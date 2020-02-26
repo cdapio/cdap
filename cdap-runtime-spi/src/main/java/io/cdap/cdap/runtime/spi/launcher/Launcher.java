@@ -47,7 +47,7 @@ public interface Launcher {
   }
 
   /**
-   * lists all intransit or running jobs.
+   * lists all in-transit or running jobs.
    * @return
    * @throws Exception
    */

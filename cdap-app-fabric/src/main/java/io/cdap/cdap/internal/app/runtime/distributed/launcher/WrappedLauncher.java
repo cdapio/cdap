@@ -59,7 +59,7 @@ public class WrappedLauncher {
       thisURL = URI.create(path.substring(0, path.indexOf("!/"))).toURL();
     }
 
-    //System.out.println("This URL: " + thisURL);
+    System.out.println("This URL: " + thisURL);
 
     File appJarDir = new File(Constants.Files.APPLICATION_JAR);
     File twillJarDir = new File(Constants.Files.TWILL_JAR);
@@ -74,6 +74,7 @@ public class WrappedLauncher {
     // add this url
     Deque<URL> queue = new LinkedList<>(urlList);
 
+
     for (URL url : classpath) {
       System.out.println("URL: " + url);
         if (url.toString().endsWith(".jar")) {
@@ -84,7 +85,7 @@ public class WrappedLauncher {
       }
     }
 
-   // System.out.println("Classpath URLs: " + queue);
+    System.out.println("Classpath URLs: " + queue);
 
     URLClassLoader newCL = new URLClassLoader(queue.toArray(new URL[0]), cl.getParent());
     Thread.currentThread().setContextClassLoader(newCL);

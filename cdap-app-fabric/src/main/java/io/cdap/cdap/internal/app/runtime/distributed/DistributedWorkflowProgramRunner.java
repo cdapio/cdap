@@ -137,6 +137,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
     // Can't use Stream.forEach as we want to preserve the IOException being thrown
     for (ScheduleProgramInfo programInfo : programInfos) {
       ProgramType programType = ProgramType.valueOfSchedulableType(programInfo.getProgramType());
+
       ProgramRunner runner = programRunnerFactory.create(programType);
       try {
         if (runner instanceof DistributedProgramRunner) {

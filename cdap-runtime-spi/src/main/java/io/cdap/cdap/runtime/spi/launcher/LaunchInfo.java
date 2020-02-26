@@ -25,6 +25,7 @@ import java.util.Map;
 public class LaunchInfo {
   private final String programId;
   private final String clusterName;
+  private final String programType;
   private final List<LauncherFile> launcherFileList;
   private Map<String, String> properties;
 
@@ -35,11 +36,17 @@ public class LaunchInfo {
    * @param files
    * @param properties
    */
-  public LaunchInfo(String programId, String clusterName, List<LauncherFile> files, Map<String, String> properties) {
+  public LaunchInfo(String programId, String clusterName, String programType,
+                    List<LauncherFile> files, Map<String, String> properties) {
     this.programId = programId;
+    this.programType = programType;
     this.clusterName = clusterName;
     this.launcherFileList = files;
     this.properties = properties;
+  }
+
+  public String getProgramType() {
+    return programType;
   }
 
   public String getProgramId() {

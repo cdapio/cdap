@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
  *
@@ -77,20 +76,14 @@ public class DataprocLauncher implements Launcher {
       List<String> uris = new ArrayList<>();
       List<String> files = new ArrayList<>();
 
-      // TODO paralelize this to be uploaded by multiple threads for faster job submission
+      // TODO parallelize this to be uploaded by multiple threads for faster job submission
       ExecutorService executor = Executors.newFixedThreadPool(info.getLauncherFileList().size());
 
       for (LauncherFile launcherFile : info.getLauncherFileList()) {
-        executor.submit(() -> {
-          try {
-            LOG.info("Uploading file {}", launcherFile.getName());
-            uploadFile(storage, bucketName, uris, files, launcherFile);
-          } catch (IOException e) {
-            LOG.error("Exception while uploading file {}", e.getMessage(), e);
-          }
-        });
+        LOG.info("Uploading file {}", launcherFile.getName());
+        uploadFile(storage, bucketName, uris, files, launcherFile);
       }
-      executor.awaitTermination(30, TimeUnit.MINUTES);
+   //   executor.awaitTermination(30, TimeUnit.MINUTES);
 
       List<String> archive = new ArrayList<>();
 
@@ -103,21 +96,44 @@ public class DataprocLauncher implements Launcher {
       }
       // TODO Get cluster information from provisioned cluster using Launcher interface
       try {
-        SubmitJobRequest request = SubmitJobRequest.newBuilder()
-          .setRegion("us-west1")
-          .setProjectId("vini-project-238000")
-          .setJob(Job.newBuilder().setPlacement(JobPlacement.newBuilder()
-                                                  .setClusterName(info.getClusterName()).build())
-                    .setHadoopJob(HadoopJob.newBuilder()
-                                    .setMainClass("io.cdap.cdap.internal.app.runtime.distributed" +
-                                                    ".launcher.WrappedLauncher")
-                                    .addAllJarFileUris(uris)
-                                    .addAllFileUris(files)
-                                    .addAllArchiveUris(archive)
-                                    .addAllArgs(ImmutableList.of(info.getProgramId(), "abc"))
-                                    .build())
-                    .build())
-          .build();
+        SubmitJobRequest request;
+        LOG.info("### Program type is: {}", info.getProgramType());
+
+//        if (info.getProgramType().equalsIgnoreCase("spark")) {
+//          LOG.info("Spark job request is created");
+//          request = SubmitJobRequest.newBuilder()
+//            .setRegion("us-west1")
+//            .setProjectId("vini-project-238000")
+//            .setJob(Job.newBuilder().setPlacement(JobPlacement.newBuilder()
+//                                                    .setClusterName(info.getClusterName()).build())
+//                      .setSparkJob(SparkJob.newBuilder()
+//                                     .setMainClass("io.cdap.cdap.internal.app.runtime.distributed" +
+//                                                     ".launcher.WrappedLauncher")
+//                                     .addAllJarFileUris(uris)
+//                                     .addAllFileUris(files)
+//                                     .addAllArchiveUris(archive)
+//                                     .addAllArgs(ImmutableList.of(info.getProgramId(), "abc"))
+//                                     .build())
+//                      .build())
+//            .build();
+//        } else {
+          LOG.info("Hadoop job request is created");
+          request = SubmitJobRequest.newBuilder()
+            .setRegion("us-west1")
+            .setProjectId("vini-project-238000")
+            .setJob(Job.newBuilder().setPlacement(JobPlacement.newBuilder()
+                                                    .setClusterName(info.getClusterName()).build())
+                      .setHadoopJob(HadoopJob.newBuilder()
+                                      .setMainClass("io.cdap.cdap.internal.app.runtime.distributed" +
+                                                      ".launcher.WrappedLauncher")
+                                      .addAllJarFileUris(uris)
+                                      .addAllFileUris(files)
+                                      .addAllArchiveUris(archive)
+                                      .addAllArgs(ImmutableList.of(info.getProgramId()))
+                                      .build())
+                      .build())
+            .build();
+        //}
         CredentialsProvider credentialsProvider = FixedCredentialsProvider
           .create(GoogleCredentials.getApplicationDefault());
         JobControllerClient client = JobControllerClient.create(
@@ -125,6 +141,7 @@ public class DataprocLauncher implements Launcher {
             .setEndpoint("us-west1-dataproc.googleapis.com:443").build()
         );
 
+        LOG.info("Submitting hadoop job");
         Job job = client.submitJob(request);
         LOG.info("Successfully launched job on dataproc");
       } catch (Exception e) {
@@ -160,16 +177,16 @@ public class DataprocLauncher implements Launcher {
     // TODO use writer channel instead of create for large files. Figure out whether that api is atomic
     Blob blob = storage.create(blobInfo, bytesArray);
 
-    if (launcherFile.getName().endsWith("jar")) {
+    if (launcherFile.getName().endsWith("jar") || launcherFile.getName().contains("cConf.xml")) {
       LOG.info("Adding {} to jar", blob.getName());
       uris.add("gs://launcher-three/" + blob.getName());
-      if (blob.getName().startsWith("expanded.")) {
-        // 2.0.0-SNAPSHOT.06ff0c10-0129-4c8b-aa13-03b958b408cf.jar to jar
-        int i = blob.getName().lastIndexOf(".jar");
-//        fileSuffix = blob.getName().substring(0, i);
-//        fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf('.') + 1);
-//        LOG.info("File suffix is : {}", fileSuffix);
-      }
+//      if (blob.getName().startsWith("expanded.")) {
+//        // 2.0.0-SNAPSHOT.06ff0c10-0129-4c8b-aa13-03b958b408cf.jar to jar
+//        int i = blob.getName().lastIndexOf(".jar");
+////        fileSuffix = blob.getName().substring(0, i);
+////        fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf('.') + 1);
+////        LOG.info("File suffix is : {}", fileSuffix);
+//      }
     } else {
       LOG.info("Adding {} to file", blob.getName());
       files.add("gs://launcher-three/" + blob.getName());

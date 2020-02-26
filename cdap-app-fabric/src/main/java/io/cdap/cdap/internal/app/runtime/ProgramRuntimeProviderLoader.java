@@ -53,6 +53,7 @@ public class ProgramRuntimeProviderLoader extends AbstractExtensionLoader<Progra
 
     for (ProgramType programType : supportedTypes.value()) {
       if (programRuntimeProvider.isSupported(programType, cConf)) {
+        System.out.println("### spark compat is supported");
         types.add(programType);
       }
     }

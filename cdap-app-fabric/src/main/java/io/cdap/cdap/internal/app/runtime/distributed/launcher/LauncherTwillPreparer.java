@@ -112,10 +112,6 @@ public class LauncherTwillPreparer implements TwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(LauncherTwillPreparer.class);
   private static final Gson GSON = new Gson();
 
-  private static final String SETUP_SPARK_SH = "setupSpark.sh";
-  private static final String SETUP_SPARK_PY = "setupSpark.py";
-  private static final String SPARK_ENV_SH = "sparkEnv.sh";
-
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final TwillSpecification twillSpec;
@@ -405,8 +401,6 @@ public class LauncherTwillPreparer implements TwillPreparer {
       saveLogback(runtimeConfigDir.resolve(Constants.Files.LOGBACK_TEMPLATE));
       saveClassPaths(runtimeConfigDir);
       saveArguments(new Arguments(arguments, runnableArgs), runtimeConfigDir.resolve(Constants.Files.ARGUMENTS));
-      saveResource(runtimeConfigDir, SETUP_SPARK_SH);
-      saveResource(runtimeConfigDir, SETUP_SPARK_PY);
       createRuntimeConfigJar(runtimeConfigDir, localFiles, stagingDir);
       Paths.deleteRecursively(runtimeConfigDir);
 
@@ -428,8 +422,10 @@ public class LauncherTwillPreparer implements TwillPreparer {
 
       Cluster cluster = GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER),
                                       Cluster.class);
-      LaunchInfo info = new LaunchInfo(programRunId.getRun(), cluster.getName(), launcherFiles,
-                                       cluster.getProperties());
+      LOG.info("Program type is: {}", programRunId.getType().getCategoryName());
+      LaunchInfo info = new LaunchInfo(programRunId.getRun(), cluster.getName(),
+                                       programRunId.getType().getCategoryName(),
+                                       launcherFiles, cluster.getProperties());
       launcher.launch(info);
       cancelLoggingContext.cancel();
       DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
@@ -736,7 +732,6 @@ public class LauncherTwillPreparer implements TwillPreparer {
 
     LOG.info("Create and copy {}", Constants.Files.LAUNCHER_JAR);
 
-    // TODO Optimize jar packaging
     Location location = locationCache.get(Constants.Files.LAUNCHER_JAR, new LocationCache.Loader() {
       @Override
       public void load(String name, Location targetLocation) throws IOException {
@@ -749,15 +744,21 @@ public class LauncherTwillPreparer implements TwillPreparer {
           Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
             @Override
             public boolean accept(String className, URL classUrl, URL classPathUrl) {
-              try {
-                jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-                try (InputStream is = classUrl.openStream()) {
-                  ByteStreams.copy(is, jarOut);
+//              LOG.info("### Classname : {}", className);
+              if (className.startsWith("io.cdap.") || className.startsWith("io/cdap") ||
+                className.startsWith("org.apache.twill") || className.startsWith("org/apache/twill")) {
+                LOG.info("### Filtering out class {}", className);
+                try {
+                  jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                  try (InputStream is = classUrl.openStream()) {
+                    ByteStreams.copy(is, jarOut);
+                  }
+                } catch (IOException e) {
+                  throw new RuntimeException(e);
                 }
-              } catch (IOException e) {
-                throw new RuntimeException(e);
+                return true;
               }
-              return true;
+              return false;
             }
           }, WrappedLauncher.class.getName(), LauncherRunner.class.getName());
         }

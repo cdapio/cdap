@@ -147,7 +147,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
     Map<String, String> extraEnv = new HashMap<>();
     extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
 
-    if (clusterMode == ClusterMode.ON_PREMISE) {
+    if (clusterMode == ClusterMode.ISOLATED) {
       extraEnv.putAll(SparkPackageUtils.getSparkClientEnv());
 
       // Add extra resources, classpath, dependencies, env and setup ClassAcceptor

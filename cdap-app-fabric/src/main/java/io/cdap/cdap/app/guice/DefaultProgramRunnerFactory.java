@@ -73,8 +73,10 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
       LOG.debug("Using runtime provider {} for program type {}", provider, programType);
       runner = provider.createProgramRunner(programType, mode, injector);
     } else {
+      System.out.println("Provider is null, getting default provider");
       Provider<ProgramRunner> defaultProvider = defaultRunnerProviders.get(programType);
       if (defaultProvider == null) {
+        System.out.println("default provider is null throwing exception");
         throw new IllegalArgumentException("Unsupported program type: " + programType);
       }
       runner = defaultProvider.get();

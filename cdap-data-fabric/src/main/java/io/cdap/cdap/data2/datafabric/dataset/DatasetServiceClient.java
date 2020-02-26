@@ -349,22 +349,6 @@ public class DatasetServiceClient {
       } catch (Exception e) {
         LOG.error("### error while getting token: {}", e.getMessage(), e);
       }
-    } else {
-      try {
-        LOG.info("Additional header is false..");
-        URL url = new URL("http://metadata/computeMetadata/v1/instance/service-accounts/default/token");
-        HttpResponse response = HttpRequests.execute(io.cdap.common.http.HttpRequest.get(url)
-                                                       .addHeader("Metadata-Flavor", "Google").build(),
-                                                     new DefaultHttpRequestConfig(false));
-
-        LOG.info("### response from auth server json {}", response.getResponseBodyAsString());
-        JsonObject jobj = new Gson().fromJson(response.getResponseBodyAsString(), JsonObject.class);
-        String accessToken = jobj.get("access_token").getAsString();
-
-        builder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-      } catch (Exception e) {
-        LOG.error("### error while getting token: {}", e.getMessage(), e);
-      }
     }
     if (!securityEnabled || !authorizationEnabled) {
       return builder;
