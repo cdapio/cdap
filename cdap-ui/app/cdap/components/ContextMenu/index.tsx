@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as React from 'react';
 import Menu from '@material-ui/core/Menu';
@@ -89,24 +89,19 @@ export const ContextMenu = ({ selector, element, options, onOpen }: IContextMenu
     }
   }, []);
 
-  React.useEffect(
-    () => {
+  React.useEffect(() => {
+    if (children) {
+      children.forEach((child) => {
+        child.removeEventListener('contextmenu', defaultEventHandler);
+        child.addEventListener('contextmenu', defaultEventHandler);
+      });
+    }
+    return () => {
       if (children) {
-        children.forEach((child) => {
-          child.removeEventListener('contextmenu', defaultEventHandler);
-          child.addEventListener('contextmenu', defaultEventHandler);
-        });
+        children.forEach((child) => child.removeEventListener('contextmenu', defaultEventHandler));
       }
-      return () => {
-        if (children) {
-          children.forEach((child) =>
-            child.removeEventListener('contextmenu', defaultEventHandler)
-          );
-        }
-      };
-    },
-    [children]
-  );
+    };
+  }, [children]);
 
   // on mount determine the position of the mouse pointer and place the menu right there.
   React.useEffect(() => {
