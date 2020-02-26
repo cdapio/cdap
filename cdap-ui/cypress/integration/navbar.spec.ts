@@ -94,7 +94,7 @@ describe('Navbar tests', () => {
     });
   });
   it('Should have right features enabled/disabled in light theme', () => {
-    cy.contains(Theme.featureNames.dashboard).should('not.exist');
+    cy.get(`[data-cy="${Theme.featureNames.dashboard}`).should('not.exist');
     cy.contains(Theme.featureNames.hub);
     cy.get('[data-cy="navbar-hamburger-icon"]').click();
     cy.contains(Theme.featureNames.pipelines);
