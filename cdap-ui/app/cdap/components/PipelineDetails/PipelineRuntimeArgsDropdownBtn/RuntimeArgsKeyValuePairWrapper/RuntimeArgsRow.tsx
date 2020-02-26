@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,14 +15,15 @@
  */
 
 import * as React from 'react';
-import Input from '@material-ui/core/Input';
-import withStyles from '@material-ui/core/styles/withStyles';
+import TextField from '@material-ui/core/TextField';
+import { KeyValueRow } from 'components/AbstractWidget/KeyValueWidget/KeyValueRow';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import AbstractRow, {
   IAbstractRowProps,
   AbstractRowStyles,
 } from 'components/AbstractWidget/AbstractMultiRowWidget/AbstractRow';
-
-const styles = (theme) => {
+import classnames from 'classnames';
+const styles = (theme): StyleRules => {
   return {
     ...AbstractRowStyles(theme),
     inputContainer: {
@@ -31,47 +32,44 @@ const styles = (theme) => {
       gridGap: '10px',
     },
     disabled: {
-      color: `${theme.palette.grey['50']}`,
+      '& .Mui-disabled': {
+        cursor: 'not-allowed',
+        color: `${theme.palette.grey['50']}`,
+      },
     },
   };
 };
-
-interface IKeyValueRowProps extends IAbstractRowProps<typeof styles> {
-  valuePlaceholder?: string;
-  keyPlaceholder?: string;
-  kvDelimiter?: string;
-  isEncoded: boolean;
-}
 
 interface IKeyValueState {
   value: string;
   key: string;
 }
+interface IRuntimeArgsRowProps extends IAbstractRowProps<typeof styles> {
+  valuePlaceholder?: string;
+  keyPlaceholder?: string;
+  isEncoded: boolean;
+  value: {
+    key: string;
+    value: string;
+    notDeletable: boolean;
+  };
+}
 
 type StateKeys = keyof IKeyValueState;
 
-export class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
-  public static defaultProps = {
-    keyPlaceholder: 'Key',
-    valuePlaceholder: 'Value',
-    kvDelimiter: ':',
-    isEncoded: false,
-  };
-
+class RuntimeArgsRowView extends AbstractRow<IRuntimeArgsRowProps, IKeyValueState> {
   public state = {
     key: '',
     value: '',
   };
-
   public componentDidMount() {
-    let [key = '', value = ''] = this.props.value.split(this.props.kvDelimiter);
-
+    let { key, value } = this.props.value;
     if (this.props.isEncoded) {
       key = decodeURIComponent(key);
       value = decodeURIComponent(value);
     }
-
     this.setState({
+      ...this.props.value,
       key,
       value,
     });
@@ -83,50 +81,51 @@ export class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> 
         [type]: e.target.value,
       } as Pick<IKeyValueState, StateKeys>,
       () => {
-        let key = this.state.key;
-        let value = this.state.value;
-
+        let { key, value } = this.state;
         if (this.props.isEncoded) {
           key = encodeURIComponent(key);
           value = encodeURIComponent(value);
         }
-
-        const updatedValue = key.length > 0 ? [key, value].join(this.props.kvDelimiter) : '';
-        this.onChange(updatedValue);
+        this.onChange({ ...this.props.value, key, value });
       }
     );
   };
 
   public renderInput = () => {
+    const keyDisabled = this.props.disabled || this.props.value.notDeletable;
+
     return (
       <div className={this.props.classes.inputContainer}>
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.keyPlaceholder}
+        <TextField
+          data-cy="runtimeargs-key"
+          label={this.props.keyPlaceholder}
           onChange={this.handleChange.bind(this, 'key')}
           value={this.state.key}
           autoFocus={this.props.autofocus}
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
-          disabled={this.props.disabled}
+          disabled={keyDisabled}
           inputRef={this.props.forwardedRef}
-          data-cy="key"
+          variant="outlined"
+          margin="dense"
+          className={classnames({ [this.props.classes.disabled]: keyDisabled })}
         />
 
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.valuePlaceholder}
+        <TextField
+          data-cy="runtimeargs-value"
+          label={this.props.valuePlaceholder}
           onChange={this.handleChange.bind(this, 'value')}
           value={this.state.value}
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
           disabled={this.props.disabled}
-          data-cy="value"
+          variant="outlined"
+          margin="dense"
+          className={classnames({ [this.props.classes.disabled]: this.props.disabled })}
         />
       </div>
     );
   };
 }
-
-const StyledKeyValueRow = withStyles(styles)(KeyValueRow);
-export default StyledKeyValueRow;
+const RuntimeArgsRow = withStyles(styles)(RuntimeArgsRowView);
+export default RuntimeArgsRow;

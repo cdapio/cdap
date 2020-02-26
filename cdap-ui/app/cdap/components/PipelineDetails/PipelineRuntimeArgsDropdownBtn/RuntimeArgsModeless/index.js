@@ -85,7 +85,7 @@ class RuntimeArgsModeless extends PureComponent {
     this.toggleSavingAndRun();
     let { runtimeArgs } = this.props;
     // Arguments with empty values are assumed to be provided from the pipeline
-    runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => !runtimeArg.value);
+    runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => runtimeArg.value);
     let runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
     runPipeline(runtimeArgsMap);
     this.props.onClose();
@@ -100,6 +100,7 @@ class RuntimeArgsModeless extends PureComponent {
           onClick={this.saveRuntimeArgs}
           disabled={this.state.saving || !isEmpty(this.state.savedSuccessMessage)}
           label="Save"
+          dataCy="save-runtimeargs-deployed-pipeline-modal-btn"
         />
       );
     };
@@ -111,6 +112,7 @@ class RuntimeArgsModeless extends PureComponent {
           onClick={this.saveRuntimeArgsAndRun}
           disabled={this.state.saving}
           label="Run"
+          dataCy="run-deployed-pipeline-modal-btn"
         />
       );
     };

@@ -145,7 +145,8 @@
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
-         data-testid="deploy-pipeline">
+         data-testid="deploy-pipeline"
+         data-cy="deploy-pipeline-btn">
       <div class="btn-container">
         <span class="fa icon-publish"></span>
         <div class="button-label">Deploy</div>
@@ -179,7 +180,8 @@
   <div class="btn-group action-buttons"
      ng-if="HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn active"
-         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
+         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
+         data-cy="preview-active-btn">
       <div class="btn-container">
         <span class="fa icon-eye"></span>
         <div class="button-label">Preview</div>
@@ -187,7 +189,8 @@
     </div>
     <div class="btn no-border-left"
          ng-click="HydratorPlusPlusTopPanelCtrl.toggleConfig()"
-         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}">
+         ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}"
+         data-cy="preview-config-btn">
       <div class="btn-container">
         <span class="fa fa-sliders"></span>
         <div class="button-label">Configure</div>

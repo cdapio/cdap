@@ -22,6 +22,9 @@ angular
   .directive('keyValuePairs', function(reactDirective) {
     return reactDirective(window.CaskCommon.KeyValuePairs);
   })
+  .directive('keyValuePairsMaterial', function(reactDirective) {
+    return reactDirective(window.CaskCommon.KeyValuePairsMaterial);
+  })
   .directive('dataprep', (reactDirective) => {
     return reactDirective(window.CaskCommon.DataPrepHome);
   })

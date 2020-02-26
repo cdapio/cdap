@@ -16,61 +16,44 @@
 
 import React from 'react';
 import PropTypes from 'prop-types';
-import PipelineConfigurationsStore, {
-  ACTIONS as PipelineConfigurationsActions,
-} from 'components/PipelineConfigurations/Store';
-import { updateKeyValueStore } from 'components/PipelineConfigurations/Store/ActionCreator';
-import { convertMapToKeyValuePairs } from 'services/helpers';
-import RuntimeArgsPairs from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsPairs';
-import classnames from 'classnames';
-import isEmpty from 'lodash/isEmpty';
-import T from 'i18n-react';
+import { updateRunTimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
+import RuntimeArgsPairs from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsPairsMaterial';
 import { connect } from 'react-redux';
+import { getDefaultKeyValuePair } from 'components/KeyValuePairs/KeyValueStore';
+import { preventPropagation } from 'services/helpers';
 
 require('./RuntimeArgsKeyValuePairWrapper.scss');
 
-const onPaste = (dataObj, index) => {
-  let runtimeArgs = { ...PipelineConfigurationsStore.getState().runtimeArgs };
+class RuntimeArgsKeyValuePairWrapper extends React.Component {
+  runtimeArgsChanged = (changedArgs) => {
+    const newArgs = changedArgs.length ? changedArgs : [getDefaultKeyValuePair()];
+    updateRunTimeArgs({ pairs: newArgs });
+  };
 
-  // If the selected key-value pair is empty, remove it first before pasting new content
-  if (!runtimeArgs.pairs[index].key.length && !runtimeArgs.pairs[index].value.length) {
-    runtimeArgs.pairs.splice(index, 1);
-  }
-
-  // If there are existing keys, replace the value, and add the remaining
-  runtimeArgs.pairs.forEach((runtimeArgsPair) => {
-    let key = runtimeArgsPair.key;
-    if (key in dataObj) {
-      runtimeArgsPair.value = dataObj[key];
-      delete dataObj[key];
-    }
-  });
-  if (!isEmpty(dataObj)) {
-    let remainingRuntimeArgs = convertMapToKeyValuePairs(dataObj);
-    runtimeArgs.pairs = runtimeArgs.pairs.concat(remainingRuntimeArgs);
-  }
-  PipelineConfigurationsStore.dispatch({
-    type: PipelineConfigurationsActions.SET_RUNTIME_ARGS,
-    payload: { runtimeArgs },
-  });
-  updateKeyValueStore();
-};
-
-function RuntimeArgsKeyValuePairWrapper({ runtimeArgs }) {
-  return (
-    <div
-      id="runtime-arguments-key-value-pairs-wrapper"
-      className="configuration-step-content configuration-content-container"
-    >
-      <div className={classnames('runtime-arguments-labels key-value-pair-labels')}>
-        <span className="key-label">{T.translate('commons.nameLabel')}</span>
-        <span className="value-label">{T.translate('commons.keyValPairs.valueLabel')}</span>
+  render() {
+    const argsPairs = this.props.runtimeArgs ? this.props.runtimeArgs.pairs : [];
+    return (
+      <div
+        id="runtime-arguments-key-value-pairs-wrapper"
+        className="configuration-step-content configuration-content-container"
+      >
+        <div
+          className="runtime-arguments-values key-value-pair-values"
+          onClick={preventPropagation}
+        >
+          <RuntimeArgsPairs
+            widgetProps={{
+              'key-placeholder': 'Key',
+              'value-placeholder': 'Value',
+            }}
+            onChange={this.runtimeArgsChanged}
+            value={argsPairs}
+            dataCy="runtimeargs-deployed"
+          />
+        </div>
       </div>
-      <div className="runtime-arguments-values key-value-pair-values">
-        <RuntimeArgsPairs onPaste={onPaste} runtimeArgs={runtimeArgs} />
-      </div>
-    </div>
-  );
+    );
+  }
 }
 
 RuntimeArgsKeyValuePairWrapper.propTypes = {
@@ -78,9 +61,9 @@ RuntimeArgsKeyValuePairWrapper.propTypes = {
   runtimeArgs: PropTypes.object,
 };
 
-const mapStateToProps = (state, ownProps) => {
+const mapStateToProps = (state) => {
   return {
-    runtimeArgs: ownProps.runtimeArgs,
+    runtimeArgs: state.runtimeArgs,
   };
 };
 

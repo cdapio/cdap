@@ -28,6 +28,8 @@ var VersionActions = require('../cdap/services/VersionStore/VersionActions').def
 var Version = require('../cdap/services/VersionRange/Version').default;
 var VersionRange = require('../cdap/services/VersionRange').default;
 var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
+var KeyValuePairsMaterial = require('../cdap/components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsPairsMaterial.tsx')
+  .default;
 var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
 var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
 var PipelineSummary = require('../cdap/components/PipelineSummary').default;
@@ -127,6 +129,7 @@ export {
   Version,
   ResourceCenterButton,
   KeyValuePairs,
+  KeyValuePairsMaterial,
   KeyValueStore,
   KeyValueStoreActions,
   Mousetrap,
