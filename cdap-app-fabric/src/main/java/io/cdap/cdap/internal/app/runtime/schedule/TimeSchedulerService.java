@@ -78,13 +78,11 @@ public interface TimeSchedulerService extends Service {
    + be returned.
    *
    * @param program program to fetch the previous runtime.
-   * @param programType type of program.
    * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException;
+  List<ScheduledRuntime> previousScheduledRuntime(ProgramId program) throws SchedulerException;
 
   /**
    * Get the next scheduled run time of the program. A program may contain multiple schedules.
@@ -93,13 +91,11 @@ public interface TimeSchedulerService extends Service {
    + be returned.
    *
    * @param program program to fetch the next runtime.
-   * @param programType type of program.
    * @return list of scheduled runtimes for the program. Empty list if there are no schedules
    *         or if the program is not found
    * @throws SchedulerException on unforeseen error.
    */
-  List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException;
+  List<ScheduledRuntime> nextScheduledRuntime(ProgramId program) throws SchedulerException;
 
   /**
    * Get all the scheduled run time of the program within the given time range in the future.
@@ -119,6 +115,5 @@ public interface TimeSchedulerService extends Service {
    * @throws SchedulerException on unforeseen error.
    */
   List<ScheduledRuntime> getAllScheduledRunTimes(ProgramId program, SchedulableProgramType programType,
-                                                 long startTimeSecs, long endTimeSecs)
-    throws SchedulerException;
+                                                 long startTimeSecs, long endTimeSecs) throws SchedulerException;
 }
