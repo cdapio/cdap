@@ -38,7 +38,7 @@ import javax.annotation.Nullable;
 /**
  * A {@link Location} implementation that caches data read locally to allow efficient re-reading.
  */
-final class CachingLocation implements Location {
+final class CachingLocation implements LinkableLocation {
 
   private static final Logger LOG = LoggerFactory.getLogger(CachingLocation.class);
 
@@ -50,6 +50,20 @@ final class CachingLocation implements Location {
     this.locationFactory = locationFactory;
     this.delegate = delegate;
     this.cachingPathProvider = cachingPathProvider;
+  }
+
+  @Override
+  public boolean tryLink(Path target) {
+    Path cachePath = cachingPathProvider.apply(delegate).orElse(null);
+    if (cachePath == null) {
+      return false;
+    }
+    try {
+      Files.createLink(target, cachePath);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   @Override
