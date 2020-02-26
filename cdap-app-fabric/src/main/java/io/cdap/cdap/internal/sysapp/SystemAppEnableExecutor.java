@@ -121,7 +121,7 @@ public class SystemAppEnableExecutor {
                                            artifactSummary, configString, x -> { },
                                            ownerPrincipalId, arguments.canUpdateSchedules());
 
-    } catch (NotFoundException | UnauthorizedException | InvalidArtifactException e) {
+    } catch (UnauthorizedException | InvalidArtifactException e) {
       throw e;
     } catch (DatasetManagementException e) {
       if (e.getCause() instanceof UnauthorizedException) {
