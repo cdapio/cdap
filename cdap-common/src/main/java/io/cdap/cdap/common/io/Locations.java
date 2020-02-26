@@ -224,6 +224,15 @@ public final class Locations {
         // Ignore. Fallback to copy
       }
     }
+    if (location instanceof LinkableLocation) {
+      try {
+        if (((LinkableLocation) location).tryLink(targetPath.toPath())) {
+          return targetPath;
+        }
+      } catch (Exception e) {
+        // Ignore. Fallback to copy
+      }
+    }
 
     try (InputStream is = location.getInputStream()) {
       Files.copy(is, targetPath.toPath());
