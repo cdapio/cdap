@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,9 +52,9 @@ public class DataprocProvisioner implements Provisioner {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocProvisioner.class);
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
-    "gcp-dataproc", "Google Cloud Dataproc",
-    "Google Cloud Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
-      "Hadoop clusters in a simpler, more cost-efficient way.");
+    "gcp-dataproc", "Dataproc",
+    "Dataproc is a fast, easy-to-use, fully-managed cloud service for running Apache Spark and Apache " +
+      "Hadoop clusters in a simpler, more cost-efficient way on Google Cloud Platform.");
   private static final String CLUSTER_PREFIX = "cdap-";
 
   // Keys for looking up system properties
