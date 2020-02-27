@@ -19,6 +19,7 @@ package io.cdap.cdap.config;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -37,7 +38,6 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -69,7 +69,7 @@ public class PreferencesTable {
    * @param entityId the entity id to get the preferences from
    * @return the map which contains the preferences
    */
-  public Map<String, String> getPreferences(EntityId entityId) throws IOException {
+  public PreferencesDetail getPreferences(EntityId entityId) throws IOException {
     switch (entityId.getEntityType()) {
       case INSTANCE:
         return get(EMPTY_NAMESPACE, INSTANCE_PREFERENCE, entityId.getEntityName());
@@ -92,8 +92,7 @@ public class PreferencesTable {
    * Verify that the preferences for the entity id were written with a greater or equal sequence id.
    *
    * @param entityId the entity id to verify
-   * @param afterId the sequence id to check
-   *
+   * @param afterId  the sequence id to check
    * @throws ConflictException if the latest version of the preferences is older than the given sequence id
    */
   public void ensureSequence(EntityId entityId, long afterId)
@@ -125,25 +124,29 @@ public class PreferencesTable {
    * -> program level.
    *
    * @param entityId the entity id to get the preferences from
-   * @return the map which contains the preferences
+   * @return preferences detail
    */
-  public Map<String, String> getResolvedPreferences(EntityId entityId) throws IOException {
+  public PreferencesDetail getResolvedPreferences(EntityId entityId) throws IOException {
+    PreferencesDetail resolved = new PreferencesDetail(Collections.emptyMap(), null, true);
+
     // if it is instance level get the properties and return
     if (entityId.getEntityType().equals(EntityType.INSTANCE)) {
-      return getPreferences(entityId);
+      resolved = PreferencesDetail.merge(resolved, getPreferences(entityId));
+      return resolved;
     }
 
-    Map<String, String> properties = new HashMap<>();
     // if the entity id has a parent id, get the preference from its parent
     if (entityId instanceof ParentedId) {
-      properties.putAll(getResolvedPreferences(((ParentedId) entityId).getParent()));
+      PreferencesDetail parentPreferences = getResolvedPreferences(((ParentedId) entityId).getParent());
+      resolved = PreferencesDetail.merge(resolved, parentPreferences);
     } else if (entityId.getEntityType() == EntityType.NAMESPACE) {
-      // otherwise it is a namespace id, which we want to look at the instance level
-      properties.putAll(getResolvedPreferences(new InstanceId("")));
+      PreferencesDetail instancePreferences = getResolvedPreferences(new InstanceId(""));
+      resolved = PreferencesDetail.merge(resolved, instancePreferences);
     }
-    // put the current level property
-    properties.putAll(getPreferences(entityId));
-    return properties;
+
+    PreferencesDetail detail = getPreferences(entityId);
+    resolved = PreferencesDetail.merge(resolved, detail);
+    return resolved;
   }
 
   /**
@@ -151,13 +154,13 @@ public class PreferencesTable {
    * -> program level.
    *
    * @param entityId the entity id to get the preferences from
-   * @param name the name of the preference to resolve
+   * @param name     the name of the preference to resolve
    * @return the resolved value of the preference, or null of the named preference is not there
    */
   @Nullable
   public String getResolvedPreference(EntityId entityId, String name) throws IOException {
     // get the preference for the entity itself
-    String value = getPreferences(entityId).get(name);
+    String value = getPreferences(entityId).getProperties().get(name);
     if (value != null) {
       return value;
     }
@@ -166,7 +169,7 @@ public class PreferencesTable {
       value = getResolvedPreference(((ParentedId) entityId).getParent(), name);
     } else {
       // if there is no parent get from the instance id
-      value = getPreferences(new InstanceId("")).get(name);
+      value = getPreferences(new InstanceId("")).getProperties().get(name);
     }
     return value;
   }
@@ -175,8 +178,7 @@ public class PreferencesTable {
    * Set the preferences for the entity id.
    *
    * @param entityId the entity id to set the preferences from
-   * @param propMap the map which contains the preferences
-   *
+   * @param propMap  the map which contains the preferences
    * @return the sequence id of the operation
    */
   public long setPreferences(EntityId entityId, Map<String, String> propMap) throws IOException {
@@ -206,7 +208,6 @@ public class PreferencesTable {
    * Delete the preferences for the entity id.
    *
    * @param entityId the entity id to delete the preferences
-   *
    * @return the sequence id of the operation, or -1 if no preferences existed for the entity id
    */
   public long deleteProperties(EntityId entityId) throws IOException {
@@ -277,16 +278,19 @@ public class PreferencesTable {
                                               seq, type, name, namespace, String.valueOf(currentSeq)));
   }
 
-  private Map<String, String> get(String namespace, String type, String name) throws IOException {
+  private PreferencesDetail get(String namespace, String type, String name) throws IOException {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
+    Map<String, String> properties = Collections.emptyMap();
+    Long seqId = null;
     if (row.isPresent()) {
       String string = row.get().getString(StoreDefinition.PreferencesStore.PROPERTIES_FIELD);
+      seqId = row.get().getLong(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD);
       if (string != null) {
-        return GSON.fromJson(string, MAP_TYPE);
+        properties = GSON.fromJson(string, MAP_TYPE);
       }
     }
-    return Collections.emptyMap();
+    return new PreferencesDetail(properties, seqId, false);
   }
 
   private List<Field<?>> toFields(String namespace, String type, Config config, long seqId) {

@@ -71,11 +71,13 @@ import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
 import io.cdap.cdap.data2.metadata.writer.DefaultMetadataServiceClient;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.MessagingService;
@@ -88,6 +90,7 @@ import io.cdap.cdap.proto.BatchProgramSchedule;
 import io.cdap.cdap.proto.DatasetMeta;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraintCodec;
 import io.cdap.cdap.proto.ProtoTrigger;
@@ -126,6 +129,7 @@ import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.jboss.resteasy.util.HttpResponseCodes;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -157,7 +161,7 @@ import javax.ws.rs.core.MediaType;
  * running the handler tests, this also gives the ability to run individual test cases.
  */
 public abstract class AppFabricTestBase {
-  protected static final Gson GSON = new GsonBuilder()
+  protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
@@ -1362,6 +1366,21 @@ public abstract class AppFabricTestBase {
     }
     return null;
   }
+
+  protected PreferencesDetail getPreferencesInternal(String uri, boolean resolved,
+                                                     HttpResponseStatus expectedResponseStatus) throws Exception {
+    String url = String.format("%s/%s/preferences", Constants.Gateway.INTERNAL_API_VERSION_3, uri);
+    if (resolved) {
+      url += "?resolved=true";
+    }
+    HttpResponse response = doGet(url);
+    Assert.assertEquals(expectedResponseStatus.code(), response.getResponseCode());
+    if (expectedResponseStatus != HttpResponseStatus.OK) {
+      return null;
+    }
+    return GSON.fromJson(response.getResponseBodyAsString(), PreferencesDetail.class);
+  }
+
 
   protected void deletePreferences(String uri, int expectedStatus) throws Exception {
     HttpResponse response = doDelete(String.format("/v3/%s/preferences", uri));

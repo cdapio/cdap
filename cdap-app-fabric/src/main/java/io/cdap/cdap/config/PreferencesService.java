@@ -28,6 +28,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.EntityScope;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -64,15 +65,27 @@ public class PreferencesService {
     this.transactionRunner = transactionRunner;
   }
 
-  private Map<String, String> getConfigProperties(EntityId entityId) {
+  private PreferencesDetail get(EntityId entityId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return new PreferencesTable(context).getPreferences(entityId);
     });
   }
 
+  private PreferencesDetail getResolved(EntityId entityId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+        return new PreferencesTable(context).getResolvedPreferences(entityId);
+    });
+  }
+
+  private Map<String, String> getConfigProperties(EntityId entityId) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return new PreferencesTable(context).getPreferences(entityId).getProperties();
+    });
+  }
+
   private Map<String, String> getConfigResolvedProperties(EntityId entityId) {
     return TransactionRunners.run(transactionRunner, context -> {
-      return new PreferencesTable(context).getResolvedPreferences(entityId);
+      return new PreferencesTable(context).getResolvedPreferences(entityId).getProperties();
     });
   }
 
@@ -123,7 +136,7 @@ public class PreferencesService {
     }
 
     // need to get old property and check if it contains profile information
-    Map<String, String> oldProperties = preferencesTable.getPreferences(entityId);
+    Map<String, String> oldProperties = preferencesTable.getPreferences(entityId).getProperties();
     // get the old profile information from the previous properties
     Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProperties);
     long seqId = preferencesTable.setPreferences(entityId, propertyMap);
@@ -149,7 +162,7 @@ public class PreferencesService {
   private void deleteConfig(EntityId entityId) {
     TransactionRunners.run(transactionRunner, context -> {
       PreferencesTable dataset = new PreferencesTable(context);
-      Map<String, String> oldProp = dataset.getPreferences(entityId);
+      Map<String, String> oldProp = dataset.getPreferences(entityId).getProperties();
       NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
         NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
       Optional<ProfileId> oldProfile = SystemArguments.getProfileIdFromArgs(namespaceId, oldProp);
@@ -166,16 +179,18 @@ public class PreferencesService {
   /**
    * Get instance level preferences
    */
-  public Map<String, String> getProperties() {
-    return getConfigProperties(new InstanceId(""));
-  }
+  public Map<String, String> getProperties() { return getConfigProperties(new InstanceId("")); }
+
+  public PreferencesDetail getPreferences() { return get(new InstanceId("")); }
+
 
   /**
    * Get namespace level preferences
    */
-  public Map<String, String> getProperties(NamespaceId namespaceId) {
-    return getConfigProperties(namespaceId);
-  }
+  public Map<String, String> getProperties(NamespaceId namespaceId) { return getConfigProperties(namespaceId); }
+
+  public PreferencesDetail getPreferences(NamespaceId namespaceId) { return get(namespaceId); }
+
 
   /**
    * Get app level preferences
@@ -183,6 +198,7 @@ public class PreferencesService {
   public Map<String, String> getProperties(ApplicationId applicationId) {
     return getConfigProperties(applicationId);
   }
+  public PreferencesDetail getPreferences(ApplicationId applicationId) { return get(applicationId); }
 
   /**
    * Get program level preferences
@@ -190,6 +206,7 @@ public class PreferencesService {
   public Map<String, String> getProperties(ProgramId programId) {
     return getConfigProperties(programId);
   }
+  public PreferencesDetail getPreferences(ProgramId programId) { return get(programId); }
 
   /**
    * Get instance level resolved preferences
@@ -197,6 +214,7 @@ public class PreferencesService {
   public Map<String, String> getResolvedProperties() {
     return getConfigResolvedProperties(new InstanceId(""));
   }
+  public PreferencesDetail getResolvedPreferences() { return getResolved(new InstanceId("")); }
 
   /**
    * Get namespace level resolved preferences
@@ -204,6 +222,7 @@ public class PreferencesService {
   public Map<String, String> getResolvedProperties(NamespaceId namespaceId) {
     return getConfigResolvedProperties(namespaceId);
   }
+  public PreferencesDetail getResolvedPreferences(NamespaceId namespaceId) { return getResolved(namespaceId); }
 
   /**
    * Get app level resolved preferences
@@ -211,6 +230,7 @@ public class PreferencesService {
   public Map<String, String> getResolvedProperties(ApplicationId appId) {
     return getConfigResolvedProperties(appId);
   }
+  public PreferencesDetail getResolvedPreferences(ApplicationId appId) { return getResolved(appId); }
 
   /**
    * Get program level resolved preferences
@@ -218,6 +238,7 @@ public class PreferencesService {
   public Map<String, String> getResolvedProperties(ProgramId programId) {
    return getConfigResolvedProperties(programId);
   }
+  public PreferencesDetail getResolvedPreferences(ProgramId programId) { return getResolved(programId); }
 
   /**
    * Set instance level preferences
@@ -241,7 +262,7 @@ public class PreferencesService {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       PreferencesTable preferencesTable = new PreferencesTable(context);
-      Map<String, String> oldProperties = preferencesTable.getPreferences(instanceId);
+      Map<String, String> oldProperties = preferencesTable.getPreferences(instanceId).getProperties();
       Map<String, String> newProperties = new HashMap<>(properties);
 
       added.addAll(Sets.difference(newProperties.keySet(), oldProperties.keySet()));
