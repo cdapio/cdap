@@ -26,6 +26,7 @@ import Mousetrap from 'mousetrap';
 import isEqual from 'lodash/isEqual';
 import DataPrepStore from 'components/DataPrep/store';
 import ScrollableList from 'components/ScrollableList';
+import { Theme } from 'services/ThemeHelper';
 
 // Directives List
 import ParseDirective from 'components/DataPrep/Directives/Parse';
@@ -51,6 +52,7 @@ import CustomTransform from 'components/DataPrep/Directives/CustomTransform';
 import DefineVariableDirective from 'components/DataPrep/Directives/DefineVariable';
 import SetCounterDirective from 'components/DataPrep/Directives/SetCounter';
 import ChangeDataTypeDirective from 'components/DataPrep/Directives/ChangeDataType';
+import MapToTargetDirective from 'components/DataPrep/Directives/MapToTarget';
 
 import ee from 'event-emitter';
 
@@ -78,7 +80,8 @@ export default class ColumnActionsDropdown extends Component {
     - 2: Works only when there are 2 selected columns.
 
     */
-    this.directives = [
+    this.directives = [];
+    this.directives.push(
       {
         id: uuidV4(),
         tag: ParseDirective,
@@ -86,7 +89,21 @@ export default class ColumnActionsDropdown extends Component {
       },
       {
         tag: 'divider',
-      },
+      }
+    );
+    if (Theme.showWranglerDataModel) {
+      this.directives.push(
+        {
+          id: uuidV4(),
+          tag: MapToTargetDirective,
+          requiredColCount: 1,
+        },
+        {
+          tag: 'divider',
+        }
+      );
+    }
+    this.directives.push(
       {
         id: uuidV4(),
         tag: SetCharacterEncoding,
@@ -211,8 +228,8 @@ export default class ColumnActionsDropdown extends Component {
         id: uuidV4(),
         tag: Hash,
         requiredColCount: 1,
-      },
-    ];
+      }
+    );
     this.eventEmitter = ee(ee);
     this.eventEmitter.on('CLOSE_POPOVER', this.toggleDropdown.bind(this, false));
     this.dropdownId = uuidV4();
