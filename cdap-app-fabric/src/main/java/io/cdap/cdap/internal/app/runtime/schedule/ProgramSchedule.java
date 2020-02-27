@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -133,7 +134,17 @@ public class ProgramSchedule {
       new ScheduleProgramInfo(programId.getType().getSchedulableType(), programId.getProgram());
     return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(),
                               scheduleId.getSchedule(), description, programInfo, properties, trigger, constraints,
-                              timeoutMillis, null);
+                              timeoutMillis, null, null);
+  }
+
+  public static ProgramSchedule fromScheduleDetail(ScheduleDetail schedule) throws IllegalArgumentException {
+    ProgramType programType = ProgramType.valueOfSchedulableType(schedule.getProgram().getProgramType());
+    ProgramId programId = new ProgramId(
+      schedule.getNamespace(), schedule.getApplication(), programType, schedule.getProgram().getProgramName());
+    ProgramSchedule programSchedule = new ProgramSchedule(
+      schedule.getName(), schedule.getDescription(), programId, schedule.getProperties(),
+      schedule.getTrigger(), schedule.getConstraints(), schedule.getTimeoutMillis());
+    return programSchedule;
   }
 }
 

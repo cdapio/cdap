@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -137,6 +137,21 @@ public class ProgramScheduleService {
     AuthorizationUtil.ensureAccess(schedule.getProgramId(), authorizationEnforcer,
                                    authenticationContext.getPrincipal());
     return schedule;
+  }
+
+  /**
+   * Get the schedule record for the given schedule ID
+   *
+   * @return the schedule
+   * @throws NotFoundException if the schedule could not be found
+   * @throws UnauthorizedException if the principal is not authorized to access the schedule program
+   * @throws Exception if any other errors occurred while performing the authorization enforcement check
+   */
+  public ProgramScheduleRecord getRecord(ScheduleId scheduleId) throws Exception {
+    ProgramScheduleRecord record = scheduler.getScheduleRecord(scheduleId);
+    AuthorizationUtil.ensureAccess(record.getSchedule().getProgramId(), authorizationEnforcer,
+                                   authenticationContext.getPrincipal());
+    return record;
   }
 
   /**

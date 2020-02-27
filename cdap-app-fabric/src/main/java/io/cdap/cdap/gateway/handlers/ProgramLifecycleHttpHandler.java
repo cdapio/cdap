@@ -689,8 +689,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   private void doGetSchedule(HttpResponder responder, String namespace,
                              String app, String version, String scheduleName) throws Exception {
     ScheduleId scheduleId = new ApplicationId(namespace, app, version).schedule(scheduleName);
-    ProgramSchedule schedule = programScheduleService.get(scheduleId);
-    ScheduleDetail detail = schedule.toScheduleDetail();
+    ProgramScheduleRecord record = programScheduleService.getRecord(scheduleId);
+    ScheduleDetail detail = record.toScheduleDetail();
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, ScheduleDetail.class));
   }
 

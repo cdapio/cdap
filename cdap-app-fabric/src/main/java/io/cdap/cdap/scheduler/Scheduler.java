@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -136,7 +136,17 @@ public interface Scheduler {
    * @return the schedule from the store
    * @throws NotFoundException if the schedule does not exist in the store
    */
+  // TODO: remove and replace callsites with getScheduleRecord
   ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException;
+
+  /**
+   * Read a schedule record (including schedule, status and last updated time) from the store.
+   *
+   * @param scheduleId the id of the schedule to read
+   * @return the schedule record from the store
+   * @throws NotFoundException if the schedule does not exist in the store
+   */
+  ProgramScheduleRecord getScheduleRecord(ScheduleId scheduleId) throws NotFoundException;
 
   /**
    * Read a schedule's status from the store.
