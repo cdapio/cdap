@@ -136,6 +136,7 @@ public interface Scheduler {
    * @return the schedule from the store
    * @throws NotFoundException if the schedule does not exist in the store
    */
+  // TODO: remove and replace callsites with getScheduleRecord
   ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException;
 
   /**
