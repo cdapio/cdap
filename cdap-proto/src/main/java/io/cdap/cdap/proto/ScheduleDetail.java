@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -45,6 +45,7 @@ public class ScheduleDetail {
   private final List<? extends Constraint> constraints;
   private final Long timeoutMillis;
   private final String status;
+  private final Long lastUpdateTime;
 
   public ScheduleDetail(@Nullable String name,
                         @Nullable String description,
@@ -53,7 +54,7 @@ public class ScheduleDetail {
                         @Nullable Trigger trigger,
                         @Nullable List<? extends Constraint> constraints,
                         @Nullable Long timeoutMillis) {
-    this(null, null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null);
+    this(null, null, null, name, description, program, properties, trigger, constraints, timeoutMillis, null, null );
   }
 
   public ScheduleDetail(@Nullable String namespace,
@@ -66,7 +67,8 @@ public class ScheduleDetail {
                         @Nullable Trigger trigger,
                         @Nullable List<? extends Constraint> constraints,
                         @Nullable Long timeoutMillis,
-                        @Nullable String status) {
+                        @Nullable String status,
+                        @Nullable Long lastUpdateTime) {
     this.namespace = namespace;
     this.application = application;
     this.applicationVersion = applicationVersion;
@@ -78,6 +80,7 @@ public class ScheduleDetail {
     this.constraints = constraints;
     this.timeoutMillis = timeoutMillis;
     this.status = status;
+    this.lastUpdateTime = lastUpdateTime;
   }
 
   @Nullable
@@ -134,6 +137,9 @@ public class ScheduleDetail {
   public String getStatus() {
     return status;
   }
+
+  @Nullable
+  public Long getLastUpdateTime() { return lastUpdateTime; }
 
   @Override
   public boolean equals(Object o) {

@@ -914,7 +914,7 @@ public class AuthorizationTest extends TestBase {
                          "testSchedule", "Something 2",
                          new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, workflowName),
                          Collections.<String, String>emptyMap(), new TimeTrigger("*/1 * * * *"),
-                         Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6), null);
+                         Collections.<Constraint>emptyList(), TimeUnit.HOURS.toMillis(6), null, null);
 
     try {
       addSchedule(scheduleId, scheduleDetail);

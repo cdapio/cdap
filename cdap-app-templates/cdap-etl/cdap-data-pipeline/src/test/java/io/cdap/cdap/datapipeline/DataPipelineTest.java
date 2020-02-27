@@ -601,7 +601,7 @@ public class DataPipelineTest extends HydratorTestBase {
                          scheduleId.getSchedule(), "",
                          new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, SmartWorkflow.NAME),
                          ImmutableMap.of(SmartWorkflow.TRIGGERING_PROPERTIES_MAPPING, GSON.toJson(propertyMapping)),
-                         completeTrigger, ImmutableList.of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null));
+                         completeTrigger, ImmutableList.of(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null));
     appManager.enableSchedule(scheduleId);
     return appManager.getWorkflowManager(SmartWorkflow.NAME);
   }

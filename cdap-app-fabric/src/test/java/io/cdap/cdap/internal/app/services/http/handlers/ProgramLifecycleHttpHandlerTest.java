@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1322,7 +1322,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                                                    scheduleName, description, programInfo, properties,
                                                    timeTrigger, Collections.emptyList(),
-                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, timeDetail);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
 
@@ -1360,29 +1360,29 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail timeDetail = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                                                    scheduleName, description, programInfo, properties,
                                                    timeTrigger, Collections.emptyList(),
-                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                                                   Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
     PartitionTrigger partitionTrigger =
       new PartitionTrigger(protoPartition.getDataset(), protoPartition.getNumPartitions());
     ScheduleDetail expectedPartitionDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          partitionScheduleName, description, programInfo, properties, partitionTrigger,
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     ScheduleDetail requestPartitionDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          partitionScheduleName, description, programInfo, properties, protoPartition,
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     ScheduleDetail expectedOrDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          orScheduleName, description, programInfo, properties,
                          new OrTrigger(timeTrigger, partitionTrigger),
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     ScheduleDetail requestOrDetail =
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          orScheduleName, description, programInfo, properties, protoOr,
-                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Collections.emptyList(), Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
 
     // trying to add the schedule with different name in path param than schedule spec should fail
     HttpResponse response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, "differentName", timeDetail);
@@ -1404,7 +1404,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
       new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, ApplicationId.DEFAULT_VERSION,
                          scheduleName, description, new ScheduleProgramInfo(SchedulableProgramType.MAPREDUCE, "nope"),
                          properties, timeTrigger, Collections.emptyList(),
-                         Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null);
+                         Schedulers.JOB_QUEUE_TIMEOUT_MILLIS, null, null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, null, scheduleName, nonExistingDetail);
     Assert.assertEquals(HttpResponseStatus.NOT_FOUND.code(), response.getResponseCode());
 
@@ -1452,7 +1452,7 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     ScheduleDetail detail2 = new ScheduleDetail(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2,
                                                 null, "Something 2", programInfo, properties,
                                                 new TimeTrigger("0 * * * ?"),
-                                                Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null);
+                                                Collections.emptyList(), TimeUnit.HOURS.toMillis(6), null, null);
     response = addSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100", detail2);
     Assert.assertEquals(HttpResponseStatus.OK.code(), response.getResponseCode());
     ScheduleDetail detail100 = getSchedule(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, "schedule-100");

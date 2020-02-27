@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -47,8 +47,9 @@ public class ProtoTriggerCodecTest {
     testTriggerCodec(timeTrigger);
 
     ProtoTrigger.ProgramStatusTrigger programStatusTrigger =
-      new ProtoTrigger.ProgramStatusTrigger(new ProgramId("test", "myapp", ProgramType.WORKER, "myprog"),
-                                            ImmutableSet.of(io.cdap.cdap.api.ProgramStatus.FAILED));
+      new ProtoTrigger.ProgramStatusTrigger(
+        new ProgramId("test", "myapp", ProgramType.WORKER, "myprog"),
+        ImmutableSet.of(io.cdap.cdap.api.ProgramStatus.FAILED));
     testTriggerCodec(ProtoTrigger.or(ProtoTrigger.and(partitionTrigger,
                                                       programStatusTrigger.or(timeTrigger, programStatusTrigger)),
                                      timeTrigger, programStatusTrigger));
@@ -65,16 +66,20 @@ public class ProtoTriggerCodecTest {
 
   @Test
   public void testObjectContainingTrigger() {
-    ScheduleDetail sched1 = new ScheduleDetail("default", "app1", "1.0.0", "sched1", "one partition schedule",
-                                               new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
-                                               ImmutableMap.of("prop3", "abc"),
-                                               new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
-                                               ImmutableList.<Constraint>of(), null, "SUSPENDED");
-    ScheduleDetail sched2 = new ScheduleDetail("default", "app1", "1.0.0", "schedone", "one time schedule",
-                                                 new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
-                                                 ImmutableMap.of("prop", "all"),
-                                                 new ProtoTrigger.TimeTrigger("* * * 1 1"),
-                                                 ImmutableList.<Constraint>of(), null, "SUSPENDED");
+    ScheduleDetail sched1 =
+      new ScheduleDetail(
+        "default", "app1", "1.0.0", "sched1", "one partition schedule",
+        new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "ww"),
+        ImmutableMap.of("prop3", "abc"),
+        new ProtoTrigger.PartitionTrigger(new DatasetId("test1", "pdfs1"), 1),
+        ImmutableList.<Constraint>of(), null, "SUSPENDED", null);
+    ScheduleDetail sched2 =
+      new ScheduleDetail(
+        "default", "app1", "1.0.0", "schedone", "one time schedule",
+        new ScheduleProgramInfo(SchedulableProgramType.WORKFLOW, "wf112"),
+        ImmutableMap.of("prop", "all"),
+        new ProtoTrigger.TimeTrigger("* * * 1 1"),
+        ImmutableList.<Constraint>of(), null, "SUSPENDED", null);
     Assert.assertEquals(sched1, GSON.fromJson(GSON.toJson(sched1), ScheduleDetail.class));
     Assert.assertEquals(sched2, GSON.fromJson(GSON.toJson(sched2), ScheduleDetail.class));
   }

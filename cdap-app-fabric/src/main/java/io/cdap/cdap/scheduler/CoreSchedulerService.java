@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -477,6 +477,12 @@ public class CoreSchedulerService extends AbstractIdleService implements Schedul
   public ProgramSchedule getSchedule(ScheduleId scheduleId) throws NotFoundException {
     checkStarted();
     return execute(store -> store.getSchedule(scheduleId), NotFoundException.class);
+  }
+
+  @Override
+  public ProgramScheduleRecord getScheduleRecord(ScheduleId scheduleId) throws NotFoundException {
+    checkStarted();
+    return execute(store -> store.getScheduleRecord(scheduleId), NotFoundException.class);
   }
 
   @Override

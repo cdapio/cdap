@@ -24,20 +24,18 @@ import com.google.common.base.Objects;
 public class ProgramScheduleMeta {
 
   private final ProgramScheduleStatus status;
-  private final long lastUpdated;
+  private final long lastUpdateTime;
 
   public ProgramScheduleMeta(ProgramScheduleStatus status, long lastUpdated) {
     this.status = status;
-    this.lastUpdated = lastUpdated;
+    this.lastUpdateTime = lastUpdated;
   }
 
   public ProgramScheduleStatus getStatus() {
     return status;
   }
 
-  public long getLastUpdated() {
-    return lastUpdated;
-  }
+  public long getLastUpdateTime() { return lastUpdateTime; }
 
   @Override
   public boolean equals(Object o) {
@@ -50,12 +48,12 @@ public class ProgramScheduleMeta {
 
     ProgramScheduleMeta that = (ProgramScheduleMeta) o;
 
-    return Objects.equal(this.lastUpdated, that.lastUpdated) &&
+    return Objects.equal(this.lastUpdateTime, that.lastUpdateTime) &&
       Objects.equal(this.status, that.status);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(status, lastUpdated);
+    return Objects.hashCode(status, lastUpdateTime);
   }
 }

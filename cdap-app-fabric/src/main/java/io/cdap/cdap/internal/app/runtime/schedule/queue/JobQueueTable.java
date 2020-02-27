@@ -162,7 +162,7 @@ public class JobQueueTable implements JobQueue {
             // ignore, it will be deleted by ConstraintCheckerService
             continue;
           }
-          long scheduleLastUpdated = record.getMeta().getLastUpdated();
+          long scheduleLastUpdated = record.getMeta().getLastUpdateTime();
           if (job.getScheduleLastUpdatedTime() != scheduleLastUpdated) {
             // schedule has changed: this job is obsolete
             writeJobObsolete(job, System.currentTimeMillis());
@@ -183,7 +183,7 @@ public class JobQueueTable implements JobQueue {
       Job.State jobState = isTriggerSatisfied(schedule, notifications)
         ? Job.State.PENDING_CONSTRAINT : Job.State.PENDING_TRIGGER;
       writeJob(new SimpleJob(schedule, nextGenerationId, System.currentTimeMillis(), notifications, jobState,
-                        record.getMeta().getLastUpdated()));
+                        record.getMeta().getLastUpdateTime()));
     }
   }
 
