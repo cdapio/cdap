@@ -77,6 +77,6 @@ public class ProgramScheduleRecord {
     return new ScheduleDetail(scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(),
                               scheduleId.getSchedule(), schedule.getDescription(), programInfo,
                               schedule.getProperties(), schedule.getTrigger(), schedule.getConstraints(),
-                              schedule.getTimeoutMillis(), meta.getStatus().name(), meta.getLastUpdateTime());
+                              schedule.getTimeoutMillis(), meta.getStatus().name(), meta.getLastUpdated());
   }
 }
