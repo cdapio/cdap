@@ -73,20 +73,16 @@ public class PreferencesService {
 
   private PreferencesDetail getResolved(EntityId entityId) {
     return TransactionRunners.run(transactionRunner, context -> {
-        return new PreferencesTable(context).getResolvedPreferences(entityId);
+      return new PreferencesTable(context).getResolvedPreferences(entityId);
     });
   }
 
   private Map<String, String> getConfigProperties(EntityId entityId) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return new PreferencesTable(context).getPreferences(entityId).getProperties();
-    });
+    return get(entityId).getProperties();
   }
 
   private Map<String, String> getConfigResolvedProperties(EntityId entityId) {
-    return TransactionRunners.run(transactionRunner, context -> {
-      return new PreferencesTable(context).getResolvedPreferences(entityId).getProperties();
-    });
+    return getResolved(entityId).getProperties();
   }
 
   /**
@@ -179,66 +175,96 @@ public class PreferencesService {
   /**
    * Get instance level preferences
    */
-  public Map<String, String> getProperties() { return getConfigProperties(new InstanceId("")); }
+  // TODO: remove and replace callsites with getPreferences
+  public Map<String, String> getProperties() {
+    return getConfigProperties(new InstanceId(""));
+  }
 
-  public PreferencesDetail getPreferences() { return get(new InstanceId("")); }
-
+  public PreferencesDetail getPreferences() {
+    return get(new InstanceId(""));
+  }
 
   /**
    * Get namespace level preferences
    */
-  public Map<String, String> getProperties(NamespaceId namespaceId) { return getConfigProperties(namespaceId); }
+  // TODO: remove and replace callsites with getPreferences
+  public Map<String, String> getProperties(NamespaceId namespaceId) {
+    return getConfigProperties(namespaceId);
+  }
 
-  public PreferencesDetail getPreferences(NamespaceId namespaceId) { return get(namespaceId); }
-
+  public PreferencesDetail getPreferences(NamespaceId namespaceId) {
+    return get(namespaceId);
+  }
 
   /**
    * Get app level preferences
    */
+  // TODO: remove and replace callsites with getPreferences
   public Map<String, String> getProperties(ApplicationId applicationId) {
     return getConfigProperties(applicationId);
   }
-  public PreferencesDetail getPreferences(ApplicationId applicationId) { return get(applicationId); }
+
+  public PreferencesDetail getPreferences(ApplicationId applicationId) {
+    return get(applicationId);
+  }
 
   /**
    * Get program level preferences
    */
+  // TODO: remove and replace callsites with getPreferences
   public Map<String, String> getProperties(ProgramId programId) {
     return getConfigProperties(programId);
   }
-  public PreferencesDetail getPreferences(ProgramId programId) { return get(programId); }
+
+  public PreferencesDetail getPreferences(ProgramId programId) {
+    return get(programId);
+  }
 
   /**
    * Get instance level resolved preferences
    */
+  // TODO: remove and replace callsites with getResolvedPreferences
   public Map<String, String> getResolvedProperties() {
     return getConfigResolvedProperties(new InstanceId(""));
   }
-  public PreferencesDetail getResolvedPreferences() { return getResolved(new InstanceId("")); }
+
+  public PreferencesDetail getResolvedPreferences() {
+    return getResolved(new InstanceId(""));
+  }
 
   /**
    * Get namespace level resolved preferences
    */
+  // TODO: remove and replace callsites with getResolvedPreferences
   public Map<String, String> getResolvedProperties(NamespaceId namespaceId) {
     return getConfigResolvedProperties(namespaceId);
   }
-  public PreferencesDetail getResolvedPreferences(NamespaceId namespaceId) { return getResolved(namespaceId); }
+
+  public PreferencesDetail getResolvedPreferences(NamespaceId namespaceId) {
+    return getResolved(namespaceId);
+  }
 
   /**
    * Get app level resolved preferences
    */
+  // TODO: remove and replace callsites with getResolvedPreferences
   public Map<String, String> getResolvedProperties(ApplicationId appId) {
     return getConfigResolvedProperties(appId);
   }
-  public PreferencesDetail getResolvedPreferences(ApplicationId appId) { return getResolved(appId); }
+  public PreferencesDetail getResolvedPreferences(ApplicationId appId) {
+    return getResolved(appId);
+  }
 
   /**
    * Get program level resolved preferences
    */
+  // TODO: remove and replace callsites with getResolvedPreferences
   public Map<String, String> getResolvedProperties(ProgramId programId) {
    return getConfigResolvedProperties(programId);
   }
-  public PreferencesDetail getResolvedPreferences(ProgramId programId) { return getResolved(programId); }
+  public PreferencesDetail getResolvedPreferences(ProgramId programId) {
+    return getResolved(programId);
+  }
 
   /**
    * Set instance level preferences

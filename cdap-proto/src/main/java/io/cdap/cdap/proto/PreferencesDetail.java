@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.proto;
 
-import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -28,6 +27,7 @@ public class PreferencesDetail {
   private final Map<String, String> properties;
   /**
    * Sequence id of operations on the preferences
+   * Normally this should be > 0. But can be 0 indicating that no preferences have been set on the entity.
    */
   private final Long seqId;
   /**
@@ -35,48 +35,39 @@ public class PreferencesDetail {
    */
   private boolean resolved;
 
-  public static PreferencesDetail merge(PreferencesDetail left, PreferencesDetail right) {
-    if (left == null && right == null) {
-      return null;
-    } else if (left == null) {
-      return right;
-    } else if (right == null) {
-      return left;
-    }
-
+  /**
+   * Return a resolved preference detail where preferences in {@code parent} take precedence over
+   * those in {@code child}. The {@code seqId} would be the max of the two.
+   */
+  public static PreferencesDetail resolve(PreferencesDetail parent, PreferencesDetail child) {
     Map<String, String> properties = new HashMap<>();
-    properties.putAll(left.getProperties());
-    properties.putAll(right.getProperties());
+    // Copy child's properties first.
+    properties.putAll(child.getProperties());
+    // Add parent's properties and overrides any existing properties in child;
+    properties.putAll(parent.getProperties());
 
-    Long seqId = null;
-    Long leftSeqId = left.getSeqId();
-    Long rightSeqId = right.getSeqId();
-    if (leftSeqId != null && rightSeqId != null) {
-      seqId = Long.max(leftSeqId.longValue(), rightSeqId.longValue());
-    } else if (leftSeqId != null) {
-      seqId = new Long(leftSeqId.longValue());
-    } else if (rightSeqId != null) {
-      seqId = new Long(rightSeqId.longValue());
-    }
+    Long seqId = getMaxSeqId(parent.getSeqId(), child.getSeqId());
 
-    boolean resolved = (left.resolved || right.resolved);
-    return new PreferencesDetail(properties, seqId, resolved);
+    return new PreferencesDetail(properties, seqId, true);
   }
 
-  public PreferencesDetail(Map<String, String> properties, @Nullable Long seqId, boolean resolved) {
+  public PreferencesDetail(Map<String, String> properties, Long seqId, boolean resolved) {
     this.properties = properties;
     this.seqId = seqId;
     this.resolved = resolved;
   }
 
-  @Nullable
   public Long getSeqId() {
     return this.seqId;
   }
 
-  public Map<String, String> getProperties() { return properties; }
+  public Map<String, String> getProperties() {
+    return properties;
+  }
 
-  public boolean getResolved() { return resolved; }
+  public boolean getResolved() {
+    return resolved;
+  }
 
   @Override
   public boolean equals(Object o) {
@@ -89,7 +80,7 @@ public class PreferencesDetail {
     PreferencesDetail that = (PreferencesDetail) o;
     return Objects.equals(properties, that.properties) &&
       Objects.equals(seqId, that.seqId) &&
-      Objects.equals(resolved,that.resolved);
+      Objects.equals(resolved, that.resolved);
   }
 
   @Override
@@ -104,6 +95,10 @@ public class PreferencesDetail {
       "seqId='" + seqId +
       "resolved='" + resolved +
       '}';
+  }
+
+  public static Long getMaxSeqId(Long left, Long right) {
+    return Long.max(left.longValue(), right.longValue());
   }
 }
 

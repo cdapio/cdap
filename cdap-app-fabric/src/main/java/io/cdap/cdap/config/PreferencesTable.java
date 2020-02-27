@@ -120,32 +120,34 @@ public class PreferencesTable {
   }
 
   /**
-   * Get the resolved preferences for the entity id, the preferences are resolved from instance -> namespace -> app
-   * -> program level.
+   * Get the resolved preferences for the entity id, the preferences are resolved from
+   * instance -> namespace -> application -> program level
+   * (e.g. preferences at instance level take precedence over those at child level)
    *
    * @param entityId the entity id to get the preferences from
    * @return preferences detail
    */
   public PreferencesDetail getResolvedPreferences(EntityId entityId) throws IOException {
-    PreferencesDetail resolved = new PreferencesDetail(Collections.emptyMap(), null, true);
-
     // if it is instance level get the properties and return
     if (entityId.getEntityType().equals(EntityType.INSTANCE)) {
-      resolved = PreferencesDetail.merge(resolved, getPreferences(entityId));
-      return resolved;
+      PreferencesDetail preferences = getPreferences(entityId);
+      return new PreferencesDetail(preferences.getProperties(), preferences.getSeqId(), true);
     }
 
+    PreferencesDetail parentPreferences = null;
     // if the entity id has a parent id, get the preference from its parent
     if (entityId instanceof ParentedId) {
-      PreferencesDetail parentPreferences = getResolvedPreferences(((ParentedId) entityId).getParent());
-      resolved = PreferencesDetail.merge(resolved, parentPreferences);
+      parentPreferences = getResolvedPreferences(((ParentedId) entityId).getParent());
     } else if (entityId.getEntityType() == EntityType.NAMESPACE) {
-      PreferencesDetail instancePreferences = getResolvedPreferences(new InstanceId(""));
-      resolved = PreferencesDetail.merge(resolved, instancePreferences);
+      parentPreferences = getResolvedPreferences(new InstanceId(""));
     }
+    PreferencesDetail preferences = getPreferences(entityId);
 
-    PreferencesDetail detail = getPreferences(entityId);
-    resolved = PreferencesDetail.merge(resolved, detail);
+    PreferencesDetail resolved = new PreferencesDetail(preferences.getProperties(), preferences.getSeqId(),
+                                                       true);
+    if (parentPreferences != null) {
+      resolved = PreferencesDetail.resolve(parentPreferences, resolved);
+    }
     return resolved;
   }
 
@@ -282,7 +284,7 @@ public class PreferencesTable {
     List<Field<?>> primaryKey = getPrimaryKey(namespace, type, name);
     Optional<StructuredRow> row = table.read(primaryKey);
     Map<String, String> properties = Collections.emptyMap();
-    Long seqId = null;
+    Long seqId = new Long(0);
     if (row.isPresent()) {
       String string = row.get().getString(StoreDefinition.PreferencesStore.PROPERTIES_FIELD);
       seqId = row.get().getLong(StoreDefinition.PreferencesStore.SEQUENCE_ID_FIELD);

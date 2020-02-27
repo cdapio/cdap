@@ -229,7 +229,8 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     // Application created but no preferences created yet. API call still succeeds but result is empty.
     detail = getPreferencesInternal(uriApp, false, HttpResponseStatus.OK);
     Assert.assertEquals(Collections.emptyMap(), detail.getProperties());
-    Assert.assertTrue(null == detail.getSeqId());
+    // For entity without any references, seqId is set to default 0, otherwise it should be always > 0.
+    Assert.assertEquals(0, detail.getSeqId().longValue());
 
     // Set the preference
     Map<String, String> instanceProperties = ImmutableMap.of("instance-key1", "instance-val1");
@@ -302,10 +303,8 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
       namespace2, appName, "invalidType", "somename"), false, HttpResponseStatus.BAD_REQUEST);
 
     // Get preferences on non-existing program id
-    detail = getPreferencesInternal(getPreferenceURI(
-      namespace2, appName, "services", "somename"), false, HttpResponseStatus.OK);
-    Assert.assertEquals(Collections.emptyMap(), detail.getProperties());
-    Assert.assertTrue(null == detail.getSeqId());
+    getPreferencesInternal(getPreferenceURI(
+      namespace2, appName, "services", "somename"), false, HttpResponseStatus.NOT_FOUND);
 
     // Set preferences on the program
     properties.clear();
