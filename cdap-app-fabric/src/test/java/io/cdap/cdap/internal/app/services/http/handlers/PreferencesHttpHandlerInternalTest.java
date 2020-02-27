@@ -230,7 +230,7 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     detail = getPreferencesInternal(uriApp, false, HttpResponseStatus.OK);
     Assert.assertEquals(Collections.emptyMap(), detail.getProperties());
     // For entity without any references, seqId is set to default 0, otherwise it should be always > 0.
-    Assert.assertEquals(0, detail.getSeqId().longValue());
+    Assert.assertEquals(0, detail.getSeqId());
 
     // Set the preference
     Map<String, String> instanceProperties = ImmutableMap.of("instance-key1", "instance-val1");

@@ -29,7 +29,7 @@ public class PreferencesDetail {
    * Sequence id of operations on the preferences
    * Normally this should be > 0. But can be 0 indicating that no preferences have been set on the entity.
    */
-  private final Long seqId;
+  private final long seqId;
   /**
    * Whether it is a resolved preferences or not.
    */
@@ -46,18 +46,18 @@ public class PreferencesDetail {
     // Add parent's properties and overrides any existing properties in child;
     properties.putAll(parent.getProperties());
 
-    Long seqId = getMaxSeqId(parent.getSeqId(), child.getSeqId());
+    long seqId = Long.max(parent.getSeqId(), child.getSeqId());
 
     return new PreferencesDetail(properties, seqId, true);
   }
 
-  public PreferencesDetail(Map<String, String> properties, Long seqId, boolean resolved) {
+  public PreferencesDetail(Map<String, String> properties, long seqId, boolean resolved) {
     this.properties = properties;
     this.seqId = seqId;
     this.resolved = resolved;
   }
 
-  public Long getSeqId() {
+  public long getSeqId() {
     return this.seqId;
   }
 
@@ -95,10 +95,6 @@ public class PreferencesDetail {
       "seqId='" + seqId +
       "resolved='" + resolved +
       '}';
-  }
-
-  public static Long getMaxSeqId(Long left, Long right) {
-    return Long.max(left.longValue(), right.longValue());
   }
 }
 
