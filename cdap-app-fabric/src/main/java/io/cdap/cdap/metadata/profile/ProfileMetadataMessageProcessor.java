@@ -314,7 +314,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private Optional<ProfileId> getProfileId(EntityId entityId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getPreferences(entityId).get(SystemArguments.PROFILE_NAME);
+    String profileName = preferencesTable.getPreferences(entityId).getProperties().get(SystemArguments.PROFILE_NAME);
     return profileName == null ? Optional.empty() : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
   }
 
