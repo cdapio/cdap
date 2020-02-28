@@ -26,6 +26,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConnectivityAssessment from 'components/Replicator/Create/Content/Assessment/ConnectivityAssessment';
 import FeaturesAssessment from 'components/Replicator/Create/Content/Assessment//FeaturesAssessment';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -98,7 +99,7 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
   return (
     <div className={classes.root}>
-      <h3>Assessment summary</h3>
+      <Heading type={HeadingTypes.h3} label="Assessment summary" />
 
       <If condition={error}>
         <div className="text-danger">{JSON.stringify(error, null, 2)}</div>

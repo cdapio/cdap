@@ -28,6 +28,7 @@ import SelectColumns from 'components/Replicator/Create/Content/SelectColumns';
 import If from 'components/If';
 import { generateTableKey } from 'components/Replicator/utilities';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -415,7 +416,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     return (
       <React.Fragment>
         <div className={classes.root}>
-          <h3>Select tables and columns to replicate</h3>
+          <Heading type={HeadingTypes.h3} label="Select tables and columns to replicate" />
 
           {this.renderError()}
           {this.renderContent()}

@@ -26,6 +26,7 @@ import { MyReplicatorApi } from 'api/replicator';
 import Checkbox from '@material-ui/core/Checkbox';
 import { generateTableKey } from 'components/Replicator/utilities';
 import LoadingSVG from 'components/LoadingSVG';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -282,7 +283,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
         <div className={classes.root}>
           <div className={classes.header}>
             <div>
-              <h3>{this.props.tableInfo.table}</h3>
+              <Heading type={HeadingTypes.h3} label={this.props.tableInfo.table} />
               <div>Select the columns to be replicated</div>
               <div>
                 Columns - {this.state.selectedColumns.size} of {this.state.columns.length} selected
