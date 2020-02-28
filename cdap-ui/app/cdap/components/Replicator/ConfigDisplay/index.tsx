@@ -69,17 +69,17 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
   sourceConfig,
   targetConfig,
 }) => {
-  const [viewMore, setViewMore] = React.useState(false);
+  const [viewingMore, setViewingMore] = React.useState(false);
 
   function toggleViewMore() {
-    setViewMore(!viewMore);
+    setViewingMore(!viewingMore);
   }
 
   return (
     <div className={classes.root}>
       <div
         className={classnames(classes.container, classes.gridContainer, {
-          [classes.expanded]: viewMore,
+          [classes.expanded]: viewingMore,
         })}
       >
         <div>
@@ -102,10 +102,10 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
       </div>
       <div className={`${classes.gridContainer} ${classes.viewMoreContainer}`}>
         <div>
-          <span onClick={toggleViewMore}>View {!viewMore ? 'more' : 'less'} configuration</span>
+          <span onClick={toggleViewMore}>View {!viewingMore ? 'more' : 'less'} configurations</span>
         </div>
         <div>
-          <span onClick={toggleViewMore}>View {!viewMore ? 'more' : 'less'} configuration</span>
+          <span onClick={toggleViewMore}>View {!viewingMore ? 'more' : 'less'} configurations</span>
         </div>
       </div>
     </div>

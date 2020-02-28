@@ -25,6 +25,7 @@ import LoadingSVG from 'components/LoadingSVG';
 import capitalize from 'lodash/capitalize';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 function convertHexToRGB(color) {
   function parseHex(hex) {
@@ -153,7 +154,7 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
     <div className={classes.root}>
       <div className={classes.header}>
         <div>
-          <h4>{tableInfo.table}</h4>
+          <Heading type={HeadingTypes.h4} label={tableInfo.table} />
         </div>
         <div className={classes.actionButtons}>
           <Button color="primary" onClick={onClose}>

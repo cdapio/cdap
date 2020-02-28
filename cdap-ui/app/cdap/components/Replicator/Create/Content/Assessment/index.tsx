@@ -50,7 +50,7 @@ const styles = (theme): StyleRules => {
       borderBottom: `3px solid ${theme.palette.grey[300]}`,
     },
     contentContainer: {
-      height: 'calc(100% - 27px - 77px - 110px)',
+      height: 'calc(100% - 27px - 77px - 110px)', // 100% - heading - link - StepButtons
     },
   };
 };
