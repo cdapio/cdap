@@ -18,7 +18,12 @@ import {
   filterByCondition,
   IFilteredWidgetProperty,
 } from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
-import { PropertyShowConfigTypeEnums, CustomOperator } from 'components/ConfigurationGroup/types';
+import {
+  PropertyShowConfigTypeEnums,
+  CustomOperator,
+  IWidgetJson,
+  IWidgetProperty,
+} from 'components/ConfigurationGroup/types';
 import { processConfigurationGroups } from 'components/ConfigurationGroup/utilities';
 
 const pluginProperties = {
@@ -127,6 +132,20 @@ const pluginProperties = {
     required: false,
     type: 'string',
   },
+  property16: {
+    name: 'property16',
+    description: 'property16',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
+  property17: {
+    name: 'property17',
+    description: 'property17',
+    macroSupported: true,
+    required: false,
+    type: 'string',
+  },
   outputProperty: {
     name: 'outputProperty',
     description: 'description of outputProperty',
@@ -135,8 +154,12 @@ const pluginProperties = {
     type: 'string',
   },
 };
-
-const widgetJson = {
+const outputProperty: IWidgetProperty[] = [
+  {
+    name: 'outputProperty',
+  },
+];
+const widgetJson: IWidgetJson = {
   'configuration-groups': [
     {
       label: 'Group with filters',
@@ -274,6 +297,22 @@ const widgetJson = {
         },
       ],
     },
+    {
+      label: 'Hide entire group',
+      description: 'Group to be hidden entirely if propety1 is Inifinity',
+      properties: [
+        {
+          name: 'property16',
+          label: 'Property 16',
+          'widget-type': 'text',
+        },
+        {
+          name: 'property17',
+          label: 'Property 17',
+          'widget-type': 'text',
+        },
+      ],
+    },
   ],
   filters: [
     {
@@ -406,10 +445,17 @@ const widgetJson = {
         },
       ],
     },
-  ],
-  outputs: [
     {
-      name: 'outputProperty',
+      name: 'Filter to hide entirely a group',
+      condition: {
+        expression: 'property1 == "Infinity"',
+      },
+      show: [
+        {
+          name: 'Hide entire group',
+          type: PropertyShowConfigTypeEnums.GROUP,
+        },
+      ],
     },
   ],
 };
@@ -428,7 +474,7 @@ function getFilteredConfigurationGroups() {
   const { defaultValues, configurationGroups } = processConfigurationGroups(
     pluginProperties,
     widgetJson['configuration-groups'],
-    widgetJson.outputs
+    outputProperty
   );
   const filteredConfigurationGroups = filterByCondition(
     configurationGroups,
@@ -581,27 +627,53 @@ describe('Unit tests for Dynamic Plugin Filters', () => {
     });
   });
 
-  it('Test that will hide entire group if all properties are hidden', () => {
-    const filteredConfigGroupsObj = getFilteredConfigurationGroups();
-    const defaultValues = filteredConfigGroupsObj.defaultValues;
-    let filteredConfigurationGroups = filteredConfigGroupsObj.filteredConfigurationGroups;
-    const configurationGroups = filteredConfigGroupsObj.configurationGroups;
+  describe('Test hiding group', () => {
+    it('Test that will hide entire group if all properties are hidden', () => {
+      const filteredConfigGroupsObj = getFilteredConfigurationGroups();
+      const defaultValues = filteredConfigGroupsObj.defaultValues;
+      let filteredConfigurationGroups = filteredConfigGroupsObj.filteredConfigurationGroups;
+      const configurationGroups = filteredConfigGroupsObj.configurationGroups;
 
-    let groupWithComplexProperties = filteredConfigurationGroups.find(
-      (group) => group.label === 'Group with complex filters'
-    );
-    expect(groupWithComplexProperties.show).toBe(true);
-    defaultValues.property1 = '-1';
-    filteredConfigurationGroups = filterByCondition(
-      configurationGroups,
-      widgetJson,
-      pluginProperties,
-      defaultValues
-    );
-    groupWithComplexProperties = filteredConfigurationGroups.find(
-      (group) => group.label === 'Group with complex filters'
-    );
-    expect(groupWithComplexProperties.show).toBe(false);
+      let groupWithComplexProperties = filteredConfigurationGroups.find(
+        (group) => group.label === 'Group with complex filters'
+      );
+      expect(groupWithComplexProperties.show).toBe(true);
+      defaultValues.property1 = '-1';
+      filteredConfigurationGroups = filterByCondition(
+        configurationGroups,
+        widgetJson,
+        pluginProperties,
+        defaultValues
+      );
+      groupWithComplexProperties = filteredConfigurationGroups.find(
+        (group) => group.label === 'Group with complex filters'
+      );
+      expect(groupWithComplexProperties.show).toBe(false);
+    });
+
+    it('Test that will hide entire group when the show has group type', () => {
+      const filteredConfigGroupsObj = getFilteredConfigurationGroups();
+      const defaultValues = filteredConfigGroupsObj.defaultValues;
+      let filteredConfigurationGroups = filteredConfigGroupsObj.filteredConfigurationGroups;
+      const configurationGroups = filteredConfigGroupsObj.configurationGroups;
+
+      let groupWithComplexProperties = filteredConfigurationGroups.find(
+        (group) => group.label === 'Hide entire group'
+      );
+      expect(groupWithComplexProperties.show).toBe(false);
+      defaultValues.property1 = 'Infinity';
+      filteredConfigurationGroups = filterByCondition(
+        configurationGroups,
+        widgetJson,
+        pluginProperties,
+        defaultValues
+      );
+
+      groupWithComplexProperties = filteredConfigurationGroups.find(
+        (group) => group.label === 'Hide entire group'
+      );
+      expect(groupWithComplexProperties.show).toBe(true);
+    });
   });
 
   describe('Test simple condition object - 1', () => {

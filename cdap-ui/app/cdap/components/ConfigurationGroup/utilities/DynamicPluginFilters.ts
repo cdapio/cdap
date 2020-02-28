@@ -26,6 +26,7 @@ import {
   IPropertyValues,
   IPropertyValueType,
   IPropertyTypedValues,
+  PropertyShowConfigTypeEnums,
 } from 'components/ConfigurationGroup/types';
 import flatten from 'lodash/flatten';
 import difference from 'lodash/difference';
@@ -78,7 +79,7 @@ function evaluateConditionObj(filter: IPropertyFilter, propertyValues: IProperty
  * This is to check if the literal property has a macro.
  */
 function expressionContainMacro(filter: IPropertyFilter, propertyValues: IPropertyValues) {
-  const literals = (jexl._getLexer().tokenize(filter.condition.expression) || [])
+  const literals = (jexl.expr([])._lexer.tokenize(filter.condition.expression) || [])
     .filter((token) => token.type === 'identifier')
     .map((token) => token.value);
   const literalsWithMacro = literals.filter((literal) => {
@@ -203,11 +204,29 @@ export function filterByCondition(
   let propertiesToHide = flatten(
     filters.map((filter) => {
       const { expression } = filter.condition;
-      const mapPropertyToShow = (f: IPropertyFilter) =>
-        f.show.map((showConfig) => ({
-          property: showConfig.name,
-          filterName: f.name,
-        }));
+      const mapPropertyToShow = (f: IPropertyFilter) => {
+        return flatten(
+          f.show.map((showConfig) => {
+            if (showConfig.type === PropertyShowConfigTypeEnums.GROUP) {
+              const configuationGroups = widgetJSON['configuration-groups'];
+              return configuationGroups
+                .filter((group) => group.label === showConfig.name)
+                .map((group) =>
+                  group.properties
+                    .filter((property) => property['widget-category'] !== 'plugin')
+                    .map((property) => ({
+                      property: property.name,
+                      filterName: f.name,
+                    }))
+                );
+            }
+            return {
+              property: showConfig.name,
+              filterName: f.name,
+            };
+          })
+        );
+      };
       if (!expression) {
         return !evaluateConditionObj(filter, propertyValues) ? mapPropertyToShow(filter) : [];
       }
@@ -224,7 +243,7 @@ export function filterByCondition(
 
       // If the condition is not true then that means the property has to be hidden.
       if (!jexl.evalSync(`${filter.condition.expression}`, typedPropertyValues)) {
-        return mapPropertyToShow(filter);
+        return flatten(mapPropertyToShow(filter));
       }
       return [];
     })
