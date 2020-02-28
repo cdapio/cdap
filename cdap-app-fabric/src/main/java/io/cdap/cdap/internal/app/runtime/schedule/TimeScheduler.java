@@ -283,14 +283,12 @@ public final class TimeScheduler {
     }
   }
 
-  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException {
-    return getScheduledRuntime(program, programType, true);
+  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program) throws SchedulerException {
+    return getScheduledRuntime(program, true);
   }
 
-  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
-    throws SchedulerException {
-    return getScheduledRuntime(program, programType, false);
+  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program) throws SchedulerException {
+    return getScheduledRuntime(program, false);
   }
 
   /**
@@ -337,11 +335,16 @@ public final class TimeScheduler {
     return scheduledRuntimes;
   }
 
-  private List<ScheduledRuntime> getScheduledRuntime(ProgramId program, SchedulableProgramType programType,
+  private List<ScheduledRuntime> getScheduledRuntime(ProgramId program,
                                                      boolean previousRuntimeRequested) throws SchedulerException {
     List<ScheduledRuntime> scheduledRuntimes = new ArrayList<>();
+    SchedulableProgramType schedulableType = program.getType().getSchedulableType();
+    if (schedulableType == null) {
+      throw new IllegalArgumentException("Program " + program + " cannot be scheduled");
+    }
+
     try {
-      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, programType))) {
+      for (Trigger trigger : scheduler.getTriggersOfJob(jobKeyFor(program, schedulableType))) {
         long time;
         if (previousRuntimeRequested) {
           if (trigger.getPreviousFireTime() == null) {

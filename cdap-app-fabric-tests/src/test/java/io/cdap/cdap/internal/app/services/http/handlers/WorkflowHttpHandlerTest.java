@@ -169,21 +169,6 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     return inputDir.getAbsolutePath();
   }
 
-  /**
-   * Returns a list of {@link ScheduledRuntime}.
-   *
-   * @param program the program id
-   * @param next if true, fetch the list of future run times. If false, fetch the list of past run times.
-   */
-  private List<ScheduledRuntime> getScheduledRunTime(Id.Program program, boolean next) throws Exception {
-    String nextRunTimeUrl = String.format("apps/%s/workflows/%s/%sruntime", program.getApplicationId(), program.getId(),
-                                          next ? "next" : "previous");
-    String versionedUrl = getVersionedAPIPath(nextRunTimeUrl, Constants.Gateway.API_VERSION_3_TOKEN,
-                                              program.getNamespaceId());
-    HttpResponse response = doGet(versionedUrl);
-    return readResponse(response, new TypeToken<List<ScheduledRuntime>>() { }.getType());
-  }
-
   private String getLocalDatasetPath(ProgramId workflowId, String runId) {
     String path = String.format("apps/%s/workflows/%s/runs/%s/localdatasets", workflowId.getApplication(),
                                 workflowId.getProgram(), runId);
@@ -854,7 +839,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     Assert.assertEquals(ApplicationId.DEFAULT_VERSION, schedules.get(0).getApplicationVersion());
     Assert.assertEquals(sampleSchedule, schedules.get(0).getName());
 
-    List<ScheduledRuntime> runtimes = getScheduledRunTime(programId, true);
+    List<ScheduledRuntime> runtimes = getScheduledRunTimes(programId.toEntityId(), true);
     String id = runtimes.get(0).getId();
     Assert.assertTrue(String.format("Expected schedule id '%s' to contain schedule name '%s'", id, scheduleName),
                       id.contains(scheduleName));
@@ -872,7 +857,7 @@ public class WorkflowHttpHandlerTest extends AppFabricTestBase {
     assertSchedule(programId, scheduleName, false, 30, TimeUnit.SECONDS);
 
     // check that there were at least 1 previous runs
-    List<ScheduledRuntime> previousRuntimes = getScheduledRunTime(programId, false);
+    List<ScheduledRuntime> previousRuntimes = getScheduledRunTimes(programId.toEntityId(), false);
     int numRuns = previousRuntimes.size();
     Assert.assertTrue(String.format("After sleeping for two seconds, the schedule should have at least triggered " +
                                       "once, but found %s previous runs", numRuns), numRuns >= 1);
