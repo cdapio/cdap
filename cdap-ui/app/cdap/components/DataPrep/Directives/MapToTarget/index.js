@@ -39,7 +39,6 @@ export default class MapToTarget extends Component {
         })}
       >
         <span>{T.translate(`${PREFIX}.title`)}</span>
-
         <span className='float-right'>
           <span className='fa fa-caret-right' />
         </span>
