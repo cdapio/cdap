@@ -152,7 +152,8 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     Map<String, String> instanceProperties = Maps.newHashMap();
     instanceProperties.put("instance-key1", "instance-val1");
     setPreferences(uriInstance, instanceProperties, 200);
-    Assert.assertEquals(instanceProperties, getPreferencesInternal(uriInstance, false, HttpResponseStatus.OK).getProperties());
+    Assert.assertEquals(instanceProperties,
+                        getPreferencesInternal(uriInstance, false, HttpResponseStatus.OK).getProperties());
 
     // Get preferences on namespace1 via internal REST API and verify it is unchanged.
     Assert.assertEquals(detail2, getPreferencesInternal(uriNamespace1, false, HttpResponseStatus.OK));

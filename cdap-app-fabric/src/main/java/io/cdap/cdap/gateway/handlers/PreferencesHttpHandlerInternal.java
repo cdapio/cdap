@@ -74,7 +74,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/namespaces/{namespace-id}/preferences")
   @GET
   public void getNamespacePreferences(HttpRequest request, HttpResponder responder,
-                                      @PathParam("namespace-id") String namespace, @QueryParam("resolved") boolean resolved) throws Exception {
+                                      @PathParam("namespace-id") String namespace,
+                                      @QueryParam("resolved") boolean resolved) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
@@ -91,7 +92,8 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @GET
   public void getApplicationPreferences(HttpRequest request, HttpResponder responder,
-                                        @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
+                                        @PathParam("namespace-id") String namespace,
+                                        @PathParam("application-id") String appId,
                                         @QueryParam("resolved") boolean resolved) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
     applicationLifecycleService.getAppDetail(applicationId);
@@ -107,8 +109,10 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @GET
   public void getProgramPreferences(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespace, @PathParam("application-id") String appId,
-                                    @PathParam("program-type") String programType, @PathParam("program-id") String programId,
+                                    @PathParam("namespace-id") String namespace,
+                                    @PathParam("application-id") String appId,
+                                    @PathParam("program-type") String programType,
+                                    @PathParam("program-id") String programId,
                                     @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
     ApplicationDetail applicationDetail = applicationLifecycleService.getAppDetail(program.getParent());
