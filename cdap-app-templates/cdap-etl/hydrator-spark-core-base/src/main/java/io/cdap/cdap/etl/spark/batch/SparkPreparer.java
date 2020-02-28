@@ -23,6 +23,7 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.spark.SparkClientContext;
@@ -30,6 +31,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
+import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.FieldOperationTypeAdapter;
 import io.cdap.cdap.etl.common.PhaseSpec;
@@ -38,6 +40,7 @@ import io.cdap.cdap.etl.common.SetMultimapCodec;
 import io.cdap.cdap.etl.common.submit.ContextProvider;
 import io.cdap.cdap.etl.common.submit.Finisher;
 import io.cdap.cdap.etl.common.submit.SubmitterPlugin;
+import io.cdap.cdap.etl.lineage.FieldLineageProcessor;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.AbstractSparkPreparer;
 import io.cdap.cdap.etl.spark.SparkSubmitterContext;
@@ -54,6 +57,7 @@ import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Prepares Spark batch jobs.
@@ -70,13 +74,15 @@ public class SparkPreparer extends AbstractSparkPreparer {
     .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter())
     .create();
   private final SparkClientContext context;
+  private final BatchPipelineSpec spec;
 
   public SparkPreparer(SparkClientContext context,
                        Metrics metrics,
                        MacroEvaluator macroEvaluator,
-                       PipelineRuntime pipelineRuntime) {
+                       PipelineRuntime pipelineRuntime, BatchPipelineSpec spec) {
     super(context, metrics, macroEvaluator, pipelineRuntime, context.getAdmin(), context);
     this.context = context;
+    this.spec = spec;
   }
 
   @Override
@@ -112,6 +118,21 @@ public class SparkPreparer extends AbstractSparkPreparer {
       // Put the collected field operations in workflow token
       token.put(Constants.FIELD_OPERATION_KEY_IN_WORKFLOW_TOKEN, GSON.toJson(stageOperations));
     }
+    long start = System.currentTimeMillis();
+
+    FieldLineageProcessor processor = new FieldLineageProcessor(spec);
+    Set<Operation> processedOperations = processor.validateAndConvert(stageOperations);
+
+    try {
+      if (!processedOperations.isEmpty()) {
+        context.record(processedOperations);
+        context.flushLineage();
+      }
+    } catch (Exception e) {
+      LOG.warn("failed to write fll");
+    }
+
+    LOG.warn("Wrote fll in {} ms", System.currentTimeMillis() - start);
     return finishers;
   }
 
