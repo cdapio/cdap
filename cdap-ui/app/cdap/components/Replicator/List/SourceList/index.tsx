@@ -18,7 +18,7 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link } from 'react-router-dom';
-import PluginCard from 'components/Replicator/List/PluginCard';
+import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
 import HorizontalCarousel from 'components/HorizontalCarousel';
 import { fetchPluginsAndWidgets } from 'components/Replicator/utilities';
 import { PluginType } from 'components/Replicator/constants';
@@ -117,7 +117,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             onChange={handleSearch}
             size="small"
             variant="outlined"
-            placeholder="Search source by name"
+            placeholder="Search sources by name"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -136,7 +136,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
           </div>
         </If>
         <If condition={!loading}>
-          <HorizontalCarousel scrollAmount={150}>
+          <HorizontalCarousel scrollAmount={PluginCardWidth}>
             {filteredSources.map((source) => {
               const { name: artifactName, version, scope } = source.artifact;
               const pluginKey = `${source.name}-${source.type}`;

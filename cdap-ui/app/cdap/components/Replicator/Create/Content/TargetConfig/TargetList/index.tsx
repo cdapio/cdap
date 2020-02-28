@@ -23,7 +23,7 @@ import { objectQuery } from 'services/helpers';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
-import PluginCard from 'components/Replicator/List/PluginCard';
+import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
 import classnames from 'classnames';
 
 const styles = (theme): StyleRules => {
@@ -117,7 +117,7 @@ const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, current
             onChange={handleSearch}
             size="small"
             variant="outlined"
-            placeholder="Search source by name"
+            placeholder="Search targets by name"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -130,7 +130,7 @@ const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, current
       </div>
 
       <div className={classes.listContainer}>
-        <HorizontalCarousel scrollAmount={150}>
+        <HorizontalCarousel scrollAmount={PluginCardWidth}>
           {filteredTarget.map((target) => {
             const pluginKey = `${target.name}-${target.type}`;
             const widgetInfo = widgetMap[pluginKey];

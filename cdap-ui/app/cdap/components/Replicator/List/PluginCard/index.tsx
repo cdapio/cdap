@@ -18,6 +18,8 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import IconSVG from 'components/IconSVG';
 
+export const PluginCardWidth = 175;
+
 const styles = (theme): StyleRules => {
   return {
     root: {
@@ -26,7 +28,7 @@ const styles = (theme): StyleRules => {
       padding: '10px',
       textAlign: 'center',
       color: theme.palette.grey[100],
-      width: '175px',
+      width: `${PluginCardWidth}px`,
       height: '100px',
 
       '&:hover': {
