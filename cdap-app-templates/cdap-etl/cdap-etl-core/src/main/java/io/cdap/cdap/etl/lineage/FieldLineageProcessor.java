@@ -22,7 +22,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
-import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.common.FieldOperationTypeAdapter;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -97,18 +96,6 @@ public class FieldLineageProcessor {
       }
 
       String stageName = stageSpec.getName();
-      // only auto generate for stages that have input and output schema
-      if (!stageInputs.isEmpty() && !stageOutputs.isEmpty()) {
-        allOperations.compute(stageName, (stage, fieldOperations) -> {
-          // if the field operations are empty for a stage, auto generate it for the stages that have input schema and
-          // output schema
-          if (fieldOperations == null || fieldOperations.isEmpty()) {
-            return Collections.singletonList(new FieldTransformOperation("Transform", "",
-                                                                         stageInputs, stageOutputs));
-          }
-          return fieldOperations;
-        });
-      }
 
       List<FieldOperation> fieldOperations = allOperations.computeIfAbsent(stageName, stage -> Collections.emptyList());
       StageOperationsValidator.Builder builder = new StageOperationsValidator.Builder(fieldOperations);
