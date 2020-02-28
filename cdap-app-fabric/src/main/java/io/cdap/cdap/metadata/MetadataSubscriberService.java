@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
@@ -67,6 +68,7 @@ import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import org.apache.tephra.TxConstants;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +110,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnConflict;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final DiscoveryServiceClient discoveryServiceClient;
 
   private String conflictMessageId = null;
   private int conflictCount = 0;
@@ -116,7 +120,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             MetricsCollectionService metricsCollectionService,
                             MetadataStorage metadataStorage,
-                            TransactionRunner transactionRunner) {
+                            TransactionRunner transactionRunner,
+                            NamespaceQueryAdmin namespaceQueryAdmin,
+                            DiscoveryServiceClient discoveryServiceClient) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
@@ -136,6 +142,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.metadataStorage = metadataStorage;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
@@ -207,7 +215,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext);
+            return new ProfileMetadataMessageProcessor(metadataStorage, namespaceQueryAdmin, discoveryServiceClient);
           default:
             return null;
         }

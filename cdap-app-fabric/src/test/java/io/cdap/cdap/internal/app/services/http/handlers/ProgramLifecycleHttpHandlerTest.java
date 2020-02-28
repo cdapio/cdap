@@ -1148,40 +1148,57 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
 
   @Test
   public void testSchedules() throws Exception {
+    String namespace1 = TEST_NAMESPACE1;
+    String appName = AppWithSchedule.NAME;
+    String appSchedule = AppWithSchedule.SCHEDULE;
+    String appVersion2 = VERSION2;
+
     // deploy an app with schedule
     Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.fromEntityId(TEST_NAMESPACE_META1.getNamespaceId()),
-                                              AppWithSchedule.NAME, VERSION1);
+                                              appName, VERSION1);
     addAppArtifact(artifactId, AppWithSchedule.class);
     AppRequest<? extends Config> request = new AppRequest<>(
       new ArtifactSummary(artifactId.getName(), artifactId.getVersion().getVersion()));
-    ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME);
+    ApplicationId defaultAppId = TEST_NAMESPACE_META1.getNamespaceId().app(appName);
     Assert.assertEquals(200, deploy(defaultAppId, request).getResponseCode());
 
     // deploy another version of the app
-    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(AppWithSchedule.NAME, VERSION2);
+
+    ApplicationId appV2Id = TEST_NAMESPACE_META1.getNamespaceId().app(appName, appVersion2);
     Assert.assertEquals(200, deploy(appV2Id, request).getResponseCode());
 
-    // list schedules for default version app, for the workflow and for the app, they should be same
+    // List schedules for the workflow, for default version app and for app version 2, they should be the same
     List<ScheduleDetail> schedules =
-      getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, AppWithSchedule.WORKFLOW_NAME);
+      getSchedules(namespace1, appName, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(1, schedules.size());
     ScheduleDetail schedule = schedules.get(0);
     Assert.assertEquals(SchedulableProgramType.WORKFLOW, schedule.getProgram().getProgramType());
     Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, schedule.getProgram().getProgramName());
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule.getTrigger());
 
-    // there should be two schedules now
-    List<ScheduleDetail> schedulesForApp = listSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, null);
+    List<ScheduleDetail> schedulesForApp = listSchedules(namespace1, appName, null);
     Assert.assertEquals(1, schedulesForApp.size());
     Assert.assertEquals(schedules, schedulesForApp);
 
     List<ScheduleDetail> schedules2 =
-      getSchedules(TEST_NAMESPACE1, AppWithSchedule.NAME, VERSION2, AppWithSchedule.WORKFLOW_NAME);
+      getSchedules(namespace1, appName, appVersion2, AppWithSchedule.WORKFLOW_NAME);
     Assert.assertEquals(1, schedules2.size());
     ScheduleDetail schedule2 = schedules2.get(0);
     Assert.assertEquals(SchedulableProgramType.WORKFLOW, schedule2.getProgram().getProgramType());
     Assert.assertEquals(AppWithSchedule.WORKFLOW_NAME, schedule2.getProgram().getProgramName());
     Assert.assertEquals(new TimeTrigger("0/15 * * * * ?"), schedule2.getTrigger());
+
+//    // get schedule metadata for app default version
+//    schedulemetadata metadatafordefaultversion = getschedulemetadata(namespace1, appname, null, appschedule);
+//    assert.asserttrue(metadatafordefaultversion.getlastupdatetime() > 0);
+//    schedulemetadata metadataforapp = getschedulemetadata(namespace1, appname, appschedule);
+//    assert.asserttrue(metadataforapp.getlastupdatetime() > 0);
+//
+//    // get schedule metadata for a specific version of the app
+//    assert.assertequals(metadatafordefaultversion, metadataforapp);
+//    schedulemetadata metadataforversion2 = getschedulemetadata(namespace1, appname, appversion2, appschedule);
+//    assert.asserttrue(metadataforversion2.getlastupdatetime() > 0);
+//    assert.asserttrue(metadataforversion2.getlastupdatetime() >= metadatafordefaultversion.getlastupdatetime());
 
     String newSchedule = "newTimeSchedule";
     testAddSchedule(newSchedule);

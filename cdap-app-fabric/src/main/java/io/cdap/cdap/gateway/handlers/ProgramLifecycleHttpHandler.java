@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.common.base.Charsets;
@@ -38,6 +37,7 @@ import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.app.mapreduce.MRJobInfoFetcher;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -1798,5 +1798,29 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
+  }
+
+  @GET
+  @Path("/apps")
+  public void getAllApplications(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId) {
+    NamespaceId id = new NamespaceId(namespaceId);
+    Collection<ApplicationSpecification> appSpecs = store.getAllApplications(id);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appSpecs, new TypeToken<List<ApplicationSpecification>>() {
+    }.getType()));
+  }
+
+  @GET
+  @Path("/apps/{app-id}/versions/{version-id}")
+  public void getApplication(HttpRequest request, HttpResponder responder,
+                             @PathParam("namespace-id") String namespaceId,
+                             @PathParam("app-id") String appId,
+                             @PathParam("version-id") String versionId) throws ApplicationNotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespaceId, appId, versionId);
+    ApplicationSpecification appSpec = store.getApplication(applicationId);
+    if (appSpec == null) {
+      throw new ApplicationNotFoundException(applicationId);
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(appSpec, ApplicationSpecification.class));
   }
 }
