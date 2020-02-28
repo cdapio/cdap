@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.spark.plugin;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
+import io.cdap.cdap.etl.api.batch.SparkPluginContext;
 import io.cdap.cdap.etl.common.plugin.Caller;
 import org.apache.spark.api.java.JavaRDD;
 
@@ -41,7 +42,7 @@ public class WrappedSparkCompute<IN, OUT> extends SparkCompute<IN, OUT> {
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
@@ -52,7 +53,29 @@ public class WrappedSparkCompute<IN, OUT> extends SparkCompute<IN, OUT> {
   }
 
   @Override
-  public void initialize(final SparkExecutionPluginContext context) throws Exception {
+  public void prepareRun(SparkPluginContext context) throws Exception {
+    caller.call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        compute.prepareRun(context);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void onRunFinish(boolean succeeded, SparkPluginContext context) {
+    caller.callUnchecked(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        compute.onRunFinish(succeeded, context);
+        return null;
+      }
+    });
+  }
+
+  @Override
+  public void initialize(SparkExecutionPluginContext context) throws Exception {
     caller.call(new Callable<Object>() {
       @Override
       public Object call() throws Exception {
@@ -63,7 +86,7 @@ public class WrappedSparkCompute<IN, OUT> extends SparkCompute<IN, OUT> {
   }
 
   @Override
-  public JavaRDD<OUT> transform(final SparkExecutionPluginContext context, final JavaRDD<IN> input) throws Exception {
+  public JavaRDD<OUT> transform(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception {
     return caller.call(new Callable<JavaRDD<OUT>>() {
       @Override
       public JavaRDD<OUT> call() throws Exception {
