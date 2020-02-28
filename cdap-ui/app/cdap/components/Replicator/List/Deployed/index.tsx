@@ -120,8 +120,8 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.root}>
       <div className={classes.headerText}>
-        {replicators.length} Delta {replicators.length === 1 ? 'replicator' : 'replicator'} - Select
-        a row to view details
+        {replicators.length} Delta {replicators.length === 1 ? 'replicator' : 'replicators'} -
+        Select a row to view details
       </div>
 
       <div className={`grid-wrapper ${classes.gridWrapper}`}>
@@ -129,7 +129,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
           <div className="grid-header">
             <div className="grid-row">
               <div>Replicator name</div>
-              <div>From/To</div>
+              <div>From / To</div>
               <div>Status</div>
             </div>
           </div>
