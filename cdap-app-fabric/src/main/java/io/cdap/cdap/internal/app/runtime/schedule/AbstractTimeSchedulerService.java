@@ -107,15 +107,15 @@ public abstract class AbstractTimeSchedulerService extends AbstractIdleService i
   }
 
   @Override
-  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program, SchedulableProgramType programType)
+  public List<ScheduledRuntime> previousScheduledRuntime(ProgramId program)
     throws SchedulerException {
-    return timeScheduler.previousScheduledRuntime(program, programType);
+    return timeScheduler.previousScheduledRuntime(program);
   }
 
   @Override
-  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program, SchedulableProgramType programType)
+  public List<ScheduledRuntime> nextScheduledRuntime(ProgramId program)
     throws SchedulerException {
-    return timeScheduler.nextScheduledRuntime(program, programType);
+    return timeScheduler.nextScheduledRuntime(program);
   }
 
   @Override

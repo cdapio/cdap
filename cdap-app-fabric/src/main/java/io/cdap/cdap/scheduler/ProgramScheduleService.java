@@ -28,15 +28,17 @@ import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleRecord;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramScheduleStatus;
+import io.cdap.cdap.internal.app.runtime.schedule.SchedulerException;
+import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
+import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
-import io.cdap.cdap.proto.id.WorkflowId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -60,13 +62,50 @@ public class ProgramScheduleService {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final Scheduler scheduler;
+  private final TimeSchedulerService timeSchedulerService;
 
   @Inject
   ProgramScheduleService(AuthorizationEnforcer authorizationEnforcer,
-                         AuthenticationContext authenticationContext, Scheduler scheduler) {
+                         AuthenticationContext authenticationContext, Scheduler scheduler,
+                         TimeSchedulerService timeSchedulerService) {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.scheduler = scheduler;
+    this.timeSchedulerService = timeSchedulerService;
+  }
+
+  /**
+   * Get the previous run time for the program. A program may contain one or more schedules
+   * the method returns the previous runtimes for all the schedules. This method only takes
+   + into account schedules based on time. For schedules based on data, an empty list will
+   + be returned.
+   *
+   * @param progrmaId program to fetch the previous runtime.
+   * @return list of Scheduled runtimes for the program. Empty list if there are no schedules
+   *         or if the program is not found
+   * @throws SchedulerException on unforeseen error from the scheduler
+   * @throws Exception if any other errors occurred while performing the authorization enforcement check
+   */
+  public List<ScheduledRuntime> getPreviousScheduledRuntimes(ProgramId progrmaId) throws Exception {
+    AuthorizationUtil.ensureAccess(progrmaId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return timeSchedulerService.previousScheduledRuntime(progrmaId);
+  }
+
+  /**
+   * Get the next scheduled run time of the program. A program may contain multiple schedules.
+   * This method returns the next scheduled runtimes for all the schedules. This method only takes
+   + into account schedules based on time. For schedules based on data, an empty list will
+   + be returned.
+   *
+   * @param programId program to fetch the next runtime.
+   * @return list of scheduled runtimes for the program. Empty list if there are no schedules
+   *         or if the program is not found
+   * @throws SchedulerException on unforeseen error.
+   * @throws Exception if any other errors occurred while performing the authorization enforcement check
+   */
+  public List<ScheduledRuntime> getNextScheduledRuntimes(ProgramId programId) throws Exception {
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return timeSchedulerService.nextScheduledRuntime(programId);
   }
 
   /**
@@ -171,18 +210,18 @@ public class ProgramScheduleService {
   }
 
   /**
-   * List the schedules for the given workflow that match the given predicate
+   * List the schedules for the given program that match the given predicate
    *
-   * @param workflowId the workflow to get schedules for
+   * @param programId the program to get schedules for
    * @param predicate return schedules that match this predicate
    * @return schedules for the given program that match the given predicate
    * @throws UnauthorizedException if the principal is not authorized to access the application
    * @throws Exception if any other errors occurred while performing the authorization enforcement check
    */
-  public Collection<ProgramScheduleRecord> list(WorkflowId workflowId,
+  public Collection<ProgramScheduleRecord> list(ProgramId programId,
                                                 Predicate<ProgramScheduleRecord> predicate) throws Exception {
-    AuthorizationUtil.ensureAccess(workflowId, authorizationEnforcer, authenticationContext.getPrincipal());
-    return scheduler.listScheduleRecords(workflowId).stream().filter(predicate).collect(Collectors.toList());
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
+    return scheduler.listScheduleRecords(programId).stream().filter(predicate).collect(Collectors.toList());
   }
 
   /**
