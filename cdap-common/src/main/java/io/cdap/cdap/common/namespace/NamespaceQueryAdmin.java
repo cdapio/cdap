@@ -47,7 +47,7 @@ public interface NamespaceQueryAdmin {
    * Checks if the specified namespace exists.
    *
    * @param namespaceId the {@link Id.Namespace} to check for existence
-   * @return true, if the specifed namespace exists, false otherwise
+   * @return true, if the specified namespace exists, false otherwise
    */
   boolean exists(NamespaceId namespaceId) throws Exception;
 }
