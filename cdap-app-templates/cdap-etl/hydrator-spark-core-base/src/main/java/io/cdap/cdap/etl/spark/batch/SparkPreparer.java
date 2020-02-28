@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkPluginContext;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
@@ -141,7 +142,15 @@ public class SparkPreparer extends PipelinePhasePreparer {
       BatchConfigurable<SparkPluginContext> sparkSink = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
       ContextProvider<BasicSparkPluginContext> contextProvider =
         dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, stageSpec, dsContext, context.getAdmin());
-      return new SubmitterPlugin<>(stageName, context, sparkSink, contextProvider);
+      return new SubmitterPlugin<>(stageName, context, sparkSink, contextProvider,
+                                   ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+    }
+    if (SparkCompute.PLUGIN_TYPE.equals(stageSpec.getPluginType())) {
+      SparkCompute<?, ?> compute = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      ContextProvider<BasicSparkPluginContext> contextProvider =
+        dsContext -> new BasicSparkPluginContext(context, pipelineRuntime, stageSpec, dsContext, context.getAdmin());
+      return new SubmitterPlugin<>(stageName, context, compute, contextProvider,
+                                   ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
     }
     return null;
   }
