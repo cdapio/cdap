@@ -43,6 +43,7 @@ import java.util.concurrent.CountDownLatch;
 public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConfig> {
 
   public static final String NAME = "AppWithSchedule";
+  public static final String DESC = "Sample application with schedule";
   public static final String WORKFLOW_NAME = "SampleWorkflow";
   public static final String SCHEDULE = "SampleSchedule";
   public static final String SCHEDULE_2 = "SampleSchedule2";
@@ -54,7 +55,7 @@ public class AppWithSchedule extends AbstractApplication<AppWithSchedule.AppConf
   public void configure() {
     try {
       setName(NAME);
-      setDescription("Sample application");
+      setDescription(DESC);
       ObjectStores.createObjectStore(getConfigurer(), "input", String.class);
       ObjectStores.createObjectStore(getConfigurer(), "output", String.class);
       AppConfig config = getConfig();
