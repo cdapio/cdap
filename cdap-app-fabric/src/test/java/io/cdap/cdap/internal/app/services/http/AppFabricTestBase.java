@@ -520,6 +520,12 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Class<?> application, int expectedCode, @Nullable String apiVersion,
+                                @Nullable String namespace, @Nullable Config appConfig) throws Exception {
+    return deploy(application, expectedCode, apiVersion, namespace, null, appConfig,
+                  null);
+  }
+
+  protected HttpResponse deploy(Class<?> application, int expectedCode, @Nullable String apiVersion,
                                 @Nullable String namespace,
                                 @Nullable String ownerPrincipal) throws Exception {
     return deploy(application, expectedCode, apiVersion, namespace, null, null, ownerPrincipal);
