@@ -389,8 +389,6 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
       },
     };
 
-    // tslint:disable-next-line: no-console
-    console.log('body', body);
     return body;
   };
 
