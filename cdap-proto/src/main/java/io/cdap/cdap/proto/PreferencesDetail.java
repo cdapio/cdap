@@ -36,15 +36,15 @@ public class PreferencesDetail {
   private boolean resolved;
 
   /**
-   * Return a resolved preference detail where preferences in {@code parent} take precedence over
-   * those in {@code child}. The {@code seqId} would be the max of the two.
+   * Return a resolved preference detail where preferences in {@code child} take precedence over
+   * those in {@code parent}. The {@code seqId} would be the max of the two.
    */
   public static PreferencesDetail resolve(PreferencesDetail parent, PreferencesDetail child) {
     Map<String, String> properties = new HashMap<>();
-    // Copy child's properties first.
-    properties.putAll(child.getProperties());
-    // Add parent's properties and overrides any existing properties in child;
+    // Copy parent's properties first.
     properties.putAll(parent.getProperties());
+    // Add child's properties and overrides any existing properties in parent;
+    properties.putAll(child.getProperties());
 
     long seqId = Long.max(parent.getSeqId(), child.getSeqId());
 

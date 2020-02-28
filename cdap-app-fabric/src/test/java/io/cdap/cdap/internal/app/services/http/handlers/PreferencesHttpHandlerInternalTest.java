@@ -116,52 +116,56 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     PreferencesDetail detail2 = null;
 
     // Verify preferences are empty
-    Map<String, String> properties = Maps.newHashMap();
-    Assert.assertEquals(properties, getPreferences(uriNamespace1, false, 200));
-    Assert.assertEquals(properties, getPreferences(uriNamespace2, false, 200));
-    Assert.assertEquals(properties, getPreferences(uriNamespace1, true, 200));
-    Assert.assertEquals(properties, getPreferences(uriNamespace2, true, 200));
+    Map<String, String> namespaceProperties = Maps.newHashMap();
+    Assert.assertEquals(namespaceProperties, getPreferences(uriNamespace1, false, 200));
+    Assert.assertEquals(namespaceProperties, getPreferences(uriNamespace2, false, 200));
+    Assert.assertEquals(namespaceProperties, getPreferences(uriNamespace1, true, 200));
+    Assert.assertEquals(namespaceProperties, getPreferences(uriNamespace2, true, 200));
 
     // Set preferences on namespace1
-    properties.put("key1", "val1");
-    properties.put("key2", "val2");
-    setPreferences(uriNamespace1, properties, 200);
+    namespaceProperties.put("key0", "namespace-key0");
+    namespaceProperties.put("namespace-key1", "namespace-val1");
+    namespaceProperties.put("namespace-key2", "naemspace-val2");
+    setPreferences(uriNamespace1, namespaceProperties, 200);
 
     // Get and verify preferences on namespace1 via internal REST API
     detail1 = getPreferencesInternal(uriNamespace1, true, HttpResponseStatus.OK);
-    Assert.assertEquals(properties, detail1.getProperties());
+    Assert.assertEquals(namespaceProperties, detail1.getProperties());
     Assert.assertTrue(detail1.getResolved());
     Assert.assertTrue(detail1.getSeqId() > 0);
 
     detail1 = getPreferencesInternal(uriNamespace1, false, HttpResponseStatus.OK);
-    Assert.assertEquals(properties, detail1.getProperties());
+    Assert.assertEquals(namespaceProperties, detail1.getProperties());
     Assert.assertFalse(detail1.getResolved());
     Assert.assertTrue(detail1.getSeqId() > 0);
 
     // Update preferences on namespace1
-    properties.put("key3", "val3");
-    setPreferences(uriNamespace1, properties, 200);
+    namespaceProperties.put("namespace-key3", "namespace-val3");
+    setPreferences(uriNamespace1, namespaceProperties, 200);
 
     // Get and verify seqId has increased via internal REST API
     detail2 = getPreferencesInternal(uriNamespace1, false, HttpResponseStatus.OK);
-    Assert.assertEquals(properties, detail2.getProperties());
+    Assert.assertEquals(namespaceProperties, detail2.getProperties());
     Assert.assertFalse(detail1.getResolved());
     Assert.assertTrue(detail2.getSeqId() > detail1.getSeqId());
 
     // Set preferences on top level instance
     Map<String, String> instanceProperties = Maps.newHashMap();
+    instanceProperties.put("key0", "instance-val0");
     instanceProperties.put("instance-key1", "instance-val1");
     setPreferences(uriInstance, instanceProperties, 200);
     Assert.assertEquals(instanceProperties,
                         getPreferencesInternal(uriInstance, false, HttpResponseStatus.OK).getProperties());
 
     // Get preferences on namespace1 via internal REST API and verify it is unchanged.
-    Assert.assertEquals(detail2, getPreferencesInternal(uriNamespace1, false, HttpResponseStatus.OK));
+    Assert.assertEquals(detail2,
+                        getPreferencesInternal(uriNamespace1, false, HttpResponseStatus.OK));
 
-    // Get resolved preferences on namespace1 via internal REST API and verify it includes preferences on instance
+    // Get resolved preferences on namespace1 via internal REST API and verify it includes preferences on instance.
+    // Also namespace preferences take preferences over instance level for key "key0"
     Map<String, String> resolvedProperties = Maps.newHashMap();
-    resolvedProperties.putAll(properties);
     resolvedProperties.putAll(instanceProperties);
+    resolvedProperties.putAll(namespaceProperties);
     detail2 = getPreferencesInternal(uriNamespace1, true, HttpResponseStatus.OK);
     Assert.assertEquals(resolvedProperties, detail2.getProperties());
     Assert.assertTrue(detail2.getResolved());
@@ -234,9 +238,19 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     Assert.assertEquals(0, detail.getSeqId());
 
     // Set the preference
-    Map<String, String> instanceProperties = ImmutableMap.of("instance-key1", "instance-val1");
-    Map<String, String> namespace1Properties = ImmutableMap.of("namespace1-key1", "namespace1-val1");
-    Map<String, String> appProperties = ImmutableMap.of("app-key1", "app-val1");
+    Map<String, String> instanceProperties =
+      ImmutableMap.of(
+        "key0", "instance-val0",
+        "instance-key1", "instance-val1"
+      );
+    Map<String, String> namespace1Properties = ImmutableMap.of(
+      "key0", "namespace-val0",
+      "namespace1-key1", "namespace1-val1"
+    );
+    Map<String, String> appProperties = ImmutableMap.of(
+      "key0", "app-val0",
+      "app-key1", "app-val1"
+    );
 
     setPreferences(uriInstance, instanceProperties, 200);
     setPreferences(uriNamespace1, namespace1Properties, 200);
@@ -294,7 +308,7 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     String appName = AllProgramsApp.NAME;
     String uriNamespace2Service = getPreferenceURI(namespace2, appName, "services", AllProgramsApp.NoOpService.NAME);
     PreferencesDetail detail;
-    Map<String, String> properties = Maps.newHashMap();
+    Map<String, String> programProperties = Maps.newHashMap();
 
     // Create application.
     addApplication(namespace2, new AllProgramsApp());
@@ -308,25 +322,29 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
       namespace2, appName, "services", "somename"), false, HttpResponseStatus.NOT_FOUND);
 
     // Set preferences on the program
-    properties.clear();
-    properties.put("program-key1", "program-val1");
-    setPreferences(uriNamespace2Service, properties, 200);
+    programProperties.clear();
+    programProperties.put("key0", "program-val0");
+    programProperties.put("program-key1", "program-val1");
+    setPreferences(uriNamespace2Service, programProperties, 200);
 
     // Get and verify preferences
     detail = getPreferencesInternal(uriNamespace2Service, false, HttpResponseStatus.OK);
-    Assert.assertEquals(properties, detail.getProperties());
+    Assert.assertEquals(programProperties, detail.getProperties());
     Assert.assertTrue(detail.getSeqId() > 0);
     Assert.assertFalse(detail.getResolved());
 
     // Set preferences on the instance and verify.
-    Map<String, String> instanceProperties = ImmutableMap.of("instance-key1", "instance-val1");
+    Map<String, String> instanceProperties = ImmutableMap.of(
+      "key0", "instance-key0",
+      "instance-key1", "instance-val1"
+    );
     setPreferences(uriInstance, instanceProperties, 200);
 
     // Get resolved preferences on the program
     detail = getPreferencesInternal(uriNamespace2Service, true, HttpResponseStatus.OK);
     Map<String, String> combinedProperties = Maps.newHashMap();
-    combinedProperties.putAll(properties);
     combinedProperties.putAll(instanceProperties);
+    combinedProperties.putAll(programProperties);
     Assert.assertEquals(combinedProperties, detail.getProperties());
     Assert.assertTrue(detail.getSeqId() > 0);
     Assert.assertTrue(detail.getResolved());
