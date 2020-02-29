@@ -53,6 +53,7 @@ import io.cdap.cdap.gateway.handlers.NamespaceHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationalStatsHttpHandler;
 import io.cdap.cdap.gateway.handlers.OperationsDashboardHttpHandler;
 import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
+import io.cdap.cdap.gateway.handlers.PreferencesHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
@@ -310,6 +311,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       // TODO: [CDAP-13355] Move OperationsDashboardHttpHandler into report generation app
       handlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
+      handlerBinder.addBinding().to(PreferencesHttpHandlerInternal.class);
       handlerBinder.addBinding().to(ConsoleSettingsHttpHandler.class);
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
