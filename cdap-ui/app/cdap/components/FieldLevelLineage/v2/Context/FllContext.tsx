@@ -19,7 +19,7 @@ import { objectQuery, parseQueryString } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import {
   IField,
-  ITableFields,
+  ITablesList,
   ITimeParams,
   getTableId,
   getTimeRange,
@@ -60,8 +60,8 @@ export interface IContextState {
   target: string;
   targetFields: IField[];
   links: ILinkSet;
-  causeSets: ITableFields;
-  impactSets: ITableFields;
+  causeSets: ITablesList;
+  impactSets: ITablesList;
   showingOneField: boolean;
   start: ITimeType;
   end: ITimeType;
@@ -76,8 +76,8 @@ export interface IContextState {
   handleViewCauseImpact?: () => void;
   handleReset?: () => void;
   activeField?: IField;
-  activeCauseSets?: ITableFields;
-  activeImpactSets?: ITableFields;
+  activeCauseSets?: ITablesList;
+  activeImpactSets?: ITablesList;
   activeLinks?: ILinkSet;
   numTables?: number;
   firstCause?: number;
@@ -158,14 +158,18 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
         if (nonTargetFd.type === 'cause') {
           if (!(tableId in activeCauseSets)) {
-            activeCauseSets[tableId] = [];
+            activeCauseSets[tableId] = {
+              fields: [],
+            };
           }
-          activeCauseSets[tableId].push(nonTargetFd);
+          activeCauseSets[tableId].fields.push(nonTargetFd);
         } else {
           if (!(tableId in activeImpactSets)) {
-            activeImpactSets[tableId] = [];
+            activeImpactSets[tableId] = {
+              fields: [],
+            };
           }
-          activeImpactSets[tableId].push(nonTargetFd);
+          activeImpactSets[tableId].fields.push(nonTargetFd);
         }
       });
     }

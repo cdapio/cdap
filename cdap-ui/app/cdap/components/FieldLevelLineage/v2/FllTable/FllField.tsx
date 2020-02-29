@@ -98,7 +98,7 @@ function FllField({ field, isActive, classes }: IFieldProps) {
         </span>
       </If>
       <If condition={activeField.id && field.id === activeField.id && isTarget && !showingOneField}>
-        <FllMenu />
+        <FllMenu hasIncomingOps={field.hasIncomingOps} hasOutgoingOps={field.hasOutgoingOps} />
       </If>
       <If condition={activeField.id && field.id === activeField.id && isTarget && showingOneField}>
         <span className={classes.targetView} onClick={handleReset} data-cy="reset-lineage">
