@@ -35,12 +35,14 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import sun.net.www.protocol.http.HttpURLConnection;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 
 /**
  * Fetch preferences via REST API calls (using internal endpoint {@code INTERNAL_API_VERSION_3})
  */
 public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   private static final Gson GSON = new Gson();
+  private static final Type PREFERENCES_TYPE = new TypeToken<PreferencesDetail>() { }.getType();
 
   private final RemoteClient remoteClient;
 
@@ -59,8 +61,7 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
     String url = getPreferencesURI(entityId, resolved);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     httpResponse = execute(requestBuilder.build());
-    return GSON.fromJson(httpResponse.getResponseBodyAsString(), new TypeToken<PreferencesDetail>() {
-    }.getType());
+    return GSON.fromJson(httpResponse.getResponseBodyAsString(), PREFERENCES_TYPE);
   }
 
   /**
