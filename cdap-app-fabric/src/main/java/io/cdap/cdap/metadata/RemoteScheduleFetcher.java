@@ -54,7 +54,7 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteScheduleFetcher(final DiscoveryServiceClient discoveryClient) {
+  public RemoteScheduleFetcher(DiscoveryServiceClient discoveryClient) {
     this.remoteClient = new RemoteClient(
       discoveryClient, Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);

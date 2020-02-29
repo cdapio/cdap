@@ -45,7 +45,7 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemotePreferencesFetcherInternal(final DiscoveryServiceClient discoveryClient) {
+  public RemotePreferencesFetcherInternal(DiscoveryServiceClient discoveryClient) {
     this.remoteClient = new RemoteClient(
       discoveryClient, Constants.Service.APP_FABRIC_HTTP,
       new DefaultHttpRequestConfig(false), Constants.Gateway.INTERNAL_API_VERSION_3);
