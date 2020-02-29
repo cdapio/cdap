@@ -16,6 +16,7 @@ ru * Copyright © 2020 Cask Data, Inc.
 
 package io.cdap.cdap.metadata;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.common.NamespaceNotFoundException;
@@ -28,6 +29,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,6 +52,31 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
     fetcher.get(appId);
   }
 
+  /**
+   * Assert the state of {@link ApplicationDetail} matches that of {@link AllProgramsApp}
+   */
+  private void assertAllProgramAppDetail(ApplicationDetail appDetail) {
+    Assert.assertEquals(AllProgramsApp.NAME, appDetail.getName());
+    Assert.assertEquals(AllProgramsApp.DESC, appDetail.getDescription());
+    Assert.assertFalse(appDetail.getAppVersion().isEmpty());
+
+    // Verify dataset names
+    Assert.assertTrue(appDetail.getDatasets().size() > 0);
+    List<String> datasetNames = new ArrayList<>();
+    appDetail.getDatasets().forEach(datasetDetail -> datasetNames.add(datasetDetail.getName()));
+    Assert.assertTrue(datasetNames.containsAll(ImmutableList.of(AllProgramsApp.DATASET_NAME,
+                                                                AllProgramsApp.DATASET_NAME2,
+                                                                AllProgramsApp.DATASET_NAME3)));
+    // Verify program field
+    Assert.assertTrue(appDetail.getPrograms().size() > 0);
+
+    // Verify plugin field
+    Assert.assertNotNull(appDetail.getPlugins());
+
+    // Verify artifact field
+    Assert.assertNotNull(appDetail.getArtifact());
+  }
+
   @Test
   public void testGetApplication() throws Exception {
     String namespace = TEST_NAMESPACE1;
@@ -61,8 +88,7 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
     // Get and validate the application
     ApplicationId appId = new ApplicationId(namespace, appName);
     ApplicationDetail appDetail = fetcher.get(appId);
-    Assert.assertEquals(AllProgramsApp.NAME, appDetail.getName());
-    Assert.assertEquals(AllProgramsApp.DESC, appDetail.getDescription());
+    assertAllProgramAppDetail(appDetail);
 
     // Delete the application
     Assert.assertEquals(
@@ -81,6 +107,7 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
   public void testGetAllApplications() throws Exception {
     String namespace = TEST_NAMESPACE1;
     List<ApplicationDetail> appDetailList = Collections.emptyList();
+    ApplicationDetail appDetail = null;
 
     // No applications have been deployed
     appDetailList = fetcher.list(namespace);
@@ -92,8 +119,8 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
     // Get and validate the application
     appDetailList = fetcher.list(namespace);
     Assert.assertEquals(1, appDetailList.size());
-    Assert.assertEquals(AllProgramsApp.NAME, appDetailList.get(0).getName());
-    Assert.assertEquals(AllProgramsApp.DESC, appDetailList.get(0).getDescription());
+    appDetail = appDetailList.get(0);
+    assertAllProgramAppDetail(appDetail);
 
     // Deploy another application
     deploy(AppWithSchedule.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
