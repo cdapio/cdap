@@ -15,19 +15,23 @@
 */
 
 import ee from 'event-emitter';
+import ifvisible from 'ifvisible.js';
 const WINDOW_ON_BLUR = 'WINDOW_BLUR_EVENT';
 const WINDOW_ON_FOCUS = 'WINDOW_FOCUS_EVENT';
 
 class WindowManager {
   public eventemitter = ee(ee);
   constructor() {
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') {
-        this.onFocusHandler();
-      } else {
-        this.onBlurEventHandler();
-      }
+    if (ifvisible.now('hidden')) {
+      this.onBlurEventHandler();
+    }
+    ifvisible.on('idle', () => {
+      this.onBlurEventHandler();
     });
+    ifvisible.on('wakeup', () => {
+      this.onFocusHandler();
+    });
+    ifvisible.setIdleDuration(30);
   }
 
   public onBlurEventHandler = () => {

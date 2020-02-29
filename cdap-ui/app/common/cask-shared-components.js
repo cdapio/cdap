@@ -104,6 +104,7 @@ var WidgetWrapper = require('../cdap/components/ConfigurationGroup/WidgetWrapper
 var ConfigurationGroupUtilities = require('../cdap/components/ConfigurationGroup/utilities');
 var DynamicFiltersUtilities = require('../cdap/components/ConfigurationGroup/utilities/DynamicPluginFilters');
 var LoadingSVG = require('../cdap/components/LoadingSVG').default;
+var WindowManager = require('../cdap/services/WindowManager').default;
 
 export {
   Store,
@@ -182,4 +183,5 @@ export {
   ConfigurationGroupUtilities,
   DynamicFiltersUtilities,
   LoadingSVG,
+  WindowManager,
 };

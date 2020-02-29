@@ -68,6 +68,7 @@ export default class NextRun extends React.PureComponent<IProps, IState> {
   };
 
   private startNextRunInterval = () => {
+    this.stopNextRunInterval();
     this.getNextRun();
     this.interval = Observable.interval(30 * 1000).subscribe(this.getNextRun.bind(this));
   };

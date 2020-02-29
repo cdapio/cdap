@@ -155,9 +155,11 @@ cdapConfigurator
     });
 
     sockServer.on('connection', function(c) {
+      log.debug('[SOCKET OPEN] Connection to client "' + c.id + '" opened');
       // @ts-ignore
       var a = new Aggregator(c);
       c.on('close', function() {
+        log.trace('Cleaning out aggregator: ' + JSON.stringify(a.connection.id));
         a = null;
       });
     });
