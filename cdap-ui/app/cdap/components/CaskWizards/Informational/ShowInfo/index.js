@@ -62,7 +62,10 @@ StepsList.propTypes = {
   steps: PropTypes.array,
 };
 
-StepsList = connect(mapStateWithProps, null)(StepsList);
+StepsList = connect(
+  mapStateWithProps,
+  null
+)(StepsList);
 
 export default function ShowInfo() {
   return (

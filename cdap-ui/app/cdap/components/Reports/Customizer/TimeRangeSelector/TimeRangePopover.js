@@ -184,6 +184,9 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const TimeRangePopover = connect(mapStateToProps, mapDispatch)(TimeRangePopoverView);
+const TimeRangePopover = connect(
+  mapStateToProps,
+  mapDispatch
+)(TimeRangePopoverView);
 
 export default TimeRangePopover;

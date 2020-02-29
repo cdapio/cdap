@@ -125,7 +125,9 @@ class SpannerInstanceListView extends React.PureComponent<ISpannerInstanceListVi
           <div className="table-body">
             {instanceList.map((instance: ISpannerInstanceObject) => {
               const Tag = this.props.enableRouting ? Link : 'div';
-              const path = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${instance.name}`;
+              const path = `/ns/${namespace}/connections/spanner/${connectionId}/instances/${
+                instance.name
+              }`;
 
               return (
                 <Tag

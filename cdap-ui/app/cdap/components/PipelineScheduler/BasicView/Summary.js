@@ -147,7 +147,10 @@ MaxConcurrentRunsSummary.propTypes = {
   maxConcurrentRuns: PropTypes.number,
 };
 
-const ConnectedSummaryComponent = connect(mapStateToSummaryProps, null)(SummaryComponent);
+const ConnectedSummaryComponent = connect(
+  mapStateToSummaryProps,
+  null
+)(SummaryComponent);
 const ConnectedMaxConcurrentRunsSummary = connect(
   mapStateToMaxConcurrentRunsSummaryProps,
   null

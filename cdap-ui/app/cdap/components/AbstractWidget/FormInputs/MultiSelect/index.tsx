@@ -56,10 +56,13 @@ export default function MultiSelect({
     onChange(selectionsString);
   };
 
-  useEffect(() => {
-    const selection = value.toString().split(delimiter);
-    setSelections(selection);
-  }, [value]);
+  useEffect(
+    () => {
+      const selection = value.toString().split(delimiter);
+      setSelections(selection);
+    },
+    [value]
+  );
 
   function renderValue(values: any) {
     if (selections.length === 0 || (selections.length === 1 && selections[0] === '')) {

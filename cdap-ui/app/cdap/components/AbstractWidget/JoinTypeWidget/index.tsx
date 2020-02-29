@@ -123,12 +123,7 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
       .toString()
       .split(',')
       .map((input) => input.trim());
-    if (
-      isEqual(
-        initialModel,
-        inputSchema.map((schema) => schema.name.trim())
-      )
-    ) {
+    if (isEqual(initialModel, inputSchema.map((schema) => schema.name.trim()))) {
       setJoinType('Inner');
       setInputs(
         inputSchema.map((input) => {
@@ -148,9 +143,12 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
     }
   }, []);
 
-  useEffect(() => {
-    formatOutput();
-  }, [inputs]);
+  useEffect(
+    () => {
+      formatOutput();
+    },
+    [inputs]
+  );
 
   return (
     <div>

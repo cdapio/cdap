@@ -78,6 +78,9 @@ DriverResources.propTypes = {
   onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedDriverResources = connect(mapStateToProps, mapDispatchToProps)(DriverResources);
+const ConnectedDriverResources = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(DriverResources);
 
 export default ConnectedDriverResources;

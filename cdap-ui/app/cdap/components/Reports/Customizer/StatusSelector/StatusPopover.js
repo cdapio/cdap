@@ -128,6 +128,9 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const StatusPopover = connect(mapStateToProps, mapDispatch)(StatusPopoverView);
+const StatusPopover = connect(
+  mapStateToProps,
+  mapDispatch
+)(StatusPopoverView);
 
 export default StatusPopover;

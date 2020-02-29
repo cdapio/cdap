@@ -18,22 +18,11 @@
 import request from 'request';
 import fs from 'fs';
 import log4js from 'log4js';
-import hash from 'object-hash';
 import * as urlHelper from 'server/url-helper';
 import { extractConfig } from 'server/config/parser';
 import * as sessionToken from 'server/token';
 
 const log = log4js.getLogger('default');
-
-/**
- * Default Poll Interval used by the backend.
- * We set the default poll interval to high, so
- * if any of the frontend needs faster than this
- * time, then would have to pass in the 'interval'
- * in their request.
- */
-var POLL_INTERVAL = 10 * 1000;
-
 /**
  * Aggregator
  * receives resourceObj, aggregate them,
@@ -49,10 +38,6 @@ function Aggregator(conn) {
   this.cdapConfig = null;
   this.connection = conn;
 
-  // WebSocket local resource pool. Key here is the resource id
-  // as send from the backend. The FE has to guarantee that the
-  // the resource id is unique within a websocket connection.
-  this.polledResources = {};
   this.populateCdapConfig().then(this.initializeEventListeners.bind(this));
   this.isSessionValid = false;
 }
@@ -116,83 +101,6 @@ Aggregator.prototype.populateCdapConfig = async function() {
       "[ERROR]: Unable to parse CDAP config. CDAP UI Proxy won't be able to serve any request to the client: " +
         e
     );
-  }
-};
-
-/**
- * Checks if the 'id' received from the client is already registered -- This
- * check was added because for whatever reason 'Safari' was sending multiple
- * requests to backend with same ids. As this is happens only once during
- * the start of poll, it's safe to make this check. The assumption here is
- * that the frontend is sending in unique ids within the websocket session.
- *
- * Upon check if it's not duplicate, we invoke doPoll that would make the
- * first call and set the interval for the timeout.
- */
-Aggregator.prototype.startPolling = function(resource) {
-  resource.interval = resource.interval || POLL_INTERVAL;
-  log.debug(
-    '[SCHEDULING]: (id: ' +
-      resource.id +
-      ', url: ' +
-      resource.url +
-      ', interval: ' +
-      resource.interval +
-      ')'
-  );
-  this.polledResources[resource.id] = {
-    resource: resource,
-    response: null,
-  };
-  doPoll.bind(this, this.polledResources[resource.id].resource)();
-};
-
-/**
- * This method is called regularly by 'doPoll' to register the next interval
- * for timeout. Every resource handle has a flag is used to indicate if the
- * the resource has been requested to be stopped, if it's already stopped, then
- * there is nothing for us to do. If it's not then we go ahead and register
- * the interval timeout.
- */
-Aggregator.prototype.scheduleAnotherIteration = function(resource) {
-  log.debug(
-    '[RESCHEDULING]: (id: ' +
-      resource.id +
-      ', url: ' +
-      resource.url +
-      ', interval: ' +
-      resource.interval +
-      ')'
-  );
-  resource.timerId = setTimeout(doPoll.bind(this, resource), resource.interval);
-};
-
-/**
- * Stops the polling of a resource. The resources that has been requested to be stopped
- * is removed from the websocket local poll and the timeouts are cleared and stop flag
- * is set to true.
- */
-Aggregator.prototype.stopPolling = function(resource) {
-  if (!this.polledResources[resource.id]) {
-    return;
-  }
-  var timerId = this.polledResources[resource.id].timerId;
-  delete this.polledResources[resource.id];
-  clearTimeout(timerId);
-};
-
-/**
- * Iterates through the websocket local resources and clears the timers and sets
- * the flag. This is called when the websocket is closing the connection.
- */
-Aggregator.prototype.stopPollingAll = function() {
-  var id, resource;
-  for (id in this.polledResources) {
-    if (this.polledResources.hasOwnProperty(id)) {
-      resource = this.polledResources[id].resource;
-      log.debug('[POLL-STOP]: (id: ' + resource.id + ', url: ' + resource.url + ')');
-      clearTimeout(resource.timerId);
-    }
   }
 };
 
@@ -293,33 +201,6 @@ function validateSemanticsOfConfigJSON(config) {
 
   return isValid;
 }
-/**
- * 'doPoll' is the doer - it makes the resource request call to backend and
- * sends the response back once it receives it. Upon completion of the request
- * it schedulers the interval for next trigger.
- */
-function doPoll(resource) {
-  if (!this.polledResources[resource.id]) {
-    return;
-  }
-  var that = this,
-    callBack = this.scheduleAnotherIteration.bind(that, resource);
-
-  resource.startTs = Date.now();
-  request(resource, function(error, response, body) {
-    if (error) {
-      emitResponse.call(that, resource, error);
-      return;
-    } else if (response.statusCode > 299) {
-      var errMessage = response.statusCode + ' ' + resource.url;
-      emitResponse.call(that, resource, errMessage, response, body);
-      return;
-    }
-    emitResponse.call(that, resource, false, response, body);
-  })
-    .on('response', callBack)
-    .on('error', callBack);
-}
 
 /**
  * Helps avoid sending certain properties to the browser (meta attributes used only in the node server)
@@ -344,7 +225,6 @@ function stripResource(key, value) {
  */
 function emitResponse(resource, error, response, body) {
   var timeDiff = Date.now() - resource.startTs;
-  var responseHash;
 
   if (error) {
     log.debug('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ')');
@@ -357,15 +237,6 @@ function emitResponse(resource, error, response, body) {
         error.toString() +
         ')'
     );
-
-    if (this.polledResources[resource.id]) {
-      responseHash = hash(error || {});
-      if (this.polledResources[resource.id].response === responseHash.toString()) {
-        return;
-      } else {
-        this.polledResources[resource.id].response = responseHash.toString();
-      }
-    }
 
     let newResource = Object.assign({}, resource, {
       url: urlHelper.deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
@@ -395,16 +266,6 @@ function emitResponse(resource, error, response, body) {
         JSON.stringify(body) +
         ')'
     );
-
-    if (this.polledResources[resource.id]) {
-      responseHash = hash(body || {});
-      if (this.polledResources[resource.id].response === responseHash.toString()) {
-        // No need to send this to the client as nothing changed.
-        return;
-      } else {
-        this.polledResources[resource.id].response = responseHash;
-      }
-    }
     let newResource = Object.assign({}, resource, {
       url: urlHelper.deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
     });
@@ -449,20 +310,12 @@ function onSocketData(message) {
         );
         this.pushConfiguration(r);
         break;
-      case 'poll-start':
-        log.debug('[POLL-START]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
-        this.startPolling(r);
-        break;
       case 'request':
         r.startTs = Date.now();
         log.debug('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
         request(r, emitResponse.bind(this, r)).on('error', function(err) {
           log.error('[ERROR]: (url: ' + r.url + ') ' + err.message);
         });
-        break;
-      case 'poll-stop':
-        log.debug('[POLL-STOP]: (id: ' + r.id + ', url: ' + r.url + ')');
-        this.stopPolling(r);
         break;
     }
   } catch (e) {
@@ -474,8 +327,7 @@ function onSocketData(message) {
  * @private onSocketClose
  */
 function onSocketClose() {
-  this.stopPollingAll();
-  this.polledResources = {};
+  log.debug('[SOCKET CLOSE] Connection to client "' + this.connection.id + '" closed');
 }
 
 export default Aggregator;

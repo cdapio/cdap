@@ -65,67 +65,6 @@ var socketDataSource = angular.module(PKG.name+'.services');
 
       var instances = {}; // keyed by scopeid
 
-      /**
-       * Start polling of the resource - sends the action 'poll-start' to
-       * the node backend.
-       */
-      function _pollStart (resource) {
-        var re = {};
-        if (!resource.url) {
-          re = resource;
-        } else {
-          re = {
-            id: resource.id,
-            url: resource.url,
-            json: resource.json,
-            method: resource.method,
-            suppressErrors: resource.suppressErrors || false
-          };
-          if (resource.interval) {
-            re.interval = resource.interval;
-          }
-          if (resource.body) {
-            re.body = resource.body;
-          }
-        }
-
-        if (resource.headers) {
-          re.headers = resource.headers;
-        }
-
-        mySocket.send({
-          action: 'poll-start',
-          resource: re
-        });
-      }
-
-      /**
-       * Stops polling of the resource - sends the actions 'poll-stop' to
-       * the node backend.
-       */
-      function _pollStop (resource) {
-        var re = {};
-        if (!resource.url) {
-          re = resource;
-        }else {
-          re = {
-            id: resource.id,
-            url: resource.url,
-            json: resource.json,
-            method: resource.method,
-            suppressErrors: resource.suppressErrors || false
-          };
-        }
-        if (resource.header) {
-          re.header = resource.header;
-        }
-
-        mySocket.send({
-          action: 'poll-stop',
-          resource: re
-        });
-      }
-
 
       function DataSource (scope) {
         scope = scope || $rootScope.$new();
@@ -183,6 +122,10 @@ var socketDataSource = angular.module(PKG.name+'.services');
               // We can remove the entry from the self bindings if its not a poll.
               // Is not going to be used for anything else.
               delete self.bindings[hash];
+            } else {
+              if (self.bindings[hash] && self.bindings[hash].type === 'POLL') {
+                self.bindings[hash].resource.interval = startClientPoll(hash, self.bindings, self.bindings[hash].resource.intervalTime);
+              }
             }
           }
           return;
@@ -193,21 +136,24 @@ var socketDataSource = angular.module(PKG.name+'.services');
             const req = self.bindings[reqId];
 
             if (req.poll) {
-              _pollStart(req.resource);
-            } else {
-              mySocket.send({
-                action: 'request',
-                resource: req.resource,
-              });
+              pausePoll(self.bindings);
             }
+            mySocket.send({
+              action: 'request',
+              resource: req.resource,
+            });
           });
+        });
+
+        EventPipe.on(MYSOCKET_EVENT.closed, () => {
+          pausePoll(self.bindings);
         });
 
         scope.$on('$destroy', function () {
           Object.keys(self.bindings).forEach(function(key) {
             var b = self.bindings[key];
             if (b.poll) {
-              _pollStop(b.resource);
+              stopPoll(self.bindings, b.resource);
             }
           });
 
@@ -215,23 +161,58 @@ var socketDataSource = angular.module(PKG.name+'.services');
         });
 
         scope.$on(caskWindowManager.event.blur, function () {
-          Object.keys(self.bindings).forEach(function(key) {
-            var b = self.bindings[key];
-            if (b.poll) {
-              _pollStop(b.resource);
-            }
-          });
+          pausePoll(self.bindings);
         });
 
         scope.$on(caskWindowManager.event.focus, function () {
-          Object.keys(self.bindings).forEach(function(key) {
-            var b = self.bindings[key];
-            if (b.poll) {
-              _pollStart(b.resource);
-            }
-          });
+          resumePoll(self.bindings);
         });
 
+      }
+
+      function startClientPoll(resourceId, bindings, interval) {
+        const intervalTimer = setTimeout(() => {
+          const resource = bindings[resourceId].resource;
+          if (!resource) {
+            clearTimeout(intervalTimer);
+            return;
+          }
+          mySocket.send({
+            action: 'request',
+            resource
+          });
+        }, interval);
+        return intervalTimer;
+      }
+
+      function stopPoll(bindings, resourceId) {
+        let id;
+        if (typeof resourceId === 'object' && resourceId !== null) {
+          id = resourceId.params.pollId;
+        } else {
+          id = resourceId;
+        }
+
+        if (bindings[id]) {
+          clearTimeout(bindings[id].resource.interval);
+          delete bindings[id];
+        }
+      }
+
+      function pausePoll(bindings) {
+        Object.keys(bindings)
+          .filter(resourceId => bindings[resourceId].type === 'POLL')
+          .forEach(resourceId => {
+            clearTimeout(bindings[resourceId].resource.interval);
+          });
+      }
+
+      function resumePoll(bindings) {
+        Object.keys(bindings)
+          .filter(resourceId => bindings[resourceId].type === 'POLL')
+          .forEach(resourceId => {
+            bindings[resourceId].resource.interval = startClientPoll(resourceId, bindings[resourceId].resource);
+          });
       }
 
       /**
@@ -240,10 +221,14 @@ var socketDataSource = angular.module(PKG.name+'.services');
       DataSource.prototype.poll = function (resource, cb, errorCb) {
         var self = this;
         var generatedResource = {};
+        const intervalTime = resource.interval || (resource.options &&  resource.options.interval) || $rootScope.defaultPollInterval;
         var promise = new MyPromise(function(resolve, reject) {
+          const resourceId = uuid.v4();
           generatedResource = {
+            id: resourceId,
             json: resource.json,
-            interval: resource.interval || (resource.options &&  resource.options.interval) || $rootScope.defaultPollInterval,
+            intervalTime,
+            interval: startClientPoll(resourceId, self.bindings, intervalTime),
             body: resource.body,
             method: resource.method || 'GET',
             suppressErrors: resource.suppressErrors || false
@@ -259,9 +244,9 @@ var socketDataSource = angular.module(PKG.name+'.services');
           }
 
           generatedResource.url = buildUrl(resource.url, resource.params || {});
-          generatedResource.id = uuid.v4();
           self.bindings[generatedResource.id] = {
             poll: true,
+            type: 'POLL',
             callback: cb,
             resource: generatedResource,
             errorCallback: errorCb,
@@ -269,7 +254,10 @@ var socketDataSource = angular.module(PKG.name+'.services');
             reject: reject
           };
 
-          _pollStart(generatedResource);
+          mySocket.send({
+            action: 'request',
+            resource: generatedResource
+          });
         }, true);
 
         if (!resource.$isResource) {
@@ -301,10 +289,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
 
         if (match) {
           resource = match.resource;
-          _pollStop(resource);
-          // We should probably be doing this once we get a confirmation from cdap node proxy server.
-          // Deleting the entry from this.bindings is wrong here if the stop poll fails for some god forsaken reason.
-          delete this.bindings[resourceId];
+          stopPoll(this.bindings, resourceId);
           defer.resolve({});
         } else {
           defer.reject({});
@@ -379,6 +364,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
           generatedResource.url = buildUrl(resource.url, resource.params || {});
           generatedResource.id = uuid.v4();
           self.bindings[generatedResource.id] = {
+            type: 'REQUEST',
             callback: cb,
             errorCallback: errorCb,
             resource: generatedResource,

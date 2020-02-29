@@ -26,7 +26,10 @@ const mapStateWithProps = (state) => {
   };
 };
 
-let ApplicationName = connect(mapStateWithProps, null)(FileDnD);
+let ApplicationName = connect(
+  mapStateWithProps,
+  null
+)(FileDnD);
 
 export default function Deploy() {
   return (

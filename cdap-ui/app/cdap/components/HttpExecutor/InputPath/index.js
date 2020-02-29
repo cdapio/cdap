@@ -68,6 +68,9 @@ InputPathView.propTypes = {
   onChange: PropTypes.func,
 };
 
-const InputPath = connect(mapStateToProps, mapDispatch)(InputPathView);
+const InputPath = connect(
+  mapStateToProps,
+  mapDispatch
+)(InputPathView);
 
 export default InputPath;

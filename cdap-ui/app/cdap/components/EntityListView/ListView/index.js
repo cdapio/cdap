@@ -61,13 +61,11 @@ export default class HomeListView extends Component {
   // TODO: CDAP-16192
   // Consolidate logic with JustAddedSection
   fetchBatchApplicationsInfo = (list) => {
-    const apps = list
-      .filter((entity) => entity.type === 'application')
-      .map((app) => {
-        return {
-          appId: app.id,
-        };
-      });
+    const apps = list.filter((entity) => entity.type === 'application').map((app) => {
+      return {
+        appId: app.id,
+      };
+    });
 
     if (apps.length === 0) {
       return;

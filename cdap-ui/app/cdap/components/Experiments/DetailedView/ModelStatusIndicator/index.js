@@ -90,7 +90,9 @@ export default function ModelStatusIndicator({ status, loading, error, model, ge
           <span>Error</span>
         </span>
         <UncontrolledTooltip placement="right" delay={0} target={`error-${model.id}`}>
-          {`Failed to get the status of the model '${model.name}'. Click to try loading the status again`}
+          {`Failed to get the status of the model '${
+            model.name
+          }'. Click to try loading the status again`}
         </UncontrolledTooltip>
       </span>
     );

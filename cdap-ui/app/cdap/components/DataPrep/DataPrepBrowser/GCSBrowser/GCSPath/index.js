@@ -84,6 +84,9 @@ const mapDispatchToProps = () => {
   };
 };
 
-const GCSPathWrapper = connect(mapStateToProps, mapDispatchToProps)(GCSPath);
+const GCSPathWrapper = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(GCSPath);
 
 export default GCSPathWrapper;

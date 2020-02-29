@@ -59,22 +59,20 @@ const getFilteredRuntimeArgs = (runtimeArgs) => {
     );
     return isMatch.length ? true : false;
   };
-  pairs = pairs
-    .filter((pair) => !skipIfProfilePropMatch(pair.key))
-    .map((pair) => {
-      if (pair.key in resolvedMacros) {
-        return {
-          notDeletable: true,
-          provided: pair.provided || false,
-          ...pair,
-        };
-      }
+  pairs = pairs.filter((pair) => !skipIfProfilePropMatch(pair.key)).map((pair) => {
+    if (pair.key in resolvedMacros) {
       return {
+        notDeletable: true,
+        provided: pair.provided || false,
         ...pair,
-        // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
-        provided: null,
       };
-    });
+    }
+    return {
+      ...pair,
+      // This is needed because KeyValuePair will render a checkbox only if the provided is a boolean.
+      provided: null,
+    };
+  });
   if (!pairs.length) {
     pairs.push(getDefaultKeyValuePair());
   }

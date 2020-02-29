@@ -86,7 +86,10 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
   };
 };
 
-let KeyValuePairCopy = connect(mapStateToFieldNameProps, mapDispatchToFieldNameProps)(KeyValuePair);
+let KeyValuePairCopy = connect(
+  mapStateToFieldNameProps,
+  mapDispatchToFieldNameProps
+)(KeyValuePair);
 
 export default class KeyValuePairs extends Component {
   constructor(props) {

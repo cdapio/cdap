@@ -49,5 +49,8 @@ const mapDispatchToProps = () => {
   };
 };
 
-const GCSSearch = connect(mapStateToProps, mapDispatchToProps)(SearchBox);
+const GCSSearch = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(SearchBox);
 export default GCSSearch;

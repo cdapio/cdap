@@ -70,9 +70,7 @@ const ProfileCreateView = Loadable({
 });
 const ProfileCreateProvisionerSelection = Loadable({
   loader: () =>
-    import(
-      /* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'
-    ),
+    import(/* webpackChunkName: "ProfileCreateProvisionerSelection" */ 'components/Cloud/Profiles/CreateView/ProvisionerSelection'),
   loading: LoadingSVGCentered,
 });
 const ProfileDetailView = Loadable({
@@ -193,9 +191,7 @@ export default class Home extends Component {
               }
               const LabExperimentTestComp = Loadable({
                 loader: () =>
-                  import(
-                    /* webpackChunkName: "LabExperimentTest" */ 'components/Lab/LabExperimentTest'
-                  ),
+                  import(/* webpackChunkName: "LabExperimentTest" */ 'components/Lab/LabExperimentTest'),
                 loading: LoadingSVGCentered,
               });
               return <LabExperimentTestComp {...props} />;

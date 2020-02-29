@@ -94,10 +94,7 @@ export default class NamespacesAccordion extends Component {
   }
 
   fetchNamespacesAndGetData = () => {
-    MyNamespaceApi.list().subscribe(
-      (res) => this.getNamespaceData(res),
-      (err) => console.log(err)
-    );
+    MyNamespaceApi.list().subscribe((res) => this.getNamespaceData(res), (err) => console.log(err));
   };
 
   getNamespaceData(namespaces) {

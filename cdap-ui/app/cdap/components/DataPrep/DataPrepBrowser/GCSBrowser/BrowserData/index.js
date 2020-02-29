@@ -129,6 +129,9 @@ const mapDispatchToProps = () => {
   };
 };
 
-const BrowserDataWrapper = connect(mapStateToProps, mapDispatchToProps)(BrowserData);
+const BrowserDataWrapper = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(BrowserData);
 
 export default BrowserDataWrapper;

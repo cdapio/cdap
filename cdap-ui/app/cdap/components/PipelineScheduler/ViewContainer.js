@@ -41,6 +41,9 @@ ViewContainerComponent.propTypes = {
   isDetailView: PropTypes.bool,
 };
 
-const ConnectedViewContainer = connect(mapStateToViewContainerProps, null)(ViewContainerComponent);
+const ConnectedViewContainer = connect(
+  mapStateToViewContainerProps,
+  null
+)(ViewContainerComponent);
 
 export default ConnectedViewContainer;

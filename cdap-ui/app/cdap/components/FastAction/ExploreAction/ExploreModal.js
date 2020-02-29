@@ -36,7 +36,9 @@ export default class ExploreModal extends Component {
     super(props);
     this.type = this.props.entity.type;
     this.state = {
-      queryString: `SELECT * FROM ${this.props.entity.databaseName}.${this.props.entity.tableName} LIMIT 500`,
+      queryString: `SELECT * FROM ${this.props.entity.databaseName}.${
+        this.props.entity.tableName
+      } LIMIT 500`,
       queries: [],
       error: null,
       loading: false,
@@ -58,7 +60,9 @@ export default class ExploreModal extends Component {
     let { databaseName: newDatabaseName, tableName: newTablename } = nextProps.entity;
     if (existingDatabaseName !== newDatabaseName || existingTableName !== newTablename) {
       this.setState({
-        queryString: `SELECT * FROM ${nextProps.entity.databaseName}.${nextProps.entity.tableName} LIMIT 500`,
+        queryString: `SELECT * FROM ${nextProps.entity.databaseName}.${
+          nextProps.entity.tableName
+        } LIMIT 500`,
       });
     }
   }
@@ -206,7 +210,9 @@ export default class ExploreModal extends Component {
   getDownloadUrl(query) {
     let path = `/v3/data/explore/queries/${query.query_handle}/download`;
     path = encodeURIComponent(path);
-    let url = `/downloadLogs?backendPath=${path}&type=download&method=POST&filename=${query.query_handle}.csv`;
+    let url = `/downloadLogs?backendPath=${path}&type=download&method=POST&filename=${
+      query.query_handle
+    }.csv`;
     return url;
   }
 

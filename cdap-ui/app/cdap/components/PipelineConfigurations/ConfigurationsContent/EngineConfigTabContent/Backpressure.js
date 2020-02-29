@@ -70,6 +70,9 @@ Backpressure.propTypes = {
   onToggle: PropTypes.func,
 };
 
-const ConnectedBackpressure = connect(mapStateToProps, mapDispatchToProps)(Backpressure);
+const ConnectedBackpressure = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Backpressure);
 
 export default ConnectedBackpressure;
