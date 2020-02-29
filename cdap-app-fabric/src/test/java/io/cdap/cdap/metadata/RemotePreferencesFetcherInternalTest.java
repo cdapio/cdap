@@ -26,6 +26,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,13 +36,14 @@ import java.util.Map;
  * Tests for {@link RemotePreferencesFetcherInternal}
  */
 public class RemotePreferencesFetcherInternalTest extends AppFabricTestBase {
-  private static AbstractPreferencesFetcher fetcher = null;
+  private static PreferencesFetcher fetcher = null;
 
   @BeforeClass
   public static void init() {
     fetcher = getInjector().getInstance(RemotePreferencesFetcherInternal.class);
   }
 
+  @Test
   public void testGetPreferences() throws Exception {
     PreferencesDetail preferences = null;
     EntityId entityId = null;
@@ -83,20 +85,20 @@ public class RemotePreferencesFetcherInternalTest extends AppFabricTestBase {
 
     // Set preferences on application and fetch again, resolved preferences should be returned.
     Map<String, String> appProperties = ImmutableMap.of("app-key1", "app-val1");
-    setPreferences(getPreferenceURI(namespace, appName), instanceProperties, 200);
+    setPreferences(getPreferenceURI(namespace, appName), appProperties, 200);
     preferences = fetcher.get(entityId, true);
     Map<String, String> resolvedProperites = new HashMap<>();
-    resolvedProperites.putAll(appProperties);
     resolvedProperites.putAll(instanceProperties);
+    resolvedProperites.putAll(appProperties);
     Assert.assertEquals(resolvedProperites, preferences.getProperties());
     Assert.assertTrue(preferences.getResolved());
     Assert.assertTrue(preferences.getSeqId() > 0);
 
     // Delete the app
     Assert.assertEquals(
-        200,
-        doDelete(getVersionedAPIPath("apps/",
-                                     Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
+      200,
+      doDelete(getVersionedAPIPath("apps/",
+                                   Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 }
 

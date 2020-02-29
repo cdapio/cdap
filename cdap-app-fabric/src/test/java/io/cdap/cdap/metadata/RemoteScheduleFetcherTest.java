@@ -21,6 +21,7 @@ import io.cdap.cdap.AppWithSchedule;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.ScheduleDetail;
@@ -36,14 +37,14 @@ import java.util.List;
  * Tests for {@link RemoteScheduleFetcher}
  */
 public class RemoteScheduleFetcherTest extends AppFabricTestBase {
-  private static AbstractScheduleFetcher fetcher = null;
+  private static ScheduleFetcher fetcher = null;
 
   @BeforeClass
   public static void setUp() {
     fetcher = getInjector().getInstance(RemoteScheduleFetcher.class);
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test(expected = ScheduleNotFoundException.class)
   public void testGetScheduleNotFound() throws Exception {
     String namespace = TEST_NAMESPACE1;
     String appName = AllProgramsApp.NAME;

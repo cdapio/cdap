@@ -18,6 +18,7 @@ package io.cdap.cdap.metadata;
 
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithSchedule;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -31,10 +32,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Test for {@link RemoteApplicationDetailFetcher}.
+ * Tests for {@link RemoteApplicationDetailFetcher}.
  */
 public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
-  private static AbstractApplicationDetailFetcher fetcher = null;
+  private static ApplicationDetailFetcher fetcher = null;
 
   @BeforeClass
   public static void init() {
@@ -70,7 +71,7 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
                                    Constants.Gateway.API_VERSION_3_TOKEN, namespace)).getResponseCode());
   }
 
-  @Test(expected = NotFoundException.class)
+  @Test(expected = NamespaceNotFoundException.class)
   public void testGetAllApplicationNamespaceNotFound() throws Exception {
     String namespace = "somenamespace";
     fetcher.list(namespace);
