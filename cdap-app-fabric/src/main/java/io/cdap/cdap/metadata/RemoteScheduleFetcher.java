@@ -22,9 +22,11 @@ import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.proto.ScheduleDetail;
@@ -43,7 +45,7 @@ import java.util.List;
 /**
  * Fetch schedules via REST API calls
  */
-public class RemoteScheduleFetcher implements AbstractScheduleFetcher {
+public class RemoteScheduleFetcher implements ScheduleFetcher {
   protected static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
     .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
@@ -62,7 +64,7 @@ public class RemoteScheduleFetcher implements AbstractScheduleFetcher {
    * Get the schedule identified by the given schedule id
    */
   @Override
-  public ScheduleDetail get(ScheduleId scheduleId) throws IOException, NotFoundException {
+  public ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException {
     String url = String.format(
       "namespaces/%s/apps/%s/versions/%s/schedules/%s",
       scheduleId.getNamespace(), scheduleId.getApplication(), scheduleId.getVersion(), scheduleId.getSchedule());
@@ -71,7 +73,7 @@ public class RemoteScheduleFetcher implements AbstractScheduleFetcher {
     try {
       httpResponse = execute(requestBuilder.build());
     } catch (NotFoundException e) {
-      throw new NotFoundException(scheduleId);
+      throw new ScheduleNotFoundException(scheduleId);
     }
     return GSON.fromJson(httpResponse.getResponseBodyAsString(), ScheduleDetail.class);
   }
@@ -80,7 +82,7 @@ public class RemoteScheduleFetcher implements AbstractScheduleFetcher {
    * Get the list of schedules for the given program id
    */
   @Override
-  public List<ScheduleDetail> list(ProgramId programId) throws IOException, NotFoundException {
+  public List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException {
     String url = String.format("namespaces/%s/apps/%s/versions/%s/schedules",
                                programId.getNamespace(), programId.getApplication(), programId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
@@ -88,7 +90,7 @@ public class RemoteScheduleFetcher implements AbstractScheduleFetcher {
     try {
       httpResponse = execute(requestBuilder.build());
     } catch (NotFoundException e) {
-      throw new NotFoundException(programId);
+      throw new ProgramNotFoundException(programId);
     }
     ObjectResponse<List<ScheduleDetail>> objectResponse = ObjectResponse.fromJsonBody(
       httpResponse, new TypeToken<List<ScheduleDetail>>() {
@@ -96,10 +98,12 @@ public class RemoteScheduleFetcher implements AbstractScheduleFetcher {
     return objectResponse.getResponseObject();
   }
 
+  // TODO: refactor out into a util function that can be shared by RemoteApplicationDetailFetcher
+  //       RemotePreferencesFetcherInternal and RemoteScheduleFetcher
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("Not found");
+      throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException(String.format("Request failed %s", httpResponse.getResponseBodyAsString()));

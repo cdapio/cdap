@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.metadata;
 
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -26,15 +28,23 @@ import java.util.List;
 /**
  * Interface for fetching {@code ApplicationDetail}
  */
-public interface AbstractApplicationDetailFetcher {
+public interface ApplicationDetailFetcher {
 
   /**
    * Get the application detail for the given application id
+   * @param appId the id of the application
+   * @return the detail of the given application
+   * @throws IOException if failed to get {@code ApplicationDetail}
+   * @throws NotFoundException if the application or namespace identified by the supplied id doesn't exist
    */
   ApplicationDetail get(ApplicationId appId) throws IOException, NotFoundException;
 
   /**
    * Get details of all applications in the given namespace
+   * @param namespace the name of the namespace to get the list of applications
+   * @return a list of {@code ApplicationDetail} in the given namspace
+   * @throws IOException if failed to get the list of {@code ApplicationDetail}
+   * @throws NamespaceNotFoundException if the given namespace doesn't exist
    */
-  List<ApplicationDetail> list(String namespace) throws IOException, NotFoundException;
+  List<ApplicationDetail> list(String namespace) throws IOException, NamespaceNotFoundException;
 }

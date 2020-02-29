@@ -17,6 +17,8 @@
 package io.cdap.cdap.metadata;
 
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ProgramNotFoundException;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
 import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -27,14 +29,25 @@ import java.util.List;
 /**
  * Interface for fetching schedule(s)
  */
-public interface AbstractScheduleFetcher {
+public interface ScheduleFetcher {
   /**
    * Get schedule details for the given {@code scheduleId}
+   * @param scheduleId the id of the schedule to fetch {@code ScheduleDetail} for
+   * @return the schedule detail
+   * @throws IOException if failed to get the detail of the given schedule
+   * @throws ScheduleNotFoundException if the given schedule doesn't exist.
    */
-  ScheduleDetail get(ScheduleId scheduleId) throws IOException, NotFoundException;
+  ScheduleDetail get(ScheduleId scheduleId) throws IOException, ScheduleNotFoundException;
 
   /**
-   * Get the list of schedules for the given program id
+   *
    */
-  List<ScheduleDetail> list(ProgramId programId) throws IOException, NotFoundException;
+  /**
+   * Get the list of schedules for the given program id
+   * @param programId the id of the program to get the list of schedules for
+   * @return a list of schedules set on the program
+   * @throws IOException if failed to get the list of schedules for the given program
+   * @throws ProgramNotFoundException if the given program id doesn't exist
+   */
+  List<ScheduleDetail> list(ProgramId programId) throws IOException, ProgramNotFoundException;
 }

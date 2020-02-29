@@ -39,7 +39,7 @@ import java.io.IOException;
 /**
  * Fetch preferences via REST API calls (using internal endpoint {@code INTERNAL_API_VERSION_3})
  */
-public class RemotePreferencesFetcherInternal implements AbstractPreferencesFetcher {
+public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   private static final Gson GSON = new Gson();
 
   private final RemoteClient remoteClient;
@@ -58,11 +58,7 @@ public class RemotePreferencesFetcherInternal implements AbstractPreferencesFetc
     HttpResponse httpResponse;
     String url = getPreferencesURI(entityId, resolved);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
-    try {
-      httpResponse = execute(requestBuilder.build());
-    } catch (NotFoundException e) {
-      throw new NotFoundException(entityId);
-    }
+    httpResponse = execute(requestBuilder.build());
     return GSON.fromJson(httpResponse.getResponseBodyAsString(), new TypeToken<PreferencesDetail>() {
     }.getType());
   }
@@ -104,7 +100,7 @@ public class RemotePreferencesFetcherInternal implements AbstractPreferencesFetc
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("Not found");
+      throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException(String.format("Request failed %s", httpResponse.getResponseBodyAsString()));

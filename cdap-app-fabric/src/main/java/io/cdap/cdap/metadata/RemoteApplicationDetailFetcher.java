@@ -20,10 +20,13 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.error.Err;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -41,15 +44,17 @@ import java.util.List;
 /**
  * Fetch application detail via REST API calls
  */
-public class RemoteApplicationDetailFetcher implements AbstractApplicationDetailFetcher {
+public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher {
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder()).create();
 
   private final RemoteClient remoteClient;
 
   @Inject
-  public RemoteApplicationDetailFetcher(final DiscoveryServiceClient discoveryClient) {
-    this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+  public RemoteApplicationDetailFetcher(DiscoveryServiceClient discoveryClient) {
+    this.remoteClient = new RemoteClient(discoveryClient,
+                                         Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false),
+                                         Constants.Gateway.API_VERSION_3);
   }
 
   /**
@@ -60,25 +65,21 @@ public class RemoteApplicationDetailFetcher implements AbstractApplicationDetail
                                appId.getNamespace(), appId.getApplication(), appId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
-    try {
-      httpResponse = execute(requestBuilder.build());
-    } catch (NotFoundException e) {
-      throw new NotFoundException(appId);
-    }
+    httpResponse = execute(requestBuilder.build());
     return GSON.fromJson(httpResponse.getResponseBodyAsString(), ApplicationDetail.class);
   }
 
   /**
    * Get details of all applications in the given namespace
    */
-  public List<ApplicationDetail> list(String namespace) throws IOException, NotFoundException {
+  public List<ApplicationDetail> list(String namespace) throws IOException, NamespaceNotFoundException {
     String url = String.format("namespaces/%s/apps", namespace);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     try {
       httpResponse = execute(requestBuilder.build());
     } catch (NotFoundException e) {
-      throw new NotFoundException(new NamespaceId(namespace));
+      throw new NamespaceNotFoundException(new NamespaceId(namespace));
     }
     ObjectResponse<List<ApplicationDetail>> objectResponse = ObjectResponse.fromJsonBody(
       httpResponse, new TypeToken<List<ApplicationDetail>>() {
@@ -89,7 +90,7 @@ public class RemoteApplicationDetailFetcher implements AbstractApplicationDetail
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
     HttpResponse httpResponse = remoteClient.execute(request);
     if (httpResponse.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
-      throw new NotFoundException("Not found");
+      throw new NotFoundException(httpResponse.getResponseBodyAsString());
     }
     if (httpResponse.getResponseCode() != HttpURLConnection.HTTP_OK) {
       throw new IOException(String.format("Request failed %s", httpResponse.getResponseBodyAsString()));
