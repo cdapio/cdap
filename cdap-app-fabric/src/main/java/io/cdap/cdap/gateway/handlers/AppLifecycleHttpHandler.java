@@ -73,6 +73,7 @@ import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
@@ -175,7 +176,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
                              @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal,
-                             @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean  updateSchedules)
+                             @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean updateSchedules)
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
@@ -195,14 +196,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/versions/{version-id}/create")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public BodyConsumer createAppVersion(HttpRequest request, HttpResponder responder,
-                                         @PathParam("namespace-id") final String namespaceId,
-                                         @PathParam("app-id") final String appId,
-                                         @PathParam("version-id") final String versionId)
+                                       @PathParam("namespace-id") final String namespaceId,
+                                       @PathParam("app-id") final String appId,
+                                       @PathParam("version-id") final String versionId)
     throws Exception {
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
 
-    if (!applicationLifecycleService.updateAppAllowed(applicationId))  {
+    if (!applicationLifecycleService.updateAppAllowed(applicationId)) {
       responder.sendString(HttpResponseStatus.CONFLICT,
                            String.format("Cannot update the application because version %s already exists", versionId));
     }
@@ -215,15 +216,21 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns a list of applications associated with a namespace.
+   * Returns a list of {@link ApplicationRecord} for all applications in the given namespace
+   *
+   * @param request         {@link HttpRequest}
+   * @param responder       {@link HttpResponse}
+   * @param namespaceId     the namespace id within which to get all application records
+   * @param artifactName    the set of valid artifact names. If empty, all artifact names are valid
+   * @param artifactVersion the artifact version to match. If null, all artifact versions are valid
+   * @throws Exception if failed to get all {@link ApplicationRecord}
    */
   @GET
   @Path("/apps")
-  public void getAllApps(HttpRequest request, HttpResponder responder,
-                         @PathParam("namespace-id") String namespaceId,
-                         @QueryParam("artifactName") String artifactName,
-                         @QueryParam("artifactVersion") String artifactVersion)
-    throws Exception {
+  public void getAllApplicationRecords(HttpRequest request, HttpResponder responder,
+                                       @PathParam("namespace-id") String namespaceId,
+                                       @QueryParam("artifactName") String artifactName,
+                                       @QueryParam("artifactVersion") String artifactVersion) throws Exception {
 
     NamespaceId namespace = validateNamespace(namespaceId);
 
@@ -242,17 +249,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Returns the info associated with the application.
+   * Returns {@link ApplicationDetail} for the given application
    */
   @GET
   @Path("/apps/{app-id}")
   public void getAppInfo(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") final String namespaceId,
-                         @PathParam("app-id") final String appId)
-    throws Exception {
-
-    ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(applicationId)));
+                         @PathParam("app-id") final String appId) throws Exception {
+    getAppDetail(request, responder, namespaceId, appId);
   }
 
   /**
@@ -306,8 +310,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") final String appId) throws Exception {
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") final String appId) throws Exception {
     ApplicationId id = validateApplicationId(namespaceId, appId);
     applicationLifecycleService.removeApplication(id);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -319,9 +323,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps/{app-id}/versions/{version-id}")
   public void deleteAppVersion(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") final String namespaceId,
-                        @PathParam("app-id") final String appId,
-                        @PathParam("version-id") final String versionId) throws Exception {
+                               @PathParam("namespace-id") final String namespaceId,
+                               @PathParam("app-id") final String appId,
+                               @PathParam("version-id") final String versionId) throws Exception {
     ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
     applicationLifecycleService.removeApplication(id);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -379,6 +383,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
+   * Get a list of {@link ApplicationDetail} for all applications in the given namespace
+   *
+   * @param request   {@link HttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace to get all application details
+   * @throws Exception if namespace doesn't exists or failed to get all application details
+   */
+  @GET
+  @Path("/appdetail")
+  public void getAllAppDetails(HttpRequest request, HttpResponder responder,
+                               @PathParam("namespace-id") String namespace) throws Exception {
+    NamespaceId namespaceId = validateNamespace(namespace);
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(applicationLifecycleService.getApps(namespaceId, detail -> true)));
+  }
+
+  /**
    * Gets {@link ApplicationDetail} for a set of applications. It expects a post body as a array of object, with each
    * object specifying the applciation id and an optional version. E.g.
    *
@@ -391,14 +412,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * ]
    * }
    * </pre>
-   *
+   * <p>
    * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
    * failure for each of the requested application in the same order as the request.
    */
   @POST
   @Path("/appdetail")
-  public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespace) throws Exception {
+  public void getAppDetailsForGivenApps(FullHttpRequest request, HttpResponder responder,
+                                        @PathParam("namespace-id") String namespace) throws Exception {
 
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
     Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.getAppDetails(appIds);
@@ -416,7 +437,46 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Decodes request coming from the {@link #getApplicationDetails(FullHttpRequest, HttpResponder, String)} call.
+   * Get {@link ApplicationDetail} for a given application
+   *
+   * @param request     {@link HttpRequest}
+   * @param responder   {@link HttpResponse}
+   * @param namespace   the namespace to get all application details   *
+   * @param application the id of the application to get its {@link ApplicationDetail}
+   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationDetail}
+   */
+  @GET
+  @Path("/appdetail/{app-id}")
+  public void getAppDetail(HttpRequest request, HttpResponder responder,
+                           @PathParam("namespace-id") String namespace,
+                           @PathParam("app-id") String application) throws Exception {
+    NamespaceId namespaceId = validateNamespace(namespace);
+    ApplicationId appId = validateApplicationId(namespaceId, application);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(appId)));
+  }
+
+  /**
+   * Get {@link ApplicationDetail} for a given application
+   *
+   * @param request     {@link HttpRequest}
+   * @param responder   {@link HttpResponse}
+   * @param namespace   the namespace to get all application details   *
+   * @param application the id of the application to get its {@link ApplicationDetail}
+   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationDetail}
+   */
+  @GET
+  @Path("/appdetail/{app-id}/versions/{version-id}")
+  public void getAppDetailForVersion(HttpRequest request, HttpResponder responder,
+                                     @PathParam("namespace-id") final String namespace,
+                                     @PathParam("app-id") final String application,
+                                     @PathParam("version-id") final String version) throws Exception {
+    NamespaceId namespaceId = validateNamespace(namespace);
+    ApplicationId appId = validateApplicationVersionId(namespaceId, application, version);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(appId)));
+  }
+
+  /**
+   * Decodes request coming from the {@link #getAppDetailsForGivenApps(FullHttpRequest, HttpResponder, String)} call.
    */
   private List<ApplicationId> decodeAndValidateBatchApplication(NamespaceId namespaceId,
                                                                 FullHttpRequest request) throws BadRequestException {

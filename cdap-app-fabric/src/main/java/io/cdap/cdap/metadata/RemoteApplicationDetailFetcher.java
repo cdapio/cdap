@@ -20,13 +20,11 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
-import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
-import io.cdap.cdap.error.Err;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -61,7 +59,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
    * Get the application detail for the given application id
    */
   public ApplicationDetail get(ApplicationId appId) throws IOException, NotFoundException {
-    String url = String.format("namespaces/%s/apps/%s/versions/%s",
+    String url = String.format("namespaces/%s/appdetail/%s/versions/%s",
                                appId.getNamespace(), appId.getApplication(), appId.getVersion());
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
@@ -73,7 +71,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
    * Get details of all applications in the given namespace
    */
   public List<ApplicationDetail> list(String namespace) throws IOException, NamespaceNotFoundException {
-    String url = String.format("namespaces/%s/apps", namespace);
+    String url = String.format("namespaces/%s/appdetail", namespace);
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     try {
