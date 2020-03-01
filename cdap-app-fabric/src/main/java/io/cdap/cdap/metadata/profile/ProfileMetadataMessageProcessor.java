@@ -248,8 +248,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         try {
           appDetail = appDetailFetcher.get(appId);
         } catch (ApplicationNotFoundException e) {
-          LOG.debug("Fail to get metadata of application {}, so the profile metadata of its programs/schedules will not get " +
-                      "updated. Ignoring the message {}: {}", appId, message, e);
+          LOG.debug("Fail to get metadata of application {}, so the profile metadata of its programs/schedules "
+                    "will not get updated. Ignoring the message {}: {}", appId, message, e);
           return;
         } catch (Exception e) {
           throw new IOException(String.format("Failed to get application detail for application %s", appId.toString()),
@@ -369,7 +369,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       scheduleList = scheduleFetcher.list(programId);
     } catch (Exception e) {
       Throwables.propagateIfPossible(e);
-      throw new IOException(String.format("Failed to list scheudles for program id %s", programId.toString()), e.getCause());
+      throw new IOException(String.format("Failed to list scheudles for program id %s", programId.toString()),
+                            e.getCause());
     }
     scheduleList.forEach(schedule -> collectScheduleProfileMetadata(schedule, programProfileId, updates));
   }
