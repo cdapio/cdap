@@ -28,7 +28,7 @@ import javax.annotation.Nullable;
 
 /**
  * Represents a schedule in a REST request/response.
- *
+ * <p>
  * All fields are nullable because after Json deserialization, they may be null. Also, this is used both
  * for creating a schedule and for updating a schedule. When updating, all fields are optional - only the
  * fields that are present will be updated.
@@ -144,7 +144,7 @@ public class ScheduleDetail {
     return lastUpdateTime;
   }
 
-  public ScheduleId toScheduleId() throws NullPointerException{
+  public ScheduleId toScheduleId() throws NullPointerException {
     if (applicationVersion != null) {
       return new ScheduleId(getNamespace(),
                             getApplication(),
