@@ -80,8 +80,7 @@ public class RemoteApplicationDetailFetcher implements ApplicationDetailFetcher 
       throw new NamespaceNotFoundException(new NamespaceId(namespace));
     }
     ObjectResponse<List<ApplicationDetail>> objectResponse = ObjectResponse.fromJsonBody(
-      httpResponse, new TypeToken<List<ApplicationDetail>>() {
-      }.getType(), GSON);
+      httpResponse, new TypeToken<List<ApplicationDetail>>() { }.getType(), GSON);
     return objectResponse.getResponseObject();
   }
 

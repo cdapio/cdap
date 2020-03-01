@@ -19,6 +19,7 @@ package io.cdap.cdap.proto;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
+import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;
@@ -141,6 +142,19 @@ public class ScheduleDetail {
   @Nullable
   public Long getLastUpdateTime() {
     return lastUpdateTime;
+  }
+
+  public ScheduleId toScheduleId() throws NullPointerException{
+    if (applicationVersion != null) {
+      return new ScheduleId(getNamespace(),
+                            getApplication(),
+                            getApplicationVersion(),
+                            getName());
+    } else {
+      return new ScheduleId(getNamespace(),
+                            getApplication(),
+                            getName());
+    }
   }
 
   @Override
