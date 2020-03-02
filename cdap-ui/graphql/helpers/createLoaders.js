@@ -17,11 +17,13 @@
 const DataLoader = require('dataloader');
 const { batchProgramRuns } = require('./BatchEndpoints/programRuns');
 const { batchTotalRuns } = require('./BatchEndpoints/totalRuns');
+const { batchNextRuntime } = require('./BatchEndpoints/nextRuntime');
 
 function createLoaders(auth) {
   return {
     programRuns: new DataLoader((req) => batchProgramRuns(req, auth), { cache: false }),
     totalRuns: new DataLoader((req) => batchTotalRuns(req, auth), { cache: false }),
+    nextRuntime: new DataLoader((req) => batchNextRuntime(req, auth), { cache: false }),
   };
 }
 

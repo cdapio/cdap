@@ -170,7 +170,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
 
       }
 
-      function startClientPoll(bindings, resourceId, interval) {
+      function startClientPoll(resourceId, bindings, interval) {
         const intervalTimer = setTimeout(() => {
           const resource = bindings[resourceId].resource;
           if (!resource) {

@@ -107,20 +107,40 @@ function getRunsForFilteredPipelines() {
     appId: pipeline.name,
     ...getProgram(pipeline.artifact.name),
   }));
+  const nextRuntimePostBody = pipelinesWithoutRuns
+    .filter((pipeline) => pipeline.artifact.name === GLOBALS.etlDataPipeline)
+    .map((pipeline) => ({
+      appId: pipeline.name,
+      ...getProgram(pipeline.artifact.name),
+    }));
   const namespace = getCurrentNamespace();
   MyPipelineApi.getBatchRuns({ namespace }, postBody)
-    .combineLatest(MyPipelineApi.getRunsCount({ namespace }, postBody))
-    .subscribe(([runs, runsCount]) => {
+    .combineLatest(
+      MyPipelineApi.getRunsCount({ namespace }, postBody),
+      MyPipelineApi.batchGetNextRunTime({ namespace }, nextRuntimePostBody)
+    )
+    .subscribe(([runs, runsCount, nextRuntime]) => {
       const runsMap = Object.assign({}, ...runs.map((app) => ({ [app.appId]: app.runs })));
+      const nextRuntimeMap = Object.assign(
+        {},
+        ...nextRuntime.map((app) => ({ [app.appId]: app.schedules }))
+      );
       const runsCountMap = Object.assign(
         {},
         ...runsCount.map((app) => ({ [app.appId]: app.runCount }))
       );
+      const getNextrunTime = (nrMap, pipeline) => {
+        if (pipeline.artifact.name === GLOBALS.etlDataStreams) {
+          return [];
+        }
+        return nrMap[pipeline.name] || pipeline.nextRuntime;
+      };
       const filteredPipelinesWithRuns = filteredPipelines.map((pipeline) => {
         return {
           ...pipeline,
           runs: runsMap[pipeline.name] || pipeline.runs,
           totalRuns: runsCountMap[pipeline.name] || pipeline.totalRuns,
+          nextRuntime: getNextrunTime(nextRuntimeMap, pipeline),
         };
       });
       const pipelinesWithRuns = pipelines.map((pipeline) => {
@@ -128,6 +148,7 @@ function getRunsForFilteredPipelines() {
           ...pipeline,
           runs: runsMap[pipeline.name] || pipeline.runs,
           totalRuns: runsCountMap[pipeline.name] || pipeline.totalRuns,
+          nextRuntime: getNextrunTime(nextRuntimeMap, pipeline),
         };
       });
       Store.dispatch({
