@@ -41,13 +41,13 @@ import javax.annotation.Nullable;
 /**
  * Abstract Class that contains commonly used methods for log Http Requests.
  */
-public abstract class AbstractLogHandler extends AbstractHttpHandler {
+public abstract class AbstractLogHttpHandler extends AbstractHttpHandler {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractLogHandler.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractLogHttpHandler.class);
 
   private final String logPattern;
 
-  protected AbstractLogHandler(CConfiguration cConfig) {
+  protected AbstractLogHttpHandler(CConfiguration cConfig) {
     this.logPattern = cConfig.get(LoggingConfiguration.LOG_PATTERN, LoggingConfiguration.DEFAULT_LOG_PATTERN);
   }
 

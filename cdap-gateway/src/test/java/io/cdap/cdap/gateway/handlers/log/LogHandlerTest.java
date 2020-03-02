@@ -53,7 +53,7 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
 import io.cdap.cdap.logging.gateway.handlers.LogData;
-import io.cdap.cdap.logging.gateway.handlers.LogHandler;
+import io.cdap.cdap.logging.gateway.handlers.LogHttpHandler;
 import io.cdap.cdap.logging.guice.LogQueryServerModule;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
@@ -692,7 +692,7 @@ public class LogHandlerTest {
    *
    * @param response {@link HttpResponse}
    * @param entityId Entity for which the logs were fetched
-   * @param format {@link LogHandler.LogFormatType}
+   * @param format {@link LogHttpHandler.LogFormatType}
    * @param runIdOrFilter true if the log is fetched for a runId or a filter was used
    * @param fullLogs true if /logs endpoint was used (this is because the response format is different
    *                 for /logs vs /next or /prev)
@@ -713,7 +713,7 @@ public class LogHandlerTest {
    *
    * @param response {@link HttpResponse}
    * @param entityId Entity for which the logs were fetched
-   * @param format {@link LogHandler.LogFormatType}
+   * @param format {@link LogHttpHandler.LogFormatType}
    * @param runIdOrFilter true if the log is fetched for a runId or a filter was used
    * @param fullLogs true if /logs endpoint was used (this is because the response format is different
    *                 for /logs vs /next or /prev)
@@ -736,7 +736,7 @@ public class LogHandlerTest {
    *
    * @param response {@link HttpResponse}
    * @param entityId Entity for which the logs were fetched
-   * @param format {@link LogHandler.LogFormatType}
+   * @param format {@link LogHttpHandler.LogFormatType}
    * @param stepSize the number used to increment expected integer value in the log message every time
    * @param fullLogs true if /logs endpoint was used (this is because the response format is different
    *                 for /logs vs /next or /prev)

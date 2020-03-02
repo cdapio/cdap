@@ -32,7 +32,7 @@ import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.logging.gateway.handlers.AbstractLogHandler;
+import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.BasicThrowable;
@@ -71,7 +71,7 @@ import javax.ws.rs.QueryParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3 + "/namespaces/{namespace-id}")
-public class PreviewHttpHandler extends AbstractLogHandler {
+public class PreviewHttpHandler extends AbstractLogHttpHandler {
   private static final Logger LOG = LoggerFactory.getLogger(PreviewHttpHandler.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(BasicThrowable.class, new BasicThrowableCodec())
