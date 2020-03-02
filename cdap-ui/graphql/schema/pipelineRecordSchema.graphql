@@ -25,6 +25,7 @@ type PipelineRecord {
   ownerPrincipal: String
   runs: [PipelineRun]
   totalRuns: Int
+  nextRuntime: [PipelineSchedule]
 }
 
 type PipelineRun {
@@ -34,4 +35,9 @@ type PipelineRun {
   end: String
   status: String!
   profileId: String
+}
+
+type PipelineSchedule {
+  id: String!
+  time: String!
 }

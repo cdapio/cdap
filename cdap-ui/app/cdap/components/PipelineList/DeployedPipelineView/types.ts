@@ -24,4 +24,8 @@ export interface IPipeline {
     starting: string | number;
   }>;
   totalRuns: number;
+  nextRuntime: {
+    id: string;
+    time: string;
+  };
 }

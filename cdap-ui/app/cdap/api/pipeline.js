@@ -25,6 +25,7 @@ const schedulePath = `${basepath}/schedules/:scheduleId`;
 const programPath = `${basepath}/:programType/:programName`;
 const runsCountPath = '/namespaces/:namespace/runcount';
 const batchRunsPath = '/namespaces/:namespace/runs';
+const batchNextRuntimePath = '/namespaces/:namespace/nextruntime';
 const pluginsPath =
   '/namespaces/:namespace/artifacts/:parentArtifact/versions/:version/extensions/:extension/plugins/:pluginName';
 
@@ -43,16 +44,11 @@ export const MyPipelineApi = {
   getRunsCount: apiCreator(dataSrc, 'POST', 'REQUEST', `${runsCountPath}`),
   pollRunsCount: apiCreator(dataSrc, 'POST', 'POLL', `${runsCountPath}`),
   getNextRunTime: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/nextruntime)`),
+  batchGetNextRunTime: apiCreator(dataSrc, 'POST', 'REQUEST', batchNextRuntimePath),
   fetchMacros: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/plugins`),
   fetchWidgetJson: apiCreator(dataSrc, 'GET', 'REQUEST', artifactBasePath),
   get: apiCreator(dataSrc, 'GET', 'REQUEST', basepath),
   pollStatistics: apiCreator(dataSrc, 'GET', 'REQUEST', statsPath),
-  getNextRun: apiCreator(
-    dataSrc,
-    'GET',
-    'REQUEST',
-    `${basepath}/:programType/:programName/nextruntime`
-  ),
   getBatchRuns: apiCreator(dataSrc, 'POST', 'REQUEST', batchRunsPath),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
 

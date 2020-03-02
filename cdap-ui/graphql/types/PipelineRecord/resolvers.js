@@ -16,10 +16,11 @@
 
 import { pipelineRunsResolver } from 'gql/types/PipelineRecord/pipelineRunsResolver';
 import { totalRunsResolvers } from 'gql/types/PipelineRecord/totalRunsResolver';
-
+import { nextRuntimeResolvers } from 'gql/types/PipelineRecord/nextRuntimeResolver';
 export const PipelineRecord = {
   PipelineRecord: {
     runs: pipelineRunsResolver,
     totalRuns: totalRunsResolvers,
+    nextRuntime: nextRuntimeResolvers,
   },
 };
