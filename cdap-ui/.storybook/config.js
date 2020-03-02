@@ -13,7 +13,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
-import { configure, setAddon } from '@storybook/react';
+import { configure } from '@storybook/react';
+import T from 'i18n-react';
 
 require('font-awesome-sass-loader!../app/cdap/styles/font-awesome.config.js');
 require('../app/cdap/styles/lib-styles.scss');
@@ -22,11 +23,5 @@ require('../app/cdap/styles/main.scss');
 require('./stories.global.scss');
 require('../app/cdap/styles/bootstrap_4_patch.scss');
 
-// automatically import all files ending in *.stories.js
-const req = require.context('../app/cdap/components/', true, /.stories.tsx$/);
-function loadStories() {
-  require('./Welcome');
-  req.keys().forEach(filename => req(filename));
-}
-
-configure(loadStories, module);
+configure(require.context('../app/cdap/components/', true, /\.stories\.tsx$/), module);
+T.setTexts(require('../app/cdap/text/text-en.yaml'));

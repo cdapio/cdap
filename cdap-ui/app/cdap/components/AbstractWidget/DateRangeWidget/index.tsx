@@ -45,7 +45,7 @@ const DateRangeWidget: React.FC<IDateRangeWidgetProps> = ({
   };
 
   return (
-    <div className={classes.root}>
+    <div className={classes ? classes.root : undefined}>
       <ExpandableTimeRange
         showRange={true}
         start={startTime}
