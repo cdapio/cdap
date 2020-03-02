@@ -248,7 +248,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         try {
           appDetail = appDetailFetcher.get(appId);
         } catch (ApplicationNotFoundException e) {
-          LOG.debug("Fail to get metadata of application {}, so the profile metadata of its programs/schedules "
+          LOG.debug("Fail to get metadata of application {}, so the profile metadata of its programs/schedules " +
                     "will not get updated. Ignoring the message {}: {}", appId, message, e);
           return;
         } catch (Exception e) {
