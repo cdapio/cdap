@@ -19,6 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (): StyleRules => {
   return {
@@ -101,7 +102,7 @@ const NameDescriptionView: React.FC<INameDescriptionProps> = ({
   return (
     <div className={classes.root}>
       <div className={classes.content}>
-        <h3>Name Replicator</h3>
+        <Heading type={HeadingTypes.h3} label="Name Replicator" />
         <br />
         <Name value={localName} setName={setLocalName} />
         <br />

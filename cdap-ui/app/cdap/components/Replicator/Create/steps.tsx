@@ -16,7 +16,9 @@
 
 import NameDescription from 'components/Replicator/Create/Content/NameDescription';
 import SourceConfig from 'components/Replicator/Create/Content/SourceConfig';
+import SelectTables from 'components/Replicator/Create/Content/SelectTables';
 import TargetConfig from 'components/Replicator/Create/Content/TargetConfig';
+import Assessment from 'components/Replicator/Create/Content/Assessment';
 import Summary from 'components/Replicator/Create/Content/Summary';
 
 export const STEPS = [
@@ -29,8 +31,16 @@ export const STEPS = [
     component: SourceConfig,
   },
   {
+    label: 'Select tables',
+    component: SelectTables,
+  },
+  {
     label: 'Configure target',
     component: TargetConfig,
+  },
+  {
+    label: 'Assessment',
+    component: Assessment,
   },
   {
     label: 'Review',

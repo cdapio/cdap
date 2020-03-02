@@ -27,20 +27,29 @@ const draftPath = `${servicePath}/drafts/:draftId`;
 
 export const MyReplicatorApi = {
   getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType?scope=system`),
+  batchGetPluginsWidgets: apiCreator(
+    dataSrc,
+    'POST',
+    'REQUEST',
+    '/namespaces/:namespace/artifactproperties'
+  ),
   publish: apiCreator(dataSrc, 'PUT', 'REQUEST', appPath),
-  list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps?artifactName=delta-app'),
-  pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`),
   action: apiCreator(dataSrc, 'POST', 'REQUEST', `${programPath}/:action`),
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', appPath),
   listDrafts: apiCreator(dataSrc, 'GET', 'REQUEST', `${servicePath}/drafts`),
   putDraft: apiCreator(dataSrc, 'PUT', 'REQUEST', draftPath),
   deleteDraft: apiCreator(dataSrc, 'DELETE', 'REQUEST', draftPath),
   getDraft: apiCreator(dataSrc, 'GET', 'REQUEST', draftPath),
-  getTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/listTables`),
-  getTableInfo: apiCreator(
-    dataSrc,
-    'POST',
-    'REQUEST',
-    `${draftPath}/databases/:database/tables/:tableId/describe`
-  ),
+  listTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/listTables`),
+  getTableInfo: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/describeTable`),
+  getReplicator: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
+  pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`),
+  getStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/status`),
+  assessPipeline: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessPipeline`),
+  assessTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessTable`),
+
+  // To be replaced with GraphQL
+  list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps?artifactName=delta-app'),
+  batchStatus: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/:namespace/status'),
+  batchAppDetail: apiCreator(dataSrc, 'POST', 'REQUEST', '/namespaces/:namespace/appdetail'),
 };
