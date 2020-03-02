@@ -18,6 +18,7 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { objectQuery } from 'services/helpers';
 import difference from 'lodash/difference';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -97,7 +98,7 @@ const PluginConfigDisplayView: React.FC<IPluginConfigProps> = ({
 
   return (
     <div>
-      <h3>{displayName}</h3>
+      <Heading type={HeadingTypes.h3} label={displayName} />
 
       <div className={classes.configContainer}>
         {config.map((property) => {

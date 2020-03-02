@@ -102,6 +102,8 @@ const styles = (theme): StyleRules => {
     red: {
       color: theme.palette.red[100],
     },
+    // For some reason, losing specificity on the border color, that is why there is !important. Will need to
+    // investigate how to avoid this.
     greenBox: {
       borderLeftColor: `rgba(${convertHexToRGB(theme.palette.green[50])}, 0.6) !important`,
     },

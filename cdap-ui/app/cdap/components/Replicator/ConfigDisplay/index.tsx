@@ -18,6 +18,7 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import PluginConfigDisplay from 'components/Replicator/ConfigDisplay/PluginConfigDisplay';
 import classnames from 'classnames';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -83,7 +84,7 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
         })}
       >
         <div>
-          <h5 className={classes.sectionTitle}>SOURCE</h5>
+          <Heading type={HeadingTypes.h5} className={classes.sectionTitle} label="SOURCE" />
           <PluginConfigDisplay
             pluginInfo={sourcePluginInfo}
             pluginWidget={sourcePluginWidget}
@@ -92,7 +93,7 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
         </div>
 
         <div>
-          <h5 className={classes.sectionTitle}>TARGET</h5>
+          <Heading type={HeadingTypes.h5} className={classes.sectionTitle} label="TARGET" />
           <PluginConfigDisplay
             pluginInfo={targetPluginInfo}
             pluginWidget={targetPluginWidget}
