@@ -28,6 +28,9 @@ enum ENDPOINT {
   REGULAR = 'regular',
   ALERT = 'alert',
   ERROR = 'error',
+  CONDITION_YES = 'condition_yes',
+  CONDITION_NO = 'condition_no',
+  PORT = 'port',
 }
 
 const AbstractNodeStyles = genericNodeStyles();
@@ -51,6 +54,7 @@ export class AbstractNode<
         makeTargetParams: endpointTargetEndpointParams(`${this.props.id}-DottedEndPoint`),
         nodeId: this.props.id,
         validConnectionHandler: this.checkForValidIncomingConnection,
+        registerTypes: this.getRegisterTypes(),
       };
       this.props.initNode(initConfig);
     }
@@ -59,8 +63,12 @@ export class AbstractNode<
     return false;
   }
 
-  public getEndpointParams = () => {
-    const endPointConfigs = this.getEndpointConfig();
+  public getRegisterTypes = () => {
+    return null;
+  };
+
+  public getEndpointParams = (): any => {
+    const endPointConfigs = AbstractNode.getEndpointConfig();
     return [
       {
         element: this.regularEndpointRef,
@@ -70,7 +78,7 @@ export class AbstractNode<
     ];
   };
 
-  public getEndpointConfig = () => {
+  public static getEndpointConfig = (): any => {
     return {
       Anchor: [1, 0.5, 1, 0, 0, 2], // same as Right but moved down 2px
       isSource: true,
@@ -87,47 +95,48 @@ export class AbstractNode<
 
   public getAlertEndpointConfig = () => {
     return {
-      ...this.getEndpointConfig(),
+      ...AbstractNode.getEndpointConfig(),
       anchor: [0.5, 1, 0, 1, 1, 0], // same as Bottom but moved right 2px
     };
   };
 
   public getErrorEndpointConfig = () => {
     return {
-      ...this.getEndpointConfig(),
+      ...AbstractNode.getEndpointConfig(),
       anchor: [0.5, 1, 0, 1, 2, 0], // same as Bottom but moved right 3px
     };
   };
 
-  public checkForValidIncomingConnection = (connObj) => {
+  public checkForValidIncomingConnection = (c) => {
     return true;
+  };
+
+  public renderEndpoint = (classes) => (
+    <div
+      className={`${classes.endpointCircle} ${classes.regularEndpointCircle}`}
+      ref={(ref) => (this.regularEndpointRef = ref)}
+      data-node-type={this.type}
+      data-endpoint-type={ENDPOINT.REGULAR}
+    >
+      <div className={classes.endpointCaret} />
+    </div>
+  );
+
+  public renderContent = () => {
+    return (
+      <span>
+        {this.props.config && this.props.config.label ? this.props.config.label : this.props.id}
+      </span>
+    );
   };
 
   public render() {
     const { classes } = this.props;
-    const Endpoint = () => (
-      <div
-        className={`${classes.endpointCircle} ${classes.regularEndpointCircle}`}
-        ref={(ref) => (this.regularEndpointRef = ref)}
-        data-node-type={this.type}
-        data-endpoint-type={ENDPOINT.REGULAR}
-      >
-        <div className={classes.endpointCaret} />
-      </div>
-    );
     return (
-      <ButtonBase
-        focusRipple
-        id={this.props.id}
-        className={classes.root}
-        data-node-type={this.type}
-        focusVisibleClassName={classes.focusVisible}
-      >
-        <span>
-          {this.props.config && this.props.config.label ? this.props.config.label : this.props.id}
-        </span>
-        <Endpoint />
-      </ButtonBase>
+      <div id={this.props.id} className={classes.root} data-node-type={this.type}>
+        {this.renderContent()}
+        {this.renderEndpoint(classes)}
+      </div>
     );
   }
 }

@@ -23,6 +23,8 @@ import { TransformNode } from 'components/DAG/Nodes/TransformNode';
 import { SinkNode } from 'components/DAG/Nodes/SinkNode';
 import { AlertPublisherNode } from 'components/DAG/Nodes/AlertPublisherNode';
 import { ErrorNode } from 'components/DAG/Nodes/ErrorNode';
+import { ConditionNode } from 'components/DAG/Nodes/ConditionNode';
+import { SplitterNode } from 'components/DAG/Nodes/SplitterNode';
 import { DAGRenderer } from 'components/DAG/DAGRenderer';
 import {
   defaultJsPlumbSettings,
@@ -72,6 +74,9 @@ const styles = () => {
     errorBtn: {
       backgroundColor: '#d40001',
     },
+    conditionBtn: {
+      backgroundColor: '#4e5568',
+    },
   };
 };
 interface IDAGProps extends WithStyles<typeof styles> {}
@@ -90,7 +95,7 @@ class DAG extends React.PureComponent<IDAGProps> {
         id: `Node_${Date.now()
           .toString()
           .substring(5)}`,
-        name: 'Ma Node!',
+        name: 'Node_bleh',
       })
     );
   };
@@ -100,6 +105,8 @@ class DAG extends React.PureComponent<IDAGProps> {
     sink: SinkNode,
     alertpublisher: AlertPublisherNode,
     error: ErrorNode,
+    condition: ConditionNode,
+    splittertransform: SplitterNode,
   };
   public getButton = (type, label, className, addNode, showAlertAndError = false) => (
     <Button
@@ -160,14 +167,25 @@ class DAG extends React.PureComponent<IDAGProps> {
                         `${classes.btnStyles} ${classes.errorBtn}`,
                         context.addNode
                       )}
+                      {this.getButton(
+                        'condition',
+                        'Add Condition',
+                        `${classes.btnStyles} ${classes.conditionBtn}`,
+                        context.addNode
+                      )}
+                      {this.getButton(
+                        'splittertransform',
+                        'Add Splitter',
+                        `${classes.btnStyles} ${classes.transformBtn}`,
+                        context.addNode
+                      )}
                       <DAGRenderer
                         nodes={context.nodes}
                         connections={context.connections}
-                        onConnection={context.addConnection}
-                        onConnectionDetached={context.removeConnection}
-                        onDeleteNode={context.removeNode}
+                        addConnection={context.addConnection}
+                        removeConnection={context.removeConnection}
+                        removeNode={context.removeNode}
                         jsPlumbSettings={defaultJsPlumbSettings}
-                        // registerTypes={registerTypes}
                       >
                         {context.nodes.map((node, i) => {
                           const nodeObj = node.toJS();
