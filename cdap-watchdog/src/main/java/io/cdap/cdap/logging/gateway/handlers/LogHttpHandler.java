@@ -45,13 +45,13 @@ import javax.ws.rs.QueryParam;
  */
 @Singleton
 @Path(Constants.Gateway.API_VERSION_3)
-public class LogHandler extends AbstractLogHandler {
+public class LogHttpHandler extends AbstractLogHttpHandler {
 
   private final ProgramStore programStore;
   private final LogReader logReader;
 
   @Inject
-  public LogHandler(LogReader logReader, CConfiguration cConf, ProgramStore programStore) {
+  public LogHttpHandler(LogReader logReader, CConfiguration cConf, ProgramStore programStore) {
     super(cConf);
     this.logReader = logReader;
     this.programStore = programStore;

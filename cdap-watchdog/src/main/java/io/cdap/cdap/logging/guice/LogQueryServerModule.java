@@ -22,7 +22,7 @@ import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
-import io.cdap.cdap.logging.gateway.handlers.LogHandler;
+import io.cdap.cdap.logging.gateway.handlers.LogHttpHandler;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.http.HttpHandler;
 
@@ -35,7 +35,7 @@ public class LogQueryServerModule extends PrivateModule {
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder(), HttpHandler.class,
                                                                       Names.named(Constants.Service.LOG_QUERY));
-    handlerBinder.addBinding().to(LogHandler.class);
+    handlerBinder.addBinding().to(LogHttpHandler.class);
     CommonHandlers.add(handlerBinder);
 
     bind(LogQueryService.class).in(Scopes.SINGLETON);
