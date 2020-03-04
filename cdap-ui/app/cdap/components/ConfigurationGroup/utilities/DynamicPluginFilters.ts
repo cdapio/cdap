@@ -252,10 +252,7 @@ export function filterByCondition(
   propertiesToHide = propertiesToHide.filter(
     (property) => !objectQuery(propertiesFromBackend, property.property, 'required')
   );
-  propertiesToShow = difference(
-    propertiesToShow,
-    propertiesToHide.map((p) => p.property)
-  );
+  propertiesToShow = difference(propertiesToShow, propertiesToHide.map((p) => p.property));
   const propertiesToFilterMap = propertiesToHide.reduce(
     (prev, curr) => ({ ...prev, [curr.property]: curr.filterName }),
     {}

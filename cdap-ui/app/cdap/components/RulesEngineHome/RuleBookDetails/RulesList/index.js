@@ -92,10 +92,7 @@ class RulesList extends Component {
     this.setState(
       update(this.state, {
         rulebookRules: {
-          $splice: [
-            [dragIndex, 1],
-            [hoverIndex, 0, dragRule],
-          ],
+          $splice: [[dragIndex, 1], [hoverIndex, 0, dragRule]],
         },
       }),
       () => {

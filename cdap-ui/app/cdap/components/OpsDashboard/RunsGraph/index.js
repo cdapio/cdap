@@ -222,6 +222,9 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const RunsGraph = connect(mapStateToProps, mapDispatch)(RunsGraphView);
+const RunsGraph = connect(
+  mapStateToProps,
+  mapDispatch
+)(RunsGraphView);
 
 export default RunsGraph;

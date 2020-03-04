@@ -50,7 +50,10 @@ const mapDispatchToDndProps = (dispatch) => {
     },
   };
 };
-const ImportRulebookFile = connect(mapStateToFileDnDProps, mapDispatchToDndProps)(FileDnD);
+const ImportRulebookFile = connect(
+  mapStateToFileDnDProps,
+  mapDispatchToDndProps
+)(FileDnD);
 
 export default function RulebookUploadStep() {
   return (

@@ -37,6 +37,9 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-const EngineRadioInput = connect(mapStateToProps, mapDispatchToProps)(Input);
+const EngineRadioInput = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(Input);
 
 export default EngineRadioInput;

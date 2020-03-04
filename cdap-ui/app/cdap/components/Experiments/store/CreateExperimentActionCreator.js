@@ -602,7 +602,9 @@ const getExperimentModelSplitForCreate = (experimentId, modelId) => {
         // The error message returned from backend for this request is at err.response.message instead of just err.response
         const error = err.response.message || err.response || err;
         setExperimentCreateError(
-          `Failed to retrieve the model '${model.name}' of the experiment '${experimentId}' - ${error}`
+          `Failed to retrieve the model '${
+            model.name
+          }' of the experiment '${experimentId}' - ${error}`
         );
         setExperimentLoading(false);
         setExperimentModelForEdit(experiment, model);

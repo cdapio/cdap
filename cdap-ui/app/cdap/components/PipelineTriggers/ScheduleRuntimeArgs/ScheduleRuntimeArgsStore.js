@@ -156,10 +156,7 @@ const args = (state = DEFAULTARGS, action = defaultAction) => {
         triggeredPipelineInfo: Object.assign({}, state.triggeredPipelineInfo, {
           unMappedMacros:
             action.payload.mappingKey && action.payload.mappingValue
-              ? difference(
-                  state.triggeredPipelineInfo.macros,
-                  argsMapping.map((arg) => arg.value)
-                )
+              ? difference(state.triggeredPipelineInfo.macros, argsMapping.map((arg) => arg.value))
               : state.triggeredPipelineInfo.unMappedMacros,
         }),
       });

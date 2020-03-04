@@ -232,6 +232,9 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const DeployedActions = connect(mapStateToProps, mapDispatch)(DeployedActionsView);
+const DeployedActions = connect(
+  mapStateToProps,
+  mapDispatch
+)(DeployedActionsView);
 
 export default DeployedActions;

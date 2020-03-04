@@ -185,7 +185,9 @@ export default class ProfilesListViewInPipeline extends Component {
   renderProfileRow = (profile) => {
     let profileNamespace =
       profile.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
-    let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
+    let profileDetailsLink = `${location.protocol}//${
+      location.host
+    }/cdap/ns/${profileNamespace}/profiles/details/${profile.name}`;
     let profileName = getProfileNameWithScope(profile.name, profile.scope);
     let selectedProfile = this.state.selectedProfile || '';
     selectedProfile = extractProfileName(selectedProfile);

@@ -33,9 +33,7 @@ require('./DataPrepContentWrapper.scss');
 
 const DataPrepVisualization = Loadable({
   loader: () =>
-    import(
-      /* webpackChunkName: "DataprepVisualization" */ 'components/DataPrep/DataPrepVisualization'
-    ),
+    import(/* webpackChunkName: "DataprepVisualization" */ 'components/DataPrep/DataPrepVisualization'),
   loading: LoadingSVGCentered,
 });
 const PREFIX = 'features.DataPrep.TopPanel';
@@ -101,7 +99,10 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-const SwitchWrapper = connect(mapStateToProps, mapDispatchToProps)(ContentSwitch);
+const SwitchWrapper = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ContentSwitch);
 const Switch = () => (
   <Provider store={ViewStore}>
     <SwitchWrapper />

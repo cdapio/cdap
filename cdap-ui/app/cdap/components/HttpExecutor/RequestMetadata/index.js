@@ -103,6 +103,9 @@ MetadataRequestBody.propTypes = {
   activeTab: PropTypes.number,
 };
 
-const RequestMetadata = connect(mapStateToProps, mapDispatch)(RequestMetadataView);
+const RequestMetadata = connect(
+  mapStateToProps,
+  mapDispatch
+)(RequestMetadataView);
 
 export default RequestMetadata;

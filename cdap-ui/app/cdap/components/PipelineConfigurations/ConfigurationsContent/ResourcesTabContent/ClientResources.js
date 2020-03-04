@@ -78,6 +78,9 @@ ClientResources.propTypes = {
   onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedClientResources = connect(mapStateToProps, mapDispatchToProps)(ClientResources);
+const ConnectedClientResources = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ClientResources);
 
 export default ConnectedClientResources;

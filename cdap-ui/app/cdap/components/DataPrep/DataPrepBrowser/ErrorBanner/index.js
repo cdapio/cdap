@@ -30,6 +30,9 @@ const mapDispatchToProps = () => {
   };
 };
 
-const DataPrepErrorBanner = connect(mapStateToProps, mapDispatchToProps)(ErrorBanner);
+const DataPrepErrorBanner = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ErrorBanner);
 
 export default DataPrepErrorBanner;

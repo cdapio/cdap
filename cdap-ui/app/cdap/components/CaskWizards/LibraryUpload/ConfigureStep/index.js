@@ -122,7 +122,10 @@ const InputArtifactClassname = connect(
   mapStateToArtifactClassnameProps,
   mapDispatchToArtifactClassnameProps
 )(InputWithValidations);
-const TypeInput = connect(mapStateToArtifactTypeInputProps, mapDispatchToArtifactTypeProps)(Input);
+const TypeInput = connect(
+  mapStateToArtifactTypeInputProps,
+  mapDispatchToArtifactTypeProps
+)(Input);
 const InputArtifactVersion = connect(
   mapStateToArtifactVersionProps,
   mapDispatchToArtifactVersionProps

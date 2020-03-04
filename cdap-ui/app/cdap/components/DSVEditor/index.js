@@ -60,7 +60,10 @@ const mapDispatchToFieldNameProps = (dispatch, ownProps) => {
   };
 };
 
-let DSVRowWrapper = connect(mapStateToFieldNameProps, mapDispatchToFieldNameProps)(DSVRow);
+let DSVRowWrapper = connect(
+  mapStateToFieldNameProps,
+  mapDispatchToFieldNameProps
+)(DSVRow);
 
 export default class DSVEditor extends Component {
   constructor(props) {

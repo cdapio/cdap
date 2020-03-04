@@ -99,6 +99,9 @@ ExecutorResources.propTypes = {
   onMemoryMBChange: PropTypes.func,
 };
 
-const ConnectedExecutorResources = connect(mapStateToProps, mapDispatchToProps)(ExecutorResources);
+const ConnectedExecutorResources = connect(
+  mapStateToProps,
+  mapDispatchToProps
+)(ExecutorResources);
 
 export default ConnectedExecutorResources;
