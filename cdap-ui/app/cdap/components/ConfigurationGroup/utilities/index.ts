@@ -162,6 +162,7 @@ function addPluginFunctions(configurationGroups) {
       const pluginFunctionWidget = {
         'widget-type': 'get-schema',
         'widget-category': 'plugin',
+        name: property.name,
         'widget-attributes': {
           'output-property': pluginFunction['output-property'],
           'omit-properties': pluginFunction['omit-properties'],
