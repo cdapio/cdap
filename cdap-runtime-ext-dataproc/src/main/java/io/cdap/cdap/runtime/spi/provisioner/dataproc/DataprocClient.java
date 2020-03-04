@@ -48,7 +48,6 @@ import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
-import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
@@ -428,8 +427,8 @@ final class DataprocClient implements AutoCloseable {
 
 
       // TODO: Do not hardcode, use resources for it. Also make sure script is generic enough for any number of workers
-      builder.addInitializationActions(0, NodeInitializationAction.newBuilder()
-        .setExecutableFile("gs://blah-bucket123/zookeeper/zookeeper.sh").build());
+//      builder.addInitializationActions(0, NodeInitializationAction.newBuilder()
+//        .setExecutableFile("gs://blah-bucket123/zookeeper/zookeeper.sh").build());
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)

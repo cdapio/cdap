@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import io.cdap.cdap.runtime.spi.launcher.Launcher;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -333,5 +334,10 @@ public class DataprocProvisioner implements Provisioner {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRun.getRun();
+  }
+
+  @Override
+  public Optional<Launcher> getLauncher() {
+    return Optional.of(new DataprocLauncher());
   }
 }

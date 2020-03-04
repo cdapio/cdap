@@ -93,6 +93,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -741,15 +742,15 @@ public class LauncherTwillPreparer implements TwillPreparer {
           if (classLoader == null) {
             classLoader = getClass().getClassLoader();
           }
+          Set<String> seen = new HashSet<>();
           Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
             @Override
             public boolean accept(String className, URL classUrl, URL classPathUrl) {
-//              LOG.info("### Classname : {}", className);
               if (className.startsWith("io.cdap.") || className.startsWith("io/cdap") ||
                 className.startsWith("org.apache.twill") || className.startsWith("org/apache/twill")) {
-                LOG.info("### Filtering out class {}", className);
                 try {
                   jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                  seen.add(className);
                   try (InputStream is = classUrl.openStream()) {
                     ByteStreams.copy(is, jarOut);
                   }
@@ -760,13 +761,15 @@ public class LauncherTwillPreparer implements TwillPreparer {
               }
               return false;
             }
-          }, WrappedLauncher.class.getName(), LauncherRunner.class.getName());
+          }, DefaultRuntimeJob.class.getName());
         }
       }
     });
 
     LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
     localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
+    localFiles.put("dataproclauncher.jar", createLocalFile("dataproclauncher.jar",
+                                                           locationFactory.create(launcher.getJarURI()), false));
   }
 
   private void saveClassPaths(Path targetDir) throws IOException {

@@ -53,6 +53,7 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.launcher.Launcher;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -208,6 +209,13 @@ public class ProvisioningService extends AbstractIdleService {
     return Retries.callWithRetries(() -> provisioner.getClusterStatus(context, cluster),
                                    RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
                                    RetryableProvisionException.class::isInstance);
+  }
+
+  public Optional<Launcher> getLauncher(ProgramOptions programOptions) {
+    Map<String, String> systemArgs = programOptions.getArguments().asMap();
+    String name = SystemArguments.getProfileProvisioner(systemArgs);
+    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    return provisioner.getLauncher();
   }
 
   /**

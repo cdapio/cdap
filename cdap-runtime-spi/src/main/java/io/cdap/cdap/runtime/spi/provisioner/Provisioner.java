@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.runtime.spi.launcher.Launcher;
+
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A Provisioner is responsible for creating and deleting clusters for program runs. Each method may be retried
@@ -140,4 +143,12 @@ public interface Provisioner {
    * @return {@link Capabilities} of this provisioner
    */
   Capabilities getCapabilities();
+
+  /**
+   * get launcher implementation.
+   * @return
+   */
+  default Optional<Launcher> getLauncher() {
+    return Optional.empty();
+  }
 }

@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.launcher;
 
+import java.net.URI;
 import java.util.List;
 
 /**
@@ -27,7 +28,7 @@ public interface Launcher {
    *
    * @return
    */
-  String getName();
+  String getClassName();
 
   /**
    *
@@ -35,6 +36,12 @@ public interface Launcher {
    * @return
    */
   JobId launch(LaunchInfo launchInfo);
+
+  /**
+   *
+   * @return
+   */
+  URI getJarURI();
 
   /**
    * gets job details

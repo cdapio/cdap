@@ -25,6 +25,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
+import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -74,7 +75,8 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
   private final MultiThreadMessagingContext messagingContext;
   private final RemoteExecutionLogProcessor logProcessor;
   private final MetricsCollectionService metricsCollectionService;
-  private final Launcher launcher;
+  private final ProvisioningService provisioningService;
+  //private final Launcher launcher;
   private LocationCache locationCache;
   private Path cachePath;
 
@@ -82,7 +84,8 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
   LauncherTwillRunnerService(CConfiguration cConf, Configuration hConf,
                              LocationFactory locationFactory, MessagingService messagingService,
                              RemoteExecutionLogProcessor logProcessor,
-                             MetricsCollectionService metricsCollectionService) {
+                             MetricsCollectionService metricsCollectionService,
+                             ProvisioningService provisioningService) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -91,10 +94,11 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
     this.controllersLock = new ReentrantLock();
     this.logProcessor = logProcessor;
     this.metricsCollectionService = metricsCollectionService;
-    this.launcher = new LauncherExtensionLoader(cConf.get("launcher.extensions.dir")).get("dataproc-launcher");
-    if (this.launcher == null) {
-      LOG.info("Test Launcher is null");
-    }
+    this.provisioningService = provisioningService;
+//    this.launcher = new LauncherExtensionLoader(cConf.get("launcher.extensions.dir")).get("dataproc-launcher");
+//    if (this.launcher == null) {
+//      LOG.info("Test Launcher is null");
+//    }
   }
 
   @Override
@@ -138,6 +142,14 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
     ProgramRunId programRunId = programTwillApp.getProgramRunId();
     ProgramOptions programOptions = programTwillApp.getProgramOptions();
     LOG.info("Creating test launcher preparer with twill application");
+    Launcher launcher = null;
+    if (provisioningService.getLauncher(programOptions).isPresent()) {
+      launcher = provisioningService.getLauncher(programOptions).get();
+      LOG.info("### Launcher is not null");
+    } else {
+      LOG.info("### Program options {}", programOptions.getArguments().asMap());
+    }
+
     return new LauncherTwillPreparer(cConf, config,
                                      application.configure(), programRunId, programOptions, null,
                                      locationCache, locationFactory, launcher);

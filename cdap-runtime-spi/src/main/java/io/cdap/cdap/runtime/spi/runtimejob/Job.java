@@ -14,27 +14,17 @@
  * the License.
  */
 
-package io.cdap.cdap.runtime.spi.launcher;
+package io.cdap.cdap.runtime.spi.runtimejob;
 
 /**
- * Represents job details.
+ *
  */
-public class JobDetails {
-  private final String status;
+public interface Job {
 
   /**
-   * job details.
-   * @param status
+   * run the job.
+   *
+   * @param context
    */
-  public JobDetails(String status) {
-    this.status = status;
-  }
-
-  /**
-   *  get job status.
-   * @return job status
-   */
-  public String getStatus() {
-    return status;
-  }
+  void run(JobContext context) throws Exception;
 }

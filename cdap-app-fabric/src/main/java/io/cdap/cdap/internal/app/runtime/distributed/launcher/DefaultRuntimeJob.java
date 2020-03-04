@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.launcher;
 
-
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -47,8 +46,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
-import io.cdap.cdap.common.guice.ZKClientModule;
-import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -67,18 +64,19 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.runtimejob.Job;
+import io.cdap.cdap.runtime.spi.runtimejob.JobContext;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
-import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.common.Threads;
-import org.apache.twill.filesystem.FileContextLocationFactory;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.apache.twill.internal.zookeeper.InMemoryZKServer;
-import org.apache.twill.yarn.YarnTwillRunnerService;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -91,39 +89,18 @@ import java.util.concurrent.CompletableFuture;
 import javax.annotation.Nullable;
 
 /**
- *
+ * this is similar to {@link LauncherRunner}.
  */
-public class LauncherRunner {
-  //private static final Logger LOG = LoggerFactory.getLogger(LauncherRunner.class);
+public class DefaultRuntimeJob implements Job {
   private static final Gson GSON =
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
       .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
       .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
 
-//  public void runnerMethod() throws Exception {
-//    YarnConfiguration conf = new YarnConfiguration();
-//    LocationFactory locationFactory = new FileContextLocationFactory(conf);
-//    TwillRunnerService twillRunner = new YarnTwillRunnerService(conf, "localhost:2181", locationFactory);
-//    twillRunner.start();
-//
-//    try {
-//      TwillController controller = twillRunner.prepare(new WorkerTwillRunnable("TestWorker"))
-//        .addLogHandler(new PrinterLogHandler(new PrintWriter(System.out, true)))
-//        .start();
-//
-//      LOG.info("Job submitted");
-//      controller.awaitTerminated();
-//      LOG.info("Job completed");
-//    } finally {
-//      twillRunner.stop();
-//    }
-//  }
-
-  public void runnerMethod(String[] args) throws Exception {
+  @Override
+  public void run(JobContext context) throws Exception {
     System.setProperty(Constants.AppFabric.SPARK_COMPAT, SparkCompat.SPARK2_2_11.getCompat());
 
-    Injector injector = Guice.createInjector(createmodule());
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
     File file = new File("program.options.json");
     if (!file.exists()) {
       System.out.println("File program options does not exist " + file.getAbsoluteFile());
@@ -139,10 +116,21 @@ public class LauncherRunner {
     //System.out.println("Deserialized program options: " + programOptions);
 
     ProgramOptions deserializedOptions = GSON.fromJson(programOptions, SimpleProgramOptions.class);
+    Cluster cluster = GSON.fromJson(deserializedOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER),
+                                    Cluster.class);
+
 
     // TODO get namespace, appname, program type, program name from program options
     ProgramId programId = deserializedOptions.getProgramId();
     System.out.println("Program type : " + programId.getType());
+
+    Injector injector = Guice.createInjector(createmodule(context, cluster.getName()));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
+    for (Map.Entry<String, String> entry : context.getConfigProperties().entrySet()) {
+      System.out.println("adding : key = " + entry.getKey() + ", value = " + entry.getValue());
+      cConf.set(entry.getKey(), entry.getValue());
+    }
+
     ProgramRunner programRunner;
     if (programId.getType() == ProgramType.WORKER) {
       programRunner = injector.getInstance(DistributedWorkerProgramRunner.class);
@@ -155,7 +143,8 @@ public class LauncherRunner {
       programRunner = injector.getInstance(ProgramRunnerFactory.class).create(ProgramType.SPARK);
     }
 
-    String runIdString = args[0];
+    // TODO: (vinisha) get it from context
+    String runIdString = context.getConfigProperties().get("runid");
     Thread.currentThread().getContextClassLoader().getResource("");
     File tempDir = createTempDirectory(cConf, programId, runIdString);
     // Get the artifact details and save it into the program options.
@@ -253,7 +242,7 @@ public class LauncherRunner {
     Location programJarFileLocation =
       locationFactory.create(options.getArguments().getOption(ProgramOptionConstants.PROGRAM_JAR));
 
-   // File programJarFileLocation = new File("2.0.0-SNAPSHOT." + runId + ".jar");
+    // File programJarFileLocation = new File("2.0.0-SNAPSHOT." + runId + ".jar");
     // Take a snapshot of the JAR file to avoid program mutation
     final File unpackedDir = new File(tempDir, "unpacked");
     unpackedDir.mkdirs();
@@ -310,7 +299,7 @@ public class LauncherRunner {
     return dir;
   }
 
-  private List<Module> createmodule() {
+  private List<Module> createmodule(JobContext context, String clusterName) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(CConfiguration.create()));
     modules.add(new AuthenticationContextModules().getProgramContainerModule());
@@ -320,16 +309,47 @@ public class LauncherRunner {
       protected void configure() {
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
 
-        InMemoryZKServer server = InMemoryZKServer.builder().build();
-        server.startAndWait();
+        // start zookeeper server
+//        System.setProperty("java.net.preferIPv6Addresses", "true");
+//        System.setProperty("twill.zk.server.localhost", "true");
+//        InMemoryZKServer server = InMemoryZKServer.builder().build();
+//        server.startAndWait();
+//
+//        System.out.println("### hostname: " + clusterName);
+//        System.out.println("zookeeper server has started host: " + server.getConnectionStr());
+//        // start zookeeper service
+//        ZKClientService service = ZKClientServices.delegate(
+//          ZKClients.reWatchOnExpire(
+//            ZKClients.retryOnFailure(
+//              ZKClientService.Builder.of(server.getConnectionStr())
+//                .setSessionTimeout(40000)
+//                .build(),
+//              RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
+//            )
+//          )
+//        );
+//        System.out.println("starting zookeeper discovery service");
+//        service.start();
+//        System.out.println("zookeeper discovery service has started");
+//
+//        ZKDiscoveryService zkDiscoveryService = new ZKDiscoveryService(service);
+//        bind(DiscoveryService.class).toInstance(zkDiscoveryService);
+//        bind(DiscoveryServiceClient.class).toInstance(zkDiscoveryService);
+//
+//        YarnConfiguration conf = new YarnConfiguration();
+//        LocationFactory locationFactory = new FileContextLocationFactory(conf);
+//
+//        YarnTwillRunnerService yarnTwillRunnerService =
+//          new YarnTwillRunnerService(conf, server.getConnectionStr(), locationFactory);
+//        yarnTwillRunnerService.start();
+//        bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
+//          .toInstance(yarnTwillRunnerService);
+//        System.out.println("yarn service has started");
 
-        YarnConfiguration conf = new YarnConfiguration();
-        LocationFactory locationFactory = new FileContextLocationFactory(conf);
-        YarnTwillRunnerService yarnTwillRunnerService =
-          new YarnTwillRunnerService(conf, server.getConnectionStr(), locationFactory);
-        yarnTwillRunnerService.start();
         bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)
-          .toInstance(yarnTwillRunnerService);
+          .toInstance(context.getTwillRunnerSupplier());
+        bind(DiscoveryService.class).toInstance(context.getDiscoveryServiceSupplier());
+        bind(DiscoveryServiceClient.class).toInstance(context.getDiscoveryServiceClientSupplier());
 
         bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
 
@@ -350,8 +370,6 @@ public class LauncherRunner {
     });
 
     modules.add(new MessagingClientModule());
-    modules.add(new ZKClientModule());
-    modules.add(new ZKDiscoveryModule());
     modules.add(new DFSLocationModule());
 
     return modules;

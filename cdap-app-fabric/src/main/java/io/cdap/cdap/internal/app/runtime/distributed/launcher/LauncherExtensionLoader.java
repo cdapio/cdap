@@ -16,11 +16,11 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.launcher;
 
+import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
 
-import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -34,7 +34,7 @@ public class LauncherExtensionLoader extends AbstractExtensionLoader<String, Lau
 
   @Override
   protected Set<String> getSupportedTypesForProvider(Launcher launcher) {
-    return Collections.singleton(launcher.getName());
+    return ImmutableSet.of();
   }
 
   @Override

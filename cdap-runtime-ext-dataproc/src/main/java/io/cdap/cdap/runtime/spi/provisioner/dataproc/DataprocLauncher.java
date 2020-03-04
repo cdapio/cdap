@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.runtime.dataproc.launcher;
+package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
@@ -31,22 +31,36 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 import io.cdap.cdap.runtime.spi.launcher.JobId;
 import io.cdap.cdap.runtime.spi.launcher.LaunchInfo;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
 import io.cdap.cdap.runtime.spi.launcher.LauncherFile;
+import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.filesystem.LocalLocationFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.internal.io.BasicLocationCache;
+import org.apache.twill.internal.io.LocationCache;
+import org.apache.twill.internal.utils.Dependencies;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarOutputStream;
 
 /**
  *
@@ -54,15 +68,54 @@ import java.util.concurrent.Executors;
 public class DataprocLauncher implements Launcher {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocLauncher.class);
 
-//  @Override
-//  public String getName() {
-//    return "dataproc-launcher";
-//  }
-
+  @Override
+  public String getClassName() {
+    return DataprocLauncher.class.getName();
+  }
 
   @Override
   public URI getJarURI() {
-    return null;
+    Location location = null;
+    try {
+      Path cachePath = Files.createTempDirectory(Paths.get("/tmp").toAbsolutePath(), "launcher.cache");
+      LocationCache locationCache = new BasicLocationCache(new LocalLocationFactory().create(cachePath.toUri()));
+      location = locationCache.get("dataproclauncher.jar", new LocationCache.Loader() {
+        @Override
+        public void load(String name, Location targetLocation) throws IOException {
+          // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
+          ClassLoader classLoader = DataprocLauncher.class.getClassLoader();
+          try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
+            if (classLoader == null) {
+              classLoader = getClass().getClassLoader();
+            }
+            Set<String> seen = new HashSet<>();
+            Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+              @Override
+              public boolean accept(String className, URL classUrl, URL classPathUrl) {
+                if (className.startsWith("io.cdap.") || className.startsWith("io/cdap") ||
+                  className.startsWith("org.apache.twill") || className.startsWith("org/apache/twill")) {
+                  try {
+                    jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+                    seen.add(className);
+                    try (InputStream is = classUrl.openStream()) {
+                      ByteStreams.copy(is, jarOut);
+                    }
+                  } catch (IOException e) {
+                    throw new RuntimeException(e);
+                  }
+                  return true;
+                }
+                return false;
+              }
+            }, DataprocJobMain.class.getName(), Services.class.getName());
+          }
+        }
+      });
+    } catch (IOException e) {
+      LOG.error("### Error while creating launcher jar.", e);
+    }
+
+    return location.toURI();
   }
 
   @Override
@@ -84,13 +137,11 @@ public class DataprocLauncher implements Launcher {
       List<String> files = new ArrayList<>();
 
       // TODO parallelize this to be uploaded by multiple threads for faster job submission
-      ExecutorService executor = Executors.newFixedThreadPool(info.getLauncherFileList().size());
-
       for (LauncherFile launcherFile : info.getLauncherFileList()) {
         LOG.info("Uploading file {}", launcherFile.getName());
         uploadFile(storage, bucketName, uris, files, launcherFile);
       }
-   //   executor.awaitTermination(30, TimeUnit.MINUTES);
+      //   executor.awaitTermination(30, TimeUnit.MINUTES);
 
       List<String> archive = new ArrayList<>();
 
@@ -105,42 +156,21 @@ public class DataprocLauncher implements Launcher {
       try {
         SubmitJobRequest request;
         LOG.info("### Program type is: {}", info.getProgramType());
-
-//        if (info.getProgramType().equalsIgnoreCase("spark")) {
-//          LOG.info("Spark job request is created");
-//          request = SubmitJobRequest.newBuilder()
-//            .setRegion("us-west1")
-//            .setProjectId("vini-project-238000")
-//            .setJob(Job.newBuilder().setPlacement(JobPlacement.newBuilder()
-//                                                    .setClusterName(info.getClusterName()).build())
-//                      .setSparkJob(SparkJob.newBuilder()
-//                                     .setMainClass("io.cdap.cdap.internal.app.runtime.distributed" +
-//                                                     ".launcher.WrappedLauncher")
-//                                     .addAllJarFileUris(uris)
-//                                     .addAllFileUris(files)
-//                                     .addAllArchiveUris(archive)
-//                                     .addAllArgs(ImmutableList.of(info.getProgramId(), "abc"))
-//                                     .build())
-//                      .build())
-//            .build();
-//        } else {
-          LOG.info("Hadoop job request is created");
-          request = SubmitJobRequest.newBuilder()
-            .setRegion("us-west1")
-            .setProjectId("vini-project-238000")
-            .setJob(Job.newBuilder().setPlacement(JobPlacement.newBuilder()
-                                                    .setClusterName(info.getClusterName()).build())
-                      .setHadoopJob(HadoopJob.newBuilder()
-                                      .setMainClass("io.cdap.cdap.internal.app.runtime.distributed" +
-                                                      ".launcher.WrappedLauncher")
-                                      .addAllJarFileUris(uris)
-                                      .addAllFileUris(files)
-                                      .addAllArchiveUris(archive)
-                                      .addAllArgs(ImmutableList.of(info.getProgramId()))
-                                      .build())
-                      .build())
-            .build();
-        //}
+        LOG.info("Hadoop job request is created");
+        request = SubmitJobRequest.newBuilder()
+          .setRegion("us-west1")
+          .setProjectId("vini-project-238000")
+          .setJob(Job.newBuilder().setPlacement(JobPlacement.newBuilder()
+                                                  .setClusterName(info.getClusterName()).build())
+                    .setHadoopJob(HadoopJob.newBuilder()
+                                    .setMainClass(DataprocJobMain.class.getName())
+                                    .addAllJarFileUris(uris)
+                                    .addAllFileUris(files)
+                                    .addAllArchiveUris(archive)
+                                    .addAllArgs(ImmutableList.of(info.getProgramId()))
+                                    .build())
+                    .build())
+          .build();
         CredentialsProvider credentialsProvider = FixedCredentialsProvider
           .create(GoogleCredentials.getApplicationDefault());
         JobControllerClient client = JobControllerClient.create(
@@ -187,22 +217,9 @@ public class DataprocLauncher implements Launcher {
     if (launcherFile.getName().endsWith("jar") || launcherFile.getName().contains("cConf.xml")) {
       LOG.info("Adding {} to jar", blob.getName());
       uris.add("gs://launcher-three/" + blob.getName());
-//      if (blob.getName().startsWith("expanded.")) {
-//        // 2.0.0-SNAPSHOT.06ff0c10-0129-4c8b-aa13-03b958b408cf.jar to jar
-//        int i = blob.getName().lastIndexOf(".jar");
-////        fileSuffix = blob.getName().substring(0, i);
-////        fileSuffix = fileSuffix.substring(fileSuffix.lastIndexOf('.') + 1);
-////        LOG.info("File suffix is : {}", fileSuffix);
-//      }
     } else {
       LOG.info("Adding {} to file", blob.getName());
       files.add("gs://launcher-three/" + blob.getName());
     }
-    //return fileSuffix;
-  }
-
-  @Override
-  public String getClassName() {
-    return null;
   }
 }
