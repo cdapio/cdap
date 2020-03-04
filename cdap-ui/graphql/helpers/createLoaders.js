@@ -17,10 +17,12 @@
 import DataLoader from 'dataloader';
 import { batchProgramRuns } from 'gql/helpers/BatchEndpoints/programRuns';
 import { batchTotalRuns } from 'gql/helpers/BatchEndpoints/totalRuns';
+import { batchNextRuntime } from 'gql/helpers/BatchEndpoints/nextRuntime';
 
 export function createLoaders(auth) {
   return {
     programRuns: new DataLoader((req) => batchProgramRuns(req, auth), { cache: false }),
     totalRuns: new DataLoader((req) => batchTotalRuns(req, auth), { cache: false }),
+    nextRuntime: new DataLoader((req) => batchNextRuntime(req, auth), { cache: false }),
   };
 }

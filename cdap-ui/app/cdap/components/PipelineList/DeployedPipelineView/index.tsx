@@ -45,7 +45,11 @@ const DeployedPipeline: React.FC = () => {
           status,
           starting
         },
-        totalRuns
+        totalRuns,
+        nextRuntime {
+          id,
+          time
+        }
       }
     }
   `;
