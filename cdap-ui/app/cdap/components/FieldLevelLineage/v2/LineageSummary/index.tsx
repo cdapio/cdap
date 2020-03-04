@@ -283,7 +283,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
                     })}
                   </div>
                   <div data-cy="target-fields" className={this.props.classes.summaryCol}>
-                    <FllHeader type="target" total={Object.keys(targetFields).length} />
+                    <FllHeader type="target" total={targetFields.fields.length} />
                     <FllTable tableId={target} tableInfo={targetFields} type="target" />
                   </div>
                   <div data-cy="impact-fields" className={this.props.classes.summaryCol}>

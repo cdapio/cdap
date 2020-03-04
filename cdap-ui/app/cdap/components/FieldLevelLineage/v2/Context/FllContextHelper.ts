@@ -20,12 +20,13 @@ import { parseQueryString } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyMetadataApi } from 'api/metadata';
 import { Theme } from 'services/ThemeHelper';
-import { IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import { IContextState, ITimeType } from 'components/FieldLevelLineage/v2/Context/FllContext';
 
 // types for backend response
 interface IFllEntity {
   entityId?: IEntityId;
   relations?: IResLink[];
+  fieldCount?: number;
 }
 
 interface IEntityId {
@@ -71,6 +72,9 @@ export interface ITableInfo {
   fields?: IField[];
   namespace?: string;
   dataset?: string;
+  fieldCount?: number;
+  unrelatedFields?: IField[];
+  isExpanded?: boolean;
 }
 
 export interface ITimeParams {
@@ -152,6 +156,7 @@ export function getLinks(
     // tables keeps track of datasets and fields that need to be rendered.
     tables[tableId] = {
       fields: [],
+      fieldCount: ent.fieldCount,
       dataset: ent.entityId.dataset,
       namespace: ent.entityId.namespace,
     };
@@ -412,4 +417,39 @@ export function getOperations(
     const operations = res[direction];
     cb(operations);
   });
+}
+
+export function fetchUnrelatedFields(
+  namespace: string,
+  tablename: string,
+  type: string,
+  relatedFields: IField[],
+  start: ITimeType,
+  end: ITimeType
+) {
+  const isUnrelatedField = (fieldname, fields) => {
+    const fieldId = getFieldId(fieldname, tablename, namespace, type);
+    return fields.filter((field) => field.id === fieldId).length === 0;
+  };
+
+  const getFieldProperties = (fieldname) => {
+    const fieldProperties: IField = {
+      type,
+      namespace,
+      name: fieldname,
+      dataset: tablename,
+      id: getFieldId(fieldname, tablename, namespace, type),
+    };
+    return fieldProperties;
+  };
+
+  const params = { namespace, entityId: tablename, start, end };
+
+  const fieldsObservable = MyMetadataApi.getFields(params).map((res) => {
+    // Filter out fields that are already being rendered (to keep field order) and add field properties
+    return res
+      .filter((fieldname) => isUnrelatedField(fieldname, relatedFields))
+      .map((fieldname) => getFieldProperties(fieldname));
+  });
+  return fieldsObservable;
 }

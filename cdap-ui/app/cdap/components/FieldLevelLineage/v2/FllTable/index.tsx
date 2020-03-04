@@ -24,6 +24,8 @@ import { IField, ITableInfo } from 'components/FieldLevelLineage/v2/Context/FllC
 import FllField from 'components/FieldLevelLineage/v2/FllTable/FllField';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import FllTableHeader from 'components/FieldLevelLineage/v2/FllTable/FllTableHeader';
+import ExpandableField from 'components/FieldLevelLineage/v2/FllTable/FllExpandableField';
+import If from 'components/If';
 
 // TO DO: Consolidate different fontsizes in ThemeWrapper
 const styles = (theme) => {
@@ -95,43 +97,44 @@ function renderGridHeader(
   );
 }
 
-function renderGridBody(fields: IField[], tableName: string, activeFields = new Set(), classes) {
+function renderGridBody(
+  fields: IField[],
+  tableId: string,
+  activeFields = new Set(),
+  hasUnrelatedFields: boolean = false,
+  isExpanded: boolean = false,
+  handleClick: () => void,
+  classes
+) {
+  const namespace = fields[0].namespace;
   return (
     <div
       className={classes.gridBody}
-      id={tableName}
-      data-tablename={fields[0].dataset}
-      data-namespace={fields[0].namespace}
+      id={tableId}
+      data-tablename={tableId}
+      data-namespace={namespace}
     >
       {fields.map((field) => {
         const isActiveField = activeFields.has(field.id);
         return <FllField key={field.id} field={field} isActive={isActiveField} />;
       })}
+      <If condition={hasUnrelatedFields}>
+        <ExpandableField
+          isExpanded={isExpanded}
+          handleClick={handleClick}
+          tablename={fields[0].dataset}
+        />
+      </If>
     </div>
   );
 }
 
 function FllTable({ tableId, tableInfo, type, isActive, classes }: ITableProps) {
   const GRID_HEADERS = [{ property: 'name', label: tableId }];
-  const { target, activeCauseSets, activeImpactSets } = useContext<IContextState>(FllContext);
-  const fields = tableInfo ? tableInfo.fields : [];
-  const isTarget = type === 'target';
-
-  // get fields that are a direct cause or impact to selected field
-  let activeFields = [];
-  if (isActive && !isTarget) {
-    if (type === 'cause' && Object.keys(activeCauseSets).length > 0) {
-      activeFields = activeCauseSets[tableId].fields;
-    } else if (type === 'impact' && Object.keys(activeImpactSets).length > 0) {
-      activeFields = activeImpactSets[tableId].fields;
-    }
-  }
-
-  const activeFieldIds = new Set(
-    activeFields.map((field) => {
-      return field.id;
-    })
-  );
+  const { target, activeCauseSets, activeImpactSets, handleExpandFields } = useContext<
+    IContextState
+  >(FllContext);
+  let fields = tableInfo ? tableInfo.fields : [];
 
   if (!fields || fields.length === 0) {
     return (
@@ -140,6 +143,44 @@ function FllTable({ tableId, tableInfo, type, isActive, classes }: ITableProps) 
       </div>
     );
   }
+
+  const unrelatedFields = tableInfo.unrelatedFields;
+  const fieldCount = tableInfo.fieldCount;
+  const isExpanded = tableInfo.isExpanded || false;
+  const isTarget = type === 'target';
+  const hasUnrelatedFields = fields.length < fieldCount;
+
+  // If there are unrelated fields AND the user has expanded to see all fields
+  // render the unrelated fields
+  if (unrelatedFields && isExpanded) {
+    fields = fields.concat(unrelatedFields);
+  }
+
+  // get fields that are a direct cause or impact to selected field
+  const getActiveFields = () => {
+    let activeFields = [];
+    if (isActive && !isTarget) {
+      if (type === 'cause' && Object.keys(activeCauseSets).length > 0) {
+        activeFields = activeCauseSets[tableId].fields;
+      } else if (type === 'impact' && Object.keys(activeImpactSets).length > 0) {
+        activeFields = activeImpactSets[tableId].fields;
+      }
+    }
+    return activeFields;
+  };
+
+  const activeFieldIds = new Set(
+    getActiveFields().map((field) => {
+      return field.id;
+    })
+  );
+
+  const handleClick = () => {
+    const namespace = fields[0].namespace;
+    const tablename = fields[0].dataset;
+
+    handleExpandFields(namespace, tablename, type);
+  };
 
   return (
     <SortableStickyGrid
