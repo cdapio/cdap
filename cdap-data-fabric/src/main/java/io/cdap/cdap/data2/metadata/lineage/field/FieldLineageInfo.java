@@ -329,18 +329,30 @@ public class FieldLineageInfo {
       computeAndValidateFieldLineageInfo(this.operations);
     }
 
+    Map<String, Set<EndPointField>> operationEndPointMap = new HashMap<>();
     Map<EndPointField, Set<EndPointField>> summary = new HashMap<>();
     for (WriteOperation write : writeOperations) {
       List<InputField> inputs = write.getInputs();
       for (InputField input : inputs) {
-        computeIncomingSummaryHelper(new EndPointField(write.getDestination(), input.getName()),
-                                     operationsMap.get(input.getOrigin()), write, summary);
+        EndPointField dest = new EndPointField(write.getDestination(), input.getName());
+        if (operationEndPointMap.containsKey(input.getOrigin())) {
+          summary.put(dest, new HashSet<>(operationEndPointMap.get(input.getOrigin())));
+          continue;
+        }
+        summary.put(dest, computeIncomingSummaryHelper(operationsMap.get(input.getOrigin()), write,
+                                                       operationEndPointMap));
       }
     }
     for (TransformOperation transform : dropTransforms) {
       for (InputField input : transform.getInputs()) {
         Operation previous = operationsMap.get(input.getOrigin());
-        computeIncomingSummaryHelper(NULL_EPF, previous, transform, summary);
+        // drop transforms uses a common NULL endpoint as key
+        Set<EndPointField> endPointFields = summary.computeIfAbsent(NULL_EPF, k -> new HashSet<>());
+        if (operationEndPointMap.containsKey(input.getOrigin())) {
+          endPointFields.addAll(new HashSet<>(operationEndPointMap.get(input.getOrigin())));
+          continue;
+        }
+        endPointFields.addAll(computeIncomingSummaryHelper(previous, transform, operationEndPointMap));
       }
     }
     return summary;
@@ -349,18 +361,17 @@ public class FieldLineageInfo {
   /**
    * Helper method to compute the incoming summary
    *
-   * @param field the {@link EndPointField} whose summary needs to be calculated
    * @param currentOperation the operation being processed. Since we are processing incoming this operation is on the
    * left side if graph is imagined in horizontal orientation or this operation is the input to the to
    * previousOperation
    * @param previousOperation the previous operation which is processed and reside on right to the current operation if
    * the graph is imagined to be in horizontal orientation.
-   * @param summary a {@link Map} of {@link EndPointField} to {@link Set} of {@link EndPointField} which represents all
-   * the fields which have incoming connection the key field
+   * @param operationEndPointMap a map that contains the operation name to the final endpoint field it will generate,
+   * this is used to track the path we already computed to ensure we do not do the same computation again
    */
-  private void computeIncomingSummaryHelper(EndPointField field, Operation currentOperation,
-                                            Operation previousOperation,
-                                            Map<EndPointField, Set<EndPointField>> summary) {
+  private Set<EndPointField> computeIncomingSummaryHelper(Operation currentOperation,
+                                                          Operation previousOperation,
+                                                          Map<String, Set<EndPointField>> operationEndPointMap) {
     if (currentOperation.getType() == OperationType.READ) {
       // if current operation is of type READ, previous operation must be of type TRANSFORM or WRITE
       // get only the input fields from the previous operations for which the origin is current READ operation
@@ -372,7 +383,8 @@ public class FieldLineageInfo {
         TransformOperation previousTransform = (TransformOperation) previousOperation;
         inputFields = new HashSet<>(previousTransform.getInputs());
       }
-      Set<EndPointField> sourceEndPointFields = summary.computeIfAbsent(field, k -> new HashSet<>());
+
+      Set<EndPointField> sourceEndPointFields = new HashSet<>();
 
       // for all the input fields of the previous operation if the origin was current operation (remember we are
       // traversing backward)
@@ -384,9 +396,10 @@ public class FieldLineageInfo {
         }
       }
       // reached the end of graph unwind the recursive calls
-      return;
+      return sourceEndPointFields;
     }
 
+    Set<EndPointField> relatedSources = new HashSet<>();
     // for transform we traverse backward in graph further through the inputs of the transform
     if (currentOperation.getType() == OperationType.TRANSFORM) {
       TransformOperation transform = (TransformOperation) currentOperation;
@@ -395,9 +408,16 @@ public class FieldLineageInfo {
         .map(InputField::getOrigin)
         .collect(Collectors.toSet());
       for (String transformOrigin : transformOrigins) {
-        computeIncomingSummaryHelper(field, operationsMap.get(transformOrigin), currentOperation, summary);
+        if (operationEndPointMap.containsKey(transformOrigin)) {
+          relatedSources.addAll(operationEndPointMap.get(transformOrigin));
+        } else {
+          relatedSources.addAll(
+            computeIncomingSummaryHelper(operationsMap.get(transformOrigin), currentOperation, operationEndPointMap));
+        }
       }
+      operationEndPointMap.put(currentOperation.getName(), relatedSources);
     }
+    return relatedSources;
   }
 
   private Map<EndPointField, Set<EndPointField>> computeOutgoingSummary() {

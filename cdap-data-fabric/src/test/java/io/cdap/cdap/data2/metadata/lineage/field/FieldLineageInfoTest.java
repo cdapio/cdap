@@ -40,6 +40,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Test for {@link FieldLineageInfo}
@@ -48,6 +54,51 @@ public class FieldLineageInfoTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+
+  @Test
+  public void testLargeLineageOperation() throws InterruptedException, ExecutionException, TimeoutException {
+    List<String> inputs = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      inputs.add("num" + i);
+    }
+
+    List<Operation> operations = new ArrayList<>();
+    operations.add(new ReadOperation("read", "Read from something", EndPoint.of("start"), inputs));
+
+    // generate 500+ operations with 5 identity + all-to-all combos
+    generateLineage(inputs, operations, "first identity", "read", "alltoall1");
+    generateLineage(inputs, operations, "second identity", "alltoall1", "alltoall2");
+    generateLineage(inputs, operations, "third identity", "alltoall2","alltoall3");
+    generateLineage(inputs, operations, "forth identity", "alltoall3","alltoall4");
+    generateLineage(inputs, operations, "fifth identity", "alltoall4", "alltoall5");
+
+    List<InputField> newList = new ArrayList<>();
+    inputs.forEach(s -> newList.add(InputField.of("alltoall5", s)));
+    WriteOperation operation = new WriteOperation("Write", "", EndPoint.of("dest"), newList);
+    operations.add(operation);
+
+    ExecutorService executor = Executors.newSingleThreadExecutor();
+    Future<FieldLineageInfo> future = executor.submit(() -> new FieldLineageInfo(operations));
+    FieldLineageInfo info = null;
+    try {
+      // this should run within seconds, giving 10 seconds should be enough
+      info = future.get(10, TimeUnit.SECONDS);
+    } finally {
+      executor.shutdownNow();
+    }
+
+    Assert.assertNotNull(info);
+    Set<EndPointField> relatedSources = new HashSet<>();
+    Map<EndPointField, Set<EndPointField>> expectedIncoming = new HashMap<>();
+    for (int i = 0; i < inputs.size(); i++) {
+      relatedSources.add(new EndPointField(EndPoint.of("start"), "num" + i));
+    }
+    for (int i = 0; i < inputs.size(); i++) {
+      EndPointField key = new EndPointField(EndPoint.of("dest"), "num" + i);
+      expectedIncoming.put(key, relatedSources);
+    }
+    Assert.assertEquals(expectedIncoming, info.getIncomingSummary());
+  }
 
   @Test
   public void testInvalidOperations() {
@@ -340,7 +391,7 @@ public class FieldLineageInfoTest {
   }
 
   @Test
-  public void testMultiSourceSingleDestinationWithoutMerge() {
+  public void testMultiSourceSingleDestinationWithoutMerge() throws InterruptedException {
     // pRead: personFile -> (offset, body)
     // parse: body -> (id, name, address)
     // cRead: codeFile -> id
@@ -878,5 +929,25 @@ public class FieldLineageInfoTest {
     int aIndex = list.indexOf(a);
     int bIndex = list.indexOf(b);
     Assert.assertTrue(aIndex < bIndex);
+  }
+
+  private void generateLineage(List<String> inputs, List<Operation> operations, String identityNamePrefix,
+                               String identityOrigin, String transform) {
+    // emit identity transform for all fields
+    for (int i = 0; i < inputs.size(); i++) {
+      operations.add(new TransformOperation(identityNamePrefix + i, "identity transform",
+                                            Collections.singletonList(InputField.of(identityOrigin, inputs.get(i))),
+                                            inputs.get(i)));
+    }
+
+    // generate an all-to-all, so that when track back, this operation has to track back to all the previous
+    // identity transform
+    List<InputField> inputFields = new ArrayList<>();
+    for (int i = 0; i < inputs.size(); i++) {
+      inputFields.add(InputField.of(identityNamePrefix + i, inputs.get(i)));
+    }
+    TransformOperation parse = new TransformOperation(transform, "all to all transform",
+                                                      inputFields, inputs);
+    operations.add(parse);
   }
 }
