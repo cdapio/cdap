@@ -30,6 +30,7 @@ import javax.annotation.Nullable;
 public class AppRequest<T> {
   private final ArtifactSummary artifact;
   private final T config;
+  private final T configuration;
   private final PreviewConfig preview;
   @SerializedName("principal")
   private final String ownerPrincipal;
@@ -60,6 +61,9 @@ public class AppRequest<T> {
     this.preview = preview;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
+
+    // This should never be set programmatically, this is added as a workaround for JIRA issue CDAP-16211
+    this.configuration = null;
   }
 
   public ArtifactSummary getArtifact() {
@@ -68,7 +72,7 @@ public class AppRequest<T> {
 
   @Nullable
   public T getConfig() {
-    return config;
+    return config != null ? config : configuration;
   }
 
   @Nullable
