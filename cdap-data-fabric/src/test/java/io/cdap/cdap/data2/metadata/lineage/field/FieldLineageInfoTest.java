@@ -33,6 +33,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,6 +47,43 @@ public class FieldLineageInfoTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+
+  @Test(timeout = 10000)
+  public void testLargeLineageOperation() {
+    List<String> inputs = new ArrayList<>();
+    for (int i = 0; i < 100; i++) {
+      inputs.add("num" + i);
+    }
+
+    List<Operation> operations = new ArrayList<>();
+    operations.add(new ReadOperation("read", "Read from something", EndPoint.of("start"), inputs));
+
+    // generate 500+ operations with 5 identity + all-to-all combos
+    generateLineage(inputs, operations, "first identity", "read", "alltoall1");
+    generateLineage(inputs, operations, "second identity", "alltoall1", "alltoall2");
+    generateLineage(inputs, operations, "third identity", "alltoall2", "alltoall3");
+    generateLineage(inputs, operations, "forth identity", "alltoall3", "alltoall4");
+    generateLineage(inputs, operations, "fifth identity", "alltoall4", "alltoall5");
+
+    List<InputField> newList = new ArrayList<>();
+    inputs.forEach(s -> newList.add(InputField.of("alltoall5", s)));
+    WriteOperation operation = new WriteOperation("Write", "", EndPoint.of("dest"), newList);
+    operations.add(operation);
+
+    FieldLineageInfo info = new FieldLineageInfo(operations);
+
+    Assert.assertNotNull(info);
+    Set<EndPointField> relatedSources = new HashSet<>();
+    Map<EndPointField, Set<EndPointField>> expectedIncoming = new HashMap<>();
+    for (int i = 0; i < inputs.size(); i++) {
+      relatedSources.add(new EndPointField(EndPoint.of("start"), "num" + i));
+    }
+    for (int i = 0; i < inputs.size(); i++) {
+      EndPointField key = new EndPointField(EndPoint.of("dest"), "num" + i);
+      expectedIncoming.put(key, relatedSources);
+    }
+    Assert.assertEquals(expectedIncoming, info.getIncomingSummary());
+  }
 
   @Test
   public void testInvalidOperations() {
@@ -797,5 +835,25 @@ public class FieldLineageInfoTest {
     int aIndex = list.indexOf(a);
     int bIndex = list.indexOf(b);
     Assert.assertTrue(aIndex < bIndex);
+  }
+
+  private void generateLineage(List<String> inputs, List<Operation> operations, String identityNamePrefix,
+                               String identityOrigin, String transform) {
+    // emit identity transform for all fields
+    for (int i = 0; i < inputs.size(); i++) {
+      operations.add(new TransformOperation(identityNamePrefix + i, "identity transform",
+                                            Collections.singletonList(InputField.of(identityOrigin, inputs.get(i))),
+                                            inputs.get(i)));
+    }
+
+    // generate an all-to-all, so that when track back, this operation has to track back to all the previous
+    // identity transform
+    List<InputField> inputFields = new ArrayList<>();
+    for (int i = 0; i < inputs.size(); i++) {
+      inputFields.add(InputField.of(identityNamePrefix + i, inputs.get(i)));
+    }
+    TransformOperation parse = new TransformOperation(transform, "all to all transform",
+                                                      inputFields, inputs);
+    operations.add(parse);
   }
 }
