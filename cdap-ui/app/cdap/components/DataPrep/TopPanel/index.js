@@ -40,7 +40,9 @@ const SchemaModal = Loadable({
 });
 const AddToPipelineModal = Loadable({
   loader: () =>
-    import(/* webpackChunkName: "AddToPipelineModal" */ 'components/DataPrep/TopPanel/AddToPipelineModal'),
+    import(
+      /* webpackChunkName: "AddToPipelineModal" */ 'components/DataPrep/TopPanel/AddToPipelineModal'
+    ),
   loading: LoadingSVGCentered,
 });
 const UpgradeModal = Loadable({
@@ -50,7 +52,9 @@ const UpgradeModal = Loadable({
 });
 const IngestDataFromDataPrep = Loadable({
   loader: () =>
-    import(/* webpackChunkName: "IngestDataFromDataPrep" */ 'components/DataPrep/TopPanel/IngestDataFromDataPrep'),
+    import(
+      /* webpackChunkName: "IngestDataFromDataPrep" */ 'components/DataPrep/TopPanel/IngestDataFromDataPrep'
+    ),
   loading: LoadingSVGCentered,
 });
 

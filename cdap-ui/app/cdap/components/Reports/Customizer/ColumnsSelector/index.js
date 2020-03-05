@@ -88,9 +88,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const ColumnsSelector = connect(
-  mapStateToProps,
-  mapDispatch
-)(ColumnsSelectorView);
+const ColumnsSelector = connect(mapStateToProps, mapDispatch)(ColumnsSelectorView);
 
 export default ColumnsSelector;

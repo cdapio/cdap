@@ -161,10 +161,7 @@ const ExperiementDescriptionWrapper = connect(
   mapStateToDescriptionProps,
   mapDispatchToDescriptionToProps
 )(ExperimentDescription);
-const ExperimentNameWrapper = connect(
-  mapStateToNameProps,
-  mapDispatchToNameProps
-)(ExperimentName);
+const ExperimentNameWrapper = connect(mapStateToNameProps, mapDispatchToNameProps)(ExperimentName);
 const ExperimentOutcomeWrapper = connect(
   mapStateToOutcomeProps,
   mapDispatchToOutcomeProps

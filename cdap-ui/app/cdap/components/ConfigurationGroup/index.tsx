@@ -73,61 +73,55 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   const [filteredConfigurationGroups, setFilteredConfigurationGroups] = React.useState([]);
 
   // Initialize the configurationGroups based on widgetJson and pluginProperties obtained from backend
-  React.useEffect(
-    () => {
-      if (!pluginProperties) {
-        return;
-      }
+  React.useEffect(() => {
+    if (!pluginProperties) {
+      return;
+    }
 
-      const widgetConfigurationGroup = objectQuery(widgetJson, 'configuration-groups');
-      const widgetOutputs = objectQuery(widgetJson, 'outputs');
-      const processedConfigurationGroup = processConfigurationGroups(
-        pluginProperties,
-        widgetConfigurationGroup,
-        widgetOutputs
-      );
+    const widgetConfigurationGroup = objectQuery(widgetJson, 'configuration-groups');
+    const widgetOutputs = objectQuery(widgetJson, 'outputs');
+    const processedConfigurationGroup = processConfigurationGroups(
+      pluginProperties,
+      widgetConfigurationGroup,
+      widgetOutputs
+    );
 
-      setConfigurationGroups(processedConfigurationGroup.configurationGroups);
+    setConfigurationGroups(processedConfigurationGroup.configurationGroups);
 
-      // set default values
-      const defaultValues = processedConfigurationGroup.defaultValues;
-      const newValues = {
-        ...defaultValues,
-        ...values,
-      };
+    // set default values
+    const defaultValues = processedConfigurationGroup.defaultValues;
+    const newValues = {
+      ...defaultValues,
+      ...values,
+    };
 
-      changeParentHandler(newValues);
-    },
-    [widgetJson, pluginProperties]
-  );
+    changeParentHandler(newValues);
+  }, [widgetJson, pluginProperties]);
 
   // Watch for changes in values to determine dynamic widget
-  React.useEffect(
-    () => {
-      let newFilteredConfigurationGroup;
+  React.useEffect(() => {
+    let newFilteredConfigurationGroup;
 
-      try {
-        newFilteredConfigurationGroup = filterByCondition(
-          configurationGroups,
-          widgetJson,
-          pluginProperties,
-          values
-        );
-      } catch (e) {
-        newFilteredConfigurationGroup = configurationGroups;
-        // tslint:disable:no-console
-        console.log('Issue with applying filters: ', e);
-      }
+    try {
+      newFilteredConfigurationGroup = filterByCondition(
+        configurationGroups,
+        widgetJson,
+        pluginProperties,
+        values
+      );
+    } catch (e) {
+      newFilteredConfigurationGroup = configurationGroups;
+      // tslint:disable:no-console
+      console.log('Issue with applying filters: ', e);
+    }
 
-      referenceValueForUnMount.current = {
-        configurationGroups: newFilteredConfigurationGroup,
-        values,
-      };
+    referenceValueForUnMount.current = {
+      configurationGroups: newFilteredConfigurationGroup,
+      values,
+    };
 
-      setFilteredConfigurationGroups(newFilteredConfigurationGroup);
-    },
-    [values, configurationGroups]
-  );
+    setFilteredConfigurationGroups(newFilteredConfigurationGroup);
+  }, [values, configurationGroups]);
 
   // This onUnMount is to make sure we clear out all properties that are hidden.
   React.useEffect(() => {
@@ -169,18 +163,12 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   const [groups, setGroups] = React.useState([]);
   const [orphanErrors, setOrphanErrors] = React.useState([]);
   // TODO: Revisit these hooks for errors. These don't seem to be necessary.
-  React.useEffect(
-    () => {
-      setGroups(constructGroups);
-    },
-    [filteredConfigurationGroups, errors]
-  );
-  React.useEffect(
-    () => {
-      setOrphanErrors(constructOrphanErrors);
-    },
-    [usedErrors]
-  );
+  React.useEffect(() => {
+    setGroups(constructGroups);
+  }, [filteredConfigurationGroups, errors]);
+  React.useEffect(() => {
+    setOrphanErrors(constructOrphanErrors);
+  }, [usedErrors]);
 
   function constructGroups() {
     const newUsedErrors = {};

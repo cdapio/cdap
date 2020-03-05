@@ -69,9 +69,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const ViewByOptionSelector = connect(
-  mapStateToProps,
-  mapDispatch
-)(ViewByOptionSelectorComp);
+const ViewByOptionSelector = connect(mapStateToProps, mapDispatch)(ViewByOptionSelectorComp);
 
 export default ViewByOptionSelector;

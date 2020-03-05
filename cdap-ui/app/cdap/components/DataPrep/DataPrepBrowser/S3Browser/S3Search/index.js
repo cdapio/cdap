@@ -50,8 +50,5 @@ const mapDispatchToProps = () => {
   };
 };
 
-const S3Search = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(SearchBox);
+const S3Search = connect(mapStateToProps, mapDispatchToProps)(SearchBox);
 export default S3Search;
