@@ -82,9 +82,6 @@ const mapDispatchToProps = () => {
   };
 };
 
-const S3PathWrapper = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(S3Path);
+const S3PathWrapper = connect(mapStateToProps, mapDispatchToProps)(S3Path);
 
 export default S3PathWrapper;

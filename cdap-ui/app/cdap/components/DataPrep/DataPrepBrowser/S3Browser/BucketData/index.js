@@ -118,9 +118,6 @@ const mapDispatchToProps = () => {
   };
 };
 
-const BucketDataWrapper = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(BucketData);
+const BucketDataWrapper = connect(mapStateToProps, mapDispatchToProps)(BucketData);
 
 export default BucketDataWrapper;

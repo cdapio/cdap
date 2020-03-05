@@ -19,6 +19,7 @@ import { Observable } from 'rxjs/Observable';
 import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
+import { Map } from 'immutable';
 
 const parentArtifact = 'delta-app';
 const version = '0.1.0-SNAPSHOT';
@@ -216,7 +217,14 @@ export function fetchPluginsAndWidgets(pluginType) {
 }
 
 export function generateTableKey(row) {
-  return `db-${row.database}-table-${row.table}`;
+  let database = row.database;
+  let table = row.table;
+  if (Map.isMap(row)) {
+    database = row.get('database');
+    table = row.get('table');
+  }
+
+  return `db-${database}-table-${table}`;
 }
 
 interface IColumn {

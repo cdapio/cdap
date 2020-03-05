@@ -247,7 +247,9 @@ class CDAP extends Component {
                 }
                 const SampleTSXComponent = Loadable({
                   loader: () =>
-                    import(/* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'),
+                    import(
+                      /* webpackChunkName: "SampleTSXComponent" */ 'components/SampleTSXComponent'
+                    ),
                   loading: LoadingSVGCentered,
                 });
                 return <SampleTSXComponent {...props} />;
@@ -262,7 +264,9 @@ class CDAP extends Component {
                 }
                 const MarkdownImpl = Loadable({
                   loader: () =>
-                    import(/* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'),
+                    import(
+                      /* webpackChunkName: "MarkdownImplExample" */ 'components/Markdown/MarkdownImplExample'
+                    ),
                   loading: LoadingSVGCentered,
                 });
                 return <MarkdownImpl {...props} />;

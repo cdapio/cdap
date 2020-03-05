@@ -24,6 +24,7 @@ const appPath = '/namespaces/:namespace/apps/:appName';
 const programPath = `${appPath}/workers/DeltaWorker`;
 const servicePath = `/namespaces/system/apps/delta/services/assessor/methods/v1/contexts/:namespace`;
 const draftPath = `${servicePath}/drafts/:draftId`;
+const workerPath = `${appPath}/workers/DeltaWorker`;
 
 export const MyReplicatorApi = {
   getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType?scope=system`),
@@ -43,10 +44,13 @@ export const MyReplicatorApi = {
   listTables: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/listTables`),
   getTableInfo: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/describeTable`),
   getReplicator: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
-  pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${programPath}/status`),
-  getStatus: apiCreator(dataSrc, 'GET', 'REQUEST', `${programPath}/status`),
   assessPipeline: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessPipeline`),
   assessTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessTable`),
+
+  // Detail
+  pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${workerPath}/runs?limit=1`),
+  pollTableStatus: apiCreator(dataSrc, 'POST', 'POLL', `${servicePath}/getState`),
+  pollMetrics: apiCreator(dataSrc, 'POST', 'POLL', `/metrics/query?:queryParams`),
 
   // To be replaced with GraphQL
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps?artifactName=delta-app'),

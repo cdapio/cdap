@@ -76,9 +76,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const AppTypeSelector = connect(
-  mapStateToProps,
-  mapDispatch
-)(AppTypeSelectorView);
+const AppTypeSelector = connect(mapStateToProps, mapDispatch)(AppTypeSelectorView);
 
 export default AppTypeSelector;

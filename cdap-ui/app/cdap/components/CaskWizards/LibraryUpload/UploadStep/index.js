@@ -44,10 +44,7 @@ const mapDispatchWithDNDFileProps = (dispatch) => {
     },
   };
 };
-const ArtifactUploader = connect(
-  mapStateWithDNDFileProps,
-  mapDispatchWithDNDFileProps
-)(FileDnD);
+const ArtifactUploader = connect(mapStateWithDNDFileProps, mapDispatchWithDNDFileProps)(FileDnD);
 
 export default function UploadStep() {
   return (

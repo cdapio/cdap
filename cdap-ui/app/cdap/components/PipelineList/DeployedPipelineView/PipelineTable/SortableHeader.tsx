@@ -32,9 +32,6 @@ const mapDispatch = () => {
   };
 };
 
-const SortableHeader = connect(
-  mapStateToProps,
-  mapDispatch
-)(SortableHeaderView);
+const SortableHeader = connect(mapStateToProps, mapDispatch)(SortableHeaderView);
 
 export default SortableHeader;

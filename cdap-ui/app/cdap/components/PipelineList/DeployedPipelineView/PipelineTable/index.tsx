@@ -120,9 +120,6 @@ const mapDispatch = (dispatch) => {
   };
 };
 
-const PipelineTable = connect(
-  mapStateToProps,
-  mapDispatch
-)(PipelineTableView);
+const PipelineTable = connect(mapStateToProps, mapDispatch)(PipelineTableView);
 
 export default PipelineTable;

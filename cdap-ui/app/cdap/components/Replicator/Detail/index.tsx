@@ -16,14 +16,25 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import Button from '@material-ui/core/Button';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
-import { Map, fromJS } from 'immutable';
-import If from 'components/If';
-import { Link, Redirect } from 'react-router-dom';
-import moment from 'moment';
-import Status from 'components/Status';
+import { List, Map, fromJS } from 'immutable';
+import { Redirect } from 'react-router-dom';
+import TopPanel from 'components/Replicator/Detail/TopPanel';
+import { objectQuery } from 'services/helpers';
+import { PROGRAM_STATUSES } from 'services/global-constants';
+import { Observable } from 'rxjs/Observable';
+import { PluginType } from 'components/Replicator/constants';
+import {
+  fetchPluginInfo,
+  fetchPluginWidget,
+  generateTableKey,
+} from 'components/Replicator/utilities';
+import ConfigDisplay from 'components/Replicator/ConfigDisplay';
+import TablesList from 'components/Replicator/Detail/TablesList';
+import Metrics from 'components/Replicator/Detail/Metrics';
+
+const DetailContext = React.createContext({});
 
 const styles = (theme): StyleRules => {
   return {
@@ -38,11 +49,12 @@ const styles = (theme): StyleRules => {
     config: {
       border: `1px solid ${theme.palette.grey[300]}`,
       borderRadius: '4px',
-      '& > pre': {
-        wordBreak: 'break-word',
-        whiteSpace: 'pre-wrap',
-        padding: '15px',
-      },
+      wordBreak: 'break-word',
+      whiteSpace: 'pre-wrap',
+      padding: '15px',
+    },
+    body: {
+      padding: '0 40px',
     },
   };
 };
@@ -55,136 +67,303 @@ interface IDetailProps extends WithStyles<typeof styles> {
   };
 }
 
-const DetailView: React.FC<IDetailProps> = ({ classes, match }) => {
-  const [replicator, setReplicator] = React.useState(Map());
-  const [error, setError] = React.useState();
-  const [status, setStatus] = React.useState();
-  const [redirect, setRedirect] = React.useState(false);
+interface IColumn {
+  name: string;
+  type: string;
+}
 
-  function getBaseParams() {
-    return {
-      namespace: getCurrentNamespace(),
-      appName: match.params.replicatorId,
-    };
-  }
+interface IDetailState {
+  name: string;
+  description: string;
+  status: string;
+  redirect: boolean;
+  rawAppConfig: Map<string, any>;
+  runId: string;
+  sourcePluginInfo: any;
+  sourcePluginWidget: any;
+  targetPluginInfo: any;
+  targetPluginWidget: any;
+  sourceConfig: Record<string, string>;
+  targetConfig: Record<string, string>;
+  tables: Map<string, Map<string, string>>;
+  columns: Map<string, List<IColumn>>;
+  offsetBasePath: string;
 
-  React.useEffect(() => {
-    MyReplicatorApi.getReplicator(getBaseParams()).subscribe((app) => {
-      let config;
+  start: () => void;
+  stop: () => void;
+  deleteReplicator: () => void;
+}
 
-      try {
-        config = JSON.parse(app.configuration);
-      } catch (e) {
-        setError(e);
-      }
+export type IDetailContext = Partial<IDetailState>;
 
-      setReplicator(fromJS(config));
-    });
+class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
+  private statusPoll$ = null;
 
-    MyReplicatorApi.pollStatus(getBaseParams()).subscribe((res) => {
-      setStatus(res.status);
-    });
-  }, []);
-
-  function start() {
+  private start = () => {
     const params = {
-      ...getBaseParams(),
+      ...this.getBaseParams(),
       action: 'start',
     };
 
-    MyReplicatorApi.action(params).subscribe(fetchStatus, (err) => {
-      setError(err);
-    });
-  }
+    MyReplicatorApi.action(params).subscribe(
+      () => {
+        this.setState({
+          status: PROGRAM_STATUSES.STARTING,
+        });
+      },
+      (err) => {
+        // tslint:disable-next-line: no-console
+        console.log('error', err);
+      }
+    );
+  };
 
-  function stop() {
+  private stop = () => {
     const params = {
-      ...getBaseParams(),
+      ...this.getBaseParams(),
       action: 'stop',
     };
 
-    MyReplicatorApi.action(params).subscribe(fetchStatus, (err) => {
-      setError(err);
-    });
-  }
-
-  function deleteReplicator() {
-    MyReplicatorApi.delete(getBaseParams()).subscribe(
+    MyReplicatorApi.action(params).subscribe(
       () => {
-        setRedirect(true);
+        this.setState({
+          status: PROGRAM_STATUSES.STOPPING,
+        });
       },
       (err) => {
-        setError(err);
+        // tslint:disable-next-line: no-console
+        console.log('error', err);
       }
     );
+  };
+
+  private deleteReplicator = () => {
+    MyReplicatorApi.delete(this.getBaseParams()).subscribe(
+      () => {
+        this.setState({ redirect: true });
+      },
+      (err) => {
+        // tslint:disable-next-line: no-console
+        console.log('error', err);
+      }
+    );
+  };
+
+  public state = {
+    name: objectQuery(this.props, 'match', 'params', 'replicatorId'),
+    description: null,
+    status: null,
+    runId: null,
+    redirect: false,
+    rawAppConfig: null,
+    sourcePluginInfo: null,
+    sourcePluginWidget: null,
+    targetPluginInfo: null,
+    targetPluginWidget: null,
+    sourceConfig: {},
+    targetConfig: {},
+    tables: Map<string, Map<string, string>>(),
+    columns: Map<string, List<IColumn>>(),
+    offsetBasePath: '',
+
+    start: this.start,
+    stop: this.stop,
+    deleteReplicator: this.deleteReplicator,
+  };
+
+  public componentDidMount() {
+    this.init();
   }
 
-  function fetchStatus() {
-    MyReplicatorApi.getStatus(getBaseParams()).subscribe((res) => {
-      setStatus(res.status);
+  public componentWillUnmount() {
+    if (this.statusPoll$) {
+      this.statusPoll$.unsubscribe();
+    }
+  }
+
+  // TODO: refactor to unify with Draft init
+  private init = () => {
+    MyReplicatorApi.getReplicator(this.getBaseParams()).subscribe((app) => {
+      let config;
+      try {
+        config = JSON.parse(app.configuration);
+      } catch (e) {
+        // tslint:disable-next-line: no-console
+        console.log('error parsing app config', e);
+      }
+
+      let sourcePlugin$;
+      let targetPlugin$;
+      let sourceWidget$;
+      let targetWidget$;
+      let sourceConfig;
+      let targetConfig;
+
+      config.stages.forEach((stage) => {
+        const artifactName = stage.plugin.artifact.name;
+        const artifactVersion = stage.plugin.artifact.version;
+        const artifactScope = stage.plugin.artifact.scope;
+        const pluginName = stage.plugin.name;
+        const pluginType = stage.plugin.type;
+        const pluginConfig = stage.plugin.properties;
+
+        if (pluginType === PluginType.source) {
+          sourcePlugin$ = fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType);
+          sourceWidget$ = fetchPluginWidget(
+            artifactName,
+            artifactVersion,
+            artifactScope,
+            pluginName,
+            pluginType
+          );
+          sourceConfig = pluginConfig;
+        } else {
+          targetPlugin$ = fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType);
+          targetWidget$ = fetchPluginWidget(
+            artifactName,
+            artifactVersion,
+            artifactScope,
+            pluginName,
+            pluginType
+          );
+          targetConfig = pluginConfig;
+        }
+      });
+
+      // fetch plugins
+      Observable.combineLatest(
+        sourcePlugin$,
+        sourceWidget$,
+        targetPlugin$,
+        targetWidget$
+      ).subscribe(
+        ([sourcePluginInfo, sourcePluginWidget, targetPluginInfo, targetPluginWidget]) => {
+          this.setState({
+            sourcePluginInfo,
+            sourcePluginWidget,
+            sourceConfig,
+            targetPluginInfo,
+            targetPluginWidget,
+            targetConfig,
+          });
+        },
+        (err) => {
+          // tslint:disable-next-line: no-console
+          console.log('error fetching plugins', err);
+        }
+      );
+
+      let selectedTables = Map<string, Map<string, string>>();
+      const tables = objectQuery(config, 'tables') || [];
+      let columns = Map<string, List<IColumn>>();
+
+      tables.forEach((table) => {
+        const tableKey = generateTableKey(table);
+
+        selectedTables = selectedTables.set(
+          tableKey,
+          fromJS({
+            database: table.database,
+            table: table.table,
+          })
+        );
+
+        const tableColumns = objectQuery(table, 'columns') || [];
+        const columnList = fromJS(tableColumns);
+
+        columns = columns.set(tableKey, columnList);
+      });
+
+      this.setState({
+        rawAppConfig: fromJS(config),
+        name: objectQuery(this.props, 'match', 'params', 'replicatorId'),
+        description: app.description,
+        tables: selectedTables,
+        columns,
+        offsetBasePath: config.offsetBasePath,
+      });
     });
-  }
 
-  const listViewLink = `/ns/${getCurrentNamespace()}/replicator`;
+    this.getStatus();
+  };
 
-  if (redirect) {
+  private getStatus = () => {
+    this.statusPoll$ = MyReplicatorApi.pollStatus(this.getBaseParams()).subscribe((runsInfo) => {
+      if (runsInfo.length === 0) {
+        this.setState({
+          status: PROGRAM_STATUSES.DEPLOYED,
+        });
+        return;
+      }
+
+      const latestRun = runsInfo[0];
+
+      this.setState({
+        status: latestRun.status,
+        runId: latestRun.runid,
+      });
+    });
+  };
+
+  private getBaseParams = () => {
+    return {
+      namespace: getCurrentNamespace(),
+      appName: this.props.match.params.replicatorId,
+    };
+  };
+
+  private redirect = () => {
+    const listViewLink = `/ns/${getCurrentNamespace()}/replicator`;
     return <Redirect to={listViewLink} />;
-  }
+  };
 
-  const startTime = moment()
-    .subtract(7, 'days')
-    .format('X');
-  let logUrl = `/v3/namespaces/${getCurrentNamespace()}/apps/${
-    match.params.replicatorId
-  }/workers/DeltaWorker/logs`;
+  public render() {
+    if (this.state.redirect) {
+      return this.redirect();
+    }
 
-  logUrl = `${logUrl}?start=${startTime}`;
-  logUrl = `/downloadLogs?type=raw&backendPath=${encodeURIComponent(logUrl)}`;
+    const classes = this.props.classes;
 
-  return (
-    <div className={classes.root}>
-      <div>
-        <Link to={listViewLink}>Back to List View</Link>
-      </div>
-      <h2>{match.params.replicatorId}</h2>
-      <br />
-
-      <If condition={error}>
-        <div className="text-danger">
-          <strong>{JSON.stringify(error, null, 2)}</strong>
-          <br />
+    return (
+      <DetailContext.Provider value={this.state}>
+        <div>
+          <TopPanel />
+          <div className={classes.body}>
+            <ConfigDisplay
+              sourcePluginInfo={this.state.sourcePluginInfo}
+              targetPluginInfo={this.state.targetPluginInfo}
+              sourcePluginWidget={this.state.sourcePluginWidget}
+              targetPluginWidget={this.state.targetPluginWidget}
+              sourceConfig={this.state.sourceConfig}
+              targetConfig={this.state.targetConfig}
+            />
+            <hr />
+            <Metrics />
+            <hr />
+            <TablesList />
+          </div>
         </div>
-      </If>
-      <div>
-        <Status status={status} />
-      </div>
-      <br />
-      <div className={classes.buttonContainer}>
-        <Button variant="contained" color="primary" onClick={start} disabled={status === 'RUNNING'}>
-          Start
-        </Button>
+      </DetailContext.Provider>
+    );
+  }
+}
 
-        <Button variant="outlined" onClick={stop} disabled={status === 'STOPPED'}>
-          Stop
-        </Button>
+export function detailContextConnect(Comp) {
+  return (extraProps) => {
+    return (
+      <DetailContext.Consumer>
+        {(props) => {
+          const finalProps = {
+            ...props,
+            ...extraProps,
+          };
 
-        <Button variant="outlined" color="primary" href={logUrl} target="_tab">
-          Logs
-        </Button>
-
-        <Button variant="contained" color="secondary" onClick={deleteReplicator}>
-          DELETE
-        </Button>
-      </div>
-
-      <br />
-      <br />
-      <div className={classes.config}>
-        <pre>{JSON.stringify(replicator, null, 2)}</pre>
-      </div>
-    </div>
-  );
-};
+          return <Comp {...finalProps} />;
+        }}
+      </DetailContext.Consumer>
+    );
+  };
+}
 
 const Detail = withStyles(styles)(DetailView);
 export default Detail;

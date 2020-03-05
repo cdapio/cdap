@@ -50,9 +50,7 @@ export default class AppDetailedViewTab extends Component {
                 to={`/ns/${this.props.params.namespace}/apps/${this.props.params.appId}/programs`}
                 activeClassName="active"
                 isActive={(match, location) => {
-                  let basepath = `^/ns/${this.props.params.namespace}/apps/${
-                    this.props.params.appId
-                  }(/programs)?$`;
+                  let basepath = `^/ns/${this.props.params.namespace}/apps/${this.props.params.appId}(/programs)?$`;
                   return location.pathname.match(basepath);
                 }}
               >

@@ -61,9 +61,6 @@ const mapDispatch = () => {
   };
 };
 
-const SearchBox = connect(
-  mapStateToProps,
-  mapDispatch
-)(SearchBoxView);
+const SearchBox = connect(mapStateToProps, mapDispatch)(SearchBoxView);
 
 export default SearchBox;

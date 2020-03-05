@@ -116,9 +116,7 @@ class DatasetListView extends Component {
           <div className="table-body">
             {datasetList.map((dataset) => {
               let Tag = this.props.enableRouting ? Link : 'div';
-              let path = `/ns/${namespace}/connections/bigquery/${
-                this.props.connectionId
-              }/datasets/${dataset.name}`;
+              let path = `/ns/${namespace}/connections/bigquery/${this.props.connectionId}/datasets/${dataset.name}`;
 
               return (
                 <Tag

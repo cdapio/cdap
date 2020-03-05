@@ -18,3 +18,8 @@ export enum PluginType {
   source = 'cdcSource',
   target = 'cdcTarget',
 }
+
+export const PROGRAM_INFO = {
+  programType: 'workers',
+  programId: 'DeltaWorker',
+};
