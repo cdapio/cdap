@@ -42,7 +42,7 @@ public class WrappedSparkSink<IN> extends SparkSink<IN> {
   }
 
   @Override
-  public void configurePipeline(final PipelineConfigurer pipelineConfigurer) {
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() {
@@ -53,7 +53,7 @@ public class WrappedSparkSink<IN> extends SparkSink<IN> {
   }
 
   @Override
-  public void prepareRun(final SparkPluginContext context) throws Exception {
+  public void prepareRun(SparkPluginContext context) throws Exception {
     caller.call(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -64,7 +64,7 @@ public class WrappedSparkSink<IN> extends SparkSink<IN> {
   }
 
   @Override
-  public void onRunFinish(final boolean succeeded, final SparkPluginContext context) {
+  public void onRunFinish(boolean succeeded, SparkPluginContext context) {
     caller.callUnchecked(new Callable<Void>() {
       @Override
       public Void call() throws Exception {
@@ -75,13 +75,13 @@ public class WrappedSparkSink<IN> extends SparkSink<IN> {
   }
 
   @Override
-  public void run(final SparkExecutionPluginContext context, final JavaRDD<IN> input) throws Exception {
-   caller.call(new Callable<Void>() {
-     @Override
-     public Void call() throws Exception {
-       sink.run(context, input);
-       return null;
-     }
-   });
+  public void run(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception {
+    caller.call(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        sink.run(context, input);
+        return null;
+      }
+    });
   }
 }
