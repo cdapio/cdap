@@ -49,6 +49,7 @@ import java.util.TreeSet;
  * stage has more than one input etc.
  */
 public class LineageOperationsProcessor {
+  private static final String MERGE_SEPARATOR = ",";
   private static final String SEPARATOR = ".";
 
   private final List<String> topologicalOrder;
@@ -86,15 +87,17 @@ public class LineageOperationsProcessor {
 
   private Map<String, Operation> computeProcessedOperations() {
     Map<String, Operation> processedOperations = new HashMap<>();
+    // this stores information about all the outputs on a merge stage, the key is the prefix of the merge
+    Map<String, List<String>> mergedOutputs = new HashMap<>();
     for (String stageName : topologicalOrder) {
       Set<String> stageInputs = stageDag.getNodeInputs(stageName);
       if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(stageName)) {
-        addMergeOperation(stageInputs, processedOperations);
+        addMergeOperation(stageInputs, processedOperations, mergedOutputs);
       }
       List<FieldOperation> fieldOperations = stageOperations.get(stageName);
       for (FieldOperation fieldOperation : fieldOperations) {
         Operation newOperation = null;
-        String newOperationName =  prefixedOperationName(stageName, fieldOperation.getName());
+        String newOperationName =  prefixedName(stageName, fieldOperation.getName());
         Set<String> currentOperationOutputs = new LinkedHashSet<>();
         switch (fieldOperation.getType()) {
           case READ:
@@ -106,14 +109,14 @@ public class LineageOperationsProcessor {
           case TRANSFORM:
             FieldTransformOperation transform = (FieldTransformOperation) fieldOperation;
             List<InputField> inputFields = createInputFields(transform.getInputFields(), stageName,
-                                                             processedOperations);
+                                                             processedOperations, mergedOutputs);
             newOperation = new TransformOperation(newOperationName, transform.getDescription(), inputFields,
                                                   transform.getOutputFields());
             currentOperationOutputs.addAll(transform.getOutputFields());
             break;
           case WRITE:
             FieldWriteOperation write = (FieldWriteOperation) fieldOperation;
-            inputFields = createInputFields(write.getInputFields(), stageName, processedOperations);
+            inputFields = createInputFields(write.getInputFields(), stageName, processedOperations, mergedOutputs);
             newOperation = new WriteOperation(newOperationName, write.getDescription(), write.getSink(), inputFields);
             break;
         }
@@ -129,34 +132,48 @@ public class LineageOperationsProcessor {
     return processedOperations;
   }
 
-  private void addMergeOperation(Set<String> stageInputs,
-                                 Map<String, Operation> processedOperations) {
+  private void addMergeOperation(Set<String> stageInputs, Map<String, Operation> processedOperations,
+                                 Map<String, List<String>> mergedOutputs) {
     Set<String> sortedInputs = new TreeSet<>(stageInputs);
-    String mergeOperationName = prefixedOperationName(Joiner.on(SEPARATOR).join(sortedInputs), "merge");
+    String mergeOperationNamePrefix = getMergeOperationNamePrefix(sortedInputs);
     String mergeDescription = "Merged stages: " + Joiner.on(",").join(sortedInputs);
-    if (processedOperations.containsKey(mergeOperationName)) {
-      // it is possible that same stages act as an input to multiple stages.
-      // we should still only add single merge operation for them
-      return;
-    }
-    List<InputField> inputFields = new ArrayList<>();
+
+
+    Map<String, List<InputField>> fieldNameMap = new LinkedHashMap<>();
     for (String inputStage : sortedInputs) {
       List<String> parentStages = findParentStages(inputStage);
       for (String parentStage : parentStages) {
         Map<String, String> fieldOrigins = stageOutputsWithOrigins.get(parentStage);
         for (Map.Entry<String, String> fieldOrigin : fieldOrigins.entrySet()) {
-          inputFields.add(InputField.of(fieldOrigin.getValue(), fieldOrigin.getKey()));
+          String fieldName = fieldOrigin.getKey();
+          List<InputField> inputFields = fieldNameMap.computeIfAbsent(fieldName, k -> new ArrayList<>());
+          inputFields.add(InputField.of(fieldOrigin.getValue(), fieldName));
         }
       }
     }
 
-    Set<String> outputs = new LinkedHashSet<>();
-    for (InputField inputField : inputFields) {
-      outputs.add(inputField.getName());
-    }
-    TransformOperation merge = new TransformOperation(mergeOperationName, mergeDescription, inputFields,
-                                                      new ArrayList<>(outputs));
-    processedOperations.put(merge.getName(), merge);
+    fieldNameMap.forEach((fieldName, inputFields) -> {
+      String mergeName = prefixedName(mergeOperationNamePrefix, fieldName);
+      if (processedOperations.containsKey(mergeName)) {
+        // it is possible that same stages act as an input to multiple stages.
+        // we should still only add single merge operation for them
+        return;
+      }
+
+      Set<String> outputs = new LinkedHashSet<>();
+      for (InputField inputField : inputFields) {
+        outputs.add(inputField.getName());
+      }
+
+      // add all these outputs to the merged output map with the merge prefix, in later stages, a field can be renamed,
+      // so we cannot rely on the actual merge operation name
+      List<String> merged = mergedOutputs.computeIfAbsent(mergeOperationNamePrefix, k -> new ArrayList<>());
+      merged.addAll(outputs);
+
+      TransformOperation merge = new TransformOperation(mergeName, mergeDescription, inputFields,
+                                                        new ArrayList<>(outputs));
+      processedOperations.put(merge.getName(), merge);
+    });
   }
 
   /**
@@ -169,10 +186,12 @@ public class LineageOperationsProcessor {
    * @param fields the List of input field names for an operation for which InputFields to be created
    * @param currentStage name of the stage which recorded the operation
    * @param processedOperations processed operations so far
+   * @param mergedOutputs the merged outputs so far
    * @return List of InputFields
    */
   private List<InputField> createInputFields(List<String> fields, String currentStage,
-                                             Map<String, Operation> processedOperations) {
+                                             Map<String, Operation> processedOperations,
+                                             Map<String, List<String>> mergedOutputs) {
     // We need to return InputFields in the same order as fields.
     // Keep them in map so we can iterate later on received fields to return InputFields.
 
@@ -220,10 +239,10 @@ public class LineageOperationsProcessor {
 
     Set<String> stageInputs = stageDag.getNodeInputs(parents.get(0));
     if (stageInputs.size() > 1 && !noMergeRequiredStages.contains(parents.get(0))) {
-      String mergeOperationName = mergeOperationName(stageInputs);
-      Operation operation = processedOperations.get(mergeOperationName);
-      List<String> outputs = ((TransformOperation) operation).getOutputs();
+      String mergeOperationNamePrefix = getMergeOperationNamePrefix(stageInputs);
+      List<String> outputs = mergedOutputs.get(mergeOperationNamePrefix);
       for (String field : fields) {
+        String mergeOperationName = prefixedName(mergeOperationNamePrefix, field);
         // Only add the InputFields corresponding to the remaining fields
         if (outputs.contains(field) && inputFields.get(field) == null) {
           inputFields.put(field, InputField.of(mergeOperationName, field));
@@ -271,12 +290,13 @@ public class LineageOperationsProcessor {
     return parents;
   }
 
-  private String mergeOperationName(Set<String> inputStages) {
+  private String getMergeOperationNamePrefix(Set<String> inputStages) {
     Set<String> sortedInputs = new TreeSet<>(inputStages);
-    return prefixedOperationName(Joiner.on(SEPARATOR).join(sortedInputs), "merge");
+    // use a different separator, as we assume everything before . is stage related info
+    return prefixedName(Joiner.on(MERGE_SEPARATOR).join(sortedInputs), "merge");
   }
 
-  private String prefixedOperationName(String stageName, String operationName) {
-    return stageName + SEPARATOR + operationName;
+  private String prefixedName(String prefix, String operationName) {
+    return prefix + SEPARATOR + operationName;
   }
 }
