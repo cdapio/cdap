@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.lineage.field.EndPoint;
@@ -624,6 +625,35 @@ public class FieldLineageInfoTest {
 
     outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(read2EndPoint, "body"));
     Assert.assertEquals(expectedOperations, outgoingOperations);
+  }
+
+  @Test
+  public void testNonCycle() {
+    EndPoint readEndPoint = EndPoint.of("ns", "src");
+    EndPoint writeEndPoint = EndPoint.of("ns", "dest");
+
+    ReadOperation read = new ReadOperation("read", "read", readEndPoint, "a", "b");
+    TransformOperation combine = new TransformOperation("combine", "combine",
+                                                        Arrays.asList(InputField.of("read", "a"),
+                                                                      InputField.of("read", "b")),
+                                                        "a", "b");
+    // an operation with no incoming inputs, this should not be considered an cycle, but should get treat like a
+    // read operation
+    TransformOperation generate = new TransformOperation("generate", "generate",
+                                                          Collections.emptyList(), "c");
+    WriteOperation write = new WriteOperation("write", "write", writeEndPoint,
+                                              Arrays.asList(InputField.of("combine", "a"),
+                                                            InputField.of("combine", "b"),
+                                                            InputField.of("generate", "c")));
+    Set<Operation> unOrdered = new HashSet<>();
+    unOrdered.add(combine);
+    unOrdered.add(read);
+    unOrdered.add(generate);
+    unOrdered.add(write);
+
+    List<Operation> operations = FieldLineageInfo.getTopologicallySortedOperations(unOrdered);
+    List<Operation> expected = ImmutableList.of(read, generate, combine, write);
+    Assert.assertEquals(expected, operations);
   }
 
   @Test(expected = IllegalArgumentException.class)
