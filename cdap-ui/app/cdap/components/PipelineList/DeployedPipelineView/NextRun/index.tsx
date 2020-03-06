@@ -15,104 +15,42 @@
  */
 
 import * as React from 'react';
-import IconSVG from 'components/IconSVG';
-import { Observable } from 'rxjs/Observable';
 import Duration from 'components/Duration';
 import { GLOBALS } from 'services/global-constants';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { MyPipelineApi } from 'api/pipeline';
-import ee from 'event-emitter';
-import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
+import IconSVG from 'components/IconSVG';
 
 interface IProps {
   pipeline: IPipeline;
 }
 
-interface IState {
-  loading: boolean;
-  nextRun: null | number;
-}
-
-export default class NextRun extends React.PureComponent<IProps, IState> {
-  private interval = null;
-
-  public eventemitter = ee(ee);
-  public state = {
-    loading: true,
-    nextRun: null,
-  };
-
-  public componentDidMount() {
-    if (this.props.pipeline.artifact.name === GLOBALS.etlDataStreams) {
-      return;
-    }
-
-    // Interval only runs after the delay, so have to
-    // initially call the function first
-    this.startNextRunInterval();
-    this.eventemitter.on(WINDOW_ON_FOCUS, this.startNextRunInterval);
-    this.eventemitter.on(WINDOW_ON_BLUR, this.stopNextRunInterval);
-  }
-
-  public componentWillUnmount() {
-    this.stopNextRunInterval();
-    this.eventemitter.off(WINDOW_ON_FOCUS, this.startNextRunInterval);
-    this.eventemitter.off(WINDOW_ON_BLUR, this.stopNextRunInterval);
-  }
-
-  private stopNextRunInterval = () => {
-    if (this.interval && this.interval.unsubscribe) {
-      this.interval.unsubscribe();
-    }
-  };
-
-  private startNextRunInterval = () => {
-    this.stopNextRunInterval();
-    this.getNextRun();
-    this.interval = Observable.interval(30 * 1000).subscribe(this.getNextRun.bind(this));
-  };
-
-  private getNextRun() {
-    const namespace = getCurrentNamespace();
-    const pipeline = this.props.pipeline;
-
-    const params = {
-      ...GLOBALS.programInfo[GLOBALS.etlDataPipeline],
-      namespace,
-      appId: pipeline.name,
-    };
-
-    MyPipelineApi.getNextRun(params).subscribe((res) => {
-      this.setState({
-        loading: false,
-        nextRun: res.length ? res[0].time : null,
-      });
-    });
-  }
-
-  private renderContent() {
-    if (
-      this.props.pipeline.artifact.name === GLOBALS.etlDataStreams ||
-      (!this.state.loading && !this.state.nextRun)
-    ) {
-      return <span>--</span>;
-    }
-
-    if (this.state.loading) {
-      // we have fa-lg here because we use tags on the same table row which is using larger loading icon
-      // If both happen to load in UI it will this discrepancy (md vs lg)
-      return (
+export default function NextRun({ pipeline }: IProps) {
+  const { nextRuntime, artifact } = pipeline;
+  if (nextRuntime === null) {
+    return (
+      <div className="next-run">
         <span className="fa fa-spin fa-lg">
           <IconSVG name="icon-spinner" />
         </span>
-      );
-    }
-
-    return <Duration targetTime={this.state.nextRun} />;
+      </div>
+    );
+  }
+  if (
+    artifact.name === GLOBALS.etlDataStreams ||
+    (Array.isArray(nextRuntime) && !nextRuntime.length)
+  ) {
+    return (
+      <div className="next-run">
+        <span>--</span>
+      </div>
+    );
   }
 
-  public render() {
-    return <div className="next-run">{this.renderContent()}</div>;
-  }
+  let { time: nextRun } = nextRuntime[0];
+  nextRun = parseInt(nextRun, 10);
+  return (
+    <div className="next-run">
+      <Duration targetTime={nextRun} />
+    </div>
+  );
 }

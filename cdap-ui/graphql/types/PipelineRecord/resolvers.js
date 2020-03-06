@@ -16,11 +16,13 @@
 
 const { pipelineRunsResolver } = require('./pipelineRunsResolver');
 const { totalRunsResolvers } = require('./totalRunsResolver');
+const { nextRuntimeResolvers } = require('./nextRuntimeResolver');
 
 const resolvers = {
   PipelineRecord: {
     runs: pipelineRunsResolver,
     totalRuns: totalRunsResolvers,
+    nextRuntime: nextRuntimeResolvers,
   },
 };
 
