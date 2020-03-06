@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,7 +30,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.common.logging.LoggingContext;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.gateway.handlers.AbstractLogHttpHandler;
 import io.cdap.cdap.logging.read.LogReader;
@@ -223,7 +223,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
       responder.sendStatus(HttpResponseStatus.OK);
       return;
     }
-    RunRecordMeta runRecord = getRunRecord(namespaceId, previewId);
+    RunRecordDetail runRecord = getRunRecord(namespaceId, previewId);
     if (runRecord == null) {
       responder.sendStatus(HttpResponseStatus.OK);
       return;
@@ -307,7 +307,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   }
 
   @Nullable
-  private RunRecordMeta getRunRecord(String namespaceId, String previewId) throws Exception {
+  private RunRecordDetail getRunRecord(String namespaceId, String previewId) throws Exception {
     return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getRunRecord();
   }
 
@@ -359,9 +359,9 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
     private final LogReader logReader;
     private final LoggingContext loggingContext;
-    private final RunRecordMeta runRecord;
+    private final RunRecordDetail runRecord;
 
-    private LogReaderInfo(LogReader logReader, LoggingContext loggingContext, RunRecordMeta runRecord) {
+    private LogReaderInfo(LogReader logReader, LoggingContext loggingContext, RunRecordDetail runRecord) {
       this.logReader = logReader;
       this.loggingContext = loggingContext;
       this.runRecord = runRecord;
@@ -375,7 +375,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
       return loggingContext;
     }
 
-    RunRecordMeta getRunRecord() {
+    RunRecordDetail getRunRecord() {
       return runRecord;
     }
   }

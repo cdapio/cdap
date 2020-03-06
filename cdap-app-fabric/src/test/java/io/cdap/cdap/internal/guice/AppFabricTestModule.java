@@ -37,7 +37,7 @@ import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.provision.MockProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
-import io.cdap.cdap.logging.guice.LogQueryServerModule;
+import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
@@ -95,7 +95,7 @@ public final class AppFabricTestModule extends AbstractModule {
     install(new NonCustomLocationUnitTestModule());
     install(new LocalLogAppenderModule());
     install(new LogReaderRuntimeModules().getInMemoryModules());
-    install(new LogQueryServerModule());
+    install(new LogQueryRuntimeModule().getInMemoryModules());
     install(new MetricsHandlerModule());
     install(new MetricsClientRuntimeModule().getInMemoryModules());
     install(new ExploreClientModule());

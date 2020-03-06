@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,7 +39,7 @@ import io.cdap.cdap.gateway.handlers.CommonHandlers;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogMessage;
 import io.cdap.cdap.logging.framework.distributed.DistributedAppenderContext;
-import io.cdap.cdap.logging.guice.LogQueryServerModule;
+import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.logbuffer.LogBufferService;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
@@ -88,7 +88,7 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
       new DataSetsModules().getStandaloneModules(),
       new LocalLocationModule(),
       // log handler is co-located with log saver
-      new LogQueryServerModule(),
+      new LogQueryRuntimeModule().getDistributedModules(),
       new PrivateModule() {
         @Override
         protected void configure() {

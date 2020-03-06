@@ -21,7 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -55,12 +55,12 @@ public class ProgramHeartbeatTable {
   }
 
   /**
-   * Write {@link RunRecordMeta} to heart beat table as value.
+   * Write {@link RunRecordDetail} to heart beat table as value.
    *
    * @param runRecordMeta row value to write
    * @param timestampInSeconds used for creating rowKey
    */
-  public void writeRunRecordMeta(RunRecordMeta runRecordMeta, long timestampInSeconds) throws IOException {
+  public void writeRunRecordMeta(RunRecordDetail runRecordMeta, long timestampInSeconds) throws IOException {
     List<Field<?>> fields = createRowKey(timestampInSeconds, runRecordMeta.getProgramRunId());
     fields.add(Fields.stringField(StoreDefinition.ProgramHeartbeatStore.RUN_RECORD, GSON.toJson(runRecordMeta)));
     table.upsert(fields);
@@ -100,19 +100,19 @@ public class ProgramHeartbeatTable {
 
   /**
    * Scan the table for the time range for each of the namespace provided
-   * and return collection of latest {@link RunRecordMeta}
-   * we maintain the latest {@link RunRecordMeta} identified by {@link ProgramRunId},
-   * Since there can be more than one RunRecordMeta for the
+   * and return collection of latest {@link RunRecordDetail}
+   * we maintain the latest {@link RunRecordDetail} identified by {@link ProgramRunId},
+   * Since there can be more than one RunRecordDetail for the
    * same runId due to multiple state changes and heart beat messages.
    *
    * @param startTimestampInSeconds inclusive start rowKey
    * @param endTimestampInSeconds exclusive end rowKey
    * @param namespaces set of namespaces
-   * @return collection of {@link RunRecordMeta}
+   * @return collection of {@link RunRecordDetail}
    */
-  public Collection<RunRecordMeta> scan(long startTimestampInSeconds, long endTimestampInSeconds,
-                                        Set<String> namespaces) throws IOException {
-    List<RunRecordMeta> resultRunRecordList = new ArrayList<>();
+  public Collection<RunRecordDetail> scan(long startTimestampInSeconds, long endTimestampInSeconds,
+                                          Set<String> namespaces) throws IOException {
+    List<RunRecordDetail> resultRunRecordList = new ArrayList<>();
     for (String namespace : namespaces) {
       List<Field<?>> startRowKey = getScanKey(namespace, startTimestampInSeconds);
       List<Field<?>> endRowKey = getScanKey(namespace, endTimestampInSeconds);
@@ -123,7 +123,7 @@ public class ProgramHeartbeatTable {
 
   /**
    * Scan is executed based on the given startRowKey and endRowKey, for each of the scanned rows, we maintain
-   * the latest {@link RunRecordMeta} identified by its {@link ProgramRunId} in a map. Finally after scan is
+   * the latest {@link RunRecordDetail} identified by its {@link ProgramRunId} in a map. Finally after scan is
    * complete add the runrecords to the result list
    *
    * @param startRowKey byte array used as start row key in scan
@@ -131,24 +131,24 @@ public class ProgramHeartbeatTable {
    * @param runRecordMetas result list to which the run records to be added
    */
   private void performScanAddToList(List<Field<?>> startRowKey, List<Field<?>> endRowKey,
-                                    List<RunRecordMeta> runRecordMetas) throws IOException {
+                                    List<RunRecordDetail> runRecordMetas) throws IOException {
     try (CloseableIterator<StructuredRow> iterator =
       table.scan(Range.create(startRowKey, Range.Bound.INCLUSIVE, endRowKey, Range.Bound.EXCLUSIVE),
                  Integer.MAX_VALUE)) {
-      Map<ProgramRunId, RunRecordMeta> runIdToRunRecordMap = new HashMap<>();
+      Map<ProgramRunId, RunRecordDetail> runIdToRunRecordMap = new HashMap<>();
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
-        RunRecordMeta runRecordMeta = GSON.fromJson(row.getString(StoreDefinition.ProgramHeartbeatStore.RUN_RECORD),
-                                                    RunRecordMeta.class);
+        RunRecordDetail runRecordMeta = GSON.fromJson(row.getString(StoreDefinition.ProgramHeartbeatStore.RUN_RECORD),
+                                                      RunRecordDetail.class);
         ProgramRunId runId = getProgramRunIdFromRow(row);
         runIdToRunRecordMap.put(runId, runRecordMeta);
       }
 
       // since the serialized runRecordMeta doesn't have programRunId (transient), we will create and
-      // add the programRunId to RunRecordMeta and add to result list
+      // add the programRunId to RunRecordDetail and add to result list
 
       runIdToRunRecordMap.entrySet().forEach((entry) -> {
-        RunRecordMeta.Builder builder = RunRecordMeta.builder(entry.getValue());
+        RunRecordDetail.Builder builder = RunRecordDetail.builder(entry.getValue());
         builder.setProgramRunId(entry.getKey());
         runRecordMetas.add(builder.build());
       });

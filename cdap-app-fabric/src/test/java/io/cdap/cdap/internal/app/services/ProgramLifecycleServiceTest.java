@@ -26,7 +26,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisioner;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -80,7 +80,7 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
 
   @Test
   public void testProgramStatusFromSingleRun() {
-    RunRecordMeta record = RunRecordMeta.builder()
+    RunRecordDetail record = RunRecordDetail.builder()
       .setProgramRunId(NamespaceId.DEFAULT.app("app").mr("mr").run(RunIds.generate()))
       .setStartTime(System.currentTimeMillis())
       .setArtifactId(new ArtifactId("r", new ArtifactVersion("1.0"), ArtifactScope.USER))
@@ -92,29 +92,29 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
     ProgramStatus status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STARTING, status);
 
-    record = RunRecordMeta.builder(record).setStatus(ProgramRunStatus.STARTING).build();
+    record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.STARTING).build();
     status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STARTING, status);
 
     // running, suspended, resuming -> running
-    record = RunRecordMeta.builder(record).setStatus(ProgramRunStatus.RUNNING).build();
+    record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.RUNNING).build();
     status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.RUNNING, status);
 
-    record = RunRecordMeta.builder(record).setStatus(ProgramRunStatus.SUSPENDED).build();
+    record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.SUSPENDED).build();
     status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.RUNNING, status);
 
     // failed, killed, completed -> stopped
-    record = RunRecordMeta.builder(record).setStatus(ProgramRunStatus.FAILED).build();
+    record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.FAILED).build();
     status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
 
-    record = RunRecordMeta.builder(record).setStatus(ProgramRunStatus.KILLED).build();
+    record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.KILLED).build();
     status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
 
-    record = RunRecordMeta.builder(record).setStatus(ProgramRunStatus.COMPLETED).build();
+    record = RunRecordDetail.builder(record).setStatus(ProgramRunStatus.COMPLETED).build();
     status = ProgramLifecycleService.getProgramStatus(Collections.singleton(record));
     Assert.assertEquals(ProgramStatus.STOPPED, status);
   }
@@ -122,26 +122,26 @@ public class ProgramLifecycleServiceTest extends AppFabricTestBase {
   @Test
   public void testProgramStatusFromMultipleRuns() {
     ProgramId programId = NamespaceId.DEFAULT.app("app").mr("mr");
-    RunRecordMeta pending = RunRecordMeta.builder()
+    RunRecordDetail pending = RunRecordDetail.builder()
       .setProgramRunId(programId.run(RunIds.generate()))
       .setStartTime(System.currentTimeMillis())
       .setArtifactId(new ArtifactId("r", new ArtifactVersion("1.0"), ArtifactScope.USER))
       .setStatus(ProgramRunStatus.PENDING)
       .setSourceId(new byte[] { 0 })
       .build();
-    RunRecordMeta starting = RunRecordMeta.builder(pending)
+    RunRecordDetail starting = RunRecordDetail.builder(pending)
       .setProgramRunId(programId.run(RunIds.generate()))
       .setStatus(ProgramRunStatus.STARTING).build();
-    RunRecordMeta running = RunRecordMeta.builder(pending)
+    RunRecordDetail running = RunRecordDetail.builder(pending)
       .setProgramRunId(programId.run(RunIds.generate()))
       .setStatus(ProgramRunStatus.RUNNING).build();
-    RunRecordMeta killed = RunRecordMeta.builder(pending)
+    RunRecordDetail killed = RunRecordDetail.builder(pending)
       .setProgramRunId(programId.run(RunIds.generate()))
       .setStatus(ProgramRunStatus.KILLED).build();
-    RunRecordMeta failed = RunRecordMeta.builder(pending)
+    RunRecordDetail failed = RunRecordDetail.builder(pending)
       .setProgramRunId(programId.run(RunIds.generate()))
       .setStatus(ProgramRunStatus.FAILED).build();
-    RunRecordMeta completed = RunRecordMeta.builder(pending)
+    RunRecordDetail completed = RunRecordDetail.builder(pending)
       .setProgramRunId(programId.run(RunIds.generate()))
       .setStatus(ProgramRunStatus.COMPLETED).build();
 

@@ -28,7 +28,7 @@ import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.WorkflowTable;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.ProgramHistory;
@@ -170,15 +170,15 @@ public interface Store {
    * @param limit     max number of entries to fetch for this history call
    * @return          map of logged runs
    */
-  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
-                                           long startTime, long endTime, int limit);
+  Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
+                                             long startTime, long endTime, int limit);
 
   /**
    * Fetches the run records for the particular status. Same as calling
    * {@link #getRuns(ProgramRunStatus, long, long, int, Predicate)
    * getRuns(status, 0, Long.MAX_VALUE, Integer.MAX_VALUE, filter)}
    */
-  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, Predicate<RunRecordMeta> filter);
+  Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status, Predicate<RunRecordDetail> filter);
 
   /**
    * Fetches run records for the particular status.
@@ -188,10 +188,10 @@ public interface Store {
    * @param endTime fetch run history that has started before the endTime in seconds
    * @param limit max number of entries to fetch for this history call
    * @param filter predicate to be passed to filter the records
-   * @return a map from {@link ProgramRunId} to the corresponding {@link RunRecordMeta}.
+   * @return a map from {@link ProgramRunId} to the corresponding {@link RunRecordDetail}.
    */
-  Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, long startTime,
-                                           long endTime, int limit, Predicate<RunRecordMeta> filter);
+  Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status, long startTime,
+                                             long endTime, int limit, Predicate<RunRecordDetail> filter);
   /**
    * Fetches run records for the particular status.
    *
@@ -199,17 +199,17 @@ public interface Store {
    * @param status status of the program to filter the records
    * @param limit max number of entries to fetch for this history call
    * @param filter predicate to be passed to filter the records
-   * @return a map from {@link ProgramRunId} to the corresponding {@link RunRecordMeta}.
+   * @return a map from {@link ProgramRunId} to the corresponding {@link RunRecordDetail}.
    */
-  Map<ProgramRunId, RunRecordMeta> getRuns(ApplicationId applicationId, ProgramRunStatus status,
-                                           int limit, Predicate<RunRecordMeta> filter);
+  Map<ProgramRunId, RunRecordDetail> getRuns(ApplicationId applicationId, ProgramRunStatus status,
+                                             int limit, Predicate<RunRecordDetail> filter);
 
   /**
    * Fetches the run records for given ProgramRunIds.
    * @param programRunIds  list of program RunIds to match against
    * @return        map of logged runs
    */
-  Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds);
+  Map<ProgramRunId, RunRecordDetail> getRuns(Set<ProgramRunId> programRunIds);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records across all namespaces.
@@ -224,7 +224,7 @@ public interface Store {
    * @param namespaceId the namespace id to match against
    * @return map of logged runs
    */
-  Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId);
+  Map<ProgramRunId, RunRecordDetail> getActiveRuns(NamespaceId namespaceId);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records from the given NamespaceId's.
@@ -232,21 +232,21 @@ public interface Store {
    * @param filter predicate to be passed to filter the records
    * @return map of logged runs
    */
-  Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter);
+  Map<ProgramRunId, RunRecordDetail> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordDetail> filter);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ApplicationId.
    * @param applicationId the application id to match against
    * @return map of logged runs
    */
-  Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId);
+  Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId);
 
   /**
    * Fetches the active (i.e STARTING or RUNNING or SUSPENDED) run records against a given ProgramId.
    * @param programId the program id to match against
    * @return map of logged runs
    */
-  Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId);
+  Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId);
 
   /**
    * Fetches active runs for a set of programs.
@@ -255,7 +255,7 @@ public interface Store {
    * @return a {@link Map} from the {@link ProgramId} to the list of run records; there will be no entry for programs
    * that do not exist.
    */
-  Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> programIds);
+  Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramId> programIds);
 
   /**
    * Fetches the run record for particular run of a program.
@@ -264,7 +264,7 @@ public interface Store {
    * @return          run record for the specified program and runid, null if not found
    */
   @Nullable
-  RunRecordMeta getRun(ProgramRunId id);
+  RunRecordDetail getRun(ProgramRunId id);
 
   /**
    * Creates new application if it doesn't exist. Updates existing one otherwise.

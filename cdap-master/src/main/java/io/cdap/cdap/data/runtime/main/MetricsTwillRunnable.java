@@ -40,7 +40,7 @@ import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
-import io.cdap.cdap.logging.guice.LogQueryServerModule;
+import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -115,7 +115,7 @@ public class MetricsTwillRunnable extends AbstractMasterTwillRunnable {
       new LogReaderRuntimeModules().getDistributedModules(),
       new MetricsHandlerModule(),
       // Log query is running in the same process as the metrics query
-      new LogQueryServerModule(),
+      new LogQueryRuntimeModule().getDistributedModules(),
       new MetricsClientRuntimeModule().getDistributedModules(),
       new MetricsStoreModule(),
       new AuditModule(),

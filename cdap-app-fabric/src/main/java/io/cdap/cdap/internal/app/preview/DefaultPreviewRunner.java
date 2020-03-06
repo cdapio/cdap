@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -43,7 +43,7 @@ import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
@@ -292,13 +292,13 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public RunRecordMeta getRunRecord() {
+  public RunRecordDetail getRunRecord() {
     try {
       ProgramRunId runId = getProgramRunId();
       if (runId == null) {
         return null;
       }
-      return programLifecycleService.getRun(runId);
+      return programLifecycleService.getRunRecordMeta(runId);
     } catch (Exception e) {
       return null;
     }

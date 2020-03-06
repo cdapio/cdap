@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -494,7 +494,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(NamespaceId namespaceId) throws Exception {
-    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
+    Map<ProgramRunId, RunRecordDetail> runningPrograms = store.getActiveRuns(namespaceId);
     List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
     Map<ApplicationId, ApplicationSpecification> apps = new HashMap<>();
     for (ApplicationSpecification appSpec : allSpecs) {
@@ -505,7 +505,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> runningProgram : runningPrograms.entrySet()) {
         activePrograms.add(runningProgram.getKey().getApplication() +
                             ": " + runningProgram.getKey().getProgram());
       }
@@ -563,11 +563,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void ensureNoRunningPrograms(ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
-    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(appId);
+    Map<ProgramRunId, RunRecordDetail> runningPrograms = store.getActiveRuns(appId);
 
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> runningProgram : runningPrograms.entrySet()) {
         activePrograms.add(runningProgram.getKey().getProgram());
       }
 

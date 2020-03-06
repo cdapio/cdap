@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,7 @@ import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.DistributedProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramLiveInfo;
@@ -154,7 +154,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     // Lookup the Twill RunId for the given run
     ProgramRunId programRunId = programId.run(runId.getId());
-    RunRecordMeta record = store.getRun(programRunId);
+    RunRecordDetail record = store.getRun(programRunId);
     if (record == null) {
       return null;
     }
@@ -204,11 +204,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    Collection<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
+    Collection<RunRecordDetail> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
       record.getTwillRunId() != null
         && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
 
-    for (RunRecordMeta record : activeRunRecords) {
+    for (RunRecordDetail record : activeRunRecords) {
       String twillRunId = record.getTwillRunId();
       if (twillRunId == null) {
         // This is unexpected. Just log and ignore the run record

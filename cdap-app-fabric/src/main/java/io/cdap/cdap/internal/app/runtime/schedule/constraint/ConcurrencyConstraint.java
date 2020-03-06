@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProtoConstraint;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
@@ -38,7 +38,7 @@ public class ConcurrencyConstraint extends ProtoConstraint.ConcurrencyConstraint
 
   @Override
   public ConstraintResult check(ProgramSchedule schedule, ConstraintContext context) {
-    Map<ProgramRunId, RunRecordMeta> activeRuns = context.getActiveRuns(schedule.getProgramId());
+    Map<ProgramRunId, RunRecordDetail> activeRuns = context.getActiveRuns(schedule.getProgramId());
     if (activeRuns.size() >= maxConcurrency) {
       LOG.debug("Skipping run of program {} from schedule {} because there are {} active runs.",
                 schedule.getProgramId(), schedule.getName(), activeRuns.size());

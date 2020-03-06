@@ -43,7 +43,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTimeTriggerInfo
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -107,14 +107,14 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   /**
    * writes heart beat messages starting from startTime + interval up to endTime, each heartbeat separated by interval
    */
-  private void setUpProgramHeartBeats(RunRecordMeta runRecordMeta,
+  private void setUpProgramHeartBeats(RunRecordDetail runRecordMeta,
                                       long startTime, long endTime, long interval) {
     for (long time = startTime + interval; time < endTime; time += interval) {
       writeRunRecordMeta(runRecordMeta, time);
     }
   }
 
-  private void writeRunRecordMeta(RunRecordMeta runRecordMeta,
+  private void writeRunRecordMeta(RunRecordDetail runRecordMeta,
                                   long timestampInMillis) {
     TransactionRunners.run(transactionRunner, context -> {
       new ProgramHeartbeatTable(context).writeRunRecordMeta(runRecordMeta, timestampInMillis);
@@ -124,9 +124,9 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
   /**
    * setup and return mock program properties on runrecord builder but use passed namespaceId and runId
    */
-  private RunRecordMeta.Builder getMockRunRecordMeta(NamespaceId namespaceId, RunId runId) {
+  private RunRecordDetail.Builder getMockRunRecordMeta(NamespaceId namespaceId, RunId runId) {
     ProgramId programId = namespaceId.app("someapp").program(ProgramType.SERVICE, "s");
-    RunRecordMeta.Builder runRecordBuilder = RunRecordMeta.builder();
+    RunRecordDetail.Builder runRecordBuilder = RunRecordDetail.builder();
     runRecordBuilder.setArtifactId(ARTIFACT_ID.toApiArtifactId());
     runRecordBuilder.setPrincipal("userA");
     runRecordBuilder.setProgramRunId(programId.run(runId));
@@ -140,10 +140,10 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     long startTime1 = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     RunId runId1 = RunIds.generate();
     NamespaceId ns1 = new NamespaceId("ns1");
-    RunRecordMeta.Builder metaBuilder = getMockRunRecordMeta(ns1, runId1);
+    RunRecordDetail.Builder metaBuilder = getMockRunRecordMeta(ns1, runId1);
     metaBuilder.setRunTime(startTime1);
     metaBuilder.setStatus(ProgramRunStatus.RUNNING);
-    RunRecordMeta meta = metaBuilder.build();
+    RunRecordDetail meta = metaBuilder.build();
     writeRunRecordMeta(meta, startTime1);
 
     // write heart beat messages for 10 minutes (every minute) for this program run.
@@ -160,10 +160,10 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     long startTime2 = startTime1 + TimeUnit.MINUTES.toSeconds(5);
     NamespaceId ns2 = new NamespaceId("ns2");
     RunId runId2 = RunIds.generate();
-    RunRecordMeta.Builder metaBuilder2 = getMockRunRecordMeta(ns2, runId2);
+    RunRecordDetail.Builder metaBuilder2 = getMockRunRecordMeta(ns2, runId2);
     metaBuilder2.setRunTime(startTime2);
     metaBuilder2.setStatus(ProgramRunStatus.RUNNING);
-    RunRecordMeta meta2 = metaBuilder2.build();
+    RunRecordDetail meta2 = metaBuilder2.build();
     writeRunRecordMeta(meta2, startTime2);
 
     // write heart beat messages for 5 minutes (every minute) for this program run.
@@ -343,13 +343,13 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
     triggerInfos.add(new DefaultTimeTriggerInfo("*/5 * * * *", startTime1));
     TriggeringScheduleInfo triggeringScheduleInfo =
       new DefaultTriggeringScheduleInfo("test", "test", triggerInfos, new HashMap<>());
-    RunRecordMeta.Builder metaBuilder = getMockRunRecordMeta(ns3, runId1);
+    RunRecordDetail.Builder metaBuilder = getMockRunRecordMeta(ns3, runId1);
     metaBuilder.setRunTime(startTime1);
     metaBuilder.setStatus(ProgramRunStatus.RUNNING);
     Map<String, String> systemArgs =
       ImmutableMap.of(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
     metaBuilder.setSystemArgs(systemArgs);
-    RunRecordMeta meta = metaBuilder.build();
+    RunRecordDetail meta = metaBuilder.build();
     writeRunRecordMeta(meta, startTime1);
 
     // write heart beat messages for 10 minutes (every minute) for this program run.

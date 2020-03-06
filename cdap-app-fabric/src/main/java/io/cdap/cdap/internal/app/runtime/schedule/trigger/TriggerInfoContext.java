@@ -23,7 +23,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -91,7 +91,7 @@ public class TriggerInfoContext {
    * @return run time arguments as a map for the specified program and runId, null if not found
    */
   public Map<String, String> getProgramRuntimeArguments(ProgramRunId programRunId) {
-    RunRecordMeta runRecordMeta = store.getRun(programRunId);
+    RunRecordDetail runRecordMeta = store.getRun(programRunId);
     if (runRecordMeta == null) {
       return Collections.emptyMap();
     }

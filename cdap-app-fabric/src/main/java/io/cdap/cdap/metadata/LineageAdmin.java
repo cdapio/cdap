@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,7 +35,7 @@ import io.cdap.cdap.data2.metadata.lineage.Lineage;
 import io.cdap.cdap.data2.metadata.lineage.LineageStoreReader;
 import io.cdap.cdap.data2.metadata.lineage.Relation;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -236,13 +236,13 @@ public class LineageAdmin {
 
     // Step 2, get the run record for all the possible inner programs, the run record contains the
     // workflow information, fetch the workflow id and add them to the map
-    Map<ProgramRunId, RunRecordMeta> runRecords = store.getRuns(possibleInnerPrograms);
+    Map<ProgramRunId, RunRecordDetail> runRecords = store.getRuns(possibleInnerPrograms);
     Set<ProgramRunId> workflowRunIds = new HashSet<>();
     runRecords.entrySet().stream()
       .filter(e -> e.getValue() != null)
       .forEach(entry -> {
         ProgramRunId programRunId = entry.getKey();
-        RunRecordMeta runRecord = entry.getValue();
+        RunRecordDetail runRecord = entry.getValue();
 
         if (runRecord.getSystemArgs().containsKey(ProgramOptionConstants.WORKFLOW_RUN_ID)) {
           ProgramRunId wfRunId = extractWorkflowRunId(programRunId, runRecord);
@@ -259,12 +259,12 @@ public class LineageAdmin {
       .filter(e -> e.getValue() != null)
       .forEach(entry -> {
         ProgramRunId programRunId = entry.getKey();
-        RunRecordMeta runRecord = entry.getValue();
+        RunRecordDetail runRecord = entry.getValue();
         extractAndAddInnerPrograms(toVisitPrograms, programWorkflowMap, appSpecs, programRunId, runRecord);
       });
   }
 
-  private ProgramRunId extractWorkflowRunId(ProgramRunId programRunId, RunRecordMeta runRecord) {
+  private ProgramRunId extractWorkflowRunId(ProgramRunId programRunId, RunRecordDetail runRecord) {
     Map<String, String> systemArgs = runRecord.getSystemArgs();
     String workflowRunId = systemArgs.get(ProgramOptionConstants.WORKFLOW_RUN_ID);
     String workflowName = systemArgs.get(ProgramOptionConstants.WORKFLOW_NAME);
@@ -280,7 +280,7 @@ public class LineageAdmin {
   private void extractAndAddInnerPrograms(Set<ProgramId> toVisitPrograms,
                                           Map<ProgramRunId, ProgramRunId> programWorkflowMap,
                                           Map<ApplicationId, ApplicationSpecification> appSpecs,
-                                          ProgramRunId programRunId, RunRecordMeta wfRunRecord) {
+                                          ProgramRunId programRunId, RunRecordDetail wfRunRecord) {
     ApplicationId appId = programRunId.getParent().getParent();
     WorkflowSpecification workflowSpec =
       appSpecs.get(appId).getWorkflows().get(programRunId.getProgram());

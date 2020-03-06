@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
@@ -183,7 +183,7 @@ public class ProgramLifecycleService {
     List<ProgramId> filteredIds = programIds.stream().filter(visibleEntities::contains).collect(Collectors.toList());
 
     Map<ProgramId, ProgramStatus> result = new HashMap<>();
-    for (Map.Entry<ProgramId, Collection<RunRecordMeta>> entry : store.getActiveRuns(filteredIds).entrySet()) {
+    for (Map.Entry<ProgramId, Collection<RunRecordDetail>> entry : store.getActiveRuns(filteredIds).entrySet()) {
       result.put(entry.getKey(), getProgramStatus(entry.getValue()));
     }
     return result;
@@ -234,21 +234,21 @@ public class ProgramLifecycleService {
   }
 
   /**
-   * Returns the {@link RunRecordMeta} for the given program run.
+   * Returns the {@link RunRecordDetail} for the given program run.
    *
    * @param programRunId the program run to fetch
-   * @return the {@link RunRecordMeta} for the given run
+   * @return the {@link RunRecordDetail} for the given run
    * @throws NotFoundException if the given program or program run doesn't exist
    * @throws Exception if authorization failed
    */
-  public RunRecordMeta getRun(ProgramRunId programRunId) throws Exception {
+  public RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) throws Exception {
     AuthorizationUtil.ensureAccess(programRunId, authorizationEnforcer, authenticationContext.getPrincipal());
 
     ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programRunId.getParent());
     if (programSpec == null) {
       throw new NotFoundException(programRunId.getParent());
     }
-    RunRecordMeta meta = store.getRun(programRunId);
+    RunRecordDetail meta = store.getRun(programRunId);
     if (meta == null) {
       throw new NotFoundException(programRunId);
     }
@@ -269,14 +269,19 @@ public class ProgramLifecycleService {
    * @throws UnauthorizedException if the principal does not have access to the program
    * @throws Exception if there was some other exception performing authorization checks
    */
-  public List<RunRecord> getRuns(ProgramId programId, ProgramRunStatus programRunStatus,
-                                 long start, long end, int limit) throws Exception {
+  public List<RunRecordDetail> getRunRecordMetas(ProgramId programId, ProgramRunStatus programRunStatus,
+                                                 long start, long end, int limit) throws Exception {
     AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
     ProgramSpecification programSpec = getProgramSpecificationWithoutAuthz(programId);
     if (programSpec == null) {
       throw new NotFoundException(programId);
     }
-    return store.getRuns(programId, programRunStatus, start, end, limit).values().stream()
+    return store.getRuns(programId, programRunStatus, start, end, limit).values().stream().collect(Collectors.toList());
+  }
+
+  public List<RunRecord> getRunRecords(ProgramId programId, ProgramRunStatus programRunStatus,
+                                       long start, long end, int limit) throws Exception {
+    return getRunRecordMetas(programId, programRunStatus, start, end, limit).stream()
       .map(record -> RunRecord.builder(record).build()).collect(Collectors.toList());
   }
 
@@ -294,8 +299,8 @@ public class ProgramLifecycleService {
    * @throws UnauthorizedException if the principal does not have access to the program
    * @throws Exception if there was some other exception performing authorization checks
    */
-  public List<ProgramHistory> getRuns(Collection<ProgramId> programs, ProgramRunStatus programRunStatus,
-                                      long start, long end, int limit) throws Exception {
+  public List<ProgramHistory> getRunRecords(Collection<ProgramId> programs, ProgramRunStatus programRunStatus,
+                                            long start, long end, int limit) throws Exception {
     List<ProgramHistory> result = new ArrayList<>();
 
     // do this in batches to avoid transaction timeouts.
@@ -359,9 +364,9 @@ public class ProgramLifecycleService {
    * @return the program status
    */
   @VisibleForTesting
-  static ProgramStatus getProgramStatus(Collection<RunRecordMeta> runRecords) {
+  static ProgramStatus getProgramStatus(Collection<RunRecordDetail> runRecords) {
     boolean hasStarting = false;
-    for (RunRecordMeta runRecord : runRecords) {
+    for (RunRecordDetail runRecord : runRecords) {
       ProgramRunStatus runStatus = runRecord.getStatus();
       if (runStatus == ProgramRunStatus.RUNNING || runStatus == ProgramRunStatus.SUSPENDED) {
         return ProgramStatus.RUNNING;
@@ -459,7 +464,7 @@ public class ProgramLifecycleService {
    */
   public Set<RunId> restart(ApplicationId applicationId, long startTimeSeconds, long endTimeSeconds) throws Exception {
     Set<RunId> runs = new HashSet<>();
-    Map<ProgramRunId, RunRecordMeta> runMap =
+    Map<ProgramRunId, RunRecordDetail> runMap =
       store.getRuns(applicationId, ProgramRunStatus.KILLED, Integer.MAX_VALUE, meta -> {
         Long stopTime = meta.getStopTs();
         return stopTime != null && stopTime >= startTimeSeconds && stopTime < endTimeSeconds;
@@ -689,7 +694,7 @@ public class ProgramLifecycleService {
 
     // See if the program is running as per the runtime service
     Map<RunId, RuntimeInfo> runtimeInfos = findRuntimeInfo(programId, runId);
-    Map<ProgramRunId, RunRecordMeta> activeRunRecords = getActiveRuns(programId, runId);
+    Map<ProgramRunId, RunRecordDetail> activeRunRecords = getActiveRuns(programId, runId);
 
     if (runtimeInfos.isEmpty() && activeRunRecords.isEmpty()) {
       // Error out if no run information from runtime service and from run record
@@ -714,7 +719,7 @@ public class ProgramLifecycleService {
       Iterator<String> iterator = pendingStops.iterator();
       while (iterator.hasNext()) {
         ProgramRunId activeRunId = programId.run(iterator.next());
-        RunRecordMeta runRecord = activeRunRecords.get(activeRunId);
+        RunRecordDetail runRecord = activeRunRecords.get(activeRunId);
         if (runRecord == null) {
           runRecord = store.getRun(activeRunId);
         }
@@ -1116,11 +1121,11 @@ public class ProgramLifecycleService {
    * Returns the active run records (PENDING / STARTING / RUNNING / SUSPENDED) based on the given program id and an
    * optional run id.
    */
-  private Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId, @Nullable String runId) {
+  private Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId, @Nullable String runId) {
     if (runId == null) {
       return store.getActiveRuns(programId);
     }
-    RunRecordMeta runRecord = store.getRun(programId.run(runId));
+    RunRecordDetail runRecord = store.getRun(programId.run(runId));
     EnumSet<ProgramRunStatus> activeStates = EnumSet.of(ProgramRunStatus.PENDING,
                                                         ProgramRunStatus.STARTING,
                                                         ProgramRunStatus.RUNNING,

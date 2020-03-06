@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,7 +19,7 @@ package io.cdap.cdap.logging.gateway.handlers;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.logging.LoggingContext;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.LoggingConfiguration;
 import io.cdap.cdap.logging.filter.Filter;
 import io.cdap.cdap.logging.filter.FilterParser;
@@ -53,7 +53,7 @@ public abstract class AbstractLogHttpHandler extends AbstractHttpHandler {
 
   protected void doGetLogs(LogReader logReader, HttpResponder responder, LoggingContext loggingContext,
                            long fromTimeSecsParam, long toTimeSecsParam, boolean escape, String filterStr,
-                           @Nullable RunRecordMeta runRecord, String format, List<String> fieldsToSuppress) {
+                           @Nullable RunRecordDetail runRecord, String format, List<String> fieldsToSuppress) {
 
     try {
       TimeRange timeRange = parseTime(fromTimeSecsParam, toTimeSecsParam, responder);
@@ -85,7 +85,7 @@ public abstract class AbstractLogHttpHandler extends AbstractHttpHandler {
 
   protected void doPrev(LogReader logReader, HttpResponder responder, LoggingContext loggingContext,
                         int maxEvents, String fromOffsetStr, boolean escape, String filterStr,
-                        @Nullable RunRecordMeta runRecord, String format, List<String> fieldsToSuppress) {
+                        @Nullable RunRecordDetail runRecord, String format, List<String> fieldsToSuppress) {
     try {
       Filter filter = FilterParser.parse(filterStr);
 
@@ -108,7 +108,7 @@ public abstract class AbstractLogHttpHandler extends AbstractHttpHandler {
   }
 
   protected void doNext(LogReader logReader, HttpResponder responder, LoggingContext loggingContext, int maxEvents,
-                        String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordMeta runRecord,
+                        String fromOffsetStr, boolean escape, String filterStr, @Nullable RunRecordDetail runRecord,
                         String format, List<String> fieldsToSuppress) {
     try {
       Filter filter = FilterParser.parse(filterStr);
@@ -193,7 +193,7 @@ public abstract class AbstractLogHttpHandler extends AbstractHttpHandler {
   /**
    * If readRange is outside runRecord's range, then the readRange is adjusted to fall within runRecords range.
    */
-  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordMeta runRecord,
+  private ReadRange adjustReadRange(ReadRange readRange, @Nullable RunRecordDetail runRecord,
                                     boolean fromTimeSpecified) {
     if (runRecord == null) {
       return readRange;

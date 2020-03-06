@@ -65,7 +65,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.proto.BatchProgram;
 import io.cdap.cdap.proto.BatchProgramCount;
@@ -221,7 +221,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     if (!appSpec.getMapReduce().containsKey(mapreduceId)) {
       throw new NotFoundException(programId);
     }
-    RunRecordMeta runRecordMeta = store.getRun(run);
+    RunRecordDetail runRecordMeta = store.getRun(run);
     if (runRecordMeta == null) {
       throw new NotFoundException(run);
     }
@@ -434,7 +434,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ProgramRunStatus runStatus = (status == null) ? ProgramRunStatus.ALL :
       ProgramRunStatus.valueOf(status.toUpperCase());
 
-    List<RunRecord> records = lifecycleService.getRuns(program, runStatus, start, end, resultLimit);
+    List<RunRecord> records = lifecycleService.getRunRecords(program, runStatus, start, end, resultLimit);
 
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(records));
   }
@@ -467,7 +467,7 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                @PathParam("run-id") String runid) throws NotFoundException, BadRequestException {
     ProgramType programType = getProgramType(type);
     ProgramId progId = new ApplicationId(namespaceId, appName, appVersion).program(programType, programName);
-    RunRecordMeta runRecordMeta = store.getRun(progId.run(runid));
+    RunRecordDetail runRecordMeta = store.getRun(progId.run(runid));
     if (runRecordMeta != null) {
       RunRecord runRecord = RunRecord.builder(runRecordMeta).build();
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(runRecord));
@@ -1551,7 +1551,8 @@ public class ProgramLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                                           batchProgram.getProgramId())).collect(Collectors.toList());
 
     List<BatchProgramHistory> response = new ArrayList<>(programs.size());
-    List<ProgramHistory> result = lifecycleService.getRuns(programIds, ProgramRunStatus.ALL, 0, Long.MAX_VALUE, 1);
+    List<ProgramHistory> result = lifecycleService.getRunRecords(programIds, ProgramRunStatus.ALL, 0,
+                                                                 Long.MAX_VALUE, 1);
     for (ProgramHistory programHistory : result) {
       ProgramId programId = programHistory.getProgramId();
       Exception exception = programHistory.getException();

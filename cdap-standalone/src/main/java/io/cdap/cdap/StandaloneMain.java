@@ -69,7 +69,7 @@ import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
-import io.cdap.cdap.logging.guice.LogQueryServerModule;
+import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.logging.service.LogQueryService;
 import io.cdap.cdap.messaging.MessagingService;
@@ -497,7 +497,7 @@ public class StandaloneMain {
       new ZKClientModule(),
       new KafkaClientModule(),
       new MetricsHandlerModule(),
-      new LogQueryServerModule(),
+      new LogQueryRuntimeModule().getStandaloneModules(),
       new InMemoryDiscoveryModule(),
       new LocalLocationModule(),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),

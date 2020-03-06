@@ -188,7 +188,7 @@ public class DefaultStore implements Store {
   private void recordCompletedWorkflow(AppMetadataStore metaStore, WorkflowTable workflowTable,
                                        WorkflowId workflowId, String runId)
     throws IOException, TableNotFoundException {
-    RunRecordMeta runRecord = metaStore.getRun(workflowId.run(runId));
+    RunRecordDetail runRecord = metaStore.getRun(workflowId.run(runId));
     if (runRecord == null) {
       return;
     }
@@ -211,7 +211,7 @@ public class DefaultStore implements Store {
         WorkflowActionNode workflowNode = (WorkflowActionNode) nodeIdMap.get(entry.getKey());
         ProgramType programType = ProgramType.valueOfSchedulableType(workflowNode.getProgram().getProgramType());
         ProgramId innerProgram = app.program(programType, entry.getKey());
-        RunRecordMeta innerProgramRun = metaStore.getRun(innerProgram.run(entry.getValue()));
+        RunRecordDetail innerProgramRun = metaStore.getRun(innerProgram.run(entry.getValue()));
         if (innerProgramRun != null && innerProgramRun.getStatus().equals(ProgramRunStatus.COMPLETED)) {
           Long stopTs = innerProgramRun.getStopTs();
           // since the program is completed, the stop ts cannot be null
@@ -286,38 +286,38 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramId id, ProgramRunStatus status,
-                                                  long startTime, long endTime, int limit) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramId id, ProgramRunStatus status,
+                                                    long startTime, long endTime, int limit) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(id, status, startTime, endTime, limit, null);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status,
-                                                  Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status,
+                                                    Predicate<RunRecordDetail> filter) {
     return getRuns(status, 0L, Long.MAX_VALUE, Integer.MAX_VALUE, filter);
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ProgramRunStatus status, long startTime,
-                                                  long endTime, int limit,
-                                                  Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ProgramRunStatus status, long startTime,
+                                                    long endTime, int limit,
+                                                    Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(null, status, startTime, endTime, limit, filter);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ApplicationId applicationId, ProgramRunStatus status, int limit,
-                                                  @Nullable Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ApplicationId applicationId, ProgramRunStatus status, int limit,
+                                                    @Nullable Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(applicationId, status, limit, filter);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(Set<ProgramRunId> programRunIds) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRuns(programRunIds);
     });
@@ -330,35 +330,36 @@ public class DefaultStore implements Store {
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(NamespaceId namespaceId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(namespaceId);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces, Predicate<RunRecordMeta> filter) {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(Set<NamespaceId> namespaces,
+                                                          Predicate<RunRecordDetail> filter) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(namespaces, filter);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(applicationId);
     });
   }
 
   @Override
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getActiveRuns(programId);
     });
   }
 
   @Override
-  public Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> programIds) {
+  public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramId> programIds) {
     return TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore appMetadataStore = getAppMetadataStore(context);
       // Get the active runs for programs that exist
@@ -373,7 +374,7 @@ public class DefaultStore implements Store {
    * @return run record for runid
    */
   @Override
-  public RunRecordMeta getRun(ProgramRunId id) {
+  public RunRecordDetail getRun(ProgramRunId id) {
     return TransactionRunners.run(transactionRunner, context -> {
       return getAppMetadataStore(context).getRun(id);
     });
@@ -510,7 +511,7 @@ public class DefaultStore implements Store {
   @Override
   public Map<String, String> getRuntimeArguments(ProgramRunId programRunId) {
     return TransactionRunners.run(transactionRunner, context -> {
-      RunRecordMeta runRecord = getAppMetadataStore(context).getRun(programRunId);
+      RunRecordDetail runRecord = getAppMetadataStore(context).getRun(programRunId);
       if (runRecord != null) {
         Map<String, String> properties = runRecord.getProperties();
         Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), STRING_MAP_TYPE);
