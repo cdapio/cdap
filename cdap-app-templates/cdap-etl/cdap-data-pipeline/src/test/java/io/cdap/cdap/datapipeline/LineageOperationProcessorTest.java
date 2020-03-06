@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -44,6 +45,154 @@ import java.util.Set;
  *
  */
 public class LineageOperationProcessorTest {
+
+  @Test
+  public void testMergeOperationsNonRepeat() {
+    // n1 -> n3 ----
+    //           |---- n5
+    // n2 -> n4 ----
+
+    // operations (n1) -> (id, name)
+    //            (n3) -> (body, offset)
+    //            (n2.id) -> id
+    //            (n2.name) -> name
+    //            (n4.body) -> (id, name)
+    //            (n5) -> (id, name)
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n3", "n5"));
+    connections.add(new Connection("n2", "n4"));
+    connections.add(new Connection("n4", "n5"));
+
+    EndPoint src1 = EndPoint.of("default", "n1");
+    EndPoint src2 = EndPoint.of("default", "n2");
+    EndPoint dest = EndPoint.of("default", "n5");
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("read1", "read description",
+                                                                               src1, "id", "name")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("read2", "read description",
+                                                                               src2, "body", "offset")));
+    List<FieldOperation> n3Operations = stageOperations.computeIfAbsent("n3", k -> new ArrayList<>());
+    n3Operations.add(new FieldTransformOperation("identity1", "identity", Collections.singletonList("id"), "id"));
+    n3Operations.add(new FieldTransformOperation("identity2", "identity", Collections.singletonList("name"), "name"));
+
+    stageOperations.put("n4", Collections.singletonList(new FieldTransformOperation("generate", "generate",
+                                                                                    Collections.singletonList("body"),
+                                                                                    "id", "name")));
+    stageOperations.put("n5", Collections.singletonList(new FieldWriteOperation("write", "write", dest,
+                                                                                "id", "name")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.emptySet());
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.read1", "read description", src1, "id", "name"));
+    expectedOperations.add(new ReadOperation("n2.read2", "read description", src2, "body", "offset"));
+    expectedOperations.add(new TransformOperation("n3.identity1", "identity",
+                                                  Collections.singletonList(InputField.of("n1.read1", "id")),
+                                                  "id"));
+    expectedOperations.add(new TransformOperation("n3.identity2", "identity",
+                                                  Collections.singletonList(InputField.of("n1.read1", "name")),
+                                                  "name"));
+    expectedOperations.add(new TransformOperation("n4.generate", "generate",
+                                                  Collections.singletonList(InputField.of("n2.read2", "body")),
+                                                  "id", "name"));
+    expectedOperations.add(new TransformOperation("n3,n4.merge.id", "Merged stages: n3,n4",
+                                                  Arrays.asList(InputField.of("n3.identity1", "id"),
+                                                                InputField.of("n4.generate", "id")), "id"));
+    expectedOperations.add(new TransformOperation("n3,n4.merge.name", "Merged stages: n3,n4",
+                                                  Arrays.asList(InputField.of("n3.identity2", "name"),
+                                                                InputField.of("n4.generate", "name")), "name"));
+    expectedOperations.add(new TransformOperation("n3,n4.merge.body", "Merged stages: n3,n4",
+                                                  Collections.singletonList(InputField.of("n2.read2", "body")),
+                                                  "body"));
+    expectedOperations.add(new TransformOperation("n3,n4.merge.offset", "Merged stages: n3,n4",
+                                                  Collections.singletonList(InputField.of("n2.read2", "offset")),
+                                                  "offset"));
+    expectedOperations.add(new WriteOperation("n5.write", "write", dest,
+                                              Arrays.asList(InputField.of("n3,n4.merge.id", "id"),
+                                                            InputField.of("n3,n4.merge.name", "name"))));
+    Set<Operation> process = processor.process();
+    Assert.assertEquals(expectedOperations, process);
+  }
+
+  @Test
+  public void testSameKeyAndRenameJoin() {
+    //  n1(id(key), swap1, n1same) ---------
+    //                              |
+    //                            JOIN  ------->(id, new_id, swap1, swap2, n1same, n2same)
+    //                              |
+    //  n2(id(key), swap2, n2same)----------
+
+    // operations (n1.id, n2.id) -> id
+    //            (n2.id) -> new_id
+    //            (n1.swap1) -> swap2
+    //            (n2.swap2) -> swap1
+    //            (n1.n1same) -> n1same
+    //            (n2.n2same) -> n2same
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n2", "n3"));
+    connections.add(new Connection("n3", "n4"));
+
+    EndPoint src1 = EndPoint.of("default", "n1");
+    EndPoint src2 = EndPoint.of("default", "n2");
+    EndPoint dest = EndPoint.of("default", "n4");
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("readSrc1", "read description",
+                                                                               src1, "id", "swap1", "n1same")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("readSrc2", "read description",
+                                                                               src2, "id", "swap2", "n2same")));
+    List<FieldOperation> joinOperations = stageOperations.computeIfAbsent("n3", k -> new ArrayList<>());
+    joinOperations.add(new FieldTransformOperation("JoinKey", "Join Key", Arrays.asList("n1.id", "n2.id"), "id"));
+    joinOperations.add(new FieldTransformOperation("RenameN2", "rename", Collections.singletonList("n2.id"),
+                                                   "new_id"));
+    joinOperations.add(new FieldTransformOperation("swap1", "swap", Collections.singletonList("n1.swap1"), "swap2"));
+    joinOperations.add(new FieldTransformOperation("swap2", "swap", Collections.singletonList("n2.swap2"), "swap1"));
+    joinOperations.add(new FieldTransformOperation("unchange1", "unchange", Collections.singletonList("n1.n1same"),
+                                                   "n1same"));
+    joinOperations.add(new FieldTransformOperation("unchange2", "unchange", Collections.singletonList("n2.n2same"),
+                                                   "n2same"));
+
+    stageOperations.put("n4", Collections.singletonList(
+      new FieldWriteOperation("Write", "write description",
+                              dest, "id", "new_id", "swap1", "swap2", "n1same", "n2same")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n3"));
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.readSrc1", "read description", src1, "id", "swap1", "n1same"));
+    expectedOperations.add(new ReadOperation("n2.readSrc2", "read description", src2, "id", "swap2", "n2same"));
+    expectedOperations.add(new TransformOperation("n3.JoinKey", "Join Key",
+                                                  Arrays.asList(InputField.of("n1.readSrc1", "id"),
+                                                                InputField.of("n2.readSrc2", "id")), "id"));
+    expectedOperations.add(new TransformOperation("n3.RenameN2", "rename",
+                                                  Collections.singletonList(InputField.of("n2.readSrc2", "id")),
+                                                  "new_id"));
+    expectedOperations.add(new TransformOperation("n3.swap1", "swap",
+                                                  Collections.singletonList(InputField.of("n1.readSrc1", "swap1")),
+                                                  "swap2"));
+    expectedOperations.add(new TransformOperation("n3.swap2", "swap",
+                                                  Collections.singletonList(InputField.of("n2.readSrc2", "swap2")),
+                                                  "swap1"));
+    expectedOperations.add(new TransformOperation("n3.unchange1", "unchange",
+                                                  Collections.singletonList(InputField.of("n1.readSrc1", "n1same")),
+                                                  "n1same"));
+    expectedOperations.add(new TransformOperation("n3.unchange2", "unchange",
+                                                  Collections.singletonList(InputField.of("n2.readSrc2", "n2same")),
+                                                  "n2same"));
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", dest,
+                                              Arrays.asList(InputField.of("n3.JoinKey", "id"),
+                                                            InputField.of("n3.RenameN2", "new_id"),
+                                                            InputField.of("n3.swap2", "swap1"),
+                                                            InputField.of("n3.swap1", "swap2"),
+                                                            InputField.of("n3.unchange1", "n1same"),
+                                                            InputField.of("n3.unchange2", "n2same"))));
+    Assert.assertEquals(expectedOperations, processor.process());
+  }
 
   @Test
   public void testSimplePipeline() {
@@ -269,22 +418,25 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(hRead);
 
     // implicit merge should be added by app
-    TransformOperation merge = new TransformOperation("n1.n2.merge", "Merged stages: n1,n2",
+    TransformOperation merge1 = new TransformOperation("n1,n2.merge.offset", "Merged stages: n1,n2",
                                                       Arrays.asList(InputField.of("n1.pRead", "offset"),
-                                                                    InputField.of("n1.pRead", "body"),
-                                                                    InputField.of("n2.hRead", "offset"),
-                                                                    InputField.of("n2.hRead", "body")),
-                                                      "offset", "body");
-    expectedOperations.add(merge);
+                                                                    InputField.of("n2.hRead", "offset")),
+                                                       "offset");
+    TransformOperation merge2 = new TransformOperation("n1,n2.merge.body", "Merged stages: n1,n2",
+                                                       Arrays.asList(InputField.of("n1.pRead", "body"),
+                                                                     InputField.of("n2.hRead", "body")),
+                                                       "body");
+    expectedOperations.add(merge1);
+    expectedOperations.add(merge2);
 
     WriteOperation write1 = new WriteOperation("n3.write1", "Writing to test store", testEndPoint,
-                                               Arrays.asList(InputField.of("n1.n2.merge", "offset"),
-                                                             InputField.of("n1.n2.merge", "body")));
+                                               Arrays.asList(InputField.of("n1,n2.merge.offset", "offset"),
+                                                             InputField.of("n1,n2.merge.body", "body")));
     expectedOperations.add(write1);
 
     WriteOperation write2 = new WriteOperation("n4.write2", "Writing to prod store", prodEndPoint,
-                                               Arrays.asList(InputField.of("n1.n2.merge", "offset"),
-                                                             InputField.of("n1.n2.merge", "body")));
+                                               Arrays.asList(InputField.of("n1,n2.merge.offset", "offset"),
+                                                             InputField.of("n1,n2.merge.body", "body")));
     expectedOperations.add(write2);
 
     Assert.assertEquals(new FieldLineageInfo(expectedOperations), new FieldLineageInfo(processedOperations));
@@ -385,24 +537,31 @@ public class LineageOperationProcessorTest {
                                    "zip");
     expectedOperations.add(parse);
 
-    List<InputField> inputsToMerge = new ArrayList<>();
-    inputsToMerge.add(InputField.of("n1.read", "offset"));
-    inputsToMerge.add(InputField.of("n1.read", "body"));
-    inputsToMerge.add(InputField.of("n2.parse", "name"));
-    inputsToMerge.add(InputField.of("n2.parse", "address"));
-    inputsToMerge.add(InputField.of("n2.parse", "zip"));
-    inputsToMerge.add(InputField.of("n3.read", "offset"));
-    inputsToMerge.add(InputField.of("n3.read", "body"));
-    inputsToMerge.add(InputField.of("n4.parse", "name"));
-    inputsToMerge.add(InputField.of("n4.parse", "address"));
-    inputsToMerge.add(InputField.of("n4.parse", "zip"));
+    TransformOperation merge1 = new TransformOperation("n2,n4.merge.offset", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n1.read", "offset"),
+                                                                        InputField.of("n3.read", "offset")), "offset");
+    TransformOperation merge2 = new TransformOperation("n2,n4.merge.body", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n1.read", "body"),
+                                                                        InputField.of("n3.read", "body")), "body");
+    TransformOperation merge3 = new TransformOperation("n2,n4.merge.address", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n2.parse", "address"),
+                                                                        InputField.of("n4.parse", "address")),
+                                                       "address");
+    TransformOperation merge4 = new TransformOperation("n2,n4.merge.name", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n2.parse", "name"),
+                                                                        InputField.of("n4.parse", "name")), "name");
+    TransformOperation merge5 = new TransformOperation("n2,n4.merge.zip", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n2.parse", "zip"),
+                                                                        InputField.of("n4.parse", "zip")), "zip");
 
-    TransformOperation merge = new TransformOperation("n2.n4.merge", "Merged stages: n2,n4", inputsToMerge, "offset",
-                                                      "body", "name", "address", "zip");
-    expectedOperations.add(merge);
+    expectedOperations.add(merge1);
+    expectedOperations.add(merge2);
+    expectedOperations.add(merge3);
+    expectedOperations.add(merge4);
+    expectedOperations.add(merge5);
 
     TransformOperation normalize = new TransformOperation("n5.normalize", "normalizing address",
-                                                          Collections.singletonList(InputField.of("n2.n4.merge",
+                                                          Collections.singletonList(InputField.of("n2,n4.merge.address",
                                                                                                   "address")),
                                                           "address");
     expectedOperations.add(normalize);
@@ -414,18 +573,19 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(rename);
 
     WriteOperation write = new WriteOperation("n6.write", "writing file 3", n6EndPoint,
-                                              InputField.of("n2.n4.merge", "offset"),
-                                              InputField.of("n2.n4.merge", "name"),
+                                              InputField.of("n2,n4.merge.offset", "offset"),
+                                              InputField.of("n2,n4.merge.name", "name"),
                                               InputField.of("n5.normalize", "address"));
     expectedOperations.add(write);
 
     rename = new TransformOperation("n7.rename", "renaming offset to file_offset",
-                                    Collections.singletonList(InputField.of("n2.n4.merge", "offset")), "file_offset");
+                                    Collections.singletonList(InputField.of("n2,n4.merge.offset", "offset")),
+                                    "file_offset");
     expectedOperations.add(rename);
 
     write = new WriteOperation("n8.write", "writing file 4", n8EndPoint, InputField.of("n7.rename", "file_offset"),
-                               InputField.of("n2.n4.merge", "name"), InputField.of("n5.normalize", "address"),
-                               InputField.of("n2.n4.merge", "zip"));
+                               InputField.of("n2,n4.merge.name", "name"), InputField.of("n5.normalize", "address"),
+                               InputField.of("n2,n4.merge.zip", "zip"));
     expectedOperations.add(write);
 
     Assert.assertEquals(expectedOperations, processedOperations);
