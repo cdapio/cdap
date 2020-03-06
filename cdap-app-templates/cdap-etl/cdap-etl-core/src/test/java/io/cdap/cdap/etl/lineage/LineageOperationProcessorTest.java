@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.lineage;
 
+import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.lineage.field.EndPoint;
 import io.cdap.cdap.api.lineage.field.InputField;
 import io.cdap.cdap.api.lineage.field.Operation;
@@ -269,22 +270,25 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(hRead);
 
     // implicit merge should be added by app
-    TransformOperation merge = new TransformOperation("n1.n2.merge", "Merged stages: n1,n2",
+    TransformOperation merge1 = new TransformOperation("n1,n2.merge.offset", "Merged stages: n1,n2",
                                                       Arrays.asList(InputField.of("n1.pRead", "offset"),
-                                                                    InputField.of("n1.pRead", "body"),
-                                                                    InputField.of("n2.hRead", "offset"),
-                                                                    InputField.of("n2.hRead", "body")),
-                                                      "offset", "body");
-    expectedOperations.add(merge);
+                                                                    InputField.of("n2.hRead", "offset")),
+                                                       "offset");
+    TransformOperation merge2 = new TransformOperation("n1,n2.merge.body", "Merged stages: n1,n2",
+                                                       Arrays.asList(InputField.of("n1.pRead", "body"),
+                                                                     InputField.of("n2.hRead", "body")),
+                                                       "body");
+    expectedOperations.add(merge1);
+    expectedOperations.add(merge2);
 
     WriteOperation write1 = new WriteOperation("n3.write1", "Writing to test store", testEndPoint,
-                                               Arrays.asList(InputField.of("n1.n2.merge", "offset"),
-                                                             InputField.of("n1.n2.merge", "body")));
+                                               Arrays.asList(InputField.of("n1,n2.merge.offset", "offset"),
+                                                             InputField.of("n1,n2.merge.body", "body")));
     expectedOperations.add(write1);
 
     WriteOperation write2 = new WriteOperation("n4.write2", "Writing to prod store", prodEndPoint,
-                                               Arrays.asList(InputField.of("n1.n2.merge", "offset"),
-                                                             InputField.of("n1.n2.merge", "body")));
+                                               Arrays.asList(InputField.of("n1,n2.merge.offset", "offset"),
+                                                             InputField.of("n1,n2.merge.body", "body")));
     expectedOperations.add(write2);
 
     Assert.assertEquals(new FieldLineageInfo(expectedOperations), new FieldLineageInfo(processedOperations));
@@ -385,24 +389,31 @@ public class LineageOperationProcessorTest {
                                    "zip");
     expectedOperations.add(parse);
 
-    List<InputField> inputsToMerge = new ArrayList<>();
-    inputsToMerge.add(InputField.of("n1.read", "offset"));
-    inputsToMerge.add(InputField.of("n1.read", "body"));
-    inputsToMerge.add(InputField.of("n2.parse", "name"));
-    inputsToMerge.add(InputField.of("n2.parse", "address"));
-    inputsToMerge.add(InputField.of("n2.parse", "zip"));
-    inputsToMerge.add(InputField.of("n3.read", "offset"));
-    inputsToMerge.add(InputField.of("n3.read", "body"));
-    inputsToMerge.add(InputField.of("n4.parse", "name"));
-    inputsToMerge.add(InputField.of("n4.parse", "address"));
-    inputsToMerge.add(InputField.of("n4.parse", "zip"));
+    TransformOperation merge1 = new TransformOperation("n2,n4.merge.offset", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n1.read", "offset"),
+                                                                        InputField.of("n3.read", "offset")), "offset");
+    TransformOperation merge2 = new TransformOperation("n2,n4.merge.body", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n1.read", "body"),
+                                                                        InputField.of("n3.read", "body")), "body");
+    TransformOperation merge3 = new TransformOperation("n2,n4.merge.address", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n2.parse", "address"),
+                                                                        InputField.of("n4.parse", "address")),
+                                                       "address");
+    TransformOperation merge4 = new TransformOperation("n2,n4.merge.name", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n2.parse", "name"),
+                                                                        InputField.of("n4.parse", "name")), "name");
+    TransformOperation merge5 = new TransformOperation("n2,n4.merge.zip", "Merged stages: n2,n4",
+                                                       ImmutableList.of(InputField.of("n2.parse", "zip"),
+                                                                        InputField.of("n4.parse", "zip")), "zip");
 
-    TransformOperation merge = new TransformOperation("n2.n4.merge", "Merged stages: n2,n4", inputsToMerge, "offset",
-                                                      "body", "name", "address", "zip");
-    expectedOperations.add(merge);
+    expectedOperations.add(merge1);
+    expectedOperations.add(merge2);
+    expectedOperations.add(merge3);
+    expectedOperations.add(merge4);
+    expectedOperations.add(merge5);
 
     TransformOperation normalize = new TransformOperation("n5.normalize", "normalizing address",
-                                                          Collections.singletonList(InputField.of("n2.n4.merge",
+                                                          Collections.singletonList(InputField.of("n2,n4.merge.address",
                                                                                                   "address")),
                                                           "address");
     expectedOperations.add(normalize);
@@ -414,18 +425,19 @@ public class LineageOperationProcessorTest {
     expectedOperations.add(rename);
 
     WriteOperation write = new WriteOperation("n6.write", "writing file 3", n6EndPoint,
-                                              InputField.of("n2.n4.merge", "offset"),
-                                              InputField.of("n2.n4.merge", "name"),
+                                              InputField.of("n2,n4.merge.offset", "offset"),
+                                              InputField.of("n2,n4.merge.name", "name"),
                                               InputField.of("n5.normalize", "address"));
     expectedOperations.add(write);
 
     rename = new TransformOperation("n7.rename", "renaming offset to file_offset",
-                                    Collections.singletonList(InputField.of("n2.n4.merge", "offset")), "file_offset");
+                                    Collections.singletonList(InputField.of("n2,n4.merge.offset", "offset")),
+                                    "file_offset");
     expectedOperations.add(rename);
 
     write = new WriteOperation("n8.write", "writing file 4", n8EndPoint, InputField.of("n7.rename", "file_offset"),
-                               InputField.of("n2.n4.merge", "name"), InputField.of("n5.normalize", "address"),
-                               InputField.of("n2.n4.merge", "zip"));
+                               InputField.of("n2,n4.merge.name", "name"), InputField.of("n5.normalize", "address"),
+                               InputField.of("n2,n4.merge.zip", "zip"));
     expectedOperations.add(write);
 
     Assert.assertEquals(expectedOperations, processedOperations);
