@@ -126,9 +126,7 @@ export default class ProfilePreview extends Component {
     }
     let profileNamespace =
       this.state.profileDetails.scope === SCOPES.SYSTEM ? SYSTEM_NAMESPACE : getCurrentNamespace();
-    let profileDetailsLink = `${location.protocol}//${
-      location.host
-    }/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
+    let profileDetailsLink = `${location.protocol}//${location.host}/cdap/ns/${profileNamespace}/profiles/details/${this.props.profileName}`;
     let profileProvisionerLabel = getProvisionerLabel(
       this.state.profileDetails,
       this.state.provisioners
