@@ -43,9 +43,6 @@ const mapDispatchToProps = (dispatch) => {
   };
 };
 
-const ConnectedRuntimeArgsPairs = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(KeyValuePairs);
+const ConnectedRuntimeArgsPairs = connect(mapStateToProps, mapDispatchToProps)(KeyValuePairs);
 
 export default ConnectedRuntimeArgsPairs;

@@ -73,9 +73,6 @@ NumExecutors.propTypes = {
   onChange: PropTypes.func,
 };
 
-const ConnectedNumExecutors = connect(
-  mapStateToProps,
-  mapDispatchToProps
-)(NumExecutors);
+const ConnectedNumExecutors = connect(mapStateToProps, mapDispatchToProps)(NumExecutors);
 
 export default ConnectedNumExecutors;

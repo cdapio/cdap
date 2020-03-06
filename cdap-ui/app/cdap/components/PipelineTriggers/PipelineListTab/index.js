@@ -140,9 +140,6 @@ PipelineListTabView.propTypes = {
   workflowName: PropTypes.string,
 };
 
-const PipelineListTab = connect(
-  mapStateToProps,
-  mapDispatch
-)(PipelineListTabView);
+const PipelineListTab = connect(mapStateToProps, mapDispatch)(PipelineListTabView);
 
 export default PipelineListTab;
