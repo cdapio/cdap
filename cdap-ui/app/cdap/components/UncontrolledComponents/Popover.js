@@ -70,8 +70,9 @@ export default class UncontrolledPopover extends Component {
         isOpen={this.state.dropdownOpen}
         target={this.state.id}
         innerClassName="dataprep-toggle-all-dropdown"
-        className={this.props.popoverClassName}
+        popperClassName={this.props.popperClassName}
         container="inline"
+        trigger="legacy"
       >
         <PopoverBody>{this.props.children}</PopoverBody>
       </Popover>
@@ -117,6 +118,6 @@ UncontrolledPopover.propTypes = {
   documentElement: PropTypes.node,
   icon: PropTypes.string,
   className: PropTypes.string,
-  popoverClassName: PropTypes.string,
+  popperClassName: PropTypes.string,
   'data-cy': PropTypes.string,
 };

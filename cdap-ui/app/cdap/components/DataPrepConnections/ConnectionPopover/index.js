@@ -233,7 +233,8 @@ export default class ConnectionPopover extends Component {
         <If condition={!this.props.connectionInfo.preconfigured}>
           <UncontrolledPopover
             icon="fa-ellipsis-v"
-            popoverClassName="connection-action-popover"
+            popperClassName="connection-action-popover"
+            fade={false}
             data-cy={`connection-action-popover-toggle-${type}-${id}`}
           >
             <div
