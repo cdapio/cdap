@@ -17,14 +17,36 @@
 package io.cdap.cdap.runtime.spi.runtimejob;
 
 /**
- * Represents runtime job that will be executed.
+ * Uniquely identifies a job.
  */
-public interface RuntimeJob {
+public class RuntimeJobId {
+  private final String runtimeJobId;
+
+  public RuntimeJobId(String runtimeJobId) {
+    this.runtimeJobId = runtimeJobId;
+  }
+
   /**
-   * This method will be responsible for running the runtime job using underlying runner.
-   *
-   * @param runtimeJobEnvironment runtime job environment
-   * @throws Exception thrown if any error while job execution
+   * Returns job id.
    */
-  void run(RuntimeJobEnvironment runtimeJobEnvironment) throws Exception;
+  public String getId() {
+    return runtimeJobId;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+    RuntimeJobId that = (RuntimeJobId) o;
+    return runtimeJobId.equals(that.runtimeJobId);
+  }
+
+  @Override
+  public int hashCode() {
+    return runtimeJobId.hashCode();
+  }
 }

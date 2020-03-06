@@ -14,41 +14,47 @@
  * the License.
  */
 
-package io.cdap.cdap.runtime.spi.launcher;
+package io.cdap.cdap.runtime.spi.runtimejob;
 
 import java.util.Objects;
 
 /**
- * Represents launched job details.
+ * Represents runtime job details.
  */
-public class JobDetails {
-  private final String status;
+public class RuntimeJobDetail {
+  private final RuntimeJobId runtimeJobId;
+  private final RuntimeJobStatus status;
 
-  public JobDetails(String status) {
+  public RuntimeJobDetail(RuntimeJobId runtimeJobId, RuntimeJobStatus status) {
+    this.runtimeJobId = runtimeJobId;
     this.status = status;
   }
 
   /**
    * Returns status of the job.
    */
-  public String getStatus() {
+  public RuntimeJobStatus getStatus() {
     return status;
+  }
+
+  /**
+   * Returns runtime job id.
+   */
+  public RuntimeJobId getRuntimeJobId() {
+    return runtimeJobId;
   }
 
   @Override
   public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (o == null || getClass() != o.getClass()) {
-      return false;
-    }
-    JobDetails that = (JobDetails) o;
-    return status.equals(that.status);
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    RuntimeJobDetail that = (RuntimeJobDetail) o;
+    return runtimeJobId.equals(that.runtimeJobId) &&
+      status == that.status;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(status);
+    return Objects.hash(runtimeJobId, status);
   }
 }

@@ -24,9 +24,9 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.util.Map;
 
 /**
- * Runtime job context to provide information needed by the {@link RuntimeJob}.
+ * Represents runtime job environment that provides information that is needed by the {@link RuntimeJob} to run the job.
  */
-public interface RuntimeJobContext {
+public interface RuntimeJobEnvironment {
   /**
    * Returns a {@link DiscoveryService} for service announcement purpose.
    */
@@ -43,7 +43,7 @@ public interface RuntimeJobContext {
   TwillRunnerService getTwillRunnerService();
 
   /**
-   * Returns properties to be added to the CDAP configuration.
+   * Returns properties to be available to {@link RuntimeJob}.
    */
-  Map<String, String> getConfigProperties();
+  Map<String, String> getProperties();
 }

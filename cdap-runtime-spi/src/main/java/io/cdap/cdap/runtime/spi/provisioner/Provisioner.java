@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
-import io.cdap.cdap.runtime.spi.launcher.Launcher;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 
 import java.util.Map;
 import java.util.Optional;
@@ -145,12 +145,13 @@ public interface Provisioner {
   Capabilities getCapabilities();
 
   /**
-   * Returns {@link Launcher} to launch runtime job on provisioned cluster.
+   * Returns {@link RuntimeJobManager} to launch and manage runtime job on provisioned cluster. This method should
+   * return concrete instance of runtime job manager.
    *
-   * @param context provisioner context to initialize launcher
-   * @return the launcher to launch the job
+   * @param context provisioner context
+   * @return optional runtime job manager, if it is empty, ssh will be used to launch and manage jobs.
    */
-  default Optional<Launcher> getLauncher(ProvisionerContext context) {
+  default Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     return Optional.empty();
   }
 }
