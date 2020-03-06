@@ -30,6 +30,7 @@ import io.cdap.cdap.api.spark.AbstractSpark;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
+import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.FieldOperationTypeAdapter;
@@ -62,9 +63,11 @@ public class ETLSpark extends AbstractSpark {
 
   private final BatchPhaseSpec phaseSpec;
   private Finisher finisher;
+  private final BatchPipelineSpec spec;
 
-  public ETLSpark(BatchPhaseSpec phaseSpec) {
+  public ETLSpark(BatchPhaseSpec phaseSpec, BatchPipelineSpec spec) {
     this.phaseSpec = phaseSpec;
+    this.spec = spec;
   }
 
   @Override
@@ -85,6 +88,7 @@ public class ETLSpark extends AbstractSpark {
     // add source, sink, transform ids to the properties. These are needed at runtime to instantiate the plugins
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.PIPELINEID, GSON.toJson(phaseSpec, BatchPhaseSpec.class));
+    properties.put(Constants.PIPELINE_SPEC_KEY, GSON.toJson(spec, BatchPipelineSpec.class));
     setProperties(properties);
   }
 
@@ -99,6 +103,7 @@ public class ETLSpark extends AbstractSpark {
 
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
+    BatchPipelineSpec spec = GSON.fromJson(properties.get(Constants.PIPELINE_SPEC_KEY), BatchPipelineSpec.class);
 
     for (Map.Entry<String, String> pipelineProperty : phaseSpec.getPipelineProperties().entrySet()) {
       sparkConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
@@ -108,7 +113,7 @@ public class ETLSpark extends AbstractSpark {
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                          context.getLogicalStartTime(), context,
                                                          context.getNamespace());
-    SparkPreparer preparer = new SparkPreparer(context, context.getMetrics(), evaluator, pipelineRuntime);
+    SparkPreparer preparer = new SparkPreparer(context, context.getMetrics(), evaluator, pipelineRuntime, spec);
     List<Finisher> finishers = preparer.prepare(phaseSpec);
     finisher = new CompositeFinisher(finishers);
   }

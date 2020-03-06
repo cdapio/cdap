@@ -733,7 +733,7 @@ public class SmartWorkflow extends AbstractWorkflow {
       applicationConfigurer.addSpark(new ExternalSparkProgram(batchPhaseSpec, stageSpec));
       programAdder.addSpark(programName);
     } else if (useSpark) {
-      applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec));
+      applicationConfigurer.addSpark(new ETLSpark(batchPhaseSpec, spec));
       programAdder.addSpark(programName);
     } else {
       applicationConfigurer.addMapReduce(new ETLMapReduce(batchPhaseSpec,
