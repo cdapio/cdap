@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -120,7 +120,7 @@ public abstract class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramStop(programRunId, 0, ProgramRunStatus.COMPLETED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
 
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId);
       Assert.assertEquals(ProgramRunStatus.PENDING, runRecordMeta.getStatus());
     });
   }
@@ -141,7 +141,7 @@ public abstract class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramStop(programRunId1, RunIds.getTime(runId1, TimeUnit.SECONDS),
                                              ProgramRunStatus.COMPLETED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId1);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId1);
       // no run record is expected to be persisted without STARTING persisted
       Assert.assertNull(runRecordMeta);
     });
@@ -153,7 +153,7 @@ public abstract class AppMetadataStoreTest {
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), -1);
       metadataStoreDataset.recordProgramResumed(programRunId2,
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), -1);
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId2);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId2);
       // no run record is expected to be persisted without STARTING persisted
       Assert.assertNull(runRecordMeta);
     });
@@ -170,7 +170,7 @@ public abstract class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramStop(programRunId3, RunIds.getTime(runId3, TimeUnit.SECONDS),
                                              ProgramRunStatus.FAILED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId3);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId3);
       // no run record is expected to be persisted without STARTING persisted
       Assert.assertNull(runRecordMeta);
     });
@@ -186,7 +186,7 @@ public abstract class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramStop(programRunId4, RunIds.getTime(runId4, TimeUnit.SECONDS),
                                              ProgramRunStatus.KILLED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId4);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId4);
       // KILLED after COMPLETED is ignored
       Assert.assertEquals(ProgramRunStatus.COMPLETED, runRecordMeta.getStatus());
     });
@@ -201,7 +201,7 @@ public abstract class AppMetadataStoreTest {
       metadataStoreDataset.recordProgramStop(programRunId5, RunIds.getTime(runId5, TimeUnit.SECONDS),
                                              ProgramRunStatus.COMPLETED, null,
                                              AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId5);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId5);
       // COMPLETED after FAILED is ignored
       Assert.assertEquals(ProgramRunStatus.FAILED, runRecordMeta.getStatus());
     });
@@ -218,7 +218,7 @@ public abstract class AppMetadataStoreTest {
                                                 currentTime);
       metadataStoreDataset.recordProgramStart(programRunId6, null, Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId6);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId6);
       // STARTING status is ignored since there's an existing SUSPENDED record
       Assert.assertEquals(ProgramRunStatus.SUSPENDED, runRecordMeta.getStatus());
       Assert.assertEquals(currentTime, runRecordMeta.getSuspendTs());
@@ -233,7 +233,7 @@ public abstract class AppMetadataStoreTest {
                                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
       metadataStoreDataset.recordProgramStart(programRunId7, null, Collections.emptyMap(),
                                               AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
-      RunRecordMeta runRecordMeta = metadataStoreDataset.getRun(programRunId7);
+      RunRecordDetail runRecordMeta = metadataStoreDataset.getRun(programRunId7);
       // STARTING status is ignored since there's an existing RUNNING record
       Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMeta.getStatus());
     });
@@ -245,7 +245,7 @@ public abstract class AppMetadataStoreTest {
     // Add some run records
     ApplicationId application = NamespaceId.DEFAULT.app("app");
     final ProgramId program = application.program(ProgramType.WORKFLOW, "program");
-    final AtomicReference<RunRecordMeta> resultRecord = new AtomicReference<>();
+    final AtomicReference<RunRecordDetail> resultRecord = new AtomicReference<>();
     final RunId runId = RunIds.generate(runIdTime.incrementAndGet());
     final ProgramRunId programRunId = program.run(runId);
     TransactionRunners.run(transactionRunner, context -> {
@@ -378,17 +378,17 @@ public abstract class AppMetadataStoreTest {
 
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-      Map<ProgramRunId, RunRecordMeta> runMap = metadataStoreDataset.getRuns(programRunIdSet);
+      Map<ProgramRunId, RunRecordDetail> runMap = metadataStoreDataset.getRuns(programRunIdSet);
       Set<String> actual = new TreeSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMap.entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> entry : runMap.entrySet()) {
         actual.add(entry.getValue().getPid());
       }
       Assert.assertEquals(expected, actual);
 
 
-      Map<ProgramRunId, RunRecordMeta> runMapHalf = metadataStoreDataset.getRuns(programRunIdSetHalf);
+      Map<ProgramRunId, RunRecordDetail> runMapHalf = metadataStoreDataset.getRuns(programRunIdSetHalf);
       Set<String> actualHalf = new TreeSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordMeta> entry : runMapHalf.entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> entry : runMapHalf.entrySet()) {
         actualHalf.add(entry.getValue().getPid());
       }
       Assert.assertEquals(expectedHalf, actualHalf);
@@ -482,7 +482,7 @@ public abstract class AppMetadataStoreTest {
       Map<ProgramId, Set<ProgramRunStatus>> allActual = new HashMap<>();
       // check active runs per namespace
       for (NamespaceId namespace : namespaces) {
-        Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(namespace);
+        Map<ProgramRunId, RunRecordDetail> activeRuns = store.getActiveRuns(namespace);
 
         // we expect 4 runs per program, with 4 programs in each namespace
         Map<ProgramId, Set<ProgramRunStatus>> expected = new HashMap<>();
@@ -497,7 +497,7 @@ public abstract class AppMetadataStoreTest {
         actual.put(namespace.app(app2).mr(program1), new HashSet<>());
         actual.put(namespace.app(app2).mr(program2), new HashSet<>());
         allActual.putAll(actual);
-        for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
+        for (Map.Entry<ProgramRunId, RunRecordDetail> activeRun : activeRuns.entrySet()) {
           ProgramId programId = activeRun.getKey().getParent();
           Assert.assertTrue("Unexpected program returned: " + programId,
                             actual.containsKey(activeRun.getKey().getParent()));
@@ -509,7 +509,7 @@ public abstract class AppMetadataStoreTest {
       }
 
       // test the instance level method
-      for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : store.getActiveRuns(x -> true).entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> activeRun : store.getActiveRuns(x -> true).entrySet()) {
         ProgramId programId = activeRun.getKey().getParent();
         Assert.assertTrue("Unexpected program returned: " + programId,
                           allActual.containsKey(activeRun.getKey().getParent()));
@@ -527,7 +527,7 @@ public abstract class AppMetadataStoreTest {
     for (ApplicationId app : apps) {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(app);
+        Map<ProgramRunId, RunRecordDetail> activeRuns = store.getActiveRuns(app);
 
         // we expect 3 runs per program, with 2 programs in each app
         Map<ProgramId, Set<ProgramRunStatus>> expected = new HashMap<>();
@@ -537,7 +537,7 @@ public abstract class AppMetadataStoreTest {
         Map<ProgramId, Set<ProgramRunStatus>> actual = new HashMap<>();
         actual.put(app.mr(program1), new HashSet<>());
         actual.put(app.mr(program2), new HashSet<>());
-        for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
+        for (Map.Entry<ProgramRunId, RunRecordDetail> activeRun : activeRuns.entrySet()) {
           ProgramId programId = activeRun.getKey().getParent();
           Assert.assertTrue("Unexpected program returned: " + programId,
                             actual.containsKey(activeRun.getKey().getParent()));
@@ -552,10 +552,10 @@ public abstract class AppMetadataStoreTest {
     for (ProgramId program : programs) {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(program);
+        Map<ProgramRunId, RunRecordDetail> activeRuns = store.getActiveRuns(program);
 
         Set<ProgramRunStatus> actual = new HashSet<>();
-        for (Map.Entry<ProgramRunId, RunRecordMeta> activeRun : activeRuns.entrySet()) {
+        for (Map.Entry<ProgramRunId, RunRecordDetail> activeRun : activeRuns.entrySet()) {
           Assert.assertEquals(program, activeRun.getKey().getParent());
           actual.add(activeRun.getValue().getStatus());
         }
@@ -608,7 +608,7 @@ public abstract class AppMetadataStoreTest {
                                       Collections.singletonMap(SystemArguments.PROFILE_NAME, profileId.getScopedName()),
                                       AppFabricTestHelper.createSourceId(startSourceId), ARTIFACT_ID);
       // the profile id should be there after the provisioning stage
-      RunRecordMeta run = store.getRun(runId);
+      RunRecordDetail run = store.getRun(runId);
       Assert.assertNotNull(run);
       Assert.assertEquals(profileId, run.getProfileId());
 
@@ -641,7 +641,7 @@ public abstract class AppMetadataStoreTest {
     }
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
-      Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(programId);
+      Map<ProgramRunId, RunRecordDetail> activeRuns = store.getActiveRuns(programId);
       // the result should be sorted with larger time stamp come first
       Assert.assertEquals(Lists.reverse(expectedRuns), new ArrayList<>(activeRuns.keySet()));
     });

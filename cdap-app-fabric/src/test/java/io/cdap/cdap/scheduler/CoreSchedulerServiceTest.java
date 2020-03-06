@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -63,7 +63,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.PartitionTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TimeTrigger;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.schedule.constraint.Constraint;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.client.StoreRequestBuilder;
@@ -332,8 +332,8 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
     // Wait for 1 run to complete for compositeWorkflow
     waitForCompleteRuns(1, compositeWorkflow);
 
-    for (RunRecordMeta runRecordMeta : store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.ALL,
-                                                     0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
+    for (RunRecordDetail runRecordMeta : store.getRuns(SCHEDULED_WORKFLOW_1, ProgramRunStatus.ALL,
+                                                       0, Long.MAX_VALUE, Integer.MAX_VALUE).values()) {
       Map<String, String> sysArgs = runRecordMeta.getSystemArgs();
       Assert.assertNotNull(sysArgs);
       TriggeringScheduleInfo scheduleInfo = GSON.fromJson(sysArgs.get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO),

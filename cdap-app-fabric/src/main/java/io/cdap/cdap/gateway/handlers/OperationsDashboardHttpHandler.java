@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,7 +33,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
 import io.cdap.cdap.internal.app.runtime.schedule.TimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ScheduledRuntime;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -104,11 +104,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
     }
     long endTimeSecs = startTimeSecs + durationTimeSecs;
     // end time is exclusive
-    Collection<RunRecordMeta> runRecordMetas =
+    Collection<RunRecordDetail> runRecordMetas =
       programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
 
     List<DashboardProgramRunRecord> result = new ArrayList<>();
-    for (RunRecordMeta runRecordMeta : runRecordMetas) {
+    for (RunRecordDetail runRecordMeta : runRecordMetas) {
       result.add(OperationsDashboardHttpHandler.runRecordToDashboardRecord(runRecordMeta));
     }
 
@@ -198,10 +198,10 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   }
 
   /**
-   * Converts a {@link RunRecordMeta} to a {@link DashboardProgramRunRecord}
+   * Converts a {@link RunRecordDetail} to a {@link DashboardProgramRunRecord}
    */
   @VisibleForTesting
-  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordMeta meta) throws IOException {
+  static DashboardProgramRunRecord runRecordToDashboardRecord(RunRecordDetail meta) throws IOException {
     ProgramRunId runId = meta.getProgramRunId();
     String startMethod = MANUAL;
     String scheduleInfoJson = meta.getSystemArgs().get(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO);

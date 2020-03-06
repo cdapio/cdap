@@ -38,7 +38,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.NotRunningProgramLiveInfo;
@@ -230,7 +230,7 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
   private void validateExpectedState(ProgramRunId programRunId, ProgramRunStatus expectedStatus) throws Exception {
     Tasks.waitFor(ImmutablePair.of(programRunId, expectedStatus), () -> {
-      RunRecordMeta runRecord = store.getRun(programRunId);
+      RunRecordDetail runRecord = store.getRun(programRunId);
       return ImmutablePair.of(programRunId, runRecord == null ? null : runRecord.getStatus());
     }, 10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }

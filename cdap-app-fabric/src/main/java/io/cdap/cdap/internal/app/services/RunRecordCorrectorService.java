@@ -30,7 +30,7 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.app.runtime.LocalDatasetDeleterRunnable;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -118,19 +118,19 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     // Do it in micro batches of transactions to avoid tx timeout
 
     Set<ProgramRunId> fixedPrograms = new HashSet<>();
-    Predicate<RunRecordMeta> filter = createFilter(fixedPrograms);
+    Predicate<RunRecordDetail> filter = createFilter(fixedPrograms);
     for (ProgramRunStatus status : NOT_STOPPED_STATUSES) {
       while (true) {
         // runs are not guaranteed to come back in order of start time, so need to scan the entire time range
         // each time. Should not be worse in performance than specifying a more restrictive time range
         // because time range is just used as a read-time filter.
-        Map<ProgramRunId, RunRecordMeta> runs = store.getRuns(status, 0L, Long.MAX_VALUE, txBatchSize, filter);
+        Map<ProgramRunId, RunRecordDetail> runs = store.getRuns(status, 0L, Long.MAX_VALUE, txBatchSize, filter);
         LOG.trace("{} run records in {} state but are not actually running", runs.size(), status);
         if (runs.isEmpty()) {
           break;
         }
 
-        for (RunRecordMeta record : runs.values()) {
+        for (RunRecordDetail record : runs.values()) {
           ProgramRunId programRunId = record.getProgramRunId();
           String msg = String.format(
             "Fixed RunRecord for program run %s in %s state because it is actually not running",
@@ -189,12 +189,12 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
   }
 
   /**
-   * Creates a {@link Predicate} for {@link RunRecordMeta} to be used for scanning the {@link Store} for run records
+   * Creates a {@link Predicate} for {@link RunRecordDetail} to be used for scanning the {@link Store} for run records
    * that doesn't have the program actually running as determined by the {@link ProgramRuntimeService}.
    *
    * @param excludedIds a set of {@link ProgramRunId} that are always rejected by the filter.
    */
-  private Predicate<RunRecordMeta> createFilter(Set<ProgramRunId> excludedIds) {
+  private Predicate<RunRecordDetail> createFilter(Set<ProgramRunId> excludedIds) {
     long now = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     return record -> {
       ProgramRunId programRunId = record.getProgramRunId();

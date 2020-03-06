@@ -17,7 +17,7 @@
 package io.cdap.cdap.reporting;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 
@@ -43,8 +43,8 @@ public class ProgramHeartbeatService {
    * @param namespaces set of namespaces to scan for the timerange
    * @return collection of run record meta
    */
-  public Collection<RunRecordMeta> scan(long startTimestampInSeconds,
-                                        long endTimestampInSeconds, Set<String> namespaces) {
+  public Collection<RunRecordDetail> scan(long startTimestampInSeconds,
+                                          long endTimestampInSeconds, Set<String> namespaces) {
     return TransactionRunners.run(transactionRunner, context -> {
       return new ProgramHeartbeatTable(context).scan(startTimestampInSeconds, endTimestampInSeconds, namespaces);
     });

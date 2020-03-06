@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,9 +30,8 @@ import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.FileUtils;
-import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
@@ -218,14 +217,14 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     }
 
     ProgramRunId runId = ((ProgramRunId) entityId);
-    RunRecordMeta runRecord = null;
+    RunRecordDetail runRecord = null;
 
     long sleepDelayMs = TimeUnit.MILLISECONDS.toMillis(100);
     long timeoutMs = TimeUnit.SECONDS.toMillis(10);
 
     try {
       runRecord = Retries.callWithRetries(() -> {
-        RunRecordMeta rec = store.getRun(runId);
+        RunRecordDetail rec = store.getRun(runId);
         if (rec != null) {
           return rec;
         }

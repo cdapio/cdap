@@ -64,7 +64,7 @@ public class WorkflowTable {
     this.table = table;
   }
 
-  void write(WorkflowId id, RunRecordMeta runRecordMeta, List<ProgramRun> programRunList) throws IOException {
+  void write(WorkflowId id, RunRecordDetail runRecordMeta, List<ProgramRun> programRunList) throws IOException {
     long startTs = runRecordMeta.getStartTs();
 
     List<Field<?>> fields = getPrimaryKeyFields(id, startTs);
