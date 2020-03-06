@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
@@ -106,6 +107,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final CConfiguration cConf;
   private final MetadataStorage metadataStorage;
   private final MultiThreadMessagingContext messagingContext;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final ApplicationDetailFetcher appDetailFetcher;
+  private final PreferencesFetcher preferencesFetcher;
+  private final ScheduleFetcher scheduleFetcher;
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnConflict;
 
@@ -116,6 +121,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             MetricsCollectionService metricsCollectionService,
                             MetadataStorage metadataStorage,
+                            NamespaceQueryAdmin namespaceQueryAdmin,
+                            ApplicationDetailFetcher appDetailFetcher,
+                            PreferencesFetcher preferencesFetcher,
+                            ScheduleFetcher scheduleFetcher,
                             TransactionRunner transactionRunner) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
@@ -134,6 +143,10 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.cConf = cConf;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.metadataStorage = metadataStorage;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.appDetailFetcher = appDetailFetcher;
+    this.preferencesFetcher = preferencesFetcher;
+    this.scheduleFetcher = scheduleFetcher;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
   }
@@ -207,7 +220,11 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext);
+            return new ProfileMetadataMessageProcessor(metadataStorage,
+                                                       namespaceQueryAdmin,
+                                                       appDetailFetcher,
+                                                       preferencesFetcher,
+                                                       scheduleFetcher);
           default:
             return null;
         }
