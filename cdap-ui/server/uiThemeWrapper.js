@@ -12,11 +12,12 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import log4js from 'log4js';
 import path from 'path';
 import get from 'lodash/get';
+import merge from 'lodash/merge';
 import fs from 'fs';
 
 const CDAP_DIST_PATH = path.normalize(__dirname + '/../public/cdap_dist');
@@ -28,23 +29,52 @@ export function extractUIThemeWrapper(cdapConfig) {
   return extractUITheme(cdapConfig, uiThemePath);
 }
 
+function extractUIFeaturesFromConfig(cdapConfig) {
+  const FEATURE_PREFIX = 'ui.feature.';
+  const acceptableString = ['true', 'false'];
+
+  const uiFeatures = Object.keys(cdapConfig).filter((configKey) => {
+    return (
+      configKey.startsWith(FEATURE_PREFIX) &&
+      acceptableString.indexOf(cdapConfig[configKey].toString()) !== -1
+    );
+  });
+
+  const featuresMap = {};
+
+  uiFeatures.forEach((configKey) => {
+    const featureKey = configKey.slice(FEATURE_PREFIX.length);
+    featuresMap[featureKey] = cdapConfig[configKey].toString() === 'true';
+  });
+
+  return featuresMap;
+}
+
+function mergeUIThemeWithConfig(cdapConfig, themeConfig) {
+  const configFeatures = {
+    features: extractUIFeaturesFromConfig(cdapConfig),
+  };
+
+  return merge(themeConfig, configFeatures);
+}
+
 export function extractUITheme(cdapConfig, uiThemePath) {
   const DEFAULT_CONFIG = {};
 
   if (!(uiThemePropertyName in cdapConfig)) {
     log.warn(`Unable to find ${uiThemePropertyName} property`);
     log.warn(`UI using default theme`);
-    return DEFAULT_CONFIG;
+    return mergeUIThemeWithConfig(cdapConfig, DEFAULT_CONFIG);
   }
 
   let uiThemeConfig = DEFAULT_CONFIG;
   // Absolute path
   if (uiThemePath[0] === '/') {
     try {
-      if (require.resolve(uiThemePath)) {
-        uiThemeConfig = require(uiThemePath);
+      if (__non_webpack_require__.resolve(uiThemePath)) {
+        uiThemeConfig = __non_webpack_require__(uiThemePath);
         log.info(`UI using theme file: ${uiThemePath}`);
-        return uiThemeConfig;
+        return mergeUIThemeWithConfig(cdapConfig, uiThemeConfig);
       }
     } catch (e) {
       log.info('UI Theme file not found at: ', uiThemePath);
@@ -78,7 +108,7 @@ export function extractUITheme(cdapConfig, uiThemePath) {
       if (__non_webpack_require__.resolve(themePath)) {
         uiThemeConfig = __non_webpack_require__(themePath);
         log.info(`UI using theme file: ${themePath}`);
-        return uiThemeConfig;
+        return mergeUIThemeWithConfig(cdapConfig, uiThemeConfig);
       }
     } catch (e) {
       // This will show the user what the full path is.
@@ -89,7 +119,7 @@ export function extractUITheme(cdapConfig, uiThemePath) {
       throw e;
     }
   }
-  return uiThemeConfig;
+  return mergeUIThemeWithConfig(cdapConfig, uiThemeConfig);
 }
 
 export function getFaviconPath(uiThemeConfig) {
