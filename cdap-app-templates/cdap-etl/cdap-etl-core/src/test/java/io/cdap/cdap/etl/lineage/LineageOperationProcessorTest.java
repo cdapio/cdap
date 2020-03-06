@@ -47,6 +47,83 @@ import java.util.Set;
 public class LineageOperationProcessorTest {
 
   @Test
+  public void testSameKeyAndRenameJoin() {
+    //  n1(id(key), swap1, n1same) ---------
+    //                              |
+    //                            JOIN  ------->(id, new_id, swap1, swap2, n1same, n2same)
+    //                              |
+    //  n2(id(key), swap2, n2same)----------
+
+    // operations (n1.id, n2.id) -> id
+    //            (n2.id) -> new_id
+    //            (n1.swap1) -> swap2
+    //            (n2.swap2) -> swap1
+    //            (n1.n1same) -> n1same
+    //            (n2.n2same) -> n2same
+    Set<Connection> connections = new HashSet<>();
+    connections.add(new Connection("n1", "n3"));
+    connections.add(new Connection("n2", "n3"));
+    connections.add(new Connection("n3", "n4"));
+
+    EndPoint src1 = EndPoint.of("default", "n1");
+    EndPoint src2 = EndPoint.of("default", "n2");
+    EndPoint dest = EndPoint.of("default", "n4");
+
+    Map<String, List<FieldOperation>> stageOperations = new HashMap<>();
+    stageOperations.put("n1", Collections.singletonList(new FieldReadOperation("readSrc1", "read description",
+                                                                               src1, "id", "swap1", "n1same")));
+    stageOperations.put("n2", Collections.singletonList(new FieldReadOperation("readSrc2", "read description",
+                                                                               src2, "id", "swap2", "n2same")));
+    List<FieldOperation> joinOperations = stageOperations.computeIfAbsent("n3", k -> new ArrayList<>());
+    joinOperations.add(new FieldTransformOperation("JoinKey", "Join Key", Arrays.asList("n1.id", "n2.id"), "id"));
+    joinOperations.add(new FieldTransformOperation("RenameN2", "rename", Collections.singletonList("n2.id"),
+                                                   "new_id"));
+    joinOperations.add(new FieldTransformOperation("swap1", "swap", Collections.singletonList("n1.swap1"), "swap2"));
+    joinOperations.add(new FieldTransformOperation("swap2", "swap", Collections.singletonList("n2.swap2"), "swap1"));
+    joinOperations.add(new FieldTransformOperation("unchange1", "unchange", Collections.singletonList("n1.n1same"),
+                                                   "n1same"));
+    joinOperations.add(new FieldTransformOperation("unchange2", "unchange", Collections.singletonList("n2.n2same"),
+                                                   "n2same"));
+
+    stageOperations.put("n4", Collections.singletonList(
+      new FieldWriteOperation("Write", "write description",
+                              dest, "id", "new_id", "swap1", "swap2", "n1same", "n2same")));
+
+    LineageOperationsProcessor processor = new LineageOperationsProcessor(connections, stageOperations,
+                                                                          Collections.singleton("n3"));
+
+    Set<Operation> expectedOperations = new HashSet<>();
+    expectedOperations.add(new ReadOperation("n1.readSrc1", "read description", src1, "id", "swap1", "n1same"));
+    expectedOperations.add(new ReadOperation("n2.readSrc2", "read description", src2, "id", "swap2", "n2same"));
+    expectedOperations.add(new TransformOperation("n3.JoinKey", "Join Key",
+                                                  Arrays.asList(InputField.of("n1.readSrc1", "id"),
+                                                                InputField.of("n2.readSrc2", "id")), "id"));
+    expectedOperations.add(new TransformOperation("n3.RenameN2", "rename",
+                                                  Collections.singletonList(InputField.of("n2.readSrc2", "id")),
+                                                  "new_id"));
+    expectedOperations.add(new TransformOperation("n3.swap1", "swap",
+                                                  Collections.singletonList(InputField.of("n1.readSrc1", "swap1")),
+                                                  "swap2"));
+    expectedOperations.add(new TransformOperation("n3.swap2", "swap",
+                                                  Collections.singletonList(InputField.of("n2.readSrc2", "swap2")),
+                                                  "swap1"));
+    expectedOperations.add(new TransformOperation("n3.unchange1", "unchange",
+                                                  Collections.singletonList(InputField.of("n1.readSrc1", "n1same")),
+                                                  "n1same"));
+    expectedOperations.add(new TransformOperation("n3.unchange2", "unchange",
+                                                  Collections.singletonList(InputField.of("n2.readSrc2", "n2same")),
+                                                  "n2same"));
+    expectedOperations.add(new WriteOperation("n4.Write", "write description", dest,
+                                              Arrays.asList(InputField.of("n3.JoinKey", "id"),
+                                                            InputField.of("n3.RenameN2", "new_id"),
+                                                            InputField.of("n3.swap2", "swap1"),
+                                                            InputField.of("n3.swap1", "swap2"),
+                                                            InputField.of("n3.unchange1", "n1same"),
+                                                            InputField.of("n3.unchange2", "n2same"))));
+    Assert.assertEquals(expectedOperations, processor.process());
+  }
+
+  @Test
   public void testSimplePipeline() {
     // n1-->n2-->n3
     Set<Connection> connections = new HashSet<>();

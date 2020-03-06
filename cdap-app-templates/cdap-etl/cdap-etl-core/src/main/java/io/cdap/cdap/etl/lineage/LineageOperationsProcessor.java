@@ -197,6 +197,14 @@ public class LineageOperationsProcessor {
 
     List<String> fieldsForJoin = new ArrayList<>();
     for (String field : fields) {
+      // for joiner, the field name is prefixed with stage name, needs to calculate this name to query for the origin
+      // from other stages, but in the inputFields map we should use the original name since the actual name can be
+      // same from different previous stages
+      // actualField is always the short name without the stage prefix, for non-joiner stages, this will be the
+      // same as field. For joiner stage, the field is in format <stage-name>.<field-name>, this actual field will
+      // get reassigned to the <field-name>in later stages. And it will be used to query for processedOperations
+      // since the field name there never contains the stage prefix.
+      String actualField = field;
       if (noMergeRequiredStages.contains(currentStage)) {
         // Current stage is of type JOIN.
         // JOIN creates operation with input fields in format <stagename.fieldname>
@@ -211,14 +219,13 @@ public class LineageOperationsProcessor {
         Iterator<String> stageFieldPairIter = Splitter.on(".").omitEmptyStrings().trimResults().split(field).iterator();
         String stageName = stageFieldPairIter.next();
         if (stageFieldPairIter.hasNext() && stageOperations.keySet().contains(stageName)) {
-          field = stageFieldPairIter.next();
-          fieldsForJoin.add(field);
+          actualField = stageFieldPairIter.next();
           List<String> parentStages = findParentStages(stageName);
-          parents.addAll(0, parentStages);
-        } else {
-          // field belongs to one of the operations output from join stage
-          fieldsForJoin.add(field);
+          // if this operation field clearly defines a stage name, should just find the origins from that stage,
+          // since we traverse backwards, append the finded parent stages
+          parents.addAll(parentStages);
         }
+        fieldsForJoin.add(field);
       }
       ListIterator<String> parentsIterator = parents.listIterator(parents.size());
       while (parentsIterator.hasPrevious()) {
@@ -226,9 +233,9 @@ public class LineageOperationsProcessor {
         // first
         String stage = parentsIterator.previous();
         // check if the current field is output by any one of operation created by current stage
-        String origin = stageOutputsWithOrigins.get(stage).get(field);
+        String origin = stageOutputsWithOrigins.get(stage).get(actualField);
         if (origin != null) {
-          inputFields.put(field, InputField.of(origin, field));
+          inputFields.put(field, InputField.of(origin, actualField));
           break;
         }
       }
