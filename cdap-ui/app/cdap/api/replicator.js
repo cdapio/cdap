@@ -25,6 +25,7 @@ const programPath = `${appPath}/workers/DeltaWorker`;
 const servicePath = `/namespaces/system/apps/delta/services/assessor/methods/v1/contexts/:namespace`;
 const draftPath = `${servicePath}/drafts/:draftId`;
 const workerPath = `${appPath}/workers/DeltaWorker`;
+const artifactBasePath = `/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties`;
 
 export const MyReplicatorApi = {
   getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType?scope=system`),
@@ -46,6 +47,7 @@ export const MyReplicatorApi = {
   getReplicator: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
   assessPipeline: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessPipeline`),
   assessTable: apiCreator(dataSrc, 'POST', 'REQUEST', `${draftPath}/assessTable`),
+  fetchArtifactProperties: apiCreator(dataSrc, 'GET', 'REQUEST', artifactBasePath),
 
   // Detail
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${workerPath}/runs?limit=1`),

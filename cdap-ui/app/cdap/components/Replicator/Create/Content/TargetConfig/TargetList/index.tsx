@@ -132,6 +132,7 @@ const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, current
             const pluginKey = `${target.name}-${target.type}`;
             const widgetInfo = widgetMap[pluginKey];
             const targetName = widgetInfo ? widgetInfo['display-name'] : target.name;
+            const icon = objectQuery(widgetInfo, 'icon', 'arguments', 'data');
 
             const currentSelectionName = objectQuery(currentSelection, 'name');
             const currentSelectionArtifact = objectQuery(currentSelection, 'artifact', 'name');
@@ -146,7 +147,7 @@ const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, current
                 })}
                 onClick={onSelect.bind(null, target)}
               >
-                <PluginCard name={targetName} />
+                <PluginCard name={targetName} icon={icon} />
               </div>
             );
           })}

@@ -106,13 +106,13 @@ const SourceConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
       <div className={classes.header}>
         <span
           className={classnames(classes.option, { [classes.active]: view === VIEW.configuration })}
-          onClick={setView.bind(null, VIEW.configuration)}
+          onClick={() => setView(VIEW.configuration)}
         >
           Configure Source
         </span>
         <span
           className={classnames(classes.option, { [classes.active]: view === VIEW.documentation })}
-          onClick={setView.bind(null, VIEW.documentation)}
+          onClick={() => setView(VIEW.documentation)}
         >
           Documentation
         </span>
