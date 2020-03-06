@@ -190,7 +190,7 @@ export default class WorkspaceTabs extends Component {
 
     return (
       <div className="workspace-tab workspace-dropdown text-center">
-        <UncontrolledPopover popoverClassName="workspace-list-popover">
+        <UncontrolledPopover popperClassName="workspace-list-popover">
           {list.map((workspace) => {
             return (
               <div key={workspace.id} className="workspace-list-dropdown-item">

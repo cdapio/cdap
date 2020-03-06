@@ -49,6 +49,8 @@ $workspace-link-active-color: var(--brand-primary-color);
   width: 250px;
   border-radius: 0;
   margin-top: 3px;
+  max-height: calc(100vh - 200px);
+  overflow-y: auto;
 
   &.bs-tether-element-attached-right {
     margin-left: 0;

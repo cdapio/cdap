@@ -291,7 +291,8 @@ export default class ColumnActionsDropdown extends Component {
         isOpen={this.state.dropdownOpen}
         target={`dataprep-action-${this.dropdownId}`}
         innerClassName="dataprep-columns-action-dropdown"
-        className="column_actions_dropdown-element"
+        fade={false}
+        popperClassName="column_actions_dropdown-element"
         modifiers={{
           shift: {
             enabled: true,
