@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
+
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * A Provisioner is responsible for creating and deleting clusters for program runs. Each method may be retried
@@ -141,4 +144,14 @@ public interface Provisioner {
    */
   Capabilities getCapabilities();
 
+  /**
+   * Returns {@link RuntimeJobManager} to launch and manage runtime job. If the optional is empty, default
+   * implementation will use ssh to launch and manage jobs.
+   *
+   * @param context provisioner context
+   * @return optional runtime job manager, if it is empty, ssh will be used to launch and manage jobs.
+   */
+  default Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
+    return Optional.empty();
+  }
 }
