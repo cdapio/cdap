@@ -21,6 +21,9 @@ import Status from 'components/Status';
 
 const styles = (theme): StyleRules => {
   return {
+    root: {
+      width: '150px',
+    },
     title: {
       fontWeight: 600,
       fontSize: '15px',
@@ -34,7 +37,7 @@ const StatusIndicatorView: React.FC<IDetailContext & WithStyles<typeof styles>> 
   status,
 }) => {
   return (
-    <div>
+    <div className={classes.root}>
       <div className={classes.title}>Status</div>
       <div>
         <Status status={status} />

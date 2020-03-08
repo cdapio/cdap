@@ -98,12 +98,13 @@ const TablesListView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
           <div className="grid-body">
             {tables.keySeq().map((tableKey) => {
               const tableInfo = tables.get(tableKey);
+              const numColumns = columns.get(tableKey).size;
 
               return (
                 <div className="grid-row" key={tableKey.toString()}>
                   <div>{statusMap.get(tableKey) || '--'}</div>
                   <div>{tableInfo.get('table')}</div>
-                  <div>{columns.get(tableKey).size}</div>
+                  <div>{numColumns === 0 ? 'All' : numColumns}</div>
                 </div>
               );
             })}

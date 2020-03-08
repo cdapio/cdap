@@ -22,6 +22,8 @@ import { PluginType } from 'components/Replicator/constants';
 import { objectQuery } from 'services/helpers';
 import Status from 'components/Status';
 import { Link } from 'react-router-dom';
+import ActionsPopover, { IAction } from 'components/ActionsPopover';
+import DeleteConfirmation from 'components/Replicator/DeleteConfirmation';
 
 const styles = (theme): StyleRules => {
   return {
@@ -42,7 +44,13 @@ const styles = (theme): StyleRules => {
       height: 'calc(100% - 20px)',
       '& .grid.grid-container.grid-compact': {
         maxHeight: '100%',
+        '& .grid-row': {
+          gridTemplateColumns: '2fr 1fr 1fr 80px',
+        },
       },
+    },
+    delete: {
+      color: theme.palette.red[100],
     },
   };
 };
@@ -51,9 +59,10 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [replicators, setReplicators] = React.useState([]);
   const [statusMap, setStatusMap] = React.useState({});
   const [configMap, setConfigMap] = React.useState({});
+  const [replicatorNameDelete, setReplicatorNameDelete] = React.useState(null);
 
   // TODO: Replace with GraphQL
-  React.useEffect(() => {
+  function fetchList() {
     const params = {
       namespace: getCurrentNamespace(),
     };
@@ -115,7 +124,9 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
         setConfigMap(map);
       });
     });
-  }, []);
+  }
+
+  React.useEffect(fetchList, []);
 
   return (
     <div className={classes.root}>
@@ -131,6 +142,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
               <div>Replicator name</div>
               <div>From / To</div>
               <div>Status</div>
+              <div />
             </div>
           </div>
 
@@ -138,6 +150,14 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             {replicators.map((replicator) => {
               const source = objectQuery(configMap, replicator.name, PluginType.source) || '--';
               const target = objectQuery(configMap, replicator.name, PluginType.target) || '--';
+
+              const actions: IAction[] = [
+                {
+                  label: 'Delete',
+                  actionFn: () => setReplicatorNameDelete(replicator.name),
+                  className: classes.delete,
+                },
+              ];
 
               return (
                 <Link
@@ -152,12 +172,22 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                   <div>
                     <Status status={statusMap[replicator.name]} />
                   </div>
+                  <div>
+                    <ActionsPopover actions={actions} />
+                  </div>
                 </Link>
               );
             })}
           </div>
         </div>
       </div>
+
+      <DeleteConfirmation
+        replicatorId={replicatorNameDelete}
+        show={replicatorNameDelete && replicatorNameDelete.length > 0}
+        onDelete={fetchList}
+        closeModal={() => setReplicatorNameDelete(null)}
+      />
     </div>
   );
 };

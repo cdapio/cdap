@@ -355,6 +355,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   };
 
   private saveDraft = () => {
+    if (!this.state.name) {
+      return;
+    }
+
     const params = {
       namespace: getCurrentNamespace(),
       draftId: this.state.draftId,

@@ -23,6 +23,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
 import { Redirect } from 'react-router-dom';
 import ConfigDisplay from 'components/Replicator/ConfigDisplay';
+import { MyAppApi } from 'api/app';
 
 const styles = (theme): StyleRules => {
   const borderBottom = `2px solid ${theme.palette.grey[300]}`;
@@ -48,6 +49,7 @@ const styles = (theme): StyleRules => {
       },
     },
     error: {
+      marginTop: '50px',
       color: theme.palette.red[100],
     },
   };
@@ -96,14 +98,30 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
       appName: spec.name,
     };
 
-    MyReplicatorApi.publish(params, spec).subscribe(
-      () => {
-        MyReplicatorApi.deleteDraft({
-          namespace: getCurrentNamespace(),
-          draftId,
-        }).subscribe(null, null, () => {
-          setRedirect(true);
-        });
+    MyAppApi.list({ namespace: getCurrentNamespace() }).subscribe(
+      (apps) => {
+        const existingAppName = apps.filter((app) => app.name === name);
+
+        if (existingAppName.length > 0) {
+          setError(`There is already an existing application "${name}"`);
+          setLoading(false);
+          return;
+        }
+
+        MyReplicatorApi.publish(params, spec).subscribe(
+          () => {
+            MyReplicatorApi.deleteDraft({
+              namespace: getCurrentNamespace(),
+              draftId,
+            }).subscribe(null, null, () => {
+              setRedirect(true);
+            });
+          },
+          (err) => {
+            setError(err);
+            setLoading(false);
+          }
+        );
       },
       (err) => {
         setError(err);

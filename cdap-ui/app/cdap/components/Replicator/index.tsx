@@ -21,13 +21,16 @@ import List from 'components/Replicator/List';
 import Create from 'components/Replicator/Create';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import Detail from 'components/Replicator/Detail';
+import { Theme } from 'services/ThemeHelper';
 
 export const basepath = '/ns/:namespace/replicator';
 
 const Replicator: React.FC = () => {
+  const pageTitle = `${Theme.productName} | Delta Replicator`;
+
   return (
     <React.Fragment>
-      <Helmet title="Replicator" />
+      <Helmet title={pageTitle} />
       <Switch>
         <Route
           exact

@@ -45,8 +45,18 @@ interface IFeatureHeadingState {
 }
 
 class FeatureHeading extends React.PureComponent<WithStyles, IFeatureHeadingState> {
+  private getInitialTitle = () => {
+    const title = objectQuery(document.querySelector('title'), 'textContent') || '';
+
+    return this.parseFeatureName(title);
+  };
+
+  private parseFeatureName = (title) => {
+    return (objectQuery(title.split('|'), 1) || '').trim();
+  };
+
   public state: IFeatureHeadingState = {
-    featureName: '',
+    featureName: this.getInitialTitle(),
   };
 
   private mutationObserver: MutationObserver = new MutationObserver(
@@ -59,7 +69,7 @@ class FeatureHeading extends React.PureComponent<WithStyles, IFeatureHeadingStat
         return;
       }
       this.setState({
-        featureName: (objectQuery(title.split('|'), 1) || '').trim(),
+        featureName: this.parseFeatureName(title),
       });
     }
   );

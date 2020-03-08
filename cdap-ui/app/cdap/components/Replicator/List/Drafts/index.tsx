@@ -21,6 +21,8 @@ import { MyReplicatorApi } from 'api/replicator';
 import { humanReadableDate, objectQuery } from 'services/helpers';
 import { PluginType } from 'components/Replicator/constants';
 import { Link } from 'react-router-dom';
+import ActionsPopover, { IAction } from 'components/ActionsPopover';
+import DeleteConfirmation, { InstanceType } from 'components/Replicator/DeleteConfirmation';
 
 const styles = (theme): StyleRules => {
   return {
@@ -41,15 +43,23 @@ const styles = (theme): StyleRules => {
       height: 'calc(100% - 20px)',
       '& .grid.grid-container.grid-compact': {
         maxHeight: '100%',
+
+        '& .grid-row': {
+          gridTemplateColumns: '1fr 1fr 1fr 1fr 80px',
+        },
       },
+    },
+    delete: {
+      color: theme.palette.red[100],
     },
   };
 };
 
 const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [drafts, setDrafts] = React.useState([]);
+  const [deleteReplicatorDraft, setDeleteReplicatorDraft] = React.useState(null);
 
-  React.useEffect(() => {
+  function fetchDrafts() {
     const params = {
       namespace: getCurrentNamespace(),
     };
@@ -57,7 +67,9 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     MyReplicatorApi.listDrafts(params).subscribe((list) => {
       setDrafts(list);
     });
-  }, []);
+  }
+
+  React.useEffect(fetchDrafts, []);
 
   return (
     <div className={classes.root}>
@@ -72,6 +84,7 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
               <div>From / To</div>
               <div>Created</div>
               <div>Updated</div>
+              <div />
             </div>
           </div>
 
@@ -87,6 +100,14 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
               const source = stageMap[PluginType.source] || '--';
               const target = stageMap[PluginType.target] || '--';
 
+              const actions: IAction[] = [
+                {
+                  label: 'Delete',
+                  actionFn: () => setDeleteReplicatorDraft(draft.name),
+                  className: classes.delete,
+                },
+              ];
+
               return (
                 <Link
                   to={`/ns/${getCurrentNamespace()}/replicator/drafts/${draft.name}`}
@@ -99,12 +120,23 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                   </div>
                   <div>{humanReadableDate(draft.createdTimeMillis, true)}</div>
                   <div>{humanReadableDate(draft.updatedTimeMillis, true)}</div>
+                  <div>
+                    <ActionsPopover actions={actions} />
+                  </div>
                 </Link>
               );
             })}
           </div>
         </div>
       </div>
+
+      <DeleteConfirmation
+        replicatorId={deleteReplicatorDraft}
+        show={deleteReplicatorDraft && deleteReplicatorDraft.length > 0}
+        onDelete={fetchDrafts}
+        closeModal={() => setDeleteReplicatorDraft(null)}
+        type={InstanceType.draft}
+      />
     </div>
   );
 };

@@ -23,9 +23,14 @@ import VerticalDivider from 'components/Replicator/Detail/TopPanel/VerticalDivid
 import LogsButton from 'components/Replicator/Detail/TopPanel/ActionButtons/LogsButton';
 import StatusIndicator from 'components/Replicator/Detail/TopPanel/ActionButtons/StatusIndicator';
 import { PROGRAM_STATUSES } from 'services/global-constants';
+import Actions from 'components/Replicator/Detail/TopPanel/ActionButtons/Actions';
 
 const styles = (theme): StyleRules => {
   return {
+    root: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+    },
     startBtn: {
       color: theme.palette.green[100],
     },
@@ -66,6 +71,7 @@ const ActionButtonsView: React.FC<IDetailContext & WithStyles<typeof styles>> = 
       <LogsButton />
       <VerticalDivider />
       <StatusIndicator />
+      <Actions />
     </div>
   );
 };
