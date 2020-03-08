@@ -17,7 +17,7 @@
 package io.cdap.cdap.logging.gateway.handlers.store;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -43,7 +43,7 @@ public class ProgramStore {
    * @param programRunId program run id
    * @return run record for runid
    */
-  public RunRecordMeta getRun(ProgramRunId programRunId) {
+  public RunRecordDetail getRun(ProgramRunId programRunId) {
     return TransactionRunners.run(transactionRunner, context -> {
       StructuredTable table = context.getTable(StoreDefinition.AppMetadataStore.RUN_RECORDS);
       AppMetadataStore metaStore = new AppMetadataStore(table);

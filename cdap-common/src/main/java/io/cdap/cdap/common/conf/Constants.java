@@ -329,7 +329,7 @@ public final class Constants {
   /**
    * Preview Configurations
    */
-  public class Preview {
+  public static class Preview {
     public static final String ENABLED = "enable.preview";
 
     /**
@@ -343,6 +343,16 @@ public final class Constants {
     public static final String WORKER_THREADS = "preview.worker.threads";
 
     public static final String PREVIEW_CACHE_SIZE = "preview.cache.size";
+
+    /**
+     * A special annotation used in Guice bindings for ProgramRunner implementations.
+     * It is needed so that we can have different bindings in different private modules,
+     * without affecting/affected by unannotated bindings in the public space.
+     */
+    @Retention(RUNTIME)
+    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
+    @BindingAnnotation
+    public @interface ProgramRunner { }
   }
 
   /**

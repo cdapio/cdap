@@ -17,8 +17,12 @@
 package io.cdap.cdap.gateway.handlers;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -26,8 +30,11 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
+import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
+import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
+import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.metadata.RemoteApplicationSpecificationFetcher;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.HttpHandler;
@@ -48,7 +55,10 @@ import javax.ws.rs.PathParam;
 @Singleton
 @Path(Constants.Gateway.INTERNAL_API_VERSION_3 + "/namespaces/{namespace-id}")
 public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandler {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
+    .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
+    .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
+    .create();
 
   /**
    * Runtime program service for running and managing programs.
@@ -77,67 +87,67 @@ public class AppLifecycleHttpHandlerInternal extends AbstractAppFabricHttpHandle
   }
 
   /**
-   * Get a list of {@link ApplicationDetail} for all applications in the given namespace
+   * Get a list of {@link ApplicationSpecification} for all applications in the given namespace
    *
-   * @param request   {@link HttpRequest}
+   * @param request {@link HttpRequest}
    * @param responder {@link HttpResponse}
    * @param namespace the namespace to get all application details
    * @throws Exception if namespace doesn't exists or failed to get all application details
    */
   @GET
   @Path("/apps")
-  public void getAllAppDetails(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespace) throws Exception {
+  public void getAppSpecs(HttpRequest request, HttpResponder responder,
+                          @PathParam("namespace-id") String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
     responder.sendJson(HttpResponseStatus.OK,
-                       GSON.toJson(applicationLifecycleService.getApps(namespaceId, detail -> true)));
+                       GSON.toJson(applicationLifecycleService.getAppSpecs(namespaceId, detail -> true)));
   }
 
   /**
-   * Get {@link ApplicationDetail} for a given application
+   * Get {@link ApplicationSpecification} for a given application
    *
-   * @param request     {@link HttpRequest}
-   * @param responder   {@link HttpResponse}
-   * @param namespace   the namespace to get all application details   *
-   * @param application the id of the application to get its {@link ApplicationDetail}
-   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationDetail}
+   * @param request {@link HttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace to get all application details   *
+   * @param application the id of the application to get its {@link ApplicationSpecification}
+   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationSpecification}
    */
   @GET
   @Path("/app/{app-id}")
-  public void getAppDetail(HttpRequest request, HttpResponder responder,
-                           @PathParam("namespace-id") String namespace,
-                           @PathParam("app-id") String application) throws Exception {
+  public void getAppSpec(HttpRequest request, HttpResponder responder,
+                         @PathParam("namespace-id") String namespace,
+                         @PathParam("app-id") String application) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
     ApplicationId appId = new ApplicationId(namespace, application);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(appId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppSpec(appId)));
   }
 
   /**
-   * Get {@link ApplicationDetail} for a given application
+   * Get {@link ApplicationSpecification} for a given application
    *
-   * @param request     {@link HttpRequest}
-   * @param responder   {@link HttpResponse}
-   * @param namespace   the namespace to get all application details
-   * @param application the id of the application to get its {@link ApplicationDetail}
-   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationDetail}
+   * @param request {@link HttpRequest}
+   * @param responder {@link HttpResponse}
+   * @param namespace the namespace to get all application details
+   * @param application the id of the application to get its {@link ApplicationSpecification}
+   * @throws Exception if either namespace or application doesn't exist, or failed to get {@link ApplicationSpecification}
    */
   @GET
   @Path("/app/{app-id}/versions/{version-id}")
-  public void getAppDetailForVersion(HttpRequest request, HttpResponder responder,
-                                     @PathParam("namespace-id") final String namespace,
-                                     @PathParam("app-id") final String application,
-                                     @PathParam("version-id") final String version) throws Exception {
+  public void getAppSpecForVersion(HttpRequest request, HttpResponder responder,
+                                   @PathParam("namespace-id") final String namespace,
+                                   @PathParam("app-id") final String application,
+                                   @PathParam("version-id") final String version) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
     if (!namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
     ApplicationId appId = new ApplicationId(namespace, application, version);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppDetail(appId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(applicationLifecycleService.getAppSpec(appId)));
   }
 }

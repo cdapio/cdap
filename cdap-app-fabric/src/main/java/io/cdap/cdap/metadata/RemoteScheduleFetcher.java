@@ -100,7 +100,7 @@ public class RemoteScheduleFetcher implements ScheduleFetcher {
     return objectResponse.getResponseObject();
   }
 
-  // TODO: refactor out into a util function that can be shared by RemoteApplicationDetailFetcher
+  // TODO: refactor out into a util function that can be shared by RemoteApplicationSpecificationFetcher
   //       RemotePreferencesFetcherInternal and RemoteScheduleFetcher
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
     HttpResponse httpResponse = remoteClient.execute(request);

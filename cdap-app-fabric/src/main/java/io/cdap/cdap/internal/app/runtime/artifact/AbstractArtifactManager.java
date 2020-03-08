@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.io.Closeables;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -53,16 +54,16 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
     this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
   }
 
-  /**
-   * Returns the {@link Location} of the give artifact.
-   *
-   * @param artifactInfo information of the artifact
-   * @param namespace artifact namespace, or null if the program namespace should not be used
-   * @return the {@link Location} of the artifact
-   * @throws IOException if failed to locate the {@link Location} of the artifact
-   */
-  protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                                  @Nullable String namespace) throws IOException;
+//  /**
+//   * Returns the {@link Location} of the give artifact.
+//   *
+//   * @param artifactInfo information of the artifact
+//   * @param namespace artifact namespace, or null if the program namespace should not be used
+//   * @return the {@link Location} of the artifact
+//   * @throws IOException if failed to locate the {@link Location} of the artifact
+//   */
+//  protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo,
+//                                                  @Nullable String namespace) throws IOException;
 
   /**
    * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied

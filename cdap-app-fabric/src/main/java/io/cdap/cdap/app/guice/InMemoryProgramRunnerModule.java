@@ -30,11 +30,16 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
+import io.cdap.cdap.internal.app.runtime.artifact.AbstractArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactDetailFetcher;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import io.cdap.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
@@ -42,6 +47,7 @@ import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.logging.gateway.handlers.LocalProgramRunRecordFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
@@ -68,7 +74,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
     // Bind the ArtifactManager implementation and expose it.
     // It could used by ProgramRunner loaded through runtime extension.
     install(new FactoryModuleBuilder()
-              .implement(ArtifactManager.class, LocalArtifactManager.class)
+              .implement(ArtifactManager.class, RemoteArtifactManager.class)
               .build(ArtifactManagerFactory.class));
     expose(ArtifactManagerFactory.class);
 

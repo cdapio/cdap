@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package io.cdap.cdap.logging.gateway.handlers.store;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -54,9 +54,9 @@ public class AppMetadataStore {
   // TODO: getRun is duplicated from cdap-app-fabric AppMetadataStore class.
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
-  public RunRecordMeta getRun(ProgramId programId, String runId) throws IOException {
+  public RunRecordDetail getRun(ProgramId programId, String runId) throws IOException {
     // Query active run record first
-    RunRecordMeta running = getUnfinishedRun(programId, runId);
+    RunRecordDetail running = getUnfinishedRun(programId, runId);
     // If program is running, this will be non-null
     if (running != null) {
       return running;
@@ -66,7 +66,7 @@ public class AppMetadataStore {
   }
 
 
-  private RunRecordMeta getUnfinishedRun(ProgramId programId, String runId) throws IOException {
+  private RunRecordDetail getUnfinishedRun(ProgramId programId, String runId) throws IOException {
     List<Field<?>> runningKey = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
     runningKey.add(Fields.longField(
       StoreDefinition.AppMetadataStore.RUN_START_TIME, getInvertedTsKeyPart(RunIds.getTime(runId, TimeUnit.SECONDS))));
@@ -74,7 +74,7 @@ public class AppMetadataStore {
     return getRunRecordMeta(runningKey);
   }
 
-  private RunRecordMeta getRunRecordMeta(List<Field<?>> primaryKeys) throws IOException {
+  private RunRecordDetail getRunRecordMeta(List<Field<?>> primaryKeys) throws IOException {
     Optional<StructuredRow> row = runRecordsTable.read(primaryKeys);
     if (!row.isPresent()) {
       return null;
@@ -82,11 +82,11 @@ public class AppMetadataStore {
     return deserializeRunRecordMeta(row.get());
   }
 
-  private static RunRecordMeta deserializeRunRecordMeta(StructuredRow row) {
-    RunRecordMeta existing =
-      GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
-    RunRecordMeta newMeta =
-      RunRecordMeta.builder(existing)
+  private static RunRecordDetail deserializeRunRecordMeta(StructuredRow row) {
+    RunRecordDetail existing =
+      GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordDetail.class);
+    RunRecordDetail newMeta =
+      RunRecordDetail.builder(existing)
         .setProgramRunId(
           getProgramIdFromRunRecordsPrimaryKeys(new ArrayList(row.getPrimaryKeys())).run(existing.getPid()))
         .build();
@@ -105,7 +105,7 @@ public class AppMetadataStore {
   }
 
 
-  private RunRecordMeta getCompletedRun(ProgramId programId, final String runId)
+  private RunRecordDetail getCompletedRun(ProgramId programId, final String runId)
     throws IOException {
     List<Field<?>> completedKey = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programId);
     // Get start time from RunId

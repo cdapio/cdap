@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -280,8 +280,8 @@ public abstract class DefaultStoreTest {
     store.setStop(programId.run(run2.getId()), nowSecs, ProgramController.State.COMPLETED.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    Map<ProgramRunId, RunRecordMeta> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
-                                                                0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Map<ProgramRunId, RunRecordDetail> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
+                                                                  0, Long.MAX_VALUE, Integer.MAX_VALUE);
 
     Assert.assertEquals(2, historymap.size());
   }
@@ -316,8 +316,8 @@ public abstract class DefaultStoreTest {
     RunId run3 = RunIds.generate(now);
     setStartAndRunning(programId.run(run3.getId()), artifactId);
 
-    // For a RunRecordMeta that has not yet been completed, getStopTs should return null
-    RunRecordMeta runRecord = store.getRun(programId.run(run3.getId()));
+    // For a RunRecordDetail that has not yet been completed, getStopTs should return null
+    RunRecordDetail runRecord = store.getRun(programId.run(run3.getId()));
     Assert.assertNotNull(runRecord);
     Assert.assertNull(runRecord.getStopTs());
 
@@ -333,18 +333,18 @@ public abstract class DefaultStoreTest {
                        artifactId);
 
     // we should probably be better with "get" method in DefaultStore interface to do that, but we don't have one
-    Map<ProgramRunId, RunRecordMeta> successHistorymap = store.getRuns(programId, ProgramRunStatus.COMPLETED,
-                                                       0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Map<ProgramRunId, RunRecordDetail> successHistorymap = store.getRuns(programId, ProgramRunStatus.COMPLETED,
+                                                                         0, Long.MAX_VALUE, Integer.MAX_VALUE);
 
-    Map<ProgramRunId, RunRecordMeta> failureHistorymap = store.getRuns(programId, ProgramRunStatus.FAILED,
-                                                                       startTimeSecs - 20, startTimeSecs - 10,
-                                                                       Integer.MAX_VALUE);
+    Map<ProgramRunId, RunRecordDetail> failureHistorymap = store.getRuns(programId, ProgramRunStatus.FAILED,
+                                                                         startTimeSecs - 20, startTimeSecs - 10,
+                                                                         Integer.MAX_VALUE);
     Assert.assertEquals(failureHistorymap, store.getRuns(programId, ProgramRunStatus.FAILED,
                                                       0, Long.MAX_VALUE, Integer.MAX_VALUE));
 
-    Map<ProgramRunId, RunRecordMeta> suspendedHistorymap = store.getRuns(programId, ProgramRunStatus.SUSPENDED,
-                                                                         startTimeSecs - 20, startTimeSecs,
-                                                                         Integer.MAX_VALUE);
+    Map<ProgramRunId, RunRecordDetail> suspendedHistorymap = store.getRuns(programId, ProgramRunStatus.SUSPENDED,
+                                                                           startTimeSecs - 20, startTimeSecs,
+                                                                           Integer.MAX_VALUE);
 
     // only finished + succeeded runs should be returned
     Assert.assertEquals(1, successHistorymap.size());
@@ -354,7 +354,7 @@ public abstract class DefaultStoreTest {
     Assert.assertEquals(1, suspendedHistorymap.size());
 
     // records should be sorted by start time latest to earliest
-    RunRecordMeta run = successHistorymap.values().iterator().next();
+    RunRecordDetail run = successHistorymap.values().iterator().next();
     Assert.assertEquals(startTimeSecs - 10, run.getStartTs());
     Assert.assertEquals(Long.valueOf(startTimeSecs - 5), run.getStopTs());
     Assert.assertEquals(ProgramController.State.COMPLETED.getRunStatus(), run.getStatus());
@@ -369,32 +369,32 @@ public abstract class DefaultStoreTest {
     Assert.assertEquals(ProgramController.State.SUSPENDED.getRunStatus(), run.getStatus());
 
     // Assert all history
-    Map<ProgramRunId, RunRecordMeta> allHistorymap =
+    Map<ProgramRunId, RunRecordDetail> allHistorymap =
       store.getRuns(programId, ProgramRunStatus.ALL, startTimeSecs - 20, startTimeSecs + 1, Integer.MAX_VALUE);
     Assert.assertEquals(allHistorymap.toString(), 4, allHistorymap.size());
 
     // Assert running programs
-    Map<ProgramRunId, RunRecordMeta> runningHistorymap = store.getRuns(programId, ProgramRunStatus.RUNNING,
-                                                                       startTimeSecs, startTimeSecs + 1, 100);
+    Map<ProgramRunId, RunRecordDetail> runningHistorymap = store.getRuns(programId, ProgramRunStatus.RUNNING,
+                                                                         startTimeSecs, startTimeSecs + 1, 100);
     Assert.assertEquals(1, runningHistorymap.size());
     Assert.assertEquals(runningHistorymap, store.getRuns(programId, ProgramRunStatus.RUNNING, 0, Long.MAX_VALUE, 100));
 
     // Get a run record for running program
-    RunRecordMeta expectedRunning = runningHistorymap.values().iterator().next();
+    RunRecordDetail expectedRunning = runningHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedRunning);
-    RunRecordMeta actualRunning = store.getRun(programId.run(expectedRunning.getPid()));
+    RunRecordDetail actualRunning = store.getRun(programId.run(expectedRunning.getPid()));
     Assert.assertEquals(expectedRunning, actualRunning);
 
     // Get a run record for completed run
-    RunRecordMeta expectedCompleted = successHistorymap.values().iterator().next();
+    RunRecordDetail expectedCompleted = successHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedCompleted);
-    RunRecordMeta actualCompleted = store.getRun(programId.run(expectedCompleted.getPid()));
+    RunRecordDetail actualCompleted = store.getRun(programId.run(expectedCompleted.getPid()));
     Assert.assertEquals(expectedCompleted, actualCompleted);
 
     // Get a run record for suspended run
-    RunRecordMeta expectedSuspended = suspendedHistorymap.values().iterator().next();
+    RunRecordDetail expectedSuspended = suspendedHistorymap.values().iterator().next();
     Assert.assertNotNull(expectedSuspended);
-    RunRecordMeta actualSuspended = store.getRun(programId.run(expectedSuspended.getPid()));
+    RunRecordDetail actualSuspended = store.getRun(programId.run(expectedSuspended.getPid()));
     Assert.assertEquals(expectedSuspended, actualSuspended);
 
     ProgramRunCluster emptyCluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, 0);
@@ -404,7 +404,7 @@ public abstract class DefaultStoreTest {
     setStart(programId.run(run7.getId()), emptyArgs, emptyArgs, artifactId);
     store.setStop(programId.run(run7.getId()), startTimeSecs + 1, ProgramController.State.ERROR.getRunStatus(),
                   AppFabricTestHelper.createSourceId(++sourceId));
-    RunRecordMeta expectedRunRecord7 = RunRecordMeta.builder()
+    RunRecordDetail expectedRunRecord7 = RunRecordDetail.builder()
       .setProgramRunId(programId.run(run7))
       .setStartTime(startTimeSecs)
       .setStopTime(startTimeSecs + 1)
@@ -413,14 +413,14 @@ public abstract class DefaultStoreTest {
       .setCluster(emptyCluster)
       .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
-    RunRecordMeta actualRecord7 = store.getRun(programId.run(run7.getId()));
+    RunRecordDetail actualRecord7 = store.getRun(programId.run(run7.getId()));
     Assert.assertEquals(expectedRunRecord7, actualRecord7);
 
     // Record workflow that starts and suspends before it runs
     RunId run8 = RunIds.generate(now);
     setStart(programId.run(run8.getId()), emptyArgs, emptyArgs, artifactId);
     store.setSuspend(programId.run(run8.getId()), AppFabricTestHelper.createSourceId(++sourceId), -1);
-    RunRecordMeta expectedRunRecord8 = RunRecordMeta.builder()
+    RunRecordDetail expectedRunRecord8 = RunRecordDetail.builder()
       .setProgramRunId(programId.run(run8))
       .setStartTime(startTimeSecs)
       .setStatus(ProgramRunStatus.SUSPENDED)
@@ -428,7 +428,7 @@ public abstract class DefaultStoreTest {
       .setCluster(emptyCluster)
       .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
-    RunRecordMeta actualRecord8 = store.getRun(programId.run(run8.getId()));
+    RunRecordDetail actualRecord8 = store.getRun(programId.run(run8.getId()));
     Assert.assertEquals(expectedRunRecord8, actualRecord8);
 
     // Record workflow that is killed while suspended
@@ -438,7 +438,7 @@ public abstract class DefaultStoreTest {
     store.setStop(programId.run(run9.getId()), startTimeSecs + 5, ProgramRunStatus.KILLED,
                   AppFabricTestHelper.createSourceId(++sourceId));
 
-    RunRecordMeta expectedRunRecord9 = RunRecordMeta.builder()
+    RunRecordDetail expectedRunRecord9 = RunRecordDetail.builder()
       .setProgramRunId(programId.run(run9))
       .setStartTime(startTimeSecs)
       .setRunTime(startTimeSecs + 1)
@@ -448,7 +448,7 @@ public abstract class DefaultStoreTest {
       .setCluster(emptyCluster)
       .setArtifactId(artifactId)
       .setSourceId(AppFabricTestHelper.createSourceId(sourceId)).build();
-    RunRecordMeta actualRecord9 = store.getRun(programId.run(run9.getId()));
+    RunRecordDetail actualRecord9 = store.getRun(programId.run(run9.getId()));
     Assert.assertEquals(expectedRunRecord9, actualRecord9);
 
     // Non-existent run record should give null
@@ -775,8 +775,8 @@ public abstract class DefaultStoreTest {
   }
 
   private void verifyRunHistory(ProgramId programId, int count) {
-    Map<ProgramRunId, RunRecordMeta> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
-                                                0, Long.MAX_VALUE, Integer.MAX_VALUE);
+    Map<ProgramRunId, RunRecordDetail> historymap = store.getRuns(programId, ProgramRunStatus.ALL,
+                                                                  0, Long.MAX_VALUE, Integer.MAX_VALUE);
     Assert.assertEquals(count, historymap.size());
   }
 
@@ -802,8 +802,8 @@ public abstract class DefaultStoreTest {
 
     // even though there's two separate run records (one that's complete and one that's active), only one should be
     // returned by the query, because the limit parameter of 1 is being passed in.
-    Map<ProgramRunId, RunRecordMeta> historymap = store.getRuns(mapreduceProgramId, ProgramRunStatus.ALL,
-                                                                0, Long.MAX_VALUE, 1);
+    Map<ProgramRunId, RunRecordDetail> historymap = store.getRuns(mapreduceProgramId, ProgramRunStatus.ALL,
+                                                                  0, Long.MAX_VALUE, 1);
     Assert.assertEquals(1, historymap.size());
   }
 

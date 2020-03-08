@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -207,6 +207,26 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return result;
   }
 
+  public List<ApplicationSpecification> getAppSpecs(NamespaceId namespace,
+                                         Predicate<ApplicationSpecification> predicate) throws Exception {
+    Map<ApplicationId, ApplicationSpecification> appSpecs = new LinkedHashMap<>();
+    for (ApplicationSpecification appSpec : store.getAllApplications(namespace)) {
+      appSpecs.put(namespace.app(appSpec.getName(), appSpec.getAppVersion()), appSpec);
+    }
+    Set<? extends EntityId> visible = authorizationEnforcer.isVisible(appSpecs.keySet(),
+                                                                      authenticationContext.getPrincipal());
+    appSpecs.keySet().removeIf(id -> !visible.contains(id));
+
+    List<ApplicationSpecification> result = new ArrayList<>();
+    for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
+      ApplicationSpecification appSpec = entry.getValue();
+      if (predicate.test(appSpec)) {
+        result.add(appSpec);
+      }
+    }
+    return result;
+  }
+
   /**
    * Get detail about the specified application
    *
@@ -215,6 +235,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws ApplicationNotFoundException if the specified application does not exist
    */
   public ApplicationDetail getAppDetail(ApplicationId appId) throws Exception {
+    ApplicationSpecification appSpec = getAppSpec(appId);
+    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
+    return filterApplicationDetail(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
+  }
+
+  public ApplicationSpecification getAppSpec(ApplicationId appId) throws Exception {
     // TODO: CDAP-12473: filter based on the entity visibility in the app detail
     // user needs to pass the visibility check to get the app detail
     AuthorizationUtil.ensureAccess(appId, authorizationEnforcer, authenticationContext.getPrincipal());
@@ -222,8 +248,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (appSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
-    String ownerPrincipal = ownerAdmin.getOwnerPrincipal(appId);
-    return filterApplicationDetail(appId, ApplicationDetail.fromSpec(appSpec, ownerPrincipal));
+    return appSpec;
   }
 
   /**
@@ -480,7 +505,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
     // collection returned.
     List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
+    LOG.debug("wyzhang: ApplicationLifecycleService deployApp: got artifact details " + artifactDetail.size());
     if (artifactDetail.isEmpty()) {
+      LOG.debug("wyzhang: artiface detail list empty");
       throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
     }
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail.iterator().next(),
@@ -494,7 +521,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception
    */
   public void removeAll(NamespaceId namespaceId) throws Exception {
-    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(namespaceId);
+    Map<ProgramRunId, RunRecordDetail> runningPrograms = store.getActiveRuns(namespaceId);
     List<ApplicationSpecification> allSpecs = new ArrayList<>(store.getAllApplications(namespaceId));
     Map<ApplicationId, ApplicationSpecification> apps = new HashMap<>();
     for (ApplicationSpecification appSpec : allSpecs) {
@@ -505,7 +532,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> runningProgram : runningPrograms.entrySet()) {
         activePrograms.add(runningProgram.getKey().getApplication() +
                             ": " + runningProgram.getKey().getProgram());
       }
@@ -563,11 +590,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    */
   private void ensureNoRunningPrograms(ApplicationId appId) throws CannotBeDeletedException {
     //Check if all are stopped.
-    Map<ProgramRunId, RunRecordMeta> runningPrograms = store.getActiveRuns(appId);
+    Map<ProgramRunId, RunRecordDetail> runningPrograms = store.getActiveRuns(appId);
 
     if (!runningPrograms.isEmpty()) {
       Set<String> activePrograms = new HashSet<>();
-      for (Map.Entry<ProgramRunId, RunRecordMeta> runningProgram : runningPrograms.entrySet()) {
+      for (Map.Entry<ProgramRunId, RunRecordDetail> runningProgram : runningPrograms.entrySet()) {
         activePrograms.add(runningProgram.getKey().getProgram());
       }
 

@@ -43,6 +43,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
@@ -77,6 +78,7 @@ import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +109,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final SConfiguration sConf;
   private final int maxPreviews;
   private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
@@ -117,6 +120,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   @Inject
   DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
                         SConfiguration sConf, DiscoveryService discoveryService,
+                        DiscoveryServiceClient discoveryServiceClient,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         SecureStore secureStore, TransactionSystemClient transactionSystemClient,
                         PreviewRunnerModuleFactory previewRunnerModuleFactory) {
@@ -125,6 +129,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.sConf = sConf;
     this.datasetFramework = datasetFramework;
     this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
     this.transactionSystemClient = transactionSystemClient;
     this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
@@ -193,6 +198,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   @Override
   public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
+    LOG.debug("wyzhang: DefaultPreviewManager start");
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
@@ -324,8 +330,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
       new PreviewSecureStoreModule(secureStore),
-      new PreviewDiscoveryRuntimeModule(discoveryService),
-      new LocalLocationModule(),
+      new PreviewDiscoveryRuntimeModule(discoveryService, discoveryServiceClient),
+//      new LocalLocationModule(),
+      new DFSLocationModule(),
       new ConfigStoreModule(),
       previewRunnerModuleFactory.create(previewRequest),
       new ProgramRunnerRuntimeModule().getStandaloneModules(),

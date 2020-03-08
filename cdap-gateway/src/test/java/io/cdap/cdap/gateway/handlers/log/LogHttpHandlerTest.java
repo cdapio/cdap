@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,9 +52,11 @@ import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.logging.gateway.handlers.FormattedTextLogEvent;
+import io.cdap.cdap.logging.gateway.handlers.LocalProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.LogData;
 import io.cdap.cdap.logging.gateway.handlers.LogHttpHandler;
-import io.cdap.cdap.logging.guice.LogQueryServerModule;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
+import io.cdap.cdap.logging.guice.LogQueryRuntimeModule;
 import io.cdap.cdap.logging.read.LogOffset;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.logging.service.LogQueryService;
@@ -97,9 +99,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Test LogHandler.
+ * Test {@link LogHttpHandler}.
  */
-public class LogHandlerTest {
+public class LogHttpHandlerTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -128,7 +130,7 @@ public class LogHandlerTest {
       new ConfigModule(cConf),
       new NonCustomLocationUnitTestModule(),
       new InMemoryDiscoveryModule(),
-      new LogQueryServerModule(),
+      new LogQueryRuntimeModule().getInMemoryModules(),
       new DataFabricModules().getInMemoryModules(),
       new DataSetsModules().getStandaloneModules(),
       new DataSetServiceModules().getInMemoryModules(),

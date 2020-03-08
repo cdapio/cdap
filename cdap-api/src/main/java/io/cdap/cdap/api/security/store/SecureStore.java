@@ -26,7 +26,7 @@ import java.util.List;
  * For write access use {@link SecureStoreManager}.
  */
 @Beta
-public interface SecureStore {
+public interface SecureStore { // TODO(needs a local vs remote)
 
   /**
    * List of metadata stored in the secure store.

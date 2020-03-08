@@ -24,6 +24,7 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.Store;
@@ -51,8 +52,12 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
+import io.cdap.cdap.metadata.ApplicationSpecificationFetcher;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemoteApplicationSpecificationFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -162,6 +167,12 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerAdmin.class);
 
     bind(PreviewRequest.class).toInstance(previewRequest);
+
+    bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
+    expose(PreferencesFetcher.class);
+
+    bind(ApplicationSpecificationFetcher.class).to(RemoteApplicationSpecificationFetcher.class);
+    expose(ApplicationSpecificationFetcher.class);
   }
 
   /**

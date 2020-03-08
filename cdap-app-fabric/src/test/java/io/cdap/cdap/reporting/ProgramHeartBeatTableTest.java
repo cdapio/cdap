@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.app.RunIds;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -53,11 +53,11 @@ public abstract class ProgramHeartBeatTableTest {
     //  write program status "running" for program 1 starting at x
     long startTime1 = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     RunId runId = RunIds.generate();
-    RunRecordMeta.Builder metaBuilder =
+    RunRecordDetail.Builder metaBuilder =
       getMockRunRecordMeta(NamespaceId.DEFAULT, runId);
     metaBuilder.setRunTime(startTime1);
     metaBuilder.setStatus(ProgramRunStatus.RUNNING);
-    RunRecordMeta meta = metaBuilder.build();
+    RunRecordDetail meta = metaBuilder.build();
     TransactionRunners.run(transactionRunner, context -> {
       new ProgramHeartbeatTable(context).writeRunRecordMeta(meta, startTime1);
     });
@@ -71,10 +71,10 @@ public abstract class ProgramHeartBeatTableTest {
     //  write program status "running" for program 2 starting at x + 5
     long startTime2 = startTime1 + TimeUnit.MINUTES.toSeconds(5);
     RunId runId2 = RunIds.generate();
-    RunRecordMeta.Builder metaBuilder2 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId2);
+    RunRecordDetail.Builder metaBuilder2 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId2);
     metaBuilder2.setRunTime(startTime2);
     metaBuilder2.setStatus(ProgramRunStatus.RUNNING);
-    RunRecordMeta meta2 = metaBuilder2.build();
+    RunRecordDetail meta2 = metaBuilder2.build();
     TransactionRunners.run(transactionRunner, context -> {
       new ProgramHeartbeatTable(context).writeRunRecordMeta(meta2, startTime2);
     });
@@ -87,13 +87,13 @@ public abstract class ProgramHeartBeatTableTest {
     TransactionRunners.run(transactionRunner, context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       // end row key is exclusive, scanning from x : x + 5 should only return run1
-      Collection<RunRecordMeta> result =
+      Collection<RunRecordDetail> result =
         programHeartbeatTable.scan(startTime1, startTime2, ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
 
       Assert.assertEquals(1 , result.size());
       Assert.assertEquals(meta, result.iterator().next());
       // scanning from x : x + 10, should return both
-      Set<RunRecordMeta> expected = ImmutableSet.of(meta, meta2);
+      Set<RunRecordDetail> expected = ImmutableSet.of(meta, meta2);
       result = programHeartbeatTable.scan(startTime1, endTime,
                                           ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
       Assert.assertEquals(expected.size() , result.size());
@@ -110,9 +110,9 @@ public abstract class ProgramHeartBeatTableTest {
   /**
    * setup and return mock program properties on runrecord builder but use passed namespaceId and runId
    */
-  private RunRecordMeta.Builder getMockRunRecordMeta(NamespaceId namespaceId, RunId runId) {
+  private RunRecordDetail.Builder getMockRunRecordMeta(NamespaceId namespaceId, RunId runId) {
     ProgramId programId = namespaceId.app("someapp").program(ProgramType.SERVICE, "s");
-    RunRecordMeta.Builder runRecordBuilder = RunRecordMeta.builder();
+    RunRecordDetail.Builder runRecordBuilder = RunRecordDetail.builder();
     runRecordBuilder.setArtifactId(ARTIFACT_ID);
     runRecordBuilder.setPrincipal("userA");
     runRecordBuilder.setProgramRunId(programId.run(runId));
@@ -124,7 +124,7 @@ public abstract class ProgramHeartBeatTableTest {
   /**
    * writes heart beat messages starting from startTime + interval up to endTime, each heartbeat separated by interval
    */
-  private void setUpProgramHeartBeats(RunRecordMeta runRecordMeta,
+  private void setUpProgramHeartBeats(RunRecordDetail runRecordMeta,
                                       long startTime, long endTime, long interval) {
     TransactionRunners.run(transactionRunner, context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
@@ -143,10 +143,10 @@ public abstract class ProgramHeartBeatTableTest {
     //  write program status "running" for program 1 starting at x
     long startTime1 = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     RunId runId = RunIds.generate();
-    RunRecordMeta.Builder metaRunningBuilder = getMockRunRecordMeta(NamespaceId.DEFAULT, runId);
+    RunRecordDetail.Builder metaRunningBuilder = getMockRunRecordMeta(NamespaceId.DEFAULT, runId);
     metaRunningBuilder.setStatus(ProgramRunStatus.RUNNING);
     metaRunningBuilder.setRunTime(startTime1);
-    RunRecordMeta metaRunning = metaRunningBuilder.build();
+    RunRecordDetail metaRunning = metaRunningBuilder.build();
     TransactionRunners.run(transactionRunner, context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaRunning, startTime1);
@@ -159,10 +159,10 @@ public abstract class ProgramHeartBeatTableTest {
 
     long programEndTime = startTime1 + TimeUnit.MINUTES.toSeconds(5);
 
-    RunRecordMeta.Builder metaKilledBuilder = getMockRunRecordMeta(NamespaceId.DEFAULT, runId);
+    RunRecordDetail.Builder metaKilledBuilder = getMockRunRecordMeta(NamespaceId.DEFAULT, runId);
     metaKilledBuilder.setStatus(ProgramRunStatus.KILLED);
     metaKilledBuilder.setStopTime(programEndTime);
-    RunRecordMeta metaKilled = metaKilledBuilder.build();
+    RunRecordDetail metaKilled = metaKilledBuilder.build();
     TransactionRunners.run(transactionRunner, context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       programHeartbeatTable.writeRunRecordMeta(metaKilled, programEndTime);
@@ -172,7 +172,7 @@ public abstract class ProgramHeartBeatTableTest {
     TransactionRunners.run(transactionRunner, context -> {
       ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
       // end row key is exclusive, scanning from x : x + 5 should only return run1
-      Collection<RunRecordMeta> runRecordMetaList =
+      Collection<RunRecordDetail> runRecordMetaList =
         programHeartbeatTable.scan(startTime1, heartBeatEndTime, ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
       Assert.assertEquals(1 , runRecordMetaList.size());
       Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMetaList.iterator().next().getStatus());

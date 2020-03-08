@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,7 +22,7 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -79,9 +79,9 @@ public class LocalDatasetDeleterRunnable implements Runnable {
   }
 
   private Set<String> getActiveRuns(NamespaceId namespaceId) {
-    Map<ProgramRunId, RunRecordMeta> activeRuns = store.getActiveRuns(namespaceId);
+    Map<ProgramRunId, RunRecordDetail> activeRuns = store.getActiveRuns(namespaceId);
     Set<String> runs = new HashSet<>();
-    for (Map.Entry<ProgramRunId, RunRecordMeta> entry : activeRuns.entrySet()) {
+    for (Map.Entry<ProgramRunId, RunRecordDetail> entry : activeRuns.entrySet()) {
       runs.add(entry.getValue().getPid());
     }
     return runs;

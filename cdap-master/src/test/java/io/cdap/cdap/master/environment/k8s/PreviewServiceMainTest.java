@@ -22,6 +22,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
@@ -31,6 +32,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.common.ContentProvider;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
@@ -45,6 +47,7 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +61,6 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
 
   @Test
   public void testPreviewService() throws Exception {
-
     // Deploy the app artifact
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, PreviewTestApp.class);
@@ -75,17 +77,22 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
         .build(), requestConfig);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-    // have to stop AppFabric so that Preview can share the same leveldb table
     AppFabricServiceMain appFabricServiceMain = getServiceMainInstance(AppFabricServiceMain.class);
-    appFabricServiceMain.stop();
+//    appFabricServiceMain.stop();
     Injector injector = appFabricServiceMain.getInjector();
-    injector.getInstance(LevelDBTableService.class).close();
+//    injector.getInstance(LevelDBTableService.class).close();
+
+    CConfiguration cconf = injector.getInstance(CConfiguration.class);
+    SConfiguration sconf = injector.getInstance(SConfiguration.class);
+
+    String localDataDir = cconf.get(Constants.CFG_LOCAL_DATA_DIR);
+    cconf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir + "/preview_data");
+    new StorageMain().createStorage(cconf);
 
     // start preview service with the same data dir as app-fabric, so that the artifact info is still there.
-    runMain(injector.getInstance(CConfiguration.class), injector.getInstance(SConfiguration.class),
-            PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
+    runMain(cconf,sconf, PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
 
-    // create a preview run
+    // Create a preview run
     url = getRouterBaseURI().resolve("/v3/namespaces/default/previews").toURL();
     ArtifactSummary artifactSummary = new ArtifactSummary(artifactName, artifactVersion);
     PreviewConfig previewConfig = new PreviewConfig(PreviewTestApp.TestWorkflow.NAME, ProgramType.WORKFLOW,

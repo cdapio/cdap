@@ -37,7 +37,7 @@ import javax.annotation.Nullable;
  * includes information that should not be exposed to users. {@link RunRecord} contains fields that are exposed
  * to users, so everything else like the Twill runid should go here.
  */
-public final class RunRecordMeta extends RunRecord {
+public final class RunRecordDetail extends RunRecord {
 
   // carries the ProgramRunId, but we don't need to serialize it as it is already in the key of the meta data store
   private final transient ProgramRunId programRunId;
@@ -60,12 +60,12 @@ public final class RunRecordMeta extends RunRecord {
   @Nullable
   private final String principal;
 
-  private RunRecordMeta(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
-                        @Nullable Long suspendTs, @Nullable Long resumeTs,
-                        ProgramRunStatus status, @Nullable Map<String, String> properties,
-                        @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
-                        ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
-                        @Nullable ArtifactId artifactId, @Nullable String principal) {
+  private RunRecordDetail(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
+                          @Nullable Long suspendTs, @Nullable Long resumeTs,
+                          ProgramRunStatus status, @Nullable Map<String, String> properties,
+                          @Nullable Map<String, String> systemArgs, @Nullable String twillRunId,
+                          ProgramRunCluster cluster, ProfileId profileId, byte[] sourceId,
+                          @Nullable ArtifactId artifactId, @Nullable String principal) {
     super(programRunId.getRun(), startTs, runTs, stopTs, suspendTs, resumeTs, status, properties, cluster, profileId);
     this.programRunId = programRunId;
     this.systemArgs = systemArgs;
@@ -116,7 +116,7 @@ public final class RunRecordMeta extends RunRecord {
       return false;
     }
 
-    RunRecordMeta that = (RunRecordMeta) o;
+    RunRecordDetail that = (RunRecordDetail) o;
     return Objects.equal(this.getProgramRunId(), that.getProgramRunId()) &&
       Objects.equal(this.getStartTs(), that.getStartTs()) &&
       Objects.equal(this.getRunTs(), that.getRunTs()) &&
@@ -157,7 +157,7 @@ public final class RunRecordMeta extends RunRecord {
   }
 
   /**
-   * @return Builder to create a RunRecordMeta
+   * @return Builder to create a RunRecordDetail
    */
   public static Builder builder() {
     return new Builder();
@@ -165,9 +165,9 @@ public final class RunRecordMeta extends RunRecord {
 
   /**
    * @param record existing record to copy fields from
-   * @return Builder to create a RunRecordMeta, initialized with values from the specified existing record
+   * @return Builder to create a RunRecordDetail, initialized with values from the specified existing record
    */
-  public static Builder builder(RunRecordMeta record) {
+  public static Builder builder(RunRecordDetail record) {
     return new Builder(record);
   }
 
@@ -186,7 +186,7 @@ public final class RunRecordMeta extends RunRecord {
       systemArgs = new HashMap<>();
     }
 
-    private Builder(RunRecordMeta record) {
+    private Builder(RunRecordDetail record) {
       super(record);
       programRunId = record.getProgramRunId();
       twillRunId = record.getTwillRunId();
@@ -229,7 +229,7 @@ public final class RunRecordMeta extends RunRecord {
       return this;
     }
 
-    public RunRecordMeta build() {
+    public RunRecordDetail build() {
       if (programRunId == null) {
         throw new IllegalArgumentException("Run record run id must be specified.");
       }
@@ -239,9 +239,9 @@ public final class RunRecordMeta extends RunRecord {
       // we are not validating artifactId for null,
       // artifactId could be null for program starts that were recorded pre 5.0 but weren't processed
       // we don't want to throw exception while processing them
-      return new RunRecordMeta(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
-                               status, properties, systemArgs, twillRunId, cluster, profileId,
-                               sourceId, artifactId, principal);
+      return new RunRecordDetail(programRunId, startTs, runTs, stopTs, suspendTs, resumeTs,
+                                 status, properties, systemArgs, twillRunId, cluster, profileId,
+                                 sourceId, artifactId, principal);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,9 +23,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.logging.LoggingContext;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.logging.gateway.handlers.store.ProgramStore;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -33,6 +32,7 @@ import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 
+import java.io.IOException;
 import java.util.List;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -47,14 +47,16 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHttpHandler extends AbstractLogHttpHandler {
 
-  private final ProgramStore programStore;
   private final LogReader logReader;
+  private final ProgramRunRecordFetcher programRunRecordFetcher;
 
   @Inject
-  public LogHttpHandler(LogReader logReader, CConfiguration cConf, ProgramStore programStore) {
+  public LogHttpHandler(LogReader logReader,
+                        ProgramRunRecordFetcher programRunFetcher,
+                        CConfiguration cConf) {
     super(cConf);
     this.logReader = logReader;
-    this.programStore = programStore;
+    this.programRunRecordFetcher = programRunFetcher;
   }
 
   @GET
@@ -85,10 +87,10 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr,
                            @QueryParam("format") @DefaultValue("text") String format,
-                           @QueryParam("suppress") List<String> suppress) throws NotFoundException {
+                           @QueryParam("suppress") List<String> suppress) throws NotFoundException, IOException {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
-    RunRecordMeta runRecord = getRunRecordMeta(programRunId);
+    RunRecordDetail runRecord = getRunRecordMeta(programRunId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                     runRecord.getSystemArgs());
 
@@ -122,10 +124,10 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
                         @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) throws NotFoundException {
+                        @QueryParam("suppress") List<String> suppress) throws NotFoundException, IOException {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
-    RunRecordMeta runRecord = getRunRecordMeta(programRunId);
+    RunRecordDetail runRecord = getRunRecordMeta(programRunId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                     runRecord.getSystemArgs());
 
@@ -159,10 +161,10 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
                         @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) throws NotFoundException {
+                        @QueryParam("suppress") List<String> suppress) throws NotFoundException, IOException {
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
-    RunRecordMeta runRecord = getRunRecordMeta(programRunId);
+    RunRecordDetail runRecord = getRunRecordMeta(programRunId);
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                     runRecord.getSystemArgs());
 
@@ -215,11 +217,11 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
     doPrev(logReader, responder, loggingContext, maxEvents, fromOffsetStr, escape, filterStr, null, format, suppress);
   }
 
-  private RunRecordMeta getRunRecordMeta(ProgramRunId programRunId) throws NotFoundException {
-    RunRecordMeta runRecord = programStore.getRun(programRunId);
-    if (runRecord == null) {
+  private RunRecordDetail getRunRecordMeta(ProgramRunId programRunId) throws IOException, NotFoundException {
+    RunRecordDetail runRecordMeta = programRunRecordFetcher.getRunRecordMeta(programRunId);
+    if (runRecordMeta == null) {
       throw new NotFoundException(programRunId);
     }
-    return runRecord;
+    return runRecordMeta;
   }
 }

@@ -34,10 +34,12 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramControllerServiceAdapter;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.AbstractArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactMeta;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.proto.ProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -90,16 +92,15 @@ public class AbstractProgramRuntimeServiceTest {
       @Override
       protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                       ProgramDescriptor programDescriptor,
-                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
+                                      Location programJarLocation, File tempDir) throws IOException {
         return program;
       }
 
       @Override
-      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+      protected Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
         io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
           "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                  new ArtifactMeta(ArtifactClasses.builder().build()));
+        return Locations.toLocation(TEMP_FOLDER.newFile());
       }
     };
 
@@ -157,16 +158,15 @@ public class AbstractProgramRuntimeServiceTest {
       @Override
       protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                       ProgramDescriptor programDescriptor,
-                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
+                                      Location programJarLocation, File tempDir) throws IOException {
         return program;
       }
 
       @Override
-      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+      protected Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
         io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
           "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                  new ArtifactMeta(ArtifactClasses.builder().build()));
+        return Locations.toLocation(TEMP_FOLDER.newFile());
       }
     };
 
@@ -363,9 +363,9 @@ public class AbstractProgramRuntimeServiceTest {
     private final RuntimeInfo extraInfo;
 
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                        @Nullable ArtifactRepository artifactRepository,
+                                        ArtifactManagerFactory artifactManagerFactory,
                                         @Nullable RuntimeInfo extraInfo) {
-      super(cConf, programRunnerFactory, artifactRepository);
+      super(cConf, programRunnerFactory, artifactManagerFactory);
       this.extraInfo = extraInfo;
     }
 

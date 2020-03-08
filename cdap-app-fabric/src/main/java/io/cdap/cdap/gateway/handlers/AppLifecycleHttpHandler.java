@@ -199,7 +199,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                          @PathParam("app-id") final String appId,
                                          @PathParam("version-id") final String versionId)
     throws Exception {
-
+    LOG.debug("wyzhang: AppLifecycleHttpHandler create an app: " + namespaceId + " " + appId + " " + versionId);
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
 
     if (!applicationLifecycleService.updateAppAllowed(applicationId))  {
@@ -209,6 +209,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
+      LOG.debug("wyzhang: AppLifecycleHttpHandler create an app: deploy failed " + ex.getMessage());
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Deploy failed: " + ex.getMessage());
       return null;
     }
@@ -464,7 +465,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
           AppRequest<?> appRequest = DECODE_GSON.fromJson(fileReader, AppRequest.class);
           ArtifactSummary artifactSummary = appRequest.getArtifact();
-
+          LOG.debug("wyzhang: deployAppFromArtifact onFinish: artifactSummary = " + artifactSummary.toString());
           KerberosPrincipalId ownerPrincipalId =
             appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 

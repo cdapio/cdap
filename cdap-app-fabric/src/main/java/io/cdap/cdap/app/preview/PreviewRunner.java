@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,7 +17,7 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.gson.JsonElement;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
@@ -76,10 +76,10 @@ public interface PreviewRunner {
 
   /**
    * Get the run record of the program executed as a part of preview.
-   * @return the {@link RunRecordMeta} associated with the preview or {@code null} if there is no run record
+   * @return the {@link RunRecordDetail} associated with the preview or {@code null} if there is no run record
    */
   @Nullable
-  RunRecordMeta getRunRecord();
+  RunRecordDetail getRunRecord();
 
   /**
    * Get the helper object to query for metrics for the preview run.

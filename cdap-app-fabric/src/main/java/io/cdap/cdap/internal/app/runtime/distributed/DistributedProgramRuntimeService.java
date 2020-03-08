@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,8 +22,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
@@ -34,10 +33,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.AbstractArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.Containers;
 import io.cdap.cdap.proto.DistributedProgramLiveInfo;
 import io.cdap.cdap.proto.ProgramLiveInfo;
@@ -52,6 +52,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,12 +84,9 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
   DistributedProgramRuntimeService(CConfiguration cConf,
                                    ProgramRunnerFactory programRunnerFactory,
                                    TwillRunner twillRunner, Store store,
-                                   // for running a program, we only need EXECUTE on the program, there should be no
-                                   // privileges needed for artifacts
-                                   @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                     ArtifactRepository noAuthArtifactRepository,
+                                   ArtifactManagerFactory artifactManagerFactory,
                                    Impersonator impersonator, ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository);
+    super(cConf, programRunnerFactory, artifactManagerFactory);
     this.twillRunner = twillRunner;
     this.store = store;
     this.impersonator = impersonator;
@@ -132,10 +130,10 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
   @Override
   protected void copyArtifact(ArtifactId artifactId,
-                              final ArtifactDetail artifactDetail, final File targetFile) throws IOException {
+                              final Location jarLocation, final File targetFile) throws IOException {
     try {
       impersonator.doAs(artifactId, () -> {
-        Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
+        Locations.linkOrCopy(jarLocation, targetFile);
         return null;
       });
     } catch (Exception e) {
@@ -154,7 +152,7 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
 
     // Lookup the Twill RunId for the given run
     ProgramRunId programRunId = programId.run(runId.getId());
-    RunRecordMeta record = store.getRun(programRunId);
+    RunRecordDetail record = store.getRun(programRunId);
     if (record == null) {
       return null;
     }
@@ -204,11 +202,11 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     final Set<RunId> twillRunIds = twillProgramInfo.columnKeySet();
-    Collection<RunRecordMeta> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
+    Collection<RunRecordDetail> activeRunRecords = store.getRuns(ProgramRunStatus.RUNNING, record ->
       record.getTwillRunId() != null
         && twillRunIds.contains(org.apache.twill.internal.RunIds.fromString(record.getTwillRunId()))).values();
 
-    for (RunRecordMeta record : activeRunRecords) {
+    for (RunRecordDetail record : activeRunRecords) {
       String twillRunId = record.getTwillRunId();
       if (twillRunId == null) {
         // This is unexpected. Just log and ignore the run record

@@ -43,7 +43,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
@@ -164,7 +164,7 @@ public class ProgramNotificationSubscriberServiceTest {
       // Wait for the inner program running
       Tasks.waitFor(ProgramRunStatus.RUNNING, () -> TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-        RunRecordMeta meta = metadataStoreDataset.getRun(programRunId);
+        RunRecordDetail meta = metadataStoreDataset.getRun(programRunId);
         if (meta == null) {
           return null;
         }
@@ -181,7 +181,7 @@ public class ProgramNotificationSubscriberServiceTest {
     // Wait for the Workflow state changed to failed
     Tasks.waitFor(ProgramRunStatus.FAILED, () -> TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-      RunRecordMeta meta = metadataStoreDataset.getRun(workflowRunId);
+      RunRecordDetail meta = metadataStoreDataset.getRun(workflowRunId);
       if (meta == null) {
         return null;
       }
@@ -191,7 +191,7 @@ public class ProgramNotificationSubscriberServiceTest {
     // The MR run record should be changed to ERROR state as well (without race)
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-      RunRecordMeta meta = metadataStoreDataset.getRun(mrRunId);
+      RunRecordDetail meta = metadataStoreDataset.getRun(mrRunId);
       Assert.assertNotNull(meta);
       Assert.assertEquals(ProgramRunStatus.FAILED, meta.getStatus());
     });
@@ -199,7 +199,7 @@ public class ProgramNotificationSubscriberServiceTest {
     // The Spark run record should stay as COMPLETED
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-      RunRecordMeta meta = metadataStoreDataset.getRun(sparkRunId);
+      RunRecordDetail meta = metadataStoreDataset.getRun(sparkRunId);
       Assert.assertNotNull(meta);
       Assert.assertEquals(ProgramRunStatus.COMPLETED, meta.getStatus());
     });
@@ -207,8 +207,8 @@ public class ProgramNotificationSubscriberServiceTest {
     // Since the Spark2 program hasn't been executed, there should be no run record
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-      Map<ProgramRunId, RunRecordMeta> runs = metadataStoreDataset.getRuns(sparkId2, ProgramRunStatus.ALL,
-                                                                           0, Long.MAX_VALUE, 100, null);
+      Map<ProgramRunId, RunRecordDetail> runs = metadataStoreDataset.getRuns(sparkId2, ProgramRunStatus.ALL,
+                                                                             0, Long.MAX_VALUE, 100, null);
       Assert.assertTrue(runs.isEmpty());
     });
   }
@@ -235,7 +235,7 @@ public class ProgramNotificationSubscriberServiceTest {
 
     Tasks.waitFor(ProgramRunStatus.STARTING, () -> TransactionRunners.run(transactionRunner, context -> {
                     AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-                    RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+                    RunRecordDetail meta = metadataStoreDataset.getRun(runId);
                     if (meta == null) {
                       return null;
                     }
@@ -372,7 +372,7 @@ public class ProgramNotificationSubscriberServiceTest {
     throws InterruptedException, ExecutionException, TimeoutException {
     Tasks.waitFor(expectedStatus, () -> TransactionRunners.run(transactionRunner, context -> {
                     AppMetadataStore metadataStoreDataset = AppMetadataStore.create(context);
-                    RunRecordMeta meta = metadataStoreDataset.getRun(runId);
+                    RunRecordDetail meta = metadataStoreDataset.getRun(runId);
                     if (meta == null) {
                       return null;
                     }
@@ -385,7 +385,7 @@ public class ProgramNotificationSubscriberServiceTest {
   private void heartbeatDatasetStatusCheck(long startTime, ProgramRunStatus expectedStatus)
     throws InterruptedException, ExecutionException, TimeoutException {
     Tasks.waitFor(expectedStatus, () -> TransactionRunners.run(transactionRunner, context -> {
-      Collection<RunRecordMeta> runRecordMetas =
+      Collection<RunRecordDetail> runRecordMetas =
         // programHeartbeatTable uses seconds for timeunit for recording runrecords
         new ProgramHeartbeatTable(context).scan(
           TimeUnit.MILLISECONDS.toSeconds(startTime), TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()),

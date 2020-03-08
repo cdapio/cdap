@@ -42,7 +42,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.ProvisionRequest;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -221,7 +221,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       }
     }
     if (notification.getNotificationType().equals(Notification.Type.PROGRAM_HEART_BEAT)) {
-      RunRecordMeta runRecordMeta = appMetadataStore.getRun(programRunId);
+      RunRecordDetail runRecordMeta = appMetadataStore.getRun(programRunId);
       long heartBeatTimeInSeconds =
         TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(properties.get(ProgramOptionConstants.HEART_BEAT_TIME)));
       writeToHeartBeatTable(runRecordMeta, heartBeatTimeInSeconds, programHeartbeatTable);
@@ -251,7 +251,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     Map<String, String> properties = notification.getProperties();
     String twillRunId = notification.getProperties().get(ProgramOptionConstants.TWILL_RUN_ID);
 
-    RunRecordMeta recordedRunRecord;
+    RunRecordDetail recordedRunRecord;
     switch (programRunStatus) {
       case STARTING:
         String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
@@ -364,18 +364,18 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    * @param notification the {@link Notification} that carries information about the program completion
    * @param sourceId the source message id of the notification
    * @param runnables a {@link List} adding {@link Runnable} to be executed after event handling is completed
-   * @return a {@link RunRecordMeta} that carries the result of updates to {@link AppMetadataStore}. If there
+   * @return a {@link RunRecordDetail} that carries the result of updates to {@link AppMetadataStore}. If there
    *         is no update, {@code null} will be returned
    * @throws Exception if failed to update program status
    */
   @Nullable
-  private RunRecordMeta handleProgramCompletion(AppMetadataStore appMetadataStore,
-                                                ProgramHeartbeatTable programHeartbeatTable,
-                                                ProgramRunId programRunId,
-                                                ProgramRunStatus programRunStatus,
-                                                Notification notification,
-                                                byte[] sourceId,
-                                                List<Runnable> runnables) throws Exception {
+  private RunRecordDetail handleProgramCompletion(AppMetadataStore appMetadataStore,
+                                                  ProgramHeartbeatTable programHeartbeatTable,
+                                                  ProgramRunId programRunId,
+                                                  ProgramRunStatus programRunStatus,
+                                                  Notification notification,
+                                                  byte[] sourceId,
+                                                  List<Runnable> runnables) throws Exception {
     Map<String, String> properties = notification.getProperties();
 
     long endTimeSecs = getTimeSeconds(properties, ProgramOptionConstants.END_TIME);
@@ -395,8 +395,8 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                             programRunStatus, notification, sourceId, runnables);
     }
 
-    RunRecordMeta recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
-                                                                         failureCause, sourceId);
+    RunRecordDetail recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
+                                                                           failureCause, sourceId);
     writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
 
     getEmitMetricsRunnable(programRunId, recordedRunRecord,
@@ -464,7 +464,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   /**
    * write to heart beat table if the recordedRunRecord is not null
    */
-  private void writeToHeartBeatTable(@Nullable RunRecordMeta recordedRunRecord,
+  private void writeToHeartBeatTable(@Nullable RunRecordDetail recordedRunRecord,
                                      long timestampInSeconds,
                                      ProgramHeartbeatTable programHeartbeatTable) throws IOException {
     if (recordedRunRecord != null) {
@@ -527,7 +527,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
           }
         });
       case DEPROVISIONING:
-        RunRecordMeta recordedMeta = appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
+        RunRecordDetail recordedMeta = appMetadataStore.recordProgramDeprovisioning(programRunId, messageIdBytes);
         // If we skipped recording the run status, that means this was a duplicate message,
         // or an invalid state transition. In both cases, we should not try to deprovision the cluster.
         if (recordedMeta != null) {
@@ -546,7 +546,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   }
 
   private Optional<Runnable> getEmitMetricsRunnable(ProgramRunId programRunId,
-                                                    @Nullable RunRecordMeta recordedRunRecord,
+                                                    @Nullable RunRecordDetail recordedRunRecord,
                                                     String metricName) {
     if (recordedRunRecord == null) {
       return Optional.empty();

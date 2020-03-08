@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
+import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.gateway.handlers.BootstrapHttpHandler;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
@@ -57,6 +58,7 @@ import io.cdap.cdap.gateway.handlers.PreferencesHttpHandler;
 import io.cdap.cdap.gateway.handlers.PreferencesHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProfileHttpHandler;
 import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
+import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ProvisionerHttpHandler;
 import io.cdap.cdap.gateway.handlers.TransactionHttpHandler;
 import io.cdap.cdap.gateway.handlers.UsageHandler;
@@ -85,6 +87,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -93,7 +96,10 @@ import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
+import io.cdap.cdap.logging.gateway.handlers.LocalProgramRunRecordFetcher;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.MetadataServiceModule;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -162,6 +168,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+                               bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
                              }
                            });
   }
@@ -212,6 +220,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
+
+                               bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
                              }
                            });
   }
@@ -250,6 +260,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
+
+                               bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
                              }
                            });
   }
@@ -310,6 +322,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(AppLifecycleHttpHandler.class);
       handlerBinder.addBinding().to(AppLifecycleHttpHandlerInternal.class);
       handlerBinder.addBinding().to(ProgramLifecycleHttpHandler.class);
+      handlerBinder.addBinding().to(ProgramLifecycleHttpHandlerInternal.class);
       // TODO: [CDAP-13355] Move OperationsDashboardHttpHandler into report generation app
       handlerBinder.addBinding().to(OperationsDashboardHttpHandler.class);
       handlerBinder.addBinding().to(PreferencesHttpHandler.class);
@@ -318,6 +331,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
+      handlerBinder.addBinding().to(ArtifactHttpHandlerInternal.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);

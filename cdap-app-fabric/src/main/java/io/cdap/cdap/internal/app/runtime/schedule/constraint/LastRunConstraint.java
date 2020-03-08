@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProtoConstraint;
 
@@ -41,7 +41,7 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
     // We only need to check program runs within recent history, adding a buffer of 1 day, because the time range
     // is for the start time of the program. It may start before `millisSinceLastRun`, but complete after it.
     // Note: this will miss out on active workflow runs that started more than ~1day ago (suspended/lengthy workflows)
-    Iterable<RunRecordMeta> runRecords =
+    Iterable<RunRecordDetail> runRecords =
       context.getProgramRuns(schedule.getProgramId(), ProgramRunStatus.ALL,
                              startTime - TimeUnit.DAYS.toSeconds(1), Long.MAX_VALUE, 100).values();
     // We can limit to 100, since just 1 program in the recent history is enough to make the constraint fail.
@@ -61,7 +61,7 @@ public class LastRunConstraint extends ProtoConstraint.LastRunConstraint impleme
 
   // Filters run records that are: FAILED, KILLED; keeps only: RUNNING, SUSPENDED, COMPLETED.
   // Also filters COMLPETED run records that have completed before the specified startTime.
-  private Iterable<RunRecordMeta> filter(Iterable<RunRecordMeta> runRecords, final long startTime) {
+  private Iterable<RunRecordDetail> filter(Iterable<RunRecordDetail> runRecords, final long startTime) {
     return StreamSupport.stream(runRecords.spliterator(), false).filter(input -> {
       //noinspection ConstantConditions
       if (ProgramRunStatus.COMPLETED == input.getStatus() && input.getStopTs() < startTime) {

@@ -30,6 +30,8 @@ import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactManager;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
@@ -40,9 +42,9 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
@@ -50,8 +52,10 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.artifact.AbstractArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.proto.InMemoryProgramLiveInfo;
@@ -83,6 +87,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -103,18 +108,18 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ArtifactRepository noAuthArtifactRepository;
+  private final ArtifactManagerFactory artifactManagerFactory;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private TwillRunnerService remoteTwillRunnerService;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository noAuthArtifactRepository) {
+                                          ArtifactManagerFactory artifactManagerFactory) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
-    this.noAuthArtifactRepository = noAuthArtifactRepository;
+    this.artifactManagerFactory = artifactManagerFactory;
   }
 
   /**
@@ -152,7 +157,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     try {
       // Get the artifact details and save it into the program options.
       ArtifactId artifactId = programDescriptor.getArtifactId();
-      ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+      Location jarLocation = getArtifactLocation(artifactId);
       ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
 
       // Take a snapshot of all the plugin artifacts used by the program
@@ -160,7 +165,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                                programDescriptor.getApplicationSpecification());
 
       // Create and run the program
-      Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
+      Program executableProgram = createProgram(cConf, runner, programDescriptor, jarLocation, tempDir);
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
@@ -180,8 +185,12 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
       : new NotRunningProgramLiveInfo(programId);
   }
 
-  protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+  protected Location getArtifactLocation(ArtifactId artifactId) throws Exception {
+    ArtifactManager artifactManager =
+      artifactManagerFactory.create(artifactId.getNamespaceId(),
+                                    RetryStrategies.exponentialDelay(1, 30, TimeUnit.SECONDS));
+    ArtifactSummary artifactSummary = new ArtifactSummary(artifactId.getArtifact(), artifactId.getVersion());
+    return artifactManager.getArtifactLocation(artifactSummary, artifactId.getNamespace());
   }
 
   /**
@@ -189,10 +198,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    */
   protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
                                   ProgramDescriptor programDescriptor,
-                                  ArtifactDetail artifactDetail, final File tempDir) throws IOException {
-
-    final Location programJarLocation = artifactDetail.getDescriptor().getLocation();
-
+                                  Location programJarLocation, final File tempDir) throws IOException {
     // Take a snapshot of the JAR file to avoid program mutation
     final File unpackedDir = new File(tempDir, "unpacked");
     unpackedDir.mkdirs();
@@ -280,7 +286,8 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
+        Location jarLocation = getArtifactLocation(artifactId);
+        copyArtifact(artifactId, jarLocation, destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }
@@ -295,13 +302,13 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
    * Copies the artifact jar to the given target file.
    *
    * @param artifactId artifact id of the artifact to be copied
-   * @param artifactDetail detail information of the artifact to be copied
+   * @param jarLocation detail information of the artifact to be copied
    * @param targetFile target file to copy to
    * @throws IOException if the copying failed
    */
   protected void copyArtifact(ArtifactId artifactId,
-                              ArtifactDetail artifactDetail, File targetFile) throws IOException {
-    Locations.linkOrCopy(artifactDetail.getDescriptor().getLocation(), targetFile);
+                              Location jarLocation, File targetFile) throws IOException {
+    Locations.linkOrCopy(jarLocation, targetFile);
   }
 
   protected Map<String, String> getExtraProgramOptions() {

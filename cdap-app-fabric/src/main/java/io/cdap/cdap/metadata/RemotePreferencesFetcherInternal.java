@@ -23,6 +23,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.gateway.handlers.PreferencesHttpHandlerInternal;
 import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -39,6 +40,7 @@ import java.lang.reflect.Type;
 
 /**
  * Fetch preferences via REST API calls (using internal endpoint {@code INTERNAL_API_VERSION_3})
+ * from {@link PreferencesHttpHandlerInternal}
  */
 public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
   private static final Gson GSON = new Gson();

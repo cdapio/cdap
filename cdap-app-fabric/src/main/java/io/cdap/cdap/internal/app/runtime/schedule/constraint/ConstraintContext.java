@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +18,7 @@ package io.cdap.cdap.internal.app.runtime.schedule.constraint;
 
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.internal.app.runtime.schedule.queue.Job;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -43,12 +43,12 @@ public final class ConstraintContext {
     return checkTimeMillis;
   }
 
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) {
     return store.getActiveRuns(programId);
   }
 
-  public Map<ProgramRunId, RunRecordMeta> getProgramRuns(ProgramId programId, ProgramRunStatus status,
-                                                         long startTime, long endTime, int limit) {
+  public Map<ProgramRunId, RunRecordDetail> getProgramRuns(ProgramId programId, ProgramRunStatus status,
+                                                           long startTime, long endTime, int limit) {
     return store.getRuns(programId, status, startTime, endTime, limit);
   }
 

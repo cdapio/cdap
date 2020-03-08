@@ -403,12 +403,12 @@ public class AppMetadataStore {
 
     Optional<StructuredRow> row = getRunRecordsTable().read(runRecordFields);
     if (row.isPresent()) {
-      RunRecordMeta record = deserializeRunRecordMeta(row.get());
+      RunRecordDetail record = deserializeRunRecordMeta(row.get());
       // Update the parent Workflow run record by adding node id and program run id in the properties
       Map<String, String> properties = new HashMap<>(record.getProperties());
       properties.put(workflowNodeId, programRunId.getRun());
       writeToStructuredTableWithPrimaryKeys(
-        runRecordFields, RunRecordMeta.builder(record).setProperties(properties).setSourceId(sourceId).build(),
+        runRecordFields, RunRecordDetail.builder(record).setProperties(properties).setSourceId(sourceId).build(),
         getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     }
   }
@@ -429,9 +429,9 @@ public class AppMetadataStore {
    * @return {@link ProgramRunClusterStatus#PROVISIONING} if it is successfully persisted, {@code null} otherwise.
    */
   @Nullable
-  public RunRecordMeta recordProgramProvisioning(ProgramRunId programRunId, Map<String, String> runtimeArgs,
-                                                 Map<String, String> systemArgs, byte[] sourceId,
-                                                 @Nullable ArtifactId artifactId)
+  public RunRecordDetail recordProgramProvisioning(ProgramRunId programRunId, Map<String, String> runtimeArgs,
+                                                   Map<String, String> systemArgs, byte[] sourceId,
+                                                   @Nullable ArtifactId artifactId)
     throws IOException {
     long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
     if (startTs == -1L) {
@@ -440,7 +440,7 @@ public class AppMetadataStore {
       return null;
     }
 
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     // for some reason, there is an existing run record.
     if (existing != null) {
       LOG.error("Ignoring unexpected request to record provisioning state for program run {} that has an existing "
@@ -457,7 +457,7 @@ public class AppMetadataStore {
     }
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONING, null, null);
-    RunRecordMeta meta = RunRecordMeta.builder()
+    RunRecordDetail meta = RunRecordDetail.builder()
       .setProgramRunId(programRunId)
       .setStartTime(startTs)
       .setStatus(ProgramRunStatus.PENDING)
@@ -474,7 +474,7 @@ public class AppMetadataStore {
     return meta;
   }
 
-  // return the property map to set in the RunRecordMeta
+  // return the property map to set in the RunRecordDetail
   private Map<String, String> getRecordProperties(Map<String, String> systemArgs, Map<String, String> runtimeArgs) {
     String workflowRunId = null;
     if (systemArgs != null && systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
@@ -499,12 +499,12 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId)
+  public RunRecordDetail recordProgramProvisioned(ProgramRunId programRunId, int numNodes, byte[] sourceId)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
 
     if (existing == null) {
       LOG.warn("Ignoring unexpected request to transition program run {} from non-existent state to cluster state {}.",
@@ -517,7 +517,7 @@ public class AppMetadataStore {
 
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, numNodes);
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
@@ -536,12 +536,12 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId)
+  public RunRecordDetail recordProgramDeprovisioning(ProgramRunId programRunId, byte[] sourceId)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONING);
@@ -557,7 +557,7 @@ public class AppMetadataStore {
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONING, null,
                                                       existing.getCluster().getNumNodes());
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
@@ -578,12 +578,12 @@ public class AppMetadataStore {
    *                 program run status will be ignored
    * @param endTs timestamp in seconds for when the cluster was deprovisioned. This is null if the program is run
    *              as part of a workflow
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramDeprovisioned(ProgramRunId programRunId, @Nullable Long endTs, byte[] sourceId)
+  public RunRecordDetail recordProgramDeprovisioned(ProgramRunId programRunId, @Nullable Long endTs, byte[] sourceId)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONED);
@@ -598,7 +598,7 @@ public class AppMetadataStore {
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.DEPROVISIONED, endTs,
                                                       existing.getCluster().getNumNodes());
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
@@ -618,12 +618,12 @@ public class AppMetadataStore {
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
    * @param endTs timestamp in seconds for when the cluster was orphaned
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramOrphaned(ProgramRunId programRunId, long endTs, byte[] sourceId)
+  public RunRecordDetail recordProgramOrphaned(ProgramRunId programRunId, long endTs, byte[] sourceId)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.debug("Ignoring unexpected transition of program run {} to cluster state {} with no existing run record.",
                 programRunId, ProgramRunClusterStatus.DEPROVISIONED);
@@ -638,7 +638,7 @@ public class AppMetadataStore {
 
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.ORPHANED, endTs,
                                                       existing.getCluster().getNumNodes());
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setCluster(cluster)
       .setSourceId(sourceId)
       .build();
@@ -649,9 +649,9 @@ public class AppMetadataStore {
   }
 
   @Nullable
-  public RunRecordMeta recordProgramRejected(ProgramRunId programRunId,
-                                             Map<String, String> runtimeArgs, Map<String, String> systemArgs,
-                                             byte[] sourceId, @Nullable ArtifactId artifactId)
+  public RunRecordDetail recordProgramRejected(ProgramRunId programRunId,
+                                               Map<String, String> runtimeArgs, Map<String, String> systemArgs,
+                                               byte[] sourceId, @Nullable ArtifactId artifactId)
     throws IOException {
     long startTs = RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
     if (startTs == -1L) {
@@ -660,7 +660,7 @@ public class AppMetadataStore {
       return null;
     }
 
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     // for some reason, there is an existing run record?
     if (existing != null) {
       LOG.error("Ignoring unexpected request to record rejected state for program run {} that has an existing "
@@ -670,7 +670,7 @@ public class AppMetadataStore {
     }
 
     Optional<ProfileId> profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs);
-    RunRecordMeta meta = RunRecordMeta.builder()
+    RunRecordDetail meta = RunRecordDetail.builder()
       .setProgramRunId(programRunId)
       .setStartTime(startTs)
       .setStopTime(startTs) // rejected: stop time == start time
@@ -689,9 +689,9 @@ public class AppMetadataStore {
   }
 
   /**
-   * Writes a new {@link RunRecordMeta} and increments the run count of a program.
+   * Writes a new {@link RunRecordDetail} and increments the run count of a program.
    */
-  private void writeNewRunRecord(RunRecordMeta meta, String typeRunRecordCompleted) throws IOException {
+  private void writeNewRunRecord(RunRecordDetail meta, String typeRunRecordCompleted) throws IOException {
     List<Field<?>> fields = getProgramRunInvertedTimeKey(typeRunRecordCompleted,
                                                          meta.getProgramRunId(), meta.getStartTs());
     writeToStructuredTableWithPrimaryKeys(fields, meta, getRunRecordsTable(),
@@ -709,14 +709,14 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramStart(ProgramRunId programRunId, @Nullable String twillRunId,
-                                          Map<String, String> systemArgs, byte[] sourceId)
+  public RunRecordDetail recordProgramStart(ProgramRunId programRunId, @Nullable String twillRunId,
+                                            Map<String, String> systemArgs, byte[] sourceId)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
-    RunRecordMeta meta;
+    RunRecordDetail existing = getRun(programRunId);
+    RunRecordDetail meta;
 
     if (systemArgs.containsKey(ProgramOptionConstants.WORKFLOW_NAME)) {
       addWorkflowNodeState(programRunId, systemArgs, ProgramRunStatus.STARTING, null, sourceId);
@@ -734,7 +734,7 @@ public class AppMetadataStore {
     // Delete the old run record
     delete(existing);
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
-    meta = RunRecordMeta.builder(existing)
+    meta = RunRecordDetail.builder(existing)
       .setStatus(ProgramRunStatus.STARTING)
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
@@ -754,12 +754,12 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
-                                            byte[] sourceId) throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+  public RunRecordDetail recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
+                                              byte[] sourceId) throws IOException {
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.RUNNING);
@@ -780,7 +780,7 @@ public class AppMetadataStore {
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
 
     // The existing record's properties already contains the workflowRunId
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setRunTime(stateChangeTime)
       .setStatus(ProgramRunStatus.RUNNING)
       .setTwillRunId(twillRunId)
@@ -799,12 +799,12 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId, long timestamp)
+  public RunRecordDetail recordProgramSuspend(ProgramRunId programRunId, byte[] sourceId, long timestamp)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.SUSPENDED);
@@ -824,12 +824,12 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramResumed(ProgramRunId programRunId, byte[] sourceId, long timestamp)
+  public RunRecordDetail recordProgramResumed(ProgramRunId programRunId, byte[] sourceId, long timestamp)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, ProgramRunStatus.RUNNING);
@@ -842,8 +842,8 @@ public class AppMetadataStore {
     return recordProgramSuspendResume(programRunId, sourceId, existing, "resume", timestamp);
   }
 
-  private RunRecordMeta recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
-                                                   RunRecordMeta existing, String action, long timestamp)
+  private RunRecordDetail recordProgramSuspendResume(ProgramRunId programRunId, byte[] sourceId,
+                                                     RunRecordDetail existing, String action, long timestamp)
     throws IOException {
     ProgramRunStatus toStatus = ProgramRunStatus.SUSPENDED;
 
@@ -853,7 +853,7 @@ public class AppMetadataStore {
     // Delete the old run record
     delete(existing);
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
-    RunRecordMeta.Builder builder = RunRecordMeta.builder(existing).setStatus(toStatus).setSourceId(sourceId);
+    RunRecordDetail.Builder builder = RunRecordDetail.builder(existing).setStatus(toStatus).setSourceId(sourceId);
     if (timestamp != -1) {
       if (action.equals("resume")) {
         builder.setResumeTime(timestamp);
@@ -861,7 +861,7 @@ public class AppMetadataStore {
         builder.setSuspendTime(timestamp);
       }
     }
-    RunRecordMeta meta = builder.build();
+    RunRecordDetail meta = builder.build();
     writeToStructuredTableWithPrimaryKeys(
       key, meta, getRunRecordsTable(), StoreDefinition.AppMetadataStore.RUN_RECORD_DATA);
     LOG.trace("Recorded {} for program {}", toStatus, programRunId);
@@ -878,13 +878,13 @@ public class AppMetadataStore {
    *                 run status notification in TMS. The source id must increase as the recording time of the program
    *                 run status increases, so that the attempt to persist program run status older than the existing
    *                 program run status will be ignored
-   * @return {@link RunRecordMeta} that was persisted, or {@code null} if the update was ignored.
+   * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordMeta recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
-                                         @Nullable BasicThrowable failureCause, byte[] sourceId)
+  public RunRecordDetail recordProgramStop(ProgramRunId programRunId, long stopTs, ProgramRunStatus runStatus,
+                                           @Nullable BasicThrowable failureCause, byte[] sourceId)
     throws IOException {
-    RunRecordMeta existing = getRun(programRunId);
+    RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
       LOG.warn("Ignoring unexpected transition of program run {} to program state {} with no existing run record.",
                programRunId, runStatus);
@@ -904,7 +904,7 @@ public class AppMetadataStore {
     }
 
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_COMPLETED, programRunId, existing.getStartTs());
-    RunRecordMeta meta = RunRecordMeta.builder(existing)
+    RunRecordDetail meta = RunRecordDetail.builder(existing)
       .setStopTime(stopTs)
       .setStatus(runStatus)
       .setSourceId(sourceId)
@@ -932,7 +932,7 @@ public class AppMetadataStore {
    *                 program run status will be ignored
    * @return {@code true} if the program run is allowed to persist the given status, {@code false} otherwise
    */
-  private boolean isValid(RunRecordMeta existing, ProgramRunStatus nextProgramState,
+  private boolean isValid(RunRecordDetail existing, ProgramRunStatus nextProgramState,
                           ProgramRunClusterStatus nextClusterState, byte[] sourceId) {
     byte[] existingSourceId = existing.getSourceId();
     if (existingSourceId != null && Bytes.compareTo(sourceId, existingSourceId) < 0) {
@@ -968,13 +968,13 @@ public class AppMetadataStore {
    *         for a given program run id, an entry will be presented with a {@code null} value
    * @throws IOException if failed to read run records
    */
-  public Map<ProgramRunId, RunRecordMeta> getRuns(Set<ProgramRunId> programRunIds) throws IOException {
+  public Map<ProgramRunId, RunRecordDetail> getRuns(Set<ProgramRunId> programRunIds) throws IOException {
     // Query active run record first
-    Map<ProgramRunId, RunRecordMeta> unfinishedRuns = getUnfinishedRuns(programRunIds);
+    Map<ProgramRunId, RunRecordDetail> unfinishedRuns = getUnfinishedRuns(programRunIds);
     // For programs that are not running, fetch completed run
-    Map<ProgramRunId, RunRecordMeta> completedRuns = getCompletedRuns(Sets.difference(programRunIds,
-                                                                                      unfinishedRuns.keySet()));
-    Map<ProgramRunId, RunRecordMeta> result = new LinkedHashMap<>();
+    Map<ProgramRunId, RunRecordDetail> completedRuns = getCompletedRuns(Sets.difference(programRunIds,
+                                                                                        unfinishedRuns.keySet()));
+    Map<ProgramRunId, RunRecordDetail> result = new LinkedHashMap<>();
     for (ProgramRunId programRunId : programRunIds) {
       result.put(programRunId, unfinishedRuns.getOrDefault(programRunId, completedRuns.get(programRunId)));
     }
@@ -989,9 +989,9 @@ public class AppMetadataStore {
    * @param filter filter to filter run record
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Set<NamespaceId> namespaces,
-                                                        Predicate<RunRecordMeta> filter) throws IOException {
-    Map<ProgramRunId, RunRecordMeta> result = new HashMap<>();
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(Set<NamespaceId> namespaces,
+                                                          Predicate<RunRecordDetail> filter) throws IOException {
+    Map<ProgramRunId, RunRecordDetail> result = new HashMap<>();
     for (NamespaceId namespaceId : namespaces) {
       List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
       result.putAll(getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, filter));
@@ -1006,7 +1006,7 @@ public class AppMetadataStore {
    */
   public int countActiveRuns(@Nullable Integer limit) throws IOException {
     AtomicInteger count = new AtomicInteger(0);
-    try (CloseableIterator<RunRecordMeta> iterator = queryProgramRuns(
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(
       Range.singleton(getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null)),
       key -> !NamespaceId.SYSTEM.getNamespace().equals(key.getString(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD)),
       null, limit != null ? limit : Integer.MAX_VALUE)) {
@@ -1022,7 +1022,7 @@ public class AppMetadataStore {
    * @param filter filter to filter run record
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(Predicate<RunRecordMeta> filter) throws IOException {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(Predicate<RunRecordDetail> filter) throws IOException {
     List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, null);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, filter);
   }
@@ -1034,7 +1034,7 @@ public class AppMetadataStore {
    * @param namespaceId given namespace
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(NamespaceId namespaceId) throws IOException {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(NamespaceId namespaceId) throws IOException {
     List<Field<?>> prefix = getRunRecordNamespacePrefix(TYPE_RUN_RECORD_ACTIVE, namespaceId);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
@@ -1046,7 +1046,7 @@ public class AppMetadataStore {
    * @param applicationId given app
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ApplicationId applicationId) throws IOException {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ApplicationId applicationId) throws IOException {
     List<Field<?>> prefix = getRunRecordApplicationPrefix(TYPE_RUN_RECORD_ACTIVE, applicationId);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
@@ -1058,7 +1058,7 @@ public class AppMetadataStore {
    * @param programId given program
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getActiveRuns(ProgramId programId) throws IOException {
+  public Map<ProgramRunId, RunRecordDetail> getActiveRuns(ProgramId programId) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, null);
   }
@@ -1068,13 +1068,13 @@ public class AppMetadataStore {
    * RUNNING or SUSPENDED.
    *
    * @param ids set of program ids to fetch for active run records
-   * @return a map from {@link ProgramId} to a {@link Collection} of {@link RunRecordMeta}. It is guaranteed to have
+   * @return a map from {@link ProgramId} to a {@link Collection} of {@link RunRecordDetail}. It is guaranteed to have
    *         an entry for each of the given program id.
    * @throws IOException if failed to fetch the run records.
    */
-  public Map<ProgramId, Collection<RunRecordMeta>> getActiveRuns(Collection<ProgramId> ids) throws IOException {
+  public Map<ProgramId, Collection<RunRecordDetail>> getActiveRuns(Collection<ProgramId> ids) throws IOException {
     Collection<Range> ranges = new ArrayList<>();
-    Map<ProgramId, Collection<RunRecordMeta>> result = new LinkedHashMap<>();
+    Map<ProgramId, Collection<RunRecordDetail>> result = new LinkedHashMap<>();
 
     for (ProgramId programId : ids) {
       ranges.add(Range.singleton(getRunRecordProgramPrefix(TYPE_RUN_RECORD_ACTIVE, programId)));
@@ -1084,7 +1084,7 @@ public class AppMetadataStore {
     try (CloseableIterator<StructuredRow> iterator = getRunRecordsTable().multiScan(ranges, Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
-        RunRecordMeta meta = deserializeRunRecordMeta(row);
+        RunRecordDetail meta = deserializeRunRecordMeta(row);
         result.get(meta.getProgramRunId().getParent()).add(meta);
       }
     }
@@ -1101,17 +1101,17 @@ public class AppMetadataStore {
    * @param startTime the run has to be started on or after this time
    * @param endTime the run has to be started before this time
    * @param limit of number of records to return
-   * @param filter of RunRecordMeta to post filter by
+   * @param filter of RunRecordDetail to post filter by
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
-                                                  long startTime, long endTime, int limit,
-                                                  @Nullable Predicate<RunRecordMeta> filter)
+  public Map<ProgramRunId, RunRecordDetail> getRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+                                                    long startTime, long endTime, int limit,
+                                                    @Nullable Predicate<RunRecordDetail> filter)
     throws IOException {
     switch (status) {
       case ALL:
-        Map<ProgramRunId, RunRecordMeta> runRecords = getProgramRuns(programId, status, startTime, endTime,
-                                                                     limit, filter, TYPE_RUN_RECORD_ACTIVE);
+        Map<ProgramRunId, RunRecordDetail> runRecords = getProgramRuns(programId, status, startTime, endTime,
+                                                                       limit, filter, TYPE_RUN_RECORD_ACTIVE);
         if (runRecords.size() < limit) {
           runRecords.putAll(getProgramRuns(programId, status, startTime, endTime,
                                            limit, filter, TYPE_RUN_RECORD_COMPLETED));
@@ -1133,16 +1133,16 @@ public class AppMetadataStore {
    * @param applicationId given application
    * @param status to filter by
    * @param limit of number of records to return
-   * @param filter of RunRecordMeta to post filter by
+   * @param filter of RunRecordDetail to post filter by
    * @return map of run id to run record meta
    */
-  public Map<ProgramRunId, RunRecordMeta> getRuns(ApplicationId applicationId, final ProgramRunStatus status,
-                                                  int limit, @Nullable Predicate<RunRecordMeta> filter)
+  public Map<ProgramRunId, RunRecordDetail> getRuns(ApplicationId applicationId, final ProgramRunStatus status,
+                                                    int limit, @Nullable Predicate<RunRecordDetail> filter)
     throws IOException {
     switch (status) {
       case ALL:
-        Map<ProgramRunId, RunRecordMeta> runRecords = getApplicationRuns(applicationId, status, limit, filter,
-                                                                         TYPE_RUN_RECORD_ACTIVE);
+        Map<ProgramRunId, RunRecordDetail> runRecords = getApplicationRuns(applicationId, status, limit, filter,
+                                                                           TYPE_RUN_RECORD_ACTIVE);
         if (runRecords.size() < limit) {
           runRecords.putAll(getApplicationRuns(applicationId, status, limit - runRecords.size(), filter,
                                                TYPE_RUN_RECORD_COMPLETED));
@@ -1162,9 +1162,9 @@ public class AppMetadataStore {
   // Any changes made here will have to be made over there too.
   // JIRA https://issues.cask.co/browse/CDAP-2172
   @Nullable
-  public RunRecordMeta getRun(ProgramRunId programRun) throws IOException {
+  public RunRecordDetail getRun(ProgramRunId programRun) throws IOException {
     // Query active run record first
-    RunRecordMeta running = getUnfinishedRuns(Collections.singleton(programRun)).get(programRun);
+    RunRecordDetail running = getUnfinishedRuns(Collections.singleton(programRun)).get(programRun);
     // If program is running, this will be non-null
     if (running != null) {
       return running;
@@ -1173,7 +1173,7 @@ public class AppMetadataStore {
     return getCompletedRuns(Collections.singleton(programRun)).get(programRun);
   }
 
-  private void delete(RunRecordMeta record) throws IOException {
+  private void delete(RunRecordDetail record) throws IOException {
     ProgramRunId programRunId = record.getProgramRunId();
     List<Field<?>> key = getProgramRunInvertedTimeKey(STATUS_TYPE_MAP.get(record.getStatus()), programRunId,
                                               record.getStartTs());
@@ -1183,7 +1183,7 @@ public class AppMetadataStore {
   /**
    * @return run records for unfinished run
    */
-  private Map<ProgramRunId, RunRecordMeta> getUnfinishedRuns(Set<ProgramRunId> programRunIds) throws IOException {
+  private Map<ProgramRunId, RunRecordDetail> getUnfinishedRuns(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
       allKeys.add(getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId,
@@ -1191,12 +1191,12 @@ public class AppMetadataStore {
     }
     return getRunRecordsTable().multiRead(allKeys).stream()
       .map(AppMetadataStore::deserializeRunRecordMeta)
-      .collect(Collectors.toMap(RunRecordMeta::getProgramRunId, r -> r, (r1, r2) -> {
+      .collect(Collectors.toMap(RunRecordDetail::getProgramRunId, r -> r, (r1, r2) -> {
         throw new IllegalStateException("Duplicate run record for " + r1.getProgramRunId());
       }, LinkedHashMap::new));
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getCompletedRuns(Set<ProgramRunId> programRunIds) throws IOException {
+  private Map<ProgramRunId, RunRecordDetail> getCompletedRuns(Set<ProgramRunId> programRunIds) throws IOException {
     List<List<Field<?>>> allKeys = new ArrayList<>();
     for (ProgramRunId programRunId : programRunIds) {
       List<Field<?>> keys = getRunRecordProgramPrefix(TYPE_RUN_RECORD_COMPLETED, programRunId.getParent());
@@ -1209,7 +1209,7 @@ public class AppMetadataStore {
     }
     return getRunRecordsTable().multiRead(allKeys).stream()
       .map(AppMetadataStore::deserializeRunRecordMeta)
-      .collect(Collectors.toMap(RunRecordMeta::getProgramRunId, r -> r, (r1, r2) -> {
+      .collect(Collectors.toMap(RunRecordDetail::getProgramRunId, r -> r, (r1, r2) -> {
         throw new IllegalStateException("Duplicate run record for " + r1.getProgramRunId());
       }, LinkedHashMap::new));
   }
@@ -1257,19 +1257,19 @@ public class AppMetadataStore {
    * @param predicate to filter the runRecordMetas by. If null, then does not filter.
    * @param limit the maximum number of entries to return
    */
-  private CloseableIterator<RunRecordMeta> queryProgramRuns(Range range,
-                                                            @Nullable Predicate<StructuredRow> keyPredicate,
-                                                            @Nullable Predicate<RunRecordMeta> predicate,
-                                                            int limit) throws IOException {
+  private CloseableIterator<RunRecordDetail> queryProgramRuns(Range range,
+                                                              @Nullable Predicate<StructuredRow> keyPredicate,
+                                                              @Nullable Predicate<RunRecordDetail> predicate,
+                                                              int limit) throws IOException {
     CloseableIterator<StructuredRow> iterator = getRunRecordsTable()
       .scan(range, predicate == null && keyPredicate == null ? limit : Integer.MAX_VALUE);
 
-    return new AbstractCloseableIterator<RunRecordMeta>() {
+    return new AbstractCloseableIterator<RunRecordDetail>() {
 
       private int currentLimit = limit;
 
       @Override
-      protected RunRecordMeta computeNext() {
+      protected RunRecordDetail computeNext() {
         if (currentLimit <= 0) {
           return endOfData();
         }
@@ -1279,7 +1279,7 @@ public class AppMetadataStore {
           if (keyPredicate != null && !keyPredicate.test(row)) {
             continue;
           }
-          RunRecordMeta recordMeta = deserializeRunRecordMeta(row);
+          RunRecordDetail recordMeta = deserializeRunRecordMeta(row);
           if (predicate == null || predicate.test(recordMeta)) {
             currentLimit--;
             return recordMeta;
@@ -1295,18 +1295,18 @@ public class AppMetadataStore {
     };
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getApplicationRuns(ApplicationId applicationId, ProgramRunStatus status,
-                                                              int limit, @Nullable Predicate<RunRecordMeta> filter,
-                                                              String recordType) throws IOException {
+  private Map<ProgramRunId, RunRecordDetail> getApplicationRuns(ApplicationId applicationId, ProgramRunStatus status,
+                                                                int limit, @Nullable Predicate<RunRecordDetail> filter,
+                                                                String recordType) throws IOException {
     List<Field<?>> prefix = getRunRecordApplicationPrefix(recordType, applicationId);
     return getRuns(Range.singleton(prefix), status, limit, null, filter);
   }
 
 
-  private Map<ProgramRunId, RunRecordMeta> getProgramRuns(@Nullable ProgramId programId, ProgramRunStatus status,
-                                                          long startTime, long endTime, int limit,
-                                                          @Nullable Predicate<RunRecordMeta> filter,
-                                                          String recordType) throws IOException {
+  private Map<ProgramRunId, RunRecordDetail> getProgramRuns(@Nullable ProgramId programId, ProgramRunStatus status,
+                                                            long startTime, long endTime, int limit,
+                                                            @Nullable Predicate<RunRecordDetail> filter,
+                                                            String recordType) throws IOException {
     List<Field<?>> prefix = getRunRecordProgramPrefix(recordType, programId);
     Range scanRange;
     Predicate<StructuredRow> keyFilter = null;
@@ -1322,15 +1322,16 @@ public class AppMetadataStore {
     return getRuns(scanRange, status, limit, keyFilter, filter);
   }
 
-  private Map<ProgramRunId, RunRecordMeta> getRuns(Range range, ProgramRunStatus status, int limit,
-                                                   @Nullable Predicate<StructuredRow> keyFilter,
-                                                   @Nullable Predicate<RunRecordMeta> valueFilter) throws IOException {
+  private Map<ProgramRunId, RunRecordDetail> getRuns(Range range, ProgramRunStatus status, int limit,
+                                                     @Nullable Predicate<StructuredRow> keyFilter,
+                                                     @Nullable Predicate<RunRecordDetail> valueFilter)
+    throws IOException {
 
-    Map<ProgramRunId, RunRecordMeta> map = new LinkedHashMap<>();
-    try (CloseableIterator<RunRecordMeta> iterator = queryProgramRuns(range, keyFilter, valueFilter,
-                                                                      getLimitByStatus(limit, status))) {
+    Map<ProgramRunId, RunRecordDetail> map = new LinkedHashMap<>();
+    try (CloseableIterator<RunRecordDetail> iterator = queryProgramRuns(range, keyFilter, valueFilter,
+                                                                        getLimitByStatus(limit, status))) {
       while (iterator.hasNext() && map.size() < limit) {
-        RunRecordMeta meta = iterator.next();
+        RunRecordDetail meta = iterator.next();
         if (status == ProgramRunStatus.ALL || status == meta.getStatus()) {
           map.put(meta.getProgramRunId(), meta);
         }
@@ -1515,13 +1516,13 @@ public class AppMetadataStore {
   Set<RunId> getRunningInRangeForStatus(String statusKey, long startTimeInSecs,
                                         long endTimeInSecs) throws IOException {
     // Create time filter to get running programs between start and end time
-    Predicate<RunRecordMeta> timeFilter = (runRecordMeta) ->
+    Predicate<RunRecordDetail> timeFilter = (runRecordMeta) ->
       runRecordMeta.getStartTs() < endTimeInSecs &&
         (runRecordMeta.getStopTs() == null || runRecordMeta.getStopTs() >= startTimeInSecs);
 
     List<Field<?>> prefix = getRunRecordStatusPrefix(statusKey);
     return getRuns(Range.singleton(prefix), ProgramRunStatus.ALL, Integer.MAX_VALUE, null, timeFilter).values().stream()
-      .map(RunRecordMeta::getPid)
+      .map(RunRecordDetail::getPid)
       .map(RunIds::fromString)
       .collect(Collectors.toSet());
   }
@@ -1596,7 +1597,7 @@ public class AppMetadataStore {
     return fields;
   }
 
-  // Do NOT use with type = RunRecordMeta since that needs custom deserialization {@link deserializeRunRecordMeta}
+  // Do NOT use with type = RunRecordDetail since that needs custom deserialization {@link deserializeRunRecordMeta}
   private <T> List<T> scanWithRange(Range range, Type typeofT, StructuredTable table, String field)
     throws IOException {
     List<T> result = new ArrayList<>();
@@ -1652,10 +1653,10 @@ public class AppMetadataStore {
     return fields;
   }
 
-  private static RunRecordMeta deserializeRunRecordMeta(StructuredRow row) {
-    RunRecordMeta existing =
-      GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordMeta.class);
-    return RunRecordMeta.builder(existing)
+  private static RunRecordDetail deserializeRunRecordMeta(StructuredRow row) {
+    RunRecordDetail existing =
+      GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.RUN_RECORD_DATA), RunRecordDetail.class);
+    return RunRecordDetail.builder(existing)
       .setProgramRunId(
         getProgramIdFromRunRecordsPrimaryKeys(new ArrayList<>(row.getPrimaryKeys())).run(existing.getPid()))
       .build();

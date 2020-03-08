@@ -21,12 +21,15 @@ import io.cdap.cdap.api.annotation.Beta;
 import java.io.IOException;
 import java.util.List;
 import javax.annotation.Nullable;
+import org.apache.twill.filesystem.Location;
 
 /**
  * Provides access to artifacts
  */
 @Beta
 public interface ArtifactManager {
+  Location getArtifactLocation(ArtifactSummary artifactSummary, @Nullable String namespace) throws IOException;
+
   /**
    * Get the list of artifacts in the repository in the current and system namespace
    *

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,7 +25,7 @@ import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.app.store.profile.ProfileStore;
 import io.cdap.cdap.proto.EntityScope;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -335,8 +335,8 @@ public class ProfileService {
     }
 
     // There must be no running programs using the profile
-    Map<ProgramRunId, RunRecordMeta> activeRuns;
-    Predicate<RunRecordMeta> runRecordMetaPredicate = runRecordMeta -> {
+    Map<ProgramRunId, RunRecordDetail> activeRuns;
+    Predicate<RunRecordDetail> runRecordMetaPredicate = runRecordMeta -> {
       // the profile comes in system arguments with the scoped name
       String scopedName = runRecordMeta.getSystemArgs().get(SystemArguments.PROFILE_NAME);
       return scopedName != null && scopedName.equals(profileId.getScopedName());
