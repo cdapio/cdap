@@ -174,6 +174,7 @@ public class SmartWorkflow extends AbstractWorkflow {
                                                             AlertPublisher.PLUGIN_TYPE),
                                             config.getEngine()).generateSpec(config);
     } catch (ValidationException e) {
+      e.printStackTrace();
       throw new IllegalArgumentException(
         String.format("Failed to configure pipeline: %s",
                       e.getFailures().isEmpty() ? e.getMessage() :

@@ -86,18 +86,21 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
    */
   @Override
   public void process(AppDeploymentInfo deploymentInfo) throws Exception {
-
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() start");
     ArtifactId artifactId = deploymentInfo.getArtifactId();
     Location artifactLocation = deploymentInfo.getArtifactLocation();
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() artifact location = " + artifactLocation.toURI());
     String appClassName = deploymentInfo.getAppClassName();
     String appVersion = deploymentInfo.getApplicationVersion();
     String configString = deploymentInfo.getConfigString();
 
     EntityImpersonator classLoaderImpersonator =
       new EntityImpersonator(artifactId, impersonator);
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() create artifact loader start");
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);
+        System.out.println("wyzhang: LocalArtifactLoaderStage::process() create artifact loader end");
 
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(
       cConf, Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId()),
@@ -107,11 +110,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
       deploymentInfo.getApplicationVersion(),
       configString);
 
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() in memory configurator config() start");
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();
     ConfigResponse response = result.get(120, TimeUnit.SECONDS);
     if (response.getExitCode() != 0) {
+      System.out.println("wyzhang: LocalArtifactLoaderStage::process() in memory configurator config() exception");
       throw new IllegalArgumentException("Failed to configure application: " + deploymentInfo);
     }
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() in memory configurator config() end");
     AppSpecInfo appSpecInfo = GSON.fromJson(response.getResponse(), AppSpecInfo.class);
     ApplicationSpecification specification = appSpecInfo.getAppSpec();
     ApplicationId applicationId;
@@ -121,6 +127,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
       applicationId = deploymentInfo.getNamespaceId().app(specification.getName(), appVersion);
     }
     authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() emit");
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getOwnerPrincipal(),

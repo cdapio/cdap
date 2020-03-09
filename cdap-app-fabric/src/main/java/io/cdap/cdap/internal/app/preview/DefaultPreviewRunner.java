@@ -178,6 +178,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                                             request.canUpdateSchedules());
     } catch (Exception e) {
       LOG.debug("wyzhang: Deploying preview application failed: " + e.getMessage());
+      e.printStackTrace();
       setStatus(new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null));
       throw e;
     }

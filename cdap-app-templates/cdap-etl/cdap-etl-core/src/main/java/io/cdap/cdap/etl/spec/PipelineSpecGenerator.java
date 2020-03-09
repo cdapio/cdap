@@ -357,6 +357,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       // a ValidationFailure.
       plugin = pluginConfigurer.usePlugin(type, pluginName, stageName, etlPlugin.getPluginProperties(), pluginSelector);
     } catch (InvalidPluginConfigException e) {
+      System.out.println("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin exception");
+      e.printStackTrace();
       int numFailures = 0;
       for (String missingProperty : e.getMissingProperties()) {
         collector.addFailure(String.format("Required property '%s' has no value.", missingProperty), null)
@@ -374,6 +376,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         collector.addFailure(e.getMessage(), null);
       }
     } catch (Exception e) {
+      System.out.println("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin exception");
+      e.printStackTrace();
       // TODO: Catch specific exceptions when CDAP-15744 is fixed
       collector.addFailure(e.getMessage(), null).withStacktrace(e.getStackTrace());
     }
