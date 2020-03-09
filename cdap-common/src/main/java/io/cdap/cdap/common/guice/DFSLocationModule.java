@@ -95,11 +95,15 @@ public class DFSLocationModule extends PrivateModule {
       // This FileContextLocationFactory supports multiple users from the same process.
       // It is used when security is enabled, which in turn impersonation could occur.
       if (UserGroupInformation.isSecurityEnabled()) {
+        System.out.println("wyzhang: security enabled");
         lf = new FileContextLocationFactory(hConf, namespace);
       } else {
+        System.out.println("wyzhang: security disabled");
         // In non hadoop secure mode, use the static file context, which operates as single user.
         lf = new InsecureFileContextLocationFactory(hConf, namespace, staticFileContextProvider.get());
       }
+      System.out.println("wyzhang : " + hConf.get("fs.defaultFS"));
+      Thread.currentThread().getStackTrace();
 
       String locationCachePath = cConf.get(Constants.LOCATION_CACHE_PATH);
       if (Strings.isNullOrEmpty(locationCachePath)) {

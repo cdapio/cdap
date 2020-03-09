@@ -149,7 +149,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactId artifactId = new ArtifactId(artifactNamespace.getNamespace(), summary.getName(), summary.getVersion());
     ArtifactDetail artifactDetail = artifactDetailFetcher.get(artifactId);
-    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() artifact detail fetched: " + artifactDetail.getDescriptor().getLocationURI().getPath());
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() artifact detail fetched: " + artifactDetail.getDescriptor().getLocationURI());
     Location artifactLocation =
       Locations.getLocationFromAbsolutePath(locationFactory,
                                             artifactDetail.getDescriptor().getLocationURI().getPath());
