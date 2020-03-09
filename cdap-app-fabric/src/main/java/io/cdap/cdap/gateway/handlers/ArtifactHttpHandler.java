@@ -759,6 +759,7 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     try {
       ArtifactDetail artifactDetail = artifactRepository.getArtifact(
         Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersion));
+      LOG.debug("wyzhang: ArtifactHttpHandler::getArtifactLocation() got detail URI " + artifactDetail.getDescriptor().getLocation().toURI());
       responder.sendString(HttpResponseStatus.OK, artifactDetail.getDescriptor().getLocation().toURI().getPath());
     } catch (Exception e) {
       LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);

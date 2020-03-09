@@ -384,6 +384,7 @@ public class ArtifactStore {
       Location artifactLocation = impersonator.doAs(artifactId.getNamespace().toEntityId(), () ->
         Locations.getLocationFromAbsolutePath(locationFactory, artifactData.getLocationPath()));
       ArtifactMeta artifactMeta = filterPlugins(artifactData.meta);
+      System.out.println("wyzhang: ArtifactStore::getArtifact() locationfactory = " + locationFactory.getClass().getName());
       return new ArtifactDetail(new ArtifactDescriptor(artifactId.toArtifactId(), artifactLocation), artifactMeta);
     } catch (Exception e) {
       throw Throwables.propagate(e);
