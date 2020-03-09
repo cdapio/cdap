@@ -106,7 +106,7 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     this.shutdownTimeoutSeconds = cConf.getLong("system.runtime.monitor.retry.policy.max.time.secs");
 
     // Creates the http service
-    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(new RuntimeHandler(cConf, new MultiThreadMessagingContext(messagingService)))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHost(InetAddress.getLoopbackAddress().getHostName());

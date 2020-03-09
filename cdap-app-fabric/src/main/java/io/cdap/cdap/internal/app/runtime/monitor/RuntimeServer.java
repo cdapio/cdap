@@ -48,12 +48,14 @@ public class RuntimeServer extends AbstractIdleService {
   RuntimeServer(CConfiguration cConf, RuntimeRequestValidator requestValidator,
                 DiscoveryService discoveryService, MessagingService messagingService,
                 MetricsCollectionService metricsCollectionService) {
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME_HTTP)
+    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(new PingHandler(),
                        new RuntimeHandler(requestValidator, new MultiThreadMessagingContext(messagingService)))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
-                                                                     Constants.Service.RUNTIME_HTTP)))
+                                                                     Constants.Service.RUNTIME)))
+      .setHost(cConf.get(Constants.RuntimeMonitor.BIND_ADDRESS))
+      .setPort(cConf.getInt(Constants.RuntimeMonitor.BIND_PORT))
       .build();
     this.discoveryService = discoveryService;
   }
@@ -62,7 +64,7 @@ public class RuntimeServer extends AbstractIdleService {
   protected void startUp() throws Exception {
     httpService.start();
     cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
-      URIScheme.createDiscoverable(Constants.Service.RUNTIME_HTTP, httpService)));
+      URIScheme.createDiscoverable(Constants.Service.RUNTIME, httpService)));
   }
 
   @Override
