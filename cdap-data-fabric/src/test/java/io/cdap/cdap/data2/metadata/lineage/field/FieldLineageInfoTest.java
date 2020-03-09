@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -48,6 +50,41 @@ public class FieldLineageInfoTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+
+  @Test
+  public void testWriteToSameEndpoint() {
+    List<Operation> operations = new ArrayList<>();
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns1", "endpoint1"), "offset", "body");
+    WriteOperation write = new WriteOperation("write", "some write", EndPoint.of("ns", "endpoint3"),
+                                              InputField.of("read", "body"));
+
+    operations.add(read);
+    operations.add(write);
+
+    ReadOperation anotherRead = new ReadOperation("anotherRead", "another read", EndPoint.of("ns1", "endpoint2"),
+                                                  "offset", "body");
+    // this write is writing to field body in same endpoint
+    WriteOperation anotherWrite = new WriteOperation("anotherWrite", "another write", EndPoint.of("ns", "endpoint3"),
+                                                     InputField.of("anotherRead", "body"));
+    operations.add(anotherRead);
+    operations.add(anotherWrite);
+    FieldLineageInfo info = new FieldLineageInfo(operations);
+
+    Map<EndPointField, Set<EndPointField>> incoming = info.getIncomingSummary();
+    Map<EndPointField, Set<EndPointField>> expected = Collections.singletonMap(
+      new EndPointField(EndPoint.of("ns", "endpoint3"), "body"),
+      ImmutableSet.of(new EndPointField(EndPoint.of("ns1", "endpoint1"), "body"),
+                      new EndPointField(EndPoint.of("ns1", "endpoint2"), "body")));
+    Assert.assertEquals(expected, incoming);
+
+    Map<EndPointField, Set<EndPointField>> outgoing = info.getOutgoingSummary();
+    expected = ImmutableMap.of(
+      new EndPointField(EndPoint.of("ns1", "endpoint1"), "body"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns", "endpoint3"), "body")),
+      new EndPointField(EndPoint.of("ns1", "endpoint2"), "body"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns", "endpoint3"), "body")));
+    Assert.assertEquals(expected, outgoing);
+  }
 
   @Test(timeout = 10000)
   public void testLargeLineageOperation() {
