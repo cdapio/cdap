@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpRequest;
@@ -131,10 +132,31 @@ public class LineageClient {
     if (levels != null) {
       path = String.format("%s&levels=%d", path, levels);
     }
-    return getLineage(datasetInstance, path);
+    return getLineage(datasetInstance, path, LineageRecord.class);
   }
 
-  private LineageRecord getLineage(NamespacedEntityId namespacedId, String path)
+  /**
+   * Retrieves field lineage about a dataset
+   *
+   * @param datasetId the dataset for which to retrieve lineage
+   * @param startTime start time for the query, in milliseconds, or in 'now - xs' format
+   * @param endTime end time for the query, in milliseconds, or in 'now - xs' format
+   * @param direction direction of the field lineage, can be incoming, outgoing or both
+   * @return {@link FieldLineageSummary} for the specified dataset.
+   */
+  public FieldLineageSummary getFieldLineage(DatasetId datasetId, long startTime, long endTime,
+                                             String direction)
+    throws IOException, BadRequestException, NotFoundException, UnauthenticatedException {
+    String path = String.format("datasets/%s/lineage/allfieldlineage?start=%s&end=%s", datasetId.getDataset(),
+                                URLEncoder.encode(Long.toString(startTime), "UTF-8"),
+                                URLEncoder.encode(Long.toString(endTime), "UTF-8"));
+    if (direction != null) {
+      path = String.format("%s&direction=%s", path, URLEncoder.encode(direction, "UTF-8"));
+    }
+    return getLineage(datasetId, path, FieldLineageSummary.class);
+  }
+
+  private <T> T getLineage(NamespacedEntityId namespacedId, String path, Class<T> type)
     throws IOException, UnauthenticatedException, NotFoundException, BadRequestException, UnauthorizedException {
     URL lineageURL = config.resolveNamespacedURLV3(new NamespaceId(namespacedId.getNamespace()), path);
     HttpResponse response = restClient.execute(HttpRequest.get(lineageURL).build(),
@@ -146,6 +168,6 @@ public class LineageClient {
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new NotFoundException(response.getResponseBodyAsString());
     }
-    return GSON.fromJson(response.getResponseBodyAsString(), LineageRecord.class);
+    return GSON.fromJson(response.getResponseBodyAsString(), type);
   }
 }
