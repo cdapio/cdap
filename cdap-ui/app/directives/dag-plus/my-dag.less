@@ -139,6 +139,12 @@ my-dag-plus {
       width: inherit;
       height: inherit;
       overflow: hidden;
+      cursor: crosshair;
+
+      &.move-mode,
+      &.disabled {
+        cursor: move;
+      }
     }
 
     &.disabled {

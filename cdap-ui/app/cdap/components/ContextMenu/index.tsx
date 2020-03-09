@@ -20,13 +20,15 @@ import MenuItem from '@material-ui/core/MenuItem';
 import withStyles from '@material-ui/core/styles/withStyles';
 import PropTypes from 'prop-types';
 import MenuItemContentWrapper from 'components/ContextMenu/MenuItemContentWrapper';
+import Divider from '@material-ui/core/Divider';
 
 export interface IContextMenuOption {
-  name: string;
-  label: (() => string) | string;
-  onClick: (event: React.SyntheticEvent) => void;
+  name?: string;
+  label?: (() => string) | string;
+  onClick?: (event: React.SyntheticEvent) => void;
   disabled?: boolean;
   icon?: React.ReactElement;
+  type?: 'divider';
 }
 
 interface IContextMenuProps {
@@ -46,7 +48,7 @@ const StyledMenuItem = withStyles(() => ({
     minHeight: 'auto',
   },
   gutters: {
-    padding: '2px 12px',
+    padding: '5px 15px',
   },
 }))(MenuItem);
 
@@ -139,7 +141,10 @@ export const ContextMenu = ({ selector, element, options, onOpen }: IContextMenu
       ref={measuredRef}
     >
       {options.map((option) => {
-        const { name, label, disabled, icon } = option;
+        const { name, disabled, type } = option;
+        if (type === 'divider') {
+          return <Divider />;
+        }
         const MenuItemComp = disabled ? StyledDisabledMenuItem : StyledMenuItem;
         return (
           <MenuItemComp

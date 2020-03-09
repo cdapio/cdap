@@ -49,7 +49,7 @@ body.theme-cdap {
     }
 
     .my-js-dag {
-      overflow: auto;
+      overflow: hidden;
     }
 
     i.fa-exclamation-circle {
@@ -147,6 +147,12 @@ body.theme-cdap {
     .btn-group-vertical {
       > .btn:not(:last-child) {
         border-bottom: 0;
+      }
+      button.move-mode-selected {
+        background-color: #6a7387;
+        i.fa.fa-arrows {
+          color: white;
+        }
       }
     }
   }
