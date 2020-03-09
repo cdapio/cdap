@@ -19,17 +19,26 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import org.apache.twill.filesystem.Location;
 
+import java.net.URI;
+
 /**
  * Uniquely describes an artifact. Artifact descriptors are ordered by scope,
  * then by name, and finally by version.
  */
 public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> {
   private final ArtifactId artifactId;
-  private final Location location;
+
+  /**
+   * Skip {@link Location}
+   */
+  private final transient Location location;
+  
+  private final URI locationURI;
 
   public ArtifactDescriptor(ArtifactId artifactId, Location location) {
     this.artifactId = artifactId;
     this.location = location;
+    this.locationURI = location.toURI();
   }
 
   /**
@@ -48,10 +57,15 @@ public final class ArtifactDescriptor implements Comparable<ArtifactDescriptor> 
     return location;
   }
 
+  public URI getLocationURI() {
+    return locationURI;
+  }
+
   @Override
   public String toString() {
     return "ArtifactDescriptor{" +
       "artifactId=" + artifactId +
+      ", locationURI=" + locationURI +
       ", location=" + location +
       '}';
   }
