@@ -27,8 +27,6 @@ import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import io.cdap.cdap.proto.bootstrap.BootstrapResult;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

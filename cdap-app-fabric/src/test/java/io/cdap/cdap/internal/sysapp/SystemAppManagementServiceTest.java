@@ -34,11 +34,9 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import java.nio.file.Files;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -47,6 +45,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,10 +63,9 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
   private static File systemConfigDir;
 
   private static final String RUNNING = "RUNNING";
-  private static final String STOPPED = "STOPPPED";
 
   @Rule
-  public TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
+  public final TemporaryFolder tmpFolder = new TemporaryFolder();
 
 
   @BeforeClass
@@ -110,7 +108,7 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
    */
   @Test
   public void testSystemAppManagementServiceE2E() throws Exception {
-    systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
+    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
     cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
     systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
                                                                 programLifecycleService);
@@ -135,7 +133,7 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
    */
   @Test
   public void testSystemAppManagementServiceUpgradeApp() throws Exception {
-    systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
+    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
     cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
     systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
         programLifecycleService);
