@@ -630,12 +630,17 @@ public class FieldLineageInfo {
   public static List<Operation> getTopologicallySortedOperations(Set<Operation> operations) {
 
     Map<String, Operation> operationMap = new HashMap<>();
-    Set<String> readOperations = new HashSet<>();
+    Set<String> operationsWithNoIncomings = new HashSet<>();
 
     for (Operation operation : operations) {
       operationMap.put(operation.getName(), operation);
       if (OperationType.READ == operation.getType()) {
-        readOperations.add(operation.getName());
+        operationsWithNoIncomings.add(operation.getName());
+      }
+      // it is common use case that a transform generates some fields from nowhere, in this case, should treat it
+      // like a read operation
+      if (OperationType.TRANSFORM == operation.getType() && ((TransformOperation) operation).getInputs().isEmpty()) {
+        operationsWithNoIncomings.add(operation.getName());
       }
     }
 
@@ -715,7 +720,6 @@ public class FieldLineageInfo {
     }
 
     List<Operation> orderedOperations = new ArrayList<>();
-    Set<String> operationsWithNoIncomings = new HashSet<>(readOperations);
     while (!operationsWithNoIncomings.isEmpty()) {
       String current = operationsWithNoIncomings.iterator().next();
       operationsWithNoIncomings.remove(current);
