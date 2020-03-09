@@ -1037,6 +1037,8 @@ features:
         variableNamePlaceholder: Enter counter name
       Swap:
         title: Swap two column names
+      MapToTarget:
+        title: Map to Target
     pageTitle: '{productName} | {featureName} {workspaceUri}'
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.
