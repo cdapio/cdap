@@ -139,8 +139,10 @@ public class SystemAppEnableExecutor {
       // TODO(CDAP-16243): Restart program if the application has changed.
       // do nothing if the program is already running
       ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
-      if (currentStatus != ProgramStatus.STOPPED) {
-        return;
+      // If a system app is already running, it needs to be restarted as app artifact/arguments might have changed.
+      // Restart should trigger running programs with latest version.
+      if (currentStatus == ProgramStatus.RUNNING) {
+        programLifecycleService.stop(programId);
       }
       programLifecycleService.run(programId, Collections.emptyMap(), false);
     } catch (ConflictException e) {
