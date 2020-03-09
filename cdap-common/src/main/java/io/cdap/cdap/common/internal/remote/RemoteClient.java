@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -48,18 +46,17 @@ import javax.net.ssl.HttpsURLConnection;
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
 
-  public RemoteClient(final DiscoveryServiceClient discoveryClient, final String discoverableServiceName,
+  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
                       HttpRequestConfig httpRequestConfig, String basePath) {
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     // Use a supplier to delay the discovery until the first time it is being used.
-    this.endpointStrategySupplier = Suppliers.memoize(
-      () -> new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName)));
+    this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
   }
@@ -126,7 +123,7 @@ public class RemoteClient {
    * @throws ServiceUnavailableException if the service could not be discovered
    */
   public URL resolve(String resource) {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(1L, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(discoverableServiceName);
     }
