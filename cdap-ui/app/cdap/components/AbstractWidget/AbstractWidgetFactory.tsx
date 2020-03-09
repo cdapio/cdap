@@ -37,6 +37,7 @@ import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
 import NumberWidget from 'components/AbstractWidget/FormInputs/Number';
 import PasswordWidget from 'components/AbstractWidget/FormInputs/Password';
 import PluginConnectionBrowser from 'components/DataPrepConnections/PluginConnectionBrowser';
+import PluginListWidget from 'components/AbstractWidget/PluginListWidget';
 import RadioGroupWidget from 'components/AbstractWidget/RadioGroupWidget';
 import RulesEngineEditor from 'components/AbstractWidget/RulesEngineEditor';
 import SecureKeyPassword from 'components/AbstractWidget/SecureKey/SecureKeyPassword';
@@ -75,6 +76,7 @@ export const WIDGET_FACTORY = {
   'multi-select': MultiSelect,
   number: NumberWidget,
   password: PasswordWidget,
+  'plugin-list': PluginListWidget,
   'radio-group': RadioGroupWidget,
   'securekey-password': SecureKeyPassword,
   'securekey-text': SecureKeyText,
