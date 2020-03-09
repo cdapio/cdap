@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -68,6 +69,8 @@ import javax.annotation.Nullable;
  * Service that manage lifecycle of Applications.
  */
 public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
+  public static final String LOCATION_FACTORY = "ApplicationLifecycleServiceForPreviewLocationFactory";
+
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleServiceForPreview.class);
 
   /**
@@ -90,7 +93,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
                                         AuthenticationContext authenticationContext,
                                         MessagingService messagingService,
                                         ArtifactDetailFetcher artifactDetailFetcher,
-                                        LocationFactory locationFactory) {
+                                        @Named(LOCATION_FACTORY) LocationFactory locationFactory) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.managerFactory = managerFactory;

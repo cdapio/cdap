@@ -33,6 +33,7 @@ import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.annotation.Annotation;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.TimeUnit;
@@ -43,14 +44,28 @@ import java.util.concurrent.TimeUnit;
  * by the {@code fs.defaultFS} configuration.
  */
 public class DFSLocationModule extends PrivateModule {
-
   private static final Logger LOG = LoggerFactory.getLogger(DFSLocationModule.class);
+
+  private final Annotation annotation;
+
+  public DFSLocationModule() {
+    this(null);
+  }
+
+  public DFSLocationModule(Annotation annotation) {
+    this.annotation = annotation;
+  }
 
   @Override
   protected void configure() {
     bind(FileContext.class).toProvider(FileContextProvider.class).in(Scopes.SINGLETON);
-    bind(LocationFactory.class).toProvider(LocationFactoryProvider.class).in(Scopes.SINGLETON);
-    expose(LocationFactory.class);
+    if (annotation == null) {
+      bind(LocationFactory.class).toProvider(LocationFactoryProvider.class).in(Scopes.SINGLETON);
+      expose(LocationFactory.class);
+    } else {
+      bind(LocationFactory.class).annotatedWith(annotation).toProvider(LocationFactoryProvider.class).in(Scopes.SINGLETON);
+      expose(LocationFactory.class).annotatedWith(annotation);
+    }
   }
 
   /**
