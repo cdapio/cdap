@@ -33,15 +33,19 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.security.Action;
@@ -50,6 +54,8 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,28 +74,33 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
    * Store manages non-runtime lifecycle.
    */
   private final OwnerAdmin ownerAdmin;
-  private final ArtifactRepository artifactRepository;
   private final ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
+  private final ArtifactDetailFetcher artifactDetailFetcher;
+  private final LocationFactory locationFactory;
 
   @Inject
   ApplicationLifecycleServiceForPreview(CConfiguration cConfiguration,
-                                        OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
+                                        OwnerAdmin ownerAdmin,
                                         ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                                        AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                                        MessagingService messagingService) {
+                                        AuthorizationEnforcer authorizationEnforcer,
+                                        AuthenticationContext authenticationContext,
+                                        MessagingService messagingService,
+                                        ArtifactDetailFetcher artifactDetailFetcher,
+                                        LocationFactory locationFactory) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
-    this.artifactRepository = artifactRepository;
     this.managerFactory = managerFactory;
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
+    this.artifactDetailFetcher = artifactDetailFetcher;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -132,15 +143,15 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
                                            @Nullable Boolean updateSchedules) throws Exception {
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
-    ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
-                                            ArtifactVersionRange.parse(summary.getVersion()));
-    // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
-    // collection returned.
-    List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
-    if (artifactDetail.isEmpty()) {
-      throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
-    }
-    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetail.iterator().next(),
+    ArtifactId artifactId = new ArtifactId(artifactNamespace.getNamespace(), summary.getName(), summary.getVersion());
+    ArtifactDetail artifactDetail = artifactDetailFetcher.get(artifactId);
+    Location artifactLocation =
+      Locations.getLocationFromAbsolutePath(locationFactory,
+                                            artifactDetail.getDescriptor().getLocationURI().getPath());
+    ArtifactDetail artifactDetailFull =
+      new ArtifactDetail(new ArtifactDescriptor(artifactDetail.getDescriptor().getArtifactId(), artifactLocation),
+                         artifactDetail.getMeta());
+    return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetailFull,
                      ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules);
   }
 

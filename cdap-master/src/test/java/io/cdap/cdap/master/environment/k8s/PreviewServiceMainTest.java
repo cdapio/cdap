@@ -22,6 +22,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
@@ -45,6 +46,7 @@ import org.junit.Test;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -75,15 +77,16 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
         .build(), requestConfig);
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-    // have to stop AppFabric so that Preview can share the same leveldb table
-    AppFabricServiceMain appFabricServiceMain = getServiceMainInstance(AppFabricServiceMain.class);
-    appFabricServiceMain.stop();
-    Injector injector = appFabricServiceMain.getInjector();
-    injector.getInstance(LevelDBTableService.class).close();
+    // Starting preview service with a different dataDir, it will fetch artifact info from appfabric via REST calls.
+    Injector injector = getServiceMainInstance(AppFabricServiceMain.class).getInjector();
+    CConfiguration cconf = injector.getInstance(CConfiguration.class);
+    SConfiguration sconf = injector.getInstance(SConfiguration.class);
+    String localDataDir = cconf.get(Constants.CFG_LOCAL_DATA_DIR);
+    cconf.set(Constants.CFG_LOCAL_DATA_DIR,
+              String.join("_", Arrays.asList(localDataDir, PreviewServiceMain.class.getSimpleName())));
+    new StorageMain().createStorage(cconf);
 
-    // start preview service with the same data dir as app-fabric, so that the artifact info is still there.
-    runMain(injector.getInstance(CConfiguration.class), injector.getInstance(SConfiguration.class),
-            PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
+    runMain(cconf, sconf, PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
 
     // create a preview run
     url = getRouterBaseURI().resolve("/v3/namespaces/default/previews").toURL();

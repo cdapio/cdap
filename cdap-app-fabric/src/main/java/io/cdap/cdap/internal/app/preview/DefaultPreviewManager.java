@@ -77,6 +77,7 @@ import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,6 +108,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final SConfiguration sConf;
   private final int maxPreviews;
   private final DiscoveryService discoveryService;
+  private final DiscoveryServiceClient discoveryServiceClient;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
@@ -117,6 +119,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   @Inject
   DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
                         SConfiguration sConf, DiscoveryService discoveryService,
+                        DiscoveryServiceClient discoveryServiceClient,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         SecureStore secureStore, TransactionSystemClient transactionSystemClient,
                         PreviewRunnerModuleFactory previewRunnerModuleFactory) {
@@ -125,6 +128,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.sConf = sConf;
     this.datasetFramework = datasetFramework;
     this.discoveryService = discoveryService;
+    this.discoveryServiceClient = discoveryServiceClient;
     this.secureStore = secureStore;
     this.transactionSystemClient = transactionSystemClient;
     this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
@@ -324,7 +328,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
       new PreviewSecureStoreModule(secureStore),
-      new PreviewDiscoveryRuntimeModule(discoveryService),
+      new PreviewDiscoveryRuntimeModule(discoveryService, discoveryServiceClient),
       new LocalLocationModule(),
       new ConfigStoreModule(),
       previewRunnerModuleFactory.create(previewRequest),
