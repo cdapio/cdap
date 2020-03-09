@@ -571,16 +571,21 @@ public class ProgramLifecycleService {
    * @throws Exception if there were other exceptions checking if the current user is authorized to start the program
    */
   public ProgramController start(ProgramId programId, Map<String, String> overrides, boolean debug) throws Exception {
+    LOG.debug("wyzhang: ProgramLifecycleService::start()");
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     checkConcurrentExecution(programId);
 
+    LOG.debug("wyzhang: ProgramLifecycleService::start() get system properties start");
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
+    LOG.debug("wyzhang: ProgramLifecycleService::start() get system properties done");
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
+    LOG.debug("wyzhang: ProgramLifecycleService::start() get user properites");
     Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
+    LOG.debug("wyzhang: ProgramLifecycleService::start() get user properites done");
 
     authorizePipelineRuntimeImpersonation(userArgs);
 
@@ -607,6 +612,7 @@ public class ProgramLifecycleService {
    */
   ProgramController startInternal(ProgramDescriptor programDescriptor,
                                   ProgramOptions programOptions, ProgramRunId programRunId) {
+    LOG.debug("wyzhang: ProgramLifecycleService::startInternal()");
     RunId runId = RunIds.fromString(programRunId.getRun());
 
     synchronized (this) {

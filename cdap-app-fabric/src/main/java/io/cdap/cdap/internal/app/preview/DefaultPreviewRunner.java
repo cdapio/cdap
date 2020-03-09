@@ -172,15 +172,18 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
     try {
       LOG.debug("Deploying preview application for {}", programId);
+      LOG.debug("wyzhang: Deploying preview application for {}", programId);
       ApplicationLifecycleServiceForPreview.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
                                             artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
                                             request.canUpdateSchedules());
     } catch (Exception e) {
+      LOG.debug("wyzhang: Deploying preview application failed: " + e.getMessage());
       setStatus(new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e), null, null));
       throw e;
     }
 
     LOG.debug("Starting preview for {}", programId);
+    LOG.debug("wyzhang: Starting preview for {}", programId);
     final PreviewConfig previewConfig = previewRequest.getAppRequest().getPreview();
     ProgramController controller = programLifecycleService.start(
       programId, previewConfig == null ? Collections.emptyMap() : previewConfig.getRuntimeArgs(), false);
@@ -314,6 +317,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     ProgramId programId = previewRequest.getProgram();
 
     LOG.debug("Starting preview runner for {}", programId);
+    LOG.debug("wyzhang: Starting preview runner for {}", programId);
     StoreDefinition.createAllTables(structuredTableAdmin, structuredTableRegistry, false);
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
