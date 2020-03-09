@@ -319,11 +319,12 @@ public class FieldLineageInfo {
       List<InputField> inputs = write.getInputs();
       for (InputField input : inputs) {
         EndPointField dest = new EndPointField(write.getDestination(), input.getName());
+        Set<EndPointField> fields = summary.computeIfAbsent(dest, k -> new HashSet<>());
         if (operationEndPointMap.containsKey(input.getOrigin())) {
-          summary.put(dest, operationEndPointMap.get(input.getOrigin()));
+          fields.addAll(operationEndPointMap.get(input.getOrigin()));
         } else {
-          summary.put(dest, computeIncomingSummaryHelper(operationsMap.get(input.getOrigin()), write,
-                                                         operationEndPointMap));
+          fields.addAll(computeIncomingSummaryHelper(operationsMap.get(input.getOrigin()), write,
+                                                     operationEndPointMap));
         }
       }
     }
