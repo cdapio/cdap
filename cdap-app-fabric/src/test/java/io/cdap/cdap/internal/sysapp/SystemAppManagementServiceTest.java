@@ -107,7 +107,6 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
    * 4. Deploys the app.
    * 5. Runs all programs corresponding to the app.
    * 6. Checks status of a continuously running program, i.e a service program.
-   * @throws Exception
    */
   @Test
   public void testSystemAppManagementServiceE2E() throws Exception {
@@ -133,7 +132,6 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
    * 4. Deploys the VERSION1 app and runs all programs corresponding to the app.
    * 6. Updates system app config with app version upgraded to VERSION2.
    * 7. On restart of SystemAppManagementService, app should kill old running programs and start program again.
-   * @throws Exception
    */
   @Test
   public void testSystemAppManagementServiceUpgradeApp() throws Exception {

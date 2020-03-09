@@ -141,8 +141,13 @@ public class SystemAppEnableExecutor {
       // Restart should trigger running programs with latest version.
       // TODO(CDAP-16243): Find smarter way to trigger restart of programs rather than always restarting. May be
       //                   checking if artifact version has changed would be a good start.
-      if (currentStatus == ProgramStatus.RUNNING) {
-        programLifecycleService.stop(programId);
+      try {
+        if (currentStatus == ProgramStatus.RUNNING) {
+          programLifecycleService.stop(programId);
+        }
+      } catch (ConflictException e) {
+        // Will reach here if the program is already stopped, which means it tried to stop after the status check above.
+        // ignore this, as it means the program is stopped as we wanted.
       }
       programLifecycleService.run(programId, Collections.emptyMap(), false);
     } catch (ConflictException e) {
