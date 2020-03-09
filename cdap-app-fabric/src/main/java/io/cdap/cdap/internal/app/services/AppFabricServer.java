@@ -126,7 +126,6 @@ public class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
-
     Futures.allAsList(
       ImmutableList.of(
         provisioningService.start(),
