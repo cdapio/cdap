@@ -142,7 +142,7 @@ class KeyValuePair extends Component {
 
   render() {
     return (
-      <div className="key-value-pair-preference">
+      <div className="key-value-pair-preference" data-cy={`key-value-pair-${this.props.index}`}>
         {this.renderKeyField()}
         {this.renderValueField()}
         {this.renderActionButtons()}

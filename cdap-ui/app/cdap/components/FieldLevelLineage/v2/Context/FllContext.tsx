@@ -18,16 +18,18 @@ import React from 'react';
 import { objectQuery, parseQueryString } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import {
-  IField,
-  ITablesList,
-  ITimeParams,
+  fetchUnrelatedFields,
+  getDefaultLinks,
+  getFieldLineage,
   getTableId,
   getTimeRange,
   getTimeRangeFromUrl,
   replaceHistory,
-  getFieldLineage,
+  IField,
   ILinkSet,
-  getDefaultLinks,
+  ITableInfo,
+  ITablesList,
+  ITimeParams,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -38,7 +40,7 @@ import {
 
 const defaultContext: IContextState = {
   target: '',
-  targetFields: [],
+  targetFields: {},
   links: getDefaultLinks(),
   causeSets: {},
   impactSets: {},
@@ -54,11 +56,11 @@ const defaultContext: IContextState = {
 
 export const FllContext = React.createContext<IContextState>(defaultContext);
 
-type ITimeType = number | string | null;
+export type ITimeType = number | string | null;
 
 export interface IContextState {
   target: string;
-  targetFields: IField[];
+  targetFields: ITableInfo;
   links: ILinkSet;
   causeSets: ITablesList;
   impactSets: ITablesList;
@@ -75,6 +77,7 @@ export interface IContextState {
   handleFieldClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
   handleViewCauseImpact?: () => void;
   handleReset?: () => void;
+  handleExpandFields?: (namespace: string, entityId: string, type: string) => void;
   activeField?: IField;
   activeCauseSets?: ITablesList;
   activeImpactSets?: ITablesList;
@@ -192,10 +195,10 @@ export class Provider extends React.Component<{ children }, IContextState> {
     const namespace = getCurrentNamespace();
     const updateState = (newState: IContextState) => {
       // If no field selected, grab the first field with lineage
-      if (!newState.activeField.id && newState.targetFields.length > 0) {
+      if (!newState.activeField.id && newState.targetFields.fields.length > 0) {
         newState.activeField = {
-          id: newState.targetFields[0].id,
-          name: newState.targetFields[0].name,
+          id: newState.targetFields.fields[0].id,
+          name: newState.targetFields.fields[0].name,
         };
       }
 
@@ -292,9 +295,48 @@ export class Provider extends React.Component<{ children }, IContextState> {
     });
   };
 
+  private handleExpandFields = (namespace: string, tablename: string, type: string) => {
+    const entityId = getTableId(tablename, namespace, type);
+    const relatedFields =
+      type === 'cause'
+        ? this.state.causeSets[entityId].fields
+        : this.state.impactSets[entityId].fields;
+
+    const allSets = type === 'cause' ? this.state.causeSets : this.state.impactSets;
+    const updatedSets = { ...allSets };
+
+    // If we already the unrelated fields for this table, no need to fetch again - just update expansion state for that table
+    if (allSets[entityId].hasOwnProperty('unrelatedFields')) {
+      updatedSets[entityId].isExpanded = !updatedSets[entityId].isExpanded;
+      this.setState(updatedSets);
+      return;
+    }
+
+    fetchUnrelatedFields(
+      namespace,
+      tablename,
+      type,
+      relatedFields,
+      this.state.start,
+      this.state.end
+    ).subscribe(
+      (unrelatedFields) => {
+        // Look up the sets to update (cause or impact)
+        // Add unrelated fields to the appropriate entity in the cause or impact sets
+        updatedSets[entityId].unrelatedFields = unrelatedFields;
+        updatedSets[entityId].isExpanded = true;
+        this.setState(updatedSets);
+      },
+      (err) => {
+        // tslint:disable-next-line: no-console
+        console.error('Error getting unrelated fields', err);
+      }
+    );
+  };
+
   public state = {
     target: '',
-    targetFields: [],
+    targetFields: {},
     links: getDefaultLinks(),
     causeSets: {},
     impactSets: {},
@@ -319,6 +361,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     handleFieldClick: this.handleFieldClick,
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
+    handleExpandFields: this.handleExpandFields,
     setTimeRange: this.setTimeRange,
     setCustomTimeRange: this.setCustomTimeRange,
     toggleOperations: this.toggleOperations,
