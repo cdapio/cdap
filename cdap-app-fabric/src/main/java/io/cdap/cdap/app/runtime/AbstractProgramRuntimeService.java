@@ -137,6 +137,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   public final RuntimeInfo run(ProgramDescriptor programDescriptor, ProgramOptions options, RunId runId) {
+    LOG.debug("wyzhang: AbstractProgramRuntimeService::run() start");
     ProgramId programId = programDescriptor.getProgramId();
     ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
 
@@ -152,7 +153,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
     try {
       // Get the artifact details and save it into the program options.
       ArtifactId artifactId = programDescriptor.getArtifactId();
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() getArtifactDetail start");
       ArtifactDetail artifactDetail = getArtifactDetail(artifactId);
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() getArtifactDetail end");
       ProgramOptions runtimeProgramOptions = updateProgramOptions(artifactId, programId, options, runId);
 
       // Take a snapshot of all the plugin artifacts used by the program
@@ -160,14 +163,21 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
                                                                programDescriptor.getApplicationSpecification());
 
       // Create and run the program
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() createProgram start");
       Program executableProgram = createProgram(cConf, runner, programDescriptor, artifactDetail, tempDir);
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() createProgram end");
       cleanUpTask = createCleanupTask(cleanUpTask, executableProgram);
 
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() createRuntimeInfo start");
       RuntimeInfo runtimeInfo = createRuntimeInfo(runner.run(executableProgram, optionsWithPlugins), programId,
                                                   cleanUpTask);
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() createRuntimeInfo end");
       monitorProgram(runtimeInfo, cleanUpTask);
+
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() end");
       return runtimeInfo;
     } catch (Exception e) {
+      LOG.debug("wyzhang: AbstractProgramRuntimeService::run() exception " + e);
       cleanUpTask.run();
       LOG.error("Exception while trying to run program", e);
       throw Throwables.propagate(e);

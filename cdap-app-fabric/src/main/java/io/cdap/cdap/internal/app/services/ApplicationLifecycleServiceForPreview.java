@@ -144,13 +144,17 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules) throws Exception {
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() start");
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
     ArtifactId artifactId = new ArtifactId(artifactNamespace.getNamespace(), summary.getName(), summary.getVersion());
     ArtifactDetail artifactDetail = artifactDetailFetcher.get(artifactId);
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() artifact detail fetched: " + artifactDetail.getDescriptor().getLocationURI().getPath());
     Location artifactLocation =
       Locations.getLocationFromAbsolutePath(locationFactory,
                                             artifactDetail.getDescriptor().getLocationURI().getPath());
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() locationFactory = " + locationFactory.getClass().getName());
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() location obj " + artifactLocation.toURI());
     ArtifactDetail artifactDetailFull =
       new ArtifactDetail(new ArtifactDescriptor(artifactDetail.getDescriptor().getArtifactId(), artifactLocation),
                          artifactDetail.getMeta());
