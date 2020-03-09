@@ -44,7 +44,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
-import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
@@ -57,7 +56,6 @@ import io.cdap.cdap.data.runtime.preview.PreviewDataModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleServiceForPreview;
@@ -120,6 +118,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final ConcurrentMap<ApplicationId, Injector> appInjectors;
   private final Path previewDataDir;
   private final PreviewRunnerModuleFactory previewRunnerModuleFactory;
+  private final LocationFactory locationFactory;
 
   @Inject
   DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
@@ -127,7 +126,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         DiscoveryServiceClient discoveryServiceClient,
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         SecureStore secureStore, TransactionSystemClient transactionSystemClient,
-                        PreviewRunnerModuleFactory previewRunnerModuleFactory) {
+                        PreviewRunnerModuleFactory previewRunnerModuleFactory,
+                        LocationFactory locationFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.sConf = sConf;
@@ -140,6 +140,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.appInjectors = new ConcurrentHashMap<>();
     this.maxPreviews = cConf.getInt(Constants.Preview.PREVIEW_CACHE_SIZE, 10);
     this.previewRunnerModuleFactory = previewRunnerModuleFactory;
+    this.locationFactory = locationFactory;
   }
 
   @Override
@@ -354,7 +355,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         }
       }),
       new ProvisionerModule(),
-      new DFSLocationModule(Names.named(ApplicationLifecycleServiceForPreview.LOCATION_FACTORY)),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -371,6 +371,15 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         public InetAddress providesHostname(CConfiguration cConf) {
           String address = cConf.get(Constants.Preview.ADDRESS);
           return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
+        }
+      },
+      new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(LocationFactory.class).annotatedWith(
+            Names.named(ApplicationLifecycleServiceForPreview.LOCATION_FACTORY)).toInstance(locationFactory);
+          expose(LocationFactory.class).annotatedWith(
+            Names.named(ApplicationLifecycleServiceForPreview.LOCATION_FACTORY));
         }
       }
     );
