@@ -40,7 +40,7 @@ import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorS
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
-import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
+import io.cdap.cdap.internal.app.services.ApplicationLifecycleServiceForPreview;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -92,7 +92,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final DatasetOpExecutorService dsOpExecService;
   private final DatasetService datasetService;
   private final LogAppenderInitializer logAppenderInitializer;
-  private final ApplicationLifecycleService applicationLifecycleService;
+  private final ApplicationLifecycleServiceForPreview ApplicationLifecycleServiceForPreview;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
   private final PreviewStore previewStore;
@@ -116,7 +116,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        DatasetOpExecutorService dsOpExecService,
                        DatasetService datasetService,
                        LogAppenderInitializer logAppenderInitializer,
-                       ApplicationLifecycleService applicationLifecycleService,
+                       ApplicationLifecycleServiceForPreview ApplicationLifecycleServiceForPreview,
                        ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
@@ -131,7 +131,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
     this.logAppenderInitializer = logAppenderInitializer;
-    this.applicationLifecycleService = applicationLifecycleService;
+    this.ApplicationLifecycleServiceForPreview = ApplicationLifecycleServiceForPreview;
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
     this.previewStore = previewStore;
@@ -172,7 +172,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
     try {
       LOG.debug("Deploying preview application for {}", programId);
-      applicationLifecycleService.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
+      ApplicationLifecycleServiceForPreview.deployApp(preview.getParent(), preview.getApplication(), preview.getVersion(),
                                             artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
                                             request.canUpdateSchedules());
     } catch (Exception e) {
@@ -347,7 +347,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.PREVIEW_HTTP));
     Futures.allAsList(
-      applicationLifecycleService.start(),
+      ApplicationLifecycleServiceForPreview.start(),
       programRuntimeService.start(),
       metricsCollectionService.start(),
       programNotificationSubscriberService.start()
@@ -377,7 +377,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       timer.cancel();
     }
     programRuntimeService.stopAndWait();
-    applicationLifecycleService.stopAndWait();
+    ApplicationLifecycleServiceForPreview.stopAndWait();
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
