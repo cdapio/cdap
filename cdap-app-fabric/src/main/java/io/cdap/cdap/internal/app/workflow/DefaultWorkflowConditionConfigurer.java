@@ -103,7 +103,7 @@ public class DefaultWorkflowConditionConfigurer<T extends WorkflowConditionAdder
   @Override
   public WorkflowConditionConfigurer<T> addAction(CustomAction action) {
     currentBranch.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                         artifactRepository, pluginInstantiator, null));
+                                                                         artifactRepository, pluginInstantiator));
     return this;
   }
 

@@ -23,7 +23,6 @@ import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
@@ -48,12 +47,11 @@ public final class DefaultMapReduceConfigurer extends AbstractConfigurer impleme
   private Resources driverResources;
   private Resources mapperResources;
   private Resources reducerResources;
-  private PluginFinder pluginFinder;
 
   public DefaultMapReduceConfigurer(MapReduce mapReduce, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                     ArtifactRepository artifactRepository,
-                                    PluginInstantiator pluginInstantiator, PluginFinder pluginFinder) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, pluginFinder);
+                                    PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.mapReduce = mapReduce;
     this.name = mapReduce.getClass().getSimpleName();
     this.description = "";

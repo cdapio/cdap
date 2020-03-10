@@ -23,7 +23,6 @@ import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.customaction.DefaultCustomActionSpecification;
 import io.cdap.cdap.internal.lang.Reflections;
@@ -47,9 +46,8 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
   private Map<String, String> properties;
 
   private DefaultCustomActionConfigurer(CustomAction customAction, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                        ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
-                                        PluginFinder pluginFinder) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, pluginFinder);
+                                       ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.customAction = customAction;
     this.name = customAction.getClass().getSimpleName();
     this.description = "";
@@ -84,10 +82,10 @@ public final class DefaultCustomActionConfigurer extends AbstractConfigurer impl
 
   public static CustomActionSpecification configureAction(CustomAction action, Id.Namespace deployNamespace,
                                                           Id.Artifact artifactId, ArtifactRepository artifactRepository,
-                                                          PluginInstantiator pluginInstantiator, PluginFinder pluginFinder) {
+                                                          PluginInstantiator pluginInstantiator) {
     DefaultCustomActionConfigurer configurer = new DefaultCustomActionConfigurer(action, deployNamespace, artifactId,
                                                                                  artifactRepository,
-                                                                                 pluginInstantiator, null);
+                                                                                 pluginInstantiator);
     action.configure(configurer);
     return configurer.createSpecification();
   }

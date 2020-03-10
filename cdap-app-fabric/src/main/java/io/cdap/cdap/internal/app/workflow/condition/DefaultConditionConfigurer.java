@@ -45,7 +45,7 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
 
   private DefaultConditionConfigurer(Condition condition, Id.Namespace deployNamespace, Id.Artifact artifactId,
                                      ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, null);
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
     this.condition = condition;
     this.name = condition.getClass().getSimpleName();
     this.description = "";

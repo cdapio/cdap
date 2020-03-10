@@ -21,7 +21,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -73,14 +72,10 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import io.cdap.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
@@ -116,7 +111,6 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
-import io.cdap.cdap.store.StoreDefinition;
 import io.cdap.http.HttpHandler;
 import org.quartz.SchedulerException;
 import org.quartz.core.JobRunShellFactory;
@@ -297,9 +291,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
           })
       );
 
-      bind(PluginFinder.class).annotatedWith(Names.named(LocalApplicationManager.PLUGIN_FINDER)).to(LocalPluginFinder.class);
-      bind(ArtifactFinder.class).annotatedWith(Names.named(LocalApplicationManager.PLUGIN_FINDER)).to(LocalPluginFinder.class);
-
       bind(Store.class).to(DefaultStore.class);
       bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);
 
@@ -391,7 +382,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     /**
      * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
      * and turning off check for new versions.
-     *
      * @param store JobStore.
      * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}

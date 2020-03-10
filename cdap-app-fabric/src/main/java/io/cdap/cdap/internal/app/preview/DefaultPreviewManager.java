@@ -32,8 +32,6 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
-import io.cdap.cdap.app.preview.DefaultPreviewRunnerModule;
-import io.cdap.cdap.app.preview.PreviewApplicationManager;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
@@ -58,11 +56,8 @@ import io.cdap.cdap.data.runtime.preview.PreviewDataModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleServiceForPreview;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
@@ -108,7 +103,6 @@ import java.util.stream.StreamSupport;
  * Class responsible for creating the injector for preview and starting it.
  */
 public class DefaultPreviewManager extends AbstractIdleService implements PreviewManager {
-  public static final String PLUGIN_FINDER = "DefaultPreviewManagerPluginFinder";
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewManager.class);
 
@@ -125,7 +119,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final Path previewDataDir;
   private final PreviewRunnerModuleFactory previewRunnerModuleFactory;
   private final LocationFactory locationFactory;
-  private final PluginFinder pluginFinder;
 
   @Inject
   DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
@@ -134,7 +127,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         SecureStore secureStore, TransactionSystemClient transactionSystemClient,
                         PreviewRunnerModuleFactory previewRunnerModuleFactory,
-                        @Named(PLUGIN_FINDER) PluginFinder pluginFinder,
                         LocationFactory locationFactory) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -149,7 +141,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.maxPreviews = cConf.getInt(Constants.Preview.PREVIEW_CACHE_SIZE, 10);
     this.previewRunnerModuleFactory = previewRunnerModuleFactory;
     this.locationFactory = locationFactory;
-    this.pluginFinder = pluginFinder;
   }
 
   @Override
