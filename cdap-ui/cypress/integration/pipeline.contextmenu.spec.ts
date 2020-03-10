@@ -65,7 +65,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
     cy.visit('/pipelines/ns/default/studio');
     cy.create_simple_pipeline().then(() => {
       cy.get('#dag-container').rightclick({ force: true });
-      cy.get('li[role="menuitem"]').contains('Add a wrangler source');
+      cy.get('li[role="menuitem"]').contains('Wrangle');
       cy.get('li[role="menuitem"]').contains('Zoom In');
       cy.get('li[role="menuitem"]').contains('Zoom Out');
       cy.get('li[role="menuitem"]').contains('Fit to Screen');
