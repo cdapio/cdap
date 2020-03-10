@@ -120,6 +120,8 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
     waitState(serviceId1, RUNNING);
     Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
+    // cleanup
+    deleteNamespace(NamespaceId.DEFAULT.getNamespace());
   }
 
   /**
@@ -159,6 +161,8 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     waitState(serviceId1, RUNNING);
     Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
     assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 1);
+    // cleanup
+    deleteNamespace(NamespaceId.DEFAULT.getNamespace());
   }
 
 }
