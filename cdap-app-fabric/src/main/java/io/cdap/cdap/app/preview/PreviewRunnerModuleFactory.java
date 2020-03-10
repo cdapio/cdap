@@ -17,6 +17,8 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.inject.Module;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * A factory for creating guice {@link Module} for a given {@link PreviewRequest}.

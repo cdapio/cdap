@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.deploy.ConfigResponse;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -29,6 +30,7 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
@@ -62,13 +64,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final Impersonator impersonator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final PluginFinder pluginFinder;
 
   /**
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
                                   Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                                  AuthenticationContext authenticationContext) {
+                                  AuthenticationContext authenticationContext, PluginFinder pluginFinder) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
@@ -76,6 +79,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     this.impersonator = impersonator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.pluginFinder = pluginFinder;
   }
 
   /**
@@ -108,7 +112,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
       artifactRepository, artifactClassLoader,
       deploymentInfo.getApplicationName(),
       deploymentInfo.getApplicationVersion(),
-      configString);
+      configString,
+      pluginFinder);
 
     System.out.println("wyzhang: LocalArtifactLoaderStage::process() in memory configurator config() start");
     ListenableFuture<ConfigResponse> result = inMemoryConfigurator.config();

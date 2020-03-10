@@ -26,7 +26,7 @@ import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 
 import java.util.HashMap;
@@ -46,12 +46,13 @@ public abstract class AbstractConfigurer extends DefaultDatasetConfigurer implem
   protected final Id.Namespace deployNamespace;
 
   protected AbstractConfigurer(Id.Namespace deployNamespace, Id.Artifact artifactId,
-                               ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
+                               ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                               PluginFinder pluginFinder) {
     this.deployNamespace = deployNamespace;
     this.extraPlugins = new HashMap<>();
     this.pluginConfigurer = new DefaultPluginConfigurer(artifactId.toEntityId(),
                                                         deployNamespace.toEntityId(), pluginInstantiator,
-                                                        new LocalPluginFinder(artifactRepository));
+                                                        pluginFinder);
   }
 
   public Map<String, Plugin> getPlugins() {

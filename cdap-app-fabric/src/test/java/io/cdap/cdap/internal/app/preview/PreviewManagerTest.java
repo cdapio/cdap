@@ -54,6 +54,7 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
@@ -79,6 +80,7 @@ import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -208,9 +210,10 @@ public class PreviewManagerTest {
                             AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
                             PrivilegesManager privilegesManager, PreferencesService preferencesService,
                             ProgramRuntimeProviderLoader programRuntimeProviderLoader,
+                            PluginFinder pluginFinder,
                             @Assisted PreviewRequest previewRequest) {
       super(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
-            privilegesManager, preferencesService, programRuntimeProviderLoader, previewRequest);
+            privilegesManager, preferencesService, programRuntimeProviderLoader, pluginFinder, previewRequest);
     }
 
     @Override

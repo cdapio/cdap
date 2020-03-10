@@ -45,6 +45,7 @@ import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.DefaultTriggerFactory;
@@ -87,17 +88,19 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
   private final TriggerFactory triggerFactory;
   private String name;
   private String description;
+  private final PluginFinder pluginFinder;
 
   // passed app to be used to resolve default name and description
   @VisibleForTesting
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app) {
-    this(namespace, artifactId, app, "", null, null);
+    this(namespace, artifactId, app, "", null, null, null);
   }
 
   public DefaultAppConfigurer(Id.Namespace namespace, Id.Artifact artifactId, Application app, String configuration,
                               @Nullable ArtifactRepository artifactRepository,
-                              @Nullable PluginInstantiator pluginInstantiator) {
-    super(namespace, artifactId, artifactRepository, pluginInstantiator);
+                              @Nullable PluginInstantiator pluginInstantiator,
+                              @Nullable PluginFinder pluginFinder) {
+    super(namespace, artifactId, artifactRepository, pluginInstantiator, pluginFinder);
     this.name = app.getClass().getSimpleName();
     this.description = "";
     this.configuration = configuration;
@@ -105,6 +108,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     this.artifactRepository = artifactRepository;
     this.pluginInstantiator = pluginInstantiator;
     this.triggerFactory = new DefaultTriggerFactory(namespace.toEntityId());
+    this.pluginFinder = pluginFinder;
   }
 
   @Override
@@ -122,7 +126,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     Preconditions.checkArgument(mapReduce != null, "MapReduce cannot be null.");
     DefaultMapReduceConfigurer configurer = new DefaultMapReduceConfigurer(mapReduce, deployNamespace, artifactId,
                                                                            artifactRepository,
-                                                                           pluginInstantiator);
+                                                                           pluginInstantiator, pluginFinder);
     mapReduce.configure(configurer);
     addDatasetsAndPlugins(configurer);
     MapReduceSpecification spec = configurer.createSpecification();
@@ -155,7 +159,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
 
     if (configurer == null) {
       configurer = new DefaultSparkConfigurer(spark, deployNamespace, artifactId,
-                                              artifactRepository, pluginInstantiator);
+                                              artifactRepository, pluginInstantiator, null);
     }
 
     spark.configure(configurer);
@@ -169,7 +173,8 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     Preconditions.checkArgument(workflow != null, "Workflow cannot be null.");
     DefaultWorkflowConfigurer configurer = new DefaultWorkflowConfigurer(workflow, this,
                                                                          deployNamespace, artifactId,
-                                                                         artifactRepository, pluginInstantiator);
+                                                                         artifactRepository, pluginInstantiator,
+                                                                         pluginFinder);
     workflow.configure(configurer);
     WorkflowSpecification spec = configurer.createSpecification();
     addDatasetsAndPlugins(configurer);
@@ -192,7 +197,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     DefaultSystemTableConfigurer systemTableConfigurer = new DefaultSystemTableConfigurer();
     DefaultServiceConfigurer configurer = new DefaultServiceConfigurer(service, deployNamespace, artifactId,
                                                                        artifactRepository, pluginInstantiator,
-                                                                       systemTableConfigurer);
+                                                                       systemTableConfigurer, null);
     service.configure(configurer);
 
     ServiceSpecification spec = configurer.createSpecification();
@@ -206,7 +211,7 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
     Preconditions.checkArgument(worker != null, "Worker cannot be null.");
     DefaultWorkerConfigurer configurer = new DefaultWorkerConfigurer(worker, deployNamespace, artifactId,
                                                                      artifactRepository,
-                                                                     pluginInstantiator);
+                                                                     pluginInstantiator, null);
     worker.configure(configurer);
     addDatasetsAndPlugins(configurer);
     WorkerSpecification spec = configurer.createSpecification();

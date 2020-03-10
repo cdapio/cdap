@@ -28,6 +28,9 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewManager;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
 
 /**
  * Provides bindings required create the {@link PreviewHttpHandler}.
@@ -45,6 +48,11 @@ public class PreviewHttpModule extends PrivateModule {
     bindPreviewRunnerFactory(binder());
     bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
     expose(PreviewManager.class);
+
+    bind(PluginFinder.class).annotatedWith(Names.named(DefaultPreviewManager.PLUGIN_FINDER))
+      .to(RemotePluginFinder.class);
+    bind(PluginFinder.class).annotatedWith(Names.named(DefaultPreviewRunnerModule.PLUGIN_FINDER))
+      .to(RemotePluginFinder.class);
   }
 
   /**

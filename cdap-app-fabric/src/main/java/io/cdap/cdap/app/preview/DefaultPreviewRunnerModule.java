@@ -24,6 +24,8 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Named;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.Store;
@@ -45,9 +47,12 @@ import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -70,11 +75,13 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
+import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Provides bindings required to create injector for running preview.
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
+  public static final String PLUGIN_FINDER = "DefaultPreviewRunnerModulePluginFinder";
 
   private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
@@ -84,6 +91,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
   private final PreviewRequest previewRequest;
+  private final PluginFinder pluginFinder;
 
   @VisibleForTesting
   @Inject
@@ -92,6 +100,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
+                                    @Named(PLUGIN_FINDER) PluginFinder pluginFinder,
                                     @Assisted PreviewRequest previewRequest) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
@@ -101,6 +110,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.previewRequest = previewRequest;
+    this.pluginFinder = pluginFinder;
   }
 
   @Override
@@ -131,6 +141,9 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                    new TypeLiteral<PreviewApplicationManager<AppDeploymentInfo, ApplicationWithPrograms>>() { })
         .build(new TypeLiteral<ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms>>() { })
     );
+
+    bind(PluginFinder.class).annotatedWith(Names.named(PreviewApplicationManager.PLUGIN_FINDER)).toInstance(pluginFinder);
+    bind(ArtifactFinder.class).annotatedWith(Names.named(PreviewApplicationManager.PLUGIN_FINDER)).toInstance((ArtifactFinder) pluginFinder);
 
     bind(Store.class).to(DefaultStore.class);
     bind(SecretStore.class).to(DefaultSecretStore.class).in(Scopes.SINGLETON);

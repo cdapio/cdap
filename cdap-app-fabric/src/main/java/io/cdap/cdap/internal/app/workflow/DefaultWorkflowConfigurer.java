@@ -39,6 +39,7 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
@@ -71,8 +72,9 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                   PluginFinder pluginFinder) {
+    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator, pluginFinder);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
@@ -111,7 +113,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   @Override
   public void addAction(CustomAction action) {
     nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                 artifactRepository, pluginInstantiator));
+                                                                 artifactRepository, pluginInstantiator, null));
   }
 
   @Override
