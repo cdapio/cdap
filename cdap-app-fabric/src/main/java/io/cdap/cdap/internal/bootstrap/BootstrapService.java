@@ -89,7 +89,7 @@ public class BootstrapService extends AbstractIdleService {
 
       // Only start SystemAppManagement service after bootstrap steps are run due to depedency on
       // LOAD_SYSTEM_ARTIFACT step.
-      // TODO(CDAP-16243): Find better way to add depedency between BootStrapService and SystemAppManagementService.
+      // TODO(CDAP-16243): Find better way to add dependency between BootStrapService and SystemAppManagementService.
       try {
         this.systemAppManagementService.start();
       } catch (Exception e) {
