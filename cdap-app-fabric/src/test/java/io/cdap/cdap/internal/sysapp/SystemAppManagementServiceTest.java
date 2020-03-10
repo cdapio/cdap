@@ -54,7 +54,6 @@ import java.util.List;
  */
 public class SystemAppManagementServiceTest extends AppFabricTestBase {
 
-  private static final Logger LOG = LoggerFactory.getLogger(SystemAppManagementServiceTest.class);
   private static final Gson GSON = new Gson();
 
   private static ProgramLifecycleService programLifecycleService;
@@ -70,7 +69,7 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
 
 
   @BeforeClass
-  public static void setup() throws IOException {
+  public static void setup() {
     Injector injector = getInjector();
     programLifecycleService = injector.getInstance(ProgramLifecycleService.class);
     applicationLifecycleService = injector.getInstance(ApplicationLifecycleService.class);
@@ -109,7 +108,7 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
    */
   @Test
   public void testSystemAppManagementServiceE2E() throws Exception {
-    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
+    systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
     cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
     systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
         programLifecycleService);
