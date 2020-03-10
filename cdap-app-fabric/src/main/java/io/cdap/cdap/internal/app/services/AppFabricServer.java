@@ -131,16 +131,12 @@ public class AppFabricServer extends AbstractIdleService {
         provisioningService.start(),
         applicationLifecycleService.start(),
         bootstrapService.start(),
-        systemAppManagementService.start(),
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
         coreSchedulerService.start()
       )
     ).get();
-
-    // Start system app management service only after bootstrap service is started.
-    systemAppManagementService.start().get();
 
     // Create handler hooks
     List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()

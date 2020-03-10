@@ -24,6 +24,7 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.bootstrap.executor.BaseStepExecutor;
 import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import io.cdap.cdap.internal.bootstrap.executor.EmptyArguments;
+import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.bootstrap.BootstrapResult;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
 import org.junit.After;
@@ -56,6 +57,7 @@ public class BootstrapServiceTest {
   private static BootstrapConfig bootstrapConfig;
   private static BootstrapService bootstrapService;
   private static BootstrapStore bootstrapStore;
+  private static SystemAppManagementService systemAppManagementService;
 
   @BeforeClass
   public static void setupClass() {
@@ -72,7 +74,9 @@ public class BootstrapServiceTest {
     BootstrapConfigProvider bootstrapConfigProvider = new InMemoryBootstrapConfigProvider(bootstrapConfig);
 
     bootstrapStore = AppFabricTestHelper.getInjector().getInstance(BootstrapStore.class);
-    bootstrapService = new BootstrapService(bootstrapConfigProvider, bootstrapStore, executors);
+    systemAppManagementService = AppFabricTestHelper.getInjector().getInstance(SystemAppManagementService.class);
+    bootstrapService = new BootstrapService(bootstrapConfigProvider, bootstrapStore, executors,
+                                            systemAppManagementService);
     bootstrapService.reload();
   }
 

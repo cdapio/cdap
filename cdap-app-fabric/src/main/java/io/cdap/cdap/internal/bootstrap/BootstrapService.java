@@ -25,9 +25,9 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
+import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.bootstrap.BootstrapResult;
 import io.cdap.cdap.proto.bootstrap.BootstrapStepResult;
-import java.util.concurrent.ExecutionException;
 import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +52,7 @@ public class BootstrapService extends AbstractIdleService {
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(50));
   private final BootstrapConfigProvider bootstrapConfigProvider;
   private final BootstrapStore bootstrapStore;
+  private SystemAppManagementService systemAppManagementService;
   private final Map<BootstrapStep.Type, BootstrapStepExecutor> bootstrapStepExecutors;
   private final AtomicBoolean bootstrapping;
   private BootstrapConfig config;
@@ -59,9 +60,11 @@ public class BootstrapService extends AbstractIdleService {
 
   @Inject
   BootstrapService(BootstrapConfigProvider bootstrapConfigProvider, BootstrapStore bootstrapStore,
-                   Map<BootstrapStep.Type, BootstrapStepExecutor> bootstrapStepExecutors) {
+                   Map<BootstrapStep.Type, BootstrapStepExecutor> bootstrapStepExecutors,
+                   SystemAppManagementService systemAppManagementService) {
     this.bootstrapConfigProvider = bootstrapConfigProvider;
     this.bootstrapStore = bootstrapStore;
+    this.systemAppManagementService = systemAppManagementService;
     this.config = BootstrapConfig.EMPTY;
     this.bootstrapStepExecutors = Collections.unmodifiableMap(bootstrapStepExecutors);
     this.bootstrapping = new AtomicBoolean(false);
@@ -72,7 +75,7 @@ public class BootstrapService extends AbstractIdleService {
     LOG.info("Starting {}", getClass().getSimpleName());
     config = bootstrapConfigProvider.getConfig();
     executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("bootstrap-service"));
-    executorService.submit(() -> {
+    executorService.execute(() -> {
       try {
         if (isBootstrappedWithRetries()) {
           // if the system is already bootstrapped, skip any bootstrap step that is supposed to only run once
@@ -83,7 +86,16 @@ public class BootstrapService extends AbstractIdleService {
       } catch (InterruptedException e) {
         LOG.info("Bootstrapping could not complete due to interruption. It will be re-run the next time CDAP starts.");
       }
-    }).get();
+
+      // Only start SystemAppManagement service after bootstrap steps are run due to depedency on
+      // LOAD_SYSTEM_ARTIFACT step.
+      // TODO(CDAP-16243): Find better way to add depedency between BootStrapService and SystemAppManagementService.
+      try {
+        this.systemAppManagementService.start();
+      } catch (Exception e) {
+        LOG.info("SystemAppManagementService could not start due to exception.", e);
+      }
+    });
     LOG.info("Started {}", getClass().getSimpleName());
   }
 
