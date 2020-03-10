@@ -40,6 +40,10 @@ const styles = (theme): StyleRules => {
       '& > .grid.grid-container': {
         maxHeight: '100%', // beating specificity
 
+        '& .grid-header': {
+          zIndex: 4,
+        },
+
         '& .grid-row': {
           gridTemplateColumns: '55px 3fr 1fr 1fr 200px 120px 120px 120px',
           alignItems: 'center',

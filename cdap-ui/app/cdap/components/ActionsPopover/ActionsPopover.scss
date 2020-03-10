@@ -25,7 +25,7 @@ $popover-width: 100px;
 .actions-popover {
   display: inline-block;
 
-  .icon-svg.icon-cog-empty {
+  .default-target.icon-svg.icon-cog-empty {
     fill: none;
     stroke: $cog-icon-color;
     font-size: 23px;

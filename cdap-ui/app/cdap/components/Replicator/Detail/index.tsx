@@ -119,6 +119,12 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
   };
 
   private stop = () => {
+    const currentStatus = this.state.status;
+
+    this.setState({
+      status: PROGRAM_STATUSES.STOPPING,
+    });
+
     const params = {
       ...this.getBaseParams(),
       action: 'stop',
@@ -133,6 +139,9 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       (err) => {
         // tslint:disable-next-line: no-console
         console.log('error', err);
+        this.setState({
+          status: currentStatus,
+        });
       }
     );
   };

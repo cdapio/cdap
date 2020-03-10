@@ -61,9 +61,13 @@ const styles = (theme): StyleRules => {
       },
     },
     gridWrapper: {
-      maxHeight: 'calc(100% - 75px - 30px)',
+      height: 'calc(100% - 75px - 30px)',
       '& .grid.grid-container.grid-compact': {
-        height: '100%',
+        maxHeight: '100%',
+
+        '& .grid-header': {
+          zIndex: 5,
+        },
 
         '& .grid-row': {
           gridTemplateColumns: '55px 40px 1fr 200px 55px 100px',
