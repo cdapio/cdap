@@ -31,7 +31,11 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
+import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
@@ -40,17 +44,20 @@ import java.util.Collections;
  */
 public class RuntimeServer extends AbstractIdleService {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeServer.class);
+
   private final NettyHttpService httpService;
   private final DiscoveryService discoveryService;
   private Cancellable cancelDiscovery;
 
   @Inject
   RuntimeServer(CConfiguration cConf, RuntimeRequestValidator requestValidator,
-                DiscoveryService discoveryService, MessagingService messagingService,
-                MetricsCollectionService metricsCollectionService) {
+                DiscoveryService discoveryService, DiscoveryServiceClient discoveryServiceClient,
+                MessagingService messagingService, MetricsCollectionService metricsCollectionService) {
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(new PingHandler(),
-                       new RuntimeHandler(requestValidator, new MultiThreadMessagingContext(messagingService)))
+                       new RuntimeHandler(new MultiThreadMessagingContext(messagingService), requestValidator),
+                       new RuntimeServiceRoutingHandler(discoveryServiceClient, requestValidator))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.RUNTIME)))
@@ -63,8 +70,11 @@ public class RuntimeServer extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     httpService.start();
-    cancelDiscovery = discoveryService.register(ResolvingDiscoverable.of(
-      URIScheme.createDiscoverable(Constants.Service.RUNTIME, httpService)));
+    Discoverable discoverable = ResolvingDiscoverable.of(URIScheme.createDiscoverable(Constants.Service.RUNTIME,
+                                                                                      httpService));
+    cancelDiscovery = discoveryService.register(discoverable);
+    LOG.debug("Runtime server with service name '{}' started on {}:{}", discoverable.getName(),
+              discoverable.getSocketAddress().getHostName(), discoverable.getSocketAddress().getPort());
   }
 
   @Override
