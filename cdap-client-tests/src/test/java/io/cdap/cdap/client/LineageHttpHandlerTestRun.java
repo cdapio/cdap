@@ -60,6 +60,19 @@ public class LineageHttpHandlerTestRun extends MetadataTestBase {
   private static final Logger LOG = LoggerFactory.getLogger(LineageHttpHandlerTestRun.class);
 
   @Test
+  public void testInvalidFieldLineageResponse() throws Exception {
+    DatasetId datasetId = new DatasetId("ns1", "test");
+    // time cannot be negative
+    fetchFieldLineage(datasetId, -100, 200, "both", BadRequestException.class);
+    fetchFieldLineage(datasetId, 100, -200, "both", BadRequestException.class);
+    // start must less than end
+    fetchFieldLineage(datasetId, 200, 100, "both", BadRequestException.class);
+    // direction must be one of incoming, outgoing or both, and cannot be null
+    fetchFieldLineage(datasetId, 100, 200, "random", BadRequestException.class);
+    fetchFieldLineage(datasetId, 100, 200, null, BadRequestException.class);
+  }
+
+  @Test
   public void testAllProgramsLineage() throws Exception {
     NamespaceId namespace = new NamespaceId("testAllProgramsLineage");
     ApplicationId app = namespace.app(AllProgramsApp.NAME);

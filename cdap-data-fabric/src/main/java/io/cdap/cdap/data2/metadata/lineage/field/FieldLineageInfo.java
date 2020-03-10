@@ -319,11 +319,12 @@ public class FieldLineageInfo {
       List<InputField> inputs = write.getInputs();
       for (InputField input : inputs) {
         EndPointField dest = new EndPointField(write.getDestination(), input.getName());
+        Set<EndPointField> fields = summary.computeIfAbsent(dest, k -> new HashSet<>());
         if (operationEndPointMap.containsKey(input.getOrigin())) {
-          summary.put(dest, operationEndPointMap.get(input.getOrigin()));
+          fields.addAll(operationEndPointMap.get(input.getOrigin()));
         } else {
-          summary.put(dest, computeIncomingSummaryHelper(operationsMap.get(input.getOrigin()), write,
-                                                         operationEndPointMap));
+          fields.addAll(computeIncomingSummaryHelper(operationsMap.get(input.getOrigin()), write,
+                                                     operationEndPointMap));
         }
       }
     }
@@ -602,12 +603,17 @@ public class FieldLineageInfo {
   public static List<Operation> getTopologicallySortedOperations(Set<Operation> operations) {
 
     Map<String, Operation> operationMap = new HashMap<>();
-    Set<String> readOperations = new HashSet<>();
+    Set<String> operationsWithNoIncomings = new HashSet<>();
 
     for (Operation operation : operations) {
       operationMap.put(operation.getName(), operation);
       if (OperationType.READ == operation.getType()) {
-        readOperations.add(operation.getName());
+        operationsWithNoIncomings.add(operation.getName());
+      }
+      // it is common use case that a transform generates some fields from nowhere, in this case, should treat it
+      // like a read operation
+      if (OperationType.TRANSFORM == operation.getType() && ((TransformOperation) operation).getInputs().isEmpty()) {
+        operationsWithNoIncomings.add(operation.getName());
       }
     }
 
@@ -687,7 +693,6 @@ public class FieldLineageInfo {
     }
 
     List<Operation> orderedOperations = new ArrayList<>();
-    Set<String> operationsWithNoIncomings = new HashSet<>(readOperations);
     while (!operationsWithNoIncomings.isEmpty()) {
       String current = operationsWithNoIncomings.iterator().next();
       operationsWithNoIncomings.remove(current);

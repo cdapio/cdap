@@ -28,6 +28,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.metadata.MetadataSearchResponse;
 import io.cdap.cdap.proto.metadata.lineage.CollapseType;
+import io.cdap.cdap.proto.metadata.lineage.FieldLineageSummary;
 import io.cdap.cdap.proto.metadata.lineage.LineageRecord;
 import org.junit.Assert;
 import org.junit.Before;
@@ -68,7 +69,7 @@ public abstract class MetadataTestBase extends ClientTestBase {
   }
 
   protected void addAppArtifact(ArtifactId artifactId, Class<?> cls) throws Exception {
-      artifactClient.add(artifactId, null, () -> Files.newInputStream(createAppJarFile(cls).toPath()));
+    artifactClient.add(artifactId, null, () -> Files.newInputStream(createAppJarFile(cls).toPath()));
   }
 
   protected void addPluginArtifact(ArtifactId artifactId, Class<?> cls, Manifest manifest,
@@ -218,6 +219,20 @@ public abstract class MetadataTestBase extends ClientTestBase {
   protected LineageRecord fetchLineage(DatasetId datasetInstance, String start, String end,
                                        int levels) throws Exception {
     return lineageClient.getLineage(datasetInstance, start, end, levels);
+  }
+
+  protected FieldLineageSummary fetchFieldLineage(DatasetId datasetId,
+                                                  long start, long end, String direction) throws Exception {
+    return lineageClient.getFieldLineage(datasetId, start, end, direction);
+  }
+
+  // expect an exception during fetching of field lineage
+  protected void fetchFieldLineage(DatasetId datasetId, long start, long end, String direction,
+                                   Class<? extends Exception> expectedExceptionClass) {
+    expectException((Callable<Void>) () -> {
+      fetchFieldLineage(datasetId, start, end, direction);
+      return null;
+    }, expectedExceptionClass);
   }
 
   private <T> void expectException(Callable<T> callable, Class<? extends Exception> expectedExceptionClass) {

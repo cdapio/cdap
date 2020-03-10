@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.data2.metadata.lineage.field;
 
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.lineage.field.EndPoint;
@@ -47,6 +50,41 @@ public class FieldLineageInfoTest {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+
+  @Test
+  public void testWriteToSameEndpoint() {
+    List<Operation> operations = new ArrayList<>();
+    ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns1", "endpoint1"), "offset", "body");
+    WriteOperation write = new WriteOperation("write", "some write", EndPoint.of("ns", "endpoint3"),
+                                              InputField.of("read", "body"));
+
+    operations.add(read);
+    operations.add(write);
+
+    ReadOperation anotherRead = new ReadOperation("anotherRead", "another read", EndPoint.of("ns1", "endpoint2"),
+                                                  "offset", "body");
+    // this write is writing to field body in same endpoint
+    WriteOperation anotherWrite = new WriteOperation("anotherWrite", "another write", EndPoint.of("ns", "endpoint3"),
+                                                     InputField.of("anotherRead", "body"));
+    operations.add(anotherRead);
+    operations.add(anotherWrite);
+    FieldLineageInfo info = new FieldLineageInfo(operations);
+
+    Map<EndPointField, Set<EndPointField>> incoming = info.getIncomingSummary();
+    Map<EndPointField, Set<EndPointField>> expected = Collections.singletonMap(
+      new EndPointField(EndPoint.of("ns", "endpoint3"), "body"),
+      ImmutableSet.of(new EndPointField(EndPoint.of("ns1", "endpoint1"), "body"),
+                      new EndPointField(EndPoint.of("ns1", "endpoint2"), "body")));
+    Assert.assertEquals(expected, incoming);
+
+    Map<EndPointField, Set<EndPointField>> outgoing = info.getOutgoingSummary();
+    expected = ImmutableMap.of(
+      new EndPointField(EndPoint.of("ns1", "endpoint1"), "body"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns", "endpoint3"), "body")),
+      new EndPointField(EndPoint.of("ns1", "endpoint2"), "body"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns", "endpoint3"), "body")));
+    Assert.assertEquals(expected, outgoing);
+  }
 
   @Test(timeout = 10000)
   public void testLargeLineageOperation() {
@@ -624,6 +662,35 @@ public class FieldLineageInfoTest {
 
     outgoingOperations = fllInfo.getOutgoingOperationsForField(new EndPointField(read2EndPoint, "body"));
     Assert.assertEquals(expectedOperations, outgoingOperations);
+  }
+
+  @Test
+  public void testNonCycle() {
+    EndPoint readEndPoint = EndPoint.of("ns", "src");
+    EndPoint writeEndPoint = EndPoint.of("ns", "dest");
+
+    ReadOperation read = new ReadOperation("read", "read", readEndPoint, "a", "b");
+    TransformOperation combine = new TransformOperation("combine", "combine",
+                                                        Arrays.asList(InputField.of("read", "a"),
+                                                                      InputField.of("read", "b")),
+                                                        "a", "b");
+    // an operation with no incoming inputs, this should not be considered an cycle, but should get treat like a
+    // read operation
+    TransformOperation generate = new TransformOperation("generate", "generate",
+                                                          Collections.emptyList(), "c");
+    WriteOperation write = new WriteOperation("write", "write", writeEndPoint,
+                                              Arrays.asList(InputField.of("combine", "a"),
+                                                            InputField.of("combine", "b"),
+                                                            InputField.of("generate", "c")));
+    Set<Operation> unOrdered = new HashSet<>();
+    unOrdered.add(combine);
+    unOrdered.add(read);
+    unOrdered.add(generate);
+    unOrdered.add(write);
+
+    List<Operation> operations = FieldLineageInfo.getTopologicallySortedOperations(unOrdered);
+    List<Operation> expected = ImmutableList.of(read, generate, combine, write);
+    Assert.assertEquals(expected, operations);
   }
 
   @Test(expected = IllegalArgumentException.class)
