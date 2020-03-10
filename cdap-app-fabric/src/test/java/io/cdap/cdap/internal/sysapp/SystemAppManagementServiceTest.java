@@ -111,7 +111,7 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
     cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
     systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
-        programLifecycleService);
+                                                                programLifecycleService);
     Id.Artifact artifactId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "App", VERSION1);
     addAppArtifact(artifactId1, AllProgramsApp.class);
     createEnableSysAppConfigFile(artifactId1, "demo.json");
