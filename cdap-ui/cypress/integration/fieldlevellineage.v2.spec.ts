@@ -54,7 +54,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
 
       // Run pipeline to generate lineage
       cy.get('[data-cy="pipeline-run-btn"]').click();
-      cy.get('[data-cy="Succeeded"]', { timeout: 360000 }).should('contain', 'Succeeded');
+      cy.get('[data-cy="Succeeded"]', { timeout: 720000 }).should('contain', 'Succeeded');
     });
   });
   after(() => {
