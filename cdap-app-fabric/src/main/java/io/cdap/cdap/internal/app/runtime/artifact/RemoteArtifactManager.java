@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -42,8 +41,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -55,7 +52,6 @@ import javax.annotation.Nullable;
  * communicating with {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandler} and returning artifact info.
  */
 public final class RemoteArtifactManager extends AbstractArtifactManager {
-  private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactManager.class);
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
@@ -134,10 +130,10 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   }
 
   @Override
-  public Location getArtifactLocation(ArtifactSummary artifactSummary,
-                                      @Nullable String artifactNamespace) throws IOException {
+  protected Location getArtifactLocation(ArtifactInfo artifactInfo,
+                                         @Nullable String artifactNamespace) throws IOException {
     String namespace;
-    if (ArtifactScope.SYSTEM.equals(artifactSummary.getScope())) {
+    if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
       namespace = NamespaceId.SYSTEM.getNamespace();
     } else if (artifactNamespace != null) {
       namespace = artifactNamespace;
@@ -148,7 +144,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     HttpRequest.Builder requestBuilder =
       remoteClient.requestBuilder(
         HttpMethod.GET, String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
-                                      namespace, artifactSummary.getName(), artifactSummary.getVersion()));
+                                      namespace, artifactInfo.getName(), artifactInfo.getVersion()));
     // add header if auth is enabled
     if (authorizationEnabled) {
       requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
@@ -166,11 +162,9 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
 
     String path = httpResponse.getResponseBodyAsString();
     Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
-    LOG.debug("wyzhang: RemoteArtifactManager location got = " + location.toString());
-    LOG.debug("wyzhang: RemoteArtifactManager locationFactory = " + locationFactory.getClass().getName());
     if (!location.exists()) {
       throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
-                                          path, artifactSummary.getName(), artifactSummary.getVersion()));
+                                          path, artifactInfo.getName(), artifactInfo.getVersion()));
     }
     return location;
   }

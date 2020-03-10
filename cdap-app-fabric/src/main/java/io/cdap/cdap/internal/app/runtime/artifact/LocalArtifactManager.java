@@ -21,7 +21,6 @@ import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.service.Retries;
@@ -81,17 +80,17 @@ public final class LocalArtifactManager extends AbstractArtifactManager {
   }
 
   @Override
-  public Location getArtifactLocation(ArtifactSummary artifactSummary,
-                                      @Nullable String artifactNamespace) throws IOException {
+  protected Location getArtifactLocation(ArtifactInfo artifactInfo,
+                                         @Nullable String artifactNamespace) throws IOException {
     NamespaceId namespace;
-    if (ArtifactScope.SYSTEM.equals(artifactSummary.getScope())) {
+    if (ArtifactScope.SYSTEM.equals(artifactInfo.getScope())) {
       namespace = NamespaceId.SYSTEM;
     } else if (artifactNamespace != null) {
       namespace = new NamespaceId(artifactNamespace);
     } else {
       namespace = namespaceId;
     }
-    ArtifactId artifactId = namespace.artifact(artifactSummary.getName(), artifactSummary.getVersion());
+    ArtifactId artifactId = namespace.artifact(artifactInfo.getName(), artifactInfo.getVersion());
 
     return Retries.callWithRetries(() -> {
       try {

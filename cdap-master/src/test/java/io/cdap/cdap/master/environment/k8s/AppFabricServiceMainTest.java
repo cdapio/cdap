@@ -39,7 +39,7 @@ import java.net.URI;
 import java.net.URL;
 
 /**
- * unit test for {@link AppFabricServiceMain}.
+ * Unit test for {@link AppFabricServiceMain}.
  */
 public class AppFabricServiceMainTest extends MasterServiceMainTestBase {
 

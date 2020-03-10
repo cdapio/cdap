@@ -17,16 +17,12 @@ package io.cdap.cdap.app.guice;
 
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.multibindings.MapBinder;
-import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
-import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeService;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
@@ -71,11 +67,6 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.SERVICE).to(DistributedServiceProgramRunner.class);
     defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
-
-    // Bind the ArtifactManager implementation
-    install(new FactoryModuleBuilder()
-              .implement(ArtifactManager.class, RemoteArtifactManager.class)
-              .build(ArtifactManagerFactory.class));
 
     // Bind and expose ProgramRuntimeService
     bind(ProgramRuntimeService.class).to(DistributedProgramRuntimeService.class).in(Scopes.SINGLETON);

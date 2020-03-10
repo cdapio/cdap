@@ -17,7 +17,6 @@
 package io.cdap.cdap.api.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
-import org.apache.twill.filesystem.Location;
 
 import java.io.IOException;
 import java.util.List;
@@ -28,15 +27,6 @@ import javax.annotation.Nullable;
  */
 @Beta
 public interface ArtifactManager {
-  /**
-   *
-   * @param artifactSummary
-   * @param namespace
-   * @return
-   * @throws IOException
-   */
-  Location getArtifactLocation(ArtifactSummary artifactSummary, @Nullable String namespace) throws IOException;
-
   /**
    * Get the list of artifacts in the repository in the current and system namespace
    *

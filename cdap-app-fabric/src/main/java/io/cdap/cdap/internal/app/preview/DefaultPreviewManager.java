@@ -26,14 +26,11 @@ import com.google.inject.Injector;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
-import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
-import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.DefaultPreviewRunnerModule;
 import io.cdap.cdap.app.preview.PreviewApplicationManager;
@@ -62,11 +59,9 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleServiceForPreview;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -352,16 +347,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new LocalLocationModule(),
       new ConfigStoreModule(),
       previewRunnerModuleFactory.create(previewRequest),
-      Modules.override(new ProgramRunnerRuntimeModule().getStandaloneModules()).with(new AbstractModule(){
-        @Override
-        protected void configure() {
-          // Bind the ArtifactManager implementation
-          install(new FactoryModuleBuilder()
-                    .implement(ArtifactManager.class, RemoteArtifactManager.class)
-                    .build(ArtifactManagerFactory.class));
-        }
-      }),
-
+      new ProgramRunnerRuntimeModule().getStandaloneModules(),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient),
       new PreviewDataModules().getDataSetsModule(datasetFramework),
       new DataSetServiceModules().getStandaloneModules(),

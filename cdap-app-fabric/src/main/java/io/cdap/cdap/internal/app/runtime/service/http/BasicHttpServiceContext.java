@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime.service.http;
 
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
-import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -56,7 +55,6 @@ import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -189,11 +187,6 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @Override
-  public Location getArtifactLocation(ArtifactSummary artifactSummary, @Nullable String namespace) throws IOException {
-    return artifactManager.getArtifactLocation(artifactSummary, namespace);
   }
 
   @Override
