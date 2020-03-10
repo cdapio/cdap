@@ -67,11 +67,11 @@ public class BootstrapService extends AbstractIdleService {
   }
 
   @Override
-  protected void startUp() {
+  protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
     config = bootstrapConfigProvider.getConfig();
     executorService = Executors.newSingleThreadExecutor(Threads.createDaemonThreadFactory("bootstrap-service"));
-    executorService.execute(() -> {
+    executorService.submit(() -> {
       try {
         if (isBootstrappedWithRetries()) {
           // if the system is already bootstrapped, skip any bootstrap step that is supposed to only run once
@@ -82,7 +82,7 @@ public class BootstrapService extends AbstractIdleService {
       } catch (InterruptedException e) {
         LOG.info("Bootstrapping could not complete due to interruption. It will be re-run the next time CDAP starts.");
       }
-    });
+    }).get();
     LOG.info("Started {}", getClass().getSimpleName());
   }
 
