@@ -34,9 +34,11 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import java.nio.file.Files;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -45,7 +47,6 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,9 +64,10 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
   private static File systemConfigDir;
 
   private static final String RUNNING = "RUNNING";
+  private static final String STOPPED = "STOPPPED";
 
   @Rule
-  public final TemporaryFolder tmpFolder = new TemporaryFolder();
+  public TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
 
   @BeforeClass
@@ -98,18 +100,44 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
   }
 
   /**
+   * Tests SystemAppManagementService end to end by running below scenario:
+   * 1. Creates a system app config for an application into corresponding directory.
+   * 2. Successfully read and load the config.
+   * 3. Runs all steps to enable a system app , tests SystemAppEnableExecutor.
+   * 4. Deploys the app.
+   * 5. Runs all programs corresponding to the app.
+   * 6. Checks status of a continuously running program, i.e a service program.
+   * @throws Exception
+   */
+  @Test
+  public void testSystemAppManagementServiceE2E() throws Exception {
+    systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
+    cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
+    systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
+                                                                programLifecycleService);
+    Id.Artifact artifactId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "App", VERSION1);
+    addAppArtifact(artifactId1, AllProgramsApp.class);
+    createEnableSysAppConfigFile(artifactId1, "demo.json");
+    systemAppManagementService.startUp();
+    ApplicationId appId1 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
+    ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
+    waitState(serviceId1, RUNNING);
+    Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
+  }
+
+  /**
    * Tests SystemAppManagementService's upgrade method end to end by running this scenario:
    * 1. Creates a system app config for an application into corresponding directory with artifact version VERSION1.
    * 2. Successfully read and load the config.
    * 3. Runs all steps to enable a system app , tests SystemAppEnableExecutor.
    * 4. Deploys the VERSION1 app and runs all programs corresponding to the app.
-   * 5. Checks status of a continuously running program, i.e a service program.
    * 6. Updates system app config with app version upgraded to VERSION2.
    * 7. On restart of SystemAppManagementService, app should kill old running programs and start program again.
+   * @throws Exception
    */
   @Test
-  public void testSystemAppManagementServiceE2E() throws Exception {
-    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
+  public void testSystemAppManagementServiceUpgradeApp() throws Exception {
+    systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
     cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
     systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
         programLifecycleService);
@@ -136,4 +164,5 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
     assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 1);
   }
+
 }

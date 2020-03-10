@@ -136,18 +136,13 @@ public class SystemAppEnableExecutor {
 
   private void startProgram(ProgramId programId) throws Exception {
     try {
+      // TODO(CDAP-16243): Restart program if the application has changed.
+      // do nothing if the program is already running
       ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
       // If a system app is already running, it needs to be restarted as app artifact/arguments might have changed.
       // Restart should trigger running programs with latest version.
-      // TODO(CDAP-16243): Find smarter way to trigger restart of programs rather than always restarting. May be
-      //                   checking if artifact version has changed would be a good start.
-      try {
-        if (currentStatus == ProgramStatus.RUNNING) {
-          programLifecycleService.stop(programId);
-        }
-      } catch (ConflictException e) {
-        // Will reach here if the program is already stopped, which means it tried to stop after the status check above.
-        // ignore this, as it means the program is stopped as we wanted.
+      if (currentStatus == ProgramStatus.RUNNING) {
+        programLifecycleService.stop(programId);
       }
       programLifecycleService.run(programId, Collections.emptyMap(), false);
     } catch (ConflictException e) {
