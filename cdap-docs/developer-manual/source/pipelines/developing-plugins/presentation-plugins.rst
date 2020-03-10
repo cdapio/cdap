@@ -22,8 +22,8 @@ list of plugins shown here, as these other widgets are internal to CDAP and may 
 supported in a future release.
 
 This document describes version |plugins-spec-version| of the plugin specification.
-Changes to the specification are described in the  
-:ref:`plugins-presentation-specification-changes` and should be checked if you are using a 
+Changes to the specification are described in the
+:ref:`plugins-presentation-specification-changes` and should be checked if you are using a
 version of the specification earlier than the current.
 
 
@@ -46,7 +46,7 @@ The widget JSON is composed of:
 .. highlight:: json-ellipsis
 
 Each configuration group consists of a list of the :ref:`individual properties
-<plugins-presentation-property-configuration>` and the 
+<plugins-presentation-property-configuration>` and the
 :ref:`widgets <plugins-presentation-widgets>` to be used. For example::
 
   {
@@ -92,7 +92,7 @@ Each configuration group consists of a list of the :ref:`individual properties
 Metadata
 --------
 Metadata refers to the top-level information about a plugin. The only information required is the
-a *map* consisting of the ``spec-version``, the version of the specification which the JSON follows. 
+a *map* consisting of the ``spec-version``, the version of the specification which the JSON follows.
 
 Current version: |plugins-spec-version|. For example:
 
@@ -195,8 +195,8 @@ Each individual property of the plugin is represented by a configuration, compos
 
 Note that all properties and property values are case-sensitive.
 
-To find the available field names, you can use the :ref:`Artifact HTTP RESTful API 
-<http-restful-api-artifact>` to :ref:`retrieve plugin details 
+To find the available field names, you can use the :ref:`Artifact HTTP RESTful API
+<http-restful-api-artifact>` to :ref:`retrieve plugin details
 <http-restful-api-artifact-plugin-detail>` for an artifact, which will include all the
 available field names. (If the artifact is your own, you will already know the available
 field names from your source code.)
@@ -264,13 +264,13 @@ CDAP pipelines as of version |version|.
      - Output Data Type
      - Description
      - Example Widget JSON
-     
+
    * - ``csv``
      - No attributes
      - Comma-separated ``string``
      - Comma-separated values; each value is entered in a separate box
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -278,13 +278,13 @@ CDAP pipelines as of version |version|.
             "widget-type": "csv",
             "widget-attributes": {}
           }
-    
+
     * - ``daterange``
      - No attributes
      - ``string``
      - Selector for a date and time range using graphical calendar
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -298,7 +298,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - Selector for a single date and time using graphical calendar
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -312,7 +312,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - A type-ahead textbox with a list of datasets from the CDAP instance
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -330,7 +330,7 @@ CDAP pipelines as of version |version|.
      - A delimiter-separated values widget that allows specifying lists of values
        separated by delimiters
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -341,8 +341,8 @@ CDAP pipelines as of version |version|.
               "values-delimiter": ":",
               "numValues": "3",
               "placeholders": [
-                "Input Field", 
-                "Lookup", 
+                "Input Field",
+                "Lookup",
                 "Output Field"
               ]
             }
@@ -353,7 +353,7 @@ CDAP pipelines as of version |version|.
      - Delimiter-separated ``string``
      - Delimiter-separated values; each value is entered in a separate box
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -363,7 +363,7 @@ CDAP pipelines as of version |version|.
               "delimiter": ":"
             }
           }
-     
+
    * - ``hidden``
      - ``default``: default ``string`` value for the widget
      - ``string``
@@ -384,10 +384,10 @@ CDAP pipelines as of version |version|.
    * - ``input-field-selector``
      - No attributes
      - ``string``
-     - A dropdown widget with a list of columns taken from the input schema. 
+     - A dropdown widget with a list of columns taken from the input schema.
        Selecting sets the input column for that plugin property.
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -395,20 +395,20 @@ CDAP pipelines as of version |version|.
             "widget-type": "csv",
             "widget-attributes": {}
           }
-     
+
    * - ``javascript-editor``
      - ``default``: default ``string`` value for the widget
      - ``string``
      - An editor to write JavaScript code as a value of a property
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
             "name": "property-javascript-editor",
             "widget-type": "javascript-editor",
             "widget-attributes": {
-              "default": 
+              "default":
                 "function transform(input, emitter, context) {\
           \\n  emitter.emit(input);\\n}"
             }
@@ -419,7 +419,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - A JSON editor that pretty-prints and auto-formats JSON while it is being entered
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -429,14 +429,14 @@ CDAP pipelines as of version |version|.
               "default": "{ \"p1\": \"value\" }"
             }
           }
-     
+
    * - ``keyvalue``
      - - ``delimiter``: delimiter for the key-value pairs
        - ``kv-delimiter``: delimiter between key and value
      - ``string``
      - A key-value editor for constructing maps of key-value pairs
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -447,7 +447,7 @@ CDAP pipelines as of version |version|.
                 "kv-delimiter": ":"
             }
           }
-     
+
    * - ``multi-select``
      - - ``delimiter``: delimiter to concatenate multiple values to form a single string
        - ``options``: array of options where each option is defined by
@@ -481,7 +481,7 @@ CDAP pipelines as of version |version|.
               ]
             }
           }
-     
+
    * - ``radio-group``
      - - ``layout``: Layout for the radio buttons to render. Defaults to `block` to render one below the other. Another option is `inline` to render side-by-side
        - ``options``: an array of options where each option is defined by
@@ -512,7 +512,7 @@ CDAP pipelines as of version |version|.
               ]
             }
           }
-     
+
    * - ``keyvalue-dropdown``
      - - ``delimiter``: delimiter for the key-value pairs
        - ``dropdownOptions``: list of drop-down options to display
@@ -520,7 +520,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - Similar to *keyvalue* widget, but with a drop-down value list
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -532,13 +532,13 @@ CDAP pipelines as of version |version|.
                 "dropdownOptions": [ "Option1", "Option2"]
             }
           }
-     
+
    * - ``non-editable-schema-editor``
      - ``schema``: schema that will be used as the output schema for the plugin
      - ``string``
      - A non-editable widget for displaying a schema
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -546,7 +546,7 @@ CDAP pipelines as of version |version|.
             "widget-type": "non-editable-schema-editor",
             "widget-attributes": {}
           }
-     
+
    * - ``number``
      - - ``default``: default value for the widget
        - ``max``: maximum value for the number box
@@ -554,7 +554,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - Default HTML number textbox that only accepts valid numbers
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -566,13 +566,13 @@ CDAP pipelines as of version |version|.
               "max": "100"
             }
           }
-     
+
    * - ``password``
      - No attributes
      - ``string``
      - Default HTML password entry box
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -580,32 +580,48 @@ CDAP pipelines as of version |version|.
             "widget-type": "password",
             "widget-attributes": {}
           }
-     
+
+   * - ``plugin-list``
+     - ``plugin-type``: The type of plugin that will be fetched
+     - ``string``
+     - A drop-down with a list of plugins
+     - .. container:: copyable copyable-text
+
+         ::
+
+          {
+            "name": "property-plugin-list",
+            "widget-type": "plugin-list",
+            "widget-attributes": {
+              "plugin-type": "jdbc"
+            }
+          }
+
    * - ``python-editor``
      - ``default``: default ``string`` value for the widget
      - ``string``
      - An editor to write Python code as a value of a property
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
             "name": "property-python-editor",
             "widget-type": "python-editor",
             "widget-attributes": {
-              "default": 
+              "default":
                 "def transform(input, emitter, context):\
           \\n  emitter.emit(input)\\n"
             }
           }
-     
+
    * - ``schema``
      - - ``schema-default-type``: default type for each newly-added field in the schema
        - ``schema-types``: list of schema types for each field from which the user can chose when setting the schema
      - ``string``
      - A four-column, editable table for representing the schema of a plugin
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -625,14 +641,14 @@ CDAP pipelines as of version |version|.
               ]
             }
           }
-     
+
    * - ``select``
      - - ``default``: default value from the list
        - ``values``: list of values for the drop-down
      - ``string``
      - An HTML drop-down with a list of values; allows one choice from the list
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -643,13 +659,13 @@ CDAP pipelines as of version |version|.
                 "values": ["Apples", "Oranges", "Bananas"]
             }
           }
-     
+
    * -  ``stream-selector``
      - No attributes
      - ``string``
      - A type-ahead textbox with a list of streams from the CDAP instance
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -664,7 +680,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - An HTML ``textarea`` element which accepts a default value attribute and a height in rows
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -675,7 +691,7 @@ CDAP pipelines as of version |version|.
               "rows": "1"
             }
           }
-     
+
    * - ``textarea-validate``
      - - ``placeholder``: placeholder text for the textarea
        - ``validate-endpoint``: plugin function endpoint to hit to validate the contents of the textarea
@@ -684,7 +700,7 @@ CDAP pipelines as of version |version|.
      - ``string``
      - An HTML ``textarea`` element with a button to validate its contents using a plugin function endpoint
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -697,13 +713,13 @@ CDAP pipelines as of version |version|.
               "validate-success-message": "Expression is valid"
             }
           }
-     
+
    * - ``textbox``
      - ``default``: default value for the widget
      - ``string``
      - An HTML textbox, used to enter any string, with a default value attribute
      - .. container:: copyable copyable-text
-     
+
          ::
 
           {
@@ -748,7 +764,7 @@ CDAP pipelines as of version |version|.
 Plugin Function
 ---------------
 A plugin function is a method exposed by a particular plugin that can be used for a
-specific task, such as fetching an output schema for a plugin. 
+specific task, such as fetching an output schema for a plugin.
 
 These fields need to be configured to use the plugin functions in the CDAP UI:
 
@@ -762,7 +778,7 @@ These fields need to be configured to use the plugin functions in the CDAP UI:
 
 The last two properties (*required-fields* and *missing-required-fields-message*) are
 solely for use by the CDAP UI and are not required for all widgets. However, the first four
-fields are required fields to use a plugin method of the plugin in the CDAP UI. 
+fields are required fields to use a plugin method of the plugin in the CDAP UI.
 
 With plugin functions, if the widget is not supported in the CDAP UI or the
 plugin function map is not supplied, the user will not see the widget in the CDAP UI.
@@ -777,12 +793,12 @@ plugin function map is not supplied, the user will not see the widget in the CDA
      - Widget attributes
      - Description
      - Example Widget JSON
-  
+
    * - ``outputSchema``
-     - - ``label``: Label for the button 
+     - - ``label``: Label for the button
        - ``btnClass``: bootstrap css class to add to the button
        - ``multiple-inputs``: boolean to indicate if there are multiple input schemas
-     - Widget to populate output schema for a plugin. 
+     - Widget to populate output schema for a plugin.
        This is specifically used to populate output schema and not any other property.
      - .. container:: copyable copyable-text
 
@@ -902,7 +918,7 @@ Beginning with version 1.2 of the specification, a plugin can accept multiple in
 schemas and from them generate a single output schema. Using the field ``multipleInputs``
 and setting it to true tells the CDAP UI to show the multiple input schemas coming into a
 specific plugin, instead of assuming that all of the schemas coming in from different
-plugins are identical. 
+plugins are identical.
 
 This is an optional object, and if it is not present, it is assumed that all of the
 schemas coming in from any connected plugins are identical. Currently, only one value
@@ -1060,7 +1076,7 @@ For example::
         "ref-property-name": "datasetName"
       }]
     }
-  }  
+  }
 
 In this example, the ``datasetName`` field of the ``dataset-selector`` will have a "jump" link added in the CDAP UI.
 

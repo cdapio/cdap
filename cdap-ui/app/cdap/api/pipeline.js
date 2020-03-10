@@ -26,8 +26,9 @@ const programPath = `${basepath}/:programType/:programName`;
 const runsCountPath = '/namespaces/:namespace/runcount';
 const batchRunsPath = '/namespaces/:namespace/runs';
 const batchNextRuntimePath = '/namespaces/:namespace/nextruntime';
-const pluginsPath =
-  '/namespaces/:namespace/artifacts/:parentArtifact/versions/:version/extensions/:extension/plugins/:pluginName';
+const extensionsPath =
+  '/namespaces/:namespace/artifacts/:parentArtifact/versions/:version/extensions/:extension';
+const pluginsPath = `${extensionsPath}/plugins/:pluginName`;
 
 export const MyPipelineApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps'),
@@ -53,4 +54,5 @@ export const MyPipelineApi = {
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
 
   getPluginProperties: apiCreator(dataSrc, 'GET', 'REQUEST', pluginsPath),
+  getExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', extensionsPath),
 };
