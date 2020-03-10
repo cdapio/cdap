@@ -27,25 +27,26 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
-import io.cdap.cdap.proto.ProgramRunStatus;
-import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import org.iq80.leveldb.util.FileUtils;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,6 +55,7 @@ import java.util.List;
  */
 public class SystemAppManagementServiceTest extends AppFabricTestBase {
 
+  private static final Logger LOG = LoggerFactory.getLogger(SystemAppManagementServiceTest.class);
   private static final Gson GSON = new Gson();
 
   private static ProgramLifecycleService programLifecycleService;
@@ -64,8 +66,8 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
 
   private static final String RUNNING = "RUNNING";
 
-  @Rule
-  public final TemporaryFolder tmpFolder = new TemporaryFolder();
+  @ClassRule
+  public static final TemporaryFolder TEMPORARY_FOLDER = new TemporaryFolder();
 
 
   @BeforeClass
@@ -91,7 +93,6 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
       new SystemAppStep("step for " + artifactId.getName(), SystemAppStep.Type.ENABLE_SYSTEM_APP, step1Argument));
     SystemAppConfig config = new SystemAppConfig(steps);
     File tmpFile = new File(systemConfigDir, filename);
-    Files.deleteIfExists(tmpFile.toPath());
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(tmpFile))) {
       bw.write(GSON.toJson(config));
     }
@@ -105,10 +106,11 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
    * 4. Deploys the app.
    * 5. Runs all programs corresponding to the app.
    * 6. Checks status of a continuously running program, i.e a service program.
+   * @throws Exception
    */
   @Test
   public void testSystemAppManagementServiceE2E() throws Exception {
-    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
+    systemConfigDir = TEMPORARY_FOLDER.newFolder("demo-sys-app-config-dir");
     cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
     systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
                                                                 programLifecycleService);
@@ -121,44 +123,4 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     waitState(serviceId1, RUNNING);
     Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
   }
-
-  /**
-   * Tests SystemAppManagementService's upgrade method end to end by running this scenario:
-   * 1. Creates a system app config for an application into corresponding directory with artifact version VERSION1.
-   * 2. Successfully read and load the config.
-   * 3. Runs all steps to enable a system app , tests SystemAppEnableExecutor.
-   * 4. Deploys the VERSION1 app and runs all programs corresponding to the app.
-   * 6. Updates system app config with app version upgraded to VERSION2.
-   * 7. On restart of SystemAppManagementService, app should kill old running programs and start program again.
-   */
-  @Test
-  public void testSystemAppManagementServiceUpgradeApp() throws Exception {
-    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
-    cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
-    systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
-        programLifecycleService);
-    Id.Artifact artifactId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "App", VERSION1);
-    addAppArtifact(artifactId1, AllProgramsApp.class);
-    createEnableSysAppConfigFile(artifactId1, "demo.json");
-    systemAppManagementService.startUp();
-    ApplicationId appId1 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
-    ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    waitState(serviceId1, RUNNING);
-    Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
-    // Program shouldn't be killed first time it is started.
-    assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 0);
-    systemAppManagementService.shutDown();
-
-    // New system app config with newer artifact version.
-    Id.Artifact artifactId2 = Id.Artifact.from(Id.Namespace.DEFAULT, "App", VERSION2);
-    addAppArtifact(artifactId2, AllProgramsApp.class);
-    createEnableSysAppConfigFile(artifactId2, "demo.json");
-    // SystemAppManagement restarts again.
-    systemAppManagementService.startUp();
-    // Program ID still stays the same.
-    waitState(serviceId1, RUNNING);
-    Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
-    assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 1);
-  }
-
 }
