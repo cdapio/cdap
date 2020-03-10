@@ -143,6 +143,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
               const widgetInfo = widgetMap[pluginKey];
 
               const sourceName = widgetInfo ? widgetInfo['display-name'] : source.name;
+              const icon = objectQuery(widgetInfo, 'icon', 'arguments', 'data');
 
               return (
                 <Link
@@ -152,7 +153,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                     source.name
                   }`}
                 >
-                  <PluginCard name={sourceName} />
+                  <PluginCard name={sourceName} icon={icon} />
                 </Link>
               );
             })}

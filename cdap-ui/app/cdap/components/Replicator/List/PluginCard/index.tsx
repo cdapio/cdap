@@ -42,12 +42,12 @@ const styles = (theme): StyleRules => {
       },
     },
     img: {
-      height: '40px',
-      width: '40px',
+      height: '50px',
+      width: '50px',
       color: theme.palette.grey[100],
     },
     name: {
-      marginTop: '15px',
+      marginTop: '7px',
       fontWeight: 600,
       color: theme.palette.grey[100],
     },
@@ -56,14 +56,15 @@ const styles = (theme): StyleRules => {
 
 interface IPluginCardProps extends WithStyles<typeof styles> {
   name: string;
+  icon?: string;
 }
 
-const PluginCardView: React.FC<IPluginCardProps> = ({ classes, name }) => {
+const PluginCardView: React.FC<IPluginCardProps> = ({ classes, name, icon }) => {
+  const defaultIcon = <IconSVG name="icon-plug" className={classes.img} />;
+
   return (
     <div className={classes.root}>
-      <div className={classes.imgContainer}>
-        <IconSVG name="icon-plug" className={classes.img} />
-      </div>
+      <div className={classes.imgContainer}>{icon ? <img src={icon} /> : defaultIcon}</div>
       <div className={classes.name}>{name}</div>
     </div>
   );
