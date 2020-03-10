@@ -35,6 +35,7 @@ import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
@@ -859,6 +860,11 @@ public class HttpHandlerGeneratorTest {
     @Override
     public MessageFetcher getMessageFetcher() {
       throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Location getArtifactLocation(ArtifactSummary artifactSummary, @Nullable String namespace) throws IOException {
+      return null;
     }
 
     @Override

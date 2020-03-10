@@ -29,7 +29,11 @@ import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.artifact.AbstractArtifactManager;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactManager;
 import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.RunId;
 import org.slf4j.Logger;
@@ -47,19 +51,15 @@ import java.util.concurrent.TimeoutException;
  * A {@link ProgramRuntimeService} for in memory mode. It is used for unit-test as well as in Standalone.
  */
 public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeService {
-
   private static final Logger LOG = LoggerFactory.getLogger(InMemoryProgramRuntimeService.class);
 
   private final String hostname;
 
   @Inject
   InMemoryProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
-                                // for running a program, we only need EXECUTE on the program, there should be
-                                // no privileges needed for artifacts
-                                @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                  ArtifactRepository noAuthArtifactRepository,
+                                ArtifactManagerFactory artifactManagerFactory,
                                 @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository);
+    super(cConf, programRunnerFactory, artifactManagerFactory);
     this.hostname = hostname.getCanonicalHostName();
   }
 

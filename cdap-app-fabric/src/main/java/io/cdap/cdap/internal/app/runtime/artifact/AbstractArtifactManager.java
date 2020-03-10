@@ -25,7 +25,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.DirectoryClassLoader;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
-import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,17 +51,6 @@ public abstract class AbstractArtifactManager implements ArtifactManager {
     this.tmpDir = DirUtils.createTempDir(tmpDir);
     this.bootstrapClassLoader = new URLClassLoader(new URL[0], null);
   }
-
-  /**
-   * Returns the {@link Location} of the give artifact.
-   *
-   * @param artifactInfo information of the artifact
-   * @param namespace artifact namespace, or null if the program namespace should not be used
-   * @return the {@link Location} of the artifact
-   * @throws IOException if failed to locate the {@link Location} of the artifact
-   */
-  protected abstract Location getArtifactLocation(ArtifactInfo artifactInfo,
-                                                  @Nullable String namespace) throws IOException;
 
   /**
    * Create a class loader with artifact jar unpacked contents and parent for this classloader is the supplied

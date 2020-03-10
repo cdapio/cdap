@@ -52,7 +52,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactDetailFetcher;
-import io.cdap.cdap.internal.app.runtime.artifact.RemotePluginFinder;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -75,7 +74,6 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.security.spi.authorization.PrivilegesManager;
 import io.cdap.cdap.store.DefaultOwnerStore;
-import org.apache.twill.filesystem.LocationFactory;
 
 /**
  * Provides bindings required to create injector for running preview.

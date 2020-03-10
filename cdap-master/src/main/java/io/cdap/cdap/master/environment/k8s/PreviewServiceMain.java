@@ -82,7 +82,10 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       new AbstractModule() {
         @Override
         protected void configure() {
+
           bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+
+
         }
       }
     );
