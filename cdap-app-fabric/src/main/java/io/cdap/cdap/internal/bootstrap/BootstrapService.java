@@ -52,7 +52,7 @@ public class BootstrapService extends AbstractIdleService {
   private static final Logger SAMPLING_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(50));
   private final BootstrapConfigProvider bootstrapConfigProvider;
   private final BootstrapStore bootstrapStore;
-  private SystemAppManagementService systemAppManagementService;
+  private final SystemAppManagementService systemAppManagementService;
   private final Map<BootstrapStep.Type, BootstrapStepExecutor> bootstrapStepExecutors;
   private final AtomicBoolean bootstrapping;
   private BootstrapConfig config;
