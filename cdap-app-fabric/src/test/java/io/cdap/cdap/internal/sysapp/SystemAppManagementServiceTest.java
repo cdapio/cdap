@@ -98,38 +98,12 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
   }
 
   /**
-   * Tests SystemAppManagementService end to end by running below scenario:
-   * 1. Creates a system app config for an application into corresponding directory.
-   * 2. Successfully read and load the config.
-   * 3. Runs all steps to enable a system app , tests SystemAppEnableExecutor.
-   * 4. Deploys the app.
-   * 5. Runs all programs corresponding to the app.
-   * 6. Checks status of a continuously running program, i.e a service program.
-   */
-  @Test
-  public void testSystemAppManagementServiceE2E() throws Exception {
-    systemConfigDir = tmpFolder.newFolder("demo-sys-app-config-dir");
-    cConf.set(Constants.SYSTEM_APP_CONFIG_DIR, systemConfigDir.getAbsolutePath());
-    systemAppManagementService = new SystemAppManagementService(cConf, applicationLifecycleService,
-                                                                programLifecycleService);
-    Id.Artifact artifactId1 = Id.Artifact.from(Id.Namespace.DEFAULT, "App", VERSION1);
-    addAppArtifact(artifactId1, AllProgramsApp.class);
-    createEnableSysAppConfigFile(artifactId1, "demo.json");
-    systemAppManagementService.startUp();
-    ApplicationId appId1 = NamespaceId.DEFAULT.app(AllProgramsApp.NAME);
-    ProgramId serviceId1 = appId1.program(ProgramType.SERVICE, AllProgramsApp.NoOpService.NAME);
-    waitState(serviceId1, RUNNING);
-    Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
-    // cleanup
-    deleteNamespace(NamespaceId.DEFAULT.getNamespace());
-  }
-
-  /**
-   * Tests SystemAppManagementService's upgrade method end to end by running this scenario:
+   * Tests SystemAppManagementService's method end to end by running this scenario:
    * 1. Creates a system app config for an application into corresponding directory with artifact version VERSION1.
    * 2. Successfully read and load the config.
    * 3. Runs all steps to enable a system app , tests SystemAppEnableExecutor.
    * 4. Deploys the VERSION1 app and runs all programs corresponding to the app.
+   * 5. Checks status of a continuously running program, i.e a service program.
    * 6. Updates system app config with app version upgraded to VERSION2.
    * 7. On restart of SystemAppManagementService, app should kill old running programs and start program again.
    */
@@ -149,6 +123,8 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     Assert.assertEquals(RUNNING, getProgramStatus(serviceId1));
     // Program shouldn't be killed first time it is started.
     assertProgramRuns(serviceId1, ProgramRunStatus.KILLED, 0);
+
+    // Shutting it down for a restart.
     systemAppManagementService.shutDown();
 
     // New system app config with newer artifact version.
@@ -164,5 +140,4 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     // cleanup
     deleteNamespace(NamespaceId.DEFAULT.getNamespace());
   }
-
 }
