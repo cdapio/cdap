@@ -78,29 +78,64 @@
       <groupId>com.google.cloud</groupId>
       <artifactId>google-cloud-storage</artifactId>
     </dependency>
-    <dependency>
-      <groupId>org.apache.twill</groupId>
-      <artifactId>twill-api</artifactId>
-    </dependency>
+    <!--    <dependency>-->
+    <!--      <groupId>org.apache.twill</groupId>-->
+    <!--      <artifactId>twill-api</artifactId>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.apache.twill</groupId>-->
+    <!--      <artifactId>twill-discovery-api</artifactId>-->
+    <!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.apache.twill</groupId>-->
+    <!--      <artifactId>twill-discovery-core</artifactId>-->
+    <!--    </dependency>-->
     <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-yarn</artifactId>
+      <exclusions>
+        <!-- Exclude all the hadoop jars from twill yarn -->
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-common</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-hdfs</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.twill</groupId>
       <artifactId>twill-core</artifactId>
     </dependency>
     <dependency>
-      <groupId>org.apache.twill</groupId>
-      <artifactId>twill-discovery-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.twill</groupId>
-      <artifactId>twill-discovery-core</artifactId>
+      <groupId>org.apache.hadoop</groupId>
+      <artifactId>hadoop-yarn-api</artifactId>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.protobuf</groupId>
+          <artifactId>protobuf-java</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>org.apache.hadoop</groupId>
-      <artifactId>hadoop-yarn-api</artifactId>
+      <artifactId>hadoop-common</artifactId>
+      <scope>provided</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>com.google.protobuf</groupId>
+          <artifactId>protobuf-java</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-common</artifactId>
+      <version>6.2.0-SNAPSHOT</version>
+      <scope>compile</scope>
     </dependency>
   </dependencies>
 

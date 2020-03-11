@@ -561,8 +561,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
       }
 
-
-
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
 

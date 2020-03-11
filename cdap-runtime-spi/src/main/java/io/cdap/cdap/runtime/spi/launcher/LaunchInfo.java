@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.launcher;
 
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
+
 import java.util.List;
 import java.util.Map;
 
@@ -28,6 +30,7 @@ public class LaunchInfo {
   private final String programType;
   private final List<LauncherFile> launcherFileList;
   private Map<String, String> properties;
+  private Class<? extends RuntimeJob> runtimeJobClass;
 
   /**
    *
@@ -63,5 +66,13 @@ public class LaunchInfo {
 
   public Map<String, String> getProperties() {
     return properties;
+  }
+
+  public Class<? extends RuntimeJob> getRuntimeJobClass() {
+    return runtimeJobClass;
+  }
+
+  public void setClass(Class<? extends RuntimeJob> clazz) {
+    runtimeJobClass = clazz;
   }
 }

@@ -31,36 +31,29 @@ import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.collect.ImmutableList;
-import com.google.common.io.ByteStreams;
+import io.cdap.cdap.runtime.runtimejob.DataprocJobMain;
+import io.cdap.cdap.runtime.runtimejob.DatarpocJarUtils;
 import io.cdap.cdap.runtime.spi.launcher.JobId;
 import io.cdap.cdap.runtime.spi.launcher.LaunchInfo;
 import io.cdap.cdap.runtime.spi.launcher.Launcher;
 import io.cdap.cdap.runtime.spi.launcher.LauncherFile;
-import org.apache.twill.api.ClassAcceptor;
+import joptsimple.OptionSpec;
+import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
-import org.apache.twill.filesystem.Location;
-import org.apache.twill.internal.io.BasicLocationCache;
-import org.apache.twill.internal.io.LocationCache;
-import org.apache.twill.internal.utils.Dependencies;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
+import org.apache.twill.internal.appmaster.ApplicationMasterMain;
+import org.apache.twill.internal.container.TwillContainerMain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
 
 /**
  *
@@ -75,58 +68,29 @@ public class DataprocLauncher implements Launcher {
 
   @Override
   public URI getJarURI() {
-    Location location = null;
-    try {
-      Path cachePath = Files.createTempDirectory(Paths.get("/tmp").toAbsolutePath(), "launcher.cache");
-      LocationCache locationCache = new BasicLocationCache(new LocalLocationFactory().create(cachePath.toUri()));
-      location = locationCache.get("dataproclauncher.jar", new LocationCache.Loader() {
-        @Override
-        public void load(String name, Location targetLocation) throws IOException {
-          // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
-          ClassLoader classLoader = DataprocLauncher.class.getClassLoader();
-          try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
-            if (classLoader == null) {
-              classLoader = getClass().getClassLoader();
-            }
-            Set<String> seen = new HashSet<>();
-            Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-              @Override
-              public boolean accept(String className, URL classUrl, URL classPathUrl) {
-                if (className.startsWith("io.cdap.") || className.startsWith("io/cdap") ||
-                  className.startsWith("org.apache.twill") || className.startsWith("org/apache/twill")) {
-                  try {
-                    jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-                    seen.add(className);
-                    try (InputStream is = classUrl.openStream()) {
-                      ByteStreams.copy(is, jarOut);
-                    }
-                  } catch (IOException e) {
-                    throw new RuntimeException(e);
-                  }
-                  return true;
-                }
-                return false;
-              }
-            }, DataprocJobMain.class.getName(), Services.class.getName());
-          }
-        }
-      });
-    } catch (IOException e) {
-      LOG.error("### Error while creating launcher jar.", e);
-    }
-
-    return location.toURI();
+   return null;
   }
 
   @Override
   public JobId launch(LaunchInfo info) {
     try {
-
       LOG.info("Inside dataproc launcher for program id: {}", info.getProgramId());
-      Map<String, String> properties = info.getProperties();
-      LOG.info("region for dataproc cluster: {}", properties.get("system.properties.region"));
-      LOG.info("name of dataproc cluster: {}", info.getClusterName());
-      LOG.info("project id of dataproc cluster: {}", properties.get("system.properties.projectId"));
+
+      LocationFactory locationFactory = new LocalLocationFactory(Files.createTempDirectory("locallocation").toFile());
+      ApplicationBundler bundler = DatarpocJarUtils.createBundler();
+
+      // build twill jar
+      LocalFile twillJar = DatarpocJarUtils.getBundleJar(bundler, locationFactory, "twill.jar",
+                                                         ImmutableList.of(ApplicationMasterMain.class,
+                                                                          TwillContainerMain.class, OptionSpec.class));
+
+      // build application jar
+      LocalFile runtimeJobJar = DatarpocJarUtils.getBundleJar(bundler, locationFactory, "application.jar",
+                                                              ImmutableList.of(info.getRuntimeJobClass()));
+
+      // build thin launcher jar using dependency tracing. Only allow cdap classes
+      LocalFile launcherJar = DatarpocJarUtils.getBundleJar(bundler, locationFactory, "launcher.jar",
+                                                            ImmutableList.of(DataprocJobMain.class));
 
       // Instantiates a client
       Storage storage = StorageOptions.getDefaultInstance().getService();
@@ -139,9 +103,18 @@ public class DataprocLauncher implements Launcher {
       // TODO parallelize this to be uploaded by multiple threads for faster job submission
       for (LauncherFile launcherFile : info.getLauncherFileList()) {
         LOG.info("Uploading file {}", launcherFile.getName());
+        if (launcherFile.getName().equals("twill.jar") || launcherFile.getName().equals("application.jar")) {
+          continue;
+        }
         uploadFile(storage, bucketName, uris, files, launcherFile);
       }
-      //   executor.awaitTermination(30, TimeUnit.MINUTES);
+
+      uploadFile(storage, bucketName, uris, files,
+                 new LauncherFile(runtimeJobJar.getName(), runtimeJobJar.getURI(), false));
+      uploadFile(storage, bucketName, uris, files,
+                 new LauncherFile(twillJar.getName(), twillJar.getURI(), false));
+      uploadFile(storage, bucketName, uris, files,
+                 new LauncherFile(launcherJar.getName(), launcherJar.getURI(), false));
 
       List<String> archive = new ArrayList<>();
 
@@ -149,7 +122,7 @@ public class DataprocLauncher implements Launcher {
         if (launcherFile.isArchive()) {
           LOG.info("Adding {} to archive", launcherFile.getName());
           String name = launcherFile.getName();
-          archive.add(name);
+          archive.add("gs://launcher-three/" + name);
         }
       }
       // TODO Get cluster information from provisioned cluster using Launcher interface
@@ -167,7 +140,7 @@ public class DataprocLauncher implements Launcher {
                                     .addAllJarFileUris(uris)
                                     .addAllFileUris(files)
                                     .addAllArchiveUris(archive)
-                                    .addAllArgs(ImmutableList.of(info.getProgramId()))
+                                    .addAllArgs(ImmutableList.of(info.getRuntimeJobClass().getName()))
                                     .build())
                     .build())
           .build();
@@ -205,21 +178,27 @@ public class DataprocLauncher implements Launcher {
     fis.close();
 
     String fileName = launcherFile.getName();
-
     if (fileName.equals("artifacts")) {
       fileName = "artifacts.jar";
     }
+
+    if (launcherFile.getName().endsWith("jar")) {
+      LOG.info("Adding {} to jar", fileName);
+      uris.add("gs://launcher-three/" + fileName);
+    } else {
+      LOG.info("Adding {} to file", fileName);
+      files.add("gs://launcher-three/" + fileName);
+    }
+
+    if (fileName.equals("artifacts.jar") || fileName.equals("cConf.xml")
+      || fileName.equals("runtime.config.jar") || fileName.equals("logback.xml") ||
+      fileName.equals("resources.jar") || fileName.equals("artifacts_archive.jar")) {
+      //fileName = "artifacts.jar";
+      LOG.info("not adding file to gcs, skipping {}", fileName);
+      return;
+    }
     BlobId blobId = BlobId.of(bucketName, fileName);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
-    // TODO use writer channel instead of create for large files. Figure out whether that api is atomic
     Blob blob = storage.create(blobInfo, bytesArray);
-
-    if (launcherFile.getName().endsWith("jar") || launcherFile.getName().contains("cConf.xml")) {
-      LOG.info("Adding {} to jar", blob.getName());
-      uris.add("gs://launcher-three/" + blob.getName());
-    } else {
-      LOG.info("Adding {} to file", blob.getName());
-      files.add("gs://launcher-three/" + blob.getName());
-    }
   }
 }

@@ -14,34 +14,35 @@
  * the License.
  */
 
-
 package io.cdap.cdap.runtime.spi.runtimejob;
 
-import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.api.TwillRunner;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.Map;
 
 /**
- *
+ * Represents runtime job environment that provides information that is needed by the {@link RuntimeJob} to run the job.
  */
-public interface JobContext {
-
+public interface RuntimeJobEnvironment {
   /**
    * Returns a {@link DiscoveryService} for service announcement purpose.
    */
-  DiscoveryService getDiscoveryServiceSupplier();
+  DiscoveryService getDiscoveryService();
 
   /**
    * Returns a {@link DiscoveryServiceClient} for service discovery purpose.
    */
-  DiscoveryServiceClient getDiscoveryServiceClientSupplier();
+  DiscoveryServiceClient getDiscoveryServiceClient();
 
   /**
-   * Returns a {@link TwillRunnerService} for running programs.
+   * Returns a {@link TwillRunner}.
    */
-  TwillRunnerService getTwillRunnerSupplier();
+  TwillRunner getTwillRunner();
 
-  Map<String, String> getConfigProperties();
+  /**
+   * Returns runtime environment properties to be available to {@link RuntimeJob}.
+   */
+  Map<String, String> getProperties();
 }

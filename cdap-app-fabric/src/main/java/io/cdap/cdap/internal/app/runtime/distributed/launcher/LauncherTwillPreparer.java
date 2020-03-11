@@ -25,7 +25,6 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
-import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
@@ -35,6 +34,7 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.launcher.LaunchInfo;
@@ -70,7 +70,6 @@ import org.apache.twill.internal.container.TwillContainerMain;
 import org.apache.twill.internal.io.LocationCache;
 import org.apache.twill.internal.json.ArgumentsCodec;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
-import org.apache.twill.internal.utils.Dependencies;
 import org.apache.twill.internal.utils.Paths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -93,7 +92,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -427,6 +425,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
       LaunchInfo info = new LaunchInfo(programRunId.getRun(), cluster.getName(),
                                        programRunId.getType().getCategoryName(),
                                        launcherFiles, cluster.getProperties());
+      info.setClass(DefaultRuntimeJob.class);
       launcher.launch(info);
       cancelLoggingContext.cancel();
       DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
@@ -731,45 +730,45 @@ public class LauncherTwillPreparer implements TwillPreparer {
    */
   private void createLauncherJar(Map<String, LocalFile> localFiles) throws IOException {
 
-    LOG.info("Create and copy {}", Constants.Files.LAUNCHER_JAR);
+   // LOG.info("Create and copy {}", Constants.Files.LAUNCHER_JAR);
 
-    Location location = locationCache.get(Constants.Files.LAUNCHER_JAR, new LocationCache.Loader() {
-      @Override
-      public void load(String name, Location targetLocation) throws IOException {
-        // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
-        try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
-          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-          if (classLoader == null) {
-            classLoader = getClass().getClassLoader();
-          }
-          Set<String> seen = new HashSet<>();
-          Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
-            @Override
-            public boolean accept(String className, URL classUrl, URL classPathUrl) {
-              if (className.startsWith("io.cdap.") || className.startsWith("io/cdap") ||
-                className.startsWith("org.apache.twill") || className.startsWith("org/apache/twill")) {
-                try {
-                  jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
-                  seen.add(className);
-                  try (InputStream is = classUrl.openStream()) {
-                    ByteStreams.copy(is, jarOut);
-                  }
-                } catch (IOException e) {
-                  throw new RuntimeException(e);
-                }
-                return true;
-              }
-              return false;
-            }
-          }, DefaultRuntimeJob.class.getName());
-        }
-      }
-    });
-
-    LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
-    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
-    localFiles.put("dataproclauncher.jar", createLocalFile("dataproclauncher.jar",
-                                                           locationFactory.create(launcher.getJarURI()), false));
+//    Location location = locationCache.get(Constants.Files.LAUNCHER_JAR, new LocationCache.Loader() {
+//      @Override
+//      public void load(String name, Location targetLocation) throws IOException {
+//        // Create a jar file with the TwillLauncher and FindFreePort and dependent classes inside.
+//        try (JarOutputStream jarOut = new JarOutputStream(targetLocation.getOutputStream())) {
+//          ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+//          if (classLoader == null) {
+//            classLoader = getClass().getClassLoader();
+//          }
+//          Set<String> seen = new HashSet<>();
+//          Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
+//            @Override
+//            public boolean accept(String className, URL classUrl, URL classPathUrl) {
+//              if (className.startsWith("io.cdap.") || className.startsWith("io/cdap") ||
+//                className.startsWith("org.apache.twill") || className.startsWith("org/apache/twill")) {
+//                try {
+//                  jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+//                  seen.add(className);
+//                  try (InputStream is = classUrl.openStream()) {
+//                    ByteStreams.copy(is, jarOut);
+//                  }
+//                } catch (IOException e) {
+//                  throw new RuntimeException(e);
+//                }
+//                return true;
+//              }
+//              return false;
+//            }
+//          }, DefaultRuntimeJob.class.getName());
+//        }
+//      }
+//    });
+//
+//    LOG.debug("Done {}", Constants.Files.LAUNCHER_JAR);
+//    localFiles.put(Constants.Files.LAUNCHER_JAR, createLocalFile(Constants.Files.LAUNCHER_JAR, location, false));
+//    localFiles.put("dataproclauncher.jar", createLocalFile("dataproclauncher.jar",
+//                                                           locationFactory.create(launcher.getJarURI()), false));
   }
 
   private void saveClassPaths(Path targetDir) throws IOException {

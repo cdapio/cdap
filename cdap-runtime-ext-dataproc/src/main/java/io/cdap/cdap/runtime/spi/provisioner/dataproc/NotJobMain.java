@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import io.cdap.cdap.runtime.spi.runtimejob.JobContext;
 import org.apache.twill.internal.Constants;
+import org.apache.twill.internal.Services;
 
 import java.io.File;
 import java.io.IOException;
@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.jar.JarEntry;
@@ -41,17 +40,17 @@ import java.util.jar.JarInputStream;
 /**
  *
  */
-public class DataprocJobMain {
+public class NotJobMain {
 
   public static void main(String[] args) throws Exception {
     System.setProperty("twill.zk.server.localhost", "false");
-    ClassLoader cl = DataprocJobMain.class.getClassLoader();
+    ClassLoader cl = NotJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {
       throw new RuntimeException("Expect it to be a URLClassLoader");
     }
 
     URL[] urls = ((URLClassLoader) cl).getURLs();
-    URL thisURL = DataprocJobMain.class.getClassLoader().getResource(DataprocJobMain.class.getName()
+    URL thisURL = NotJobMain.class.getClassLoader().getResource(NotJobMain.class.getName()
                                                                        .replace('.', '/') + ".class");
     if (thisURL == null) {
       throw new RuntimeException("Failed to find the resource for main class");
@@ -66,48 +65,47 @@ public class DataprocJobMain {
     File appJarDir = new File(Constants.Files.APPLICATION_JAR);
     File twillJarDir = new File(Constants.Files.TWILL_JAR);
     File resourceJarDir = new File(Constants.Files.RESOURCES_JAR);
-    File runtimeConfigDir = new File(Constants.Files.RUNTIME_CONFIG_JAR);
-    File logback = new File("logback.xml");
 
     // add app jar, twill jar, resource jar
-    URL[] classpath = createClasspath(appJarDir, twillJarDir, resourceJarDir, runtimeConfigDir, logback);
-    List<URL> urlList = new ArrayList<>(Arrays.asList(urls));
+    URL[] classpath = createClasspath(appJarDir, twillJarDir, resourceJarDir);
+//    List<URL> urlList = new ArrayList<>(Arrays.asList(urls));
+//
+//    // add this url
+//    Deque<URL> queue = new LinkedList<>(urlList);
+//
+//    for (URL url : classpath) {
+//      System.out.println("URL: " + url);
+//      if (url.toString().endsWith(".jar")) {
+//        addAll(url, queue);
+//        queue.addFirst(url);
+//      } else {
+//        queue.addLast(url);
+//      }
+//    }
 
-    // add this url
-    Deque<URL> queue = new LinkedList<>(urlList);
+    System.out.println("Classpath URLs: " + Arrays.toString(urls));
 
-
-    for (URL url : classpath) {
-      System.out.println("URL: " + url);
-      if (url.toString().endsWith(".jar")) {
-        addAll(url, queue);
-        queue.addFirst(url);
-      } else {
-        queue.addLast(url);
-      }
-    }
-
-    System.out.println("Classpath URLs: " + queue);
-
-    URLClassLoader newCL = new URLClassLoader(queue.toArray(new URL[0]), cl.getParent());
+    URLClassLoader newCL = new URLClassLoader(urls, cl.getParent());
     Thread.currentThread().setContextClassLoader(newCL);
     Class<?> serviceClass = newCL.loadClass(Services.class.getName());
     Method serviceMethod = serviceClass.getMethod("getJobContext");
     Object newServicesInstance = serviceClass.newInstance();
     Object jobContextObj = serviceMethod.invoke(newServicesInstance);
 
-    Class<?> jobContextCls = newCL.loadClass(JobContext.class.getName());
+    //Class<?> jobContextCls = newCL.loadClass(JobContext.class.getName());
     Class<?> cls = newCL.loadClass("io.cdap.cdap.internal.app.runtime.distributed.launcher.DefaultRuntimeJob");
-    Method method = cls.getMethod("run", jobContextCls);
+   // Method method = cls.getMethod("run", jobContextCls);
     System.out.println("Invoking run() on Default Runtime Job.");
-    method.invoke(cls.newInstance(), jobContextObj);
+    //method.invoke(cls.newInstance(), jobContextObj);
 
     System.out.println("Launcher completed");
   }
 
   private static URL[] createClasspath(File appJarDir, File twillJarDir,
-                                       File resourceJarDir, File runtimeConfigDir, File logback) throws IOException {
+                                       File resourceJarDir) throws IOException {
     List<URL> urls = new ArrayList<>();
+    // add dataproc launcher jar just to launch the runtime job
+    urls.add(new File("dataproclauncher.jar").toURI().toURL());
 
     // For backward compatibility, sort jars from twill and jars from application together
     // With TWILL-179, this will change as the user can have control on how it should be.
@@ -122,15 +120,11 @@ public class DataprocJobMain {
 
     // add resources and runtime args
     urls.add(new File(resourceJarDir, "resources").toURI().toURL());
-    addRuntimeConfig(runtimeConfigDir.toURI().toURL(), urls);
 
     // Add all lib jars
     for (File jarFile : libJarFiles) {
       urls.add(jarFile.toURI().toURL());
     }
-
-    // add dataproc launcher jar just to launch the runtime job
-    urls.add(new File("dataproclauncher.jar").toURI().toURL());
 
     //urls.add(logback.toURI().toURL());
     return urls.toArray(new URL[urls.size()]);
@@ -146,6 +140,7 @@ public class DataprocJobMain {
     }
     for (File file : files) {
       if (file.getName().endsWith(".jar")) {
+        System.out.println("## Adding file from listJarFiles: " + file.getName());
         result.add(file);
       }
     }
@@ -165,8 +160,6 @@ public class DataprocJobMain {
             name = name.substring(idx + 1);
           }
           Path jarPath = tempDir.resolve(name);
-
-          //   System.out.println("Jar entry" + entry.getName() + "is expanded to " + jarPath);
           Files.copy(jarInput, jarPath);
           depJars.add(jarPath.toUri().toURL());
         }
@@ -177,32 +170,6 @@ public class DataprocJobMain {
     ListIterator<URL> itor = depJars.listIterator(depJars.size());
     while (itor.hasPrevious()) {
       urls.addFirst(itor.previous());
-    }
-  }
-
-  private static void addRuntimeConfig(URL jarURL, List<URL> urls) throws IOException {
-    Path tempDir = Files.createTempDirectory("expanded.jar");
-    List<URL> depJars = new ArrayList<>();
-    try (JarInputStream jarInput = new JarInputStream(jarURL.openStream())) {
-      JarEntry entry = jarInput.getNextJarEntry();
-      while (entry != null) {
-        String name = entry.getName();
-        int idx = name.lastIndexOf("/");
-        if (idx >= 0) {
-          name = name.substring(idx + 1);
-        }
-        Path jarPath = tempDir.resolve(name);
-
-        // System.out.println("Jar entry" + entry.getName() + "is expanded to " + jarPath);
-        Files.copy(jarInput, jarPath);
-        depJars.add(jarPath.toUri().toURL());
-        entry = jarInput.getNextJarEntry();
-      }
-    }
-
-    ListIterator<URL> itor = depJars.listIterator(depJars.size());
-    while (itor.hasPrevious()) {
-      urls.add(itor.previous());
     }
   }
 }
