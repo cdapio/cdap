@@ -24,6 +24,13 @@ import java.util.Optional;
  */
 public interface RuntimeJobManager {
   /**
+   * Initialize the clients for job launch.
+   *
+   * @throws Exception thrown if any exception while initializing the manager
+   */
+  void initialize() throws Exception;
+
+  /**
    * This method uses runtime job information to launch the job.
    *
    * @param runtimeJobInfo runtime job information
@@ -65,4 +72,9 @@ public interface RuntimeJobManager {
    * @throws Exception thrown if any exception while killing the job
    */
   void kill(RuntimeJobId runtimeJobId) throws Exception;
+
+  /**
+   * This method is responsible to perform clean up for runtime manager.
+   */
+  void destroy();
 }
