@@ -17,8 +17,8 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.base.Joiner;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
+import com.google.common.collect.Multimap;
+import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -48,20 +48,27 @@ import javax.net.ssl.HttpsURLConnection;
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
-  private final Supplier<EndpointStrategy> endpointStrategySupplier;
+  private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
+  private final RemoteAuthenticator authenticator;
 
-  public RemoteClient(final DiscoveryServiceClient discoveryClient, final String discoverableServiceName,
+  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
                       HttpRequestConfig httpRequestConfig, String basePath) {
+    this(discoveryClient, discoverableServiceName, httpRequestConfig, basePath, null);
+  }
+
+  public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
+                      HttpRequestConfig httpRequestConfig, String basePath,
+                      @Nullable RemoteAuthenticator authenticator) {
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
     // Use a supplier to delay the discovery until the first time it is being used.
-    this.endpointStrategySupplier = Suppliers.memoize(
-      () -> new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName)));
+    this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
+    this.authenticator = authenticator == null ? RemoteAuthenticator.getDefaultAuthenticator() : authenticator;
   }
 
   /**
@@ -87,6 +94,17 @@ public class RemoteClient {
    *                                     was a 503
    */
   public HttpResponse execute(HttpRequest request) throws IOException {
+    // Add Authorization header if needed
+    if (authenticator != null) {
+      Multimap<String, String> headers = request.getHeaders();
+      if (headers == null || headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+        request = HttpRequest.builder(request)
+          .addHeader(HttpHeaders.AUTHORIZATION,
+                     String.format("%s %s", authenticator.getType(), authenticator.getCredentials()))
+          .build();
+      }
+    }
+
     try {
       HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
       switch (response.getResponseCode()) {
@@ -114,6 +132,11 @@ public class RemoteClient {
     if (EnumSet.of(HttpMethod.POST, HttpMethod.PUT).contains(method)) {
       urlConn.setDoOutput(true);
     }
+    if (authenticator != null) {
+      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
+                                 String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
+    }
+
     urlConn.setRequestMethod(method.name());
     return urlConn;
   }
@@ -126,7 +149,7 @@ public class RemoteClient {
    * @throws ServiceUnavailableException if the service could not be discovered
    */
   public URL resolve(String resource) {
-    Discoverable discoverable = endpointStrategySupplier.get().pick(1L, TimeUnit.SECONDS);
+    Discoverable discoverable = endpointStrategy.pick(1L, TimeUnit.SECONDS);
     if (discoverable == null) {
       throw new ServiceUnavailableException(discoverableServiceName);
     }

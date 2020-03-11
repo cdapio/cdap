@@ -22,10 +22,9 @@ import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import java.util.Map;
-
-import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Constants used by different systems are all defined here.
@@ -122,7 +121,7 @@ public final class Constants {
     public static final String EXTERNAL_AUTHENTICATION = "external.authentication";
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String MESSAGING_SERVICE = "messaging.service";
-    public static final String RUNTIME_HTTP = "runtime.http";
+    public static final String RUNTIME = "runtime";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
@@ -293,7 +292,7 @@ public final class Constants {
     /**
      * Annotation for binding remote execution twill service
      */
-    @Retention(RUNTIME)
+    @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
     @BindingAnnotation
     public @interface RemoteExecution { }
@@ -303,7 +302,7 @@ public final class Constants {
      * It is needed so that we can have different bindings in different private modules,
      * without affecting/affected by unannotated bindings in the public space.
      */
-    @Retention(RUNTIME)
+    @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
     @BindingAnnotation
     public @interface ProgramRunner { }
@@ -311,7 +310,7 @@ public final class Constants {
     /**
      * Annotation for binding {@link KeyStore} that is used for storing encryption keys.
      */
-    @Retention(RUNTIME)
+    @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
     @BindingAnnotation
     public @interface KeyStore { }
@@ -319,7 +318,7 @@ public final class Constants {
     /**
      * Annotation for binding {@link KeyStore} that for certificate verification.
      */
-    @Retention(RUNTIME)
+    @Retention(RetentionPolicy.RUNTIME)
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
     @BindingAnnotation
     public @interface TrustStore { }
@@ -493,7 +492,7 @@ public final class Constants {
       /**
        * Annotation for binding default dataset modules for the dataset service
        */
-      @Retention(RUNTIME)
+      @Retention(RetentionPolicy.RUNTIME)
       @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
       @BindingAnnotation
       public @interface DefaultDatasetModules { }
@@ -863,6 +862,9 @@ public final class Constants {
     public static final String GRACEFUL_SHUTDOWN_MS = "app.program.runtime.monitor.graceful.shutdown.ms";
     public static final String THREADS = "app.program.runtime.monitor.threads";
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
+
+    public static final String BIND_ADDRESS = "app.program.runtime.monitor.server.bind.address";
+    public static final String BIND_PORT = "app.program.runtime.monitor.server.bind.port";
 
     // Configuration keys for the runtime monitor server
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";

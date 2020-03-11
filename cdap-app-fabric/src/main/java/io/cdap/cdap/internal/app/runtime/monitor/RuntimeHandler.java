@@ -21,7 +21,9 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
@@ -54,15 +56,16 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 
 /**
- * The http handler for handling runtime requests
+ * The http handler for handling runtime requests from the program runtime.
  */
-@Path("/v2/runtime/namespaces/{namespace}")
+@Path(Constants.Gateway.INTERNAL_API_VERSION_3 +
+  "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
 public class RuntimeHandler extends AbstractHttpHandler {
 
   private final MessagingContext messagingContext;
   private final RuntimeRequestValidator requestValidator;
 
-  RuntimeHandler(RuntimeRequestValidator requestValidator, MessagingContext messagingContext) {
+  RuntimeHandler(MessagingContext messagingContext, RuntimeRequestValidator requestValidator) {
     this.requestValidator = requestValidator;
     this.messagingContext = messagingContext;
   }
@@ -85,7 +88,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
    * Handles call for writing to TMS from the program runtime for a given program run. The POST body is an
    * avro array of bytes.
    */
-  @Path("/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}/topics/{topic}")
+  @Path("/topics/{topic}")
   @POST
   public BodyConsumer writeMessages(HttpRequest request, HttpResponder responder,
                                     @PathParam("namespace") String namespace,
@@ -94,13 +97,14 @@ public class RuntimeHandler extends AbstractHttpHandler {
                                     @PathParam("program-type") String programType,
                                     @PathParam("program") String program,
                                     @PathParam("run") String run,
-                                    @PathParam("topic") String topic) throws BadRequestException {
+                                    @PathParam("topic") String topic) throws Exception {
 
     if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       throw new BadRequestException("Only avro/binary content type is supported.");
     }
 
-    ProgramRunId programRunId = new ProgramRunId(namespace, app,
+    ApplicationId appId = new NamespaceId(namespace).app(app, version);
+    ProgramRunId programRunId = new ProgramRunId(appId,
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
     requestValidator.validate(programRunId, request);

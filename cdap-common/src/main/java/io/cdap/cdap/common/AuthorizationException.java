@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,29 +17,28 @@
 package io.cdap.cdap.common;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
-import javax.annotation.Nullable;
+import java.net.HttpURLConnection;
 
 /**
- * Similar to Exception, but responds with a custom error code.
+ * An exception representing authorzation failure.
  */
-public class ServiceException extends RuntimeException implements HttpErrorStatusProvider {
+public class AuthorizationException extends Exception implements HttpErrorStatusProvider {
 
-  private final HttpResponseStatus status;
-
-  public ServiceException(String message, @Nullable Throwable cause, HttpResponseStatus status) {
-    super(message, cause);
-    this.status = status;
+  public AuthorizationException(String message) {
+    super(message);
   }
 
-  public ServiceException(@Nullable Throwable cause, HttpResponseStatus status) {
+  public AuthorizationException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public AuthorizationException(Throwable cause) {
     super(cause);
-    this.status = status;
   }
 
   @Override
   public int getStatusCode() {
-    return status.code();
+    return HttpURLConnection.HTTP_UNAUTHORIZED;
   }
 }

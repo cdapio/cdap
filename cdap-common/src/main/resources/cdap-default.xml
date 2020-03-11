@@ -2685,6 +2685,22 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.server.bind.address</name>
+    <value>0.0.0.0</value>
+    <description>
+      The address for the runtime monitor server to bind to.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.server.bind.port</name>
+    <value>11016</value>
+    <description>
+      The port the runtime monitor server to bind to.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.server.info.file</name>
     <value>runtime.monitor.server.info</value>
     <description>
