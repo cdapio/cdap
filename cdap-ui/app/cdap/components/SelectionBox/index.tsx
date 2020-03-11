@@ -63,54 +63,48 @@ export default function SelectionBox(props: ISelectionBoxProps) {
     );
   }, []);
 
-  React.useEffect(
-    () => {
-      if (!selection) {
-        return;
-      }
-      if (toggleSelection) {
-        selection.enable();
-      } else {
-        selection.disable();
-      }
-    },
-    [toggleSelection]
-  );
+  React.useEffect(() => {
+    if (!selection) {
+      return;
+    }
+    if (toggleSelection) {
+      selection.enable();
+    } else {
+      selection.disable();
+    }
+  }, [toggleSelection]);
 
-  React.useEffect(
-    () => {
-      if (!selection) {
-        return;
+  React.useEffect(() => {
+    if (!selection) {
+      return;
+    }
+
+    selection.on('start', () => {
+      if (onSelectionStart) {
+        onSelectionStart();
       }
+    });
+    selection.on('move', ({ selected, changed: { added, removed } }) => {
+      const selectedNodes = [];
+      for (const el of selected) {
+        selectedNodes.push(el.id);
+      }
+      if (onSelectionMove && (added.length > 0 || removed.length > 0)) {
+        onSelectionMove({ selected: selectedNodes });
+      }
+    });
+    selection.on('stop', () => {
+      if (onSelectionEnd) {
+        onSelectionEnd();
+      }
+    });
 
-      selection.on('start', () => {
-        if (onSelectionStart) {
-          onSelectionStart();
-        }
-      });
-      selection.on('move', ({ selected, changed: { added, removed } }) => {
-        const selectedNodes = [];
-        for (const el of selected) {
-          selectedNodes.push(el.id);
-        }
-        if (onSelectionMove && (added.length > 0 || removed.length > 0)) {
-          onSelectionMove({ selected: selectedNodes });
-        }
-      });
-      selection.on('stop', () => {
-        if (onSelectionEnd) {
-          onSelectionEnd();
-        }
-      });
-
-      return () => {
-        if (selection) {
-          selection.destroy();
-        }
-      };
-    },
-    [selection]
-  );
+    return () => {
+      if (selection) {
+        selection.destroy();
+      }
+    };
+  }, [selection]);
   return null;
 }
 

@@ -17,7 +17,6 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { MarkdownWithStyles } from 'components/Markdown';
-import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
 
@@ -29,19 +28,28 @@ const styles = (): StyleRules => {
   };
 };
 
-const DocumentationView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
-  sourcePluginInfo,
-}) => {
+interface IDocumentationProps extends WithStyles<typeof styles> {
+  pluginInfo: {
+    name: string;
+    type: string;
+    artifact: {
+      name: string;
+      version: string;
+      scope: string;
+    };
+  };
+}
+
+const DocumentationView: React.FC<IDocumentationProps> = ({ classes, pluginInfo }) => {
   const [docs, setDocs] = React.useState('');
 
   React.useEffect(() => {
     const params = {
       namespace: getCurrentNamespace(),
-      artifactName: sourcePluginInfo.artifact.name,
-      artifactVersion: sourcePluginInfo.artifact.version,
-      scope: sourcePluginInfo.artifact.scope,
-      keys: `doc.${sourcePluginInfo.name}-${sourcePluginInfo.type}`,
+      artifactName: pluginInfo.artifact.name,
+      artifactVersion: pluginInfo.artifact.version,
+      scope: pluginInfo.artifact.scope,
+      keys: `doc.${pluginInfo.name}-${pluginInfo.type}`,
     };
 
     MyReplicatorApi.fetchArtifactProperties(params).subscribe((res) => {
@@ -56,6 +64,5 @@ const DocumentationView: React.FC<ICreateContext & WithStyles<typeof styles>> = 
   );
 };
 
-const StyledDocumentation = withStyles(styles)(DocumentationView);
-const Documentation = createContextConnect(StyledDocumentation);
+const Documentation = withStyles(styles)(DocumentationView);
 export default Documentation;
