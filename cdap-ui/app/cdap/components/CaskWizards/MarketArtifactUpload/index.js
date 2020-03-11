@@ -21,6 +21,7 @@ import ArtifactUploadWizard from 'components/CaskWizards/ArtifactUpload';
 import ArtifactUploadStore from 'services/WizardStores/ArtifactUpload/ArtifactUploadStore';
 import ArtifactUploadActions from 'services/WizardStores/ArtifactUpload/ArtifactUploadActions';
 import { MyMarketApi } from 'api/market';
+import MarketStore from 'components/Market/store/market-store';
 import find from 'lodash/find';
 import T from 'i18n-react';
 
@@ -28,9 +29,11 @@ export default function MarketArtifactUploadWizard({ input, onClose, isOpen, dis
   const args = input.action.arguments;
   let config = find(args, { name: 'config' });
   input.headerLabel = T.translate('features.Wizard.ArtifactUpload.headerlabel');
+  const marketHost = MarketStore.getState().selectedMarketHost;
   let params = {
     entityName: input.package.name,
     entityVersion: input.package.version,
+    marketHost,
     filename: config.value,
   };
 

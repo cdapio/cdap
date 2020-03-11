@@ -64,9 +64,11 @@ export default class MarketPlaceEntity extends Component {
     };
   }
   fetchEntityDetail(displayCTA = true) {
+    const marketHost = MarketStore.getState().selectedMarketHost;
     MyMarketApi.get({
       packageName: this.props.entity.name,
       version: this.props.entity.version,
+      marketHost,
     }).subscribe(
       (res) => {
         this.setState({ entityDetail: res });
@@ -198,6 +200,7 @@ export default class MarketPlaceEntity extends Component {
 
     const getRightCard = () => {
       let beta = classnames('package-icon-container', { beta: this.props.entity.beta });
+      const marketHost = MarketStore.getState().selectedMarketHost;
 
       return !this.state.expandedMode ? (
         <Card
@@ -214,7 +217,7 @@ export default class MarketPlaceEntity extends Component {
               <span className={classnames('fa', this.state.logoIcon)} />
             ) : (
               <img
-                src={MyMarketApi.getIcon(this.props.entity)}
+                src={MyMarketApi.getIcon(this.props.entity, marketHost)}
                 onError={this.imageError.bind(this)}
               />
             )}
@@ -241,7 +244,7 @@ export default class MarketPlaceEntity extends Component {
                 <span className={classnames('fa', this.state.logoIcon)} />
               ) : (
                 <img
-                  src={MyMarketApi.getIcon(this.props.entity)}
+                  src={MyMarketApi.getIcon(this.props.entity, marketHost)}
                   onError={this.imageError.bind(this)}
                 />
               )}

@@ -36,10 +36,18 @@ function setError() {
   });
 }
 
+function setSelectedMarketHost(host) {
+  MarketStore.dispatch({
+    type: 'SET_SELECTED_MARKET_HOST',
+    payload: host,
+  });
+}
+
 const MarketAction = {
   setList,
   setFilter,
   setError,
+  setSelectedMarketHost,
 };
 
 export default MarketAction;

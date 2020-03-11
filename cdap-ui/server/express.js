@@ -18,7 +18,7 @@
 import { ping } from 'server/config/router-check';
 import { extractUISettings } from 'server/config/parser';
 import q from 'q';
-import { constructUrl, REQUEST_ORIGIN_MARKET } from 'server/url-helper';
+import { constructUrl, isVerifiedMarketHost, getMarketUrls, REQUEST_ORIGIN_MARKET } from 'server/url-helper';
 import url from 'url';
 import csp from 'helmet-csp';
 import proxy from 'express-http-proxy';
@@ -116,8 +116,11 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   app.use(frameguard({ action: 'sameorigin' }));
 
   if (!isModeDevelopment()) {
-    let marketUrl = url.parse(cdapConfig['market.base.url']);
-    let imgsrc = `${marketUrl.protocol}//${marketUrl.host}`;
+    const imgSrcs = getMarketUrls(cdapConfig)
+        .map(urlString => url.parse(urlString))
+        .map(marketUrl => `${marketUrl.protocol}//${marketUrl.host}`)
+        .join(' ');
+
     /**
      * Adding nonce to every response pipe.
      */
@@ -128,7 +131,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     app.use(
       csp({
         directives: {
-          imgSrc: [`'self' data: ${imgsrc}`],
+          imgSrc: [`'self' data: ${imgSrcs}`],
           scriptSrc: [
             (req, res) => `'nonce-${res.locals.nonce}'`,
             `'unsafe-inline'`,
@@ -169,7 +172,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         previewEnabled: cdapConfig['enable.preview'] === 'true',
         defaultCheckpointDir: cdapConfig['data.streams.default.checkpoint.directory'] || false,
       },
-      marketUrl: cdapConfig['market.base.url'],
+      marketUrls: getMarketUrls(cdapConfig),
       securityEnabled: authAddress.enabled,
       isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV,
@@ -229,6 +232,9 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         !sessionToken.validateToken(req.headers['session-token'], cdapConfig, log, authToken))
     ) {
       return res.status(500).send('Unable to validate session');
+    }
+    if (!isVerifiedMarketHost(cdapConfig, sourceLink)) {
+      return res.status(403).send('Invalid source link');
     }
     sourceLink = constructUrl(cdapConfig, sourceLink, REQUEST_ORIGIN_MARKET);
     targetLink = constructUrl(cdapConfig, targetLink);

@@ -17,8 +17,8 @@ import { MyMarketApi } from 'api/market';
 import PublishPipelineStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
 import PublishPipelineActions from 'services/WizardStores/PublishPipeline/PublishPipelineActions';
 
-const fetchPipelineConfig = ({ entityName, entityVersion, filename }) => {
-  return MyMarketApi.getSampleData({ entityName, entityVersion, filename }).subscribe((res) => {
+const fetchPipelineConfig = ({ entityName, entityVersion, filename, marketHost }) => {
+  return MyMarketApi.getSampleData({ entityName, entityVersion, filename, marketHost }).subscribe((res) => {
     PublishPipelineStore.dispatch({
       type: PublishPipelineActions.setPipelineConfig,
       payload: {

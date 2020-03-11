@@ -16,6 +16,7 @@
 import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
+import MarketStore from 'components/Market/store/market-store';
 import WizardModal from 'components/WizardModal';
 import Wizard from 'components/Wizard';
 import PublishPipelineWizardStore from 'services/WizardStores/PublishPipeline/PublishPipelineStore';
@@ -48,9 +49,11 @@ export default class PublishPipelineWizard extends Component {
   componentWillMount() {
     let action = this.props.input.action;
     let filename = head(action.arguments.filter((arg) => arg.name === 'config')).value;
+    const marketHost = MarketStore.getState().selectedMarketHost;
     PublishPipelineActionCreator.fetchPipelineConfig({
       entityName: this.props.input.package.name,
       entityVersion: this.props.input.package.version,
+      marketHost,
       filename,
     });
   }

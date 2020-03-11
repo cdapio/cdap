@@ -18,7 +18,7 @@
 import request from 'request';
 import fs from 'fs';
 import log4js from 'log4js';
-import * as urlHelper from 'server/url-helper';
+import { REQUEST_ORIGIN_ROUTER, REQUEST_ORIGIN_MARKET, constructUrl, deconstructUrl, isVerifiedMarketHost} from 'server/url-helper';
 import { extractConfig } from 'server/config/parser';
 import * as sessionToken from 'server/token';
 
@@ -239,7 +239,7 @@ function emitResponse(resource, error, response, body) {
     );
 
     let newResource = Object.assign({}, resource, {
-      url: urlHelper.deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
+      url: deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
     });
     this.connection.write(
       JSON.stringify(
@@ -267,7 +267,7 @@ function emitResponse(resource, error, response, body) {
         ')'
     );
     let newResource = Object.assign({}, resource, {
-      url: urlHelper.deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
+      url: deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
     });
     log.debug('[RESPONSE]: (id: ' + newResource.id + ', url: ' + newResource.url + ')');
     this.connection.write(
@@ -291,10 +291,18 @@ function onSocketData(message) {
   try {
     message = JSON.parse(message);
     var r = message.resource;
-    r.url = urlHelper.constructUrl(
+    // early out if market place url is invalid. The server won't attempt to request the specified url.
+    if (r.requestOrigin === REQUEST_ORIGIN_MARKET && !isVerifiedMarketHost(this.cdapConfig, r.url)) {
+        log.debug('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
+        const invalidMarketRequestError = new Error('invalid market request');
+        emitResponse.call(this, r, invalidMarketRequestError, {statusCode: 403, body: invalidMarketRequestError.message});
+        log.error('[ERROR]: (url: ' + r.url + ') ' + invalidMarketRequestError.message);
+        return;
+    }
+    r.url = constructUrl(
       this.cdapConfig,
       r.url,
-      r.requestOrigin || urlHelper.REQUEST_ORIGIN_ROUTER
+      r.requestOrigin || REQUEST_ORIGIN_ROUTER
     );
     switch (message.action) {
       case 'template-config':
