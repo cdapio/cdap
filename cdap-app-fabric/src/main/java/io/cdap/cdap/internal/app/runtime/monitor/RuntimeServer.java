@@ -53,10 +53,12 @@ public class RuntimeServer extends AbstractIdleService {
   @Inject
   RuntimeServer(CConfiguration cConf, RuntimeRequestValidator requestValidator,
                 DiscoveryService discoveryService, DiscoveryServiceClient discoveryServiceClient,
-                MessagingService messagingService, MetricsCollectionService metricsCollectionService) {
+                MessagingService messagingService, MetricsCollectionService metricsCollectionService,
+                RemoteExecutionLogProcessor logProcessor) {
     this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(new PingHandler(),
-                       new RuntimeHandler(new MultiThreadMessagingContext(messagingService), requestValidator),
+                       new RuntimeHandler(cConf, new MultiThreadMessagingContext(messagingService),
+                                          logProcessor, requestValidator),
                        new RuntimeServiceRoutingHandler(discoveryServiceClient, requestValidator))
       .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
