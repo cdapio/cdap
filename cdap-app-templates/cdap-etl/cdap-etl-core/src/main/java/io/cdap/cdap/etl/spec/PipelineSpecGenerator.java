@@ -59,6 +59,8 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -76,6 +78,7 @@ import java.util.Set;
  * @param <P> the pipeline specification generated from the config
  */
 public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends PipelineSpec> {
+  private static final Logger LOG = LoggerFactory.getLogger(PipelineSpecGenerator.class);
   private static final Set<String> VALID_ERROR_INPUTS = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
   protected final PluginConfigurer pluginConfigurer;
@@ -355,9 +358,11 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       // Call to usePlugin may throw IllegalArgumentException if hte plugin with the same id is already deployed.
       // This would mean there is a bug in the app and this can not be fixed by user. That is why it is not handled as
       // a ValidationFailure.
+      LOG.debug("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin start");
       plugin = pluginConfigurer.usePlugin(type, pluginName, stageName, etlPlugin.getPluginProperties(), pluginSelector);
+      LOG.debug("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin end");
     } catch (InvalidPluginConfigException e) {
-      System.out.println("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin exception");
+      LOG.debug("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin exception");
       e.printStackTrace();
       int numFailures = 0;
       for (String missingProperty : e.getMissingProperties()) {
@@ -376,7 +381,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         collector.addFailure(e.getMessage(), null);
       }
     } catch (Exception e) {
-      System.out.println("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin exception");
+      LOG.debug("wyzhang: PipelineSpecGenerator::getPlugin() usePlugin exception");
       e.printStackTrace();
       // TODO: Catch specific exceptions when CDAP-15744 is fixed
       collector.addFailure(e.getMessage(), null).withStacktrace(e.getStackTrace());

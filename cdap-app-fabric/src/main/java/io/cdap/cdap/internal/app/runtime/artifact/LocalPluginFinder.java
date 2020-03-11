@@ -28,6 +28,8 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.apache.twill.filesystem.Location;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.Map;
@@ -36,7 +38,7 @@ import java.util.Map;
  * Implementation of {@link PluginFinder} that uses {@link ArtifactRepository} directly.
  */
 public class LocalPluginFinder implements PluginFinder, ArtifactFinder {
-
+  private static final Logger LOG = LoggerFactory.getLogger(LocalPluginFinder.class);
   private final ArtifactRepository artifactRepository;
 
   @Inject
@@ -50,6 +52,7 @@ public class LocalPluginFinder implements PluginFinder, ArtifactFinder {
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
     throws PluginNotExistsException {
+    LOG.debug("wyzhang: LocalPluginFinder::findPlugin start");
     try {
       return artifactRepository.getReader().findPlugin(pluginNamespaceId,
                                                  Id.Artifact.fromEntityId(parentArtifactId),

@@ -32,6 +32,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.net.www.protocol.http.HttpURLConnection;
 
 import java.io.IOException;
@@ -42,6 +44,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepositoryReader.class);
   public static final String LOCATION_FACTORY = "RemoteArtifactRepositoryReaderLocationFactory";
 
   private static final Gson GSON = new GsonBuilder()
@@ -79,9 +82,11 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(
     NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName, PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() start");
     try {
         List<PluginInfo> infos = getPlugins(namespace, artifactId, pluginType, pluginName);
         if (infos.isEmpty()) {
+          LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() returned new PluginNotExistsException");
           throw new PluginNotExistsException(namespace, pluginType, pluginName);
         }
 
@@ -99,10 +104,12 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
 
         Map.Entry<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> selected = selector.select(plugins);
         if (selected == null) {
+          LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() returned new PluginNotExistsException");
           throw new PluginNotExistsException(namespace, pluginType, pluginName);
         }
 
         Location artifactLocation = getArtifactLocation(Artifacts.toArtifactId(namespace, selected.getKey()));
+        LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() returned something");
         return Maps.immutableEntry(new ArtifactDescriptor(selected.getKey(), artifactLocation), selected.getValue());
     } catch (PluginNotExistsException e) {
       throw e;
