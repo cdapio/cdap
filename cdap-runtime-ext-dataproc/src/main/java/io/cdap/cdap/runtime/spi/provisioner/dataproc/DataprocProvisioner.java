@@ -16,9 +16,11 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -29,6 +31,9 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
+import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
+import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import org.slf4j.Logger;
@@ -62,6 +67,7 @@ public class DataprocProvisioner implements Provisioner {
 
   // Key which is set to true if the instance only have private ip assigned to it else false
   private static final String PRIVATE_INSTANCE = "privateInstance";
+  private static final String BUCKET = "bucket";
 
   // keys and values cannot be longer than 63 characters
   // keys and values can only contain lowercase letters, numbers, underscores, and dashes
@@ -333,5 +339,33 @@ public class DataprocProvisioner implements Provisioner {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
     return CLUSTER_PREFIX + cleanedAppName + "-" + programRun.getRun();
+  }
+
+  /**
+   * Provides implementation of {@link RuntimeJobManager}.
+   */
+  @Override
+  public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), null);
+    String clusterName = getClusterName(context.getProgramRun());
+    String projectId = conf.getProjectId();
+    String region = conf.getRegion();
+    String sparkCompat = context.getSparkCompat().getCompat();
+    String bucket = conf.getGcsBucket();
+    if (Strings.isNullOrEmpty(bucket)) {
+      bucket = systemContext.getProperties().get(BUCKET);
+    }
+    Map<String, String> systemLabels = getSystemLabels(systemContext);
+    GoogleCredentials dataprocCredentials;
+    try {
+      dataprocCredentials = conf.getDataprocCredentials();
+    } catch (Exception e) {
+      throw new RuntimeException("Error while getting credentials for dataproc. ", e);
+    }
+
+    return Optional.of(
+      new DataprocRuntimeJobManager(new DataprocClusterInfo(clusterName, dataprocCredentials,
+                                                            DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
+                                                            projectId, region, bucket, systemLabels, sparkCompat)));
   }
 }

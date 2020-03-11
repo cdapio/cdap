@@ -48,28 +48,31 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
 
   private static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
   private static final String ZK_QUORUM = "zookeeper.quorum";
+  private static final String APP_SPARK_COMPAT = "app.program.spark.compat";
   private InMemoryZKServer zkServer;
   private TwillRunnerService yarnTwillRunnerService;
   private LocationFactory locationFactory;
-  private String connectionStr;
+  private Map<String, String> properties;
 
   /**
    * This method initializes the dataproc runtime environment.
    *
+   * @param sparkCompat spark compat version supported by dataproc cluster
    * @throws Exception any exception while initializing the environment.
    */
-  public void initialize() throws Exception {
+  public void initialize(String sparkCompat) throws Exception {
     System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
     zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
 
     InetSocketAddress resolved = resolve(zkServer.getLocalAddress());
-    connectionStr = resolved.getHostString() + ":" + resolved.getPort();
+    String connectionStr = resolved.getHostString() + ":" + resolved.getPort();
 
     YarnConfiguration conf = new YarnConfiguration();
     locationFactory = new FileContextLocationFactory(conf);
     yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
     yarnTwillRunnerService.start();
+    properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
   }
 
   @Override
@@ -84,7 +87,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
 
   @Override
   public Map<String, String> getProperties() {
-    return ImmutableMap.of(ZK_QUORUM, connectionStr);
+    return properties;
   }
 
   /**
