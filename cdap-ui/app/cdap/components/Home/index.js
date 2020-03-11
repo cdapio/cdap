@@ -188,7 +188,7 @@ export default class Home extends Component {
             exact
             path="/ns/:namespace/lab-experiment-test"
             render={(props) => {
-              if (!window.Cypress) {
+              if (!window.parent.Cypress) {
                 return <Page404 {...props} />;
               }
               const LabExperimentTestComp = Loadable({

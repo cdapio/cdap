@@ -32,7 +32,7 @@ import 'rxjs/add/operator/combineLatest';
 import 'rxjs/add/operator/mergeMap';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/debounceTime';
-import { WINDOW_ON_BLUR, WINDOW_ON_FOCUS } from 'services/WindowManager';
+import WindowManager, { WINDOW_ON_BLUR, WINDOW_ON_FOCUS } from 'services/WindowManager';
 import { objectQuery } from 'services/helpers';
 import ifvisible from 'ifvisible.js';
 
@@ -253,7 +253,7 @@ export default class Datasource {
     const interval = objectQuery(this.bindings, resourceId, 'resource', 'intervalTime' );
     const intervalTimer = setTimeout(() => {
       const resource = objectQuery(this.bindings, resourceId, 'resource');
-      if (!resource || !ifvisible.now('active')) {
+      if (!resource || !WindowManager.isWindowActive()) {
         clearTimeout(intervalTimer);
         return;
       }

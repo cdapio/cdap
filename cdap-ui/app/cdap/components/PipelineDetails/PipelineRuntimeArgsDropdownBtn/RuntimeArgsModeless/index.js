@@ -113,7 +113,7 @@ class RuntimeArgsModeless extends PureComponent {
           onClick={this.saveRuntimeArgsAndRun}
           disabled={this.state.saving}
           label="Run"
-          dataCy="run-deployed-pipeline-modal-btn"
+          data-cy="run-deployed-pipeline-modal-btn"
         />
       );
     };

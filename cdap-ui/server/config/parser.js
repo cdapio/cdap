@@ -27,11 +27,11 @@ const log = log4js.getLogger('default');
 
 export function extractUISettings() {
   try {
-    if (__non_webpack_require__.resolve('./ui-settings.json')) {
-      return __non_webpack_require__('./ui-settings.json') || {};
+    if (__non_webpack_require__.resolve('./server/config/ui-settings.json')) {
+      return __non_webpack_require__('./server/config/ui-settings.json') || {};
     }
   } catch (e) {
-    log.info('Unable to find UI settings json file.');
+    log.info('Unable to find UI settings json file.: ' + e + ' : ' + __dirname);
     return {};
   }
 }

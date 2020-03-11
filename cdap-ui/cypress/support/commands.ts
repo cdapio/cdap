@@ -354,7 +354,8 @@ Cypress.Commands.add('select_from_to', (from: INodeIdentifier, to: INodeIdentifi
           clientX: toX + toWidth + 10,
           clientY: toY + toHeight + 10,
         })
-        .trigger('mouseup', { force: true });
+        .trigger('mouseup', { force: true })
+        .trigger('click', { force: true });
     });
   });
 });
