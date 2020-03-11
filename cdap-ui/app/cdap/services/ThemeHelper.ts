@@ -420,6 +420,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       showCreateProfile: true,
       showReloadSystemArtifacts: true,
       showSqlPipeline: true,
+      showCDC: false,
     };
     if (isNilOrEmpty(featuresJson)) {
       return features;
