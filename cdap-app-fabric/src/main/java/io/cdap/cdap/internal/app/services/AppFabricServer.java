@@ -131,7 +131,6 @@ public class AppFabricServer extends AbstractIdleService {
         provisioningService.start(),
         applicationLifecycleService.start(),
         bootstrapService.start(),
-        systemAppManagementService.start(),
         programRuntimeService.start(),
         programNotificationSubscriberService.start(),
         runRecordCorrectorService.start(),
