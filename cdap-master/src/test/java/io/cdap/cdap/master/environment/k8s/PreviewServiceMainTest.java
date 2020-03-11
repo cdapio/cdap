@@ -120,4 +120,69 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
                                                  Collections.singletonList(PreviewTestApp.TRACER_VAL)),
                         tracerData);
   }
+
+@Test
+  public void testPreviewService2() throws Exception {
+    // Deploy the app artifact
+    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, PreviewTestApp.class);
+
+    String artifactName = PreviewTestApp.class.getSimpleName();
+    String artifactVersion = "1.0.0-SNAPSHOT";
+
+    HttpRequestConfig requestConfig = new HttpRequestConfig(0, 0, false);
+    URL url = getRouterBaseURI().resolve(String.format("/v3/namespaces/default/artifacts/%s", artifactName)).toURL();
+    HttpResponse response = HttpRequests.execute(
+      HttpRequest.post(url)
+        .withBody((ContentProvider<? extends InputStream>) appJar::getInputStream)
+        .addHeader("Artifact-Version", artifactVersion)
+        .build(), requestConfig);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+
+    AppFabricServiceMain appFabricServiceMain = getServiceMainInstance(AppFabricServiceMain.class);
+    Injector injector = appFabricServiceMain.getInjector();
+
+    CConfiguration cconf = injector.getInstance(CConfiguration.class);
+    SConfiguration sconf = injector.getInstance(SConfiguration.class);
+
+    String localDataDir = cconf.get(Constants.CFG_LOCAL_DATA_DIR);
+    cconf.set(Constants.CFG_LOCAL_DATA_DIR, localDataDir + "/preview_data");
+    new StorageMain().createStorage(cconf);
+
+    // start preview service with the same data dir as app-fabric, so that the artifact info is still there.
+    runMain(cconf, sconf, PreviewServiceMain.class, AppFabricServiceMain.class.getSimpleName());
+
+    // Create a preview run
+    url = getRouterBaseURI().resolve("/v3/namespaces/default/previews").toURL();
+    ArtifactSummary artifactSummary = new ArtifactSummary(artifactName, artifactVersion);
+    PreviewConfig previewConfig = new PreviewConfig(PreviewTestApp.TestWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.emptyMap(), 2);
+    AppRequest appRequest = new AppRequest<>(artifactSummary, null, previewConfig);
+    response = HttpRequests.execute(HttpRequest.post(url).withBody(GSON.toJson(appRequest)).build(), requestConfig);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    ApplicationId previewId = GSON.fromJson(response.getResponseBodyAsString(), ApplicationId.class);
+
+    URL statusUrl = getRouterBaseURI()
+      .resolve(String.format("/v3/namespaces/default/previews/%s/status", previewId.getApplication())).toURL();
+    Tasks.waitFor(PreviewStatus.Status.COMPLETED, () -> {
+      HttpResponse statusResponse = HttpRequests.execute(HttpRequest.get(statusUrl).build(), requestConfig);
+      if (statusResponse.getResponseCode() != 200) {
+        return null;
+      }
+      PreviewStatus previewStatus = GSON.fromJson(statusResponse.getResponseBodyAsString(), PreviewStatus.class);
+      return previewStatus.getStatus();
+    }, 2, TimeUnit.MINUTES);
+
+    url = getRouterBaseURI()
+      .resolve(String.format("/v3/namespaces/default/previews/%s/tracers/%s",
+                             previewId.getApplication(), PreviewTestApp.TRACER_NAME)).toURL();
+    response = HttpRequests.execute(HttpRequest.get(url).build(), requestConfig);
+    Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
+    Map<String, List<String>> tracerData = GSON.fromJson(response.getResponseBodyAsString(),
+                                                         new TypeToken<Map<String, List<String>>>() {
+                                                         }.getType());
+    Assert.assertEquals(Collections.singletonMap(PreviewTestApp.TRACER_KEY,
+                                                 Collections.singletonList(PreviewTestApp.TRACER_VAL)),
+                        tracerData);
+  }
 }

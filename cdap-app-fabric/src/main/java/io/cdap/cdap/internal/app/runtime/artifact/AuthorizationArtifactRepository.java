@@ -67,15 +67,23 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
   private final ArtifactRepository delegate;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final ArtifactRepositoryReader artifactRepositoryReader;
 
   @Inject
   public AuthorizationArtifactRepository(@Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
-                                           ArtifactRepository artifactRepository,
+                                             ArtifactRepository artifactRepository,
                                          AuthorizationEnforcer authorizationEnforcer,
-                                         AuthenticationContext authenticationContext) {
+                                         AuthenticationContext authenticationContext,
+                                         ArtifactRepositoryReader artifactRepositoryReader) {
     this.delegate = artifactRepository;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.artifactRepositoryReader = artifactRepositoryReader;
+  }
+
+  @Override
+  public ArtifactRepositoryReader getReader() {
+    return artifactRepositoryReader;
   }
 
   @Override
@@ -125,6 +133,14 @@ public class AuthorizationArtifactRepository implements ArtifactRepository {
                                            authenticationContext.getPrincipal());
     }
     return delegate.getArtifact(artifactId);
+  }
+
+  @Override
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(NamespaceId namespace, Id.Artifact artifactId,
+                                                               String pluginType, String pluginName,
+                                                               PluginSelector selector)
+    throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+    return delegate.findPlugin(namespace, artifactId, pluginType, pluginName, selector);
   }
 
   @Override

@@ -95,9 +95,9 @@ public class ConfiguratorTest {
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository baseArtifactRepo = new DefaultArtifactRepository(conf, null, null,
                                                                         new DummyProgramRunnerFactory(),
-                                                                        new DefaultImpersonator(cConf, null));
+                                                                        new DefaultImpersonator(cConf, null), null);
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
-                                                                          authEnforcer, authenticationContext);
+                                                                          authEnforcer, authenticationContext, null);
 
 
     // Create a configurator that is testable. Provide it a application.
@@ -135,9 +135,9 @@ public class ConfiguratorTest {
     CConfiguration cConf = CConfiguration.create();
     ArtifactRepository baseArtifactRepo = new DefaultArtifactRepository(conf, null, null,
                                                                         new DummyProgramRunnerFactory(),
-                                                                        new DefaultImpersonator(cConf, null));
+                                                                        new DefaultImpersonator(cConf, null), null);
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
-                                                                          authEnforcer, authenticationContext);
+                                                                          authEnforcer, authenticationContext, null);
 
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
     // Create a configurator that is testable. Provide it an application.

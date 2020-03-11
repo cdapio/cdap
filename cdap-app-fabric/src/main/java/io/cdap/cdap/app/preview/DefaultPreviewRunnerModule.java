@@ -46,8 +46,10 @@ import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetailFetcher;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactDetailFetcher;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -76,7 +78,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
 
-  private final ArtifactRepository artifactRepository;
+//  private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -87,13 +89,12 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
   @VisibleForTesting
   @Inject
-  public DefaultPreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
+  public DefaultPreviewRunnerModule(ArtifactStore artifactStore,
                                     AuthorizerInstantiator authorizerInstantiator,
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                                     @Assisted PreviewRequest previewRequest) {
-    this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -105,8 +106,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
   @Override
   protected void configure() {
-    bind(ArtifactRepository.class).toInstance(artifactRepository);
-    expose(ArtifactRepository.class);
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);

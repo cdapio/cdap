@@ -97,6 +97,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     EntityImpersonator classLoaderImpersonator =
       new EntityImpersonator(artifactId, impersonator);
     System.out.println("wyzhang: LocalArtifactLoaderStage::process() create artifact loader start");
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() create artifact class loader " + artifactRepository.getClass().getName());
     ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactLocation,
                                                                                    classLoaderImpersonator);
     getContext().setProperty(LocalApplicationManager.ARTIFACT_CLASSLOADER_KEY, artifactClassLoader);

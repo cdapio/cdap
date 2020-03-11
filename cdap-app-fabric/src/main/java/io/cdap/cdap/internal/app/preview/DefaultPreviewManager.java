@@ -30,6 +30,7 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
+import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -57,7 +58,10 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleServiceForPreview;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
@@ -355,13 +359,27 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         }
       }),
       new ProvisionerModule(),
-      new AbstractModule() {
+      new PrivateModule() {
         @Override
         protected void configure() {
+          bind(LocationFactory.class).annotatedWith(
+            Names.named(RemoteArtifactRepositoryReader.LOCATION_FACTORY)).toInstance(locationFactory);
+          bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
           bind(ArtifactRepository.class)
             .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
             .to(DefaultArtifactRepository.class)
             .in(Scopes.SINGLETON);
+          expose(ArtifactRepository.class)
+            .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+          bind(ArtifactRepository.class)
+            .to(AuthorizationArtifactRepository.class)
+            .in(Scopes.SINGLETON);
+          expose(ArtifactRepository.class);
+        }
+      },
+      new AbstractModule() {
+        @Override
+        protected void configure() {
           bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
         }
 

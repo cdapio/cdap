@@ -204,12 +204,12 @@ public class PreviewManagerTest {
   private static final class MockPreviewRunnerModule extends DefaultPreviewRunnerModule {
 
     @Inject
-    MockPreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
+    MockPreviewRunnerModule(ArtifactStore artifactStore,
                             AuthorizerInstantiator authorizerInstantiator, AuthorizationEnforcer authorizationEnforcer,
                             PrivilegesManager privilegesManager, PreferencesService preferencesService,
                             ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                             @Assisted PreviewRequest previewRequest) {
-      super(artifactRepository, artifactStore, authorizerInstantiator, authorizationEnforcer,
+      super(artifactStore, authorizerInstantiator, authorizationEnforcer,
             privilegesManager, preferencesService, programRuntimeProviderLoader, previewRequest);
     }
 

@@ -52,6 +52,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.runtime.service.SimpleRuntimeInfo;
 import io.cdap.cdap.proto.InMemoryProgramLiveInfo;
@@ -103,18 +104,18 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   private final ReadWriteLock runtimeInfosLock;
   private final Table<ProgramType, RunId, RuntimeInfo> runtimeInfos;
   private final ProgramRunnerFactory programRunnerFactory;
-  private final ArtifactRepository noAuthArtifactRepository;
+  private final ArtifactRepository artifactRepository;
   private ProgramRunnerFactory remoteProgramRunnerFactory;
   private TwillRunnerService remoteTwillRunnerService;
 
   protected AbstractProgramRuntimeService(CConfiguration cConf,
                                           ProgramRunnerFactory programRunnerFactory,
-                                          ArtifactRepository noAuthArtifactRepository) {
+                                          ArtifactRepository artifactRepository) {
     this.cConf = cConf;
     this.runtimeInfosLock = new ReentrantReadWriteLock();
     this.runtimeInfos = HashBasedTable.create();
     this.programRunnerFactory = programRunnerFactory;
-    this.noAuthArtifactRepository = noAuthArtifactRepository;
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -191,7 +192,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
   }
 
   protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws Exception {
-    return noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+    return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
   }
 
   /**
@@ -290,7 +291,7 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
       try {
         ArtifactId artifactId = Artifacts.toArtifactId(programId.getNamespaceId(), plugin.getArtifactId());
-        copyArtifact(artifactId, noAuthArtifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
+        copyArtifact(artifactId, artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)), destFile);
       } catch (ArtifactNotFoundException e) {
         throw new IllegalArgumentException(String.format("Artifact %s could not be found", plugin.getArtifactId()), e);
       }

@@ -73,9 +73,11 @@ import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAd
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import io.cdap.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
@@ -309,7 +311,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         .to(DefaultArtifactRepository.class)
         .in(Scopes.SINGLETON);
       bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class).in(Scopes.SINGLETON);
+
       bind(ProfileService.class).in(Scopes.SINGLETON);
+      bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

@@ -95,13 +95,15 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   private final ArtifactConfigReader configReader;
   private final MetadataServiceClient metadataServiceClient;
   private final Impersonator impersonator;
+  private final ArtifactRepositoryReader artifactRepositoryReader;
 
   @VisibleForTesting
   @Inject
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
                                    MetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
-                                   Impersonator impersonator) {
+                                   Impersonator impersonator,
+                                   ArtifactRepositoryReader artifactRepositoryReader) {
     this.artifactStore = artifactStore;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
@@ -127,6 +129,12 @@ public class DefaultArtifactRepository implements ArtifactRepository {
     this.configReader = new ArtifactConfigReader();
     this.metadataServiceClient = metadataServiceClient;
     this.impersonator = impersonator;
+    this.artifactRepositoryReader = artifactRepositoryReader;
+  }
+
+  @Override
+  public ArtifactRepositoryReader getReader() {
+    return artifactRepositoryReader;
   }
 
   @Override
@@ -171,7 +179,14 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
-    return artifactStore.getArtifact(artifactId);
+    return artifactRepositoryReader.getArtifact(artifactId);
+  }
+
+  @Override
+  public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(
+    NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName, PluginSelector selector)
+    throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+    return artifactRepositoryReader.findPlugin(namespace, artifactId, pluginType, pluginName, selector);
   }
 
   @Override
@@ -231,6 +246,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
                                                                String pluginType, String pluginName,
                                                                PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
+    // TODO: replace with reader->()
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
       namespace, artifactRange, pluginType, pluginName, null, Integer.MAX_VALUE, ArtifactSortOrder.UNORDERED);
     return getPluginEntries(pluginClasses, selector,

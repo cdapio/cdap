@@ -51,10 +51,9 @@ public class LocalPluginFinder implements PluginFinder, ArtifactFinder {
                                                                PluginSelector selector)
     throws PluginNotExistsException {
     try {
-      ArtifactRange parentRange = new ArtifactRange(parentArtifactId.getNamespace(), parentArtifactId.getArtifact(),
-                                                    new ArtifactVersion(parentArtifactId.getVersion()), true,
-                                                    new ArtifactVersion(parentArtifactId.getVersion()), true);
-      return artifactRepository.findPlugin(pluginNamespaceId, parentRange, pluginType, pluginName, selector);
+      return artifactRepository.getReader().findPlugin(pluginNamespaceId,
+                                                 Id.Artifact.fromEntityId(parentArtifactId),
+                                                 pluginType, pluginName, selector);
     } catch (IOException | ArtifactNotFoundException e) {
       // If there is error accessing artifact store or if the parent artifact is missing, just propagate
       throw Throwables.propagate(e);
@@ -64,7 +63,7 @@ public class LocalPluginFinder implements PluginFinder, ArtifactFinder {
   @Override
   public Location getArtifactLocation(ArtifactId artifactId) throws ArtifactNotFoundException, IOException {
     try {
-      return artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId)).getDescriptor().getLocation();
+      return artifactRepository.getReader().getArtifact(Id.Artifact.fromEntityId(artifactId)).getDescriptor().getLocation();
     } catch (ArtifactNotFoundException | IOException e) {
       throw e;
     } catch (Exception e) {
