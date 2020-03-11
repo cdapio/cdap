@@ -27,6 +27,7 @@ import ConnectivityAssessment from 'components/Replicator/Create/Content/Assessm
 import FeaturesAssessment from 'components/Replicator/Create/Content/Assessment//FeaturesAssessment';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import Heading, { HeadingTypes } from 'components/Heading';
+import { extractErrorMessage } from 'components/Replicator/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -87,7 +88,7 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         setLoading(false);
       },
       (err) => {
-        setError(err);
+        setError(extractErrorMessage(err));
         setLoading(false);
       }
     );
@@ -102,7 +103,13 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
       <Heading type={HeadingTypes.h3} label="Assessment summary" />
 
       <If condition={error}>
-        <div className="text-danger">{JSON.stringify(error, null, 2)}</div>
+        <React.Fragment>
+          <br />
+          <div className="text-danger">
+            <Heading type={HeadingTypes.h5} label="Error" />
+            <span>{error}</span>
+          </div>
+        </React.Fragment>
       </If>
 
       <If condition={!loading && !error}>

@@ -27,7 +27,7 @@ const styles = (theme): StyleRules => {
       height: '70px',
       backgroundColor: theme.palette.grey[700],
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr 40%',
+      gridTemplateColumns: '1fr 1fr 550px',
       alignContent: 'center',
       paddingLeft: '40px',
       paddingRight: '40px',
