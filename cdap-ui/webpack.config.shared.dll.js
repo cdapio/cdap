@@ -67,7 +67,7 @@ var webpackConfig = {
       'classnames',
       'reactstrap',
       'i18n-react',
-      'react-cookie',
+      'universal-cookie',
       'whatwg-fetch',
       'react-vis',
       'clipboard',

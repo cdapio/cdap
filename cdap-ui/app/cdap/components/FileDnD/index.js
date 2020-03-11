@@ -16,18 +16,26 @@
 
 import PropTypes from 'prop-types';
 
-import React from 'react';
-import Dropzone from 'react-dropzone';
+import React, { useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
 require('./FileDnD.scss');
+import classnames from 'classnames';
 import T from 'i18n-react';
 
 export default function FileDnD({ file, onDropHandler, error, uploadLabel, clickLabel }) {
+  const onDrop = useCallback((acceptedFiles) => {
+    onDropHandler(acceptedFiles);
+  }, []);
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
+
   return (
-    <Dropzone
-      activeClassName="file-drag-container"
-      className="file-drop-container"
-      onDrop={onDropHandler}
+    <div
+      {...getRootProps({ 'data-cy': 'file-drop-zone' })}
+      className={classnames('file-drop-container', {
+        'file-drag-container': isDragActive,
+      })}
     >
+      <input {...getInputProps()} />
       <div className="file-metadata-container text-center">
         <i className="fa fa-upload fa-3x" />
         {file.name && file.name.length ? (
@@ -43,7 +51,7 @@ export default function FileDnD({ file, onDropHandler, error, uploadLabel, click
         )}
         {error ? <div className="text-danger">{error}</div> : null}
       </div>
-    </Dropzone>
+    </div>
   );
 }
 FileDnD.propTypes = {

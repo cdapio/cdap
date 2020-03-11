@@ -122,11 +122,6 @@
               </span>
             </th>
 
-            <th class="source source-header log-header"
-                ng-if="LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
-              Source
-            </th>
-
             <th class="message-header"
                 ng-if="LogViewer.configOptions.message && !LogViewer.hiddenColumns.message"
                 ng-class="{'expanded': LogViewer.isMessageExpanded }">
@@ -184,10 +179,6 @@
                 </span>
             </td>
 
-            <td class="source"
-                ng-if="!entry.stackTrace && LogViewer.configOptions.source && !LogViewer.hiddenColumns.source">
-                <span ng-bind="LogViewer.getEntrySource(entry)"></span>
-            </td>
             <td class="log-message"
                 ng-if="!entry.stackTrace && LogViewer.configOptions.message && !LogViewer.hiddenColumns.message">
               <span ng-bind-html="LogViewer.highlight(entry.log.message)"></span>

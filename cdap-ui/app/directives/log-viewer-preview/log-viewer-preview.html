@@ -111,12 +111,6 @@
                 </ul>
               </span>
             </th>
-
-            <th class="source source-header log-header"
-                ng-if="LogViewerPreview.configOptions.source && !LogViewerPreview.hiddenColumns.source">
-              Source
-            </th>
-
             <th class="message-header"
                 ng-if="LogViewerPreview.configOptions.message && !LogViewerPreview.hiddenColumns.message"
                 ng-class="{'expanded': LogViewerPreview.isMessageExpanded }">
@@ -172,11 +166,6 @@
                 <span class="display-level" ng-class="{ warning: entry.log.logLevel === LogViewerPreview.logEvents.WARN, error: entry.log.logLevel === LogViewerPreview.logEvents.ERROR }"
                       ng-bind="entry.log.logLevel">
                 </span>
-            </td>
-
-            <td class="source"
-                ng-if="!entry.stackTrace && LogViewerPreview.configOptions.source && !LogViewerPreview.hiddenColumns.source">
-                <span ng-bind="LogViewerPreview.getEntrySource(entry)"></span>
             </td>
             <td class="log-message"
                 ng-if="!entry.stackTrace && LogViewerPreview.configOptions.message && !LogViewerPreview.hiddenColumns.message">

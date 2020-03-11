@@ -107,6 +107,10 @@ declare global {
       upload_pipeline: (filename: string, selector: string) => Chainable<JQuery<HTMLElement>>;
 
       /**
+       * Generic file upload using react-dropzone
+       */
+      upload: (file: any, fileName: string, fileType: string) => Chainable<any>;
+      /**
        * Open plugin node property modal
        *
        * @nodeObj - NodeIdentifier object to identify the node in the canvas
