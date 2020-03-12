@@ -18,8 +18,7 @@ import { loginIfRequired, getArtifactsPoll } from '../helpers';
 import { dataCy } from '../helpers';
 
 let headers = {};
-const runtimeArgsPipeline = `runtime_args_pipeline_${Date.now()}`;
-const PIPELINE_RUN_TIMEOUT = 30000;
+const PIPELINE_RUN_TIMEOUT = 40000;
 const RUNTIME_ARGS_PREVIEW_SELECTOR = 'runtimeargs-preview';
 const RUNTIME_ARGS_DEPLOYED_SELECTOR = 'runtimeargs-deployed';
 const RUNTIME_ARGS_KEY_SELECTOR = 'runtimeargs-key';
@@ -31,7 +30,8 @@ const PREVIEW_SUCCESS_BANNER_MSG =
 const SINK_PATH_VAL = '/tmp/cdap-ui-integration-fixtures';
 const SOURCE_PATH_VAL = 'file:/tmp/cdap-ui-integration-fixtures/airports.csv';
 
-describe('Creating pipeline ', () => {
+/* Disabling preview tests for now because our E2E tests don't have preview enabled
+ describe('Creating pipeline with macros ', () => {
   before(() => {
     loginIfRequired().then(() => {
       cy.getCookie('CDAP_Auth_Token').then(cookie => {
@@ -49,11 +49,7 @@ describe('Creating pipeline ', () => {
     getArtifactsPoll(headers);
   });
 
-  after(() => {
-    cy.cleanup_pipelines(headers, runtimeArgsPipeline);
-  });
-
-  it('with macros should be successful', () => {
+  it('should be successful for preview', () => {
     // Go to Pipelines studio
     cy.visit('/pipelines/ns/default/studio');
     cy.url().should('include', '/studio');
@@ -191,8 +187,43 @@ describe('Creating pipeline ', () => {
       PREVIEW_SUCCESS_BANNER_MSG
     );
     cy.get(`${dataCy('valium-banner-hydrator')} button`).click();
+  });
+});
+ */
+describe('Deploying pipeline with temporary runtime arguments', () => {
+  const runtimeArgsPipeline = `runtime_args_pipeline_${Date.now()}`;
+  before(() => {
+    loginIfRequired().then(() => {
+      cy.getCookie('CDAP_Auth_Token').then(cookie => {
+        if (!cookie) {
+          return;
+        }
+        headers = {
+          Authorization: 'Bearer ' + cookie.value
+        };
+      });
+    });
+  });
 
-    cy.get(dataCy('preview-active-btn')).click();
+  beforeEach(() => {
+    getArtifactsPoll(headers);
+  });
+  after(() => {
+    cy.cleanup_pipelines(headers, runtimeArgsPipeline);
+  });
+
+  it('should be successful', () => {
+    // Go to Pipelines studio
+    cy.visit('/pipelines/ns/default/studio');
+    cy.url().should('include', '/studio');
+    cy.upload_pipeline(
+      'pipeline_with_macros.json',
+      '#pipeline-import-config-link > input[type="file"]'
+    ).then(subject => {
+      expect(subject.length).to.be.eq(1);
+    });
+  });
+  it('and running it should succeed.', () => {
     cy.get('.pipeline-name').click();
     cy.get('#pipeline-name-input')
       .clear()
@@ -200,10 +231,6 @@ describe('Creating pipeline ', () => {
       .type('{enter}');
     cy.get(dataCy('deploy-pipeline-btn')).click();
     cy.get(dataCy('Deployed')).should('exist');
-  });
-
-  it(', deploying and running it with temporary runtime arguments should work', () => {
-    // Deploying pipeline ang
     cy.get(dataCy('pipeline-run-btn')).click();
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
     cy.get(
@@ -304,10 +331,51 @@ describe('Creating pipeline ', () => {
     cy.get('[datacy="run-deployed-pipeline-modal-btn"]').click();
     cy.get(dataCy('Succeeded'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
   });
+});
 
-  it(', deploying and running it with saved arguments should work', () => {
+describe('Deploying pipeline with saved runtime arguments', () => {
+  const runtimeArgsPipeline = `runtime_args_pipeline_${Date.now()}`;
+  before(() => {
+    loginIfRequired().then(() => {
+      cy.getCookie('CDAP_Auth_Token').then(cookie => {
+        if (!cookie) {
+          return;
+        }
+        headers = {
+          Authorization: 'Bearer ' + cookie.value
+        };
+      });
+    });
+  });
+
+  beforeEach(() => {
+    getArtifactsPoll(headers);
+  });
+  after(() => {
+    // cy.cleanup_pipelines(headers, runtimeArgsPipeline);
+  });
+
+  it('should be successful', () => {
+    // Go to Pipelines studio
+    cy.visit('/pipelines/ns/default/studio');
+    cy.url().should('include', '/studio');
+    cy.upload_pipeline(
+      'pipeline_with_macros.json',
+      '#pipeline-import-config-link > input[type="file"]'
+    ).then(subject => {
+      expect(subject.length).to.be.eq(1);
+    });
+  });
+
+  it('and running it should succeed.', () => {
+    cy.get('.pipeline-name').click();
+    cy.get('#pipeline-name-input')
+      .clear()
+      .type(runtimeArgsPipeline)
+      .type('{enter}');
+    cy.get(dataCy('deploy-pipeline-btn')).click();
+    cy.get(dataCy('Deployed')).should('exist');
     cy.get(dataCy('pipeline-run-btn')).click();
-
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
     cy.get(
       `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
@@ -352,7 +420,6 @@ describe('Creating pipeline ', () => {
     ).type(SINK_PATH_VAL);
     cy.get('[datacy="run-deployed-pipeline-modal-btn"]').click();
     cy.get(dataCy('pipeline-run-btn')).click();
-    cy.get(dataCy('Running')).should('exist');
     cy.get(dataCy('Succeeded'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
   });
 });
