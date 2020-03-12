@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -15,36 +15,60 @@
  */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
-import KeyValueRow from 'components/AbstractWidget/KeyValueWidget/KeyValueRow';
-import ThemeWrapper from 'components/ThemeWrapper';
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
+import RuntimeArgsRow from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsRow';
+import ThemeWrapper from 'components/ThemeWrapper';
 import { objectQuery } from 'services/helpers';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
-interface IKeyValueWidgetProps {
+interface IRuntimeArgsPairsWidgetProps {
   'key-placeholder'?: string;
   'value-placeholder'?: string;
   'kv-delimiter'?: string;
   delimiter?: string;
 }
 
-interface IKeyValueProps extends IMultiRowProps<IKeyValueWidgetProps> {
+interface IRuntimeArgsPairsProps extends IMultiRowProps<IRuntimeArgsPairsWidgetProps> {
   isEncoded?: boolean; // for compatiblity with keyvalue-encoded type
 }
 
-export class KeyValueWidgetView extends AbstractMultiRowWidget<IKeyValueProps> {
+interface IValue {
+  key: string;
+  value: string;
+  notDeletable: boolean;
+}
+
+class RuntimeArgsPairsView extends AbstractMultiRowWidget<IRuntimeArgsPairsProps> {
+  public componentWillReceiveProps(nextProps) {
+    // causing focus/render issues if we don't return here
+    return;
+  }
+
+  public constructValues = () => {
+    const values = this.state.rows
+      .filter((id) => this.values[id] && this.values[id].value)
+      .map((id) => this.values[id].value);
+    return values;
+  };
+  public deconstructValues = (props) => {
+    if (!props.value || props.value.length === 0) {
+      return [];
+    }
+    return props.value;
+  };
+
   public renderRow = (id, index) => {
     const keyPlaceholder = objectQuery(this.props, 'widgetProps', 'key-placeholder');
     const valuePlaceholder = objectQuery(this.props, 'widgetProps', 'value-placeholder');
-    const kvDelimiter = objectQuery(this.props, 'widgetProps', 'kv-delimiter');
     const isEncoded = this.props.isEncoded || objectQuery(this.props, 'widgetProps', 'isEncoded');
+    const value = this.values[id].value;
+    const notDeletable = objectQuery(value, 'notDeletable');
+
     return (
-      <KeyValueRow
+      <RuntimeArgsRow
         key={id}
-        value={this.values[id].value}
+        value={value}
         id={id}
         index={index}
         onChange={this.editRow}
@@ -55,24 +79,18 @@ export class KeyValueWidgetView extends AbstractMultiRowWidget<IKeyValueProps> {
         disabled={this.props.disabled}
         keyPlaceholder={keyPlaceholder}
         valuePlaceholder={valuePlaceholder}
-        kvDelimiter={kvDelimiter}
         isEncoded={isEncoded}
         forwardedRef={this.values[id].ref}
         errors={this.props.errors}
+        deleteDisabled={notDeletable}
       />
     );
   };
 }
-
-export default function KeyValueWidget(props) {
+export default function RuntimeArgsPairsMaterial(props) {
   return (
     <ThemeWrapper>
-      <KeyValueWidgetView {...props} />
+      <RuntimeArgsPairsView {...props} />
     </ThemeWrapper>
   );
 }
-
-(KeyValueWidget as any).propTypes = {
-  ...WIDGET_PROPTYPES,
-  isEncoded: PropTypes.bool,
-};

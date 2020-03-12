@@ -37,7 +37,7 @@ const LabExperimentTest: React.FC = () => {
             This is experimental component for the toggle.
           </p>
         }
-      ></ToggleExperiment>
+      />
     </div>
   );
 };

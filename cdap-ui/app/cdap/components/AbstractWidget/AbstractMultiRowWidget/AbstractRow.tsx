@@ -28,7 +28,7 @@ export const AbstractRowStyles = (theme): StyleRules => {
     root: {
       height: '44px',
       display: 'grid',
-      gridTemplateColumns: '1fr auto auto',
+      gridTemplateColumns: '1fr 40px 40px',
       alignItems: 'end',
       '& > *:first-child': {
         marginRight: '10px',
@@ -41,7 +41,8 @@ export const AbstractRowStyles = (theme): StyleRules => {
 };
 
 export interface IAbstractRowProps<S extends typeof AbstractRowStyles> extends WithStyles<S> {
-  value: string;
+  // any is needed here because we cannot override types in TS.
+  value: string | any;
   id: string;
   index: number;
   autofocus: boolean;
@@ -53,6 +54,7 @@ export interface IAbstractRowProps<S extends typeof AbstractRowStyles> extends W
   forwardedRef: () => void;
   errors: IErrorObj[];
   dataCy?: string;
+  deleteDisabled?: boolean;
 }
 
 export default class AbstractRow<
@@ -107,10 +109,11 @@ export default class AbstractRow<
               <IconButton onClick={this.props.addRow} data-cy="add-row">
                 <AddIcon fontSize="small" />
               </IconButton>
-
-              <IconButton color="secondary" onClick={this.props.removeRow} data-cy="remove-row">
-                <DeleteIcon fontSize="small" />
-              </IconButton>
+              <If condition={!this.props.deleteDisabled}>
+                <IconButton color="secondary" onClick={this.props.removeRow} data-cy="remove-row">
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </If>
             </React.Fragment>
           </If>
         </div>
