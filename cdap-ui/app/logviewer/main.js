@@ -274,7 +274,7 @@ angular
     }
 
     this.eventEmitter.on(globalEvents.PAGE_LEVEL_ERROR, (error) => {
-      if (error.rest === true) {
+      if (error.reset === true) {
         this.pageLevelError = null;
       }
       else {

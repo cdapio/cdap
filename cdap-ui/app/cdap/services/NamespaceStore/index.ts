@@ -104,7 +104,19 @@ const getCurrentNamespace = () => {
 
 const isValidNamespace = async (namespace: string) => {
   if (namespace) {
-    const validNamespaces = await MyNamespaceApi.list().toPromise();
+    const { namespaces: namespacesFromStore } = NamespaceStore.getState();
+    let validNamespaces;
+    if (namespacesFromStore.length) {
+      validNamespaces = namespacesFromStore;
+    } else {
+      validNamespaces = await MyNamespaceApi.list().toPromise();
+      NamespaceStore.dispatch({
+        type: NamespaceActions.updateNamespaces,
+        payload: {
+          namespaces: validNamespaces,
+        },
+      });
+    }
     const validNs = validNamespaces.find((ns: INamespace) => ns.name === namespace);
     return validNs;
   }
