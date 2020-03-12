@@ -1563,6 +1563,8 @@ features:
           causeImpact: "Pin field"
           viewIncoming: "View cause"
           viewOutgoing: "View impact"
+        FllTableHeader:
+          viewLineage: "View lineage"
         noRelatedTables: "There is no {type} for {target}"
         relatedFieldsCount:
           1: "{context} related field"
