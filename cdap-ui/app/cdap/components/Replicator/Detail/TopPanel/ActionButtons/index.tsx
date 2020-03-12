@@ -24,6 +24,7 @@ import LogsButton from 'components/Replicator/Detail/TopPanel/ActionButtons/Logs
 import StatusIndicator from 'components/Replicator/Detail/TopPanel/ActionButtons/StatusIndicator';
 import { PROGRAM_STATUSES } from 'services/global-constants';
 import Actions from 'components/Replicator/Detail/TopPanel/ActionButtons/Actions';
+import Configure from 'components/Replicator/Detail/TopPanel/ActionButtons/Configure';
 
 const styles = (theme): StyleRules => {
   return {
@@ -53,6 +54,8 @@ const ActionButtonsView: React.FC<IDetailContext & WithStyles<typeof styles>> = 
 
   return (
     <div className={classes.root}>
+      <Configure />
+
       <ActionButton
         icon={<IconSVG name="icon-stop" className={classes.stopBtn} />}
         text="Stop"

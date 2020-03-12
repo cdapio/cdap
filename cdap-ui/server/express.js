@@ -172,6 +172,9 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         previewEnabled: cdapConfig['enable.preview'] === 'true',
         defaultCheckpointDir: cdapConfig['data.streams.default.checkpoint.directory'] || false,
       },
+      delta: {
+        defaultCheckpointDir: cdapConfig['delta.default.checkpoint.directory'] || false,
+      },
       marketUrls: getMarketUrls(cdapConfig),
       securityEnabled: authAddress.enabled,
       isEnterprise: isModeProduction(),

@@ -26,7 +26,7 @@ import orderBy from 'lodash/orderBy';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import SelectColumns from 'components/Replicator/Create/Content/SelectColumns';
 import If from 'components/If';
-import { generateTableKey } from 'components/Replicator/utilities';
+import { generateTableKey, extractErrorMessage } from 'components/Replicator/utilities';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Heading, { HeadingTypes } from 'components/Heading';
 
@@ -130,7 +130,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
       (err) => {
         // tslint:disable-next-line: no-console
         console.log('error', err);
-        this.setState({ error: err, loading: false });
+        this.setState({ error: extractErrorMessage(err), loading: false });
       }
     );
   };
@@ -277,7 +277,15 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
       return null;
     }
 
-    return <div className="text-danger">{JSON.stringify(this.state.error, null, 2)}</div>;
+    return (
+      <React.Fragment>
+        <br />
+        <div className="text-danger">
+          <Heading type={HeadingTypes.h5} label="Error" />
+          <span>{this.state.error}</span>
+        </div>
+      </React.Fragment>
+    );
   };
 
   public handleNext = () => {

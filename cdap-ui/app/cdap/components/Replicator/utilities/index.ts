@@ -20,6 +20,7 @@ import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
+import { objectQuery } from 'services/helpers';
 
 const parentArtifact = 'delta-app';
 const version = '0.1.0-SNAPSHOT';
@@ -301,4 +302,8 @@ export function constructTablesSelection(tables, columns, dmlBlacklist) {
   });
 
   return tablesArr;
+}
+
+export function extractErrorMessage(errObj) {
+  return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
 }

@@ -74,6 +74,14 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
   // TODO: Fetch artifacts version from Backend service
   function constructJson() {
+    const config = {
+      ...getReplicatorConfig(),
+    };
+
+    if (window.CDAP_CONFIG.delta.defaultCheckpointDir) {
+      config.offsetBasePath = window.CDAP_CONFIG.delta.defaultCheckpointDir;
+    }
+
     return {
       name,
       artifact: {
@@ -81,11 +89,7 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         version: '0.1.0-SNAPSHOT',
         scope: 'SYSTEM',
       },
-      config: {
-        ...getReplicatorConfig(),
-        // TODO: replace with actual textbox step to configure offsetBasePath
-        offsetBasePath: window.CDAP_CONFIG.hydrator.defaultCheckpointDir || '/tmp/Replicator',
-      },
+      config,
     };
   }
 
