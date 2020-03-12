@@ -45,7 +45,8 @@ import java.util.TreeMap;
 
 public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteArtifactRepositoryReader.class);
-  public static final String LOCATION_FACTORY = "RemoteArtifactRepositoryReaderLocationFactory";
+  public static final String LOCATION_FACTORY = "RemoteArtifactRepositoryReader_LocationFactory";
+  public static final String DISCOVERY_SERVICE_CLIENT = "RemoteArtifactRepositoryReader_DiscoveryServiceClient";
 
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
@@ -57,7 +58,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
   private final LocationFactory locationFactory;
 
   @Inject
-  public RemoteArtifactRepositoryReader(DiscoveryServiceClient discoveryClient,
+  public RemoteArtifactRepositoryReader(@Named(DISCOVERY_SERVICE_CLIENT) DiscoveryServiceClient discoveryClient,
                                         @Named(LOCATION_FACTORY)LocationFactory locationFactory) {
     this.remoteClient = new RemoteClient(
       discoveryClient, Constants.Service.APP_FABRIC_HTTP,

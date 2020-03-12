@@ -575,7 +575,7 @@ public class ProgramLifecycleService {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     checkConcurrentExecution(programId);
 
-    LOG.debug("wyzhang: ProgramLifecycleService::start() get system properties start");
+    LOG.debug("wyzhang: ProgramLifecycleService::start()g ce/t system properties start");
     Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
     LOG.debug("wyzhang: ProgramLifecycleService::start() get system properties done");
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");

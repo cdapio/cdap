@@ -39,6 +39,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.config.guice.ConfigStoreModule;
 import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
@@ -170,8 +171,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
-
-                               bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
                              }
                            });
   }
@@ -222,8 +221,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
                                // TODO: Uncomment after CDAP-7688 is resolved
                                // handlerHookNamesBinder.addBinding().toInstance(Constants.Service.MESSAGING_SERVICE);
-
-                               bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
                              }
                            });
   }
@@ -262,8 +259,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                                           Names.named("appfabric.handler.hooks"));
                                handlerHookNamesBinder.addBinding().toInstance(Constants.Service.APP_FABRIC_HTTP);
                                servicesNamesBinder.addBinding().toInstance(Constants.Service.SECURE_STORE_SERVICE);
-
-                               bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
                              }
                            });
   }
@@ -314,6 +309,9 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+
+      bind(PreferencesFetcher.class).annotatedWith(Names.named(PropertiesResolver.PREFERENCES_FETCHER))
+        .to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

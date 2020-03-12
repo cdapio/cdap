@@ -99,6 +99,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     } catch (IllegalArgumentException e) {
       throw new BadRequestException(e.getMessage());
+    } catch (Exception e) {
+      throw e;
     }
   }
 

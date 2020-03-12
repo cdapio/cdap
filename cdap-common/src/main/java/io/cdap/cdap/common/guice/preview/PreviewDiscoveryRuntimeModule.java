@@ -16,25 +16,30 @@
 package io.cdap.cdap.common.guice.preview;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Singleton;
+import com.google.inject.name.Names;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 
 /**
  * Provides Guice bindings for DiscoveryService and DiscoveryServiceClient for preview mode.
  */
 public class PreviewDiscoveryRuntimeModule extends AbstractModule {
   private DiscoveryService discoveryService;
-  private DiscoveryServiceClient discoveryServiceClient;
 
-  public PreviewDiscoveryRuntimeModule(DiscoveryService discoveryService,
-                                       DiscoveryServiceClient discoveryServiceClient) {
+  public PreviewDiscoveryRuntimeModule(DiscoveryService discoveryService) {
     this.discoveryService = discoveryService;
-    this.discoveryServiceClient = discoveryServiceClient;
   }
 
   @Override
   protected void configure() {
-    bind(DiscoveryService.class).toInstance(discoveryService);
-    bind(DiscoveryServiceClient.class).toInstance(discoveryServiceClient);
+    // we want to share the actual discovery service, so preview http service can register when it starts up
+    // and router can route directly to preview service. for other services we want to use local discovery service.
+    bind(DiscoveryService.class).annotatedWith(
+      Names.named("shared-discovery-service")).toInstance(discoveryService);
+    bind(InMemoryDiscoveryService.class).in(Singleton.class);
+    bind(DiscoveryService.class).to(InMemoryDiscoveryService.class);
+    bind(DiscoveryServiceClient.class).to(InMemoryDiscoveryService.class);
   }
 }

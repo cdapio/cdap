@@ -552,6 +552,13 @@ public abstract class Id implements EntityIdCompatible {
       this.name = name;
       this.version = version;
     }
+    public Artifact(String namespace, String name, ArtifactVersion version) {
+      this(new Namespace(namespace), name, version);
+    }
+
+    public Artifact(String namespace, String name, String version) {
+      this(new Namespace(namespace), name, new ArtifactVersion(version));
+    }
 
     @Override
     public Namespace getNamespace() {

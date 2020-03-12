@@ -30,7 +30,6 @@ import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -63,12 +62,15 @@ import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepositor
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleServiceForPreview;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -123,6 +125,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final Path previewDataDir;
   private final PreviewRunnerModuleFactory previewRunnerModuleFactory;
   private final LocationFactory locationFactory;
+  private final RemotePreferencesFetcherInternal remotePreferencesFetcherInternal;
 
   @Inject
   DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
@@ -131,7 +134,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
                         SecureStore secureStore, TransactionSystemClient transactionSystemClient,
                         PreviewRunnerModuleFactory previewRunnerModuleFactory,
-                        LocationFactory locationFactory) {
+                        LocationFactory locationFactory,
+                        RemotePreferencesFetcherInternal remotePreferencesFetcherInternal) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.sConf = sConf;
@@ -145,6 +149,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.maxPreviews = cConf.getInt(Constants.Preview.PREVIEW_CACHE_SIZE, 10);
     this.previewRunnerModuleFactory = previewRunnerModuleFactory;
     this.locationFactory = locationFactory;
+    this.remotePreferencesFetcherInternal = remotePreferencesFetcherInternal;
   }
 
   @Override
@@ -338,7 +343,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new IOModule(),
       new AuthenticationContextModules().getMasterModule(),
       new PreviewSecureStoreModule(secureStore),
-      new PreviewDiscoveryRuntimeModule(discoveryService, discoveryServiceClient),
+      new PreviewDiscoveryRuntimeModule(discoveryService),
       new LocalLocationModule(),
       new ConfigStoreModule(),
       previewRunnerModuleFactory.create(previewRequest),
@@ -364,7 +369,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         protected void configure() {
           bind(LocationFactory.class).annotatedWith(
             Names.named(RemoteArtifactRepositoryReader.LOCATION_FACTORY)).toInstance(locationFactory);
+          bind(DiscoveryServiceClient.class).annotatedWith(
+            Names.named(RemoteArtifactRepositoryReader.DISCOVERY_SERVICE_CLIENT)).toInstance(discoveryServiceClient);
           bind(ArtifactRepositoryReader.class).to(RemoteArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+
           bind(ArtifactRepository.class)
             .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
             .to(DefaultArtifactRepository.class)
@@ -382,7 +390,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         protected void configure() {
           bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
         }
-
         @Provides
         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS)
         @SuppressWarnings("unused")
@@ -398,6 +405,13 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             Names.named(ApplicationLifecycleServiceForPreview.LOCATION_FACTORY)).toInstance(locationFactory);
           expose(LocationFactory.class).annotatedWith(
             Names.named(ApplicationLifecycleServiceForPreview.LOCATION_FACTORY));
+        }
+      },
+      new PrivateModule() {
+        @Override
+        protected void configure() {
+          bind(PreferencesFetcher.class).annotatedWith(Names.named(PropertiesResolver.PREFERENCES_FETCHER)).toInstance(remotePreferencesFetcherInternal);
+          expose(PreferencesFetcher.class).annotatedWith(Names.named(PropertiesResolver.PREFERENCES_FETCHER));
         }
       }
     );

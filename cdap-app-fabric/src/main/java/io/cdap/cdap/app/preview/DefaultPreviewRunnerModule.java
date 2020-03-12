@@ -165,9 +165,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerAdmin.class);
 
     bind(PreviewRequest.class).toInstance(previewRequest);
-
-    bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
-    bind(ArtifactDetailFetcher.class).to(RemoteArtifactDetailFetcher.class);
   }
 
   /**

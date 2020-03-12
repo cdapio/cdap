@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.Maps;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -40,13 +41,15 @@ import java.util.Map;
  * Used to provide default user and system properties that can be used while starting a Program.
  */
 public class PropertiesResolver {
+  public static final String PREFERENCES_FETCHER = "PropertiesResolver_PreferencesFetcher";
+
   private final PreferencesFetcher preferencesFetcher;
   private final CConfiguration cConf;
   private final OwnerAdmin ownerAdmin;
   private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  PropertiesResolver(PreferencesFetcher preferencesFetcher, CConfiguration cConf,
+  PropertiesResolver(@Named(PREFERENCES_FETCHER) PreferencesFetcher preferencesFetcher, CConfiguration cConf,
                      OwnerAdmin ownerAdmin,
                      SchedulerQueueResolver schedulerQueueResolver) {
     this.preferencesFetcher = preferencesFetcher;
