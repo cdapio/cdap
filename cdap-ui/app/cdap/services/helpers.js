@@ -23,6 +23,8 @@ import T from 'i18n-react';
 import { compose } from 'redux';
 import uuidV4 from 'uuid/v4';
 import round from 'lodash/round';
+import React from 'react';
+import { connect } from 'react-redux';
 
 /*
   Purpose: Query a json object or an array of json objects
@@ -472,6 +474,14 @@ function handlePageLevelError(error) {
   return {errorCode, message};
 }
 
+function connectWithStore(store, WrappedComponent, ...args) {
+  const ConnectedWrappedComponent = connect(...args)(WrappedComponent);
+  // eslint-disable-next-line react/display-name
+  return function(props) {
+    return <ConnectedWrappedComponent {...props} store={store} />;
+  };
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -510,5 +520,6 @@ export {
   parseQueryString,
   isMacro,
   removeEmptyJsonValues,
-  handlePageLevelError
+  handlePageLevelError,
+  connectWithStore,
 };

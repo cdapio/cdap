@@ -14,36 +14,328 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import React, { useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import T from 'i18n-react';
+import { makeStyles } from '@material-ui/core';
+import Input from '@material-ui/core/Input';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemText from '@material-ui/core/ListItemText';
+import { UncontrolledTooltip } from 'reactstrap';
 import classnames from 'classnames';
+import { preventPropagation, connectWithStore } from 'services/helpers';
+import { setPopoverOffset } from 'components/DataPrep/helper';
+import If from 'components/If';
+import DataPrepStore from 'components/DataPrep/store';
+import {
+  execute,
+  setError,
+  loadTargetDataModelFields,
+  saveTargetDataModelFields,
+  setTargetDataModel,
+  setTargetModel
+} from 'components/DataPrep/store/DataPrepActionCreator';
+
+const useStyles = makeStyles(theme => ({
+  secondLevelPopover: {
+    width: '300px !important',
+  },
+  selectedItem: {
+    display: 'flex',
+    flexDirection: 'row',
+  },
+  selectedItemName: {
+    flex: 1,
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  },
+  unselectIcon: {
+    cursor: 'pointer',
+    padding: theme.spacing(0.75),
+    margin: '0 !important',
+    '&:hover': {
+      fontWeight: 'bold',
+    },
+  },
+  optionSearch: {
+    width: '100%',
+    marginBottom: theme.spacing(0.5),
+  },
+  targetOptionList: {
+    overflowX: 'hidden',
+    overflowY: 'auto',
+    maxHeight: '400px',
+  },
+  targetOption: {
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+  },
+  highlight: {
+    color: theme.palette.primary.contrastText,
+    backgroundColor: theme.palette.primary.dark,
+  },
+}));
 
 const PREFIX = 'features.DataPrep.Directives.MapToTarget';
 
-export default class MapToTarget extends Component {
-  static propTypes = {
-    isOpen: PropTypes.bool,
-    isDisabled: PropTypes.bool,
-    column: PropTypes.string,
-    onComplete: PropTypes.func,
+const MapToTarget = (props) => {
+  const classes = useStyles(undefined);
+  const {
+    isOpen,
+    isDisabled,
+    column,
+    onComplete,
+    close,
+    dataModelList,
+    targetDataModel,
+    targetModel,
+  } = props;
+  const [initializing, setInitializing] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  useEffect(() => {
+    let pending = true;
+    (async () => {
+      try {
+        await loadTargetDataModelFields();
+      } catch (error) {
+        setError(error);
+      } finally {
+        if (pending) {
+          setInitializing(false);
+        }
+      }
+      return () => pending = false;
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (isOpen && !isDisabled) {
+      setPopoverOffset(document.getElementById('map-to-target-directive'));
+    }
+  });
+
+  const applySearch = (options) => {
+    const searchTextUpper = searchText.trim().toUpperCase();
+    if (searchTextUpper) {
+      return options.filter((option) => option.name.toUpperCase().indexOf(searchTextUpper) >= 0);
+    }
+    return options;
   };
 
-  render() {
+  const highlightText = (text) => {
+    const searchTextUpper = searchText.trim().toUpperCase();
+    if (searchTextUpper) {
+      const index = text.toUpperCase().indexOf(searchTextUpper);
+      if (index >= 0) {
+        const leadingText = text.substring(0, index);
+        const highlightedText = text.substring(index, index + searchTextUpper.length);
+        const trailingText = text.substring(index + searchTextUpper.length);
+        return (
+          <span>
+            {leadingText}
+            <span className={classes.highlight}>{highlightedText}</span>
+            {trailingText}
+          </span>
+        );
+      }
+    }
+    return text;
+  };
+
+  const resetTargetOptionsScroll = () => {
+    const element = document.querySelector('.' + classes.targetOptionList);
+    if (element) {
+      element.scrollTop = 0;
+    }
+  };
+
+  const selectTargetDataModel = async (dataModel) => {
+    setLoading(true);
+    try {
+      await setTargetDataModel(dataModel);
+      await setTargetModel(null);
+      setSearchText('');
+      resetTargetOptionsScroll();
+    } catch (error) {
+      setError(error, 'Could not set target data model');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const selectTargetModel = async (model) => {
+    setLoading(true);
+    try {
+      await setTargetModel(model);
+      setSearchText('');
+      resetTargetOptionsScroll();
+    } catch (error) {
+      setError(error, 'Could not set target model');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyDirective = async (field) => {
+    setLoading(true);
+    try {
+      await saveTargetDataModelFields();
+
+      const directive = 'data-model-map-column ' +
+        `'${targetDataModel.url}' '${targetDataModel.id}' ${targetDataModel.revision} ` +
+        `'${targetModel.id}' '${field.id}' :${column}`;
+
+      await execute([directive], false, true).toPromise();
+
+      close();
+      onComplete();
+    } catch (error) {
+      setError(error, 'Error executing Map to Target directive');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderDetail = () => {
+    if (!isOpen || isDisabled) {
+      return null;
+    }
+
+    let options, selectFn;
+    const selection = [];
+
+    if (targetDataModel) {
+      selection.push(
+        {
+          key: 'datamodel',
+          unselectFn: () => (async() => await selectTargetDataModel(null))(),
+          ...targetDataModel,
+        }
+      );
+      if (targetModel) {
+        selection.push(
+          {
+            key: 'model',
+            unselectFn: () => (async () => await selectTargetModel(null))(),
+            ...targetModel,
+          }
+        );
+        options = applySearch(targetModel.fields || []);
+        selectFn = (field) => (async () => await applyDirective(field))();
+      } else {
+        options = applySearch(targetDataModel.models || []);
+        selectFn = (model) => (async () => await selectTargetModel(model))();
+      }
+    } else {
+      options = dataModelList || [];
+      selectFn = (dataModel) => (async () => await selectTargetDataModel(dataModel))();
+    }
+
     return (
-      <div
-        id='map-to-target-directive'
-        className={classnames('clearfix action-item', {
-          active: this.props.isOpen && !this.props.isDisabled,
-          disabled: this.props.isDisabled,
-        })}
-      >
-        <span>{T.translate(`${PREFIX}.title`)}</span>
-        <span className='float-right'>
-          <span className='fa fa-caret-right' />
-        </span>
+      <div className={classnames('second-level-popover', classes.secondLevelPopover)} onClick={preventPropagation}>
+        {selection.length === 0 ? <h5>{T.translate(`${PREFIX}.dataModelPlaceholder`)}</h5> : null}
+        {selection.map(item => (
+          <div id={`map-to-target-selected-${item.key}`} key={item.key} className={classes.selectedItem}>
+            <span className={classes.selectedItemName}>{item.name}</span>
+            <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
+            <If condition={item.description}>
+              <UncontrolledTooltip
+                target={`map-to-target-selected-${item.key}`}
+                placement='right-end'
+                delay={{ show: 750, hide: 0 }}
+              >
+                {item.description}
+              </UncontrolledTooltip>
+            </If>
+          </div>
+        ))}
+
+        {loading || initializing ? <LinearProgress /> : <hr />}
+
+        <If condition={targetDataModel}>
+          <Input
+            autoFocus={true}
+            type='text'
+            className={classes.optionSearch}
+            value={searchText}
+            placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+            onChange={(event) => setSearchText(event.target.value)}
+          />
+        </If>
+
+        <List dense={true} disablePadding={true} className={classes.targetOptionList}>
+          {options.map((option, index) => (
+            <ListItem
+              button={true}
+              key={option.id}
+              id={`map-to-target-option-${index}`}
+              onClick={() => selectFn(option)}>
+              <ListItemText
+                className={classes.targetOption}
+                primary={highlightText(option.name)}
+              />
+              <If condition={option.description}>
+                <UncontrolledTooltip
+                  target={`map-to-target-option-${index}`}
+                  modifiers={{
+                    preventOverflow: {
+                      boundariesElement: 'window'
+                    }
+                  }}
+                  placement='right'
+                  delay={{ show: 500, hide: 0 }}
+                >
+                  {option.description}
+                </UncontrolledTooltip>
+              </If>
+            </ListItem>
+          ))}
+        </List>
       </div>
     );
-  }
+  };
 
-}
+  return (
+    <div
+      id='map-to-target-directive'
+      className={classnames('map-to-target-directive clearfix action-item', {
+        active: isOpen && !isDisabled,
+        disabled: isDisabled,
+      })}
+    >
+      <span>{T.translate(`${PREFIX}.title`)}</span>
+      <span className='float-right'>
+          <span className='fa fa-caret-right' />
+        </span>
+      {renderDetail()}
+    </div>
+  );
+};
+
+MapToTarget.propTypes = {
+  isOpen: PropTypes.bool,
+  isDisabled: PropTypes.bool,
+  column: PropTypes.string,
+  onComplete: PropTypes.func,
+  close: PropTypes.func,
+  dataModelList: PropTypes.array,
+  targetDataModel: PropTypes.object,
+  targetModel: PropTypes.object,
+};
+
+const mapStateToProps = state => {
+  const { dataModelList, targetDataModel, targetModel } = state.dataprep;
+  return {
+    dataModelList,
+    targetDataModel,
+    targetModel,
+  };
+};
+
+export default connectWithStore(DataPrepStore, MapToTarget, mapStateToProps);
