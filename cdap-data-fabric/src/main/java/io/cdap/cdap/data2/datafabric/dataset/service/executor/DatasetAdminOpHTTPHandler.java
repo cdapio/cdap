@@ -60,6 +60,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   @Inject
   @VisibleForTesting
   public DatasetAdminOpHTTPHandler(DatasetAdminService datasetAdminService) {
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler construct");
     this.datasetAdminService = datasetAdminService;
   }
 
@@ -68,6 +69,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void exists(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String instanceName) {
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::exists() start");
     propagateUserId(request);
     NamespaceId namespace = new NamespaceId(namespaceId);
     try {
@@ -81,6 +83,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
       LOG.error(getAdminOpErrorMessage("exists", instanceName), e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("exists", instanceName));
     }
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::exists() end");
   }
 
   @POST
@@ -88,6 +91,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::create() start");
     propagateUserId(request);
     InternalDatasetCreationParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
@@ -106,6 +110,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::create() end");
   }
 
   @POST
@@ -113,6 +118,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void update(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
                      @PathParam("name") String name) {
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::update() start");
     propagateUserId(request);
     InternalDatasetUpdateParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                        InternalDatasetUpdateParams.class);
@@ -138,6 +144,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     } catch (Exception e) {
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
     }
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::update() end");
   }
 
   @POST
@@ -145,6 +152,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void drop(FullHttpRequest request, HttpResponder responder,
                    @PathParam("namespace-id") String namespaceId,
                    @PathParam("name") String instanceName) throws Exception {
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::drop() start");
     propagateUserId(request);
     InternalDatasetDropParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                      InternalDatasetDropParams.class);
@@ -160,6 +168,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     } catch (BadRequestException e) {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::drop() end");
   }
 
   @POST
@@ -168,6 +177,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
                        @PathParam("namespace-id") String namespaceId,
                        @PathParam("name") String instanceName) {
     propagateUserId(request);
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::truncate() start");
     try {
       DatasetId instanceId = new DatasetId(namespaceId, instanceName);
       datasetAdminService.truncate(instanceId);
@@ -179,6 +189,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
       LOG.error(getAdminOpErrorMessage("truncate", instanceName), e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("truncate", instanceName));
     }
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::truncate() end");
   }
 
   @POST
@@ -186,6 +197,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   public void upgrade(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("name") String instanceName) {
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::upgrade() start");
     propagateUserId(request);
     try {
       DatasetId instanceId = new DatasetId(namespaceId, instanceName);
@@ -198,6 +210,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
       LOG.error(getAdminOpErrorMessage("upgrade", instanceName), e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("upgrade", instanceName));
     }
+    LOG.debug("wyzhang: DatasetAdminOpHTTPHandler::upgrade() end");
   }
 
   private String getAdminOpErrorMessage(String opName, String instanceName) {

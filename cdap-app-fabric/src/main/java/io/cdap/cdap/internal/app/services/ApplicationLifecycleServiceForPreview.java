@@ -25,6 +25,8 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.Store;
@@ -33,6 +35,9 @@ import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetServiceClient;
+import io.cdap.cdap.data2.datafabric.dataset.DatasetServiceFetcher;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -43,6 +48,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.cdap.metadata.DatasetFieldLineageSummary;
+import io.cdap.cdap.proto.DatasetSpecificationSummary;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -59,6 +66,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import javax.annotation.Nullable;
@@ -81,6 +90,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
   private final ArtifactDetailFetcher artifactDetailFetcher;
+  private final DatasetServiceFetcher datasetServiceFetcher;
   private final LocationFactory locationFactory;
 
   @Inject
@@ -91,6 +101,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
                                         AuthenticationContext authenticationContext,
                                         MessagingService messagingService,
                                         ArtifactDetailFetcher artifactDetailFetcher,
+                                        DatasetServiceFetcher datasetServiceFetcher,
                                         @Named(LOCATION_FACTORY) LocationFactory locationFactory) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -101,6 +112,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
     this.artifactDetailFetcher = artifactDetailFetcher;
+    this.datasetServiceFetcher = datasetServiceFetcher;
     this.locationFactory = locationFactory;
   }
 
@@ -142,6 +154,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
                                            ProgramTerminator programTerminator,
                                            @Nullable KerberosPrincipalId ownerPrincipal,
                                            @Nullable Boolean updateSchedules) throws Exception {
+    doSomethingelse();
     LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() start");
     NamespaceId artifactNamespace =
       ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : namespace;
@@ -210,5 +223,15 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
     return applicationWithPrograms;
+  }
+
+  private void doSomethingelse() {
+    LOG.debug("wyzhang: doSomethingelse start");
+    try {
+      Collection<DatasetSpecificationSummary> result = datasetServiceFetcher.getDatasets("default");
+    } catch (Exception e) {
+      LOG.debug("wyzhang: doSomethingelse get exception " + e);
+    }
+    LOG.debug("wyzhang: doSomethingelse end");
   }
 }

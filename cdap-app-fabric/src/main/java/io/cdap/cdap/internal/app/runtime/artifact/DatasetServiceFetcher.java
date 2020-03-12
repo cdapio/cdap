@@ -18,6 +18,7 @@ package io.cdap.cdap.data2.datafabric.dataset;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.InstanceConflictException;
@@ -67,39 +68,47 @@ import javax.annotation.Nullable;
  * Provides programmatic APIs to access {@link io.cdap.cdap.data2.datafabric.dataset.service.DatasetService}.
  * Just a java wrapper for accessing service's REST API.
  */
-public class DatasetServiceClient {
-  private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceClient.class);
+public class DatasetServiceFetcher {
+  private static final Logger LOG = LoggerFactory.getLogger(DatasetServiceFetcher.class);
   private static final Gson GSON = new Gson();
   private static final Type SUMMARY_LIST_TYPE = new TypeToken<List<DatasetSpecificationSummary>>() { }.getType();
 
   private final RemoteClient remoteClient;
-  private final NamespaceId namespaceId;
-  private final boolean securityEnabled;
-  private final boolean kerberosEnabled;
-  private final boolean authorizationEnabled;
-  private final AuthenticationContext authenticationContext;
-  private final String masterShortUserName;
+//  private final NamespaceId namespaceId;
+//  private final boolean securityEnabled;
+//  private final boolean kerberosEnabled;
+//  private final boolean authorizationEnabled;
+//  private final AuthenticationContext authenticationContext;
+//  private final String masterShortUserName;
 
-  DatasetServiceClient(final DiscoveryServiceClient discoveryClient, NamespaceId namespaceId,
-                       CConfiguration cConf, AuthenticationContext authenticationContext) {
-    LOG.debug("wyzhang: DatasetServiceClient construction ");
-    LOG.debug("wyzhang: DatasetServiceClient construction discoveryClient = n" + discoveryClient.getClass().getName());
-    LOG.debug("wyzhang: DatasetServiceClient construction namespaceid =" + namespaceId.toString());
+  @Inject
+  DatasetServiceFetcher(DiscoveryServiceClient discoveryClient) {
     this.remoteClient = new RemoteClient(
-      discoveryClient, Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false),
-      String.format("%s/namespaces/%s/data", Constants.Gateway.API_VERSION_3, namespaceId.getNamespace()));
-    this.namespaceId = namespaceId;
-    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
-    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    this.authenticationContext = authenticationContext;
-    this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
+      discoveryClient, Constants.Service.DATASET_MANAGER, new DefaultHttpRequestConfig(false), Constants.Gateway.API_VERSION_3);
+    LOG.debug("wyzhang: DatasetServiceFetcher construction ");
+    LOG.debug("wyzhang: DatasetServiceFetcher construction discoveryClient = " + discoveryClient.getClass().getName());
+
+//    this.namespaceId = namespaceId;
+//    this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
+//    this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
+//    this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
+//    this.authenticationContext = authenticationContext;
+//    this.masterShortUserName = AuthorizationUtil.getEffectiveMasterUser(cConf);
+  }
+
+  public Collection<DatasetSpecificationSummary> getDatasets(String namespace) throws DatasetManagementException {
+    LOG.debug("wyzhang: DatasetServiceFetcher::getDatasets() start");
+    String url = String.format("/namespaces/%s/data/datasets", namespace);
+    HttpResponse response = doGet(url);
+    LOG.debug("wyzhang: response " + response.getResponseBodyAsString());
+    LOG.debug("wyzhang: DatasetServiceFetcher::getDatasets() done");
+    return GSON.fromJson(response.getResponseBodyAsString(), SUMMARY_LIST_TYPE);
   }
 
   @Nullable
   public DatasetMeta getInstance(String instanceName)
     throws DatasetManagementException {
-    LOG.debug("wyzhang: DatasetServiceClient getInstance() start ");
+
     HttpResponse response = doGet("datasets/" + instanceName);
     if (HttpResponseStatus.NOT_FOUND.code() == response.getResponseCode()) {
       return null;
@@ -118,7 +127,6 @@ public class DatasetServiceClient {
   }
 
   Collection<DatasetSpecificationSummary> getAllInstances() throws DatasetManagementException {
-    LOG.debug("wyzhang: DatasetServiceClient getAllInstance() start ");
     HttpResponse response = doGet("datasets");
     if (HttpResponseStatus.OK.code() != response.getResponseCode()) {
       throw new DatasetManagementException(String.format("Cannot retrieve all dataset instances, details: %s",
@@ -277,7 +285,6 @@ public class DatasetServiceClient {
   }
 
   private HttpResponse doGet(String resource) throws DatasetManagementException {
-    LOG.debug("wyzhang: DatasetServiceClient::doGet() start resource=" + resource);
     return doRequest(remoteClient.requestBuilder(HttpMethod.GET, resource));
   }
 
@@ -330,41 +337,43 @@ public class DatasetServiceClient {
     if (LOG.isTraceEnabled()) {
       builder = builder.addHeader("callerId", Thread.currentThread().getName());
     }
-    if (!securityEnabled || !authorizationEnabled) {
-      return builder;
-    }
 
-    String currUserShortName;
-    try {
-      currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
-    } catch (IOException e) {
-      throw new DatasetManagementException("Unable to get the current user", e);
-    }
-
-    // If the request originated from the router and was forwarded to any service other than dataset service, before
-    // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
-    // e.g. deploying an app that contains a dataset.
-    // For user datasets, if a dataset call originates from a program runtime, then find the userId from
-    // UserGroupInformation#getCurrentUser()
-    String userId = authenticationContext.getPrincipal().getName();
-    if (NamespaceId.SYSTEM.equals(namespaceId)) {
-      // For getting a system dataset like MDS, use the system principal, if the current user is the same as the
-      // CDAP kerberos principal. If a user tries to access a system dataset from an app, either:
-      // 1. The request will go through if the user is impersonating as the cdap principal - which means that
-      // impersonation has specifically been configured in this namespace to use the cdap principal; or
-      // 2. The request will fail, if kerberos is enabled and the user is impersonating as a non-cdap user; or
-      // 3. The request will go through, if kerberos is disabled, since the impersonating user will be cdap
-
-      // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
-      // configured principal
-      if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
-        LOG.trace("Accessing dataset in system namespace using the system principal because the current user " +
-                    "{} is the same as the CDAP master user {}.",
-                  currUserShortName, masterShortUserName);
-        userId = currUserShortName;
-      }
-    }
-    return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
+    return builder;
+//    if (!securityEnabled || !authorizationEnabled) {
+//      return builder;
+//    }
+//
+//    String currUserShortName;
+//    try {
+//      currUserShortName = UserGroupInformation.getCurrentUser().getShortUserName();
+//    } catch (IOException e) {
+//      throw new DatasetManagementException("Unable to get the current user", e);
+//    }
+//
+//    // If the request originated from the router and was forwarded to any service other than dataset service, before
+//    // going to dataset service via dataset service client, the userId could be set in the SecurityRequestContext.
+//    // e.g. deploying an app that contains a dataset.
+//    // For user datasets, if a dataset call originates from a program runtime, then find the userId from
+//    // UserGroupInformation#getCurrentUser()
+//    String userId = authenticationContext.getPrincipal().getName();
+//    if (NamespaceId.SYSTEM.equals(namespaceId)) {
+//      // For getting a system dataset like MDS, use the system principal, if the current user is the same as the
+//      // CDAP kerberos principal. If a user tries to access a system dataset from an app, either:
+//      // 1. The request will go through if the user is impersonating as the cdap principal - which means that
+//      // impersonation has specifically been configured in this namespace to use the cdap principal; or
+//      // 2. The request will fail, if kerberos is enabled and the user is impersonating as a non-cdap user; or
+//      // 3. The request will go through, if kerberos is disabled, since the impersonating user will be cdap
+//
+//      // we compare short name, because in some YARN containers launched by CDAP, the current username isn't the full
+//      // configured principal
+//      if (!kerberosEnabled || currUserShortName.equals(masterShortUserName)) {
+//        LOG.trace("Accessing dataset in system namespace using the system principal because the current user " +
+//                    "{} is the same as the CDAP master user {}.",
+//                  currUserShortName, masterShortUserName);
+//        userId = currUserShortName;
+//      }
+//    }
+//    return builder.addHeader(Constants.Security.Headers.USER_ID, userId);
   }
 
   private static void logThreadDump() {
