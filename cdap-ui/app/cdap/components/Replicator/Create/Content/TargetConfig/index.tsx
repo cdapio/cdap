@@ -25,14 +25,37 @@ import { objectQuery } from 'services/helpers';
 import TargetList from 'components/Replicator/Create/Content/TargetConfig/TargetList';
 import If from 'components/If';
 import LoadingSVG from 'components/LoadingSVG';
+import classnames from 'classnames';
+import Documentation from 'components/Replicator/Create/Content/Documentation';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     root: {
       padding: '25px 40px',
     },
+    header: {
+      marginTop: '15px',
+      fontSize: '18px',
+      borderBottom: `1px solid ${theme.palette.grey[300]}`,
+    },
+    option: {
+      marginRight: '100px',
+      cursor: 'pointer',
+    },
+    active: {
+      fontWeight: 'bold',
+      borderBottom: `3px solid ${theme.palette.grey[200]}`,
+    },
+    content: {
+      paddingTop: '25px',
+    },
   };
 };
+
+enum VIEW {
+  configuration = 'CONFIGURATION',
+  documentation = 'DOCUMENTATION',
+}
 
 const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
@@ -43,6 +66,7 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   setTargetPluginWidget,
   setTargetConfig,
 }) => {
+  const [view, setView] = React.useState(VIEW.configuration);
   const [values, setValues] = React.useState(targetConfig);
   const [loading, setLoading] = React.useState(false);
 
@@ -122,13 +146,40 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
     <div className={classes.root}>
       <TargetList onSelect={handleTargetSelect} currentSelection={targetPluginInfo} />
 
+      <div className={classes.header}>
+        <span
+          className={classnames(classes.option, {
+            [classes.active]: view === VIEW.configuration,
+          })}
+          onClick={() => setView(VIEW.configuration)}
+        >
+          Configure Target
+        </span>
+        <span
+          className={classnames(classes.option, {
+            [classes.active]: view === VIEW.documentation,
+          })}
+          onClick={() => setView(VIEW.documentation)}
+        >
+          Documentation
+        </span>
+      </div>
+
       <If condition={targetPluginInfo && !loading}>
-        <ConfigurationGroup
-          widgetJson={targetPluginWidget}
-          pluginProperties={pluginProperties}
-          values={values}
-          onChange={setValues}
-        />
+        <div className={classes.content}>
+          <If condition={view === VIEW.configuration}>
+            <ConfigurationGroup
+              widgetJson={targetPluginWidget}
+              pluginProperties={pluginProperties}
+              values={values}
+              onChange={setValues}
+            />
+          </If>
+
+          <If condition={view === VIEW.documentation}>
+            <Documentation pluginInfo={targetPluginInfo} />
+          </If>
+        </div>
       </If>
       <If condition={loading}>
         <LoadingSVG />

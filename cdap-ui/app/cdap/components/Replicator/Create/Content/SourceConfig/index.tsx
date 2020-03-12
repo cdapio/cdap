@@ -129,7 +129,7 @@ const SourceConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
         </If>
 
         <If condition={view === VIEW.documentation}>
-          <Documentation />
+          <Documentation pluginInfo={sourcePluginInfo} />
         </If>
       </div>
 
