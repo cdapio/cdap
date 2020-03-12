@@ -41,6 +41,7 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -64,12 +65,15 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
     .create();
   private static String systemArtifactsDir;
   private static ArtifactRepository artifactRepository;
+  private static DiscoveryServiceClient discoveryClient;
+  private static LocationFactory locationFactory;
 
   @BeforeClass
   public static void setup() {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     systemArtifactsDir = getInjector().getInstance(CConfiguration.class).get(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR);
-    DiscoveryServiceClient discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
+    locationFactory = getInjector().getInstance(LocationFactory.class);
+    discoveryClient = getInjector().getInstance(DiscoveryServiceClient.class);
     EndpointStrategy endpointStrategy = new RandomEndpointStrategy(
       () -> discoveryClient.discover(Constants.Service.METADATA_SERVICE));
     Discoverable discoverable = endpointStrategy.pick(1, TimeUnit.SECONDS);
@@ -90,6 +94,14 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   public void wipeData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
     artifactRepository.clear(NamespaceId.SYSTEM);
+  }
+
+  protected static DiscoveryServiceClient getDiscoveryClient() {
+    return discoveryClient;
+  }
+
+  protected static LocationFactory getLocationFactory() {
+    return locationFactory;
   }
 
   /**

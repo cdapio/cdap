@@ -87,7 +87,7 @@ import javax.annotation.Nullable;
  */
 public interface ArtifactRepositoryReader {
   /**
-   * Get details about the given artifact. Will never return null.
+   * Get details about the given artifact. Will never return null.k
    * If no such artifact exist, an exception is thrown. Namespace existence is not checked.
    *
    * @param artifactId the id of the artifact to get

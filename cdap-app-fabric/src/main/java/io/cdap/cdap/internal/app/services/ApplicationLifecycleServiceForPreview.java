@@ -156,6 +156,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
     ArtifactDetail artifactDetailFull =
       new ArtifactDetail(new ArtifactDescriptor(artifactDetail.getDescriptor().getArtifactId(), artifactLocation),
                          artifactDetail.getMeta());
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() artifact detial = " + artifactDetail.toString());
     return deployApp(namespace, appName, appVersion, configStr, programTerminator, artifactDetailFull,
                      ownerPrincipal, updateSchedules == null ? appUpdateSchedules : updateSchedules);
   }
@@ -194,6 +195,7 @@ public class ApplicationLifecycleServiceForPreview extends AbstractIdleService {
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
                                                              appClass.getClassName(), appName, appVersion,
                                                              configStr, ownerPrincipal, updateSchedules);
+    LOG.debug("wyzhang: ApplicationLifecycleServiceForPreview::deployApp() deployment info = " + deploymentInfo.toString());
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
     // TODO: (CDAP-3258) Manager needs MUCH better error handling.

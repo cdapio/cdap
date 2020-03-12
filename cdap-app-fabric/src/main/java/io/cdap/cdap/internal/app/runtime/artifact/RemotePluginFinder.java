@@ -95,7 +95,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
         List<PluginInfo> infos = getPlugins(pluginNamespaceId, parentArtifactId, pluginType, pluginName);
         if (infos.isEmpty()) {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
-        }
+       }
 
         SortedMap<io.cdap.cdap.api.artifact.ArtifactId, PluginClass> plugins = new TreeMap<>();
 

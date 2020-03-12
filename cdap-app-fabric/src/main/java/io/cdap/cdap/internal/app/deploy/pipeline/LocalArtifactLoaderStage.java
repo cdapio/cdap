@@ -87,7 +87,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   @Override
   public void process(AppDeploymentInfo deploymentInfo) throws Exception {
     System.out.println("wyzhang: LocalArtifactLoaderStage::process() start");
-    ArtifactId artifactId = deploymentInfo.getArtifactId();
+        ArtifactId artifactId = deploymentInfo.getArtifactId();
+    System.out.println("wyzhang: LocalArtifactLoaderStage::process() artifact id = " + artifactId.toString());
     Location artifactLocation = deploymentInfo.getArtifactLocation();
     System.out.println("wyzhang: LocalArtifactLoaderStage::process() artifact location = " + artifactLocation.toURI());
     String appClassName = deploymentInfo.getAppClassName();

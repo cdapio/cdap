@@ -85,6 +85,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() start");
     try {
         List<PluginInfo> infos = getPlugins(namespace, artifactId, pluginType, pluginName);
+        LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() getPlugins done: size=" + infos.size());
         if (infos.isEmpty()) {
           LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() returned new PluginNotExistsException");
           throw new PluginNotExistsException(namespace, pluginType, pluginName);
@@ -112,10 +113,13 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
         LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() returned something");
         return Maps.immutableEntry(new ArtifactDescriptor(selected.getKey(), artifactLocation), selected.getValue());
     } catch (PluginNotExistsException e) {
+      LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() plugin not exists exception " + e);
       throw e;
     } catch (ArtifactNotFoundException e) {
+      LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() artifact not found exception " + e);
       throw new PluginNotExistsException(namespace, pluginType, pluginName);
     } catch (Exception e) {
+      LOG.debug("wyzhang: RemoteArtifactRepositoryReader::findPlugin() exception " + e);
       throw Throwables.propagate(e);
     }
   }
@@ -124,12 +128,14 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
    * Retrieves the {@link Location} of a given artifact.
    */
   private Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getArtifactLocation() start");
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/location",
+                               artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion());
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getArtifactLocation() url = " + url);
     HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(
-        HttpMethod.GET, String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
-                                      artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion()));
+      remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse response = remoteClient.execute(requestBuilder.build());
-
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getArtifactLocation() resp = " + response.getResponseBodyAsString());
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new ArtifactNotFoundException(artifactId);
     }
@@ -139,7 +145,8 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     }
 
     String path = response.getResponseBodyAsString();
-    Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+        Location location = Locations.getLocationFromAbsolutePath(locationFactory, path);
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getArtifactLocation() location = " + location.toURI());
     if (!location.exists()) {
       throw new IOException(String.format("Artifact Location does not exist %s for artifact %s version %s",
                                           path, artifactId.getArtifact(), artifactId.getVersion()));
@@ -162,19 +169,24 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
                                       Id.Artifact parentArtifactId,
                                       String pluginType,
                                       String pluginName) throws IOException, PluginNotExistsException {
-    HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(
-        HttpMethod.GET,
-        String.format("namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s&pluginScope=%s",
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings start");
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings namespace id = " + namespaceId.toString());
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings parent artifact " + parentArtifactId.getNamespace() + " " + parentArtifactId.getName());
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings plugintype = " + pluginType);
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings pluginName = " + pluginName);
+    String url = String.format("namespaces/%s/artifacts/%s/versions/%s/extensions/%s/plugins/%s?scope=%s",
                       namespaceId.getNamespace(), parentArtifactId.getName(),
                       parentArtifactId.getVersion(), pluginType, pluginName,
-                      NamespaceId.SYSTEM.equals(parentArtifactId.getNamespace())
-                        ? ArtifactScope.SYSTEM : ArtifactScope.USER,
-                      NamespaceId.SYSTEM.equals(namespaceId.getNamespaceId())
-                        ? ArtifactScope.SYSTEM : ArtifactScope.USER
-                      ));
+                      Id.Namespace.SYSTEM.getId().equals(parentArtifactId.getNamespace().getId())
+                        ?  ArtifactScope.SYSTEM : ArtifactScope.USER);
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings url = " + url);
+    HttpRequest.Builder requestBuilder =
+      remoteClient.requestBuilder(HttpMethod.GET, url);
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings execute");
     HttpResponse response = remoteClient.execute(requestBuilder.build());
 
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings response body = " + response.getResponseBodyAsString());
+    LOG.debug("wyzhang: RemoteArtifactRepositoryReader::getPluings response code = " + response.getResponseCode());
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new PluginNotExistsException(namespaceId, pluginType, pluginName);
     }

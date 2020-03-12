@@ -734,39 +734,39 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
     }
   }
 
-  // the following endpoints with path "artifact-internals" are only called by CDAP programs, not exposed via router.
-  @GET
-  @Path("/namespaces/{namespace-id}/artifact-internals/artifacts")
-  public void listArtifactsInternal(HttpRequest request, HttpResponder responder,
-                                    @PathParam("namespace-id") String namespaceId) {
-    try {
-      List<ArtifactInfo> artifactInfoList = new ArrayList<>();
-      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
-      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactInfoList, ARTIFACT_INFO_LIST_TYPE));
-    } catch (Exception e) {
-      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
-    }
-  }
-
-  @GET
-  @Path("/namespaces/{namespace-id}/artifact-internals/artifacts/{artifact-name}/versions/{artifact-version}/location")
-  public void getArtifactLocation(HttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespaceId,
-                                  @PathParam("artifact-name") String artifactName,
-                                  @PathParam("artifact-version") String artifactVersion) {
-    try {
-      ArtifactDetail artifactDetail = artifactRepository.getArtifact(
-        Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersion));
-      LOG.debug("wyzhang: ArtifactHttpHandler::getArtifactLocation() got detail URI " + artifactDetail.getDescriptor().getLocation().toURI());
-      responder.sendString(HttpResponseStatus.OK, artifactDetail.getDescriptor().getLocation().toURI().getPath());
-    } catch (Exception e) {
-      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
-                           "Error reading artifact metadata from the store.");
-    }
-  }
+//  // the following endpoints with path "artifact-internals" are only called by CDAP programs, not exposed via router.
+//  @GET
+//  @Path("/namespaces/{namespace-id}/artifact-internals/artifacts")
+//  public void listArtifactsInternal(HttpRequest request, HttpResponder responder,
+//                                    @PathParam("namespace-id") String namespaceId) {
+//    try {
+//      List<ArtifactInfo> artifactInfoList = new ArrayList<>();
+//      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(new NamespaceId(namespaceId)));
+//      artifactInfoList.addAll(artifactRepository.getArtifactsInfo(NamespaceId.SYSTEM));
+//      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactInfoList, ARTIFACT_INFO_LIST_TYPE));
+//    } catch (Exception e) {
+//      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
+//      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
+//    }
+//  }
+//
+//  @GET
+//  @Path("/namespaces/{namespace-id}/artifact-internals/artifacts/{artifact-name}/versions/{artifact-version}/location")
+//  public void getArtifactLocation(HttpRequest request, HttpResponder responder,
+//                                  @PathParam("namespace-id") String namespaceId,
+//                                  @PathParam("artifact-name") String artifactName,
+//                                  @PathParam("artifact-version") String artifactVersion) {
+//    try {
+//      ArtifactDetail artifactDetail = artifactRepository.getArtifact(
+//        Id.Artifact.from(Id.Namespace.from(namespaceId), artifactName, artifactVersion));
+//      LOG.debug("wyzhang: ArtifactHttpHandler::getArtifactLocation() got detail URI " + artifactDetail.getDescriptor().getLocation().toURI());
+//      responder.sendString(HttpResponseStatus.OK, artifactDetail.getDescriptor().getLocation().toURI().getPath());
+//    } catch (Exception e) {
+//      LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
+//      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR,
+//                           "Error reading artifact metadata from the store.");
+//    }
+//  }
 
   private ArtifactScope validateScope(String scope) throws BadRequestException {
     try {
