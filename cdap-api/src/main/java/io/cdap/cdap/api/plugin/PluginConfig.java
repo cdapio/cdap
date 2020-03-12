@@ -33,10 +33,12 @@ public abstract class PluginConfig extends Config implements Serializable {
 
   // below fields are set using reflection
   private PluginProperties properties;
+  private PluginProperties rawProperties;
   private Set<String> macroFields;
 
   protected PluginConfig() {
     this.properties = PluginProperties.builder().build();
+    this.rawProperties = PluginProperties.builder().build();
     this.macroFields = Collections.emptySet();
   }
 
@@ -58,6 +60,15 @@ public abstract class PluginConfig extends Config implements Serializable {
    */
   public final PluginProperties getProperties() {
     return properties;
+  }
+
+  /**
+   * Returns the raw {@link PluginProperties}
+   *
+   * No macro evaluations will be performed here, meaning that for example "schema" could map to "${schema}".
+   */
+  public final PluginProperties getRawProperties() {
+    return rawProperties;
   }
 
   /**
