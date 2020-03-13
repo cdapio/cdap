@@ -105,6 +105,7 @@ public class BootstrapService extends AbstractIdleService {
     // Shutdown the executor, which will issue an interrupt to the running thread.
     // There is only a single daemon thread, so no need to wait for termination
     executorService.shutdownNow();
+    this.systemAppManagementService.stopAndWait();
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
