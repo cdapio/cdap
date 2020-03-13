@@ -1102,6 +1102,12 @@ public final class Constants {
       public static final String SSL_TRUSTSTORE_TYPE = "security.auth.server.ssl.truststore.type";
       /** SSL truststore password */
       public static final String SSL_TRUSTSTORE_PASSWORD = "security.auth.server.ssl.truststore.password";
+      /** Case conversion type */
+      public static final String USERNAME_CASE_CONVERSION_TYPE =
+              "security.auth.server.usernameCaseConversion";
+      /** Title case conversion delimiter */
+      public static final String USERNAME_TITLECASE_DELIMITER =
+              "security.auth.server.usernameTitleCaseDelim";
     }
 
     /** Path to the Kerberos keytab file used by CDAP master */

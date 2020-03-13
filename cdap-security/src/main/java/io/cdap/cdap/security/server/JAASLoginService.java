@@ -50,7 +50,7 @@ import javax.security.auth.login.LoginException;
  *
  * Creates a UserRealm suitable for use with JAAS
  */
-public class JAASLoginService extends AbstractLifeCycle implements LoginService {
+public class JAASLoginService extends AbstractLoginService {
   private static final Logger LOG = Log.getLogger(JAASLoginService.class);
 
   public static String defaultRoleClassName = "org.eclipse.jetty.plus.jaas.JAASRole";
@@ -221,8 +221,11 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
 
       loginContext.login();
 
+      String userNameCH = getUserName(callbackHandler);
+      userNameCH = usernameCaseConvert(userNameCH);
+
       //login success
-      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(getUserName(callbackHandler), subject, loginContext);
+      JAASUserPrincipal userPrincipal = new JAASUserPrincipal(userNameCH, subject, loginContext);
       subject.getPrincipals().add(userPrincipal);
 
       return identityService.newUserIdentity(subject, userPrincipal, getGroups(subject));
@@ -295,4 +298,8 @@ public class JAASLoginService extends AbstractLifeCycle implements LoginService 
     }
   }
 
+  @Override
+  public String serverCaseConvert(String username) {
+    throw new UnsupportedOperationException("server type is not supported for JAASLoginService");
+  }
 }

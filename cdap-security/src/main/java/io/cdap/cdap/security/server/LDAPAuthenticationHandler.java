@@ -19,6 +19,7 @@ package io.cdap.cdap.security.server;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.common.conf.Constants;
+import org.eclipse.jetty.security.LoginService;
 
 import java.util.HashMap;
 import java.util.List;
@@ -82,5 +83,13 @@ public class LDAPAuthenticationHandler extends JAASAuthenticationHandler {
 
   static boolean getLdapSSLVerifyCertificate() {
     return ldapSSLVerifyCertificate;
+  }
+
+  @Override
+  protected LoginService getHandlerLoginService() {
+    LDAPLoginService ldapLoginService = new LDAPLoginService();
+    ldapLoginService.setLoginModuleName("ldapLoginService");
+    ldapLoginService.setConfiguration(getLoginModuleConfiguration());
+    return ldapLoginService;
   }
 }
