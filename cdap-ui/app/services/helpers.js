@@ -220,6 +220,22 @@ angular.module(PKG.name+'.services')
   }
 
   /* ----------------------------------------------------------------------- */
+  function validNamespaceResolver(stateParams) {
+    const { namespace } = stateParams;
+    window.CaskCommon.IsValidNS(namespace)
+      .then(validNamespace => {
+        if (!validNamespace) {
+          const error = {
+            statusCode: 404,
+            data: `Namespace '${namespace}' does not exist.`
+          };
+          window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
+        }
+      })
+      .catch(err => {
+        window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, err);
+      });
+  }
 
   return {
     deepSet: deepSet,
@@ -232,5 +248,6 @@ angular.module(PKG.name+'.services')
     isNumeric: isNumeric,
     handlePageLevelError: handlePageLevelError,
     objHasMissingValues: objHasMissingValues,
+    validNamespaceResolver: validNamespaceResolver
   };
 });

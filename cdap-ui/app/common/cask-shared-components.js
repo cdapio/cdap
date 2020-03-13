@@ -17,6 +17,7 @@
 import T from 'i18n-react';
 T.setTexts(require('../cdap/text/text-en.yaml'));
 var Store = require('../cdap/services/NamespaceStore').default;
+var IsValidNS = require('../cdap/services/NamespaceStore').isValidNamespace;
 var NameSpaceStoreActions = require('../cdap/services/NamespaceStore/NamespaceActions').default;
 var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
 var DataPrepHome = require('../cdap/components/DataPrepHome').default;
@@ -205,4 +206,5 @@ export {
   Page404,
   Page500,
   WindowManager,
+  IsValidNS,
 };
