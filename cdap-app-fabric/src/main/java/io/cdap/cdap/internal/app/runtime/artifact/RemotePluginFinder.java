@@ -189,7 +189,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     LOG.debug("wyzhang: RemotePluginFinder::getArtifactLocation() start");
     LOG.debug("wyzhang: RemotePluginFinder::getArtifactLocation() artifact id = " + artifactId.toString());
 
-    String uri = String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
+    String uri = String.format("namespaces/%s/artifact/artifacts/%s/versions/%s/location",
                                artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion());
     HttpRequest.Builder requestBuilder =
       remoteClientInternal.requestBuilder(HttpMethod.GET, uri);
