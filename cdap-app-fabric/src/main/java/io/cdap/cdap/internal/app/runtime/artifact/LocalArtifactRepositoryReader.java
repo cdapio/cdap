@@ -129,7 +129,7 @@ public class LocalArtifactRepositoryReader implements ArtifactRepositoryReader {
   public Map.Entry<ArtifactDescriptor, PluginClass> findPlugin(
     NamespaceId namespace, Id.Artifact artifactId, String pluginType, String pluginName, PluginSelector selector)
     throws IOException, PluginNotExistsException, ArtifactNotFoundException {
-    ArtifactRange artifactRange = new ArtifactRange(namespace.getNamespace(), artifactId.getName(),
+    ArtifactRange artifactRange = new ArtifactRange(artifactId.getNamespace().getId(), artifactId.getName(),
                                                     new ArtifactVersion(artifactId.getVersion().getVersion()), true,
                                                     new ArtifactVersion(artifactId.getVersion().getVersion()), true);
     SortedMap<ArtifactDescriptor, PluginClass> pluginClasses = artifactStore.getPluginClasses(
