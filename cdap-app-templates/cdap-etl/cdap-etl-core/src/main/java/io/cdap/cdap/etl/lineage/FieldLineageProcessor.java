@@ -70,21 +70,29 @@ public class FieldLineageProcessor {
     for (StageSpec stageSpec : pipelineSpec.getStages()) {
 
       Map<String, Schema> inputSchemas = stageSpec.getInputSchemas();
+      // workaround to avoid NPE if the schema is not set
+      // TODO: CDAP-16428 populate the schema if macro is enabled to avoid this
+      if (inputSchemas == null) {
+        LOG.warn("Field lineage will not be recorded since the input schema is not set. ");
+        return Collections.emptySet();
+      }
       // If current stage is of type JOIN add fields as inputstageName.fieldName
       List<String> stageInputs = new ArrayList<>();
       List<String> stageOutputs = new ArrayList<>();
       if (BatchJoiner.PLUGIN_TYPE.equals(stageSpec.getPlugin().getType())) {
         for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
-          if (entry.getValue().getFields() != null) {
-            stageInputs.addAll(entry.getValue().getFields()
+          Schema schema = entry.getValue();
+          if (schema != null && schema.getFields() != null) {
+            stageInputs.addAll(schema.getFields()
                                  .stream().map(field -> entry.getKey() + "." + field.getName())
                                  .collect(Collectors.toList()));
           }
         }
       } else {
         for (Map.Entry<String, Schema> entry : inputSchemas.entrySet()) {
-          if (entry.getValue().getFields() != null) {
-            stageInputs.addAll(entry.getValue().getFields().stream().map(Schema.Field::getName)
+          Schema schema = entry.getValue();
+          if (schema != null && schema.getFields() != null) {
+            stageInputs.addAll(schema.getFields().stream().map(Schema.Field::getName)
                                  .collect(Collectors.toList()));
           }
         }
