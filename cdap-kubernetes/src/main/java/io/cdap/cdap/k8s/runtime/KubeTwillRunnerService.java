@@ -129,6 +129,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   @Override
   public TwillPreparer prepare(TwillApplication application) {
+    LOG.debug("wyzhang: KubeTwillRunnerService::prepare() start");
     TwillSpecification spec = application.configure();
     RunId runId = RunIds.generate();
     Map<String, String> labels = new HashMap<>(extraLabels);
@@ -160,12 +161,14 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   @Nullable
   @Override
   public TwillController lookup(String applicationName, RunId runId) {
+    LOG.debug("wyzhang: KubeTwillRunnerService::lookup() start");
     KubeLiveInfo liveInfo = liveInfos.get(applicationName);
     return liveInfo == null ? null : liveInfo.getController(runId);
   }
 
   @Override
   public Iterable<TwillController> lookup(String applicationName) {
+    LOG.debug("wyzhang: KubeTwillRunnerService::lookup() start");
     KubeLiveInfo liveInfo = liveInfos.get(applicationName);
     return liveInfo == null ? Collections.emptyList() : liveInfo.getControllers();
   }
@@ -191,6 +194,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   @Override
   public void start() {
     try {
+      LOG.debug("wyzhang: KubeTwillRunnerService::start() start");
       apiClient = Config.defaultClient();
       monitorScheduler = Executors.newSingleThreadScheduledExecutor(
         Threads.createDaemonThreadFactory("kube-monitor-executor"));
@@ -199,12 +203,15 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     } catch (IOException e) {
       throw new IllegalStateException("Unable to get Kubernetes API Client", e);
     }
+    LOG.debug("wyzhang: KubeTwillRunnerService::start() end");
   }
 
   @Override
   public void stop() {
+    LOG.debug("wyzhang: KubeTwillRunnerService::stop() start");
     deploymentWatcher.close();
     monitorScheduler.shutdownNow();
+    LOG.debug("wyzhang: KubeTwillRunnerService::stop() end");
   }
 
   /**
@@ -218,6 +225,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   private KubeTwillController monitorController(KubeLiveInfo liveInfo, long timeout,
                                                 TimeUnit timeoutUnit, KubeTwillController controller) {
+    LOG.debug("wyzhang: KubeTwillRunnerService::monitorController() start");
     String runId = controller.getRunId().getId();
 
     LOG.debug("Monitoring application {} with run {} starts in {} {}",
@@ -308,6 +316,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       LOG.info("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
     }, Threads.SAME_THREAD_EXECUTOR);
 
+    LOG.debug("wyzhang: KubeTwillRunnerService::monitorController() end");
     return controller;
   }
 

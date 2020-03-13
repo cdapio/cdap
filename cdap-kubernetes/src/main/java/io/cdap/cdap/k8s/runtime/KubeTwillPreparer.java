@@ -312,9 +312,11 @@ class KubeTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
+    LOG.debug("wyzhang: KubeTwillPreparer::start() start");
     try {
       V1ConfigMap configMap = createConfigMap();
       createDeployment(configMap, timeoutUnit.toMillis(timeout));
+      LOG.debug("wyzhang: KubeTwillPreparer::start() done");
       return controllerFactory.create(timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
@@ -322,6 +324,7 @@ class KubeTwillPreparer implements TwillPreparer {
   }
 
   private V1Deployment createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+    LOG.debug("wyzhang: KubeTwillPreparer::createDeployment() start");
     /*
        The deployment will look something like:
        apiVersion: apps/v1

@@ -47,6 +47,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -60,11 +62,12 @@ import java.util.concurrent.TimeUnit;
  * Implementation of {@link PluginFinder} that use the artifact HTTP endpoints for finding plugins.
  */
 public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
-
+  private static final Logger LOG = LoggerFactory.getLogger(RemotePluginFinder.class);
   private static final Gson GSON = new Gson();
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
 
   private final RemoteClient remoteClient;
+  private final RemoteClient remoteClientInternal;
   private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
   private final LocationFactory locationFactory;
@@ -77,6 +80,10 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false),
                                          String.format("%s", Constants.Gateway.API_VERSION_3));
+    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                         new DefaultHttpRequestConfig(false),
+                                         String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
+
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
     this.locationFactory = locationFactory;
@@ -179,16 +186,19 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
    */
   @Override
   public Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
+    LOG.debug("wyzhang: RemotePluginFinder::getArtifactLocation() start");
+    LOG.debug("wyzhang: RemotePluginFinder::getArtifactLocation() artifact id = " + artifactId.toString());
+
+    String uri = String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
+                               artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion());
     HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(
-        HttpMethod.GET, String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
-                                      artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion()));
+      remoteClientInternal.requestBuilder(HttpMethod.GET, uri);
     // add header if auth is enabled
     if (authorizationEnabled) {
       requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
     }
 
-    HttpResponse response = remoteClient.execute(requestBuilder.build());
+    HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
 
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new ArtifactNotFoundException(artifactId);
