@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
@@ -542,6 +543,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private void startCoreServices() {
     // Initialize log appender
     logAppenderInitializer.initialize();
+    SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
     try {
       // Starts the core services
