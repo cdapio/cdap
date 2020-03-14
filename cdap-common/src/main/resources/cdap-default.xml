@@ -2673,6 +2673,7 @@
     <value>5000</value>
     <description>
       Number of milliseconds to wait for the runtime to shutdown after a program execution completed in that runtime.
+      This value should be larger than the value of the "app.program.runtime.monitor.polltime.ms" property
     </description>
   </property>
 
