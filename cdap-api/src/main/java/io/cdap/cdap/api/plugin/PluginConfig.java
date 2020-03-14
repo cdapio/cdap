@@ -63,9 +63,9 @@ public abstract class PluginConfig extends Config implements Serializable {
   }
 
   /**
-   * Returns the raw {@link PluginProperties}
-   *
-   * No macro evaluations will be performed here, meaning that for example "schema" could map to "${schema}".
+   * Contains the {@link PluginProperties} as they were before macro evaluation. For example, at configure time, if the
+   * 'schema' property is a macro '${schema}', the value will be the raw string '${schema}' instead of null. This is
+   * primarily useful when one plugin is passing macro enabled properties to another plugin.
    */
   public final PluginProperties getRawProperties() {
     return rawProperties;

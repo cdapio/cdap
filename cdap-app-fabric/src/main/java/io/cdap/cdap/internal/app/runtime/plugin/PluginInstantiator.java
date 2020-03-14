@@ -257,12 +257,11 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> configFieldType = pluginType.resolveType(field.getGenericType());
       Object config = instantiatorFactory.get(configFieldType).create();
 
-      PluginProperties rawProperties = plugin.getProperties();
-
       // perform macro substitution if an evaluator is provided, collect fields with macros only at configure time
       PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
       Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
+      PluginProperties rawProperties = plugin.getProperties();
       ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, rawProperties, macroFields);
       Reflections.visit(config, configFieldType.getType(), fieldSetter);
 
@@ -514,7 +513,7 @@ public class PluginInstantiator implements Closeable {
     private final Set<InvalidPluginProperty> invalidProperties;
 
     ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties, PluginProperties rawProperties,
-        Set<String> macroFields) {
+                      Set<String> macroFields) {
       this.pluginClass = pluginClass;
       this.properties = properties;
       this.rawProperties = rawProperties;
