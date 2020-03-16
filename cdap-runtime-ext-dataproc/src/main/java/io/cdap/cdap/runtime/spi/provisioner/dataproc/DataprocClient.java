@@ -334,9 +334,10 @@ final class DataprocClient implements AutoCloseable {
       if (publicKey != null) {
         // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
         metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
+        // override any os-login that may be set on the project-level metadata
+        // this metadata is only needed if ssh is being used to launch the jobs - CDAP-15369
+        metadata.put("enable-oslogin", "false");
       }
-      // override any os-login that may be set on the project-level metadata
-      metadata.put("enable-oslogin", "false");
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
@@ -360,8 +361,11 @@ final class DataprocClient implements AutoCloseable {
                                                   conf.getNetwork()));
       }
 
-      for (String targetTag : getFirewallTargetTags()) {
-        clusterConfig.addTags(targetTag);
+      // if public key is no null that means ssh should be used to launch job on dataproc
+      if (publicKey != null) {
+        for (String targetTag : getFirewallTargetTags()) {
+          clusterConfig.addTags(targetTag);
+        }
       }
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security

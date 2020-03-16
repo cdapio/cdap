@@ -106,6 +106,7 @@ public class ProvisioningService extends AbstractIdleService {
   private static final Type PLUGIN_REQUIREMENT_SET_TYPE = new TypeToken<Set<PluginRequirement>>() { }.getType();
 
   private final CConfiguration cConf;
+  private final boolean shouldSSH;
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
@@ -126,6 +127,7 @@ public class ProvisioningService extends AbstractIdleService {
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
                       ProvisionerStore provisionerStore, TransactionRunner transactionRunner) {
     this.cConf = cConf;
+    this.shouldSSH = !cConf.get(Constants.RuntimeJob.RUNTIME_JOB_MANAGER).equals(Constants.RuntimeJob.CLOUD_PROVIDER);
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
@@ -195,9 +197,12 @@ public class ProvisioningService extends AbstractIdleService {
     // Create the ProvisionerContext and query the cluster status using the provisioner
     ProvisionerContext context;
     try {
-      context = createContext(programRunId, userId, properties,
-                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                    null, null));
+      DefaultSSHContext defaultSSHContext = null;
+      if (shouldSSH) {
+        defaultSSHContext = new DefaultSSHContext(
+          Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
+      }
+      context = createContext(programRunId, userId, properties, defaultSSHContext);
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -537,10 +542,13 @@ public class ProvisioningService extends AbstractIdleService {
 
     ProvisionerContext context;
     try {
-      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
-                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                    locationFactory.create(taskInfo.getSecureKeysDir()),
-                                                    createSSHKeyPair(taskInfo)));
+      DefaultSSHContext defaultSSHContext = null;
+      if (shouldSSH) {
+        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                  locationFactory.create(taskInfo.getSecureKeysDir()),
+                                                  createSSHKeyPair(taskInfo));
+      }
+      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), defaultSSHContext);
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -591,9 +599,12 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
-      context = createContext(programRunId, taskInfo.getUser(), properties,
-                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                    null, sshKeyPair));
+      DefaultSSHContext defaultSSHContext = null;
+      if (shouldSSH) {
+        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                  null, sshKeyPair);
+      }
+      context = createContext(programRunId, taskInfo.getUser(), properties, defaultSSHContext);
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -702,7 +713,7 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           SSHContext sshContext) {
+                                           @Nullable SSHContext sshContext) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
   }
