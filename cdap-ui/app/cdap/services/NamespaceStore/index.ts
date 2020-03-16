@@ -103,6 +103,10 @@ const getCurrentNamespace = () => {
 };
 
 const isValidNamespace = async (namespace: string) => {
+  if (namespace === SYSTEM_NAMESPACE) {
+    return true;
+  }
+
   if (namespace) {
     const { namespaces: namespacesFromStore } = NamespaceStore.getState();
     let validNamespaces;

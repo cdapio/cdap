@@ -67,10 +67,20 @@ export default class RunConfigs extends Component {
   }
 
   getRuntimeArgsAndToggleModeless = () => {
-    PipelineConfigurationsStore.dispatch({
-      type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
-      payload: { open: false },
-    });
+    if (this.state.showModeless) {
+      PipelineConfigurationsStore.dispatch({
+        type: PipelineConfigurationsActions.SET_MODELESS_OPEN_STATUS,
+        payload: { open: false },
+      });
+      PipelineConfigurationsStore.dispatch({
+        type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
+        payload: {
+          pipelineVisualConfiguration: {
+            isHistoricalRun: true,
+          },
+        },
+      });
+    }
 
     let runtimeArgs = objectQuery(this.props.currentRun, 'properties', 'runtimeArgs') || '';
     try {
@@ -86,15 +96,6 @@ export default class RunConfigs extends Component {
 
     this.setState({
       runtimeArgs,
-    });
-
-    PipelineConfigurationsStore.dispatch({
-      type: PipelineConfigurationsActions.SET_PIPELINE_VISUAL_CONFIGURATION,
-      payload: {
-        pipelineVisualConfiguration: {
-          isHistoricalRun: true,
-        },
-      },
     });
   };
 
