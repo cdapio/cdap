@@ -353,7 +353,6 @@ public class DataprocProvisioner implements Provisioner {
     if (Strings.isNullOrEmpty(bucket)) {
       bucket = systemContext.getProperties().get(BUCKET);
     }
-    String sparkVersion = context.getSparkCompat().getCompat();
     Map<String, String> systemLabels = getSystemLabels(systemContext);
     GoogleCredentials dataprocCredentials;
     try {
@@ -363,6 +362,6 @@ public class DataprocProvisioner implements Provisioner {
     }
 
     return Optional.of(new DataprocRuntimeJobManager(clusterName, dataprocCredentials, projectId, region, bucket,
-                                                     sparkVersion, systemLabels));
+                                                     systemLabels));
   }
 }

@@ -157,6 +157,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     try {
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
       CConfiguration cConf = injector.getInstance(CConfiguration.class);
+      System.setProperty(Constants.SPARK_COMPAT_ENV, cConf.get(Constants.AppFabric.SPARK_COMPAT));
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
 
       // Create and run the program. The program files should be present in current working directory.

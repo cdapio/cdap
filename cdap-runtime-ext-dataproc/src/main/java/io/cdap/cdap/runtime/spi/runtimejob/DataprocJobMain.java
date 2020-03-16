@@ -40,7 +40,6 @@ import java.util.zip.ZipInputStream;
  */
 public class DataprocJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
-  private static final String SPARK_COMPAT = "SPARK_COMPAT";
 
   /**
    * Main method to setup classpath and call the RuntimeJob.run() method.
@@ -49,14 +48,11 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
-    if (args.length < 2) {
-      throw new RuntimeException("An implementation of RuntimeJob classname and spark compat should be provided as an" +
-                                   " argument.");
+    if (args.length < 1) {
+      throw new RuntimeException("An implementation of RuntimeJob classname should be provided as an argument.");
     }
+
     String runtimeJobClassName = args[0];
-    String sparkCompat = args[1];
-    // This is needed by Runtime job to detect correct spark compat version
-    System.setProperty(SPARK_COMPAT, sparkCompat);
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {

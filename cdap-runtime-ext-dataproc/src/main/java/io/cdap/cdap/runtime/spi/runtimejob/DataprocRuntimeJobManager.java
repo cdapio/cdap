@@ -84,7 +84,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String projectId;
   private final String region;
   private final String bucket;
-  private final String sparkVersion;
   private final Map<String, String> labels;
 
   private Storage storageClient;
@@ -98,17 +97,15 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * @param projectId project id
    * @param region region
    * @param bucket gcs bucket
-   * @param sparkVersion spark compat version
    * @param labels system labels to be added on dataproc job
    */
   public DataprocRuntimeJobManager(String clusterName, GoogleCredentials credentials, String projectId, String region,
-                                   String bucket, String sparkVersion, Map<String, String> labels) {
+                                   String bucket, Map<String, String> labels) {
     this.clusterName = clusterName;
     this.credentials = credentials;
     this.projectId = projectId;
     this.region = region;
     this.bucket = bucket;
-    this.sparkVersion = sparkVersion;
     this.labels = Collections.unmodifiableMap(new HashMap<>(labels));
   }
 
@@ -285,7 +282,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // set main class
       .setMainClass(DataprocJobMain.class.getName())
       // set main class arguments
-      .addAllArgs(ImmutableList.of(jobMainClassName, sparkVersion))
+      .addAllArgs(ImmutableList.of(jobMainClassName))
       .putAllProperties(ImmutableMap.of(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace(),
                                         CDAP_RUNTIME_APPLICATION, runInfo.getApplication(),
                                         CDAP_RUNTIME_PROGRAM, runInfo.getProgram(),
