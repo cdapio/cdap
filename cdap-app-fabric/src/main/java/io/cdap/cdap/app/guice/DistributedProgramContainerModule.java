@@ -17,27 +17,22 @@
 package io.cdap.cdap.app.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Binder;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
-import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.namespace.NoLookupNamespacePathLocator;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
-import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
@@ -52,7 +47,6 @@ import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -79,10 +73,6 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -257,47 +247,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
             return programRunId.getNamespaceId().equals(namespaceId);
           }
         });
-
-        bindRuntimeMonitorServer(binder());
       }
     });
-  }
-
-  /**
-   * Optionally adds {@link RuntimeMonitorServer} binding.
-   */
-  private void bindRuntimeMonitorServer(Binder binder) {
-    try {
-      Path keyStorePath = Paths.get(Constants.RuntimeMonitor.SERVER_KEYSTORE);
-      Path trustStorePath = Paths.get(Constants.RuntimeMonitor.CLIENT_KEYSTORE);
-
-      // If there is no key store or trust store, don't add the binding.
-      // The reason is that this module is used in all containers, but only the driver container would have the
-      // key store files.
-      if (!Files.isReadable(keyStorePath) || !Files.isReadable(trustStorePath)) {
-        return;
-      }
-
-      KeyStore keyStore = KeyStores.load(Locations.toLocation(keyStorePath), () -> "");
-      KeyStore trustStore = KeyStores.load(Locations.toLocation(trustStorePath), () -> "");
-
-      // Update the cConf as well to store the service proxy password
-      cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD, KeyStores.hash(keyStore));
-
-      binder.install(new PrivateModule() {
-        @Override
-        protected void configure() {
-          bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(keyStore);
-          bind(KeyStore.class).annotatedWith(Constants.AppFabric.TrustStore.class).toInstance(trustStore);
-          bind(RuntimeMonitorServer.class);
-          expose(RuntimeMonitorServer.class);
-        }
-      });
-
-    } catch (Exception e) {
-      // Just log if failed to load the KeyStores. It will fail when RuntimeMonitorServer is needed.
-      LOG.error("Failed to load key store and/or trust store", e);
-    }
   }
 
   private static String generateClientId(ProgramRunId programRunId, String instanceId) {

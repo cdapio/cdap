@@ -921,11 +921,12 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
     scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
 
     scriptWriter.printf(
-      "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true >%s/stdout 2>%s/stderr &\n",
+      "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s >%s/stdout 2>%s/stderr &\n",
       programRunId.getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
-      getJvmOptions().getRunnableExtraOptions(runnableName),
+      getJvmOptions().getAMExtraOptions(),
       RemoteLauncher.class.getName(),
-      runtimeSpec.getRunnableSpecification().getClassName(),
+      RemoteExecutionJobMain.class.getName(),
+      programRunId.getRun(),
       logsDir, logsDir);
 
     scriptWriter.flush();

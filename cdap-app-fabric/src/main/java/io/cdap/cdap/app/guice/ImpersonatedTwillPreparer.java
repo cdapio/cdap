@@ -22,12 +22,12 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.TokenSecureStoreRenewer;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.security.User;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.yarn.YarnSecureStore;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -60,7 +60,7 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
     try {
       return impersonator.doAs(programId, () -> {
         // Add secure tokens
-        if (User.isHBaseSecurityEnabled(hConf) || UserGroupInformation.isSecurityEnabled()) {
+        if (isHBaseSecurityEnabled() || UserGroupInformation.isSecurityEnabled()) {
           addSecureStore(YarnSecureStore.create(secureStoreRenewer.createCredentials()));
         }
         return new ImpersonatedTwillController(delegate.start(timeout, timeoutUnit),
@@ -68,6 +68,20 @@ final class ImpersonatedTwillPreparer extends ForwardingTwillPreparer {
       });
     } catch (Exception e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Determines if HBase security is enabled. This method uses reflection to invoke HBase case so that
+   * we can ignore if HBase is not present in the current environment.
+   */
+  private boolean isHBaseSecurityEnabled() {
+    try {
+      Class<?> hbaseUser = Class.forName("org.apache.hadoop.hbase.security.User");
+      Method method = hbaseUser.getMethod("isHBaseSecurityEnabled", Configuration.class);
+      return (boolean) method.invoke(null, hConf);
+    } catch (Exception e) {
+      return false;
     }
   }
 }

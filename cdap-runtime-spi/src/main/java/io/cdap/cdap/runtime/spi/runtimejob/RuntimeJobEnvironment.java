@@ -17,8 +17,7 @@
 package io.cdap.cdap.runtime.spi.runtimejob;
 
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 
@@ -26,15 +25,11 @@ import java.util.Map;
  * Represents runtime job environment that provides information that is needed by the {@link RuntimeJob} to run the job.
  */
 public interface RuntimeJobEnvironment {
-  /**
-   * Returns a {@link DiscoveryService} for service announcement purpose.
-   */
-  DiscoveryService getDiscoveryService();
 
   /**
-   * Returns a {@link DiscoveryServiceClient} for service discovery purpose.
+   * Returns a {@link LocationFactory} for location access.
    */
-  DiscoveryServiceClient getDiscoveryServiceClient();
+  LocationFactory getLocationFactory();
 
   /**
    * Returns a {@link TwillRunner}.
