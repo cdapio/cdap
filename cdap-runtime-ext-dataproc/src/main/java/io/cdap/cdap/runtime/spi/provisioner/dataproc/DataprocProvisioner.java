@@ -31,6 +31,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -150,17 +151,21 @@ public class DataprocProvisioner implements Provisioner {
     // Generates and set the ssh key if it does not have one.
     // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
     SSHContext sshContext = context.getSSHContext();
-    SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
-    if (sshKeyPair == null) {
-      sshKeyPair = sshContext.generate("cdap");
-      sshContext.setSSHKeyPair(sshKeyPair);
+    SSHPublicKey sshPublicKey = null;
+    if (sshContext != null) {
+      SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
+      if (sshKeyPair == null) {
+        sshKeyPair = sshContext.generate("cdap");
+        sshContext.setSSHKeyPair(sshKeyPair);
+      }
+      sshPublicKey = sshKeyPair.getPublicKey();
     }
 
     // Reload system context properties and get system labels
     systemContext.reloadProperties();
     Map<String, String> systemLabels = getSystemLabels(systemContext);
 
-    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshPublicKey);
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client =

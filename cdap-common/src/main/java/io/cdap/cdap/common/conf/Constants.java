@@ -891,6 +891,13 @@ public final class Constants {
   }
 
   /**
+   * RuntimeJob constants.
+   */
+  public static final class RuntimeJob {
+    public static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
+  }
+
+  /**
    * Logging constants.
    */
   public static final class Logging {
