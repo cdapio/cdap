@@ -19,16 +19,18 @@ import { apiCreator } from 'services/resource-helper';
 
 const dataSrc = DataSourceConfigurer.getInstance();
 
-const pluginPath = '/namespaces/:namespace/artifacts/delta-app/versions/0.1.0-SNAPSHOT/extensions';
+const pluginPath = '/namespaces/:namespace/artifacts/:parentArtifact/versions/:version/extensions';
 const appPath = '/namespaces/:namespace/apps/:appName';
 const programPath = `${appPath}/workers/DeltaWorker`;
-const servicePath = `/namespaces/system/apps/delta/services/assessor/methods/v1/contexts/:namespace`;
+const deltaAppPath = '/namespaces/system/apps/delta';
+const servicePath = `${deltaAppPath}/services/assessor/methods/v1/contexts/:namespace`;
 const draftPath = `${servicePath}/drafts/:draftId`;
 const workerPath = `${appPath}/workers/DeltaWorker`;
 const artifactBasePath = `/namespaces/:namespace/artifacts/:artifactName/versions/:artifactVersion/properties`;
 
 export const MyReplicatorApi = {
-  getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType?scope=system`),
+  getDeltaApp: apiCreator(dataSrc, 'GET', 'REQUEST', deltaAppPath),
+  getPlugins: apiCreator(dataSrc, 'GET', 'REQUEST', `${pluginPath}/:pluginType`),
   batchGetPluginsWidgets: apiCreator(
     dataSrc,
     'POST',

@@ -16,6 +16,7 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import HorizontalCarousel from 'components/HorizontalCarousel';
 import { fetchPluginsAndWidgets } from 'components/Replicator/utilities';
 import { PluginType } from 'components/Replicator/constants';
@@ -56,18 +57,23 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface ITargetListProps extends WithStyles<typeof styles> {
+interface ITargetListProps extends ICreateContext, WithStyles<typeof styles> {
   onSelect: (target) => void;
   currentSelection: any;
 }
 
-const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, currentSelection }) => {
+const TargetListView: React.FC<ITargetListProps> = ({
+  classes,
+  onSelect,
+  currentSelection,
+  parentArtifact,
+}) => {
   const [targets, setTargets] = React.useState([]);
   const [widgetMap, setWidgetMap] = React.useState({});
   const [search, setSearch] = React.useState('');
 
   React.useEffect(() => {
-    fetchPluginsAndWidgets(PluginType.target).subscribe((res) => {
+    fetchPluginsAndWidgets(parentArtifact, PluginType.target).subscribe((res) => {
       if (res.plugins.length === 1 && !currentSelection) {
         onSelect(res.plugins[0]);
       }
@@ -157,5 +163,6 @@ const TargetListView: React.FC<ITargetListProps> = ({ classes, onSelect, current
   );
 };
 
-const TargetList = withStyles(styles)(TargetListView);
+const StyledTargetList = withStyles(styles)(TargetListView);
+const TargetList = createContextConnect(StyledTargetList);
 export default TargetList;

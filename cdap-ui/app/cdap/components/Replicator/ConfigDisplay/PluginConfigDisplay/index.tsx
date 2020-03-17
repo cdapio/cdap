@@ -43,6 +43,8 @@ interface IPluginConfigProps extends WithStyles<typeof styles> {
   pluginConfig: any;
 }
 
+const ESCAPED_SENSITIVE_FIELDS = ['password', 'serviceAccountKey'];
+
 const PluginConfigDisplayView: React.FC<IPluginConfigProps> = ({
   classes,
   pluginInfo,
@@ -102,6 +104,10 @@ const PluginConfigDisplayView: React.FC<IPluginConfigProps> = ({
 
       <div className={classes.configContainer}>
         {config.map((property) => {
+          if (ESCAPED_SENSITIVE_FIELDS.indexOf(property.name) !== -1) {
+            return null;
+          }
+
           return (
             <div key={property.name} className={classes.configRow}>
               <div>
