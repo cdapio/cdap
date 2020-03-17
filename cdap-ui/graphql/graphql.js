@@ -19,7 +19,7 @@ import { ApolloServer } from 'apollo-server-express';
 import log4js from 'log4js';
 import { resolvers } from 'gql/resolvers';
 import { importSchema } from 'graphql-import';
-import sessionToken from 'server/token';
+import * as sessionToken from 'server/token';
 import { createLoaders } from 'gql/helpers/createLoaders';
 
 const log = log4js.getLogger('graphql');
