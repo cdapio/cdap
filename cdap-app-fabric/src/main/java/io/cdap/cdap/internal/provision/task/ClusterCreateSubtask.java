@@ -22,6 +22,7 @@ import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,6 +42,12 @@ public class ClusterCreateSubtask extends ProvisioningSubtask {
   @Override
   public Cluster execute(Cluster cluster) throws Exception {
     Cluster nextCluster = provisioner.createCluster(provisionerContext);
+    SSHContext sshContext = provisionerContext.getSSHContext();
+    // ssh context can be null if ssh is not being used to submit job
+    if (sshContext == null) {
+      return new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(),
+                         nextCluster.getProperties());
+    }
 
     // Add the ssh user property to the resulting Cluster if SSHKeyPair is present in the context
     return provisionerContext.getSSHContext().getSSHKeyPair()

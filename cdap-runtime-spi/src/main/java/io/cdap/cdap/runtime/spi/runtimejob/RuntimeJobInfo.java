@@ -29,10 +29,10 @@ public interface RuntimeJobInfo {
   Collection<? extends RuntimeLocalFile> getLocalizeFiles();
 
   /**
-   * Returns default implementation of a {@link RuntimeJob}. This class is responsible for submitting runtime job to
-   * provided environment.
+   * Returns fully qualified classname of default implementation of a {@link RuntimeJob}.
+   * This class is responsible for submitting runtime job to provided environment.
    */
-  Class<? extends RuntimeJob> getRuntimeJobClass();
+  String getRuntimeJobClassname();
 
   /**
    * Returns a program run info.

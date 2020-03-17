@@ -49,6 +49,7 @@ import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
+import io.cdap.cdap.internal.app.runtime.distributed.runtime.TwillControllerFactory;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
@@ -165,14 +166,15 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private Path cachePath;
   private ExecutorService startupTaskExecutor;
   private ScheduledExecutorService monitorScheduler;
-  
+
   @Inject
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
                                     DiscoveryServiceClient discoveryServiceClient,
                                     LocationFactory locationFactory, MessagingService messagingService,
                                     RemoteExecutionLogProcessor logProcessor,
                                     MetricsCollectionService metricsCollectionService,
-                                    ProvisioningService provisioningService, ProgramStateWriter programStateWriter,
+                                    ProvisioningService provisioningService,
+                                    ProgramStateWriter programStateWriter,
                                     TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -488,9 +490,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   }
 
   /**
-   * Implementation of {@link RemoteExecutionTwillControllerFactory}.
+   * Implementation of {@link TwillControllerFactory}.
    */
-  private final class ControllerFactory implements RemoteExecutionTwillControllerFactory {
+  private final class ControllerFactory implements TwillControllerFactory {
 
     private final ProgramRunId programRunId;
     private final ProgramOptions programOptions;

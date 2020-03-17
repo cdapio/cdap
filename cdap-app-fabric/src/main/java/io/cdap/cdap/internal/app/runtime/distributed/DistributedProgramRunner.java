@@ -508,11 +508,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
       File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
       File archiveFile = new File(tempDir, "artifacts.jar");
-      BundleJarUtil.createJar(localDir, archiveFile);
 
-      // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
-      localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+      if (!localDir.exists()) {
+        // if local dir does not exist, that means artifacts.jar in current directory should be
+        // considered as archive file.
+        archiveFile = new File("artifacts.jar");
+        // Localize plugins to two files, one expanded into a directory, one not.
+        localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+        localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+      } else {
+        BundleJarUtil.createJar(localDir, archiveFile);
+        // Localize plugins to two files, one expanded into a directory, one not.
+        localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
+        localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
+      }
 
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
       newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");

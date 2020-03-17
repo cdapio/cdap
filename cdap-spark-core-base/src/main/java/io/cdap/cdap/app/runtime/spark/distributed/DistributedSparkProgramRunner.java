@@ -147,28 +147,18 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
     Map<String, String> extraEnv = new HashMap<>();
     extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
 
-    if (clusterMode == ClusterMode.ON_PREMISE) {
-      extraEnv.putAll(SparkPackageUtils.getSparkClientEnv());
+    extraEnv.putAll(SparkPackageUtils.getSparkClientEnv());
 
-      // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
-      Map<String, LocalizeResource> localizeResources = new HashMap<>();
-      SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
+    // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
+    Map<String, LocalizeResource> localizeResources = new HashMap<>();
+    SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
 
-      // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
-      MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+    // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
+    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
 
-      launchConfig
-        .addExtraResources(localizeResources)
-        .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()));
-    } else {
-      // No need to rewrite YARN client
-      cConf.setBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE, false);
-
-      // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
-      launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
-
-      extraEnv.put(SparkPackageUtils.SPARK_YARN_MODE, "true");
-    }
+    launchConfig
+      .addExtraResources(localizeResources)
+      .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()));
 
     launchConfig
       .addExtraEnv(extraEnv)
@@ -176,7 +166,6 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
       .addExtraSystemArgument(SparkRuntimeContextConfig.DISTRIBUTED_MODE, Boolean.TRUE.toString())
       .setClassAcceptor(createBundlerClassAcceptor());
   }
-
 
   private ClassAcceptor createBundlerClassAcceptor() throws MalformedURLException {
     final Set<URL> urls = new HashSet<>();

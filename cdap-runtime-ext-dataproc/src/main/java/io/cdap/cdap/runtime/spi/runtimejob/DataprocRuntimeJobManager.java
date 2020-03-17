@@ -18,7 +18,6 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.api.gax.paging.Page;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.StatusCode;
 import com.google.auth.oauth2.GoogleCredentials;
@@ -33,17 +32,16 @@ import com.google.cloud.dataproc.v1.JobReference;
 import com.google.cloud.dataproc.v1.JobStatus;
 import com.google.cloud.dataproc.v1.ListJobsRequest;
 import com.google.cloud.dataproc.v1.SubmitJobRequest;
-import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
-import com.google.cloud.storage.StorageBatch;
 import com.google.cloud.storage.StorageException;
 import com.google.cloud.storage.StorageOptions;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
-import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
@@ -60,6 +58,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and
@@ -68,13 +67,13 @@ import java.util.Set;
 public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocRuntimeJobManager.class);
 
-  private static final String CDAP_GCS_ROOT = "cdap-job";
   // dataproc job properties
   private static final String CDAP_RUNTIME_NAMESPACE = "cdap.runtime.namespace";
   private static final String CDAP_RUNTIME_APPLICATION = "cdap.runtime.application";
   private static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
   private static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap.runtime.program.type";
   private static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
+  private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
 
   private final String clusterName;
   private final GoogleCredentials credentials;
@@ -87,7 +86,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   private Storage storageClient;
   private JobControllerClient jobControllerClient;
-  private String runRootPath;
 
   /**
    * Created by dataproc provisioner with properties that are needed by dataproc runtime job manager.
@@ -119,7 +117,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   @Override
-  public RuntimeJobId launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
+  public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     LOG.info("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
              runInfo.getRun(), clusterName, projectId, region, bucket);
@@ -128,7 +126,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     File tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
     // on dataproc bucket the run root will be <bucket>/cdap-job/<runid>/. All the files for this run will be copied
     // under that base dir.
-    this.runRootPath = getPath(CDAP_GCS_ROOT, runInfo.getRun());
+    String runRootPath = getPath(DataprocUtils.CDAP_GCS_ROOT, runInfo.getRun());
     try {
       // step 1: build twill.jar and launcher.jar and add them to files to be copied to gcs
       List<RuntimeLocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
@@ -142,20 +140,18 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
 
       // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClass().getName(),
+      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClassname(),
                                                      runInfo, localFiles);
 
       // step 4: submit hadoop job to dataproc
       LOG.info("Submitting hadoop job {} to cluster {}.", request.getJob().getReference().getJobId(), clusterName);
       Job job = jobControllerClient.submitJob(request);
       LOG.info("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
-
-      return new RuntimeJobId(job.getReference().getJobId());
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
-      deleteGCSPath(runRootPath);
+      DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
       throw new Exception(String.format("Error while launching job %s on cluster %s",
-                                        runInfo.getRun(), clusterName), e);
+                                        getJobId(runInfo), clusterName), e);
     } finally {
       // delete local temp directory
       deleteDirectoryContents(tempDir);
@@ -163,8 +159,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   @Override
-  public Optional<RuntimeJobDetail> getDetail(RuntimeJobId runtimeJobId) throws Exception {
-    String jobId = runtimeJobId.getRuntimeJobId();
+  public Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception {
+    String jobId = getJobId(programRunInfo);
 
     try {
       LOG.info("Getting job details for {} under project {}, region {}.", projectId, region, jobId);
@@ -175,7 +171,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                                              .build());
       RuntimeJobStatus runtimeJobStatus = getRuntimeJobStatus(job);
 
-      return Optional.of(new RuntimeJobDetail(runtimeJobId, runtimeJobStatus));
+      return Optional.of(new RuntimeJobDetail(programRunInfo, runtimeJobStatus));
     } catch (ApiException e) {
       // this may happen if job is manually deleted by user
       if (e.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
@@ -209,34 +205,30 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     List<RuntimeJobDetail> jobsDetail = new ArrayList<>();
     for (Job job : listJobsPagedResponse.iterateAll()) {
-      jobsDetail.add(new RuntimeJobDetail(new RuntimeJobId(job.getReference().getJobId()), getRuntimeJobStatus(job)));
+      jobsDetail.add(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
     }
     return jobsDetail;
   }
 
   @Override
-  public void stop(RuntimeJobId runtimeJobId) throws Exception {
-    Optional<RuntimeJobDetail> jobDetail = getDetail(runtimeJobId);
+  public void stop(ProgramRunInfo programRunInfo) throws Exception {
+    Optional<RuntimeJobDetail> jobDetail = getDetail(programRunInfo);
     // if the job does not exist, it can be safely assume that job has been deleted. Hence has reached terminal state.
     if (!jobDetail.isPresent()) {
       return;
     }
     // stop dataproc job
-    stopJob(runtimeJobId);
+    stopJob(getJobId(programRunInfo));
   }
 
   @Override
-  public void kill(RuntimeJobId runtimeJobId) throws Exception {
-    stop(runtimeJobId);
+  public void kill(ProgramRunInfo programRunInfo) throws Exception {
+    stop(programRunInfo);
   }
 
   @Override
   public void destroy() {
     jobControllerClient.close();
-
-    if (!Strings.isNullOrEmpty(runRootPath)) {
-      deleteGCSPath(runRootPath);
-    }
   }
 
   /**
@@ -282,7 +274,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     for (RuntimeLocalFile localFile : localFiles) {
       String localFileName = localFile.getName();
-      String fileName = getPath("gs:/", bucket, CDAP_GCS_ROOT, runId, localFileName);
+      String fileName = getPath("gs:/", bucket, DataprocUtils.CDAP_GCS_ROOT, runId, localFileName);
 
       // add archive file
       if (localFile.isArchive()) {
@@ -306,7 +298,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       .setProjectId(projectId)
       .setJob(Job.newBuilder()
                 // use program run uuid as hadoop job id on dataproc
-                .setReference(JobReference.newBuilder().setJobId(runInfo.getRun()))
+                .setReference(JobReference.newBuilder().setJobId(getJobId(runInfo)))
                 // place the job on provisioned cluster
                 .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
                 // add same labels as provisioned cluster
@@ -314,6 +306,18 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                 .setHadoopJob(hadoopJobBuilder.build())
                 .build())
       .build();
+  }
+
+  private ProgramRunInfo getProgramRunInfo(Job job) {
+    Map<String, String> jobProperties = job.getHadoopJob().getPropertiesMap();
+
+    ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder();
+    builder.setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE));
+    builder.setApplication(jobProperties.get(CDAP_RUNTIME_APPLICATION));
+    builder.setProgram(jobProperties.get(CDAP_RUNTIME_PROGRAM));
+    builder.setProgramType(jobProperties.get(CDAP_RUNTIME_PROGRAM_TYPE));
+    builder.setRun(jobProperties.get(CDAP_RUNTIME_RUNID));
+    return builder.build();
   }
 
   /**
@@ -360,8 +364,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Stops the dataproc job. Returns job object if it was stopped.
    */
-  private void stopJob(RuntimeJobId runtimeJobId) throws Exception {
-    String jobId = runtimeJobId.getRuntimeJobId();
+  private void stopJob(String jobId) throws Exception {
     try {
       jobControllerClient.cancelJob(projectId, region, jobId);
       LOG.info("Stopped the job {} on cluster {}.", jobId, clusterName);
@@ -372,31 +375,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw new Exception(String.format("Error occurred while stopping job %s on cluster %s.",
                                           jobId, clusterName), e);
       }
-    }
-  }
-
-  private void deleteGCSPath(String path) {
-    try {
-      removeDir(path);
-    } catch (Exception e) {
-      LOG.warn(String.format("GCS path %s was not cleaned up for bucket %s due to %s. ",
-                             path, bucket, e.getMessage()), e);
-    }
-  }
-
-  private void removeDir(String path) {
-    StorageBatch batch = storageClient.batch();
-    Page<Blob> blobs = storageClient.list(bucket, Storage.BlobListOption.currentDirectory(),
-                                          Storage.BlobListOption.prefix(path + "/"));
-    boolean addedToDelete = false;
-    for (Blob blob : blobs.iterateAll()) {
-      LOG.debug("Added path to be deleted {}", blob.getName());
-      batch.delete(blob.getBlobId());
-      addedToDelete = true;
-    }
-
-    if (addedToDelete) {
-      batch.submit();
     }
   }
 
@@ -419,5 +397,28 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     if (!file.delete()) {
       LOG.warn("Failed to delete temp file {}.", file);
     }
+  }
+
+  /**
+   * Returns job name from run info.
+   * namespace, application, program, run(36 characters)
+   * Example: namespace_application_program_8e1cb2ce-a102-48cf-a959-c4f991a2b475
+   *
+   * The ID must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), or hyphens (-).
+   * The maximum length is 100 characters.
+   *
+   * @throws IllegalArgumentException if provided id does not comply with naming restrictions
+   */
+  @VisibleForTesting
+  public static String getJobId(ProgramRunInfo runInfo) {
+    List<String> parts = ImmutableList.of(runInfo.getNamespace(), runInfo.getApplication(), runInfo.getProgram());
+    String joined = Joiner.on("_").join(parts);
+    joined = joined.substring(0, Math.min(joined.length(), 63));
+    joined = joined + "_" + runInfo.getRun();
+    if (!DATAPROC_JOB_ID_PATTERN.matcher(joined).matches()) {
+      throw new IllegalArgumentException(String.format("Job ID %s is not a valid dataproc job id. ", joined));
+    }
+
+    return joined;
   }
 }

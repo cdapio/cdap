@@ -28,12 +28,85 @@ public class ProgramRunInfo {
   private final String programType;
   private final String run;
 
-  public ProgramRunInfo(String namespace, String application, String program, String programType, String run) {
+  private ProgramRunInfo(String namespace, String application, String program, String programType, String run) {
     this.namespace = namespace;
     this.application = application;
     this.program = program;
     this.programType = programType;
     this.run = run;
+  }
+
+  /**
+   * Builder to build program info.
+   */
+  public static class Builder {
+    private String namespace;
+    private String application;
+    private String program;
+    private String programType;
+    private String run;
+
+    /**
+     * Sets namespace.
+     *
+     * @param namespace namespace
+     * @return this builder
+     */
+    public Builder setNamespace(String namespace) {
+      this.namespace = namespace;
+      return this;
+    }
+
+    /**
+     * Sets application name.
+     *
+     * @param application application name
+     * @return this builder
+     */
+    public Builder setApplication(String application) {
+      this.application = application;
+      return this;
+    }
+
+    /**
+     * Sets program name.
+     *
+     * @param program program
+     * @return this builder
+     */
+    public Builder setProgram(String program) {
+      this.program = program;
+      return this;
+    }
+
+    /**
+     * Sets program type.
+     *
+     * @param programType program type
+     * @return this builder
+     */
+    public Builder setProgramType(String programType) {
+      this.programType = programType;
+      return this;
+    }
+
+    /**
+     * Sets program run.
+     *
+     * @param run program run
+     * @return this builder
+     */
+    public Builder setRun(String run) {
+      this.run = run;
+      return this;
+    }
+
+    /**
+     * Returns program run info.
+     */
+    public ProgramRunInfo build() {
+      return new ProgramRunInfo(namespace, application, program, programType, run);
+    }
   }
 
   public String getNamespace() {
