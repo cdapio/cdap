@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.lineage.AccessType;
+import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.mock.action.FieldLineageAction;
@@ -142,7 +143,9 @@ public class HydratorTestBase extends TestBase {
                    Transform.class.getPackage().getName(),
                    SparkCompute.class.getPackage().getName(),
                    InvalidStageException.class.getPackage().getName(),
-                   PipelineConfigurable.class.getPackage().getName());
+                   PipelineConfigurable.class.getPackage().getName(),
+                   // have to export this package, otherwise getting ClassCastException in unit test
+                   FieldOperation.class.getPackage().getName());
 
 
     streamingMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0");

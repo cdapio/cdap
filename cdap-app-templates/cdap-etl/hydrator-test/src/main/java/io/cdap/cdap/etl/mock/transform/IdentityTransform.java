@@ -28,10 +28,13 @@ import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.StageSubmitterContext;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
+import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Identity transform for testing.
@@ -50,6 +53,13 @@ public class IdentityTransform extends Transform<StructuredRecord, StructuredRec
   @Override
   public void prepareRun(StageSubmitterContext context) throws Exception {
     super.prepareRun(context);
+    Schema schema = context.getInputSchema();
+    if (schema != null && schema.getFields() != null) {
+      schema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList())
+        .forEach(field -> context.record(Collections.singletonList(
+          new FieldTransformOperation("Identity transform " + field, "Identity transform",
+                                      Collections.singletonList(field), field))));
+    }
   }
 
   @Override

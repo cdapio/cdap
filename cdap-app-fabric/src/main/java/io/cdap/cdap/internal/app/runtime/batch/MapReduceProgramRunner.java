@@ -172,7 +172,8 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
         new BasicMapReduceContext(program, options, cConf, spec, workflowInfo, discoveryServiceClient,
                                   metricsCollectionService, txSystemClient, programDatasetFramework,
                                   getPluginArchive(options), pluginInstantiator, secureStore, secureStoreManager,
-                                  messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin);
+                                  messagingService, metadataReader, metadataPublisher, namespaceQueryAdmin,
+                                  fieldLineageWriter);
       closeables.add(context);
 
       Reflections.visit(mapReduce, mapReduce.getClass(),
@@ -193,7 +194,7 @@ public class MapReduceProgramRunner extends AbstractProgramRunnerWithPlugin {
       ClusterMode clusterMode = ProgramRunners.getClusterMode(options);
       Service mapReduceRuntimeService = new MapReduceRuntimeService(injector, cConf, hConf, mapReduce, spec,
                                                                     context, program.getJarLocation(), locationFactory,
-                                                                    fieldLineageWriter, clusterMode);
+                                                                    clusterMode, fieldLineageWriter);
       mapReduceRuntimeService.addListener(createRuntimeServiceListener(closeables), Threads.SAME_THREAD_EXECUTOR);
 
       ProgramController controller = new MapReduceProgramController(mapReduceRuntimeService, context);

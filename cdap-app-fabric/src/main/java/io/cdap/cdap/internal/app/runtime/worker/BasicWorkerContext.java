@@ -29,6 +29,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
@@ -58,12 +59,12 @@ final class BasicWorkerContext extends AbstractContext implements WorkerContext 
                      SecureStoreManager secureStoreManager,
                      MessagingService messagingService, MetadataReader metadataReader,
                      MetadataPublisher metadataPublisher,
-                     NamespaceQueryAdmin namespaceQueryAdmin) {
+                     NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
     super(program, programOptions, cConf, spec.getDatasets(),
           datasetFramework, transactionSystemClient, discoveryServiceClient, true,
           metricsCollectionService, ImmutableMap.of(Constants.Metrics.Tag.INSTANCE_ID, String.valueOf(instanceId)),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin);
+          namespaceQueryAdmin, fieldLineageWriter);
 
     this.specification = spec;
     this.instanceId = instanceId;

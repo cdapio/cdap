@@ -53,6 +53,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.hbase.HBaseTable;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext;
@@ -140,12 +141,12 @@ public class BasicMapReduceTaskContext<KEYOUT, VALUEOUT> extends AbstractContext
                             AuthenticationContext authenticationContext,
                             MessagingService messagingService, MapReduceClassLoader mapReduceClassLoader,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                            NamespaceQueryAdmin namespaceQueryAdmin) {
+                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
     super(program, programOptions, cConf, ImmutableSet.of(), dsFramework, txClient, discoveryServiceClient,
           true, metricsCollectionService, createMetricsTags(programOptions,
                                                             taskId, type, workflowProgramInfo), secureStore,
           secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin);
+          namespaceQueryAdmin, fieldLineageWriter);
     this.cConf = cConf;
     this.workflowProgramInfo = workflowProgramInfo;
     this.transaction = transaction;

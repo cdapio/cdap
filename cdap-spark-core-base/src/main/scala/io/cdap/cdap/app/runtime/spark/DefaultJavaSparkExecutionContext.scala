@@ -25,6 +25,7 @@ import io.cdap.cdap.api.ServiceDiscoverer
 import io.cdap.cdap.api.TxRunnable
 import io.cdap.cdap.api.app.ApplicationSpecification
 import io.cdap.cdap.api.data.batch.Split
+import io.cdap.cdap.api.lineage.field.Operation
 import io.cdap.cdap.api.messaging.MessagingContext
 import io.cdap.cdap.api.metadata.Metadata
 import io.cdap.cdap.api.metadata.MetadataEntity
@@ -182,5 +183,13 @@ class DefaultJavaSparkExecutionContext(sec: SparkExecutionContext) extends JavaS
 
   override def removeTags(metadataEntity: MetadataEntity, tags: String*): Unit = {
     sec.removeTags(metadataEntity, tags:_*)
+  }
+
+  override def record(operations: util.Collection[_ <: Operation]): Unit = {
+    sec.record(operations)
+  }
+
+  override def flushLineage(): Unit = {
+    sec.flushLineage()
   }
 }

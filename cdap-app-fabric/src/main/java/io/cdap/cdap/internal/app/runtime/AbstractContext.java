@@ -85,6 +85,8 @@ import io.cdap.cdap.data2.dataset2.DynamicDatasetCache;
 import io.cdap.cdap.data2.dataset2.MultiThreadDatasetCache;
 import io.cdap.cdap.data2.dataset2.SingleThreadDatasetCache;
 import io.cdap.cdap.data2.metadata.lineage.AccessType;
+import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataOperation;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.RetryingShortTransactionSystemClient;
@@ -170,6 +172,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final MetadataPublisher metadataPublisher;
   private final Set<Operation> fieldLineageOperations;
   private final LoggingContext loggingContext;
+  private final FieldLineageWriter fieldLineageWriter;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -185,7 +188,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                             MessagingService messagingService,
                             @Nullable PluginInstantiator pluginInstantiator,
                             MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                            NamespaceQueryAdmin namespaceQueryAdmin) {
+                            NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
     super(program.getId());
 
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
@@ -209,6 +212,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                                           cConf);
     this.messagingService = messagingService;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
+    this.fieldLineageWriter = fieldLineageWriter;
 
     // Creating the DynamicDatasetCache
     Map<String, Map<String, String>> staticDatasets = new HashMap<>();
@@ -870,7 +874,14 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   @Override
-  public void record(Collection<? extends Operation> operations) {
+  public synchronized void record(Collection<? extends Operation> operations) {
     fieldLineageOperations.addAll(operations);
+  }
+
+  @Override
+  public synchronized void flushLineage() {
+    FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
+    fieldLineageWriter.write(programRunId, info);
+    fieldLineageOperations.clear();
   }
 }

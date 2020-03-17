@@ -42,7 +42,6 @@ import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.PipelinePhase;
-import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.StreamingCompat;
@@ -81,12 +80,12 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
     ErrorTransform.PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
   @Override
-  public void run(final JavaSparkExecutionContext sec) throws Exception {
-    final DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
-                                                               DataStreamsPipelineSpec.class);
+  public void run(JavaSparkExecutionContext sec) throws Exception {
+    DataStreamsPipelineSpec pipelineSpec = GSON.fromJson(sec.getSpecification().getProperty(Constants.PIPELINEID),
+                                                         DataStreamsPipelineSpec.class);
 
     Set<StageSpec> stageSpecs = pipelineSpec.getStages();
-    final PipelinePhase pipelinePhase = PipelinePhase.builder(SUPPORTED_PLUGIN_TYPES)
+    PipelinePhase pipelinePhase = PipelinePhase.builder(SUPPORTED_PLUGIN_TYPES)
       .addConnections(pipelineSpec.getConnections())
       .addStages(stageSpecs)
       .build();
@@ -103,12 +102,13 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       if (Strings.isNullOrEmpty(configCheckpointDir)) {
         // Use the directory of a fileset dataset if the checkpoint directory is not set.
         Admin admin = sec.getAdmin();
+        // TODO: CDAP-16329 figure out a way to filter out this fileset in dataset lineage
         if (!admin.datasetExists(DEFAULT_CHECKPOINT_DATASET_NAME)) {
           admin.createDataset(DEFAULT_CHECKPOINT_DATASET_NAME, FileSet.class.getName(),
                               FileSetProperties.builder().build());
         }
         // there isn't any way to instantiate the fileset except in a TxRunnable, so need to use a reference.
-        final AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
+        AtomicReference<Location> checkpointBaseRef = new AtomicReference<>();
         Transactionals.execute(sec, new TxRunnable() {
           @Override
           public void run(DatasetContext context) throws Exception {
@@ -180,37 +180,42 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
 
   }
 
-  private JavaStreamingContext run(final DataStreamsPipelineSpec pipelineSpec,
-                                   final PipelinePhase pipelinePhase,
-                                   final JavaSparkExecutionContext sec,
-                                   @Nullable final String checkpointDir,
-                                   @Nullable final JavaSparkContext context) throws Exception {
-    Function0<JavaStreamingContext> contextFunction = new Function0<JavaStreamingContext>() {
-      @Override
-      public JavaStreamingContext call() throws Exception {
-        JavaSparkContext javaSparkContext = context == null ? new JavaSparkContext() : context;
-        JavaStreamingContext jssc = new JavaStreamingContext(
-          javaSparkContext, Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
-        SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec,
-                                                                               pipelineSpec.isCheckpointsDisabled());
-        PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                        pipelineSpec.isStageLoggingEnabled(),
-                                                                        pipelineSpec.isProcessTimingEnabled());
-        // TODO: figure out how to get partitions to use for aggregators and joiners.
-        // Seems like they should be set at configure time instead of runtime? but that requires an API change.
-        try {
-          runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE,
-                             sec, new HashMap<String, Integer>(), pluginContext,
-                             new HashMap<String, StageStatisticsCollector>());
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-        if (checkpointDir != null) {
-          jssc.checkpoint(checkpointDir);
-          jssc.sparkContext().hadoopConfiguration().set("fs.defaultFS", checkpointDir);
-        }
-        return jssc;
+  private JavaStreamingContext run(DataStreamsPipelineSpec pipelineSpec,
+                                   PipelinePhase pipelinePhase,
+                                   JavaSparkExecutionContext sec,
+                                   @Nullable String checkpointDir,
+                                   @Nullable JavaSparkContext context) throws Exception {
+    try {
+      SparkFieldLineageRecorder recorder = new SparkFieldLineageRecorder(sec, pipelinePhase, pipelineSpec);
+      recorder.record();
+    } catch (Exception e) {
+      LOG.warn("Failed to emit field lineage operations for streaming pipeline", e);
+    }
+
+    // the content in the function might not run due to spark checkpointing, currently just have the lineage logic
+    // before anything is run
+    Function0<JavaStreamingContext> contextFunction = (Function0<JavaStreamingContext>) () -> {
+      JavaSparkContext javaSparkContext = context == null ? new JavaSparkContext() : context;
+      JavaStreamingContext jssc = new JavaStreamingContext(
+        javaSparkContext, Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
+      SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec,
+                                                                             pipelineSpec.isCheckpointsDisabled());
+      PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                      pipelineSpec.isStageLoggingEnabled(),
+                                                                      pipelineSpec.isProcessTimingEnabled());
+      // TODO: figure out how to get partitions to use for aggregators and joiners.
+      // Seems like they should be set at configure time instead of runtime? but that requires an API change.
+      try {
+        runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE, sec, new HashMap<>(),
+                           pluginContext, new HashMap<>());
+      } catch (Exception e) {
+        throw new RuntimeException(e);
       }
+      if (checkpointDir != null) {
+        jssc.checkpoint(checkpointDir);
+        jssc.sparkContext().hadoopConfiguration().set("fs.defaultFS", checkpointDir);
+      }
+      return jssc;
     };
     return checkpointDir == null
       ? contextFunction.call()

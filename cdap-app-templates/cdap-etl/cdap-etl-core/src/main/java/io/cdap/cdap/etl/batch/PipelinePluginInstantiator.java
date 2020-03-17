@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.batch.connector.ConnectorFactory;
 import io.cdap.cdap.etl.batch.connector.ConnectorSink;
 import io.cdap.cdap.etl.batch.connector.ConnectorSource;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
@@ -41,12 +42,12 @@ import javax.annotation.Nullable;
  */
 public class PipelinePluginInstantiator implements PluginContext {
   private final PluginContext pluginContext;
-  private final BatchPhaseSpec phaseSpec;
+  private final PhaseSpec phaseSpec;
   private final Set<String> connectorSources;
   private final Set<String> connectorSinks;
   private final ConnectorFactory connectorFactory;
 
-  public PipelinePluginInstantiator(PluginContext pluginContext, Metrics metrics, BatchPhaseSpec phaseSpec,
+  public PipelinePluginInstantiator(PluginContext pluginContext, Metrics metrics, PhaseSpec phaseSpec,
                                     ConnectorFactory connectorFactory) {
     this.pluginContext = new PipelinePluginContext(pluginContext, metrics,
                                                    phaseSpec.isStageLoggingEnabled(),

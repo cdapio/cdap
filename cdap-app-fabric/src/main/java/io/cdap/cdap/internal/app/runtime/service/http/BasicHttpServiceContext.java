@@ -36,6 +36,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
+import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
@@ -115,12 +116,13 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
                                  ArtifactManager artifactManager, MetadataReader metadataReader,
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
-                                 PluginFinder pluginFinder, TransactionRunner transactionRunner) {
+                                 PluginFinder pluginFinder, TransactionRunner transactionRunner,
+                                 FieldLineageWriter fieldLineageWriter) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
-          namespaceQueryAdmin);
+          namespaceQueryAdmin, fieldLineageWriter);
     this.cConf = cConf;
     this.namespaceId = program.getId().getNamespaceId();
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
