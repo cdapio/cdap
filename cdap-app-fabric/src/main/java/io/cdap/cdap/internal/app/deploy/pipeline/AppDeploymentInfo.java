@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,7 +55,7 @@ public class AppDeploymentInfo {
                            String appClassName, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules) {
-    this.artifactId = Artifacts.apiToProtoArtifactId(namespaceId, artifactDescriptor.getArtifactId());
+    this.artifactId = Artifacts.toProtoArtifactId(namespaceId, artifactDescriptor.getArtifactId());
     this.artifactLocation = artifactDescriptor.getLocation();
     this.namespaceId = namespaceId;
     this.appClassName = appClassName;
