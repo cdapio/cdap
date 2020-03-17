@@ -302,7 +302,6 @@ export function setError(error, prefix) {
   const status = error.statusCode;
   const detail = error.message || error.response.message || 'Unknown error';
   const message = `${prefix || 'Error'}: ${status ? `${status}: ${detail}` : detail}`;
-  console.error(message, error);
   DataPrepStore.dispatch({
     type: DataPrepActions.setError,
     payload: {
@@ -311,7 +310,7 @@ export function setError(error, prefix) {
   });
 }
 
-export async function loadTargetDataModelFields() {
+export async function loadTargetDataModelStates() {
   // These properties were populated by MyDataPrepApi.getWorkspace API
   const {
     dataModel,
@@ -334,7 +333,7 @@ export async function loadTargetDataModelFields() {
   }
 }
 
-export async function saveTargetDataModelFields() {
+export async function saveTargetDataModelStates() {
   const params = {
     context: NamespaceStore.getState().selectedNamespace,
     workspaceId: DataPrepStore.getState().dataprep.workspaceId,
@@ -357,10 +356,10 @@ export async function saveTargetDataModelFields() {
 
   if (oldDataModelId !== newDataModelId || oldDataModelRevision !== newDataModelRevision) {
     if (oldDataModelId !== null) {
-      await MyDataPrepApi.removeDataModel(params).toPromise();
+      await MyDataPrepApi.detachDataModel(params).toPromise();
     }
     if (newDataModelId !== null) {
-      await MyDataPrepApi.addDataModel(params, {
+      await MyDataPrepApi.attachDataModel(params, {
         id: newDataModelId,
         revision: newDataModelRevision,
       }).toPromise();
@@ -369,7 +368,7 @@ export async function saveTargetDataModelFields() {
 
   if (oldModelId !== newModelId) {
     if (oldModelId !== null) {
-      await MyDataPrepApi.removeModel(
+      await MyDataPrepApi.detachModel(
         Object.assign(
           {
             modelId: oldModelId,
@@ -379,7 +378,7 @@ export async function saveTargetDataModelFields() {
       ).toPromise();
     }
     if (newModelId !== null) {
-      await MyDataPrepApi.addModel(params, {
+      await MyDataPrepApi.attachModel(params, {
         id: newModelId,
       }).toPromise();
     }
@@ -404,7 +403,7 @@ export async function fetchDataModelList(url) {
   };
 
   await MyDataPrepApi.addDataModels(params, { url }).toPromise();
-  const response = await MyDataPrepApi.listDataModels(params).toPromise();
+  const response = await MyDataPrepApi.getDataModels(params).toPromise();
   const dataModelList = response.values.map((dataModel) => ({
     id: dataModel['namespacedId'].id,
     revision: dataModel.revision,
@@ -431,7 +430,7 @@ export async function fetchModelList(dataModel) {
     dataModelRevision: dataModel.revision,
   };
 
-  const response = await MyDataPrepApi.listModels(params).toPromise();
+  const response = await MyDataPrepApi.getDataModel(params).toPromise();
 
   try {
     const data = JSON.parse(response.message || null);

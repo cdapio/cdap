@@ -38,13 +38,13 @@ const MyDataPrepApi = {
   getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/workspaces`),
 
   // Wrangler Data Model
-  addDataModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/datamodels`),
-  removeDataModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/datamodels`),
-  addModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/models`),
-  removeModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/models/:modelId`),
+  attachDataModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/datamodels`),
+  detachDataModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/datamodels`),
+  attachModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/models`),
+  detachModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/models/:modelId`),
   addDataModels: apiCreator(dataSrc, 'POST', 'REQUEST', `${datamodelsPath}`),
-  listDataModels: apiCreator(dataSrc, 'GET', 'REQUEST', `${datamodelsPath}`),
-  listModels: apiCreator(
+  getDataModels: apiCreator(dataSrc, 'GET', 'REQUEST', `${datamodelsPath}`),
+  getDataModel: apiCreator(
     dataSrc,
     'GET',
     'REQUEST',

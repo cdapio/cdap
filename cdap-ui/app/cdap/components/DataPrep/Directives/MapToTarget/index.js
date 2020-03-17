@@ -32,8 +32,8 @@ import DataPrepStore from 'components/DataPrep/store';
 import {
   execute,
   setError,
-  loadTargetDataModelFields,
-  saveTargetDataModelFields,
+  loadTargetDataModelStates,
+  saveTargetDataModelStates,
   setTargetDataModel,
   setTargetModel
 } from 'components/DataPrep/store/DataPrepActionCreator';
@@ -45,6 +45,12 @@ const useStyles = makeStyles(theme => ({
   selectedItem: {
     display: 'flex',
     flexDirection: 'row',
+  },
+  selectedItemLabel: {
+    whiteSpace: 'nowrap',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
+    fontWeight: 'bold',
   },
   selectedItemName: {
     flex: 1,
@@ -102,7 +108,7 @@ const MapToTarget = (props) => {
     let pending = true;
     (async () => {
       try {
-        await loadTargetDataModelFields();
+        await loadTargetDataModelStates();
       } catch (error) {
         setError(error);
       } finally {
@@ -130,22 +136,23 @@ const MapToTarget = (props) => {
 
   const highlightText = (text) => {
     const searchTextUpper = searchText.trim().toUpperCase();
-    if (searchTextUpper) {
-      const index = text.toUpperCase().indexOf(searchTextUpper);
-      if (index >= 0) {
-        const leadingText = text.substring(0, index);
-        const highlightedText = text.substring(index, index + searchTextUpper.length);
-        const trailingText = text.substring(index + searchTextUpper.length);
-        return (
-          <span>
-            {leadingText}
-            <span className={classes.highlight}>{highlightedText}</span>
-            {trailingText}
-          </span>
-        );
-      }
+    if (!searchTextUpper) {
+      return text;
     }
-    return text;
+    const index = text.toUpperCase().indexOf(searchTextUpper);
+    if (index >= 0) {
+      return text;
+    }
+    const leadingText = text.substring(0, index);
+    const highlightedText = text.substring(index, index + searchTextUpper.length);
+    const trailingText = text.substring(index + searchTextUpper.length);
+    return (
+      <span>
+        {leadingText}
+        <span className={classes.highlight}>{highlightedText}</span>
+        {trailingText}
+      </span>
+    );
   };
 
   const resetTargetOptionsScroll = () => {
@@ -185,7 +192,7 @@ const MapToTarget = (props) => {
   const applyDirective = async (field) => {
     setLoading(true);
     try {
-      await saveTargetDataModelFields();
+      await saveTargetDataModelStates();
 
       const directive = 'data-model-map-column ' +
         `'${targetDataModel.url}' '${targetDataModel.id}' ${targetDataModel.revision} ` +
@@ -208,12 +215,14 @@ const MapToTarget = (props) => {
     }
 
     let options, selectFn;
+    let filterPlaceholder;
     const selection = [];
 
     if (targetDataModel) {
       selection.push(
         {
           key: 'datamodel',
+          label: T.translate(`${PREFIX}.dataModelLabel`),
           unselectFn: () => (async() => await selectTargetDataModel(null))(),
           ...targetDataModel,
         }
@@ -222,13 +231,16 @@ const MapToTarget = (props) => {
         selection.push(
           {
             key: 'model',
+            label: T.translate(`${PREFIX}.modelLabel`),
             unselectFn: () => (async () => await selectTargetModel(null))(),
             ...targetModel,
           }
         );
+        filterPlaceholder = T.translate(`${PREFIX}.fieldFilterPlaceholder`);
         options = applySearch(targetModel.fields || []);
         selectFn = (field) => (async () => await applyDirective(field))();
       } else {
+        filterPlaceholder = T.translate(`${PREFIX}.modelFilterPlaceholder`);
         options = applySearch(targetDataModel.models || []);
         selectFn = (model) => (async () => await selectTargetModel(model))();
       }
@@ -242,6 +254,7 @@ const MapToTarget = (props) => {
         {selection.length === 0 ? <h5>{T.translate(`${PREFIX}.dataModelPlaceholder`)}</h5> : null}
         {selection.map(item => (
           <div id={`map-to-target-selected-${item.key}`} key={item.key} className={classes.selectedItem}>
+            <span className={classes.selectedItemLabel}>{item.label}:&nbsp;</span>
             <span className={classes.selectedItemName}>{item.name}</span>
             <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
             <If condition={item.description}>
@@ -264,7 +277,7 @@ const MapToTarget = (props) => {
             type='text'
             className={classes.optionSearch}
             value={searchText}
-            placeholder={T.translate(`${PREFIX}.searchPlaceholder`)}
+            placeholder={filterPlaceholder}
             onChange={(event) => setSearchText(event.target.value)}
           />
         </If>
