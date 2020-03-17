@@ -24,14 +24,12 @@ import java.util.Objects;
 public class ProgramRunInfo {
   private final String namespace;
   private final String application;
-  private final String version;
   private final String program;
   private final String run;
 
-  public ProgramRunInfo(String namespace, String application, String version, String program, String run) {
+  public ProgramRunInfo(String namespace, String application, String program, String run) {
     this.namespace = namespace;
     this.application = application;
-    this.version = version;
     this.program = program;
     this.run = run;
   }
@@ -42,10 +40,6 @@ public class ProgramRunInfo {
 
   public String getApplication() {
     return application;
-  }
-
-  public String getVersion() {
-    return version;
   }
 
   public String getProgram() {
@@ -65,12 +59,12 @@ public class ProgramRunInfo {
       return false;
     }
     ProgramRunInfo that = (ProgramRunInfo) o;
-    return namespace.equals(that.namespace) && application.equals(that.application) &&
-      version.equals(that.version) && program.equals(that.program) && run.equals(that.run);
+    return namespace.equals(that.namespace) && application.equals(that.application)
+      && program.equals(that.program) && run.equals(that.run);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, application, version, program, run);
+    return Objects.hash(namespace, application, program, run);
   }
 }

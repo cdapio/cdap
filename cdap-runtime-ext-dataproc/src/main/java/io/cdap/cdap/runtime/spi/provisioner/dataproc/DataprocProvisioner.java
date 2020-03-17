@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import io.cdap.cdap.runtime.spi.launcher.Launcher;
+import com.google.common.base.Strings;
+import io.cdap.cdap.runtime.runtimejob.DataprocRuntimeJobManager;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -30,8 +32,10 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,6 +67,7 @@ public class DataprocProvisioner implements Provisioner {
 
   // Key which is set to true if the instance only have private ip assigned to it else false
   private static final String PRIVATE_INSTANCE = "privateInstance";
+  private static final String BUCKET = "bucket";
 
   // keys and values cannot be longer than 63 characters
   // keys and values can only contain lowercase letters, numbers, underscores, and dashes
@@ -85,12 +90,12 @@ public class DataprocProvisioner implements Provisioner {
 
   /**
    * Parses labels that are expected to be of the form key1=val1,key2=val2 into a map of key values.
-   *
+   * <p>
    * If a label key or value is invalid, a message will be logged but the key-value will not be returned in the map.
    * Keys and values cannot be longer than 63 characters.
    * Keys and values can only contain lowercase letters, numeric characters, underscores, and dashes.
    * Keys must start with a lowercase letter and must not be empty.
-   *
+   * <p>
    * If a label is given without a '=', the label value will be empty.
    * If a label is given as 'key=', the label value will be empty.
    * If a label has multiple '=', it will be ignored. For example, 'key=val1=val2' will be ignored.
@@ -151,17 +156,21 @@ public class DataprocProvisioner implements Provisioner {
     // Generates and set the ssh key if it does not have one.
     // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
     SSHContext sshContext = context.getSSHContext();
-    SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
-    if (sshKeyPair == null) {
-      sshKeyPair = sshContext.generate("cdap");
-      sshContext.setSSHKeyPair(sshKeyPair);
+    SSHPublicKey sshPublicKey = null;
+    if (sshContext != null) {
+      SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
+      if (sshKeyPair == null) {
+        sshKeyPair = sshContext.generate("cdap");
+        sshContext.setSSHKeyPair(sshKeyPair);
+      }
+      sshPublicKey = sshKeyPair.getPublicKey();
     }
 
     // Reload system context properties and get system labels
     systemContext.reloadProperties();
     Map<String, String> systemLabels = getSystemLabels(systemContext);
 
-    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshPublicKey);
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client =
@@ -189,6 +198,7 @@ public class DataprocProvisioner implements Provisioner {
 
       LOG.info("Creating Dataproc cluster {} in project {}, in region {}, with image {}, with system labels {}",
                clusterName, conf.getProjectId(), conf.getRegion(), imageVersion, systemLabels);
+
       ClusterOperationMetadata createOperationMeta = client.createCluster(clusterName, imageVersion, systemLabels);
       int numWarnings = createOperationMeta.getWarningsCount();
       if (numWarnings > 0) {
@@ -337,7 +347,25 @@ public class DataprocProvisioner implements Provisioner {
   }
 
   @Override
-  public Optional<Launcher> getLauncher() {
-    return Optional.of(new DataprocLauncher());
+  public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), null);
+    String clusterName = getClusterName(context.getProgramRun());
+    String projectId = conf.getProjectId();
+    String region = conf.getRegion();
+    String bucket = conf.getGcsBucket();
+    if (Strings.isNullOrEmpty(bucket)) {
+      bucket = systemContext.getProperties().get(BUCKET);
+    }
+    String sparkVersion = context.getSparkCompat().getCompat();
+    Map<String, String> systemLabels = getSystemLabels(systemContext);
+    GoogleCredentials dataprocCredentials;
+    try {
+      dataprocCredentials = conf.getDataprocCredentials();
+    } catch (Exception e) {
+      throw new RuntimeException("Error while getting credentials for dataproc. ", e);
+    }
+
+    return Optional.of(new DataprocRuntimeJobManager(clusterName, dataprocCredentials, projectId, region, bucket,
+                                                     sparkVersion, systemLabels));
   }
 }

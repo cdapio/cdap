@@ -16,26 +16,33 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
+import java.net.URI;
 import java.util.Objects;
 
 /**
- * Represents runtime job details.
+ *
  */
-public class RuntimeJobDetail {
-  private final RuntimeJobId runtimeJobId;
-  private final RuntimeJobStatus status;
+public class RuntimeLocalFile {
+  private final String name;
+  private final URI fileUri;
+  private final boolean isArchive;
 
-  public RuntimeJobDetail(RuntimeJobId runtimeJobId, RuntimeJobStatus status) {
-   this.runtimeJobId = runtimeJobId;
-   this.status = status;
+  public RuntimeLocalFile(String name, URI fileUri, boolean isArchive) {
+    this.name = name;
+    this.fileUri = fileUri;
+    this.isArchive = isArchive;
   }
 
-  public RuntimeJobId getRuntimeJobId() {
-    return runtimeJobId;
+  public String getName() {
+    return name;
   }
 
-  public RuntimeJobStatus getStatus() {
-    return status;
+  public URI getFileUri() {
+    return fileUri;
+  }
+
+  public boolean isArchive() {
+    return isArchive;
   }
 
   @Override
@@ -46,12 +53,12 @@ public class RuntimeJobDetail {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    RuntimeJobDetail that = (RuntimeJobDetail) o;
-    return runtimeJobId.equals(that.runtimeJobId) && status == that.status;
+    RuntimeLocalFile that = (RuntimeLocalFile) o;
+    return isArchive == that.isArchive && name.equals(that.name) && fileUri.equals(that.fileUri);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(runtimeJobId, status);
+    return Objects.hash(name, fileUri, isArchive);
   }
 }

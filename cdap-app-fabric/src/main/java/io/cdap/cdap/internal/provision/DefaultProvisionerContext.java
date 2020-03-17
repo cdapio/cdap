@@ -24,9 +24,9 @@ import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Context for a {@link Provisioner} extension
@@ -39,10 +39,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final String cdapVersion;
 
   public DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
-                                   SparkCompat sparkCompat, SSHContext sshContext) {
+                                   SparkCompat sparkCompat, @Nullable SSHContext sshContext) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
-    this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
+    this.properties = new HashMap<>(properties);
     this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
     this.cdapVersion = ProjectInfo.getVersion().toString();
@@ -64,6 +64,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   }
 
   @Override
+  @Nullable
   public SSHContext getSSHContext() {
     return sshContext;
   }

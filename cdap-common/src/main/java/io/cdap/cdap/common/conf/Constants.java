@@ -878,6 +878,14 @@ public final class Constants {
   }
 
   /**
+   * RuntimeJob constants.
+   */
+  public static final class RuntimeJob {
+    public static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
+    public static final String CLOUD_PROVIDER = "cloud-provider";
+  }
+
+  /**
    * Logging constants.
    */
   public static final class Logging {

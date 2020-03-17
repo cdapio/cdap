@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
+import java.util.Objects;
+
 /**
  * Uniquely identifies a runtime job.
  */
@@ -26,9 +28,6 @@ public class RuntimeJobId {
     this.runtimeJobId = runtimeJobId;
   }
 
-  /**
-   * Returns a runtime job id.
-   */
   public String getRuntimeJobId() {
     return runtimeJobId;
   }
@@ -47,6 +46,6 @@ public class RuntimeJobId {
 
   @Override
   public int hashCode() {
-    return runtimeJobId.hashCode();
+    return Objects.hash(runtimeJobId);
   }
 }

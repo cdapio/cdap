@@ -33,14 +33,11 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
-import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.launcher.LaunchInfo;
-import io.cdap.cdap.runtime.spi.launcher.Launcher;
-import io.cdap.cdap.runtime.spi.launcher.LauncherFile;
-import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeLocalFile;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ClassAcceptor;
@@ -131,7 +128,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
   private final Map<String, Map<String, String>> runnableConfigs = new HashMap<>();
   private final Map<String, String> runnableExtraOptions = new HashMap<>();
   private final LocationFactory locationFactory;
-  private final Launcher launcher;
+  private final RuntimeJobManager launcher;
 
   private String extraOptions;
   private JvmOptions.DebugOptions debugOptions;
@@ -141,7 +138,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
   LauncherTwillPreparer(CConfiguration cConf, Configuration hConf,
                         TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
                         @Nullable String extraOptions,
-                        LocationCache locationCache, LocationFactory locationFactory, Launcher launcher) {
+                        LocationCache locationCache, LocationFactory locationFactory, RuntimeJobManager launcher) {
     // Check to prevent future mistake
     if (twillSpec.getRunnables().size() != 1) {
       throw new IllegalArgumentException("Only one TwillRunnable is supported");
@@ -384,8 +381,8 @@ public class LauncherTwillPreparer implements TwillPreparer {
 
       Map<String, LocalFile> localFiles = new HashMap<>();
 
-      createLauncherJar(localFiles);
-      createTwillJar(createBundler(classAcceptor, stagingDir), localFiles);
+      //createLauncherJar(localFiles);
+     // createTwillJar(createBundler(classAcceptor, stagingDir), localFiles);
       createApplicationJar(createBundler(classAcceptor, stagingDir), localFiles);
       createResourcesJar(createBundler(classAcceptor, stagingDir), localFiles, stagingDir);
 
@@ -394,7 +391,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
       TwillRuntimeSpecification twillRuntimeSpec;
       Path runtimeConfigDir = Files.createTempDirectory(stagingDir, Constants.Files.RUNTIME_CONFIG_JAR);
       twillRuntimeSpec = saveSpecification(twillSpec,
-                                           runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC), stagingDir, launcher);
+                                           runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC), stagingDir);
       RuntimeSpecification runtimeSpec = twillRuntimeSpec.getTwillSpecification().getRunnables().values()
         .stream().findFirst().orElseThrow(IllegalStateException::new);
       saveLogback(runtimeConfigDir.resolve(Constants.Files.LOGBACK_TEMPLATE));
@@ -404,29 +401,38 @@ public class LauncherTwillPreparer implements TwillPreparer {
       Paths.deleteRecursively(runtimeConfigDir);
 
       throwIfTimeout(startTime, timeout, timeoutUnit);
-      List<LauncherFile> launcherFiles = new ArrayList<>();
+      List<LocalFile> launcherFiles = new ArrayList<>();
+
       for (Map.Entry<String, LocalFile> entry : localFiles.entrySet()) {
-        LauncherFile launcherFile = new LauncherFile(entry.getKey(), entry.getValue().getURI(),
-                                                      entry.getValue().isArchive());
-        LOG.info("### Adding file : {}", launcherFile);
-        launcherFiles.add(launcherFile);
+        LOG.info("### Adding file : {}", entry.getValue());
+        launcherFiles.add(entry.getValue());
       }
+
       for (LocalFile file : runtimeSpec.getLocalFiles()) {
-        LauncherFile launcherFile = new LauncherFile(file.getName(), file.getURI(), file.isArchive());
-        launcherFiles.add(launcherFile);
-        LOG.info("### Adding file : {}", launcherFile);
+        if (file.getName().equals("artifacts")) {
+          launcherFiles.add(new DefaultLocalFile("artifacts.jar", file.getURI(), file.getLastModified(),
+                                                 file.getSize(), file.isArchive(), file.getPattern()));
+          continue;
+        }
+        if (file.getName().equals("artifacts_archive.jar")) {
+          // skip
+          continue;
+        }
+        launcherFiles.add(file);
+        LOG.info("### Adding file : {}", file);
       }
 
       LOG.info("####### Finally launching job");
-
-      Cluster cluster = GSON.fromJson(programOptions.getArguments().getOption(ProgramOptionConstants.CLUSTER),
-                                      Cluster.class);
       LOG.info("Program type is: {}", programRunId.getType().getCategoryName());
-      LaunchInfo info = new LaunchInfo(programRunId.getRun(), cluster.getName(),
-                                       programRunId.getType().getCategoryName(),
-                                       launcherFiles, cluster.getProperties());
-      info.setClass(DefaultRuntimeJob.class);
-      launcher.launch(info);
+
+      DefaultRuntimeInfo defaultRuntimeInfo = new DefaultRuntimeInfo(
+        launcherFiles.stream()
+          .map(file -> new RuntimeLocalFile(file.getName(), file.getURI(), file.isArchive()))
+          .collect(Collectors.toList()),
+        new ProgramRunInfo(programRunId.getNamespace(), programRunId.getApplication(),
+                           programRunId.getProgram(), programRunId.getRun()));
+      launcher.initialize();
+      launcher.launch(defaultRuntimeInfo);
       cancelLoggingContext.cancel();
       DirUtils.deleteDirectoryContents(stagingDir.toFile(), false);
     } catch (Exception e) {
@@ -498,7 +504,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
     });
 
     LOG.debug("Done {}", Constants.Files.TWILL_JAR);
-    localFiles.put(Constants.Files.TWILL_JAR, createLocalFile(Constants.Files.TWILL_JAR, location, true));
+      localFiles.put(Constants.Files.TWILL_JAR, createLocalFile(Constants.Files.TWILL_JAR, location, true));
   }
 
 
@@ -672,8 +678,7 @@ public class LauncherTwillPreparer implements TwillPreparer {
   }
 
   private TwillRuntimeSpecification saveSpecification(TwillSpecification spec,
-                                                      Path targetFile, Path stagingDir,
-                                                      Launcher launcher) throws Exception {
+                                                      Path targetFile, Path stagingDir) throws Exception {
     final Map<String, Collection<LocalFile>> runnableLocalFiles = populateRunnableLocalFiles(spec, stagingDir);
 
     // Rewrite LocalFiles inside twillSpec

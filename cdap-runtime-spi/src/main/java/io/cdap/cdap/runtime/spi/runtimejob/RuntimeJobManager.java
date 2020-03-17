@@ -16,13 +16,20 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
-import java.io.Closeable;
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Runtime job manager to prepare and launch the job.
  */
-public interface RuntimeJobManager extends Closeable {
+public interface RuntimeJobManager {
+  /**
+   * Initialize the clients for job launch.
+   *
+   * @throws Exception thrown if any exception while initializing the manager
+   */
+  void initialize() throws Exception;
+
   /**
    * This method uses runtime job information to launch the job.
    *
@@ -46,7 +53,7 @@ public interface RuntimeJobManager extends Closeable {
    * @return a list job details
    * @throws Exception thrown if any exception while getting list of running jobs
    */
-  Iterable<RuntimeJobDetail> list() throws Exception;
+  List<RuntimeJobDetail> list() throws Exception;
 
   /**
    * Gracefully stops a running job. If the job is already in terminal status, then this method should be a no-op. If
@@ -67,9 +74,7 @@ public interface RuntimeJobManager extends Closeable {
   void kill(RuntimeJobId runtimeJobId) throws Exception;
 
   /**
-   * Close any resources that were used while launching the runtime job.
+   * This method is responsible to perform clean up for runtime manager.
    */
-  default void close() {
-    // no-op
-  }
+  void destroy();
 }

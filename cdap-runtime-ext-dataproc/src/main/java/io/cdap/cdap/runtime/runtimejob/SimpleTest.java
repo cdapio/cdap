@@ -16,41 +16,67 @@
 
 package io.cdap.cdap.runtime.runtimejob;
 
+import com.google.api.gax.core.CredentialsProvider;
+import com.google.api.gax.core.FixedCredentialsProvider;
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.cloud.dataproc.v1.Job;
+import com.google.cloud.dataproc.v1.JobControllerClient;
+import com.google.cloud.dataproc.v1.JobControllerSettings;
 import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-import com.google.common.base.Throwables;
-import com.google.common.collect.Lists;
-import io.cdap.cdap.common.utils.DirUtils;
+import com.google.common.base.Joiner;
+import org.apache.twill.api.LocalFile;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.ApplicationBundler;
+import org.apache.twill.internal.DefaultLocalFile;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+/**
+ *
+ */
 public class SimpleTest {
 
   public static void main(String[] args) throws Exception {
 
-//    CredentialsProvider credentialsProvider = FixedCredentialsProvider
-//      .create(GoogleCredentials.getApplicationDefault());
-//    JobControllerClient jobControllerClient = JobControllerClient.create(
-//      JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
-//        .setEndpoint("us-west1-dataproc.googleapis.com:443").build());
+    CredentialsProvider credentialsProvider = FixedCredentialsProvider
+      .create(GoogleCredentials.getApplicationDefault());
+    JobControllerClient jobControllerClient = JobControllerClient.create(
+      JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
+        .setEndpoint("us-west1-dataproc.googleapis.com:443").build());
     Storage gcsStorage = StorageOptions.getDefaultInstance().getService();
-    BlobId blobId = BlobId.of("launcher-two", "hello/world/how/are/you.jar");
-    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
-    //gcsStorage.create(blobInfo, Files.readAllBytes(Paths.get("/Users/vinishashah/Downloads/launcher.jar")));
+    BlobId blobId = BlobId.of("launcher-two", "hello/world");
+    BlobId blobId2 = BlobId.of("launcher-two", "hello/world2");
+    BlobId blobId3 = BlobId.of("launcher-two", "hello/world3");
 
+    Set<String> filters = new HashSet<>();
+    filters.add("status.state = ACTIVE");
+    filters.add("labels.hello=world");
+
+    JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
+      jobControllerClient.listJobs("vini-project-238000", "us-west1", Joiner.on(" AND ").join(filters));
+
+    Iterator<Job> jobsItor = listJobsPagedResponse.iterateAll().iterator();
+
+    while (jobsItor.hasNext()) {
+      System.out.println("job: " + jobsItor.next().getJobUuid());
+    }
+
+    BlobInfo blobInfo = BlobInfo.newBuilder(blobId).build();
+   // gcsStorage.create(blobInfo, Files.readAllBytes(Paths.get("/Users/vinishashah/Downloads/launcher.jar")));
     gcsStorage.delete(blobId);
 
 //    File applicationFile = new File("/Users/vinishashah/Downloads/application.jar");
@@ -89,7 +115,44 @@ public class SimpleTest {
 //      }
 //    });
 
+   // LocalLocationFactory lf = new LocalLocationFactory(Files.createTempDirectory("local.location").toFile());
 
+//    ApplicationBundler bundler = DatarpocJarUtils.createBundler();
+//
+//    LocalFile twillJar = DatarpocJarUtils.getBundleJar(bundler, lf, "twill.jar",
+//                                                       ImmutableList.of(ApplicationMasterMain.class,
+//                                                                        TwillContainerMain.class, OptionSpec.class));
+
+    /*Location launcherJar = lf.create("launcher.jar");
+    try (JarOutputStream jarOut = new JarOutputStream(launcherJar.getOutputStream())) {
+      ClassLoader classLoader = DataprocJobMain.class.getClassLoader();
+      URL[] urls = new URL[1];
+      urls[0] = new URL("file:/Users/vinishashah/Documents/work/mywork/cdap/cdap-runtime-spi/target/cdap-runtime" +
+                          "-spi-6.2" +
+                          ".0-SNAPSHOT.jar");
+      URLClassLoader urlClassLoader = new URLClassLoader(urls, classLoader);
+      Dependencies.findClassDependencies(urlClassLoader, new ClassAcceptor() {
+        @Override
+        public boolean accept(String className, URL classUrl, URL classPathUrl) {
+          if (className.equals("io.cdap.cdap.runtime.runtimejob.DataprocJobMain") ||
+            className.equals("io.cdap.cdap.runtime.runtimejob.DataprocRuntimeEnvironment") ||
+            className.equals("io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment")) {
+            try {
+              jarOut.putNextEntry(new JarEntry(className.replace('.', '/') + ".class"));
+              try (InputStream is = classUrl.openStream()) {
+                ByteStreams.copy(is, jarOut);
+              }
+            } catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+            return true;
+          }
+          return false;
+        }
+      }, DataprocJobMain.class.getName());
+    }
+*/
+    System.out.println();
 
   }
 
@@ -117,25 +180,36 @@ public class SimpleTest {
     return destinationFolder;
   }
 
-  private static URL[] getClassPathURLs(File dir, Set<String> libDirs) {
-    try {
-      List<URL> urls = Lists.newArrayList(dir.toURI().toURL());
-      addJarURLs(dir, urls);
-      urls.add(new File(dir, "classes").toURI().toURL());
+//  private static URL[] getClassPathURLs(File dir, Set<String> libDirs) {
+//    try {
+//      List<URL> urls = Lists.newArrayList(dir.toURI().toURL());
+//      addJarURLs(dir, urls);
+//      urls.add(new File(dir, "classes").toURI().toURL());
+//
+//      for (String libDir : libDirs) {
+//        addJarURLs(new File(dir, libDir), urls);
+//      }
+//
+//      return urls.toArray(new URL[urls.size()]);
+//    } catch (MalformedURLException e) {
+//      throw Throwables.propagate(e);
+//    }
+//  }
 
-      for (String libDir : libDirs) {
-        addJarURLs(new File(dir, libDir), urls);
-      }
+//  private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
+//    for (File file : DirUtils.listFiles(dir, "jar")) {
+//      result.add(file.toURI().toURL());
+//    }
+//  }
 
-      return urls.toArray(new URL[urls.size()]);
-    } catch (MalformedURLException e) {
-      throw Throwables.propagate(e);
-    }
+  public static LocalFile getBundleJar(ApplicationBundler bundler, LocationFactory locationFactory, String name,
+                                       Iterable<Class<?>> classes) throws IOException {
+    Location targetLocation = locationFactory.create(name);
+    bundler.createBundle(targetLocation, classes);
+    return createLocalFile(name, targetLocation, true);
   }
 
-  private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
-    for (File file : DirUtils.listFiles(dir, "jar")) {
-      result.add(file.toURI().toURL());
-    }
+  private static LocalFile createLocalFile(String name, Location location, boolean archive) throws IOException {
+    return new DefaultLocalFile(name, location.toURI(), location.lastModified(), location.length(), archive, null);
   }
 }

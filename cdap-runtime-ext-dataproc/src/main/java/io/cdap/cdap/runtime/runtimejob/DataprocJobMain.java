@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime.runtimejob;
 
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
-import org.apache.twill.internal.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +41,7 @@ import java.util.zip.ZipInputStream;
  */
 public class DataprocJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
+
 
   /**
    * Main method to setup classpath and call the RuntimeJob.run() method.
@@ -78,6 +78,9 @@ public class DataprocJobMain {
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
       try {
+        LOG.info("##### class: {}", newCL.findResource("org/apache/hadoop/yarn/conf/YarnConfiguration.class"));
+        System.out.println("##### class: " + newCL.findResource("org/apache/hadoop/yarn/conf/YarnConfiguration" +
+                                                                     ".class"));
         // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize");
         LOG.info("Invoking initialize() on {}", dataprocEnvClassName);
@@ -118,14 +121,13 @@ public class DataprocJobMain {
   private static URL[] getClasspath(URLClassLoader cl, File tempDir) throws IOException {
     URL[] urls = cl.getURLs();
     List<URL> urlList = new ArrayList<>();
-    for (String file : Arrays.asList(Constants.Files.RESOURCES_JAR, Constants.Files.APPLICATION_JAR,
-                                     Constants.Files.TWILL_JAR)) {
+    for (String file : Arrays.asList(Constants.RESOURCES_JAR, Constants.APPLICATION_JAR, Constants.TWILL_JAR)) {
       File jar = new File(file);
       File jarDir = new File(tempDir, "expanded." + file);
       expand(jar, jarDir);
       // add url for dir
       urlList.add(jarDir.toURI().toURL());
-      if (file.equals(Constants.Files.RESOURCES_JAR)) {
+      if (file.equals("resources.jar")) {
         continue;
       }
       urlList.addAll(createClassPathURLs(jarDir));

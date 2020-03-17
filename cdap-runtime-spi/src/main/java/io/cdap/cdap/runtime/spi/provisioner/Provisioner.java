@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
-import io.cdap.cdap.runtime.spi.launcher.Launcher;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 
 import java.util.Map;
 import java.util.Optional;
@@ -148,7 +148,7 @@ public interface Provisioner {
    * get launcher implementation.
    * @return
    */
-  default Optional<Launcher> getLauncher() {
+  default Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     return Optional.empty();
   }
 }

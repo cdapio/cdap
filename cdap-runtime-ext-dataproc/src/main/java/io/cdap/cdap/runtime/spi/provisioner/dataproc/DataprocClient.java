@@ -115,75 +115,74 @@ final class DataprocClient implements AutoCloseable {
     }
 
     String projectId = conf.getProjectId();
-//    String networkHostProjectID = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
-//      conf.getNetworkHostProjectID();
-//    String systemProjectId = null;
-//    try {
-//      systemProjectId = DataprocConf.getSystemProjectId();
-//    } catch (IllegalArgumentException e) {
-//      // expected when not running on GCP, ignore
-//    }
-//    if (network == null && projectId.equals(systemProjectId)) {
-//      // If the CDAP instance is running on a GCE/GKE VM from a project that matches the provisioner project,
-//      // use the network of that VM.
-//      network = systemNetwork;
-//    } else if (network == null) {
-//      // Otherwise, pick a network from the configured project using the Compute API
-//      network = "default";
-//      //network = findNetwork(networkHostProjectID, compute);
-//    }
-//    if (network == null) {
-//      throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a
-//      network.");
-//    }
-//
-//    String subnet = conf.getSubnet();
-//    Network networkInfo = getNetworkInfo(networkHostProjectID, network, compute);
-//
-//    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo);
-//
-//    if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
-//      // Peering is setup between the system network and customer network and is in ACTIVE state.
-//      // However user has selected to preferred external IP the instance. This is not a private instance and is
-//      // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
-//      // internal IP can be used.
-//      LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
-//                               "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
-//                               "to launch Dataproc clusters with internal IP only.", systemNetwork,
-//                             systemProjectId, network, networkHostProjectID));
-//    }
-//
-//    // Use internal IP for the Dataproc cluster if instance is private
-//    // or
-//    // user has not preferred external IP and (CDAP is running in the same customer project as Dataproc is going to
-//    // be launched
-//    // or
-//    // Network peering is done between customer network and system network and is in ACTIVE mode).
-//    boolean useInternalIP = privateInstance ||
-//      !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId))
-//      ||
-//      state == PeeringState.ACTIVE);
-//
-//    List<String> subnets = networkInfo.getSubnetworks();
-//    if (subnet != null && !subnetExists(subnets, subnet)) {
-//      throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
-//                                                         + "Please use a different subnet.",
-//                                                       subnet, network, networkHostProjectID));
-//    }
-//
-//    // if the network uses custom subnets, a subnet must be provided to the dataproc api
-//    boolean autoCreateSubnet = networkInfo.getAutoCreateSubnetworks() == null ?
-//      false : networkInfo.getAutoCreateSubnetworks();
-//    if (!autoCreateSubnet) {
-//      // if the network uses custom subnets but none exist, error out
-//      if (subnets == null || subnets.isEmpty()) {
-//        throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
-//                                                           + "Please create a subnet or use a different network.",
-//                                                         network, networkHostProjectID));
-//      }
-//    }
-//
-//    subnet = chooseSubnet(network, subnets, subnet, conf.getRegion());
+    String networkHostProjectID = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
+      conf.getNetworkHostProjectID();
+    String systemProjectId = null;
+    try {
+      systemProjectId = DataprocConf.getSystemProjectId();
+    } catch (IllegalArgumentException e) {
+      // expected when not running on GCP, ignore
+    }
+    if (network == null && projectId.equals(systemProjectId)) {
+      // If the CDAP instance is running on a GCE/GKE VM from a project that matches the provisioner project,
+      // use the network of that VM.
+      network = systemNetwork;
+    } else if (network == null) {
+      // Otherwise, pick a network from the configured project using the Compute API
+      network = "default";
+      //network = findNetwork(networkHostProjectID, compute);
+    }
+    if (network == null) {
+      throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
+    }
+
+    String subnet = conf.getSubnet();
+    Network networkInfo = getNetworkInfo(networkHostProjectID, network, compute);
+
+    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo);
+
+    if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
+      // Peering is setup between the system network and customer network and is in ACTIVE state.
+      // However user has selected to preferred external IP the instance. This is not a private instance and is
+      // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
+      // internal IP can be used.
+      LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
+                               "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
+                               "to launch Dataproc clusters with internal IP only.", systemNetwork,
+                             systemProjectId, network, networkHostProjectID));
+    }
+
+    // Use internal IP for the Dataproc cluster if instance is private
+    // or
+    // user has not preferred external IP and (CDAP is running in the same customer project as Dataproc is going to
+    // be launched
+    // or
+    // Network peering is done between customer network and system network and is in ACTIVE mode).
+    boolean useInternalIP = privateInstance ||
+      !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId))
+      ||
+      state == PeeringState.ACTIVE);
+
+    List<String> subnets = networkInfo.getSubnetworks();
+    if (subnet != null && !subnetExists(subnets, subnet)) {
+      throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
+                                                         + "Please use a different subnet.",
+                                                       subnet, network, networkHostProjectID));
+    }
+
+    // if the network uses custom subnets, a subnet must be provided to the dataproc api
+    boolean autoCreateSubnet = networkInfo.getAutoCreateSubnetworks() == null ?
+      false : networkInfo.getAutoCreateSubnetworks();
+    if (!autoCreateSubnet) {
+      // if the network uses custom subnets but none exist, error out
+      if (subnets == null || subnets.isEmpty()) {
+        throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
+                                                           + "Please create a subnet or use a different network.",
+                                                         network, networkHostProjectID));
+      }
+    }
+
+    subnet = chooseSubnet(network, subnets, subnet, conf.getRegion());
 
     return new DataprocClient(new DataprocConf(conf, network, null), client, compute, false);
   }
@@ -336,9 +335,10 @@ final class DataprocClient implements AutoCloseable {
       if (publicKey != null) {
         // Don't fail if there is no public key. It is for tooling case that the key might be generated differently.
         metadata.put("ssh-keys", publicKey.getUser() + ":" + publicKey.getKey());
+        // override any os-login that may be set on the project-level metadata
+        // this metadata is only needed if ssh is being used to launch the jobs - CDAP-15369
+        metadata.put("enable-oslogin", "false");
       }
-      // override any os-login that may be set on the project-level metadata
-      metadata.put("enable-oslogin", "false");
 
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
@@ -362,8 +362,11 @@ final class DataprocClient implements AutoCloseable {
                                                   conf.getNetwork()));
       }
 
-      for (String targetTag : getFirewallTargetTags()) {
-        clusterConfig.addTags(targetTag);
+      // if public key is no null that means ssh should be used to launch job on dataproc
+      if (publicKey != null) {
+        for (String targetTag : getFirewallTargetTags()) {
+          clusterConfig.addTags(targetTag);
+        }
       }
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security
@@ -424,11 +427,6 @@ final class DataprocClient implements AutoCloseable {
       if (conf.getGcsBucket() != null) {
         builder.setConfigBucket(conf.getGcsBucket());
       }
-
-
-      // TODO: Do not hardcode, use resources for it. Also make sure script is generic enough for any number of workers
-//      builder.addInitializationActions(0, NodeInitializationAction.newBuilder()
-//        .setExecutableFile("gs://blah-bucket123/zookeeper/zookeeper.sh").build());
 
       Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
         .setClusterName(name)

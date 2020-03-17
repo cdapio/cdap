@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.launcher;
 
-import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -30,7 +29,7 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.launcher.Launcher;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
@@ -55,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
@@ -80,12 +80,12 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
   private LocationCache locationCache;
   private Path cachePath;
 
-  @Inject
-  LauncherTwillRunnerService(CConfiguration cConf, Configuration hConf,
-                             LocationFactory locationFactory, MessagingService messagingService,
-                             RemoteExecutionLogProcessor logProcessor,
-                             MetricsCollectionService metricsCollectionService,
-                             ProvisioningService provisioningService) {
+
+  public LauncherTwillRunnerService(CConfiguration cConf, Configuration hConf,
+                                    LocationFactory locationFactory, MessagingService messagingService,
+                                    RemoteExecutionLogProcessor logProcessor,
+                                    MetricsCollectionService metricsCollectionService,
+                                    ProvisioningService provisioningService) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.locationFactory = locationFactory;
@@ -95,10 +95,6 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
     this.logProcessor = logProcessor;
     this.metricsCollectionService = metricsCollectionService;
     this.provisioningService = provisioningService;
-//    this.launcher = new LauncherExtensionLoader(cConf.get("launcher.extensions.dir")).get("dataproc-launcher");
-//    if (this.launcher == null) {
-//      LOG.info("Test Launcher is null");
-//    }
   }
 
   @Override
@@ -142,9 +138,12 @@ public class LauncherTwillRunnerService implements TwillRunnerService {
     ProgramRunId programRunId = programTwillApp.getProgramRunId();
     ProgramOptions programOptions = programTwillApp.getProgramOptions();
     LOG.info("Creating test launcher preparer with twill application");
-    Launcher launcher = null;
-    if (provisioningService.getLauncher(programOptions).isPresent()) {
-      launcher = provisioningService.getLauncher(programOptions).get();
+    RuntimeJobManager launcher = null;
+    Optional<RuntimeJobManager> manager = provisioningService.getRuntimeJobManager(programOptions, programRunId);
+
+
+    if (manager.isPresent()) {
+      launcher = manager.get();
       LOG.info("### Launcher is not null");
     } else {
       LOG.info("### Program options {}", programOptions.getArguments().asMap());

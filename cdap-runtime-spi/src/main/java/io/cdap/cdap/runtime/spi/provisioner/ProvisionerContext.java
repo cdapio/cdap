@@ -20,6 +20,7 @@ import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Context for provisioner operations.
@@ -43,8 +44,10 @@ public interface ProvisionerContext {
   Map<String, String> getProperties();
 
   /**
-   * Returns the {@link SSHContext} for performing ssh operations.
+   * Returns the {@link SSHContext} for performing ssh operations. The context should be null if ssh is not used to
+   * submit jobs.
    */
+  @Nullable
   SSHContext getSSHContext();
 
   /**

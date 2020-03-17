@@ -16,19 +16,18 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
-import org.apache.twill.api.LocalFile;
-
 import java.util.Collection;
 
 /**
  * Runtime job information. The instance of this interface will be provided to
- * {@link RuntimeJobManager#launch(RuntimeJobInfo)} with files to be localized and runtime job class implementation.
+ * {@link RuntimeJobManager#launch(RuntimeJobInfo)} with files to be localized and runtime
+ * job class implementation.
  */
 public interface RuntimeJobInfo {
   /**
    * Returns a collection of files that are used to launch the job.
    */
-  Collection<? extends LocalFile> getLocalizeFiles();
+  Collection<? extends RuntimeLocalFile> getLocalizeFiles();
 
   /**
    * Returns default implementation of a {@link RuntimeJob}. This class is responsible for submitting runtime job to

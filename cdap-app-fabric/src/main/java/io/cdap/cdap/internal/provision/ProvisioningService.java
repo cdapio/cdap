@@ -53,7 +53,6 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
 import io.cdap.cdap.runtime.spi.SparkCompat;
-import io.cdap.cdap.runtime.spi.launcher.Launcher;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -62,6 +61,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -107,6 +107,7 @@ public class ProvisioningService extends AbstractIdleService {
   private static final Type PLUGIN_REQUIREMENT_SET_TYPE = new TypeToken<Set<PluginRequirement>>() { }.getType();
 
   private final CConfiguration cConf;
+  private final boolean shouldSSH;
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
@@ -127,6 +128,7 @@ public class ProvisioningService extends AbstractIdleService {
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
                       ProvisionerStore provisionerStore, TransactionRunner transactionRunner) {
     this.cConf = cConf;
+    this.shouldSSH = !cConf.get(Constants.RuntimeJob.RUNTIME_JOB_MANAGER).equals(Constants.RuntimeJob.CLOUD_PROVIDER);
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
@@ -196,9 +198,12 @@ public class ProvisioningService extends AbstractIdleService {
     // Create the ProvisionerContext and query the cluster status using the provisioner
     ProvisionerContext context;
     try {
-      context = createContext(programRunId, userId, properties,
-                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                    null, null));
+      DefaultSSHContext defaultSSHContext = null;
+      if (shouldSSH) {
+        defaultSSHContext = new DefaultSSHContext(
+          Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
+      }
+      context = createContext(programRunId, userId, properties, defaultSSHContext);
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -209,13 +214,6 @@ public class ProvisioningService extends AbstractIdleService {
     return Retries.callWithRetries(() -> provisioner.getClusterStatus(context, cluster),
                                    RetryStrategies.exponentialDelay(1, 5, TimeUnit.SECONDS),
                                    RetryableProvisionException.class::isInstance);
-  }
-
-  public Optional<Launcher> getLauncher(ProgramOptions programOptions) {
-    Map<String, String> systemArgs = programOptions.getArguments().asMap();
-    String name = SystemArguments.getProfileProvisioner(systemArgs);
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
-    return provisioner.getLauncher();
   }
 
   /**
@@ -347,7 +345,7 @@ public class ProvisioningService extends AbstractIdleService {
                                     "plugins: '%s'", programRunId.getProgram(), name,
                                   groupByRequirement(unfulfilledRequirements))));
         programStateWriter.error(programRunId, new IllegalArgumentException("Provisioner does not meet all the " +
-                                                                           "requirements for the program to run."));
+                                                                              "requirements for the program to run."));
         provisionerNotifier.deprovisioned(programRunId);
         return () -> { };
       }
@@ -363,6 +361,23 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerTable provisionerTable = new ProvisionerTable(context);
     provisionerTable.putTaskInfo(provisioningTaskInfo);
     return createProvisionTask(provisioningTaskInfo, provisioner);
+  }
+
+  /**
+   * Returns runtime job manager implementation.
+   *
+   * @param programOptions program options
+   * @param programRunId program run
+   * @return an object of runtime job manager
+   */
+  public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramOptions programOptions, ProgramRunId programRunId) {
+    Map<String, String> systemArgs = programOptions.getArguments().asMap();
+    String name = SystemArguments.getProfileProvisioner(systemArgs);
+    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
+    String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
+    Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
+    ProvisionerContext context = createContext(programRunId, user, properties, null);
+    return provisioner.getRuntimeJobManager(context);
   }
 
   /**
@@ -545,10 +560,13 @@ public class ProvisioningService extends AbstractIdleService {
 
     ProvisionerContext context;
     try {
-      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
-                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                    locationFactory.create(taskInfo.getSecureKeysDir()),
-                                                    createSSHKeyPair(taskInfo)));
+      DefaultSSHContext defaultSSHContext = null;
+      if (shouldSSH) {
+        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                  locationFactory.create(taskInfo.getSecureKeysDir()),
+                                                  createSSHKeyPair(taskInfo));
+      }
+      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), defaultSSHContext);
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -599,9 +617,12 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
-      context = createContext(programRunId, taskInfo.getUser(), properties,
-                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                    null, sshKeyPair));
+      DefaultSSHContext defaultSSHContext = null;
+      if (shouldSSH) {
+        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                  null, sshKeyPair);
+      }
+      context = createContext(programRunId, taskInfo.getUser(), properties, defaultSSHContext);
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -652,7 +673,8 @@ public class ProvisioningService extends AbstractIdleService {
       Throwable rootCause = Throwables.getRootCause(t);
       if (!(rootCause instanceof SocketTimeoutException || rootCause instanceof ConnectException)) {
         SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. " +
-          "Tasks that were in progress during the last CDAP shutdown will not be resumed until this succeeds. ", t);
+                            "Tasks that were in progress during the last CDAP shutdown will not be resumed " +
+                            "until this succeeds. ", t);
       }
       return true;
     });
@@ -710,7 +732,7 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           SSHContext sshContext) {
+                                           @Nullable SSHContext sshContext) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
   }

@@ -33,6 +33,8 @@ import org.apache.twill.zookeeper.RetryStrategies;
 import org.apache.twill.zookeeper.ZKClientService;
 import org.apache.twill.zookeeper.ZKClientServices;
 import org.apache.twill.zookeeper.ZKClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -47,6 +49,7 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("unused")
 public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocRuntimeEnvironment.class);
   private static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
   private static final String ZK_QUORUM = "zookeeper.quorum";
   private ZKDiscoveryService zkDiscoveryService;
@@ -84,7 +87,6 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     startAndWait.invoke(zkClientService);
 
     zkDiscoveryService = new ZKDiscoveryService(zkClientService);
-
     YarnConfiguration conf = new YarnConfiguration();
     LocationFactory locationFactory = new FileContextLocationFactory(conf);
     yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
