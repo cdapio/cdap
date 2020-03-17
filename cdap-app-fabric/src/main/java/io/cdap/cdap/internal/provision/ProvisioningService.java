@@ -371,7 +371,7 @@ public class ProvisioningService extends AbstractIdleService {
    */
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramOptions programOptions, ProgramRunId programRunId) {
     String shouldUseRuntimeMonitor = cConf.get(Constants.RuntimeJob.RUNTIME_JOB_MANAGER);
-    if (Strings.isNullOrEmpty(shouldUseRuntimeMonitor) || !shouldUseRuntimeMonitor.equals("false")) {
+    if (Strings.isNullOrEmpty(shouldUseRuntimeMonitor) || shouldUseRuntimeMonitor.equals("false")) {
       return Optional.empty();
     }
 
@@ -679,7 +679,8 @@ public class ProvisioningService extends AbstractIdleService {
       Throwable rootCause = Throwables.getRootCause(t);
       if (!(rootCause instanceof SocketTimeoutException || rootCause instanceof ConnectException)) {
         SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. " +
-                            "Tasks that were in progress during the last CDAP shutdown will not be resumed until this succeeds. ", t);
+                            "Tasks that were in progress during the last CDAP shutdown will " +
+                            "not be resumed until this succeeds. ", t);
       }
       return true;
     });

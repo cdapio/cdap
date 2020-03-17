@@ -53,6 +53,7 @@ public class RuntimeJobTwillController implements TwillController {
   private final RuntimeJobManager jobManager;
   private final CompletableFuture<RuntimeJobTwillController> started;
   private final CompletableFuture<RuntimeJobTwillController> completion;
+  private CompletableFuture<RuntimeJobId> startupTaskFuture;
 
   public RuntimeJobTwillController(RuntimeJobManager jobManager, RunId runId, RuntimeJobId jobId) {
     this.runId = runId;
@@ -61,17 +62,18 @@ public class RuntimeJobTwillController implements TwillController {
 
     this.completion = new CompletableFuture<>();
     this.started = new CompletableFuture<>();
+
   }
 
   public RuntimeJobManager getJobManager() {
     return jobManager;
   }
 
-  void start(CompletableFuture<RuntimeJobId> startupTaskFuture) {
+  void start(CompletableFuture<RuntimeJobId> startupTaskCompletion) {
+    this.startupTaskFuture = startupTaskCompletion;
     startupTaskFuture.whenComplete((res, throwable) -> {
       // terminate this controller with fail state
       if (throwable == null) {
-        completion.complete(this);
         started.complete(this);
       } else {
         completion.completeExceptionally(throwable);
@@ -159,8 +161,11 @@ public class RuntimeJobTwillController implements TwillController {
   @Override
   public Future<? extends ServiceController> terminate() {
     try {
-      awaitTerminated();
+      LOG.info("In terminate of runtime job twill controller");
+      startupTaskFuture.cancel(true);
+      LOG.info("Done cancelling of runtime job");
       jobManager.stop(jobId);
+      LOG.info("stopping...");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -170,8 +175,11 @@ public class RuntimeJobTwillController implements TwillController {
   @Override
   public void kill() {
     try {
-      awaitTerminated();
+      LOG.info("In kill of runtime job twill controller");
+      startupTaskFuture.cancel(true);
+      LOG.info("Done cancelling of runtime job");
       jobManager.stop(jobId);
+      LOG.info("stopping...");
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }

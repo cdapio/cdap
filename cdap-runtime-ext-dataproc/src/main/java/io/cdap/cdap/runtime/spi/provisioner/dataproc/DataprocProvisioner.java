@@ -366,6 +366,6 @@ public class DataprocProvisioner implements Provisioner {
     }
 
     return Optional.of(new DataprocRuntimeJobManager(clusterName, dataprocCredentials, projectId, region, bucket,
-                                                     sparkVersion, systemLabels));
+                                                     systemLabels));
   }
 }

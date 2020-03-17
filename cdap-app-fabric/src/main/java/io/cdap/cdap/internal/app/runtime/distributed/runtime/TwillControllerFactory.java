@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
 
 /**
  * A package local interface for creating instance of {@link TwillControllerFactory}.
+ * @param <T>
  */
 public interface TwillControllerFactory<T> {
 

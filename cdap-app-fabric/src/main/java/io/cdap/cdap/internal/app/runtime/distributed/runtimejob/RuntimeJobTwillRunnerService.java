@@ -344,8 +344,12 @@ public class RuntimeJobTwillRunnerService implements TwillRunnerService {
       // When the program is completed, remove the controller from the map.
       controller.onTerminated(() -> {
         LOG.info("Controller completed for program run {}", programRunId);
+        jobManager.destroy();
+        LOG.info("Job manager destroyed");
         controllers.remove(programRunId, controller);
+        LOG.info("Controller removed");
         deleteRunningState(programRunId);
+        LOG.info("Deleting running state");
       }, Threads.SAME_THREAD_EXECUTOR);
 
       controller.start(startupTaskCompletion);

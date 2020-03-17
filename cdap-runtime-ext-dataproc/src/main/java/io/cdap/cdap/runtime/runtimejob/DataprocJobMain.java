@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.runtimejob;
 
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
+import org.apache.twill.internal.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,7 +43,6 @@ import java.util.zip.ZipInputStream;
 public class DataprocJobMain {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
 
-
   /**
    * Main method to setup classpath and call the RuntimeJob.run() method.
    *
@@ -50,14 +50,11 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
-    if (args.length < 2) {
-      throw new RuntimeException("An implementation of RuntimeJob classname and spark compat should be provided as an" +
-                                   " argument.");
+    if (args.length < 1) {
+      throw new RuntimeException("An implementation of RuntimeJob classname should be provided as an argument.");
     }
+
     String runtimeJobClassName = args[0];
-    String sparkCompat = args[1];
-    // This is needed by Runtime job to detect correct spark compat version
-    System.setProperty("SPARK_COMPAT", sparkCompat);
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {
@@ -78,9 +75,6 @@ public class DataprocJobMain {
       Object newDataprocEnvInstance = dataprocEnvClass.newInstance();
 
       try {
-        LOG.info("##### class: {}", newCL.findResource("org/apache/hadoop/yarn/conf/YarnConfiguration.class"));
-        System.out.println("##### class: " + newCL.findResource("org/apache/hadoop/yarn/conf/YarnConfiguration" +
-                                                                     ".class"));
         // call initialize() method on dataprocEnvClass
         Method initializeMethod = dataprocEnvClass.getMethod("initialize");
         LOG.info("Invoking initialize() on {}", dataprocEnvClassName);
@@ -121,13 +115,14 @@ public class DataprocJobMain {
   private static URL[] getClasspath(URLClassLoader cl, File tempDir) throws IOException {
     URL[] urls = cl.getURLs();
     List<URL> urlList = new ArrayList<>();
-    for (String file : Arrays.asList(Constants.RESOURCES_JAR, Constants.APPLICATION_JAR, Constants.TWILL_JAR)) {
+    for (String file : Arrays.asList(Constants.Files.RESOURCES_JAR, Constants.Files.APPLICATION_JAR,
+                                     Constants.Files.TWILL_JAR)) {
       File jar = new File(file);
       File jarDir = new File(tempDir, "expanded." + file);
       expand(jar, jarDir);
       // add url for dir
       urlList.add(jarDir.toURI().toURL());
-      if (file.equals("resources.jar")) {
+      if (file.equals(Constants.Files.RESOURCES_JAR)) {
         continue;
       }
       urlList.addAll(createClassPathURLs(jarDir));
@@ -171,7 +166,7 @@ public class DataprocJobMain {
   }
 
   private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
-    if (dir == null || dir.listFiles() == null) {
+    if (dir.listFiles() == null) {
       return;
     }
     for (File file : dir.listFiles()) {

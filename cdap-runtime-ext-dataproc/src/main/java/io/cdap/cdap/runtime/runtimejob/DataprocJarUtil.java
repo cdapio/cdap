@@ -24,6 +24,7 @@ import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
+import org.apache.twill.internal.Constants;
 import org.apache.twill.internal.appmaster.ApplicationMasterMain;
 import org.apache.twill.internal.container.TwillContainerMain;
 import org.apache.twill.internal.utils.Dependencies;
@@ -47,25 +48,27 @@ final class DataprocJarUtil {
    * @throws IOException any error while building the jar
    */
   static RuntimeLocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
-    // Build twill jar. We also need to exclude io.cdap.cdap because in sandbox mode,
-    // io.cdap.cdap.spark-assembly-2.1.3.jar is added to twill.jar. See CDAP-16433 for more information.
-    ApplicationBundler bundler = new ApplicationBundler(ImmutableList.of("org.apache.hadoop", "io.cdap.cdap"));
-    Location location = locationFactory.create(Constants.TWILL_JAR);
+    ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
+      @Override
+      public boolean accept(String className, URL classUrl, URL classPathUrl) {
+        return !className.startsWith("org.apache.hadoop") && !classPathUrl.toString().contains("spark-assembly");
+      }
+    });
+    Location location = locationFactory.create(Constants.Files.TWILL_JAR);
     bundler.createBundle(location, ImmutableList.of(ApplicationMasterMain.class,
                                                     TwillContainerMain.class, OptionSpec.class));
     return createLocalFile(location, true);
   }
 
   /**
-   * Returns a thin launcher jar containing classes that are needed for {@code DataprocJobMain}. It will only contain
-   * classes that are needed by {@code DataprocJobMain}.
+   * Returns a thin launcher jar containing classes that are needed for {@code DataprocJobMain}.
    *
    * @param locationFactory location factory to create location
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
   static RuntimeLocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
-    Location location = locationFactory.create(Constants.LAUNCHER_JAR);
+    Location location = locationFactory.create("launcher.jar");
     try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
       ClassLoader classLoader = DataprocRuntimeJobManager.class.getClassLoader();
       Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {

@@ -424,7 +424,8 @@ public class RuntimeJobTwillPreparer implements TwillPreparer {
       }
     };
 
-    return controllerFactory.create(startupTask, timeout, timeoutUnit);
+    // TODO (vinisha) change later
+    return controllerFactory.create(startupTask, 1, TimeUnit.HOURS);
   }
 
   /**
