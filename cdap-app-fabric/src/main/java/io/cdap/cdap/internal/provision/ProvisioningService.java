@@ -89,7 +89,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +109,6 @@ public class ProvisioningService extends AbstractIdleService {
 
   private final CConfiguration cConf;
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
-  private final Map<String, RuntimeJobManager> runtimeJobManagersCache;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
   private final ProvisionerNotifier provisionerNotifier;
@@ -134,7 +132,6 @@ public class ProvisioningService extends AbstractIdleService {
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
     this.provisionerInfo = new AtomicReference<>(new ProvisionerInfo(new HashMap<>(), new HashMap<>()));
-    this.runtimeJobManagersCache = new ConcurrentHashMap<>();
     this.locationFactory = locationFactory;
     this.sparkCompat = SparkCompatReader.get(cConf);
     this.secureStore = secureStore;
@@ -380,17 +377,11 @@ public class ProvisioningService extends AbstractIdleService {
 
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     String name = SystemArguments.getProfileProvisioner(systemArgs);
-    if (runtimeJobManagersCache.containsKey(name)) {
-      return Optional.of(runtimeJobManagersCache.get(name));
-    }
-
     Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
     ProvisionerContext context = createContext(programRunId, user, properties, null);
-    Optional<RuntimeJobManager> manager = provisioner.getRuntimeJobManager(context);
-    manager.ifPresent(runtimeJobManager -> runtimeJobManagersCache.put(name, runtimeJobManager));
-    return manager;
+    return provisioner.getRuntimeJobManager(context);
   }
 
   /**
