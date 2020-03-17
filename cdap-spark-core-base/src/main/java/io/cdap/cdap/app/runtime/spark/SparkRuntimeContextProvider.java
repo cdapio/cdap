@@ -186,10 +186,10 @@ public final class SparkRuntimeContextProvider {
 
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
 
-      ProxySelector oldProxySelector = ProxySelector.getDefault();
+      //ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-        Authenticator.setDefault(injector.getInstance(Authenticator.class));
+//        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
+//        Authenticator.setDefault(injector.getInstance(Authenticator.class));
       }
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -229,8 +229,8 @@ public final class SparkRuntimeContextProvider {
               LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
             }
           }
-          Authenticator.setDefault(null);
-          ProxySelector.setDefault(oldProxySelector);
+//          Authenticator.setDefault(null);
+//          ProxySelector.setDefault(oldProxySelector);
           System.out.println("Spark runtime services shutdown completed");
         }
       });

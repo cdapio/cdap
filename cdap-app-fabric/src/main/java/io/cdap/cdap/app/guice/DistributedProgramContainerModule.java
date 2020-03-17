@@ -47,6 +47,7 @@ import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.LauncherDiscoveryModule;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -202,7 +203,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addIsolatedModules(List<Module> modules) {
-    modules.add(new RemoteExecutionDiscoveryModule());
+    modules.add(new LauncherDiscoveryModule());
     modules.add(new TMSLogAppenderModule());
     modules.add(new DFSLocationModule());
     modules.add(new DataSetsModules().getStandaloneModules());

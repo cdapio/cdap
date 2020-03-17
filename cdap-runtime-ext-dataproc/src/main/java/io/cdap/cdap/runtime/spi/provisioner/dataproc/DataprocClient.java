@@ -383,10 +383,18 @@ final class DataprocClient implements AutoCloseable {
       // for more information.
       dataprocProps.put("dataproc:dataproc.allow.zero.workers", "true");
       // Enable/Disable stackdriver
-      dataprocProps.put("dataproc:dataproc.logging.stackdriver.enable",
+      dataprocProps.put("dataproc:dataproc.logging.strackdriver.enable",
                         Boolean.toString(conf.isStackdriverLoggingEnabled()));
       dataprocProps.put("dataproc:dataproc.monitoring.stackdriver.enable",
                         Boolean.toString(conf.isStackdriverMonitoringEnabled()));
+      dataprocProps.put("dataproc:dataproc.logging.stackdriver.job.driver.enable",
+                        Boolean.toString(Boolean.TRUE));
+      dataprocProps.put("dataproc:jobs.file-backed-output.enable",
+                        Boolean.toString(Boolean.TRUE));
+      dataprocProps.put("dataproc:dataproc.logging.stackdriver.job.yarn.container.enable",
+                        Boolean.toString(Boolean.TRUE));
+      // set yarn node manager logs for 1 day - 60 * 60 * 24
+      dataprocProps.put("yarn:yarn.nodemanager.delete.debug-delay-sec", "86400");
 
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()

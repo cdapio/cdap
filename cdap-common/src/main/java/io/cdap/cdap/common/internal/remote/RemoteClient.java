@@ -17,8 +17,6 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Multimap;
-import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
@@ -52,7 +50,7 @@ public class RemoteClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private final RemoteAuthenticator authenticator;
+ // private final RemoteAuthenticator authenticator;
 
   public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
                       HttpRequestConfig httpRequestConfig, String basePath) {
@@ -68,7 +66,7 @@ public class RemoteClient {
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
-    this.authenticator = authenticator == null ? RemoteAuthenticator.getDefaultAuthenticator() : authenticator;
+   // this.authenticator = authenticator == null ? RemoteAuthenticator.getDefaultAuthenticator() : authenticator;
   }
 
   /**
@@ -95,15 +93,15 @@ public class RemoteClient {
    */
   public HttpResponse execute(HttpRequest request) throws IOException {
     // Add Authorization header if needed
-    if (authenticator != null) {
-      Multimap<String, String> headers = request.getHeaders();
-      if (headers == null || headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-        request = HttpRequest.builder(request)
-          .addHeader(HttpHeaders.AUTHORIZATION,
-                     String.format("%s %s", authenticator.getType(), authenticator.getCredentials()))
-          .build();
-      }
-    }
+//    if (authenticator != null) {
+//      Multimap<String, String> headers = request.getHeaders();
+//      if (headers == null || headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+//        request = HttpRequest.builder(request)
+//          .addHeader(HttpHeaders.AUTHORIZATION,
+//                     String.format("%s %s", authenticator.getType(), authenticator.getCredentials()))
+//          .build();
+//      }
+//    }
 
     try {
       HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
@@ -132,10 +130,10 @@ public class RemoteClient {
     if (EnumSet.of(HttpMethod.POST, HttpMethod.PUT).contains(method)) {
       urlConn.setDoOutput(true);
     }
-    if (authenticator != null) {
-      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
-                                 String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
-    }
+//    if (authenticator != null) {
+//      urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
+//                                 String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
+//    }
 
     urlConn.setRequestMethod(method.name());
     return urlConn;

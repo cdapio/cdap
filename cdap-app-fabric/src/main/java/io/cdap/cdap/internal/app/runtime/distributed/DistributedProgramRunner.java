@@ -80,6 +80,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
@@ -200,12 +201,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
       final List<String> additionalClassPaths = new ArrayList<>();
       addContainerJars(cConf, localizeResources, additionalClassPaths);
-      addAdditionalLogAppenderJars(cConf, tempDir, localizeResources);
+      //addAdditionalLogAppenderJars(cConf, tempDir, localizeResources);
 
+      System.out.println("before hbase jars");
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
       List<URI> configResources = localizeConfigs(cConf, hConf, tempDir, localizeResources);
 
+      System.out.println("Jar location");
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
       final String programJarName = programJarLocation.getName();
@@ -221,11 +224,29 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                               ApplicationSpecification.class,
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
-      final URI logbackURI = getLogBackURI(program, tempDir);
-      if (logbackURI != null) {
+      System.out.println("Jar location");
+      URI oldlogbackURI = getLogBackURI(program, tempDir);
+      if (oldlogbackURI != null) {
         // Localize the logback xml
-        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
+        System.out.println("Logback file is not null");
+        localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(oldlogbackURI, false));
+      } else {
+        System.out.println("logback file is null.");
+        File oldLogbackFile = new File("logback.xml");
+        // Copy the template
+        File logbackFile = new File(tempDir, "logback.xml");
+        try (InputStream is = new FileInputStream(oldLogbackFile)) {
+          Files.copy(is, logbackFile.toPath());
+        }
+        if (!logbackFile.exists()) {
+          System.out.println("Logback file is not available in current working dir");
+        } else {
+          System.out.println("Adding logback file to localized resource");
+          oldlogbackURI = logbackFile.toURI();
+          localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackFile.toURI(), false));
+        }
       }
+      final URI logbackURI = oldlogbackURI;
 
       // Update the ProgramOptions to carry program and runtime information necessary to reconstruct the program
       // and runs it in the remote container
@@ -245,6 +266,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                               options, ProgramOptions.class,
                               File.createTempFile("program.options", ".json", tempDir))));
 
+      System.out.println("After updated program options");
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
         public ProgramController call() throws Exception {
@@ -340,6 +362,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           // Invoke the before launch hook
           beforeLaunch(program, options);
 
+          System.out.println("twill controller created");
           TwillController twillController;
           // Change the context classloader to the combine classloader of this ProgramRunner and
           // all the classloaders of the dependencies classes so that Twill can trace classes.

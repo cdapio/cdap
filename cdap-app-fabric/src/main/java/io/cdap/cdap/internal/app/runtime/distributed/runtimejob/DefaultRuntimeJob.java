@@ -131,69 +131,101 @@ public class DefaultRuntimeJob implements RuntimeJob {
     SLF4JBridgeHandler.removeHandlersForRootLogger();
     SLF4JBridgeHandler.install();
 
+    LOG.info("### using logger from cdap now");
+    getAllFiles(new File("."));
     // Get Program Options
+    System.out.println("program options");
     ProgramOptions programOptions = readJsonFile(new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
                                                  ProgramOptions.class);
+    System.out.println("program runid");
     ProgramRunId programRunId = programOptions.getProgramId().run(ProgramRunners.getRunId(programOptions));
     ProgramId programId = programRunId.getParent();
 
     // Setup logging context for the program
     Arguments systemArgs = programOptions.getArguments();
+    System.out.println("logging context");
     LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                              systemArgs.asMap()));
 
 
     // Get App spec
+    System.out.println("appspec");
     ApplicationSpecification appSpec = readJsonFile(new File(DistributedProgramRunner.APP_SPEC_FILE_NAME),
                                                     ApplicationSpecification.class);
+    System.out.println("program descriptor");
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
-    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv)));
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    Deque<Service> coreServices = createCoreServices(injector);
-    startCoreServices(coreServices, logAppenderInitializer);
-
+    System.out.println("injector");
     try {
-      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
-      CConfiguration cConf = injector.getInstance(CConfiguration.class);
-      ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
+      Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv)));
+      System.out.println("logAppenderInitializer");
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      System.out.println("create core services");
+      Deque<Service> coreServices = createCoreServices(injector);
+      System.out.println("start core services");
+      startCoreServices(coreServices, logAppenderInitializer);
 
-      // Create and run the program. The program files should be present in current working directory.
-      try (Program program = createProgram(cConf, programRunner, programDescriptor, programOptions)) {
-        CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
-        ProgramController controller = programRunner.run(program, programOptions);
-        controllerFuture.complete(controller);
+      try {
+        SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
+        CConfiguration cConf = injector.getInstance(CConfiguration.class);
+        System.out.println("get program runner");
+        ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
 
-        controller.addListener(new AbstractListener() {
-          @Override
-          public void completed() {
-            programCompletion.complete(ProgramController.State.COMPLETED);
+        // Create and run the program. The program files should be present in current working directory.
+        try (Program program = createProgram(cConf, programRunner, programDescriptor, programOptions)) {
+          CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
+          System.out.println("run program");
+          ProgramController controller = programRunner.run(program, programOptions);
+          controllerFuture.complete(controller);
+
+          controller.addListener(new AbstractListener() {
+            @Override
+            public void completed() {
+              System.out.println("completed");
+              programCompletion.complete(ProgramController.State.COMPLETED);
+            }
+
+            @Override
+            public void killed() {
+              System.out.println("killed");
+              programCompletion.complete(ProgramController.State.KILLED);
+            }
+
+            @Override
+            public void error(Throwable cause) {
+              programCompletion.completeExceptionally(cause);
+            }
+          }, Threads.SAME_THREAD_EXECUTOR);
+
+          // Block on the completion
+          programCompletion.get();
+        } finally {
+          if (programRunner instanceof Closeable) {
+            Closeables.closeQuietly((Closeable) programRunner);
           }
-
-          @Override
-          public void killed() {
-            programCompletion.complete(ProgramController.State.KILLED);
-          }
-
-          @Override
-          public void error(Throwable cause) {
-            programCompletion.completeExceptionally(cause);
-          }
-        }, Threads.SAME_THREAD_EXECUTOR);
-
-        // Block on the completion
-        programCompletion.get();
-      } finally {
-        if (programRunner instanceof Closeable) {
-          Closeables.closeQuietly((Closeable) programRunner);
         }
+      } catch (Throwable t) {
+        controllerFuture.completeExceptionally(t);
+        throw t;
+      } finally {
+        stopCoreServices(coreServices, logAppenderInitializer);
       }
-    } catch (Throwable t) {
-      controllerFuture.completeExceptionally(t);
-      throw t;
-    } finally {
-      stopCoreServices(coreServices, logAppenderInitializer);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  private void getAllFiles(File curDir) {
+    File[] filesList = curDir.listFiles();
+    for (File f : filesList) {
+      if (f.isDirectory()) {
+        System.out.println("### Directory " + f.getName());
+        getAllFiles(f);
+      }
+      if (f.isFile()) {
+        System.out.println("### file: " + f.getName());
+      }
     }
   }
 
@@ -208,6 +240,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
       }
       controller.stop();
     } catch (Exception e) {
+      System.out.println("Cannot stop a failed program" + e.getMessage());
+      e.printStackTrace();
       LOG.warn("Cannot stop a failed program", e);
     }
   }
@@ -272,13 +306,21 @@ public class DefaultRuntimeJob implements RuntimeJob {
   @VisibleForTesting
   List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf) {
     List<Module> modules = new ArrayList<>();
+    System.out.println("listing modules");
     modules.add(new ConfigModule(cConf));
+    System.out.println("ConfigModule");
     modules.add(new IOModule());
+    System.out.println("IOModule");
     modules.add(new TMSLogAppenderModule());
+    System.out.println("TMSLogAppenderModule");
     modules.add(new RemoteExecutionDiscoveryModule());
+    System.out.println("RemoteExecutionDiscoveryModule");
     modules.add(new AuthenticationContextModules().getProgramContainerModule());
+    System.out.println("AuthenticationContextModules");
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
+    System.out.println("MetricsClientRuntimeModule");
     modules.add(new MessagingServerRuntimeModule().getStandaloneModules());
+    System.out.println("MessagingServerRuntimeModule");
 
     modules.add(new AbstractModule() {
       @Override
@@ -310,7 +352,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     });
 
     // Active monitoring means we need to start the RuntimeMonitorServer for app-fabric to poll
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING)) {
+    if (cConf.get(Constants.RuntimeMonitor.ACTIVE_MONITORING) != null) {
       modules.add(createRuntimeMonitorServerModule(cConf));
     }
 
@@ -366,7 +408,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     services.add(injector.getInstance(MessagingHttpService.class));
 
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING)) {
+    if (cConf.get(Constants.RuntimeMonitor.ACTIVE_MONITORING) != null) {
       services.add(injector.getInstance(RuntimeMonitorServer.class));
     }
 
@@ -380,6 +422,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     try {
       // Starts the core services
       for (Service service : coreServices) {
+        System.out.println("Starting core service " + service);
         LOG.debug("Starting core service {}", service);
         service.startAndWait();
       }
@@ -392,6 +435,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
   private void stopCoreServices(Deque<Service> coreServices, LogAppenderInitializer logAppenderInitializer) {
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
+      System.out.println("Stopping core service " + service);
       LOG.debug("Stopping core service {}", service);
       try {
         service.stopAndWait();

@@ -74,7 +74,7 @@ import java.util.Set;
  * by Spark framework as the actual Spark program execution.
  */
 public final class DistributedSparkProgramRunner extends DistributedProgramRunner
-                                                 implements ProgramClassLoaderProvider {
+  implements ProgramClassLoaderProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedSparkProgramRunner.class);
 

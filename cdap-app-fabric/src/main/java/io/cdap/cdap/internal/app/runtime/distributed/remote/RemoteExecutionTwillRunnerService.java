@@ -668,7 +668,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
     private volatile InetSocketAddress address;
     private boolean closed;
-  
+
     private MonitorServerAddressSupplier(ProgramRunId programRunId) {
       this.programRunId = programRunId;
     }

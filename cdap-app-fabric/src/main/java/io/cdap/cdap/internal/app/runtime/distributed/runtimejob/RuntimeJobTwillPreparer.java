@@ -423,7 +423,7 @@ public class RuntimeJobTwillPreparer implements TwillPreparer {
       return null;
     };
 
-    return controllerFactory.create(startupTask, timeout, timeoutUnit);
+    return controllerFactory.create(startupTask, 1, TimeUnit.HOURS);
   }
 
   /**
