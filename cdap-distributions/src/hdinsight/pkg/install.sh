@@ -26,7 +26,7 @@ CDAP_BRANCH='release/6.1'
 # otherwise, it should be CDAP_TAG=''. This should be next version to be released from this branch.
 CDAP_TAG=${CDAP_TAG:+hdi6.0}
 # The CDAP package version passed to Chef. This should be next version to be released from this branch.
-CDAP_VERSION='6.1.1-1'
+CDAP_VERSION='6.1.2-1'
 # The version of Chef to install
 CHEF_VERSION='13.8.5'
 # cdap-site.xml configuration parameters
