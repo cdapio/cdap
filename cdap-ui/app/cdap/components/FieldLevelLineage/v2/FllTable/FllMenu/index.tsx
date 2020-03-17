@@ -15,7 +15,7 @@
 */
 
 import React, { useState, useContext } from 'react';
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import MenuItem from '@material-ui/core/MenuItem';
 import Menu from '@material-ui/core/Menu';
 import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
@@ -52,11 +52,14 @@ const styles = (theme): StyleRules => {
   };
 };
 
-function FllMenu({ classes }) {
+interface IFllMenuProps extends WithStyles<typeof styles> {
+  hasIncomingOps?: boolean;
+  hasOutgoingOps?: boolean;
+}
+
+function FllMenu({ hasIncomingOps, hasOutgoingOps, classes }: IFllMenuProps) {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { handleViewCauseImpact, toggleOperations, activeCauseSets, activeImpactSets } = useContext<
-    IContextState
-  >(FllContext);
+  const { handleViewCauseImpact, toggleOperations } = useContext<IContextState>(FllContext);
 
   function handleViewClick(e: React.MouseEvent<HTMLButtonElement>) {
     setAnchorEl(e.currentTarget);
@@ -71,8 +74,6 @@ function FllMenu({ classes }) {
     handleCloseMenu();
   }
 
-  const hasIncomingOps = Object.keys(activeCauseSets).length !== 0;
-  const hasOutgoingOps = Object.keys(activeImpactSets).length !== 0;
   return (
     <span className={classes.root}>
       <Button onClick={handleViewClick} className={classes.targetView} data-cy="fll-view-dropdown">

@@ -19,7 +19,8 @@ import { objectQuery, parseQueryString } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import {
   IField,
-  ITableFields,
+  ITableInfo,
+  ITablesList,
   ITimeParams,
   getTableId,
   getTimeRange,
@@ -38,7 +39,7 @@ import {
 
 const defaultContext: IContextState = {
   target: '',
-  targetFields: [],
+  targetFields: {},
   links: getDefaultLinks(),
   causeSets: {},
   impactSets: {},
@@ -58,10 +59,10 @@ type ITimeType = number | string | null;
 
 export interface IContextState {
   target: string;
-  targetFields: IField[];
+  targetFields: ITableInfo;
   links: ILinkSet;
-  causeSets: ITableFields;
-  impactSets: ITableFields;
+  causeSets: ITablesList;
+  impactSets: ITablesList;
   showingOneField: boolean;
   start: ITimeType;
   end: ITimeType;
@@ -76,8 +77,8 @@ export interface IContextState {
   handleViewCauseImpact?: () => void;
   handleReset?: () => void;
   activeField?: IField;
-  activeCauseSets?: ITableFields;
-  activeImpactSets?: ITableFields;
+  activeCauseSets?: ITablesList;
+  activeImpactSets?: ITablesList;
   activeLinks?: ILinkSet;
   numTables?: number;
   firstCause?: number;
@@ -158,14 +159,18 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
         if (nonTargetFd.type === 'cause') {
           if (!(tableId in activeCauseSets)) {
-            activeCauseSets[tableId] = [];
+            activeCauseSets[tableId] = {
+              fields: [],
+            };
           }
-          activeCauseSets[tableId].push(nonTargetFd);
+          activeCauseSets[tableId].fields.push(nonTargetFd);
         } else {
           if (!(tableId in activeImpactSets)) {
-            activeImpactSets[tableId] = [];
+            activeImpactSets[tableId] = {
+              fields: [],
+            };
           }
-          activeImpactSets[tableId].push(nonTargetFd);
+          activeImpactSets[tableId].fields.push(nonTargetFd);
         }
       });
     }
@@ -188,10 +193,10 @@ export class Provider extends React.Component<{ children }, IContextState> {
     const namespace = getCurrentNamespace();
     const updateState = (newState: IContextState) => {
       // If no field selected, grab the first field with lineage
-      if (!newState.activeField.id && newState.targetFields.length > 0) {
+      if (!newState.activeField.id && newState.targetFields.fields.length > 0) {
         newState.activeField = {
-          id: newState.targetFields[0].id,
-          name: newState.targetFields[0].name,
+          id: newState.targetFields.fields[0].id,
+          name: newState.targetFields.fields[0].name,
         };
       }
 
@@ -290,7 +295,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
   public state = {
     target: '',
-    targetFields: [],
+    targetFields: {},
     links: getDefaultLinks(),
     causeSets: {},
     impactSets: {},
