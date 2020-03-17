@@ -19,7 +19,7 @@ import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../suppo
 
 let headers = {};
 const fllPipeline = `fll_pipeline_${Date.now()}`;
-
+const { dataCy } = Helpers;
 describe('Generating and navigating field level lineage for datasets', () => {
   before(() => {
     Helpers.loginIfRequired().then(() => {
@@ -37,19 +37,18 @@ describe('Generating and navigating field level lineage for datasets', () => {
     Helpers.deployAndTestPipeline('fll_wrangler-test-pipeline.json', fllPipeline, () => {
       // Update and save runtime arguments
       cy.get('.arrow-btn-container').click();
-      cy.get('[data-cy="key-value-pair-0"] .value-input')
-        .should('exist')
-        .focus()
-        .type(DEFAULT_GCP_SERVICEACCOUNT_PATH);
-      cy.get('[data-cy="key-value-pair-1"] .value-input')
-        .should('exist')
-        .focus()
-        .type(DEFAULT_GCP_PROJECTID);
-      // TO DO: Fix test to not need second attempt to input value
-      cy.get('[data-cy="key-value-pair-0"] .value-input')
-        .should('exist')
-        .clear()
-        .type(DEFAULT_GCP_SERVICEACCOUNT_PATH);
+      cy.get(
+        `${dataCy('runtimeargs-deployed')} ${dataCy(0)} ${dataCy('runtimeargs-value')}`
+      ).should('exist');
+      cy.get(`${dataCy('runtimeargs-deployed')} ${dataCy(0)} ${dataCy('runtimeargs-value')}`).type(
+        DEFAULT_GCP_SERVICEACCOUNT_PATH
+      );
+      cy.get(
+        `${dataCy('runtimeargs-deployed')} ${dataCy(1)} ${dataCy('runtimeargs-value')}`
+      ).should('exist');
+      cy.get(`${dataCy('runtimeargs-deployed')} ${dataCy(1)} ${dataCy('runtimeargs-value')}`).type(
+        DEFAULT_GCP_PROJECTID
+      );
       cy.get('[data-cy="save-runtime-args-btn"]').click();
 
       // Run pipeline to generate lineage
