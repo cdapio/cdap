@@ -27,7 +27,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionTwillRunnerService;
+import io.cdap.cdap.internal.app.runtime.distributed.runtime.DelegatingTwillRunnerService;
 import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.proto.ProgramType;
@@ -48,7 +48,7 @@ final class RemoteExecutionProgramRunnerModule extends PrivateModule {
     // The binding is added in here instead of in TwillModule is because this module can be used
     // in standalone env as well and it doesn't require YARN.
     bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
-    bind(twillRunnerServiceKey).to(RemoteExecutionTwillRunnerService.class).in(Scopes.SINGLETON);
+    bind(twillRunnerServiceKey).to(DelegatingTwillRunnerService.class).in(Scopes.SINGLETON);
     expose(twillRunnerServiceKey);
 
     // Bind ProgramRunnerFactory and expose it with the RemoteExecution annotation
