@@ -71,6 +71,7 @@ import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.elasticsearch.common.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,6 +89,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -107,7 +109,6 @@ public class ProvisioningService extends AbstractIdleService {
   private static final Type PLUGIN_REQUIREMENT_SET_TYPE = new TypeToken<Set<PluginRequirement>>() { }.getType();
 
   private final CConfiguration cConf;
-  private final boolean shouldSSH;
   private final AtomicReference<ProvisionerInfo> provisionerInfo;
   private final ProvisionerProvider provisionerProvider;
   private final ProvisionerConfigProvider provisionerConfigProvider;
@@ -128,7 +129,6 @@ public class ProvisioningService extends AbstractIdleService {
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
                       ProvisionerStore provisionerStore, TransactionRunner transactionRunner) {
     this.cConf = cConf;
-    this.shouldSSH = !cConf.get(Constants.RuntimeJob.RUNTIME_JOB_MANAGER).equals(Constants.RuntimeJob.CLOUD_PROVIDER);
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
     this.provisionerNotifier = provisionerNotifier;
@@ -198,12 +198,9 @@ public class ProvisioningService extends AbstractIdleService {
     // Create the ProvisionerContext and query the cluster status using the provisioner
     ProvisionerContext context;
     try {
-      DefaultSSHContext defaultSSHContext = null;
-      if (shouldSSH) {
-        defaultSSHContext = new DefaultSSHContext(
-          Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
-      }
-      context = createContext(programRunId, userId, properties, defaultSSHContext);
+      context = createContext(programRunId, userId, properties,
+                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    null, null));
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -361,23 +358,6 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerTable provisionerTable = new ProvisionerTable(context);
     provisionerTable.putTaskInfo(provisioningTaskInfo);
     return createProvisionTask(provisioningTaskInfo, provisioner);
-  }
-
-  /**
-   * Returns runtime job manager implementation.
-   *
-   * @param programOptions program options
-   * @param programRunId program run
-   * @return an object of runtime job manager
-   */
-  public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramOptions programOptions, ProgramRunId programRunId) {
-    Map<String, String> systemArgs = programOptions.getArguments().asMap();
-    String name = SystemArguments.getProfileProvisioner(systemArgs);
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
-    String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
-    Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
-    ProvisionerContext context = createContext(programRunId, user, properties, null);
-    return provisioner.getRuntimeJobManager(context);
   }
 
   /**
@@ -560,13 +540,10 @@ public class ProvisioningService extends AbstractIdleService {
 
     ProvisionerContext context;
     try {
-      DefaultSSHContext defaultSSHContext = null;
-      if (shouldSSH) {
-        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                  locationFactory.create(taskInfo.getSecureKeysDir()),
-                                                  createSSHKeyPair(taskInfo));
-      }
-      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), defaultSSHContext);
+      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(),
+                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    locationFactory.create(taskInfo.getSecureKeysDir()),
+                                                    createSSHKeyPair(taskInfo)));
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -617,12 +594,9 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
-      DefaultSSHContext defaultSSHContext = null;
-      if (shouldSSH) {
-        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                  null, sshKeyPair);
-      }
-      context = createContext(programRunId, taskInfo.getUser(), properties, defaultSSHContext);
+      context = createContext(programRunId, taskInfo.getUser(), properties,
+                              new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    null, sshKeyPair));
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -673,8 +647,7 @@ public class ProvisioningService extends AbstractIdleService {
       Throwable rootCause = Throwables.getRootCause(t);
       if (!(rootCause instanceof SocketTimeoutException || rootCause instanceof ConnectException)) {
         SAMPLING_LOG.warn("Error scanning for in-progress provisioner tasks. " +
-                            "Tasks that were in progress during the last CDAP shutdown will not be resumed " +
-                            "until this succeeds. ", t);
+                            "Tasks that were in progress during the last CDAP shutdown will not be resumed until this succeeds. ", t);
       }
       return true;
     });
@@ -732,7 +705,7 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           @Nullable SSHContext sshContext) {
+                                           SSHContext sshContext) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
   }

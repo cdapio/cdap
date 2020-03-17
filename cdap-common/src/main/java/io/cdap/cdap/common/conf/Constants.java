@@ -882,7 +882,6 @@ public final class Constants {
    */
   public static final class RuntimeJob {
     public static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
-    public static final String CLOUD_PROVIDER = "cloud-provider";
   }
 
   /**
