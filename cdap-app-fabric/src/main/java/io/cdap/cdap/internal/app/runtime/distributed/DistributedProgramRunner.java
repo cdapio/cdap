@@ -81,7 +81,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Writer;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -100,6 +99,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
 
@@ -221,7 +221,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                               ApplicationSpecification.class,
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
-      final URI logbackURI = getLogBackURI(program, tempDir);
+      final URI logbackURI = getLogBackURI(program);
       if (logbackURI != null) {
         // Localize the logback xml
         localizeResources.put(LOGBACK_FILE_NAME, new LocalizeResource(logbackURI, false));
@@ -367,18 +367,23 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     }
   }
 
+  /**
+   * Adds a {@link LocalizeResource} if extra log appender is being configured.
+   */
   private void addAdditionalLogAppenderJars(CConfiguration cConf, File tempDir,
                                             Map<String, LocalizeResource> localizeResources) throws IOException {
     String provider = cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER);
     if (Strings.isNullOrEmpty(provider)) {
       return;
     }
-    String jarDir = cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR);
-    File bundleJarFile = new File(tempDir, "log-appender.jar");
-    BundleJarUtil.createJar(new File(jarDir + "/" + provider), bundleJarFile);
-    String localizedDir = "log-appender";
+
+    String localizedDir = "log-appender-ext";
+    File logAppenderArchive = new File(tempDir, localizedDir + ".zip");
+    try (ZipOutputStream zipOut = new ZipOutputStream(Files.newOutputStream(logAppenderArchive.toPath()))) {
+      BundleJarUtil.addToArchive(new File(cConf.get(Constants.Logging.LOG_APPENDER_EXT_DIR), provider), true, zipOut);
+    }
     // set extensions dir to point to localized appender directory - appender/<log-appender-provider>
-    localizeResources.put(localizedDir + "/" + provider, new LocalizeResource(bundleJarFile, true));
+    localizeResources.put(localizedDir, new LocalizeResource(logAppenderArchive, true));
     cConf.set(Constants.Logging.LOG_APPENDER_EXT_DIR, localizedDir);
   }
 
@@ -505,19 +510,33 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     Map<String, String> newSystemArgs = new HashMap<>(systemArgs.asMap());
     newSystemArgs.putAll(extraSystemArgs);
 
-    if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
-      File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
-      File archiveFile = new File(tempDir, "artifacts.jar");
-      BundleJarUtil.createJar(localDir, archiveFile);
+    String artifactArchiveJarName = "artifacts_archive.jar";
+    String artifactDirName = "artifacts";
 
+    if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_ARCHIVE)) {
+      // If the archive already exists locally, we just need to re-localize it to remote containers
+      File archiveFile = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_ARCHIVE));
       // Localize plugins to two files, one expanded into a directory, one not.
-      localizeResources.put("artifacts", new LocalizeResource(archiveFile, true));
-      localizeResources.put("artifacts_archive.jar", new LocalizeResource(archiveFile, false));
-
-      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, "artifacts");
-      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, "artifacts_archive.jar");
-
+      localizeResources.put(artifactDirName, new LocalizeResource(archiveFile, true));
+      localizeResources.put(artifactArchiveJarName, new LocalizeResource(archiveFile, false));
+    } else if (systemArgs.hasOption(ProgramOptionConstants.PLUGIN_DIR)) {
+      // If there is a plugin directory, then we need to create an archive and localize it to remote containers
+      File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
+      File archiveFile = new File(tempDir, artifactDirName + ".jar");
+      BundleJarUtil.createJar(localDir, archiveFile);
+      // Localize plugins to two files, one expanded into a directory, one not.
+      localizeResources.put(artifactDirName, new LocalizeResource(archiveFile, true));
+      localizeResources.put(artifactArchiveJarName, new LocalizeResource(archiveFile, false));
     }
+
+    // Add/rename the entries in the system arguments
+    if (localizeResources.containsKey(artifactDirName)) {
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_DIR, artifactDirName);
+    }
+    if (localizeResources.containsKey(artifactArchiveJarName)) {
+      newSystemArgs.put(ProgramOptionConstants.PLUGIN_ARCHIVE, artifactArchiveJarName);
+    }
+
     return new SimpleProgramOptions(options.getProgramId(), new BasicArguments(newSystemArgs),
                                     options.getUserArguments(), options.isDebug());
   }
@@ -527,7 +546,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * classpath.
    */
   @Nullable
-  private URI getLogBackURI(Program program, File tempDir) throws IOException, URISyntaxException {
+  private URI getLogBackURI(Program program) throws URISyntaxException {
     String configurationFile = System.getProperty("logback.configurationFile");
     if (configurationFile != null) {
       return new File(configurationFile).toURI();
@@ -537,16 +556,15 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     if (logbackURL != null) {
       return logbackURL.toURI();
     }
-    URL resource = getClass().getClassLoader().getResource("logback-container.xml");
-    if (resource == null) {
-      return null;
+
+    for (String name : Arrays.asList("logback-container.xml", "logback.xml")) {
+      URL resource = getClass().getClassLoader().getResource(name);
+      if (resource != null) {
+        return resource.toURI();
+      }
     }
-    // Copy the template
-    File logbackFile = new File(tempDir, "logback.xml");
-    try (InputStream is = resource.openStream()) {
-      Files.copy(is, logbackFile.toPath());
-    }
-    return logbackFile.toURI();
+
+    return null;
   }
 
   private Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {

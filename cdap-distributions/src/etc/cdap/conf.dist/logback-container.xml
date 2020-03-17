@@ -21,6 +21,9 @@
 -->
 <configuration>
 
+  <!-- Default values -->
+  <property name="CDAP_LOG_DIR" value="logs" />
+
   <!-- Quieting some chatty loggers -->
   <logger name="org.apache.commons.beanutils" level="ERROR"/>
   <logger name="org.apache.zookeeper.server" level="ERROR"/>
