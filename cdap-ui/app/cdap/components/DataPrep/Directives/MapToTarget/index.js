@@ -140,7 +140,7 @@ const MapToTarget = (props) => {
       return text;
     }
     const index = text.toUpperCase().indexOf(searchTextUpper);
-    if (index >= 0) {
+    if (index < 0) {
       return text;
     }
     const leadingText = text.substring(0, index);
