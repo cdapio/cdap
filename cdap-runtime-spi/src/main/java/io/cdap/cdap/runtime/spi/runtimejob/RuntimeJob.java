@@ -20,6 +20,7 @@ package io.cdap.cdap.runtime.spi.runtimejob;
  * Represents a job that will be executed on a given runtime environment.
  */
 public interface RuntimeJob {
+
   /**
    * This method will be responsible for submitting the runtime job to underlying runner.
    *

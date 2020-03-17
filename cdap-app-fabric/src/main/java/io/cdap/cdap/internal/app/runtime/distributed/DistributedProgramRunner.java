@@ -108,16 +108,17 @@ import javax.annotation.Nullable;
  */
 public abstract class DistributedProgramRunner implements ProgramRunner, ProgramControllerCreator {
 
+  public static final String CDAP_CONF_FILE_NAME = "cConf.xml";
+  public static final String APP_SPEC_FILE_NAME = "appSpec.json";
+  public static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
+
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
     .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec())
     .create();
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
-  private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
-  private static final String APP_SPEC_FILE_NAME = "appSpec.json";
   private static final String LOGBACK_FILE_NAME = "logback.xml";
-  private static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
 
   protected final CConfiguration cConf;
   protected final Configuration hConf;
@@ -321,17 +322,14 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           twillPreparer.withClassPaths(launchConfig.getExtraClasspath());
           twillPreparer.withEnv(launchConfig.getExtraEnv());
 
-          // For on premise, need to add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the
-          // twill container.
-          if (clusterMode == ClusterMode.ON_PREMISE) {
-            // The Yarn app classpath goes last
-            List<String> yarnAppClassPath = Arrays.asList(
-              hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                                      YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-            twillPreparer
-              .withApplicationClassPaths(yarnAppClassPath)
-              .withClassPaths(yarnAppClassPath);
-          }
+          // Add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the twill container.
+          // The Yarn app classpath goes last
+          List<String> yarnAppClassPath = Arrays.asList(
+            hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                    YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+          twillPreparer
+            .withApplicationClassPaths(yarnAppClassPath)
+            .withClassPaths(yarnAppClassPath);
 
           twillPreparer
             .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
@@ -410,6 +408,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
     // Setup the configurations for isolated mode
     if (clusterMode == ClusterMode.ISOLATED) {
+      // Disable logs collection through twill
+      result.set(Constants.COLLECT_APP_CONTAINER_LOG_LEVEL, "OFF");
+
       // Disable implicit transaction
       result.set(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL, TransactionControl.EXPLICIT.name());
 
@@ -421,14 +422,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
       // The following services will be running in the edge node host.
       // Set the bind addresses for all of them to "${master.services.bind.address}"
-      // Which the value of `"master.services.bind.address" will be set in the AbstractProgramTwillRunnable when it
+      // Which the value of `"master.services.bind.address" will be set in the DefaultRuntimeJob when it
       // starts in the remote machine
       String masterBindAddrConf = "${" + Constants.Service.MASTER_SERVICES_BIND_ADDRESS + "}";
-
       result.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, masterBindAddrConf);
-      result.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, masterBindAddrConf);
-      result.set(Constants.Dataset.Executor.ADDRESS, masterBindAddrConf);
-      result.set(Constants.Metadata.SERVICE_BIND_ADDRESS, masterBindAddrConf);
 
       // Don't try and use the CDAP system certs for SSL
       result.unset(Constants.Security.SSL.INTERNAL_CERT_PATH);
@@ -469,8 +466,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     }
 
     // Set the "program.container.dist.jars" since files are already localized to the container.
-    cConf.setStrings(Constants.AppFabric.PROGRAM_CONTAINER_DIST_JARS,
-                     containerExtraJars.toArray(new String[containerExtraJars.size()]));
+    cConf.setStrings(Constants.AppFabric.PROGRAM_CONTAINER_DIST_JARS, containerExtraJars.toArray(new String[0]));
   }
 
   /**
@@ -532,6 +528,11 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    */
   @Nullable
   private URI getLogBackURI(Program program, File tempDir) throws IOException, URISyntaxException {
+    String configurationFile = System.getProperty("logback.configurationFile");
+    if (configurationFile != null) {
+      return new File(configurationFile).toURI();
+    }
+
     URL logbackURL = program.getClassLoader().getResource("logback.xml");
     if (logbackURL != null) {
       return logbackURL.toURI();
@@ -641,13 +642,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   /**
    * Creates the {@link EventHandler} for handling the application events.
    */
-  @Nullable
   private EventHandler createEventHandler(CConfiguration cConf, ProgramRunId programRunId) {
-    if (clusterMode != ClusterMode.ON_PREMISE) {
-      return null;
-    }
     return new TwillAppLifecycleEventHandler(cConf.getLong(Constants.CFG_TWILL_NO_CONTAINER_TIMEOUT, Long.MAX_VALUE),
-                                             this instanceof LongRunningDistributedProgramRunner, programRunId);
+                                             this instanceof LongRunningDistributedProgramRunner, programRunId,
+                                             clusterMode);
   }
 
   /**
@@ -667,12 +665,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     localizeResources.put(CDAP_CONF_FILE_NAME, new LocalizeResource(cConfFile));
     resources.add(cConfFile.toURI());
 
-    if (clusterMode == ClusterMode.ON_PREMISE) {
-      // Save the configuration to files
-      File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
-      localizeResources.put(HADOOP_CONF_FILE_NAME, new LocalizeResource(hConfFile));
-      resources.add(hConfFile.toURI());
-    }
+    // Save the configuration to files
+    File hConfFile = saveHConf(hConf, new File(tempDir, HADOOP_CONF_FILE_NAME));
+    localizeResources.put(HADOOP_CONF_FILE_NAME, new LocalizeResource(hConfFile));
+    resources.add(hConfFile.toURI());
 
     return resources;
   }

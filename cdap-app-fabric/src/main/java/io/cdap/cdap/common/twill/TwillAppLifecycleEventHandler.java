@@ -20,6 +20,9 @@ import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Module;
+import io.cdap.cdap.app.guice.ClusterMode;
+import io.cdap.cdap.app.guice.RemoteExecutionDiscoveryModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -36,11 +39,12 @@ import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.EventHandlerContext;
 import org.apache.twill.api.RunId;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -49,12 +53,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * it cannot provision container for some runnable.
  */
 public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
-  private static final Logger LOG = LoggerFactory.getLogger(TwillAppLifecycleEventHandler.class);
+
   private static final Gson GSON = new Gson();
   private static final String HADOOP_CONF_FILE_NAME = "hConf.xml";
   private static final String CDAP_CONF_FILE_NAME = "cConf.xml";
 
   private RunId twillRunId;
+  private ClusterMode clusterMode;
   private ProgramRunId programRunId;
   private ProgramStateWriterWithHeartBeat programStateWriterWithHeartBeat;
   private ZKClientService zkClientService;
@@ -70,15 +75,18 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
    *                       number of instances.
    * @param programRunId the program run id that this event handler is handling
    */
-  public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull, ProgramRunId programRunId) {
+  public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull, ProgramRunId programRunId,
+                                       ClusterMode clusterMode) {
     super(abortTime, abortIfNotFull);
     this.programRunId = programRunId;
+    this.clusterMode = clusterMode;
   }
 
   @Override
   protected Map<String, String> getConfigs() {
     Map<String, String> configs = new HashMap<>(super.getConfigs());
     configs.put("programRunId", GSON.toJson(programRunId));
+    configs.put("clusterMode", clusterMode.name());
     return configs;
   }
 
@@ -88,7 +96,11 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
 
     this.runningPublished = new AtomicBoolean();
     this.twillRunId = context.getRunId();
-    this.programRunId = GSON.fromJson(context.getSpecification().getConfigs().get("programRunId"), ProgramRunId.class);
+
+    Map<String, String> configs = context.getSpecification().getConfigs();
+    this.programRunId = GSON.fromJson(configs.get("programRunId"), ProgramRunId.class);
+    this.clusterMode = ClusterMode.valueOf(configs.get("clusterMode"));
+
     // Fetch cConf and hConf from resources jar
     File cConfFile = new File("resources.jar/resources/" + CDAP_CONF_FILE_NAME);
     File hConfFile = new File("resources.jar/resources/" + HADOOP_CONF_FILE_NAME);
@@ -111,11 +123,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
       }
 
       // Create the injector to create a program state writer
-      Injector injector = Guice.createInjector(
+      List<Module> modules = new ArrayList<>(Arrays.asList(
         new ConfigModule(cConf, hConf),
-        new ZKClientModule(),
-        new KafkaClientModule(),
-        new ZKDiscoveryModule(),
         new MessagingClientModule(),
         new AbstractModule() {
           @Override
@@ -123,10 +132,25 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
             bind(ProgramStateWriter.class).to(MessagingProgramStateWriter.class);
           }
         }
-      );
+      ));
 
-      zkClientService = injector.getInstance(ZKClientService.class);
-      zkClientService.startAndWait();
+      switch (clusterMode) {
+        case ON_PREMISE:
+          modules.add(new ZKClientModule());
+          modules.add(new ZKDiscoveryModule());
+          modules.add(new KafkaClientModule());
+          break;
+        case ISOLATED:
+          modules.add(new RemoteExecutionDiscoveryModule());
+          break;
+      }
+
+      Injector injector = Guice.createInjector(modules);
+
+      if (clusterMode == ClusterMode.ON_PREMISE) {
+        zkClientService = injector.getInstance(ZKClientService.class);
+        zkClientService.startAndWait();
+      }
 
       ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
       MessagingService messagingService = injector.getInstance(MessagingService.class);
@@ -223,8 +247,8 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     }
 
     void writeError(ProgramStateWriterWithHeartBeat writer) {
-      String errorMessage = String.format("Container %s, instance %s stopped with exit status %d",
-                                          containerId, instanceId, exitStatus);
+      String errorMessage = String.format("Container %s of Runnable %s with instance %s stopped with exit status %d",
+                                          containerId, runnableName, instanceId, exitStatus);
       writer.error(new Exception(errorMessage));
     }
   }
