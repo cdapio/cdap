@@ -193,9 +193,6 @@ Glossary
    Structured Record
       The data format used to exchange events between most of the pre-built CDAP ETL :term:`plugins <plugin>`.
 
-   ETL
-      Refers to the *Extract*, *Transform* and *Load* of data.
-
    Plugin
       A plugin extends an :term:`application` by implementing an interface
       expected by the :term:`application`. Plugins are packaged in an :term:`artifact`.
