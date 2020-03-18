@@ -22,6 +22,7 @@ import { Observable } from 'rxjs/Observable';
 import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
 import { objectQuery } from 'services/helpers';
 import ee from 'event-emitter';
+import uuidV4 from 'uuid/v4';
 import { orderBy, find } from 'lodash';
 import { Theme } from 'services/ThemeHelper';
 
@@ -405,6 +406,7 @@ export async function fetchDataModelList(url) {
   await MyDataPrepApi.addDataModels(params, { url }).toPromise();
   const response = await MyDataPrepApi.getDataModels(params).toPromise();
   const dataModelList = response.values.map((dataModel) => ({
+    uuid: uuidV4(),
     id: dataModel['namespacedId'].id,
     revision: dataModel.revision,
     name: dataModel.displayName,
@@ -447,6 +449,7 @@ export async function fetchModelList(dataModel) {
                   if (field && typeof field.name === 'string') {
                     if ((field.name = field.name.trim()).length > 0) {
                       fields.push({
+                        uuid: uuidV4(),
                         id: field.name,
                         name: field.name,
                         description: field.doc,
@@ -457,6 +460,7 @@ export async function fetchModelList(dataModel) {
                 fields.sort((a, b) => a.name.localeCompare(b.name));
               }
               dataModel.models.push({
+                uuid: uuidV4(),
                 id: model.name,
                 name: model.name,
                 description: model.doc,
@@ -473,21 +477,30 @@ export async function fetchModelList(dataModel) {
       `Malformed definition received for "${dataModel.id}" data model of ${dataModel.revision} revision: ${error}`
     );
   }
-
-  return dataModel.models;
 }
 
 export async function setTargetDataModel(dataModel) {
-  if (dataModel && !Array.isArray(dataModel.models)) {
-    await fetchModelList(dataModel);
-  }
-
+  // Clear current target data model first to hide it on UI
+  // This is necessary in case when loading bar is appeared but current data model is still visible to user
   DataPrepStore.dispatch({
     type: DataPrepActions.setTargetDataModel,
     payload: {
-      targetDataModel: dataModel || null,
+      targetDataModel: null,
     },
   });
+
+  if (dataModel) {
+    if (!Array.isArray(dataModel.models)) {
+      await fetchModelList(dataModel);
+    }
+
+    DataPrepStore.dispatch({
+      type: DataPrepActions.setTargetDataModel,
+      payload: {
+        targetDataModel: dataModel,
+      },
+    });
+  }
 }
 
 export function setTargetModel(model) {

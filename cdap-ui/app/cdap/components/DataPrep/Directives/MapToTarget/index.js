@@ -211,7 +211,9 @@ const MapToTarget = (props) => {
           <div id={`map-to-target-selected-${item.key}`} key={item.key} className={classes.selectedItem}>
             <span className={classes.selectedItemLabel}>{item.label}:&nbsp;</span>
             <span className={classes.selectedItemName}>{item.name}</span>
-            <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
+            {!loading // Hide [X] when loading
+              ? <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
+              : null}
             <UncontrolledTooltip
               target={`map-to-target-selected-${item.key}`}
               placement='right-end'
@@ -263,7 +265,7 @@ const MapToTarget = (props) => {
           <ListItem
             button={true}
             key={option.id}
-            id={`map-to-target-option-${option.id}`}
+            id={`map-to-target-option-${option.uuid}`}
             onClick={() => selectFn(option)}
           >
             <ListItemText
@@ -271,7 +273,7 @@ const MapToTarget = (props) => {
               primary={highlightText(option.name)}
             />
             <UncontrolledTooltip
-              target={`map-to-target-option-${option.id}`}
+              target={`map-to-target-option-${option.uuid}`}
               modifiers={{
                 preventOverflow: {
                   boundariesElement: 'window'
