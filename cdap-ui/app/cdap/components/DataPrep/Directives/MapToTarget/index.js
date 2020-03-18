@@ -27,7 +27,6 @@ import { UncontrolledTooltip } from 'reactstrap';
 import classnames from 'classnames';
 import { preventPropagation, connectWithStore } from 'services/helpers';
 import { setPopoverOffset } from 'components/DataPrep/helper';
-import If from 'components/If';
 import DataPrepStore from 'components/DataPrep/store';
 import {
   execute,
@@ -213,15 +212,13 @@ const MapToTarget = (props) => {
             <span className={classes.selectedItemLabel}>{item.label}:&nbsp;</span>
             <span className={classes.selectedItemName}>{item.name}</span>
             <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
-            <If condition={item.description}>
-              <UncontrolledTooltip
-                target={`map-to-target-selected-${item.key}`}
-                placement='right-end'
-                delay={{ show: 750, hide: 0 }}
-              >
-                {item.description}
-              </UncontrolledTooltip>
-            </If>
+            <UncontrolledTooltip
+              target={`map-to-target-selected-${item.key}`}
+              placement='right-end'
+              delay={{ show: 750, hide: 0 }}
+            >
+              {item.description || item.name}
+            </UncontrolledTooltip>
           </div>
         ))}
       </div>
@@ -262,33 +259,30 @@ const MapToTarget = (props) => {
     }
     return (
       <List dense={true} disablePadding={true} className={classes.targetOptionList} hidden={loading}>
-        {options.map((option, index) => (
-          <div key={option.id}>
-            <ListItem
-              button={true}
-              id={`map-to-target-option-${index}`}
-              onClick={() => selectFn(option)}
+        {options.map(option => (
+          <ListItem
+            button={true}
+            key={option.id}
+            id={`map-to-target-option-${option.id}`}
+            onClick={() => selectFn(option)}
+          >
+            <ListItemText
+              className={classes.targetOption}
+              primary={highlightText(option.name)}
+            />
+            <UncontrolledTooltip
+              target={`map-to-target-option-${option.id}`}
+              modifiers={{
+                preventOverflow: {
+                  boundariesElement: 'window'
+                }
+              }}
+              placement='right'
+              delay={{ show: 500, hide: 0 }}
             >
-              <ListItemText
-                className={classes.targetOption}
-                primary={highlightText(option.name)}
-              />
-            </ListItem>
-            <If condition={option.description}>
-              <UncontrolledTooltip
-                target={`map-to-target-option-${index}`}
-                modifiers={{
-                  preventOverflow: {
-                    boundariesElement: 'window'
-                  }
-                }}
-                placement='right'
-                delay={{ show: 500, hide: 0 }}
-              >
-                {option.description}
-              </UncontrolledTooltip>
-            </If>
-          </div>
+              {option.description || option.name}
+            </UncontrolledTooltip>
+          </ListItem>
         ))}
       </List>
     );
@@ -354,8 +348,8 @@ const MapToTarget = (props) => {
     >
       <span>{T.translate(`${PREFIX}.title`)}</span>
       <span className='float-right'>
-          <span className='fa fa-caret-right' />
-        </span>
+        <span className='fa fa-caret-right' />
+      </span>
       {renderDetail()}
     </div>
   );
