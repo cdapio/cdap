@@ -90,6 +90,11 @@ interface ICreateState {
   tables: any;
   columns: any;
   dmlBlacklist: Map<string, Set<DML>>;
+  parentArtifact: {
+    name: string;
+    version: string;
+    scope: string;
+  };
   draftId: string;
   isInvalidSource: boolean;
   loading: boolean;
@@ -188,8 +193,6 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
       ),
     };
 
-    // tslint:disable-next-line: no-console
-    console.log('config', config);
     return config;
   };
 
@@ -206,6 +209,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     columns: Map<string, List<IColumn>>(),
     dmlBlacklist: Map<string, Set<DML>>(),
 
+    parentArtifact: null,
     draftId: null,
     isInvalidSource: false,
     loading: true,
@@ -224,13 +228,19 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   };
 
   public componentDidMount() {
-    const draftId = objectQuery(this.props, 'match', 'params', 'draftId');
-    if (!draftId) {
-      this.initCreate();
-      return;
-    }
+    MyReplicatorApi.getDeltaApp().subscribe((appInfo) => {
+      this.setState({
+        parentArtifact: appInfo.artifact,
+      });
 
-    this.initDraft(draftId);
+      const draftId = objectQuery(this.props, 'match', 'params', 'draftId');
+      if (!draftId) {
+        this.initCreate();
+        return;
+      }
+
+      this.initDraft(draftId);
+    });
   }
 
   private initCreate = () => {
@@ -245,7 +255,13 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
       return;
     }
 
-    fetchPluginInfo(artifactName, artifactScope, pluginName, PluginType.source).subscribe(
+    fetchPluginInfo(
+      this.state.parentArtifact,
+      artifactName,
+      artifactScope,
+      pluginName,
+      PluginType.source
+    ).subscribe(
       (res) => {
         this.setState({ sourcePluginInfo: res, loading: false, draftId: uuidV4() });
       },
@@ -284,6 +300,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         const sourceArtifact = objectQuery(source, 'plugin', 'artifact') || {};
 
         const sourcePluginInfo = await fetchPluginInfo(
+          this.state.parentArtifact,
           sourceArtifact.name,
           sourceArtifact.scope,
           source.plugin.name,
@@ -339,6 +356,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         const targetArtifact = objectQuery(target, 'plugin', 'artifact') || {};
 
         const targetPluginInfo = await fetchPluginInfo(
+          this.state.parentArtifact,
           targetArtifact.name,
           targetArtifact.scope,
           target.plugin.name,

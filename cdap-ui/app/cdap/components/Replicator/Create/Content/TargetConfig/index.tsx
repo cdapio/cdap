@@ -65,6 +65,7 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   setTargetPluginInfo,
   setTargetPluginWidget,
   setTargetConfig,
+  parentArtifact,
 }) => {
   const [view, setView] = React.useState(VIEW.configuration);
   const [values, setValues] = React.useState(targetConfig);
@@ -94,7 +95,13 @@ const TargetConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
     const artifactName = target.artifact.name;
     const pluginName = target.name;
 
-    fetchPluginInfo(artifactName, target.artifact.scope, pluginName, PluginType.target).subscribe(
+    fetchPluginInfo(
+      parentArtifact,
+      artifactName,
+      target.artifact.scope,
+      pluginName,
+      PluginType.target
+    ).subscribe(
       (res) => {
         setTargetPluginInfo(res);
 
