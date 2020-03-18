@@ -22,4 +22,11 @@ export default [
     screenshot: null,
     value: false,
   },
+  {
+    name: 'Data Ingestion',
+    description: `Easily transfer data between a source and a sink.`,
+    id: 'data-ingestion',
+    screenshot: '/cdap_assets/img/cleanse_data.svg',
+    value: false,
+  },
 ];

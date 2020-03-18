@@ -1701,6 +1701,10 @@ features:
       namespaceLabel: Namespace
       systemLabel: System
       title: Manage
+    Ingestion:
+      description: Set one time transfer of your data
+      linkLabel: Transfer
+      title: Ingest Data
     Metadata:
       description: Discover data using metadata. Perform root cause and impact analysis using lineage.
       linkLabel: Metadata

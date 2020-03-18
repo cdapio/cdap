@@ -20,6 +20,18 @@ const PREFIX = 'features.Home';
 export const ActionConfig = [
   {
     img: '/cdap_assets/img/cleanse_data.svg',
+    title: T.translate(`${PREFIX}.Ingestion.title`).toString(),
+    description: T.translate(`${PREFIX}.Ingestion.description`).toString(),
+    links: [
+      {
+        label: T.translate(`${PREFIX}.Ingestion.linkLabel`).toString(),
+        url: `/cdap/ns/:namespace/ingestion`,
+      },
+    ],
+    experiment: 'data-ingestion',
+  },
+  {
+    img: '/cdap_assets/img/cleanse_data.svg',
     title: T.translate(`${PREFIX}.Wrangler.title`).toString(),
     description: T.translate(`${PREFIX}.Wrangler.description`).toString(),
     links: [
