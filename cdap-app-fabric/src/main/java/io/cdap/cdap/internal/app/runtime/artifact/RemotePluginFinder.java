@@ -114,7 +114,8 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
         }
 
-        Location artifactLocation = getArtifactLocation(Artifacts.toArtifactId(pluginNamespaceId, selected.getKey()));
+        Location artifactLocation = getArtifactLocation(
+          Artifacts.apiToProtoArtifactId(pluginNamespaceId, selected.getKey()));
         return Maps.immutableEntry(new ArtifactDescriptor(selected.getKey(), artifactLocation), selected.getValue());
       }, retryStrategy);
     } catch (PluginNotExistsException e) {
