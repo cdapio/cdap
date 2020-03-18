@@ -257,9 +257,9 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       agent: false,
     };
 
-    if (req.headers.authorization) {
+    if (req.cookies && req.cookies['CDAP_Auth_Token']) {
       customHeaders = {
-        authorization: 'Bearer ' + req.headers.authorization,
+        authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token'],
       };
     }
 
