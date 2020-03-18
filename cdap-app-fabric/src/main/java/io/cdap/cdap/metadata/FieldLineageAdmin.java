@@ -156,6 +156,7 @@ public class FieldLineageAdmin {
     Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
     Map<DatasetId, Set<FieldRelation>> incomingRelations = new HashMap<>();
     Map<DatasetId, Set<FieldRelation>> outgoingRelations = new HashMap<>();
+    Map<DatasetId, Integer> fieldCount = new HashMap<>();
     for (String field : lineageFields) {
       EndPointField endPointField = new EndPointField(endPoint, field);
 
@@ -164,6 +165,12 @@ public class FieldLineageAdmin {
         direction == Constants.FieldLineage.Direction.BOTH) {
         Map<DatasetId, Set<String>> incomingSummary =
           convertSummaryToDatasetMap(fieldLineageReader.getIncomingSummary(endPointField, start, end));
+        // compute the field count for all incoming datasets
+        incomingSummary.keySet().forEach(datasetId -> {
+          fieldCount.computeIfAbsent(
+            datasetId, missingDataset -> missingDataset == null ? 0 : fieldLineageReader.getFields(
+              EndPoint.of(missingDataset.getNamespace(), missingDataset.getDataset()), start, end).size());
+        });
         // here the field itself will be the destination
         computeAndAddRelations(incomingRelations, field, true, incomingSummary);
       }
@@ -173,6 +180,12 @@ public class FieldLineageAdmin {
         direction == Constants.FieldLineage.Direction.BOTH) {
         Map<DatasetId, Set<String>> outgoingSummary =
           convertSummaryToDatasetMap(fieldLineageReader.getOutgoingSummary(endPointField, start, end));
+        // compute the field count for all outgoing datasets
+        outgoingSummary.keySet().forEach(datasetId -> {
+          fieldCount.computeIfAbsent(
+            datasetId, missingDataset -> missingDataset == null ? 0 : fieldLineageReader.getFields(
+              EndPoint.of(missingDataset.getNamespace(), missingDataset.getDataset()), start, end).size());
+        });
         // here the field itself will be the source
         computeAndAddRelations(outgoingRelations, field, false, outgoingSummary);
       }
@@ -182,7 +195,7 @@ public class FieldLineageAdmin {
     Set<String> allFields = ImmutableSet.<String>builder().addAll(lineageFields).addAll(noLineageFields).build();
     return new DatasetFieldLineageSummary(direction, start, end,
                                           new DatasetId(endPoint.getNamespace(), endPoint.getName()),
-                                          allFields, incomingRelations, outgoingRelations);
+                                          allFields, fieldCount, incomingRelations, outgoingRelations);
   }
 
   /**
@@ -214,7 +227,9 @@ public class FieldLineageAdmin {
     Map<DatasetId, Set<String>> endPointFields = new HashMap<>();
     for (EndPointField endPointField : summary) {
       EndPoint endPoint = endPointField.getEndPoint();
-      DatasetId datasetId = new DatasetId(endPoint.getNamespace(), endPoint.getName());
+      // this can be null if the field is not related to any dataset, it can either be generated or dropped
+      DatasetId datasetId = (endPoint.getNamespace() == null || endPoint.getName() == null) ? null :
+        new DatasetId(endPoint.getNamespace(), endPoint.getName());
       Set<String> fields = endPointFields.computeIfAbsent(datasetId, k -> new HashSet<>());
       fields.add(endPointField.getField());
     }
@@ -312,8 +327,9 @@ public class FieldLineageAdmin {
 
     List<ProgramInfo> programInfos;
 
-    programInfos = sortedByLastExecutedTime.map(programIdLongEntry
-      -> new ProgramInfo(programIdLongEntry.getKey(), programIdLongEntry.getValue())).collect(Collectors.toList());
+    programInfos = sortedByLastExecutedTime.map(
+      programIdLongEntry -> new ProgramInfo(programIdLongEntry.getKey(),
+                                            programIdLongEntry.getValue())).collect(Collectors.toList());
 
     return programInfos;
   }
