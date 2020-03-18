@@ -284,15 +284,13 @@ const MapToTarget = (props) => {
 
         <List dense={true} disablePadding={true} className={classes.targetOptionList}>
           {options.map((option, index) => (
-            <ListItem
-              button={true}
-              key={option.id}
-              id={`map-to-target-option-${index}`}
-              onClick={() => selectFn(option)}>
-              <ListItemText
-                className={classes.targetOption}
-                primary={highlightText(option.name)}
-              />
+            <div id={`map-to-target-option-${index}`} key={option.id}>
+              <ListItem button={true} onClick={() => selectFn(option)}>
+                <ListItemText
+                  className={classes.targetOption}
+                  primary={highlightText(option.name)}
+                />
+              </ListItem>
               <If condition={option.description}>
                 <UncontrolledTooltip
                   target={`map-to-target-option-${index}`}
@@ -307,7 +305,7 @@ const MapToTarget = (props) => {
                   {option.description}
                 </UncontrolledTooltip>
               </If>
-            </ListItem>
+            </div>
           ))}
         </List>
       </div>
