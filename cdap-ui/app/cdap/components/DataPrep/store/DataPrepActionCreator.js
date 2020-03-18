@@ -490,7 +490,7 @@ export async function setTargetDataModel(dataModel) {
   });
 }
 
-export async function setTargetModel(model) {
+export function setTargetModel(model) {
   DataPrepStore.dispatch({
     type: DataPrepActions.setTargetModel,
     payload: {

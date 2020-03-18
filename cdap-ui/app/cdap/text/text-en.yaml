@@ -1039,6 +1039,9 @@ features:
         title: Swap two column names
       MapToTarget:
         title: Map to Target
+        initializingText: Initializing...
+        loadingText: Loading...
+        executingDirectiveText: Executing directive...
         dataModelPlaceholder: Select Data Model
         dataModelLabel: Data Model
         modelLabel: Table

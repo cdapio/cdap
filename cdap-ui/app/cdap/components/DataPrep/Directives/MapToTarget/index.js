@@ -100,12 +100,12 @@ const MapToTarget = (props) => {
     targetDataModel,
     targetModel,
   } = props;
-  const [initializing, setInitializing] = useState(true);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState('');
   const [searchText, setSearchText] = useState('');
 
   useEffect(() => {
     let pending = true;
+    setLoading(`${PREFIX}.initializingText`);
     (async () => {
       try {
         await loadTargetDataModelStates();
@@ -113,11 +113,13 @@ const MapToTarget = (props) => {
         setError(error);
       } finally {
         if (pending) {
-          setInitializing(false);
+          setLoading('');
         }
       }
-      return () => pending = false;
     })();
+    return () => {
+      pending = false;
+    }
   }, []);
 
   useEffect(() => {
@@ -163,34 +165,27 @@ const MapToTarget = (props) => {
   };
 
   const selectTargetDataModel = async (dataModel) => {
-    setLoading(true);
+    setLoading(`${PREFIX}.loadingText`);
     try {
+      setTargetModel(null);
       await setTargetDataModel(dataModel);
-      await setTargetModel(null);
       setSearchText('');
       resetTargetOptionsScroll();
     } catch (error) {
       setError(error, 'Could not set target data model');
     } finally {
-      setLoading(false);
+      setLoading('');
     }
   };
 
-  const selectTargetModel = async (model) => {
-    setLoading(true);
-    try {
-      await setTargetModel(model);
-      setSearchText('');
-      resetTargetOptionsScroll();
-    } catch (error) {
-      setError(error, 'Could not set target model');
-    } finally {
-      setLoading(false);
-    }
+  const selectTargetModel = (model) => {
+    setTargetModel(model);
+    setSearchText('');
+    resetTargetOptionsScroll();
   };
 
   const applyDirective = async (field) => {
-    setLoading(true);
+    setLoading(`${PREFIX}.executingDirectiveText`);
     try {
       await saveTargetDataModelStates();
 
@@ -205,8 +200,98 @@ const MapToTarget = (props) => {
     } catch (error) {
       setError(error, 'Error executing Map to Target directive');
     } finally {
-      setLoading(false);
+      setLoading('');
     }
+  };
+
+  const renderHeader = (selection) => {
+    return (
+      <div>
+        {selection.length === 0 ? <h5>{T.translate(`${PREFIX}.dataModelPlaceholder`)}</h5> : null}
+        {selection.map(item => (
+          <div id={`map-to-target-selected-${item.key}`} key={item.key} className={classes.selectedItem}>
+            <span className={classes.selectedItemLabel}>{item.label}:&nbsp;</span>
+            <span className={classes.selectedItemName}>{item.name}</span>
+            <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
+            <If condition={item.description}>
+              <UncontrolledTooltip
+                target={`map-to-target-selected-${item.key}`}
+                placement='right-end'
+                delay={{ show: 750, hide: 0 }}
+              >
+                {item.description}
+              </UncontrolledTooltip>
+            </If>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const renderLoading = () => {
+    if (!loading) {
+      return <hr />;
+    }
+    return (
+      <div>
+        <LinearProgress />
+        <div>{T.translate(loading)}</div>
+      </div>
+    );
+  };
+
+  const renderFilter = (placeholder) => {
+    if (loading || !targetDataModel) {
+      return null;
+    }
+    return (
+      <Input
+        autoFocus={true}
+        type='text'
+        className={classes.optionSearch}
+        value={searchText}
+        placeholder={placeholder}
+        onChange={(event) => setSearchText(event.target.value)}
+      />
+    );
+  };
+
+  const renderOptions = (options, selectFn) => {
+    if (loading) {
+      return null;
+    }
+    return (
+      <List dense={true} disablePadding={true} className={classes.targetOptionList} hidden={loading}>
+        {options.map((option, index) => (
+          <div key={option.id}>
+            <ListItem
+              button={true}
+              id={`map-to-target-option-${index}`}
+              onClick={() => selectFn(option)}
+            >
+              <ListItemText
+                className={classes.targetOption}
+                primary={highlightText(option.name)}
+              />
+            </ListItem>
+            <If condition={option.description}>
+              <UncontrolledTooltip
+                target={`map-to-target-option-${index}`}
+                modifiers={{
+                  preventOverflow: {
+                    boundariesElement: 'window'
+                  }
+                }}
+                placement='right'
+                delay={{ show: 500, hide: 0 }}
+              >
+                {option.description}
+              </UncontrolledTooltip>
+            </If>
+          </div>
+        ))}
+      </List>
+    );
   };
 
   const renderDetail = () => {
@@ -232,7 +317,7 @@ const MapToTarget = (props) => {
           {
             key: 'model',
             label: T.translate(`${PREFIX}.modelLabel`),
-            unselectFn: () => (async () => await selectTargetModel(null))(),
+            unselectFn: () => selectTargetModel(null),
             ...targetModel,
           }
         );
@@ -242,7 +327,7 @@ const MapToTarget = (props) => {
       } else {
         filterPlaceholder = T.translate(`${PREFIX}.modelFilterPlaceholder`);
         options = applySearch(targetDataModel.models || []);
-        selectFn = (model) => (async () => await selectTargetModel(model))();
+        selectFn = (model) => selectTargetModel(model);
       }
     } else {
       options = dataModelList || [];
@@ -251,63 +336,10 @@ const MapToTarget = (props) => {
 
     return (
       <div className={classnames('second-level-popover', classes.secondLevelPopover)} onClick={preventPropagation}>
-        {selection.length === 0 ? <h5>{T.translate(`${PREFIX}.dataModelPlaceholder`)}</h5> : null}
-        {selection.map(item => (
-          <div id={`map-to-target-selected-${item.key}`} key={item.key} className={classes.selectedItem}>
-            <span className={classes.selectedItemLabel}>{item.label}:&nbsp;</span>
-            <span className={classes.selectedItemName}>{item.name}</span>
-            <span className={classnames('fa fa-times', classes.unselectIcon)} onClick={item.unselectFn} />
-            <If condition={item.description}>
-              <UncontrolledTooltip
-                target={`map-to-target-selected-${item.key}`}
-                placement='right-end'
-                delay={{ show: 750, hide: 0 }}
-              >
-                {item.description}
-              </UncontrolledTooltip>
-            </If>
-          </div>
-        ))}
-
-        {loading || initializing ? <LinearProgress /> : <hr />}
-
-        <If condition={targetDataModel}>
-          <Input
-            autoFocus={true}
-            type='text'
-            className={classes.optionSearch}
-            value={searchText}
-            placeholder={filterPlaceholder}
-            onChange={(event) => setSearchText(event.target.value)}
-          />
-        </If>
-
-        <List dense={true} disablePadding={true} className={classes.targetOptionList}>
-          {options.map((option, index) => (
-            <div id={`map-to-target-option-${index}`} key={option.id}>
-              <ListItem button={true} onClick={() => selectFn(option)}>
-                <ListItemText
-                  className={classes.targetOption}
-                  primary={highlightText(option.name)}
-                />
-              </ListItem>
-              <If condition={option.description}>
-                <UncontrolledTooltip
-                  target={`map-to-target-option-${index}`}
-                  modifiers={{
-                    preventOverflow: {
-                      boundariesElement: 'window'
-                    }
-                  }}
-                  placement='right'
-                  delay={{ show: 500, hide: 0 }}
-                >
-                  {option.description}
-                </UncontrolledTooltip>
-              </If>
-            </div>
-          ))}
-        </List>
+        {renderHeader(selection)}
+        {renderLoading()}
+        {renderFilter(filterPlaceholder)}
+        {renderOptions(options, selectFn)}
       </div>
     );
   };
