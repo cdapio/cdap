@@ -64,15 +64,17 @@ function getSessionToken(headers) {
   if (sessionToken !== null) {
     return sessionToken;
   }
-  return cy.request({
-    method: 'GET',
-    url: `http://${Cypress.env('host')}:11011/sessionToken`,
-    failOnStatusCode: false,
-    headers,
-  }).then(response => {
-    sessionToken = response.body;
-    return sessionToken;
-  });
+  return cy
+    .request({
+      method: 'GET',
+      url: `http://${Cypress.env('host')}:11011/sessionToken`,
+      failOnStatusCode: false,
+      headers,
+    })
+    .then((response) => {
+      sessionToken = response.body;
+      return sessionToken;
+    });
 }
 
 function getArtifactsPoll(headers, retries = 0) {
@@ -109,7 +111,7 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .type(pipelineName)
     .type('{enter}');
   cy.get('[data-testid=deploy-pipeline]').click();
-  cy.wait(10000);
+  cy.get('[data-cy="Deployed"]', { timeout: 20000 }).should('contain', 'Deployed');
   cy.url()
     .should('include', `/view/${pipelineName}`)
     .then(() => done());

@@ -27,7 +27,7 @@ import { Link } from 'react-router-dom';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
 import FllMenu from 'components/FieldLevelLineage/v2/FllTable/FllMenu';
 
-const styles = (theme): StyleRules => {
+export const styles = (theme): StyleRules => {
   return {
     root: {
       '&.grid-row.activeField': {

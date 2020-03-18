@@ -43,25 +43,25 @@ function formatDatasets(datasets) {
 }
 
 function getDatasets(operations) {
-  const inputs = [];
-  const outputs = [];
+  const inputs = new Set(); // to prevent duplicate datasets in header
+  const outputs = new Set();
 
   operations.forEach((operation) => {
     const input = objectQuery(operation, 'inputs', 'endPoint', 'name');
     const output = objectQuery(operation, 'outputs', 'endPoint', 'name');
 
     if (input) {
-      inputs.push(input);
+      inputs.add(input);
     }
 
     if (output) {
-      outputs.push(output);
+      outputs.add(output);
     }
   });
 
   return {
-    sources: formatDatasets(inputs),
-    targets: formatDatasets(outputs),
+    sources: formatDatasets(Array.from(inputs)),
+    targets: formatDatasets(Array.from(outputs)),
   };
 }
 
