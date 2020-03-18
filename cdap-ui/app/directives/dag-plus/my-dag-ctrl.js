@@ -72,15 +72,41 @@ angular.module(PKG.name + '.commons')
 
     var Mousetrap = window.CaskCommon.Mousetrap;
 
+    vm.clearSelectedNodes = () => {
+      vm.selectedNode = [];
+      vm.instance.clearDragSelection();
+      vm.instance.repaintEverything();
+    };
+
     vm.selectNode = (event, node) => {
       if (vm.isDisabled) { return; }
+      const isMultipleNodesDragged = document.querySelectorAll('.jsplumb-drag-selected');
+      const isNodeAlreadyInSelection = vm.selectedNode.find(selectedNode => selectedNode.name === node.name);
       event.stopPropagation();
-      clearConnectionsSelection();
-      if (vm.selectionBox.toggle) {
-        vm.selectedNode.push(node);
+
+      /**
+       * When users selects a bunch of nodes jsplumb adds jsplumb-drag-selected class to the nodes.
+       *
+       * After selecting the nodes, the user will click on one of the nodes and drag the selection around the canvas.
+       * The click on the node shouldn't be considered as node selection. Hence we check if multiple nodes are being
+       * dragged and if so just repaint instead of clearing out all selection and selecting that particular node.
+       */
+      if (isMultipleNodesDragged && isMultipleNodesDragged.length && isNodeAlreadyInSelection) {
+        vm.instance.repaintEverything();
         return;
       }
-      vm.selectedNode = [node];
+
+      // If user clicks on a node with command/ctrl key pressed, keep adding the nodes the selection.
+      if (vm.selectionBox.isMultiSelectEnabled) {
+        vm.selectedNode.push(node);
+        vm.highlightSelectedNodeConnections();
+      } else {
+        vm.selectedNode = [node];
+        clearConnectionsSelection();
+        vm.instance.clearDragSelection();
+      }
+      vm.instance.addToDragSelection(node.name);
+      vm.instance.repaintEverything();
     };
     vm.getSelectedNodes = () => vm.selectedNode;
     /**
@@ -131,6 +157,27 @@ angular.module(PKG.name + '.commons')
       return vm.selectedNode.filter(node => node.name === nodeName).length > 0;
     };
 
+    /**
+     * Selection is for multi-select nodes/connections in the pipeline.
+     *
+     * toggle -
+     *   This flag flips the mode between selection mode and move mode. We basically disable
+     * dragging for the diagram-container and allow the <selection-box> to take
+     * over the user selection
+     *
+     * isMultiSelectEnabled - 
+     *   This flag is used when user clicks on command/ctrl and manually selects
+     * individual nodes. This is a separate flag as when user selects a node we should
+     * be able to differentiate between the normal selection (just clicking on a node)
+     * vs command+click in which case the nodes selection behavior is slightly different.
+     * The difference should be evident in the vm.selectNodes function
+     *
+     * isSelectionInProgress - 
+     *   This flag is used to track if the user is currently selecting a bunch of nodes.
+     * We need this flag to be able to easily go between selecting nodes and then clicking
+     * on canvas to reset all the selection. This should be more evident in vm.handleCanvasClick
+     * function.
+     */
     vm.selectionBox = {
       boundaries: ['#diagram-container'],
       selectables: ['.box'],
@@ -142,10 +189,12 @@ angular.module(PKG.name + '.commons')
        * matter what the sequence of callback happens it is right.
        */
       isSelectionInProgress: false,
-      toggle: false,
+      toggle: vm.isDisabled ? false : true,
+      isMultiSelectEnabled: false,
       start: () => {
         if (!vm.selectionBox.isSelectionInProgress) {
-          vm.selectedNode = [];
+          vm.clearSelectedNodes();
+          clearConnectionsSelection();
           vm.selectionBox.isSelectionInProgress = true;
         }
       },
@@ -178,7 +227,17 @@ angular.module(PKG.name + '.commons')
         vm.highlightSelectedNodeConnections();
       },
       end: () => {
-        vm.selectionBox.isSelectionInProgress = false;
+        const nodesToAddToDrag = vm.selectedNode.map(node => node.name);
+        vm.instance.addToDragSelection(nodesToAddToDrag);
+      },
+      toggleSelectionMode: () => {
+        if (!vm.selectionBox.toggle) {
+          vm.secondInstance.setDraggable('diagram-container', false);
+          vm.selectionBox.toggle = true;
+        } else {
+          vm.secondInstance.setDraggable('diagram-container', true);
+          vm.selectionBox.toggle = false;
+        }
       }
     };
     const repaintTimeoutsMap = {};
@@ -198,7 +257,6 @@ angular.module(PKG.name + '.commons')
         const connectionsFromSource = vm.instance.getConnections({sourceId: name});
         connectedNodes.forEach(nodeId => {
           if (!selectedNodesMap[nodeId]) {
-            console.log(nodeId + ' doesn\'t exist in the selected nodes');
             return;
           }
           const connObj = connectionsFromSource.filter(conn => conn.source.getAttribute('data-nodeid') === name && conn.targetId === nodeId);
@@ -214,13 +272,13 @@ angular.module(PKG.name + '.commons')
       if (!Array.isArray(nodes) || !Array.isArray(connections)) {
         return;
       }
-      vm.selectedNode = [];
+      vm.clearSelectedNodes();
       clearConnectionsSelection();
       let {nodes: newNodes, connections: newConnections} = sanitizeNodesAndConnectionsBeforePaste({nodes, connections});
       vm.selectedNode = newNodes;
       newNodes = [...$scope.nodes, ...newNodes];
       newConnections  = [...$scope.connections, ...newConnections];
-      DAGPlusPlusNodesActionsFactory.createGraphFromConfigOnPaste(newNodes, newConnections);
+      DAGPlusPlusNodesActionsFactory.createGraphFromConfigOnPaste(newNodes, newConnections, vm.comments);
       vm.instance.unbind('connection');
       vm.instance.unbind('connectionDetached');
       vm.instance.unbind('connectionMoved');
@@ -230,6 +288,7 @@ angular.module(PKG.name + '.commons')
       init();
       $timeout.cancel(highlightSelectedNodeConnectionsTimeout);
       highlightSelectedNodeConnectionsTimeout = $timeout(() => vm.highlightSelectedNodeConnections());
+      vm.instance.clearDragSelection();
     };
     vm.getPluginConfiguration = () => {
       if (!vm.selectedNode.length) {
@@ -360,18 +419,39 @@ angular.module(PKG.name + '.commons')
       Mousetrap.bind(['command+shift+z', 'ctrl+shift+z'], vm.redoActions);
       Mousetrap.bind(['del', 'backspace'], vm.onKeyboardDelete);
       Mousetrap.bind(['command+c', 'ctrl+c'], vm.onKeyboardCopy);
-      // This is to select multiple nodes by click-n-drag in pipeline studio
-      Mousetrap.bind('shift', () => {
+
+      if (vm.isDisabled) {
+        return;
+      }
+      // Toggle between move mode. With spacebar users can move the entire canvas
+      Mousetrap.bind('space', () => {
         $scope.$apply(function() {
           vm.secondInstance.setDraggable('diagram-container', false);
           vm.selectionBox.toggle = true;
         });
-      }, 'keydown');
-      Mousetrap.bind('shift', () => {
+      }, 'keyup');
+      Mousetrap.bind('space', () => {
         $scope.$apply(function() {
           vm.secondInstance.setDraggable('diagram-container', true);
           vm.selectionBox.toggle = false;
         });
+      }, 'keydown');
+
+      // Select all the nodes in the canvas.
+      Mousetrap.bind('command+a', () => {
+        const nodes = $scope.nodes;
+        vm.selectedNode = nodes;
+        vm.highlightSelectedNodeConnections();
+        vm.instance.addToDragSelection(nodes.map(node => node.name));
+        return false;
+      });
+
+      // Select multiple nodes by manually selecting nodes.
+      Mousetrap.bind('command', () => {
+        vm.selectionBox.isMultiSelectEnabled = true;
+      }, 'keydown');
+      Mousetrap.bind('command', () => {
+        vm.selectionBox.isMultiSelectEnabled = false;
       }, 'keyup');
     }
 
@@ -380,6 +460,9 @@ angular.module(PKG.name + '.commons')
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['command+c', 'ctrl+c']);
       Mousetrap.unbind(['del', 'backspace']);
+      Mousetrap.unbind('command');
+      Mousetrap.unbind('space');
+      Mousetrap.unbind('command+a');
     }
 
     function closeMetricsPopover(node) {
@@ -713,12 +796,14 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.handleCanvasClick = () => {
-      if (vm.selectionBox.toggle) {
+      if(vm.selectionBox.isSelectionInProgress) {
+        vm.selectionBox.isSelectionInProgress = false;
         return;
       }
+      vm.instance.clearDragSelection();
       vm.toggleNodeMenu();
       clearConnectionsSelection();
-      vm.selectedNode = [];
+      vm.clearSelectedNodes();
       vm.clearCommentSelection();
     };
 
@@ -791,7 +876,7 @@ angular.module(PKG.name + '.commons')
     function toggleConnections(selectedObj, event) {
       if (vm.isDisabled) { return; }
 
-      vm.selectedNode = [];
+      vm.clearSelectedNodes();
 
       // is connection
       if (selectedObj.sourceId && selectedObj.targetId) {
@@ -1064,6 +1149,11 @@ angular.module(PKG.name + '.commons')
           localY = currentCoordinates.y;
 
           dragged = true;
+          const nodeName = drag.el.getAttribute('id');
+          const isNodeAlreadySelected = vm.selectedNode.find(selectedNode => selectedNode.name === nodeName);
+          if (!isNodeAlreadySelected) {
+            vm.instance.clearDragSelection();
+          }
         },
         stop: function (dragEndEvent) {
           var config = {
@@ -1081,6 +1171,8 @@ angular.module(PKG.name + '.commons')
       var comments = document.querySelectorAll('.comment-box');
       vm.instance.draggable(comments, {
         start: function () {
+          vm.clearSelectedNodes();
+          clearConnectionsSelection();
           dragged = true;
         },
         stop: function (dragEndEvent) {
@@ -1097,7 +1189,7 @@ angular.module(PKG.name + '.commons')
 
     vm.selectEndpoint = function(event, node) {
       if (event.target.className.indexOf('endpoint-circle') === -1) { return; }
-      vm.selectedNode = [];
+      vm.clearSelectedNodes();
 
       let sourceElem = node.name;
       let endpoints = vm.instance.getEndpoints(sourceElem);
@@ -1151,6 +1243,9 @@ angular.module(PKG.name + '.commons')
             DAGPlusPlusNodesActionsFactory.setCanvasPanning(vm.panning);
           }
         });
+        if (!vm.isDisabled) {
+          vm.secondInstance.setDraggable('diagram-container', false);
+        }
       }
 
       // doing this to listen to changes to just $scope.nodes instead of everything else
@@ -1160,9 +1255,21 @@ angular.module(PKG.name + '.commons')
             $timeout.cancel(nodesTimeout);
           }
           nodesTimeout = $timeout(function () {
-            makeCommentsDraggable();
             makeNodesDraggable();
             initNodes();
+            makeCommentsDraggable();
+            /**
+             * TODO(https://issues.cask.co/browse/CDAP-16423): Need to debug why setting zoom on init doesn't set the correct zoom
+             *
+             * Without this, on initial load the nodes drag is weird. The cursor travels outside the node
+             * meaning the nodes are dragged only to some extent and not along with the mouse cursor.
+             * The underlying reason is that the zoom is incorrect in the graph. Once the zoom is set
+             * right the drag happens correctly.
+             *
+             * This is a escape hatch for us to set zoom and make dragging
+             * right one each node addition. This is not a perfect solution
+             */
+            setZoom(vm.instance.getZoom(), vm.instance);
           });
         }
       }, true);
@@ -1210,7 +1317,8 @@ angular.module(PKG.name + '.commons')
         event.stopPropagation();
       }
 
-      nodes.forEach(node => {
+      const newNodes = angular.copy(nodes);
+      newNodes.forEach(node => {
         DAGPlusPlusNodesActionsFactory.removeNode(node.name);
 
         if (Object.keys(splitterNodesPorts).indexOf(node.name) !== -1) {
@@ -1234,7 +1342,7 @@ angular.module(PKG.name + '.commons')
       });
       vm.instance.bind('connectionDetached', removeConnection);
 
-      vm.selectedNode = [];
+      vm.clearSelectedNodes();
     };
 
     vm.cleanUpGraph = function () {

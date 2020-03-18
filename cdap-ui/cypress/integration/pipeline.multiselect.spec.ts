@@ -46,19 +46,34 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
   it('Should not select if not in selection mode', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.create_simple_pipeline().then(({ sourceNodeId: from, transformNodeId: to }) => {
-      let fromNodeElement, toNodeElement;
-      cy.get_node(from).then(sElement => {
+      let fromNodeElement;
+      let toNodeElement;
+      cy.get_node(from).then((sElement) => {
         fromNodeElement = sElement;
-        cy.get_node(to).then(tElement => {
+        cy.get_node(to).then((tElement) => {
           toNodeElement = tElement;
           const { x: fromX, y: fromY } = fromNodeElement[0].getBoundingClientRect();
-          const { x: toX, y: toY, width: toWidth, height: toHeight } = toNodeElement[0].getBoundingClientRect();
+          const {
+            x: toX,
+            y: toY,
+            width: toWidth,
+            height: toHeight,
+          } = toNodeElement[0].getBoundingClientRect();
+          cy.get('[data-cy="pipeline-move-mdoe-action-btn"]').click();
+          cy.get('#dag-container').trigger('mousedown', {
+            which: 1,
+            clientX: fromX - 10,
+            clientY: fromY - 10,
+          });
           cy.get('#dag-container')
-            .trigger('mousedown', { which: 1, clientX: (fromX - 10), clientY: (fromY - 10) });
-          cy.get('#dag-container')
-            .trigger('mousemove', { which: 1, clientX: (toX + toWidth + 10), clientY: (toY + toHeight + 10) })
+            .trigger('mousemove', {
+              which: 1,
+              clientX: toX + toWidth + 10,
+              clientY: toY + toHeight + 10,
+            })
             .trigger('mouseup', { force: true });
           cy.get('.box.selected').should('have.length', 0);
+          cy.get('[data-cy="pipeline-move-mdoe-action-btn"]').click();
         });
       });
     });
@@ -66,15 +81,17 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
 
   it('Should select everything including edges', () => {
     cy.visit('/pipelines/ns/default/studio');
-    cy.create_complex_pipeline().then(({ sourceNodeId1, transformNodeId2, joinerNodeId, sinkNodeId2 }) => {
-      cy.get('[data-cy="feature-heading"]').click();
-      cy.select_from_to(sourceNodeId1, transformNodeId2);
-      cy.get('.box.selected').should('have.length', 4);
-      cy.get('svg.selected-connector').should('have.length', 2);
-      cy.get('#dag-container').click();
-      cy.select_from_to(joinerNodeId, sinkNodeId2);
-      cy.get('svg.selected-connector').should('have.length', 3);
-    });
+    cy.create_complex_pipeline().then(
+      ({ sourceNodeId1, transformNodeId2, joinerNodeId, sinkNodeId2 }) => {
+        cy.get('[data-cy="feature-heading"]').click();
+        cy.select_from_to(sourceNodeId1, transformNodeId2);
+        cy.get('.box.selected').should('have.length', 4);
+        cy.get('svg.selected-connector').should('have.length', 2);
+        cy.get('#dag-container').click();
+        cy.select_from_to(joinerNodeId, sinkNodeId2);
+        cy.get('svg.selected-connector').should('have.length', 3);
+      }
+    );
   });
 
   it('Should correctly copy/paste/delete only nodes/connections in the selection', () => {
@@ -88,7 +105,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
       cy.get('[data-cy="menu-item-plugin copy"]:visible').click();
       cy.get('#dag-container').rightclick({ force: true });
       cy.get('[data-cy="menu-item-pipeline-node-paste"]').click();
-      cy.get_pipeline_json().then(pipelineConfig => {
+      cy.get_pipeline_json().then((pipelineConfig) => {
         const connections = pipelineConfig.config.connections;
         const stages = pipelineConfig.config.stages;
         expect(connections.length).eq(3);
@@ -96,7 +113,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
       });
       const undoSelector = '[data-cy="pipeline-undo-action-btn"]';
       cy.get(undoSelector).click();
-      cy.get_pipeline_json().then(pipelineConfig => {
+      cy.get_pipeline_json().then((pipelineConfig) => {
         const connections = pipelineConfig.config.connections;
         const stages = pipelineConfig.config.stages;
         expect(connections.length).eq(2);

@@ -97,12 +97,25 @@
           data-cy="pipeline-redo-action-btn">
     <i class="fa fa-repeat"></i>
   </button>
+
+  <button class="btn btn-default"
+          uib-tooltip="Move"
+          tooltip-append-to-body="true"
+          tooltip-placement="left"
+          tooltip-popup-delay="500"
+          ng-if="!DAGPlusPlusCtrl.isDisabled"
+          ng-click="DAGPlusPlusCtrl.selectionBox.toggleSelectionMode()"
+          ng-class="{'move-mode-selected': !DAGPlusPlusCtrl.selectionBox.toggle}"
+          data-cy="pipeline-move-mdoe-action-btn"
+  >
+    <i class="fa fa-arrows"></i>
+  </button>
 </div>
 
 <div class="my-js-dag"
     ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'normal-cursor': disableNodeClick, 'preview-mode': previewMode }"
-    ng-click="DAGPlusPlusCtrl.handleCanvasClick()">
-    <div id="diagram-container">
+    ng-click="DAGPlusPlusCtrl.handleCanvasClick($event, true)">
+    <div id="diagram-container" ng-class="{'move-mode': !DAGPlusPlusCtrl.selectionBox.toggle, 'disabled': DAGPlusPlusCtrl.isDisabled}">
       <div id="dag-container" ng-style="DAGPlusPlusCtrl.panning.style">
         <!--
           The condition on ng-click is to prevent user from being able to click

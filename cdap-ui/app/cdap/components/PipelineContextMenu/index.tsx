@@ -111,6 +111,18 @@ export default function PipelineContextMenu({
       onClick: () => setShowWranglerModal(!showWranglerModal),
     },
     {
+      type: 'divider',
+    },
+    {
+      name: 'pipeline-node-paste',
+      label: 'Paste',
+      icon: <IconSVG name="icon-filecopyaction" />,
+      onClick: () => {
+        getNodesFromClipBoard().then(onNodesPaste);
+      },
+      disabled: pasteOptionDisabled,
+    },
+    {
       name: 'zoom-in',
       label: 'Zoom In',
       icon: <IconSVG name="icon-zoomIn" />,
@@ -133,15 +145,6 @@ export default function PipelineContextMenu({
       label: 'Align',
       icon: <IconSVG name="icon-clean" />,
       onClick: prettyPrintGraph,
-    },
-    {
-      name: 'pipeline-node-paste',
-      label: 'Paste',
-      icon: <IconSVG name="icon-filecopyaction" />,
-      onClick: () => {
-        getNodesFromClipBoard().then(onNodesPaste);
-      },
-      disabled: pasteOptionDisabled,
     },
   ];
   const onWranglerSourceAddWrapper = (...props) => {
