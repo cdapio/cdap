@@ -49,10 +49,13 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
-    if (args.length < 1) {
-      throw new RuntimeException("An implementation of RuntimeJob classname should be provided as an argument.");
+    if (args.length < 2) {
+      throw new RuntimeException("An implementation of RuntimeJob classname and spark compat should be provided as " +
+                                   "job arguments.");
     }
+
     String runtimeJobClassName = args[0];
+    String sparkCompat = args[1];
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {
@@ -74,9 +77,9 @@ public class DataprocJobMain {
 
       try {
         // call initialize() method on dataprocEnvClass
-        Method initializeMethod = dataprocEnvClass.getMethod("initialize");
-        LOG.info("Invoking initialize() on {}", dataprocEnvClassName);
-        initializeMethod.invoke(newDataprocEnvInstance);
+        Method initializeMethod = dataprocEnvClass.getMethod("initialize", String.class);
+        LOG.info("Invoking initialize() on {} with {}", dataprocEnvClassName, sparkCompat);
+        initializeMethod.invoke(newDataprocEnvInstance, sparkCompat);
 
         // call run() method on runtimeJobClass
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
