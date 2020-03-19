@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
   @ClassRule
   public static final ExternalResource RESOURCE = new ExternalResource() {
     private String previousRequirementBlacklist;
+
     @Override
     protected void before() {
       // store the previous value
@@ -65,13 +66,14 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
 
   @Test
   public void testPluginRequirements() throws Exception {
-    // add a system artifact
-    ArtifactId systemId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
-    addAppAsSystemArtifacts();
+    // Add a system artifact
+    ArtifactId systemArtifactId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
+    addAppAsSystemArtifacts(systemArtifactId);
 
     Set<ArtifactRange> parents = Sets.newHashSet(new ArtifactRange(
-      systemId.getNamespace(), systemId.getArtifact(),
-      new ArtifactVersion(systemId.getVersion()), true, new ArtifactVersion(systemId.getVersion()), true));
+      systemArtifactId.getNamespace(), systemArtifactId.getArtifact(),
+      new ArtifactVersion(systemArtifactId.getVersion()), true,
+      new ArtifactVersion(systemArtifactId.getVersion()), true));
 
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InspectionApp.class.getPackage().getName());
@@ -79,7 +81,7 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
     Assert.assertEquals(HttpResponseStatus.OK.code(),
                         addPluginArtifact(Id.Artifact.fromEntityId(artifactId), InspectionApp.class, manifest, parents)
                           .getResponseCode());
-    Set<PluginClass> plugins = getArtifact(artifactId).getClasses().getPlugins();
+    Set<PluginClass> plugins = getArtifactInfo(artifactId).getClasses().getPlugins();
     // Only four plugins which does not have transactions as requirement should be visible.
     Assert.assertEquals(4, plugins.size());
     Set<String> actualPluginClassNames = plugins.stream().map(PluginClass::getClassName).collect(Collectors.toSet());

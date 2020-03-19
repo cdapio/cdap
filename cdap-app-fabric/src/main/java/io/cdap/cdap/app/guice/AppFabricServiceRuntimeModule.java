@@ -44,6 +44,7 @@ import io.cdap.cdap.data.security.DefaultSecretStore;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandler;
+import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
 import io.cdap.cdap.gateway.handlers.BootstrapHttpHandler;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
@@ -320,6 +321,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       handlerBinder.addBinding().to(TransactionHttpHandler.class);
       handlerBinder.addBinding().to(WorkflowHttpHandler.class);
       handlerBinder.addBinding().to(ArtifactHttpHandler.class);
+      handlerBinder.addBinding().to(ArtifactHttpHandlerInternal.class);
       handlerBinder.addBinding().to(WorkflowStatsSLAHttpHandler.class);
       handlerBinder.addBinding().to(AuthorizationHandler.class);
       handlerBinder.addBinding().to(SecureStoreHandler.class);

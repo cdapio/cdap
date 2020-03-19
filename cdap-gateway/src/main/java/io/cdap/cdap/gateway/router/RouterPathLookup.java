@@ -185,11 +185,6 @@ public final class RouterPathLookup extends AbstractHttpHandler {
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/properties
       // /v3/namespaces/{namespace-id}/data/datasets/{name}/admin/{method}
       return DATASET_MANAGER;
-    } else if ((uriParts.length >= 4) && uriParts[3].equals("artifact-internals")) {
-      // we don't want to expose endpoints in artifact handler that are internal and can only by called by programs
-      // /v3/namespaces/{namespace-id}/artifact-internals/list/artifacts
-      // /v3/namespaces/{namespace-id}/artifact-internals/artifact/{artifact-name}
-      return DONT_ROUTE;
     } else if ((uriParts.length == 3) && uriParts[1].equals("metadata-internals")) {
       // we don't want to expose endpoints for direct metadata mutation from CDAP master
       // /v3/metadata-internals/{mutation-type}
