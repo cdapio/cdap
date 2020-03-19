@@ -261,7 +261,8 @@ public class PluginInstantiator implements Closeable {
       PluginProperties pluginProperties = substituteMacros(plugin, macroEvaluator);
       Set<String> macroFields = (macroEvaluator == null) ? getFieldsWithMacro(plugin) : Collections.emptySet();
 
-      ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, macroFields);
+      PluginProperties rawProperties = plugin.getProperties();
+      ConfigFieldSetter fieldSetter = new ConfigFieldSetter(pluginClass, pluginProperties, rawProperties, macroFields);
       Reflections.visit(config, configFieldType.getType(), fieldSetter);
 
       if (!fieldSetter.invalidProperties.isEmpty() || !fieldSetter.missingProperties.isEmpty()) {
@@ -506,13 +507,16 @@ public class PluginInstantiator implements Closeable {
   private static final class ConfigFieldSetter extends FieldVisitor {
     private final PluginClass pluginClass;
     private final PluginProperties properties;
+    private final PluginProperties rawProperties;
     private final Set<String> macroFields;
     private final Set<String> missingProperties;
     private final Set<InvalidPluginProperty> invalidProperties;
 
-    ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties, Set<String> macroFields) {
+    ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties, PluginProperties rawProperties,
+                      Set<String> macroFields) {
       this.pluginClass = pluginClass;
       this.properties = properties;
+      this.rawProperties = rawProperties;
       this.macroFields = macroFields;
       this.missingProperties = new HashSet<>();
       this.invalidProperties = new HashSet<>();
@@ -528,10 +532,16 @@ public class PluginInstantiator implements Closeable {
       TypeToken<?> declareTypeToken = TypeToken.of(declareType);
 
       if (PluginConfig.class.equals(declareTypeToken.getRawType())) {
-        if (field.getName().equals("properties")) {
-          field.set(instance, properties);
-        } else if (field.getName().equals("macroFields")) {
-          field.set(instance, macroFields);
+        switch (field.getName()) {
+          case "properties":
+            field.set(instance, properties);
+            break;
+          case "macroFields":
+            field.set(instance, macroFields);
+            break;
+          case "rawProperties":
+            field.set(instance, rawProperties);
+            break;
         }
         return;
       }
