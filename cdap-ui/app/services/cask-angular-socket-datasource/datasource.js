@@ -211,7 +211,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
         Object.keys(bindings)
           .filter(resourceId => bindings[resourceId].type === 'POLL')
           .forEach(resourceId => {
-            bindings[resourceId].resource.interval = startClientPoll(resourceId, bindings[resourceId].resource);
+            bindings[resourceId].resource.interval = startClientPoll(resourceId, bindings, bindings[resourceId].resource);
           });
       }
 
