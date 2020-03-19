@@ -33,7 +33,7 @@ public class ProgramDescriptor {
   private final ArtifactId artifactId;
 
   public ProgramDescriptor(ProgramId programId, ApplicationSpecification appSpec) {
-    this(programId, appSpec, Artifacts.toArtifactId(programId.getNamespaceId(), appSpec.getArtifactId()));
+    this(programId, appSpec, Artifacts.apiToProtoArtifactId(programId.getNamespaceId(), appSpec.getArtifactId()));
   }
 
   @VisibleForTesting

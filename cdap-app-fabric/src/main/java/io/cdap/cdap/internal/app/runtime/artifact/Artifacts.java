@@ -64,12 +64,12 @@ public final class Artifacts {
   }
 
   /**
-   * Converts a {@link ArtifactId} to {@link io.cdap.cdap.proto.id.ArtifactId}.
+   * Converts a {@link io.cdap.cdap.api.artifact.ArtifactId} to {@link io.cdap.cdap.proto.id.ArtifactId}.
    *
    * @param namespaceId the user namespace to use
    * @param artifactId the artifact id to convert
    */
-  public static io.cdap.cdap.proto.id.ArtifactId toArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
+  public static io.cdap.cdap.proto.id.ArtifactId apiToProtoArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
     ArtifactScope scope = artifactId.getScope();
     NamespaceId artifactNamespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : namespaceId;
     return artifactNamespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion());

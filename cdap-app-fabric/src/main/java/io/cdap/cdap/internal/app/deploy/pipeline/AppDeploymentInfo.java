@@ -55,7 +55,7 @@ public class AppDeploymentInfo {
                            String appClassName, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules) {
-    this.artifactId = Artifacts.toArtifactId(namespaceId, artifactDescriptor.getArtifactId());
+    this.artifactId = Artifacts.apiToProtoArtifactId(namespaceId, artifactDescriptor.getArtifactId());
     this.artifactLocation = artifactDescriptor.getLocation();
     this.namespaceId = namespaceId;
     this.appClassName = appClassName;
