@@ -89,7 +89,7 @@ export default class Datasource {
         delete this.bindings[hash];
       } else {
         if (this.bindings[hash] && this.bindings[hash].type === 'POLL') {
-          this.bindings[hash].resource.interval = this.startClientPoll(hash, this.bindings[hash].resource.intervalTime);
+          this.bindings[hash].resource.interval = this.startClientPoll(hash);
         }
       }
     });
@@ -249,7 +249,8 @@ export default class Datasource {
     return observable;
   }
 
-  startClientPoll = (resourceId, interval) => {
+  startClientPoll = (resourceId) => {
+    const interval = objectQuery(this.bindings, resourceId, 'resource', 'intervalTime' );
     const intervalTimer = setTimeout(() => {
       const resource = objectQuery(this.bindings, resourceId, 'resource');
       if (!resource || !ifvisible.now('active')) {
@@ -289,7 +290,7 @@ export default class Datasource {
     Object.keys(this.bindings)
       .filter(subscriptionID => this.bindings[subscriptionID].type === 'POLL')
       .forEach(subscriptionID => {
-        this.bindings[subscriptionID].resource.interval = this.startClientPoll(subscriptionID, this.bindings[subscriptionID].resource.intervalTime);
+        this.bindings[subscriptionID].resource.interval = this.startClientPoll(subscriptionID);
       });
   }
 
