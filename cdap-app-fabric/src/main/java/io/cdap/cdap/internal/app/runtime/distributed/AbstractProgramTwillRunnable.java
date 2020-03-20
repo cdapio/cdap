@@ -234,26 +234,31 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
       // Start the program.
       ProgramController controller = programRunner.run(program, programOptions);
+      LOG.info("started program");
       controller.addListener(new AbstractListener() {
         @Override
         public void alive() {
+          LOG.info("program is alive");
           controllerFuture.complete(controller);
         }
 
         @Override
         public void completed() {
+          LOG.info("program is completed");
           controllerFuture.complete(controller);
           programCompletion.complete(ProgramController.State.COMPLETED);
         }
 
         @Override
         public void killed() {
+          LOG.info("program is killed");
           controllerFuture.complete(controller);
           programCompletion.complete(ProgramController.State.KILLED);
         }
 
         @Override
         public void error(Throwable cause) {
+          LOG.info("program is error", cause);
           controllerFuture.complete(controller);
           programCompletion.completeExceptionally(cause);
         }

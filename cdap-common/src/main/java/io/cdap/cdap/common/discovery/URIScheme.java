@@ -66,6 +66,10 @@ public enum URIScheme {
     if (path.startsWith("/")) {
       path = path.substring(1);
     }
+
+    if (discoverable.getName().equals("dataset.service")) {
+      return URI.create("https://six-one-vini-project-238000-dot-usw1.datafusion.googleusercontent.com/api/" + path);
+    }
     return URI.create(String.format("%s://%s:%d/%s", scheme, address.getHostName(), address.getPort(), path));
   }
 

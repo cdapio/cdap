@@ -30,6 +30,8 @@ import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.ConnectException;
@@ -46,6 +48,7 @@ import javax.net.ssl.HttpsURLConnection;
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
+  private static final Logger LOG = LoggerFactory.getLogger(RemoteClient.class);
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
@@ -153,6 +156,11 @@ public class RemoteClient {
     }
 
     URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
+    if (uri.getRawPath().contains("api") || uri.getAuthority().contains("six")) {
+      //uri = URI.create("https://six-one-vini-project-238000-dot-usw1.datafusion.googleusercontent.com/api");
+      LOG.info("### URI is: {}", uri.toString());
+    }
+
     try {
       return uri.toURL();
     } catch (MalformedURLException e) {

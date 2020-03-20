@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.distributed.remote;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
@@ -34,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -61,13 +61,16 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
   @Override
   public synchronized Cancellable register(Discoverable discoverable) {
+    LOG.info("### Service name to register: {}, address {}, payload {}", discoverable.getName(),
+             discoverable.getSocketAddress(),
+             Bytes.toString(discoverable.getPayload()));
     String serviceName = discoverable.getName();
     DefaultServiceDiscovered serviceDiscovered = services.computeIfAbsent(serviceName, DefaultServiceDiscovered::new);
 
     // Add the address to cConf
     String key = Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + serviceName;
     Networks.addDiscoverable(cConf, key, discoverable);
-    LOG.debug("Discoverable {} with address {} added to configuration with payload {}",
+    LOG.info("Discoverable {} with address {} added to configuration with payload {}",
               discoverable.getName(), discoverable.getSocketAddress(), Bytes.toString(discoverable.getPayload()));
 
     // Update the ServiceDiscovered
@@ -114,20 +117,17 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     Set<Discoverable> discoverables = Networks.getDiscoverables(cConf, key);
 
     if (discoverables.isEmpty()) {
-      // If there is no address from the configuration, assuming it is using the service proxy,
-      // hence the discovery name is the hostname. Also use port == 0 so that the RemoteExecutionProxySelector
-      // knows that it need to use service proxy.
-      URIScheme scheme = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
-      discoverables = Collections.singleton(scheme.createDiscoverable(name,
-                                                                      InetSocketAddress.createUnresolved(name, 0)));
+        discoverables = Collections.singleton(new Discoverable(name, InetSocketAddress.createUnresolved(
+          "six-one-vini-project-238000-dot-usw1.datafusion.googleusercontent.com/api", 0),
+                                                               "https://".getBytes(StandardCharsets.UTF_8)));
     }
 
-    if (LOG.isDebugEnabled()) {
+    //if (LOG.isDebugEnabled()) {
       for (Discoverable d : discoverables) {
-        LOG.debug("Update discoverable {} with address {} and payload {}",
+        LOG.info("Update discoverable {} with address {} and payload {}",
                   d.getName(), d.getSocketAddress(), Bytes.toString(d.getPayload()));
       }
-    }
+    //}
 
     serviceDiscovered.setDiscoverables(discoverables);
   }

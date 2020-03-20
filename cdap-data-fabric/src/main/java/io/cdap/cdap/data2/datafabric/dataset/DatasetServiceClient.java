@@ -117,6 +117,7 @@ public class DatasetServiceClient {
                                                          instanceName, response));
     }
 
+    LOG.info("### response body {}", response.getResponseBodyAsString());
     return GSON.fromJson(response.getResponseBodyAsString(), DatasetMeta.class);
   }
 
@@ -301,13 +302,14 @@ public class DatasetServiceClient {
   private HttpResponse doRequest(HttpRequest.Builder requestBuilder) throws DatasetManagementException {
     HttpRequest request = addUserIdHeader(requestBuilder).build();
     try {
-      LOG.trace("Executing {} {}", request.getMethod(), request.getURL().getPath());
+
+      LOG.info("Executing {} {}", request.getMethod(), request.getURL().getPath());
       HttpResponse response = remoteClient.execute(request);
-      LOG.trace("Executed {} {}", request.getMethod(), request.getURL().getPath());
+      LOG.info("Executed {} {}", request.getMethod(), request.getURL().getPath());
       return response;
     } catch (ServiceUnavailableException e) { // thrown by RemoteClient in case of ConnectException
       logThreadDump();
-      LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().getPath(), e);
+      LOG.trace("Caught exception for {} {}", request.getMethod(), request.getURL().toString(), e);
       throw e;
     } catch (SocketTimeoutException e) { // passed through by RemoteClient
       logThreadDump();

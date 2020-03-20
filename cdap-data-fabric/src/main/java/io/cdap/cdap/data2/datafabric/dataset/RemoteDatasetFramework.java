@@ -91,7 +91,8 @@ public class RemoteDatasetFramework implements DatasetFramework {
                                 final AuthenticationContext authenticationContext) {
     this.cConf = cConf;
     LOG.info("### Discovery client class name: {}", discoveryClient.getClass().getName());
-    if (discoveryClient.getClass().getName().contains("LauncherDiscoveryService")) {
+    if (discoveryClient.getClass().getName().contains("RemoteExecutionDiscoveryService")) {
+      LOG.info("### Header is true");
       addAdditionalHeader = true;
     }
     this.clientCache = CacheBuilder.newBuilder().build(new CacheLoader<NamespaceId, DatasetServiceClient>() {
