@@ -57,6 +57,7 @@ public class BatchPhaseSpecTest {
                     .build())
         .addStage(StageSpec.builder("source2", new PluginSpec(BatchSource.PLUGIN_TYPE, "src", props, artifactId))
                     .addInputSchema("a", Schema.recordOf("stuff", Schema.Field.of("x", Schema.of(Schema.Type.INT))))
+                    .addInputStage("a")
                     .build())
         .addStage(StageSpec.builder("sink.connector", connectorSpec).build())
         .addConnection("source1", "sink.connector")

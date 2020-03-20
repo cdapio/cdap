@@ -58,11 +58,20 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
     this.config = config;
   }
 
+  private void validateInputStages(Map<String, Schema> inputSchemas, List<String> inputStages) {
+    if (!inputStages.containsAll(inputSchemas.keySet())) {
+      throw new RuntimeException("inputStages: " + inputStages + "doesn't have all stages in inputSchemas: " +
+                                  inputSchemas.keySet());
+    }
+  }
+
   @Override
   public void configurePipeline(MultiInputPipelineConfigurer pipelineConfigurer) {
     MultiInputStageConfigurer stageConfigurer = pipelineConfigurer.getMultiInputStageConfigurer();
     Map<String, Schema> inputSchemas = stageConfigurer.getInputSchemas();
+    List<String> inputStages = stageConfigurer.getInputStages();
     config.validateConfig(inputSchemas, stageConfigurer.getFailureCollector());
+    validateInputStages(inputSchemas, inputStages);
     stageConfigurer.setOutputSchema(getOutputSchema(inputSchemas));
   }
 
@@ -70,6 +79,8 @@ public class MockJoiner extends BatchJoiner<StructuredRecord, StructuredRecord, 
   public void initialize(BatchJoinerRuntimeContext context) throws Exception {
     inputSchemas = context.getInputSchemas();
     outputSchema = context.getOutputSchema();
+    List<String> inputStages = context.getInputStages();
+    validateInputStages(inputSchemas, inputStages);
   }
 
   @Override

@@ -36,6 +36,7 @@ import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import javax.annotation.Nullable;
@@ -145,6 +146,11 @@ public abstract class AbstractStageContext implements StageContext {
   @Override
   public Map<String, Schema> getInputSchemas() {
     return stageSpec.getInputSchemas();
+  }
+
+  @Override
+  public List<String> getInputStages() {
+    return stageSpec.getInputStages();
   }
 
   @Nullable

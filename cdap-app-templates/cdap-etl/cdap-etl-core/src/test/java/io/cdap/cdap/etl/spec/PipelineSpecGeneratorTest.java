@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spec;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.Resources;
@@ -240,28 +241,33 @@ public class PipelineSpecGeneratorTest {
       .addStage(
         StageSpec.builder("sink1", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("t3", SCHEMA_B)
+          .addInputStage("t3")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("sink2", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchemas(ImmutableMap.of("t1", SCHEMA_A, "t2", SCHEMA_A, "source", SCHEMA_A))
+          .addInputStages(ImmutableList.of("source", "t1", "t2"))
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("t1", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
+          .addInputStage("source")
           .addOutput(SCHEMA_A, "t2", "t3", "sink2")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("t2", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
           .addInputSchemas(ImmutableMap.of("source", SCHEMA_A, "t1", SCHEMA_A))
+          .addInputStages(ImmutableList.of("source", "t1"))
           .addOutput(SCHEMA_A, "t3", "sink2")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("t3", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
           .addInputSchemas(ImmutableMap.of("t1", SCHEMA_A, "t2", SCHEMA_A))
+          .addInputStages(ImmutableList.of("t1", "t2"))
           .addOutput(SCHEMA_B, "sink1")
           .setErrorSchema(SCHEMA_A)
           .build())
@@ -311,24 +317,28 @@ public class PipelineSpecGeneratorTest {
       .addStage(
         StageSpec.builder("sinkA", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("tA", SCHEMA_A)
+          .addInputStage("tA")
           .addOutput(null, "action")
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("sinkB", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
           .addInputSchema("tB", SCHEMA_B)
+          .addInputStage("tB")
           .addOutput(null, "action")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("tA", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
+          .addInputStage("source")
           .addOutput(SCHEMA_A, "sinkA")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("tB", new PluginSpec(Transform.PLUGIN_TYPE, "mockB", emptyMap, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
+          .addInputStage("source")
           .addOutput(SCHEMA_B, "sinkB")
           .setErrorSchema(SCHEMA_A)
           .build())
@@ -336,6 +346,8 @@ public class PipelineSpecGeneratorTest {
         StageSpec.builder("action", new PluginSpec(Action.PLUGIN_TYPE, "mockaction", emptyMap, ARTIFACT_ID))
           .addInputSchema("sinkA", null)
           .addInputSchema("sinkB", null)
+          .addInputStage("sinkA")
+          .addInputStage("sinkB")
           .build())
       .addConnections(config.getConnections())
       .setResources(config.getResources())
@@ -404,6 +416,7 @@ public class PipelineSpecGeneratorTest {
       .addStage(
         StageSpec.builder("split", new PluginSpec(SplitterTransform.PLUGIN_TYPE, "mocksplit", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
+          .addInputStage("source")
           .addOutput("sinkA", "portA", SCHEMA_A)
           .addOutput("sinkB", "portB", SCHEMA_B)
           .addOutput("sinkC", "portC", null)
@@ -412,16 +425,19 @@ public class PipelineSpecGeneratorTest {
       .addStage(
         StageSpec.builder("sinkA", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("split", SCHEMA_A)
+          .addInputStage("split")
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("sinkB", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("split", SCHEMA_B)
+          .addInputStage("split")
           .setErrorSchema(SCHEMA_B)
           .build())
       .addStage(
         StageSpec.builder("sinkC", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("split", null)
+          .addInputStage("split")
           .build())
       .addConnections(config.getConnections())
       .setResources(config.getResources())
@@ -458,12 +474,14 @@ public class PipelineSpecGeneratorTest {
       .addStage(
         StageSpec.builder("cond", new PluginSpec(Condition.PLUGIN_TYPE, "mockcondition", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("source", SCHEMA_A)
+          .addInputStage("source")
           .addOutput("sink", null, SCHEMA_A)
           .setErrorSchema(SCHEMA_A)
           .build())
       .addStage(
         StageSpec.builder("sink", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", EMPTY_MAP, ARTIFACT_ID))
           .addInputSchema("cond", SCHEMA_A)
+          .addInputStage("cond")
           .setErrorSchema(SCHEMA_A)
           .build())
       .addConnections(config.getConnections())
@@ -635,6 +653,7 @@ public class PipelineSpecGeneratorTest {
                   .build())
       .addStage(StageSpec.builder("a2", new PluginSpec(Action.PLUGIN_TYPE, "action2", empty, ARTIFACT_ID))
                   .addInputSchema("a1", null)
+                  .addInputStage("a1")
                   .build())
       .setResources(new Resources(1024))
       .setDriverResources(new Resources(1024))
