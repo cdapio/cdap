@@ -2686,6 +2686,15 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.run.record.fetch.class</name>
+    <value>io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher</value>
+    <description>
+      Class name of the ProgramRunRecordFetcher used by the runtime monitoring system.
+      This value controls the run record fetching mechanism depending on the CDAP setup.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.server.bind.address</name>
     <value>0.0.0.0</value>
     <description>

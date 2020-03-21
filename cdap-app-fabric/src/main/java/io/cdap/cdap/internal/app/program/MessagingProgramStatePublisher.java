@@ -51,7 +51,8 @@ public class MessagingProgramStatePublisher implements ProgramStatePublisher {
   private final TopicId topicId;
   private final RetryStrategy retryStrategy;
 
-  MessagingProgramStatePublisher(MessagingService messagingService, TopicId topicId, RetryStrategy retryStrategy) {
+  public MessagingProgramStatePublisher(MessagingService messagingService,
+                                        TopicId topicId, RetryStrategy retryStrategy) {
     this.messagingService = messagingService;
     this.topicId = topicId;
     this.retryStrategy = retryStrategy;

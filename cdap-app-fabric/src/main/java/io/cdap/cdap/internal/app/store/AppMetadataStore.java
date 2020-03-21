@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -757,7 +758,8 @@ public class AppMetadataStore {
    * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordDetail recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
+  public RunRecordDetail recordProgramRunning(ProgramRunId programRunId, long stateChangeTime,
+                                              @Nullable String twillRunId,
                                               byte[] sourceId) throws IOException {
     RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
@@ -1171,6 +1173,31 @@ public class AppMetadataStore {
     }
     // If program is not running, query completed run records
     return getCompletedRuns(Collections.singleton(programRun)).get(programRun);
+  }
+
+  /**
+   * Deletes the run record for the given program run if the program state is in one of the terminated state.
+   *
+   * @param programRunId the program run id to lookup for run to be deleted
+   * @param sourceId the source id that the program run recorded with.
+   *                 It has to match with the run record for the deletion to proceed
+   * @return the deleted {@link RunRecordDetail} or {@code null} if no record has been deleted
+   * @throws IOException if failed to find or delete the record
+   */
+  @Nullable
+  public RunRecordDetail deleteRunIfTerminated(ProgramRunId programRunId, byte[] sourceId) throws IOException {
+    RunRecordDetail detail = getRun(programRunId);
+    if (detail == null || !detail.getStatus().isEndState()) {
+      return null;
+    }
+    if (detail.getSourceId() == null || sourceId == null) {
+      return null;
+    }
+    if (!Arrays.equals(detail.getSourceId(), sourceId)) {
+      return null;
+    }
+    delete(detail);
+    return detail;
   }
 
   private void delete(RunRecordDetail record) throws IOException {

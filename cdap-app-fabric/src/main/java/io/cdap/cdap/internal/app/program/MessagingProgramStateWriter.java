@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.program;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -36,8 +37,6 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -46,7 +45,7 @@ import javax.inject.Inject;
  * An implementation of ProgramStateWriter that publishes program status events to TMS
  */
 public final class MessagingProgramStateWriter implements ProgramStateWriter {
-  private static final Logger LOG = LoggerFactory.getLogger(MessagingProgramStateWriter.class);
+
   private static final Gson GSON =
     ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
       .registerTypeAdapter(Arguments.class, new ArgumentsCodec())
@@ -57,11 +56,15 @@ public final class MessagingProgramStateWriter implements ProgramStateWriter {
 
   @Inject
   public MessagingProgramStateWriter(CConfiguration cConf, MessagingService messagingService) {
-    this.programStatePublisher =
-      new MessagingProgramStatePublisher(messagingService,
-                                         NamespaceId.SYSTEM.topic(cConf.get(
-                                           Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
-                                         RetryStrategies.fromConfiguration(cConf, "system.program.state."));
+    this(new MessagingProgramStatePublisher(messagingService,
+                                            NamespaceId.SYSTEM.topic(cConf.get(
+                                              Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC)),
+                                            RetryStrategies.fromConfiguration(cConf, "system.program.state.")));
+  }
+
+  @VisibleForTesting
+  public MessagingProgramStateWriter(ProgramStatePublisher programStatePublisher) {
+    this.programStatePublisher = programStatePublisher;
   }
 
   @Override

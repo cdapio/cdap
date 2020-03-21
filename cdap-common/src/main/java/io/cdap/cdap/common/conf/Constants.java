@@ -865,6 +865,7 @@ public final class Constants {
     public static final String GRACEFUL_SHUTDOWN_MS = "app.program.runtime.monitor.graceful.shutdown.ms";
     public static final String THREADS = "app.program.runtime.monitor.threads";
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
+    public static final String RUN_RECORD_FETCHER_CLASS = "app.program.runtime.monitor.run.record.fetch.class";
 
     /**
      * Configuration to tell if the runtime monitoring is active

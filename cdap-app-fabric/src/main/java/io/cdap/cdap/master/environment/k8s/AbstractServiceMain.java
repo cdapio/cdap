@@ -140,6 +140,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
       cConf.addResource(new File(options.getExtraConfPath(), "cdap-site.xml").toURI().toURL());
       sConf.addResource(new File(options.getExtraConfPath(), "cdap-security.xml").toURI().toURL());
     }
+    cConf = updateCConf(cConf);
 
     Configuration hConf = new Configuration();
 
@@ -272,6 +273,16 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    */
   protected Module getLogAppenderModule() {
     return new RemoteLogAppenderModule();
+  }
+
+  /**
+   * Updates the given {@link CConfiguration}.
+   *
+   * @param cConf the {@link CConfiguration} to be updated
+   * @return the updated configuration
+   */
+  protected CConfiguration updateCConf(CConfiguration cConf) {
+    return cConf;
   }
 
   /**

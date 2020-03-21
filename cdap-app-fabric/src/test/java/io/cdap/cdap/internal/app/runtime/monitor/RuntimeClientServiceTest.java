@@ -239,7 +239,7 @@ public class RuntimeClientServiceTest {
 
     // The client service should get stopped by itself.
     Tasks.waitFor(Service.State.TERMINATED, () -> runtimeClientService.state(),
-                  clientCConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS), TimeUnit.MILLISECONDS);
+                  clientCConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS) + 2000, TimeUnit.MILLISECONDS);
 
     // All messages should be sent after the runtime client service stopped
     MessagingContext serverMessagingContext = new MultiThreadMessagingContext(messagingService);

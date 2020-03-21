@@ -16,12 +16,19 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -33,8 +40,13 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.dataset2.lib.table.inmemory.InMemoryTableService;
-import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeTable;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
+import io.cdap.cdap.messaging.data.MessageId;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
@@ -57,6 +69,8 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.Collections;
+import javax.annotation.Nullable;
 
 /**
  * Unit test for {@link DirectRuntimeRequestValidator}.
@@ -66,13 +80,17 @@ public class DirectRuntimeRequestValidatorTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private static final ArtifactId ARTIFACT_ID = new ArtifactId("test", new ArtifactVersion("1.0"), ArtifactScope.USER);
+
   private CConfiguration cConf;
-  private TransactionRunner transactionRunner;
+  private TransactionRunner txRunner;
 
   @Before
   public void setup() throws IOException, TableAlreadyExistsException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().toString());
+    // This will effectively turn off the cache in the validator with a TTL of 0.
+    cConf.setLong(Constants.RuntimeMonitor.POLL_TIME_MS, 0L);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -87,15 +105,16 @@ public class DirectRuntimeRequestValidatorTest {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
           bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
           bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
+          bind(Store.class).to(DefaultStore.class);
         }
       }
     );
 
-    // Create runtime store definition
+    // Create store definition
     injector.getInstance(StructuredTableRegistry.class).initialize();
-    StoreDefinition.RemoteRuntimeStore.createTables(injector.getInstance(StructuredTableAdmin.class), true);
+    StoreDefinition.AppMetadataStore.createTables(injector.getInstance(StructuredTableAdmin.class), true);
 
-    transactionRunner = injector.getInstance(TransactionRunner.class);
+    txRunner = injector.getInstance(TransactionRunner.class);
   }
 
   @After
@@ -106,24 +125,108 @@ public class DirectRuntimeRequestValidatorTest {
 
   @Test
   public void testValid() throws BadRequestException, AuthorizationException {
-    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
-    // Insert the run id
-    TransactionRunners.run(transactionRunner, context -> {
-      RemoteRuntimeTable.create(context).write(programRunId, new SimpleProgramOptions(programRunId.getParent()));
+    // Insert the run
+    TransactionRunners.run(txRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "system:default"),
+                                      createSourceId(1), ARTIFACT_ID);
+      store.recordProgramProvisioned(programRunId, 1, createSourceId(2));
+      store.recordProgramStart(programRunId, null, Collections.emptyMap(), createSourceId(3));
     });
 
     // Validation should pass
-    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, transactionRunner);
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
+                                                                          new MockProgramRunRecordFetcher());
     validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
   }
 
   @Test (expected = BadRequestException.class)
   public void testInvalid() throws BadRequestException, AuthorizationException {
-    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
 
     // Validation should fail
-    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, transactionRunner);
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
+                                                                          new MockProgramRunRecordFetcher());
     validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+  }
+
+  @Test (expected = BadRequestException.class)
+  public void testNotRunning() throws BadRequestException, AuthorizationException {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+
+    // Insert a completed run
+    TransactionRunners.run(txRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.recordProgramProvisioning(programRunId, Collections.emptyMap(),
+                                      Collections.singletonMap(SystemArguments.PROFILE_NAME, "system:default"),
+                                      createSourceId(1), ARTIFACT_ID);
+      store.recordProgramProvisioned(programRunId, 1, createSourceId(2));
+      store.recordProgramStart(programRunId, null, Collections.emptyMap(), createSourceId(3));
+      store.recordProgramStop(programRunId, System.currentTimeMillis(), ProgramRunStatus.COMPLETED, null,
+                              createSourceId(4));
+    });
+
+    // Validation should fail
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner,
+                                                                          new MockProgramRunRecordFetcher());
+    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+  }
+
+  @Test
+  public void testFetcher() throws BadRequestException, AuthorizationException {
+    ArtifactId artifactId = new ArtifactId("test", new ArtifactVersion("1.0"), ArtifactScope.USER);
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    RunRecordDetail runRecord = RunRecordDetail.builder()
+      .setProgramRunId(programRunId)
+      .setStartTime(System.currentTimeMillis())
+      .setArtifactId(artifactId)
+      .setStatus(ProgramRunStatus.RUNNING)
+      .setSystemArgs(ImmutableMap.of(
+        SystemArguments.PROFILE_NAME, "default",
+        SystemArguments.PROFILE_PROVISIONER, "native"))
+      .setProfileId(NamespaceId.DEFAULT.profile("native"))
+      .setSourceId(new byte[MessageId.RAW_ID_SIZE])
+      .build();
+
+    MockProgramRunRecordFetcher runRecordFetcher = new MockProgramRunRecordFetcher().setRunRecord(runRecord);
+    RuntimeRequestValidator validator = new DirectRuntimeRequestValidator(cConf, txRunner, runRecordFetcher);
+
+    // The first call should be hitting the run record fetching to fetch the run record.
+    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+
+    // The second call will hit the runtime store, so it shouldn't matter what the run record fetch returns
+    runRecordFetcher.setRunRecord(null);
+    validator.validate(programRunId, new DefaultHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.GET, "/"));
+  }
+
+  private byte[] createSourceId(int value) {
+    return Bytes.toBytes(value);
+  }
+
+  /**
+   * A mock {@link ProgramRunRecordFetcher} that returns a fixed {@link RunRecordDetail} if the run id matches.
+   */
+  private static final class MockProgramRunRecordFetcher implements ProgramRunRecordFetcher {
+
+    private RunRecordDetail runRecord;
+
+    MockProgramRunRecordFetcher setRunRecord(@Nullable RunRecordDetail runRecord) {
+      this.runRecord = runRecord;
+      return this;
+    }
+
+    @Override
+    public RunRecordDetail getRunRecordMeta(ProgramRunId runId) throws NotFoundException {
+      if (runRecord == null) {
+        throw new NotFoundException(runId);
+      }
+      if (!runId.equals(runRecord.getProgramRunId())) {
+        throw new NotFoundException(runId);
+      }
+      return runRecord;
+    }
   }
 }

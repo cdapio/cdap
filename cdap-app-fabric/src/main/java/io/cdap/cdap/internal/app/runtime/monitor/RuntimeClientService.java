@@ -26,6 +26,7 @@ import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LogSamplers;
@@ -175,7 +176,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
      * @throws TopicNotFoundException if the TMS topic to fetch from does not exist
      * @throws IOException if failed to read from TMS or write to RuntimeClient
      */
-    long publishMessages() throws TopicNotFoundException, IOException {
+    long publishMessages() throws TopicNotFoundException, IOException, BadRequestException {
       long currentTimeMillis = System.currentTimeMillis();
 
       // Not too publish more than necessary in one topic.
@@ -223,7 +224,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     /**
      * Processes the give list of {@link Message}. By default it sends them through the {@link RuntimeClient}.
      */
-    protected void processMessages(Iterator<Message> iterator) throws IOException {
+    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException {
       runtimeClient.sendMessages(programRunId, topicId, iterator);
     }
 
@@ -248,7 +249,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     }
 
     @Override
-    protected void processMessages(Iterator<Message> iterator) throws IOException {
+    protected void processMessages(Iterator<Message> iterator) throws IOException, BadRequestException {
       List<Message> message = StreamSupport.stream(Spliterators.spliteratorUnknownSize(iterator, 0), false)
         .collect(Collectors.toList());
 
@@ -274,7 +275,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     @Override
     public void close() throws IOException {
       if (!lastProgramStateMessages.isEmpty()) {
-        super.processMessages(lastProgramStateMessages.iterator());
+        try {
+          super.processMessages(lastProgramStateMessages.iterator());
+        } catch (BadRequestException e) {
+          // This shouldn't happen. If it does, that means the server thinks this program is no longer running.
+          // The best we can do is to log here, even the log won't be collected by CDAP, but it will be retained
+          // on the cluster.
+          LOG.warn("Failed to send program state messages to runtime server: {}", lastProgramStateMessages, e);
+        }
         lastProgramStateMessages.clear();
       }
     }

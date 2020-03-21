@@ -56,7 +56,6 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.reporting.ProgramHeartbeatTable;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -262,7 +261,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
         // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
         if (isInWorkflow || skipProvisioning) {
-          ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+          ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
           ProgramDescriptor programDescriptor =
             GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
           appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
@@ -312,7 +311,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                     messageIdBytes, runnables);
         break;
       case REJECTED:
-        ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
         ProgramDescriptor programDescriptor =
           GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
         recordedRunRecord = appMetadataStore.recordProgramRejected(
@@ -480,7 +479,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                 StructuredTableContext context) throws IOException {
     Map<String, String> properties = notification.getProperties();
 
-    ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+    ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
 
     long endTs = getTimeSeconds(properties, ProgramOptionConstants.CLUSTER_END_TIME);
@@ -556,22 +555,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName));
   }
 
-  private ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> properties) {
-    String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
-    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-    String debugString = properties.get(ProgramOptionConstants.DEBUG_ENABLED);
-
-    boolean debug = Boolean.parseBoolean(debugString);
-    Map<String, String> userArguments = userArgumentsString == null ?
-      Collections.emptyMap() : GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
-    Map<String, String> systemArguments = systemArgumentsString == null ?
-      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-
-    return new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
-                                    new BasicArguments(userArguments), debug);
-  }
-
-
   private void publishRecordedStatus(Notification notification,
                                      ProgramRunId programRunId, ProgramRunStatus status) throws Exception {
     Map<String, String> notificationProperties = new HashMap<>(notification.getProperties());
@@ -594,7 +577,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private long getTimeSeconds(Map<String, String> properties, String option) {
     String timeString = properties.get(option);
-    return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
+    return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 
   /**
