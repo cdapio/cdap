@@ -70,7 +70,7 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     ProgramRunner runner;
 
     if (provider != null) {
-      LOG.debug("Using runtime provider {} for program type {}", provider, programType);
+      LOG.trace("Using runtime provider {} for program type {}", provider, programType);
       runner = provider.createProgramRunner(programType, mode, injector);
     } else {
       Provider<ProgramRunner> defaultProvider = defaultRunnerProviders.get(programType);
