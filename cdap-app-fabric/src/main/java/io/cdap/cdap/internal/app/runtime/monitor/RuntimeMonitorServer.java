@@ -25,15 +25,10 @@ import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
-import io.cdap.cdap.common.logging.LogSamplers;
-import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.http.AbstractHttpHandler;
@@ -55,12 +50,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.Reader;
 import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.ProxySelector;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
@@ -68,7 +60,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -79,29 +70,23 @@ import javax.ws.rs.Path;
 public class RuntimeMonitorServer extends AbstractIdleService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitorServer.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
   private static final Gson GSON = new Gson();
 
   private final CConfiguration cConf;
   private final CountDownLatch shutdownLatch;
   private final Cancellable programRunCancellable;
-  private final ProxySelector proxySelector;
   private final Authenticator authenticator;
   private final NettyHttpService httpService;
   private final long shutdownTimeoutSeconds;
-  private TrafficRelayServer trafficRelayServer;
-  private ProxySelector oldProxySelector;
-  private volatile String keyStoreHash;
 
   @Inject
   RuntimeMonitorServer(CConfiguration cConf, MessagingService messagingService,
-                       Cancellable programRunCancellable, ProxySelector proxySelector, Authenticator authenticator,
+                       Cancellable programRunCancellable, Authenticator authenticator,
                        @Constants.AppFabric.KeyStore KeyStore keyStore,
                        @Constants.AppFabric.TrustStore KeyStore trustStore) {
     this.cConf = cConf;
     this.shutdownLatch = new CountDownLatch(1);
     this.programRunCancellable = programRunCancellable;
-    this.proxySelector = proxySelector;
     this.authenticator = authenticator;
     this.shutdownTimeoutSeconds = cConf.getLong("system.runtime.monitor.retry.policy.max.time.secs");
 
@@ -137,44 +122,13 @@ public class RuntimeMonitorServer extends AbstractIdleService {
 
     LOG.info("Runtime monitor server started on {}", httpService.getBindAddress());
 
-    // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
-    trafficRelayServer = new TrafficRelayServer(InetAddress.getLocalHost(), this::getTrafficRelayTarget);
-    trafficRelayServer.startAndWait();
-
-    // Set the traffic relay service address to cConf. It will be used as the proxy address for all worker processes
-    Networks.setAddress(cConf, Constants.RuntimeMonitor.SERVICE_PROXY_ADDRESS,
-                        ResolvingDiscoverable.resolve(trafficRelayServer.getBindAddress()));
-
-    // Set the proxy selector
-    oldProxySelector = ProxySelector.getDefault();
-    ProxySelector.setDefault(proxySelector);
-
     // Set the authenticator
     Authenticator.setDefault(authenticator);
-
-    LOG.info("Runtime traffic relay server started on {}", trafficRelayServer.getBindAddress());
   }
 
   @VisibleForTesting
   public InetSocketAddress getBindAddress() {
     return httpService.getBindAddress();
-  }
-
-  /**
-   * Returns the {@link InetSocketAddress} that the {@link TrafficRelayServer} should relay traffic to.
-   *
-   * @return the {@link InetSocketAddress} or {@code null} if there is no known target to relay traffic to
-   */
-  @Nullable
-  private InetSocketAddress getTrafficRelayTarget() {
-    try (Reader reader = Files.newBufferedReader(Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_FILE),
-                                                 StandardCharsets.UTF_8)) {
-      int port = GSON.fromJson(reader, ServiceSocksProxyInfo.class).getPort();
-      return port == 0 ? null : new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
-    } catch (Exception e) {
-      OUTAGE_LOG.warn("Failed to open service proxy file {}", Constants.RuntimeMonitor.SERVICE_PROXY_FILE, e);
-      return null;
-    }
   }
 
   @Override
@@ -187,7 +141,6 @@ public class RuntimeMonitorServer extends AbstractIdleService {
     }
 
     Authenticator.setDefault(null);
-    ProxySelector.setDefault(oldProxySelector);
 
     // Wait for the shutdown signal from the runtime monitor before shutting off the http server.
     // This allows the runtime monitor still able to talk to this service until all data are fetched.
@@ -195,21 +148,8 @@ public class RuntimeMonitorServer extends AbstractIdleService {
       LOG.warn("Did not receive a shutdown signal from the master after {} seconds, proceeding with shutdown. "
                  + "This may result in missing logs or metrics.", shutdownTimeoutSeconds);
     }
-    trafficRelayServer.stopAndWait();
     httpService.stop();
     LOG.info("Runtime monitor server stopped");
-  }
-
-  @Nullable
-  private String getKeyStoreHash(KeyStore keyStore) {
-    if (keyStoreHash == null) {
-      try {
-        keyStoreHash = KeyStores.hash(keyStore);
-      } catch (Exception e) {
-        return null;
-      }
-    }
-    return keyStoreHash;
   }
 
   /**
