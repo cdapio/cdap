@@ -94,6 +94,8 @@ public class ETLSpark extends AbstractSpark {
     SparkClientContext context = getContext();
 
     SparkConf sparkConf = new SparkConf();
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+    sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     sparkConf.set("spark.speculation", "false");
     context.setSparkConf(sparkConf);
 

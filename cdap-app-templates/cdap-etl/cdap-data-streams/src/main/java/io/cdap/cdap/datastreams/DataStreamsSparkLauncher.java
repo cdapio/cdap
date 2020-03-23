@@ -97,6 +97,8 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     }
 
     SparkConf sparkConf = new SparkConf();
+    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+    sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
     for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
