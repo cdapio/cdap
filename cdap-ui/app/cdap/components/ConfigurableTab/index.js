@@ -42,7 +42,11 @@ export default class ConfigurableTab extends Component {
   };
 
   componentWillReceiveProps(nextProps) {
-    this.setState({ tabs: nextProps.tabConfig.tabs, activeTab: nextProps.activeTab });
+    const newState = { tabs: nextProps.tabConfig.tabs };
+    if (nextProps.activeTab && nextProps.activeTab !== this.state.activeTab) {
+      newState.activeTab = nextProps.activeTab;
+    }
+    this.setState(newState);
   }
 
   state = {

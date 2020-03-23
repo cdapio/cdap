@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import memoize from 'lodash/memoize';
 
@@ -34,20 +34,29 @@ function extractMarketUrls(cdapConfig) {
     return [];
   }
   const defaultMarketUrl = cdapConfig['market.base.url'];
-  if (!cdapConfig['market.base.urls']) {
+  let marketUrls = cdapConfig['market.base.urls'];
+  if (!defaultMarketUrl && !marketUrls) {
+    return [];
+  }
+  if (defaultMarketUrl && !marketUrls) {
     return [defaultMarketUrl];
   }
-  const marketUrls = cdapConfig['market.base.urls'].split('+');
-  const filteredMarketUrls = marketUrls.filter(element => element !== defaultMarketUrl); 
+  marketUrls = marketUrls.split('+');
+  let filteredMarketUrls;
+  if (!defaultMarketUrl) {
+    filteredMarketUrls = marketUrls;
+  } else {
+    filteredMarketUrls = marketUrls.filter((element) => element !== defaultMarketUrl);
+    filteredMarketUrls.splice(0, 0, defaultMarketUrl);
+  }
   // Make sure the default CDAP market is the first market.
-  filteredMarketUrls.splice(0, 0, defaultMarketUrl);
   return filteredMarketUrls;
 }
 
 export const getMarketUrls = memoize(extractMarketUrls);
 
 export function isVerifiedMarketHost(cdapConfig, url) {
-  return !!getMarketUrls(cdapConfig).find(element => url.startsWith(element));
+  return !!getMarketUrls(cdapConfig).find((element) => url.startsWith(element));
 }
 
 export function constructUrl(cdapConfig, path, origin = REQUEST_ORIGIN_ROUTER) {
