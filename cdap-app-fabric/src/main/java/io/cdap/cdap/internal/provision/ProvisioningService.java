@@ -198,7 +198,7 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerContext context;
     try {
       DefaultSSHContext defaultSSHContext = null;
-      if (!getRuntimeJobManager(programOptions, programRunId).isPresent()) {
+      if (!getRuntimeJobManager(programRunId, programOptions).isPresent()) {
         defaultSSHContext = new DefaultSSHContext(
           Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
       }
@@ -365,11 +365,11 @@ public class ProvisioningService extends AbstractIdleService {
   /**
    * Returns runtime job manager implementation.
    *
-   * @param programOptions program options
    * @param programRunId program run
+   * @param programOptions program options
    * @return an object of runtime job manager
    */
-  public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramOptions programOptions, ProgramRunId programRunId) {
+  public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramRunId programRunId, ProgramOptions programOptions) {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     Provisioner provisioner = provisionerInfo.get().provisioners.get(SystemArguments.getProfileProvisioner(systemArgs));
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
@@ -560,7 +560,7 @@ public class ProvisioningService extends AbstractIdleService {
     ProvisionerContext context;
     try {
       DefaultSSHContext defaultSSHContext = null;
-      if (!getRuntimeJobManager(programOptions, programRunId).isPresent()) {
+      if (!getRuntimeJobManager(programRunId, programOptions).isPresent()) {
         defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                   locationFactory.create(taskInfo.getSecureKeysDir()),
                                                   createSSHKeyPair(taskInfo));
@@ -618,7 +618,7 @@ public class ProvisioningService extends AbstractIdleService {
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
       DefaultSSHContext defaultSSHContext = null;
-      if (!getRuntimeJobManager(programOptions, programRunId).isPresent()) {
+      if (!getRuntimeJobManager(programRunId, programOptions).isPresent()) {
         defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                   null, sshKeyPair);
       }

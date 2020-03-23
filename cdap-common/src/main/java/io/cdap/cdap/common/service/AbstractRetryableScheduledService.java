@@ -161,7 +161,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         nonFailureStartTime = 0L;
         failureCount = 0;
       } catch (Exception e) {
-        OUTAGE_LOG.warn("Failed to execute task for scheduled service {}", getServiceName(), e);
+        logTaskFailure(e);
         if (!shouldRetry(e)) {
           throw e;
         }
@@ -192,5 +192,12 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         return new Schedule(delayMillis, TimeUnit.MILLISECONDS);
       }
     };
+  }
+
+  /**
+   * Logs an exception raised by {@link #runTask()}.
+   */
+  protected void logTaskFailure(Throwable t) {
+    OUTAGE_LOG.warn("Failed to execute task for scheduled service {}", getServiceName(), t);
   }
 }

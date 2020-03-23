@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.logging.appender;
 
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategy;
 import org.slf4j.Logger;
@@ -34,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractLogPublisher.class);
+  private static final Logger OUTAGE_LOG = Loggers.sampling(
+    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))), LogSamplers.skipFirstN(1));
 
   private final int queueSize;
   private final BlockingQueue<LogMessage> messageQueue;
@@ -81,6 +85,11 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
     buffer.clear();
     failed = false;
     return 0;
+  }
+
+  @Override
+  protected void logTaskFailure(Throwable t) {
+    OUTAGE_LOG.error("Publish log message failed for {}. Will be retried.", getServiceName(), t);
   }
 
   @Override

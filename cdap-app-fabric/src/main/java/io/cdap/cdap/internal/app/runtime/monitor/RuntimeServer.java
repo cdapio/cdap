@@ -22,10 +22,12 @@ import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
+import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.gateway.handlers.PingHandler;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -51,11 +53,11 @@ public class RuntimeServer extends AbstractIdleService {
   private Cancellable cancelDiscovery;
 
   @Inject
-  RuntimeServer(CConfiguration cConf, RuntimeRequestValidator requestValidator,
+  RuntimeServer(CConfiguration cConf, SConfiguration sConf, RuntimeRequestValidator requestValidator,
                 DiscoveryService discoveryService, DiscoveryServiceClient discoveryServiceClient,
                 MessagingService messagingService, MetricsCollectionService metricsCollectionService,
                 RemoteExecutionLogProcessor logProcessor) {
-    this.httpService = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
+    NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
       .setHttpHandlers(new PingHandler(),
                        new RuntimeHandler(cConf, new MultiThreadMessagingContext(messagingService),
                                           logProcessor, requestValidator),
@@ -64,8 +66,13 @@ public class RuntimeServer extends AbstractIdleService {
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.RUNTIME)))
       .setHost(cConf.get(Constants.RuntimeMonitor.BIND_ADDRESS))
-      .setPort(cConf.getInt(Constants.RuntimeMonitor.BIND_PORT))
-      .build();
+      .setPort(cConf.getInt(Constants.RuntimeMonitor.BIND_PORT));
+
+    if (cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED)) {
+      new HttpsEnabler().configureKeyStore(cConf, sConf).enable(builder);
+    }
+
+    this.httpService = builder.build();
     this.discoveryService = discoveryService;
   }
 

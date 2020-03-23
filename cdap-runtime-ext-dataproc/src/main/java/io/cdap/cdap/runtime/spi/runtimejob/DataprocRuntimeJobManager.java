@@ -174,23 +174,19 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String jobId = getJobId(programRunInfo);
 
     try {
-      LOG.info("Getting job details for {} under project {}, region {}.", projectId, region, jobId);
       Job job = jobControllerClient.getJob(GetJobRequest.newBuilder()
                                              .setProjectId(projectId)
                                              .setRegion(region)
                                              .setJobId(jobId)
                                              .build());
-      RuntimeJobStatus runtimeJobStatus = getRuntimeJobStatus(job);
-
-      return Optional.of(new RuntimeJobDetail(programRunInfo, runtimeJobStatus));
+      return Optional.of(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
     } catch (ApiException e) {
-      // this may happen if job is manually deleted by user
-      if (e.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
-        LOG.warn("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId, region);
-      } else {
+      if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
         throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
                                           jobId, clusterName), e);
       }
+      // Status is not found if job is finished or manually deleted by the user
+      LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId, region);
     }
     return Optional.empty();
   }
@@ -409,12 +405,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       jobControllerClient.cancelJob(projectId, region, jobId);
       LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
-      if (e.getStatusCode().getCode() == StatusCode.Code.FAILED_PRECONDITION) {
-        LOG.warn("Job {} is already stopped on cluster {}.", jobId, clusterName);
-      } else {
+      if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {
         throw new Exception(String.format("Error occurred while stopping job %s on cluster %s.",
                                           jobId, clusterName), e);
       }
+      LOG.debug("Job {} is already stopped on cluster {}.", jobId, clusterName);
     }
   }
 

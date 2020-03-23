@@ -70,7 +70,6 @@ public class RuntimeClientServerTest {
   public void beforeTest() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(Constants.RuntimeMonitor.BIND_PORT, 0);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),

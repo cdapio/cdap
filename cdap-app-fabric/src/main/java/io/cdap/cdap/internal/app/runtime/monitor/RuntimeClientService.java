@@ -67,8 +67,8 @@ import java.util.stream.StreamSupport;
 public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeClientService.class);
-  private static final Logger PROGRESS_LOG = Loggers.sampling(LOG,
-                                                              LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG,
+                                                            LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
   private static final Gson GSON = new Gson();
 
   private final Map<String, TopicRelayer> topicRelayers;
@@ -114,6 +114,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
       long now = System.currentTimeMillis();
       if ((nextPollDelay == pollTimeMillis && now - (gracefulShutdownMillis >> 1) > programFinishTime)
           || (now - gracefulShutdownMillis > programFinishTime)) {
+        LOG.debug("Program {} terminated. Shutting down runtime client service.", programRunId);
         stop();
       }
     }
@@ -123,7 +124,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   @Override
   protected boolean shouldRetry(Exception e) {
-    LOG.warn("Failed to send runtime status. Will be retried.", e);
+    OUTAGE_LOG.warn("Failed to send runtime status. Will be retried.", e);
     return true;
   }
 
@@ -160,6 +161,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
    * Helper class to fetch and publish messages from one topic.
    */
   private class TopicRelayer implements Closeable {
+
+    private final Logger progressLog = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
     private final TopicId topicId;
     private String lastMessageId;
@@ -207,7 +210,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
           // Update the lastMessageId if sendMessages succeeded
           lastMessageId = messageId[0] == null ? lastMessageId : messageId[0];
-          PROGRESS_LOG.debug("Processed {} messages on topic {}", messageCount.get(), topicId);
+          progressLog.debug("Processed {} messages on topic {}", messageCount.get(), topicId);
         }
 
         // If we fetched all messages, then delay the next poll by pollTimeMillis.
@@ -230,7 +233,15 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
     @Override
     public void close() throws IOException {
-      // no-op
+      try {
+        // Force one extra poll
+        nextPublishTimeMillis = 0L;
+        publishMessages();
+      } catch (TopicNotFoundException | BadRequestException e) {
+        // This shouldn't happen. If it does, it must be some bug in the system and there is no way to recover from it.
+        // So just log the cause for debugging.
+        LOG.error("Failed to publish messages on close for topic {}", topicId, e);
+      }
     }
   }
 
@@ -274,6 +285,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
     @Override
     public void close() throws IOException {
+      // Keep polling until it sees the program completion
+      Retries.runWithRetries(() -> {
+        ProgramStatusTopicRelayer.super.close();
+        if (programFinishTime < 0) {
+          throw new RetryableException("Program completion is not yet observed");
+        }
+      }, getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
+
       if (!lastProgramStateMessages.isEmpty()) {
         try {
           super.processMessages(lastProgramStateMessages.iterator());

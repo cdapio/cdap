@@ -50,10 +50,9 @@ public class ClusterCreateSubtask extends ProvisioningSubtask {
     }
 
     Map<String, String> properties = new HashMap<>(nextCluster.getProperties());
-    if (provisioner.getRuntimeJobManager(provisionerContext).isPresent()) {
-      properties.put(Constants.RuntimeMonitor.LAUNCH_TYPE, Constants.RuntimeMonitor.LAUNCH_TYPE_SPI);
-    } else {
-      properties.put(Constants.RuntimeMonitor.LAUNCH_TYPE, Constants.RuntimeMonitor.LAUNCH_TYPE_SSH);
+
+    // If no runtime job manager is present, default to use SSH for job launching
+    if (!provisioner.getRuntimeJobManager(provisionerContext).isPresent()) {
       provisionerContext.getSSHContext().getSSHKeyPair().ifPresent(sshKeyPair -> {
         properties.put(Constants.RuntimeMonitor.SSH_USER, sshKeyPair.getPublicKey().getUser());
       });

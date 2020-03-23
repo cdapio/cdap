@@ -59,6 +59,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -188,8 +189,7 @@ public final class SparkRuntimeContextProvider {
 
       ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-        Authenticator.setDefault(injector.getInstance(Authenticator.class));
+        RuntimeMonitors.setupMonitoring(injector);
       }
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);

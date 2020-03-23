@@ -14,12 +14,11 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.internal.app.runtime.distributed.AbstractRuntimeTwillPreparer;
-import io.cdap.cdap.internal.app.runtime.distributed.runtime.TwillControllerFactory;
+import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.hadoop.conf.Configuration;
@@ -36,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,29 +43,35 @@ import java.util.stream.Stream;
  *  A {@link TwillPreparer} implementation that uses runtime job manager to launch a single {@link TwillRunnable}.
  */
 class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
+
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeJobTwillPreparer.class);
 
-  private final RuntimeJobManager jobManager;
+  private final Supplier<RuntimeJobManager> jobManagerSupplier;
 
   RuntimeJobTwillPreparer(CConfiguration cConf, Configuration hConf,
                           TwillSpecification twillSpec, ProgramRunId programRunId,
                           ProgramOptions programOptions, LocationCache locationCache,
                           LocationFactory locationFactory, TwillControllerFactory controllerFactory,
-                          RuntimeJobManager jobManager) {
+                          Supplier<RuntimeJobManager> jobManagerSupplier) {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
-    this.jobManager = jobManager;
+    this.jobManagerSupplier = jobManagerSupplier;
   }
 
   @Override
   protected void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
                         JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
                         TimeoutChecker timeoutChecker) throws Exception {
+    RuntimeJobManager jobManager = jobManagerSupplier.get();
     jobManager.initialize();
-    timeoutChecker.throwIfTimeout();
-    DefaultRuntimeInfo defaultRuntimeInfo = createRuntimeJobInfo(runtimeSpec, localFiles);
-    LOG.info("Starting runnable {} for runId {} with job manager.", runtimeSpec.getName(), getProgramRunId());
-    // launch job using job manager
-    jobManager.launch(defaultRuntimeInfo);
+    try {
+      timeoutChecker.throwIfTimeout();
+      DefaultRuntimeInfo defaultRuntimeInfo = createRuntimeJobInfo(runtimeSpec, localFiles);
+      LOG.info("Starting runnable {} for runId {} with job manager.", runtimeSpec.getName(), getProgramRunId());
+      // launch job using job manager
+      jobManager.launch(defaultRuntimeInfo);
+    } finally {
+      jobManager.destroy();
+    }
   }
 
   private DefaultRuntimeInfo createRuntimeJobInfo(RuntimeSpecification runtimeSpec, Map<String, LocalFile> localFiles) {

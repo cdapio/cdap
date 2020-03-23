@@ -78,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -110,6 +111,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
   private final MetricsCollectionService metricsCollectionService;
+  private Set<ProgramCompletionNotifier> programCompletionNotifiers;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -129,6 +131,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
+    this.programCompletionNotifiers = Collections.emptySet();
+  }
+
+  @Inject(optional = true)
+  void setProgramCompletionNotifiers(Set<ProgramCompletionNotifier> notifiers) {
+    this.programCompletionNotifiers = notifiers;
   }
 
   @Nullable
@@ -396,10 +404,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
     RunRecordDetail recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
                                                                            failureCause, sourceId);
-    writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
+    if (recordedRunRecord != null) {
+      writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
 
-    getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                           STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+      getEmitMetricsRunnable(programRunId, recordedRunRecord,
+                             STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+      runnables.add(() -> {
+        programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
+                                                                                   recordedRunRecord.getStatus()));
+      });
+    }
     return recordedRunRecord;
   }
 
@@ -471,8 +485,19 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
   }
 
-
-
+  /**
+   * Handles a notification related to cluster operations.
+   *
+   * @param programRunId program run id from the event
+   * @param clusterStatus cluster status from the event
+   * @param notification the notification to process
+   * @param messageIdBytes the unique ID for the notification message
+   * @param appMetadataStore the data table to use
+   * @param context the table context for performing table operations
+   * @return an {@link Optional} of {@link Runnable} to carry a task to execute after handling of this event completed.
+   *         See {@link #postProcess()} for details.
+   * @throws IOException if failed to read/write to the app metadata store.
+   */
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
                                                 AppMetadataStore appMetadataStore,

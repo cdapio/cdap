@@ -20,6 +20,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.AbstractModule;
@@ -27,7 +28,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -58,7 +58,6 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
 import io.cdap.cdap.common.namespace.NoLookupNamespacePathLocator;
-import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -73,9 +72,11 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgram
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.TrafficRelayServer;
+import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
@@ -85,15 +86,16 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import org.apache.twill.api.TwillRunner;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -107,20 +109,20 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.net.Authenticator;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -139,6 +141,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
       .registerTypeAdapter(ProgramOptions.class, new ProgramOptionsCodec()).create();
 
   private final CompletableFuture<ProgramController> controllerFuture = new CompletableFuture<>();
+  private final CountDownLatch runCompletedLatch = new CountDownLatch(1);
+  private volatile boolean stopRequested;
 
   @Override
   public void run(RuntimeJobEnvironment runtimeJobEnv) throws Exception {
@@ -148,16 +152,18 @@ public class DefaultRuntimeJob implements RuntimeJob {
     SLF4JBridgeHandler.install();
 
     // Get Program Options
-    ProgramOptions programOptions = readJsonFile(new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
+    ProgramOptions programOpts = readJsonFile(new File(DistributedProgramRunner.PROGRAM_OPTIONS_FILE_NAME),
                                                  ProgramOptions.class);
-    ProgramRunId programRunId = programOptions.getProgramId().run(ProgramRunners.getRunId(programOptions));
+    ProgramRunId programRunId = programOpts.getProgramId().run(ProgramRunners.getRunId(programOpts));
     ProgramId programId = programRunId.getParent();
 
+    Arguments systemArgs = programOpts.getArguments();
+
     // Setup logging context for the program
-    Arguments systemArgs = programOptions.getArguments();
     LoggingContextAccessor.setLoggingContext(LoggingContextHelper.getLoggingContextWithRunId(programRunId,
                                                                                              systemArgs.asMap()));
-
+    // Get the cluster launch type
+    Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
 
     // Get App spec
     ApplicationSpecification appSpec = readJsonFile(new File(DistributedProgramRunner.APP_SPEC_FILE_NAME),
@@ -165,24 +171,27 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
-    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv)));
-
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
-    Deque<Service> coreServices = createCoreServices(injector);
+    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv), programRunId));
+    CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
     ProxySelector oldProxySelector = ProxySelector.getDefault();
-    ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
+    RuntimeMonitors.setupMonitoring(injector);
+
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
+
     startCoreServices(coreServices, logAppenderInitializer);
 
+    ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+
     try {
-      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
-      CConfiguration cConf = injector.getInstance(CConfiguration.class);
+      SystemArguments.setLogLevel(programOpts.getUserArguments(), logAppenderInitializer);
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
 
       // Create and run the program. The program files should be present in current working directory.
-      try (Program program = createProgram(cConf, programRunner, programDescriptor, programOptions)) {
+      try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
         CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
-        ProgramController controller = programRunner.run(program, programOptions);
+        ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
 
         controller.addListener(new AbstractListener() {
@@ -193,14 +202,24 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
           @Override
           public void killed() {
+            // Write an extra state to make sure there is always a terminal state even
+            // if the program application run failed to write out the state.
+            programStateWriter.killed(programRunId);
             programCompletion.complete(ProgramController.State.KILLED);
           }
 
           @Override
           public void error(Throwable cause) {
+            // Write an extra state to make sure there is always a terminal state even
+            // if the program application run failed to write out the state.
+            programStateWriter.error(programRunId, cause);
             programCompletion.completeExceptionally(cause);
           }
         }, Threads.SAME_THREAD_EXECUTOR);
+
+        if (stopRequested) {
+          controller.stop();
+        }
 
         // Block on the completion
         programCompletion.get();
@@ -215,21 +234,24 @@ public class DefaultRuntimeJob implements RuntimeJob {
     } finally {
       stopCoreServices(coreServices, logAppenderInitializer);
       ProxySelector.setDefault(oldProxySelector);
+      Authenticator.setDefault(null);
+      runCompletedLatch.countDown();
     }
   }
 
-  /**
-   * Stops the running program before it completes. It is supposed to be called when user request to stop a run.
-   */
-  private void stop() {
+  @Override
+  public void stop() {
     try {
-      ProgramController controller = controllerFuture.getNow(null);
-      if (controller == null) {
-        throw new IllegalStateException("Program hasn't been started");
+      stopRequested = true;
+      ProgramController controller = Uninterruptibles.getUninterruptibly(controllerFuture);
+      if (!controller.getState().isDone()) {
+        LOG.info("Stopping program {} explicitly", controller.getProgramRunId());
+        controller.stop();
       }
-      controller.stop();
     } catch (Exception e) {
-      LOG.warn("Cannot stop a failed program", e);
+      LOG.warn("Failed to stop program", e);
+    } finally {
+      Uninterruptibles.awaitUninterruptibly(runCompletedLatch);
     }
   }
 
@@ -291,7 +313,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * Returns list of guice modules used to start the program run.
    */
   @VisibleForTesting
-  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf) {
+  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf, ProgramRunId programRunId) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
     modules.add(new IOModule());
@@ -327,57 +349,22 @@ public class DefaultRuntimeJob implements RuntimeJob {
         defaultProgramRunnerBinder.addBinding(ProgramType.WORKFLOW).to(DistributedWorkflowProgramRunner.class);
         defaultProgramRunnerBinder.addBinding(ProgramType.WORKER).to(DistributedWorkerProgramRunner.class);
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
+
+        bind(ProgramRunId.class).toInstance(programRunId);
       }
     });
-
-    // Active monitoring means we need to start the RuntimeMonitorServer for app-fabric to poll
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING, false)) {
-      modules.add(createRuntimeMonitorServerModule(cConf));
-    }
 
     return modules;
   }
 
-  /**
-   * Optionally adds {@link RuntimeMonitorServer} binding.
-   */
-  private Module createRuntimeMonitorServerModule(CConfiguration cConf) {
-    return new PrivateModule() {
-      @Override
-      protected void configure() {
-        try {
-          Path keyStorePath = Paths.get(cConf.get(Constants.RuntimeMonitor.SERVER_KEYSTORE_PATH));
-          Path trustStorePath = Paths.get(cConf.get(Constants.RuntimeMonitor.CLIENT_KEYSTORE_PATH));
-
-          KeyStore keyStore = KeyStores.load(Locations.toLocation(keyStorePath), () -> "");
-          KeyStore trustStore = KeyStores.load(Locations.toLocation(trustStorePath), () -> "");
-
-          // Update the cConf as well to store the service proxy password
-          cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD, KeyStores.hash(keyStore));
-
-          bind(KeyStore.class).annotatedWith(Constants.AppFabric.KeyStore.class).toInstance(keyStore);
-          bind(KeyStore.class).annotatedWith(Constants.AppFabric.TrustStore.class).toInstance(trustStore);
-
-          bind(Cancellable.class).toInstance(() -> stop());
-          bind(RuntimeMonitorServer.class);
-          expose(RuntimeMonitorServer.class);
-
-        } catch (Exception e) {
-          // Just log if failed to load the KeyStores. It will fail when RuntimeMonitorServer is needed.
-          LOG.error("Failed to load key store and/or trust store", e);
-        }
-      }
-    };
-  }
-
   @VisibleForTesting
-  Deque<Service> createCoreServices(Injector injector) {
+  Deque<Service> createCoreServices(Injector injector, Arguments systemArgs, Cluster cluster) {
     Deque<Service> services = new LinkedList<>();
+
+    services.add(injector.getInstance(LogAppenderLoaderService.class));
 
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     services.add(metricsCollectionService);
-
-    services.add(injector.getInstance(LogAppenderLoaderService.class));
 
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -385,14 +372,18 @@ public class DefaultRuntimeJob implements RuntimeJob {
     }
     services.add(injector.getInstance(MessagingHttpService.class));
 
-    // Bind the traffic relay on the host, not on the loopback interface. It needs to be accessible from all workers.
-    services.add(injector.getInstance(TrafficRelayService.class));
-
-    CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING, false)) {
-      services.add(injector.getInstance(RuntimeMonitorServer.class));
+    // Starts the traffic relay if monitoring is done through SSH tunnel
+    if (injector.getInstance(CConfiguration.class).get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
+      services.add(injector.getInstance(TrafficRelayService.class));
     }
+    services.add(injector.getInstance(RuntimeClientService.class));
 
+    // Creates a service to emit profile metrics
+    ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);
+    ProfileId profileId = SystemArguments.getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs.asMap())
+      .orElseThrow(() -> new IllegalStateException("Missing profile information for program run " + programRunId));
+    services.add(new ProfileMetricService(metricsCollectionService, programRunId, profileId,
+                                          cluster.getNodes().size()));
     return services;
   }
 
@@ -413,6 +404,9 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   private void stopCoreServices(Deque<Service> coreServices, LogAppenderInitializer logAppenderInitializer) {
+    // Close the log appender first to make sure all important logs are published.
+    logAppenderInitializer.close();
+
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       LOG.debug("Stopping core service {}", service);
@@ -422,7 +416,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
         LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
       }
     }
-    logAppenderInitializer.close();
   }
 
   /**

@@ -17,6 +17,7 @@
 package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.base.Joiner;
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.net.HttpHeaders;
 import io.cdap.cdap.common.ServiceUnavailableException;
@@ -48,6 +49,9 @@ import javax.net.ssl.HttpsURLConnection;
  * Discovers a remote service and resolves URLs to that service.
  */
 public class RemoteClient {
+
+  public static final String RUNTIME_SERVICE_ROUTING_BASE_URI = "cdap.runtime.service.routing.base.uri";
+
   private final EndpointStrategy endpointStrategy;
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
@@ -64,7 +68,6 @@ public class RemoteClient {
                       @Nullable RemoteAuthenticator authenticator) {
     this.discoverableServiceName = discoverableServiceName;
     this.httpRequestConfig = httpRequestConfig;
-    // Use a supplier to delay the discovery until the first time it is being used.
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
@@ -94,19 +97,25 @@ public class RemoteClient {
    *                                     was a 503
    */
   public HttpResponse execute(HttpRequest request) throws IOException {
-    // Add Authorization header if needed
-    if (authenticator != null) {
+    HttpRequest httpRequest = request;
+    URL rewrittenURL = rewriteURL(request.getURL());
+
+    // Add Authorization header and use a rewritten URL if needed
+    if (authenticator != null || !rewrittenURL.equals(request.getURL())) {
       Multimap<String, String> headers = request.getHeaders();
-      if (headers == null || headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
-        request = HttpRequest.builder(request)
-          .addHeader(HttpHeaders.AUTHORIZATION,
-                     String.format("%s %s", authenticator.getType(), authenticator.getCredentials()))
-          .build();
+      if (authenticator != null) {
+        headers = headers == null ? HashMultimap.create() : HashMultimap.create(headers);
+        if (headers.keySet().stream().noneMatch(HttpHeaders.AUTHORIZATION::equalsIgnoreCase)) {
+          headers.put(HttpHeaders.AUTHORIZATION,
+                      String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
+        }
       }
+      httpRequest = new HttpRequest(request.getMethod(), rewrittenURL, headers,
+                                    request.getBody(), request.getBodyLength());
     }
 
     try {
-      HttpResponse response = HttpRequests.execute(request, httpRequestConfig);
+      HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       switch (response.getResponseCode()) {
         case HttpURLConnection.HTTP_UNAVAILABLE:
           throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
@@ -120,6 +129,9 @@ public class RemoteClient {
     }
   }
 
+  /**
+   * Opens a {@link HttpURLConnection} for the given request method on the given resource path.
+   */
   public HttpURLConnection openConnection(HttpMethod method, String resource) throws IOException {
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
@@ -156,7 +168,7 @@ public class RemoteClient {
 
     URI uri = URIScheme.createURI(discoverable, "%s%s", basePath, resource);
     try {
-      return uri.toURL();
+      return rewriteURL(uri.toURL());
     } catch (MalformedURLException e) {
       // shouldn't happen. If it does, it means there is some bug in the service announcer
       throw new IllegalStateException(String.format("Discovered service %s, but it announced malformed URL %s",
@@ -177,5 +189,29 @@ public class RemoteClient {
     return String.format("Error making request to %s service at %s while doing %s with headers %s%s.",
                          discoverableServiceName, request.getURL(), request.getMethod(),
                          headers, body == null ? "" : " and body " + body);
+  }
+
+  /**
+   * Rewrites the given URL based on the runtime service.
+   */
+  private URL rewriteURL(URL url) {
+    if (url.getPort() != 0) {
+      return url;
+    }
+
+    String baseURI = System.getProperty(RUNTIME_SERVICE_ROUTING_BASE_URI);
+    if (baseURI == null) {
+      return url;
+    }
+    try {
+      String path = url.getFile();
+      // Trim all the leading "/"
+      while (!path.isEmpty() && path.charAt(0) == '/') {
+        path = path.substring(1);
+      }
+      return URI.create(baseURI).resolve(discoverableServiceName + "/").resolve(path).toURL();
+    } catch (IllegalArgumentException | MalformedURLException e) {
+      return url;
+    }
   }
 }

@@ -28,7 +28,9 @@ import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -36,6 +38,7 @@ import javax.annotation.Nullable;
  */
 public class LogAppenderInitializer implements Closeable {
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
+  private final Set<String> loggerNames = new HashSet<>();
   private final LogAppender logAppender;
 
   @Inject
@@ -50,7 +53,7 @@ public class LogAppenderInitializer implements Closeable {
   @VisibleForTesting
   public synchronized void initialize(String loggerName) {
     LoggerContext loggerContext = getLoggerContext();
-    if (loggerContext != null) {
+    if (loggerContext != null && loggerNames.add(loggerName)) {
       Logger logger = loggerContext.getLogger(loggerName);
 
       // Check if the logger already contains the logAppender
@@ -91,7 +94,14 @@ public class LogAppenderInitializer implements Closeable {
     if (logAppender != null) {
       LOG.debug("Stopping log appender {}", logAppender.getName());
       logAppender.stop();
-      LOG.debug("Done stopping log appender {}", logAppender.getName());
+      LoggerContext loggerContext = getLoggerContext();
+      if (loggerContext != null) {
+        synchronized (this) {
+          for (String loggerName : loggerNames) {
+            loggerContext.getLogger(loggerName).detachAppender(logAppender);
+          }
+        }
+      }
     }
   }
   

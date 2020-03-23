@@ -867,21 +867,17 @@ public final class Constants {
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
     public static final String RUN_RECORD_FETCHER_CLASS = "app.program.runtime.monitor.run.record.fetch.class";
 
-    /**
-     * Configuration to tell if the runtime monitoring is active
-     * An active monitoring is the app-fabric polling the remote runtime for status
-     * This is temporary until we move the SSH approach to use the RuntimeClient for monitoring.
-     */
-    public static final String ACTIVE_MONITORING = "app.program.runtime.monitor.active.monitoring";
-    public static final String SERVER_KEYSTORE_PATH = "app.program.runtime.monitor.server.keystore.path";
-    public static final String CLIENT_KEYSTORE_PATH = "app.program.runtime.monitor.client.keystore.path";
-
     public static final String BIND_ADDRESS = "app.program.runtime.monitor.server.bind.address";
     public static final String BIND_PORT = "app.program.runtime.monitor.server.bind.port";
+    public static final String SSL_ENABLED = "app.program.runtime.monitor.server.ssl.enabled";
+
+    // Configuration key for specifying the base URL for sending monitoring messages.
+    // If it is missing from the configuration, SSH tunnel will be used.
+    public static final String MONITOR_URL = "app.program.runtime.monitor.url";
+    public static final String MONITOR_AUTHENTICATOR_CLASS = "app.program.runtime.monitor.authenticator.class";
 
     // Configuration keys for the runtime monitor server
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
-    public static final String SERVER_INFO_FILE = "app.program.runtime.monitor.server.info.file";
 
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
@@ -890,13 +886,6 @@ public final class Constants {
     public static final String SSH_USER = "ssh.user";
     public static final String PUBLIC_KEY = "id_rsa.pub";
     public static final String PRIVATE_KEY = "id_rsa";
-    public static final String SERVER_KEYSTORE = "server.jks";
-    public static final String CLIENT_KEYSTORE = "client.jks";
-
-    // Constants for job launch type
-    public static final String LAUNCH_TYPE = "launch.type";
-    public static final String LAUNCH_TYPE_SSH = "ssh";
-    public static final String LAUNCH_TYPE_SPI = "spi";
 
     // Configurations related to the Service Proxy that runs in the remote runtime for proxying traffic from
     // remote cluster back into calling CDAP services.
@@ -906,6 +895,7 @@ public final class Constants {
     public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
     // Configuration key for the service proxy password. It is only used within a runtime cluster.
     public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
+    public static final String SERVICE_PROXY_PASSWORD_FILE = "service.proxy.secret";
   }
 
   /**

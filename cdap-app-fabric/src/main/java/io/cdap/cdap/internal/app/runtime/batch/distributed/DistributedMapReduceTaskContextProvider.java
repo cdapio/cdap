@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -81,8 +82,7 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     try {
       oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
-        Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
+        RuntimeMonitors.setupMonitoring(getInjector());
       }
 
       for (Service service : coreServices) {

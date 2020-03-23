@@ -2713,9 +2713,18 @@
 
   <property>
     <name>app.program.runtime.monitor.server.bind.port</name>
-    <value>11016</value>
+    <value>0</value>
     <description>
       The port the runtime monitor server to bind to.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.server.ssl.enabled</name>
+    <value>${ssl.internal.enabled}</value>
+    <description>
+      Enable usage of SSL for the runtime monitor server. By default is disabled.
+      This is because traffic is already encrypted through the SSH tunnel.
     </description>
   </property>
 

@@ -28,4 +28,9 @@ public interface RuntimeJob {
    * @throws Exception thrown if any error while job execution
    */
   void run(RuntimeJobEnvironment runtimeJobEnvironment) throws Exception;
+
+  /**
+   * This method will be called when there is an explicit stop to terminate the running program.
+   */
+  void stop();
 }

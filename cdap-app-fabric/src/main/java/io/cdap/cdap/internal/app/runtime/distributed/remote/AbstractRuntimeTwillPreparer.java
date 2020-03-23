@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.distributed;
+package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
 import com.google.common.base.Joiner;
 import com.google.common.base.Preconditions;
@@ -32,7 +32,6 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.utils.DirUtils;
-import io.cdap.cdap.internal.app.runtime.distributed.runtime.TwillControllerFactory;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -97,7 +96,7 @@ import java.util.stream.Collectors;
 /**
  * An abstract base implementation for implementing {@link TwillPreparer} for program runtime.
  */
-public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
+abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRuntimeTwillPreparer.class);
 
@@ -127,10 +126,10 @@ public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
   private String extraOptions;
   private String classLoaderClassName;
 
-  protected AbstractRuntimeTwillPreparer(CConfiguration cConf, Configuration hConf,
-                                         TwillSpecification twillSpec, ProgramRunId programRunId,
-                                         ProgramOptions programOptions, LocationCache locationCache,
-                                         LocationFactory locationFactory, TwillControllerFactory controllerFactory) {
+  AbstractRuntimeTwillPreparer(CConfiguration cConf, Configuration hConf,
+                               TwillSpecification twillSpec, ProgramRunId programRunId,
+                               ProgramOptions programOptions, LocationCache locationCache,
+                               LocationFactory locationFactory, TwillControllerFactory controllerFactory) {
     // Check to prevent future mistake
     if (twillSpec.getRunnables().size() != 1) {
       throw new IllegalArgumentException("Only one TwillRunnable is supported");
@@ -150,21 +149,21 @@ public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
   /**
    * Returns the {@link ProgramRunId} that is going to be launched by this preparer.
    */
-  protected ProgramRunId getProgramRunId() {
+  ProgramRunId getProgramRunId() {
     return programRunId;
   }
 
   /**
    * Returns the {@link LocationCache} used by this preparer.
    */
-  protected LocationCache getLocationCache() {
+  LocationCache getLocationCache() {
     return locationCache;
   }
 
   /**
    * Returns the {@link LocationFactory} used by this preparer.
    */
-  protected LocationFactory getLocationFactory() {
+  LocationFactory getLocationFactory() {
     return locationFactory;
   }
 
@@ -179,9 +178,9 @@ public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
    * @param timeoutChecker a {@link TimeoutChecker} to check for startup timeout.
    * @throws Exception if failed to launch the program
    */
-  protected abstract void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
-                                 JvmOptions jvmOptions, Map<String, String> environments,
-                                 Map<String, LocalFile> localFiles, TimeoutChecker timeoutChecker) throws Exception;
+  abstract void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
+                       JvmOptions jvmOptions, Map<String, String> environments,
+                       Map<String, LocalFile> localFiles, TimeoutChecker timeoutChecker) throws Exception;
 
   /**
    * Sub-classes can override this method to add extra files to get localized.
@@ -189,7 +188,7 @@ public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
    * @param stagingDir a local staging directory for temporary file creation
    * @param localFiles a {@link Map} for adding new files to be localized
    */
-  protected void addLocalFiles(Path stagingDir, Map<String, LocalFile> localFiles) throws IOException {
+  void addLocalFiles(Path stagingDir, Map<String, LocalFile> localFiles) throws IOException {
     // no-op
   }
 
@@ -198,15 +197,25 @@ public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
    *
    * @param runtimeConfigDir a local directory for adding extra files to
    */
-  protected void addRuntimeConfigFiles(Path runtimeConfigDir) throws IOException {
+  void addRuntimeConfigFiles(Path runtimeConfigDir) throws IOException {
     // no-op
   }
 
   /**
    * Creates an instance of {@link LocalFile} based on the parameters.
    */
-  protected LocalFile createLocalFile(String name, Location location, boolean archive) throws IOException {
+  LocalFile createLocalFile(String name, Location location, boolean archive) throws IOException {
     return new DefaultLocalFile(name, location.toURI(), location.lastModified(), location.length(), archive, null);
+  }
+
+  /**
+   * Creates an {@link ApplicationBundler} for creating bundle jar through dependency tracing.
+   *
+   * @param stagingDir a staging directory for local temporary files.
+   * @return an {@link ApplicationBundler} which use the current {@link #classAcceptor} for class filtering.
+   */
+  ApplicationBundler createBundler(Path stagingDir) {
+    return new ApplicationBundler(classAcceptor).setTempDir(stagingDir.toFile());
   }
 
   @Override
@@ -636,10 +645,6 @@ public abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
 
   private void saveArguments(Arguments arguments, final Path targetPath) throws IOException {
     ArgumentsCodec.encode(arguments, () -> Files.newBufferedWriter(targetPath, StandardCharsets.UTF_8));
-  }
-
-  protected ApplicationBundler createBundler(Path stagingDir) {
-    return new ApplicationBundler(classAcceptor).setTempDir(stagingDir.toFile());
   }
 
   /**

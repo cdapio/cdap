@@ -131,7 +131,7 @@ public final class TMSLogAppender extends LogAppender {
 
       for (Map.Entry<Integer, List<byte[]>> partition : partitionedMessages.entrySet()) {
         directMessagePublisher.publish(NamespaceId.SYSTEM.getNamespace(),
-                topicPrefix + partition.getKey(), partition.getValue().iterator());
+                                       topicPrefix + partition.getKey(), partition.getValue().iterator());
       }
     }
 

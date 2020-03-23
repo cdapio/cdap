@@ -30,6 +30,12 @@ public interface RemoteProcessController {
   boolean isRunning() throws Exception;
 
   /**
+   * Graceful shutdown of the remote process
+   * @throws Exception if not able to terminate the remote process
+   */
+  void terminate() throws Exception;
+
+  /**
    * Forcefully kills the remote process
    * @throws Exception if not able to kill the remote process
    */
