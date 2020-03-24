@@ -49,7 +49,8 @@ import javax.annotation.Nullable;
 
 /**
  * Implementation for {@link io.cdap.cdap.api.artifact.ArtifactManager}
- * communicating with {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandler} and returning artifact info.
+ * communicating with internal REST endpoints {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal}
+ * and returning artifact info.
  */
 public final class RemoteArtifactManager extends AbstractArtifactManager {
   private static final Gson GSON = new GsonBuilder()

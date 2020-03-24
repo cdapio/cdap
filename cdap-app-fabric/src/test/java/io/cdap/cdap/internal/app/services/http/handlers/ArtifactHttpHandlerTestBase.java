@@ -158,7 +158,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   }
 
   /**
-   * Return {@link ArtifactInfo} of the given artifactId
+   * @return {@link ArtifactInfo} of the given artifactId
    */
   protected ArtifactInfo getArtifactInfo(ArtifactId artifactId) throws IOException {
     // get /artifacts/{name}/versions/{version}
@@ -166,7 +166,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   }
 
   /**
-   * Return {@link ArtifactInfo} of the given artifactId in the given scope
+   * @return {@link ArtifactInfo} of the given artifactId in the given scope
    */
   protected ArtifactInfo getArtifactInfo(ArtifactId artifactId, ArtifactScope scope) throws IOException {
     // get /artifacts/{name}/versions/{version}?scope={scope}
@@ -179,7 +179,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   }
 
   /**
-   * Return the contents from doing a get on the given url as the given type, or null if a 404 is returned
+   * @return the contents from doing a get on the given url as the given type, or null if a 404 is returned
    */
   @Nullable
   <T> T getResults(URL endpoint, Type type) throws IOException {
@@ -196,7 +196,7 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   }
 
   /**
-   * Return the given scope as a query parameter string or empty string if the scope is null
+   * @return the given scope as a query parameter string or empty string if the scope is null
    */
   String getScopeQuery(ArtifactScope scope) {
     return (scope == null) ? ("") : ("?scope=" + scope.name());
