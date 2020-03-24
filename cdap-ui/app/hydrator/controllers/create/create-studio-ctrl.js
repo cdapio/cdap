@@ -128,7 +128,7 @@ class HydratorPlusPlusStudioCtrl {
       // For Chrome, Safari, IE8+ and Opera 12+
       return message;
     };
-    if (!window.Cypress) {
+    if (!window.parent.Cypress) {
       $window.onbeforeunload = confirmOnPageExit;
     }
 

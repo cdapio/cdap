@@ -38,7 +38,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
       cy.get('#dag-container').click();
       cy.select_from_to(sourceNodeId, sinkNodeId);
       cy.get('.box.selected').should('have.length', 3);
-      cy.get('#dag-container').click();
+      cy.get('#dag-container').click({ force: true });
       cy.get('.box.selected').should('have.length', 0);
     });
   });

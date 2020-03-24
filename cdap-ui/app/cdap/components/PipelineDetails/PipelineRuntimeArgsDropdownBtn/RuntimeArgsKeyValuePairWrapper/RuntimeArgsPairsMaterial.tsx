@@ -40,6 +40,9 @@ interface IValue {
 }
 
 class RuntimeArgsPairsView extends AbstractMultiRowWidget<IRuntimeArgsPairsProps> {
+  public componentWillUnmount() {
+    this.values = {};
+  }
   public componentWillReceiveProps(nextProps) {
     // causing focus/render issues if we don't return here
     return;

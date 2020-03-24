@@ -22,13 +22,22 @@ const WINDOW_ON_FOCUS = 'WINDOW_FOCUS_EVENT';
 class WindowManager {
   public eventemitter = ee(ee);
   constructor() {
+    if (window.parent.Cypress) {
+      return;
+    }
     if (ifvisible.now('hidden')) {
       this.onBlurEventHandler();
     }
     ifvisible.on('idle', () => {
+      if (window.parent.Cypress) {
+        return;
+      }
       this.onBlurEventHandler();
     });
     ifvisible.on('wakeup', () => {
+      if (window.parent.Cypress) {
+        return;
+      }
       this.onFocusHandler();
     });
     ifvisible.setIdleDuration(30);
@@ -40,6 +49,13 @@ class WindowManager {
 
   public onFocusHandler = () => {
     this.eventemitter.emit(WINDOW_ON_FOCUS);
+  };
+
+  public isWindowActive = () => {
+    if (window.parent.Cypress) {
+      return true;
+    }
+    return ifvisible.now('active');
   };
 }
 

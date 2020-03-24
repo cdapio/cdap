@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS, caskWindowManager, myHelpers) {
+  .controller('HydratorPlusPlusDetailCtrl', function(rPipelineDetail, $scope, $stateParams, PipelineAvailablePluginsActions, GLOBALS, myHelpers) {
     // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view
     const pipelineDetailsActionCreator = window.CaskCommon.PipelineDetailActionCreator;
     const pipelineMetricsActionCreator = window.CaskCommon.PipelineMetricsActionCreator;
@@ -163,12 +163,12 @@ angular.module(PKG.name + '.feature.hydrator')
       }
     });
 
-    $scope.$on(caskWindowManager.event.focus, () => {
+    this.eventEmitter.on(window.CaskCommon.WINDOW_ON_FOCUS, () => {
       pollRuns();
       pollRunsCount();
     });
 
-    $scope.$on(caskWindowManager.event.blur, () => {
+    this.eventEmitter.on(window.CaskCommon.WINDOW_ON_BLUR, () => {
       if (metricsObservable) {
         metricsObservable.unsubscribe();
       }
@@ -179,6 +179,7 @@ angular.module(PKG.name + '.feature.hydrator')
         runsCountPoll.unsubscribe();
       }
     });
+
 
     $scope.$on('$destroy', function() {
       // FIXME: This should essentially be moved to a scaffolding service that will do stuff for a state/view

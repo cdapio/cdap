@@ -76,7 +76,9 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
 
   it('Should work on clicking zoom-in/out actions', () => {
     cy.get('#dag-container').then(el => {
-      expect(el).to.have.css('transform', 'none');
+      // matrix(1,0,0,1,0,0) is the default value for transform
+      // with scalex & y(zoom) to be 1 and dx & dy to be 0
+      expect(el).to.have.css('transform', 'matrix(1, 0, 0, 1, 0, 0)');
     });
     cy.get('#dag-container').rightclick({ force: true });
     cy.get('[data-cy="menu-item-zoom-in"]').click();
