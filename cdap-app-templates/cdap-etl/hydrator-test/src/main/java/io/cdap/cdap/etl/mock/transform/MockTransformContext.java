@@ -128,6 +128,11 @@ public class MockTransformContext implements TransformContext {
     return Collections.emptyMap();
   }
 
+  @Override
+  public List<String> getInputStages() {
+    return Collections.emptyList();
+  }
+
   @Nullable
   @Override
   public Schema getOutputSchema() {

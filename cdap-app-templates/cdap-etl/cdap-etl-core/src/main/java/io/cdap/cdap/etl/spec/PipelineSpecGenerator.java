@@ -326,6 +326,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
                                            pluginSelector.getSelectedArtifact());
     StageSpec.Builder specBuilder = StageSpec.builder(stageName, pluginSpec)
       .addInputSchemas(pipelineConfigurer.getStageConfigurer().getInputSchemas())
+      .addInputStages(pipelineConfigurer.getStageConfigurer().getInputStages())
       .setErrorSchema(stageConfigurer.getErrorSchema());
 
     if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
