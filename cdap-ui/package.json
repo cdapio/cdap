@@ -237,9 +237,9 @@
     "typescript": "3.7.4",
     "universal-cookie": "4.0.3",
     "uuid": "3.3.3",
-    "vega": "5.9.0",
-    "vega-lite": "4.0.2",
-    "vega-tooltip": "0.20.0",
+    "vega": "3.0.10",
+    "vega-lite": "2.0.0-beta.16",
+    "vega-tooltip": "0.4.3",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
     "yml-loader": "2.1.0"
   },
