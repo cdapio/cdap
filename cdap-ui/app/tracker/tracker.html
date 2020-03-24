@@ -36,18 +36,18 @@
   ng-keyup="onSearch($event)">
       <my-global-navbar ng-if="!$state.params.iframe"></my-global-navbar>
 
-    <main class="container" id="app-container" ng-class="{'iframe': $state.params.iframe}">
-      <div ng-if="!BodyCtrl.pageLevelError" ui-view></div>
-      <page404 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode === 404"
-      message="BodyCtrl.pageLevelError.message"></page404>
-      <page500 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode !== 404"
-      message="BodyCtrl.pageLevelError.message"></page500>
+    <main ng-if="!BodyCtrl.pageLevelError" class="container" id="app-container" ng-class="{'iframe': $state.params.iframe}">
+      <div ui-view></div>
     </main>
 
   <div class="alerts" id="alerts"></div>
   <div ng-if="!$state.params.iframe">
     <loading-icon></loading-icon>
     <loading-indicator></loading-indicator>
+    <page404 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode === 404"
+      message="BodyCtrl.pageLevelError.message"></page404>
+    <page500 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode !== 404"
+      message="BodyCtrl.pageLevelError.message"></page500>
     <status-alert-message></status-alert-message>
     <global-footer></global-footer>
     <auth-refresher></auth-refresher>
