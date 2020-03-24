@@ -1,6 +1,6 @@
 {
   "name": "cdap-ui",
-  "version": "6.1.2-SNAPSHOT",
+  "version": "6.1.2",
   "description": "Front-end for CDAP",
   "license": "Apache-2.0",
   "scripts": {
