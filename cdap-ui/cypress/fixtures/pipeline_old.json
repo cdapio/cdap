@@ -1,7 +1,7 @@
 {
   "artifact": {
     "name": "cdap-data-pipeline",
-    "version": "6.1.2-SNAPSHOT",
+    "version": "6.1.2",
     "scope": "SYSTEM",
     "label": "Data Pipeline - Batch"
   },
