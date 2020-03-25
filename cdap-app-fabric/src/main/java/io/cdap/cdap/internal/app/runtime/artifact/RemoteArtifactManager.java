@@ -49,7 +49,8 @@ import javax.annotation.Nullable;
 
 /**
  * Implementation for {@link io.cdap.cdap.api.artifact.ArtifactManager}
- * communicating with {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandler} and returning artifact info.
+ * communicating with internal REST endpoints {@link io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal}
+ * and returning artifact info.
  */
 public final class RemoteArtifactManager extends AbstractArtifactManager {
   private static final Gson GSON = new GsonBuilder()
@@ -61,7 +62,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   private final NamespaceId namespaceId;
   private final RetryStrategy retryStrategy;
   private final boolean authorizationEnabled;
-  private final RemoteClient remoteClient;
+  private final RemoteClient remoteClientInternal;
 
   @Inject
   RemoteArtifactManager(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
@@ -73,9 +74,9 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     this.namespaceId = namespaceId;
     this.retryStrategy = retryStrategy;
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
-    this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
-                                         new DefaultHttpRequestConfig(false),
-                                         String.format("%s", Constants.Gateway.API_VERSION_3));
+    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
   }
 
   /**
@@ -105,8 +106,8 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   public List<ArtifactInfo> listArtifacts(String namespace) throws IOException {
     return Retries.callWithRetries(() -> {
       HttpRequest.Builder requestBuilder =
-        remoteClient.requestBuilder(HttpMethod.GET,
-                                    String.format("namespaces/%s/artifact-internals/artifacts", namespace));
+        remoteClientInternal.requestBuilder(HttpMethod.GET,
+                                            String.format("namespaces/%s/artifacts", namespace));
       // add header if auth is enabled
       if (authorizationEnabled) {
         requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
@@ -116,7 +117,7 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
   }
 
   private List<ArtifactInfo> getArtifactsList(HttpRequest httpRequest) throws IOException {
-    HttpResponse httpResponse = remoteClient.execute(httpRequest);
+    HttpResponse httpResponse = remoteClientInternal.execute(httpRequest);
 
     if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException("Could not list artifacts, endpoint not found");
@@ -142,15 +143,15 @@ public final class RemoteArtifactManager extends AbstractArtifactManager {
     }
 
     HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(
-        HttpMethod.GET, String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
+      remoteClientInternal.requestBuilder(
+        HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
                                       namespace, artifactInfo.getName(), artifactInfo.getVersion()));
     // add header if auth is enabled
     if (authorizationEnabled) {
       requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
     }
 
-    HttpResponse httpResponse = remoteClient.execute(requestBuilder.build());
+    HttpResponse httpResponse = remoteClientInternal.execute(requestBuilder.build());
 
     if (httpResponse.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new IOException("Could not get artifact detail, endpoint not found");
