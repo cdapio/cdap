@@ -34,7 +34,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactManagerFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactManager;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.service.InMemoryProgramRuntimeService;
 import io.cdap.cdap.internal.app.runtime.service.InMemoryServiceProgramRunner;
@@ -72,9 +71,7 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
               .build(ArtifactManagerFactory.class));
     expose(ArtifactManagerFactory.class);
 
-    bind(PluginFinder.class).to(LocalPluginFinder.class);
     bind(ArtifactFinder.class).to(LocalPluginFinder.class);
-    expose(PluginFinder.class);
     expose(ArtifactFinder.class);
 
     // Bind ProgramRunner

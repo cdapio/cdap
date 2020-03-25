@@ -24,7 +24,7 @@ import io.cdap.cdap.api.worker.WorkerConfigurer;
 import io.cdap.cdap.api.worker.WorkerSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.PropertyFieldExtractor;
@@ -47,9 +47,9 @@ public class DefaultWorkerConfigurer extends AbstractConfigurer implements Worke
   private Set<String> datasets;
 
   public DefaultWorkerConfigurer(Worker worker, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                 ArtifactRepository artifactRepository,
+                                 PluginFinder pluginFinder,
                                  PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
     this.worker = worker;
     this.name = worker.getClass().getSimpleName();
     this.description = "";

@@ -39,6 +39,8 @@ import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
@@ -98,7 +100,7 @@ public class ConfiguratorTest {
                                                                         new DefaultImpersonator(cConf, null));
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
-
+    PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
 
     // Create a configurator that is testable. Provide it a application.
     try (CloseableClassLoader artifactClassLoader =
@@ -106,7 +108,7 @@ public class ConfiguratorTest {
              appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
                                             new DefaultImpersonator(cConf, null)))) {
       Configurator configurator = new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId,
-                                                           AllProgramsApp.class.getName(), artifactRepo,
+                                                           AllProgramsApp.class.getName(), pluginFinder,
                                                            artifactClassLoader, null, null, "");
       // Extract response from the configurator.
       ListenableFuture<ConfigResponse> result = configurator.config();
@@ -138,16 +140,17 @@ public class ConfiguratorTest {
                                                                         new DefaultImpersonator(cConf, null));
     ArtifactRepository artifactRepo = new AuthorizationArtifactRepository(baseArtifactRepo,
                                                                           authEnforcer, authenticationContext);
-
+    PluginFinder pluginFinder = new LocalPluginFinder(artifactRepo);
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
     // Create a configurator that is testable. Provide it an application.
     try (CloseableClassLoader artifactClassLoader =
            artifactRepo.createArtifactClassLoader(
              appJar, new EntityImpersonator(artifactId.getNamespace().toEntityId(),
                                             new DefaultImpersonator(cConf, null)))) {
+
       Configurator configuratorWithConfig =
         new InMemoryConfigurator(conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-                                 artifactRepo, artifactClassLoader, null, null, new Gson().toJson(config));
+                                 pluginFinder, artifactClassLoader, null, null, new Gson().toJson(config));
 
       ListenableFuture<ConfigResponse> result = configuratorWithConfig.config();
       ConfigResponse response = result.get(10, TimeUnit.SECONDS);
@@ -161,7 +164,7 @@ public class ConfiguratorTest {
 
       Configurator configuratorWithoutConfig = new InMemoryConfigurator(
         conf, Id.Namespace.DEFAULT, artifactId, ConfigTestApp.class.getName(),
-        artifactRepo, artifactClassLoader, null, null, null);
+        pluginFinder, artifactClassLoader, null, null, null);
       result = configuratorWithoutConfig.config();
       response = result.get(10, TimeUnit.SECONDS);
       Assert.assertNotNull(response);

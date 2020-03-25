@@ -76,6 +76,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
 import io.cdap.cdap.internal.app.runtime.schedule.ExecutorThreadPool;
 import io.cdap.cdap.internal.app.runtime.schedule.LocalTimeSchedulerService;
@@ -271,6 +273,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     protected void configure() {
       bind(PipelineFactory.class).to(SynchronousPipelineFactory.class);
 
+      bind(PluginFinder.class).to(LocalPluginFinder.class);
       install(
         new FactoryModuleBuilder()
           .implement(new TypeLiteral<Manager<AppDeploymentInfo, ApplicationWithPrograms>>() {

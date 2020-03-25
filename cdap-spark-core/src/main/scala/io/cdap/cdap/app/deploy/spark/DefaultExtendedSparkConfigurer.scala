@@ -23,6 +23,7 @@ import io.cdap.cdap.api.spark.dynamic.SparkCompiler
 import io.cdap.cdap.app.runtime.spark.dynamic.{DefaultSparkCompiler, URLAdder}
 import io.cdap.cdap.common.id.Id
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator
 
 import scala.reflect.io.VirtualDirectory
@@ -34,9 +35,9 @@ import scala.tools.nsc.Settings
 class DefaultExtendedSparkConfigurer(spark: Spark,
                                      deployNamespace: Id.Namespace,
                                      artifactId: Id.Artifact,
-                                     artifactRepository: ArtifactRepository,
+                                     pluginFinder: PluginFinder,
                                      pluginInstantiator: PluginInstantiator)
-  extends AbstractExtendedSparkConfigurer(spark, deployNamespace, artifactId, artifactRepository, pluginInstantiator) {
+  extends AbstractExtendedSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator) {
 
   override def createSparkCompiler(settings: Settings): SparkCompiler = {
     // Creates an in-memory compiler
