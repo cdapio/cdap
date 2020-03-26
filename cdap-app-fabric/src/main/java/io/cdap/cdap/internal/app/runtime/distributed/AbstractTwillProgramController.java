@@ -80,8 +80,8 @@ public abstract class AbstractTwillProgramController extends AbstractProgramCont
           stop();
           return;
         }
-
         ServiceController.TerminationStatus terminationStatus = twillController.getTerminationStatus();
+        LOG.debug("Twill program termination status: {}", terminationStatus);
         // The terminationStatus shouldn't be null when the twillController state is terminated
         // In case it does (e.g. bug or twill changes), rely on the termination future to determine the state
         if (terminationStatus == null) {
