@@ -370,13 +370,6 @@ public class RouterPathLookupTest {
   }
 
   @Test
-  public void testArtifactInternalsPaths() {
-    assertRouting("/v3/namespaces/default/artifact-internals/artifacts", RouterPathLookup.DONT_ROUTE);
-    assertRouting("/v3/namespaces/default/artifact-internals/artifact/jdbc", RouterPathLookup.DONT_ROUTE);
-    assertRouting("/v3/namespaces/default/previews/artifact-internals/status", RouterPathLookup.PREVIEW_HTTP);
-  }
-
-  @Test
   public void testMetadataInternalsPaths() {
     assertRouting("/v3/metadata-internals/create", RouterPathLookup.DONT_ROUTE);
     assertRouting("/v3/metadata-internals/drop", RouterPathLookup.DONT_ROUTE);

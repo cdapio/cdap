@@ -87,7 +87,7 @@ const client = new ApolloClient({
   uri: '/graphql',
   cache: new InMemoryCache({ fragmentMatcher }),
   request: (operation) => {
-    if (window.CDAP_CONFIG.securityEnabled && cookie.load('CDAP_Auth_Token')) {
+    if (window.CDAP_CONFIG.securityEnabled && cookie.get('CDAP_Auth_Token')) {
       const token = `Bearer ${cookie.get('CDAP_Auth_Token')}`;
 
       operation.setContext({

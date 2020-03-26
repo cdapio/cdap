@@ -24,6 +24,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
+import ToggleExperiment from 'components/Lab/ToggleExperiment';
 
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
@@ -113,6 +114,11 @@ const Replicator = Loadable({
   loading: LoadingSVGCentered,
 });
 
+const Ingestion = Loadable({
+  loader: () => import(/* webpackChunkMame: "Ingestion" */ 'components/Ingestion'),
+  loading: LoadingSVGCentered,
+});
+
 export default class Home extends Component {
   constructor(props) {
     super(props);
@@ -188,7 +194,7 @@ export default class Home extends Component {
             exact
             path="/ns/:namespace/lab-experiment-test"
             render={(props) => {
-              if (!window.Cypress) {
+              if (!window.parent.Cypress) {
                 return <Page404 {...props} />;
               }
               const LabExperimentTestComp = Loadable({
@@ -199,6 +205,18 @@ export default class Home extends Component {
                 loading: LoadingSVGCentered,
               });
               return <LabExperimentTestComp {...props} />;
+            }}
+          />
+          <Route
+            path="/ns/:namespace/ingestion"
+            render={(props) => {
+              return (
+                <ToggleExperiment
+                  name="data-ingestion"
+                  defaultComponent={<Page404 {...props} />}
+                  experimentalComponent={<Ingestion />}
+                />
+              );
             }}
           />
           <Route component={Page404} />

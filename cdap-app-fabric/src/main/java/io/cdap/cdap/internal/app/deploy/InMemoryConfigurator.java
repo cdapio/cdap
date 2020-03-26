@@ -42,6 +42,7 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppSpecInfo;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,13 +71,13 @@ public final class InMemoryConfigurator implements Configurator {
   // if the artifact is a system artifact, the namespace will be the system namespace.
   private final Id.Namespace appNamespace;
 
-  private final ArtifactRepository artifactRepository;
+  private final PluginFinder pluginFinder;
   private final ClassLoader artifactClassLoader;
   private final String appClassName;
   private final Id.Artifact artifactId;
 
   public InMemoryConfigurator(CConfiguration cConf, Id.Namespace appNamespace, Id.Artifact artifactId,
-                              String appClassName, ArtifactRepository artifactRepository,
+                              String appClassName, PluginFinder pluginFinder,
                               ClassLoader artifactClassLoader,
                               @Nullable String applicationName, @Nullable String applicationVersion,
                               @Nullable String configString) {
@@ -87,7 +88,7 @@ public final class InMemoryConfigurator implements Configurator {
     this.applicationName = applicationName;
     this.applicationVersion = applicationVersion;
     this.configString = configString == null ? "" : configString;
-    this.artifactRepository = artifactRepository;
+    this.pluginFinder = pluginFinder;
     this.artifactClassLoader = artifactClassLoader;
     this.baseUnpackDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                                   cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
@@ -134,7 +135,7 @@ public final class InMemoryConfigurator implements Configurator {
       PluginInstantiator pluginInstantiator = new PluginInstantiator(cConf, app.getClass().getClassLoader(), tempDir)
     ) {
       configurer = new DefaultAppConfigurer(appNamespace, artifactId, app,
-                                            configString, artifactRepository, pluginInstantiator);
+                                            configString, pluginFinder, pluginInstantiator);
       T appConfig;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (configString.isEmpty()) {

@@ -33,10 +33,12 @@ public abstract class PluginConfig extends Config implements Serializable {
 
   // below fields are set using reflection
   private PluginProperties properties;
+  private PluginProperties rawProperties;
   private Set<String> macroFields;
 
   protected PluginConfig() {
     this.properties = PluginProperties.builder().build();
+    this.rawProperties = PluginProperties.builder().build();
     this.macroFields = Collections.emptySet();
   }
 
@@ -58,6 +60,15 @@ public abstract class PluginConfig extends Config implements Serializable {
    */
   public final PluginProperties getProperties() {
     return properties;
+  }
+
+  /**
+   * Contains the {@link PluginProperties} as they were before macro evaluation. For example, at configure time, if the
+   * 'schema' property is a macro '${schema}', the value will be the raw string '${schema}' instead of null. This is
+   * primarily useful when one plugin is passing macro enabled properties to another plugin.
+   */
+  public final PluginProperties getRawProperties() {
+    return rawProperties;
   }
 
   /**

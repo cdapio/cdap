@@ -34,6 +34,9 @@ $key-value-pair-visible-number: 6;
     }
   }
   .runtime-arguments-labels {
+    background-color: $grey-07;
+    width: 100%;
+    padding: 3px;
     display: grid;
     grid-template-columns: 1fr 1fr 62px;
     grid-gap: 10px;
@@ -82,8 +85,8 @@ $key-value-pair-visible-number: 6;
     .provided-label {
       display: inline-block;
       color: $input-label-color;
-      width: 40%;
-      font-weight: 500;
+      width: 100%;
+      font-weight: 800;
     }
 
     .key-label {
@@ -92,7 +95,6 @@ $key-value-pair-visible-number: 6;
   }
 
   .key-value-pair-values {
-    margin-top: 10px;
 
     // This is incorrect. We shouldn't be modifying the style outside of the component
     // in all the places. It becomes unmanageable to reuse/recycle the component.

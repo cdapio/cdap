@@ -35,13 +35,12 @@ interface IKeyValueProps extends IMultiRowProps<IKeyValueWidgetProps> {
   isEncoded?: boolean; // for compatiblity with keyvalue-encoded type
 }
 
-class KeyValueWidgetView extends AbstractMultiRowWidget<IKeyValueProps> {
+export class KeyValueWidgetView extends AbstractMultiRowWidget<IKeyValueProps> {
   public renderRow = (id, index) => {
     const keyPlaceholder = objectQuery(this.props, 'widgetProps', 'key-placeholder');
     const valuePlaceholder = objectQuery(this.props, 'widgetProps', 'value-placeholder');
     const kvDelimiter = objectQuery(this.props, 'widgetProps', 'kv-delimiter');
     const isEncoded = this.props.isEncoded || objectQuery(this.props, 'widgetProps', 'isEncoded');
-
     return (
       <KeyValueRow
         key={id}

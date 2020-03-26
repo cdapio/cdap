@@ -27,6 +27,7 @@
     <logger name="com.ning" level="WARN"/>
     <logger name="org.apache.spark" level="WARN"/>
     <logger name="org.spark-project" level="WARN"/>
+    <logger name="org.spark_project" level="WARN"/>
     <logger name="org.apache.hadoop" level="WARN"/>
     <!--See CDAP-7948-->
     <logger name="org.apache.hadoop.ipc.Client" level="ERROR"/>

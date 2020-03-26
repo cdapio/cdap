@@ -386,7 +386,6 @@ class HydratorPlusPlusTopPanelCtrl {
         value: '',
         uniqueId: 'id-' + this.uuid.v4()
       }];
-      this.validToStartPreview = this.isValidToStartPreview();
       this.previewStore.dispatch(
         this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
       );
@@ -445,7 +444,6 @@ class HydratorPlusPlusTopPanelCtrl {
             this.previewStore.dispatch(
               this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
             );
-            this.validToStartPreview = this.isValidToStartPreview();
             return this.runtimeArguments;
           },
           err => {
@@ -463,7 +461,6 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
       );
-      this.validToStartPreview = this.isValidToStartPreview();
       return this.$q.when(this.runtimeArguments);
     }
   }
@@ -505,11 +502,6 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewStore.dispatch(
       this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
     );
-    this.validToStartPreview = this.isValidToStartPreview();
-  }
-
-  isValidToStartPreview() {
-    return !this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
   }
 
   onPreviewStart() {

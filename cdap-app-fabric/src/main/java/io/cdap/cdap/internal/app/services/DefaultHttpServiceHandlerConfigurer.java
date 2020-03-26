@@ -24,7 +24,7 @@ import io.cdap.cdap.api.service.http.ServiceHttpEndpoint;
 import io.cdap.cdap.api.service.http.SystemHttpServiceConfigurer;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
@@ -54,14 +54,15 @@ public class DefaultHttpServiceHandlerConfigurer extends AbstractConfigurer impl
    * The properties and description are set to empty values and the name is the handler class name.
    *
    * @param handler the handler for the service
+   * @param pluginFinder
    */
   public DefaultHttpServiceHandlerConfigurer(HttpServiceHandler handler,
                                              Id.Namespace deployNamespace,
                                              Id.Artifact artifactId,
-                                             ArtifactRepository artifactRepository,
+                                             PluginFinder pluginFinder,
                                              PluginInstantiator pluginInstantiator,
                                              SystemTableConfigurer systemTableConfigurer) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
     this.handler = handler;
     this.name = handler.getClass().getSimpleName();
     this.properties = new HashMap<>();

@@ -26,6 +26,9 @@ import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.api.lineage.field.LineageRecorder;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -134,6 +137,16 @@ public interface StageContext extends ServiceDiscoverer, MetadataReader, Metadat
    * @return the map of input stage names to their schema
    */
   Map<String, Schema> getInputSchemas();
+
+  /**
+   * Return the input stage names. Stage name will be set even if the corresponding input schema is unknown or
+   * not constant.
+   *
+   * @return the list of input stage names
+   */
+  default List<String> getInputStages() {
+    return Collections.emptyList();
+  }
 
   /**
    * Return the output schema of the stage, as set by this stage when the pipeline was deployed. If none was set,

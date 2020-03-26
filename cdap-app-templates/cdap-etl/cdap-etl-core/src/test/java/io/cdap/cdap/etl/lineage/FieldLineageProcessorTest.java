@@ -66,14 +66,17 @@ public class FieldLineageProcessorTest {
         .build(),
       StageSpec.builder("transform1", DUMMY_PLUGIN)
         .addInputSchema("src", srcSchema)
+        .addInputStage("src")
         .addOutput(transform1Schema, "transform2")
         .build(),
       StageSpec.builder("transform2", DUMMY_PLUGIN)
         .addInputSchema("transform1", transform1Schema)
+        .addInputStage("transform1")
         .addOutput(transform2Schema, "sink")
         .build(),
       StageSpec.builder("sink", DUMMY_PLUGIN)
         .addInputSchema("transform2", transform2Schema)
+        .addInputStage("transform2")
         .build()
     );
 

@@ -86,6 +86,7 @@ final class DataprocClient implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
+  static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
 
   private final DataprocConf conf;
   private final ClusterControllerClient client;
@@ -285,7 +286,7 @@ final class DataprocClient implements AutoCloseable {
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
-    String regionalEndpoint = conf.getRegion() + "-dataproc.googleapis.com:443";
+    String regionalEndpoint = conf.getRegion() + DATAPROC_GOOGLEAPIS_COM_443;
 
     ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
       .setCredentialsProvider(credentialsProvider)

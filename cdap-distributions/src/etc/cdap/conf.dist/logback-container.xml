@@ -28,6 +28,7 @@
   <logger name="com.ning" level="WARN"/>
   <logger name="org.apache.spark" level="WARN"/>
   <logger name="org.spark-project" level="WARN"/>
+  <logger name="org.spark_project" level="WARN"/>
   <logger name="org.apache.hadoop" level="WARN"/>
   <logger name="org.apache.hive" level="WARN"/>
   <logger name="org.apache.tephra.distributed.AbstractClientProvider" level="WARN"/>

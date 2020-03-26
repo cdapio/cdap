@@ -29,6 +29,7 @@ import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
@@ -62,13 +63,14 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final Impersonator impersonator;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
+  private final PluginFinder pluginFinder;
 
   /**
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
                                   Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                                  AuthenticationContext authenticationContext) {
+                                  AuthenticationContext authenticationContext, PluginFinder pluginFinder) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
@@ -76,6 +78,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     this.impersonator = impersonator;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.pluginFinder = pluginFinder;
   }
 
   /**
@@ -102,7 +105,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     InMemoryConfigurator inMemoryConfigurator = new InMemoryConfigurator(
       cConf, Id.Namespace.fromEntityId(deploymentInfo.getNamespaceId()),
       Id.Artifact.fromEntityId(artifactId), appClassName,
-      artifactRepository, artifactClassLoader,
+      pluginFinder, artifactClassLoader,
       deploymentInfo.getApplicationName(),
       deploymentInfo.getApplicationVersion(),
       configString);

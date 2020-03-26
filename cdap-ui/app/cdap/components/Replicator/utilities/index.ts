@@ -20,20 +20,23 @@ import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
+import { objectQuery } from 'services/helpers';
 
-const parentArtifact = 'delta-app';
-const version = '0.1.0-SNAPSHOT';
-const scope = 'SYSTEM';
-
-export function fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType) {
+export function fetchPluginInfo(
+  parentArtifact,
+  artifactName,
+  artifactScope,
+  pluginName,
+  pluginType
+) {
   const observable$ = Observable.create((observer) => {
     const pluginParams = {
       namespace: getCurrentNamespace(),
-      parentArtifact,
-      version,
+      parentArtifact: parentArtifact.name,
+      version: parentArtifact.version,
       extension: pluginType,
       pluginName,
-      scope,
+      scope: parentArtifact.scope,
       artifactName,
       artifactScope,
       limit: 1,
@@ -98,60 +101,13 @@ export function fetchPluginWidget(
   return observable$;
 }
 
-function constructPluginConfigurationSpec(plugin, pluginConfig) {
-  return {
-    name: plugin.name,
-    plugin: {
-      name: plugin.name,
-      type: plugin.type,
-      artifact: {
-        ...plugin.artifact,
-      },
-      properties: {
-        ...pluginConfig,
-      },
-    },
-  };
-}
-
-export function constructReplicatorSpec(
-  name,
-  description,
-  sourcePluginInfo,
-  targetPluginInfo,
-  sourceConfig,
-  targetConfig
-) {
-  const source = constructPluginConfigurationSpec(sourcePluginInfo, sourceConfig);
-  const target = constructPluginConfigurationSpec(targetPluginInfo, targetConfig);
-
-  const transferSpec = {
-    name,
-    description,
-    artifact: {
-      name: parentArtifact,
-      version,
-      scope,
-    },
-    config: {
-      connections: [
-        {
-          from: source.name,
-          to: target.name,
-        },
-      ],
-      stages: [source, target],
-      offsetBasePath: '/tmp/Replicator',
-    },
-  };
-
-  return transferSpec;
-}
-
-export function fetchPluginsAndWidgets(pluginType) {
+export function fetchPluginsAndWidgets(parentArtifact, pluginType) {
   const observable$ = Observable.create((observer) => {
     const params = {
       namespace: getCurrentNamespace(),
+      parentArtifact: parentArtifact.name,
+      version: parentArtifact.version,
+      scope: parentArtifact.scope,
       pluginType,
     };
 
@@ -301,4 +257,8 @@ export function constructTablesSelection(tables, columns, dmlBlacklist) {
   });
 
   return tablesArr;
+}
+
+export function extractErrorMessage(errObj) {
+  return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
 }

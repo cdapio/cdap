@@ -73,6 +73,8 @@ export interface ITableInfo {
   fieldCount?: number;
   unrelatedFields?: IField[];
   isExpanded?: boolean;
+  namespace?: string;
+  dataset?: string;
 }
 
 export interface ITimeParams {
@@ -155,6 +157,8 @@ export function getLinks(
     tables[tableId] = {
       fieldCount: ent.fieldCount,
       fields: [],
+      dataset: ent.entityId.dataset,
+      namespace: ent.entityId.namespace,
     };
     // fieldIds keeps track of fields to prevent duplication, since a single field can have multiple connections
     const fieldIds = new Map();

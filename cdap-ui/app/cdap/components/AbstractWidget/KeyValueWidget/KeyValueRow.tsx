@@ -50,7 +50,7 @@ interface IKeyValueState {
 
 type StateKeys = keyof IKeyValueState;
 
-class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
+export class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
   public static defaultProps = {
     keyPlaceholder: 'Key',
     valuePlaceholder: 'Value',
@@ -77,7 +77,7 @@ class KeyValueRow extends AbstractRow<IKeyValueRowProps, IKeyValueState> {
     });
   }
 
-  private handleChange = (type: StateKeys, e) => {
+  public handleChange = (type: StateKeys, e) => {
     this.setState(
       {
         [type]: e.target.value,

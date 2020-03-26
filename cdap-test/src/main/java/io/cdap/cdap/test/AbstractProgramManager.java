@@ -68,9 +68,16 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   @Override
   public T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
                               TimeUnit timeoutUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    return startAndWaitForRun(arguments, status, timeout, timeoutUnit, 50, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout,
+                              TimeUnit timeoutUnit, long sleepTime, TimeUnit sleepUnit)
+    throws InterruptedException, ExecutionException, TimeoutException {
     int count = getHistory(status).size();
     T manager = start(arguments);
-    waitForRuns(status, count + 1, timeout, timeoutUnit);
+    waitForRuns(status, count + 1, timeout, timeoutUnit, sleepTime, sleepUnit);
     return manager;
   }
 
@@ -91,9 +98,15 @@ public abstract class AbstractProgramManager<T extends ProgramManager> implement
   }
 
   @Override
-  public void waitForRuns(final ProgramRunStatus status, final int runCount, long timeout, TimeUnit timeoutUnit)
+  public void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException {
-    Tasks.waitFor(true, () -> getHistory(status).size() >= runCount, timeout, timeoutUnit);
+    waitForRuns(status, runCount, timeout, timeoutUnit, 50, TimeUnit.MILLISECONDS);
+  }
+
+  @Override
+  public void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit, long sleepTime,
+                          TimeUnit sleepUnit) throws InterruptedException, ExecutionException, TimeoutException {
+    Tasks.waitFor(true, () -> getHistory(status).size() >= runCount, timeout, timeoutUnit, sleepTime, sleepUnit);
   }
 
   @Override

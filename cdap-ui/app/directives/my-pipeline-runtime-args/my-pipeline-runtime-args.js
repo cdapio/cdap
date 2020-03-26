@@ -46,21 +46,9 @@ class MyPipelineRuntimeArgsCtrl {
     return runtimeArguments;
   }
 
-  onRuntimeArgumentsChange(newRuntimeArguments) {
-    this.runtimeArguments = this.checkForReset(newRuntimeArguments);
-  }
-
-  toggleAllProvided(isProvided) {
-    angular.forEach(this.runtimeArguments.pairs, (runtimeArg) => {
-      if (runtimeArg.notDeletable) {
-        runtimeArg.provided = isProvided;
-      }
-    });
-    window.CaskCommon.KeyValueStore.dispatch({
-      type: window.CaskCommon.KeyValueStoreActions.onUpdate,
-      payload: {pairs: this.runtimeArguments.pairs}
-    });
-    this.providedPopoverOpen = !this.providedPopoverOpen;
+  onRuntimeArgumentsChange(changedArgs) {
+    const newArgs = changedArgs.length ? changedArgs : [];
+    this.runtimeArguments = this.checkForReset({pairs: newArgs});
   }
 
   getResettedRuntimeArgument(index) {

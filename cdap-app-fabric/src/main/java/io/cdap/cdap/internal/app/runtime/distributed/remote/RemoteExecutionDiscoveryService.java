@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.utils.Networks;
+import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.cdap.cdap.proto.ProgramType;
@@ -43,7 +44,7 @@ import javax.inject.Inject;
  * A discovery service implementation used in remote runtime execution. It has a fixed list of services
  * that will go through {@link ServiceSocksProxy}, hence won't resolve the service name to an actual address.
  * It also use the {@link CConfiguration} as the backing store for service announcements, which is suitable for
- * the current remote runtime that has some "mini" system services running in the runtime process (the driver).
+ * the current remote runtime that has some "mini" system services running in the {@link DefaultRuntimeJob}.
  */
 public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, DiscoveryService {
 

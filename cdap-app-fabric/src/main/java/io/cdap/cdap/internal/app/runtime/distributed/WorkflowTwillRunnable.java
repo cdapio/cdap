@@ -48,13 +48,6 @@ import java.util.List;
  */
 public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<WorkflowProgramRunner> {
 
-  /**
-   * Main method for the remote execution mode.
-   */
-  public static void main(String[] args) throws Exception {
-    new WorkflowTwillRunnable(getRunnableNameFromEnv()).doMain();
-  }
-
   public WorkflowTwillRunnable(String name) {
     super(name);
   }

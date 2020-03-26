@@ -96,6 +96,7 @@ export default class EntityListView extends Component {
           });
       } else {
         !this.unmounted &&
+          this.state.namespaceNotFound &&
           this.setState({
             namespaceNotFound: false,
           });

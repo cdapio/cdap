@@ -21,6 +21,7 @@ import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
+import debounce from 'lodash/debounce';
 
 const styles = (theme): StyleRules => {
   return {
@@ -75,7 +76,6 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
     if (nextProps.value === currentValue) {
       return;
     }
-
     this.editor.getSession().setValue(nextProps.value);
   }
 
@@ -93,16 +93,35 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
     if (this.props.disabled) {
       this.editor.setReadOnly(true);
     }
-    this.editor.getSession().on('change', () => {
-      if (typeof this.props.onChange === 'function') {
-        this.props.onChange(this.editor.getSession().getValue());
-      }
-    });
+
+    // TODO: Investigate why this change event is fired multiple times
+    // https://issues.cask.co/browse/CDAP-16477
+    this.editor.getSession().on('change', this.debouncedChangeHandler);
     this.editor.setShowPrintMargin(false);
   }
+
+  private valueChangeHandler = () => {
+    if (typeof this.props.onChange === 'function') {
+      const value = this.editor.getSession().getValue();
+      this.props.onChange(value);
+    }
+  };
+
+  private debouncedChangeHandler = debounce(this.valueChangeHandler, 500);
+
   public shouldComponentUpdate() {
     return false;
   }
+
+  // This componentWillUnmount is to handle the edge case where the user types something
+  // and hit escape before the 500ms debounce have cleared. So to guarantee the onChange
+  // to fire before the modal closes, the debounce is cancelled and the onChange is called
+  // manually
+  public componentWillUnmount() {
+    this.debouncedChangeHandler.cancel();
+    this.valueChangeHandler();
+  }
+
   public render() {
     const { value, className, classes } = this.props;
     return (

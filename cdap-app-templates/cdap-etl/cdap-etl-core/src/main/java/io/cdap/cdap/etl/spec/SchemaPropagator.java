@@ -78,6 +78,7 @@ public class SchemaPropagator {
       }
 
       outputStageConfigurer.addInputSchema(stageName, nextStageInputSchema);
+      outputStageConfigurer.addInputStage(stageName);
     }
   }
 

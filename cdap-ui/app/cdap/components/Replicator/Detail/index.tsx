@@ -193,6 +193,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
   // TODO: refactor to unify with Draft init
   private init = () => {
     MyReplicatorApi.getReplicator(this.getBaseParams()).subscribe((app) => {
+      const parentArtifact = { ...app.artifact };
+
       let config;
       try {
         config = JSON.parse(app.configuration);
@@ -217,7 +219,13 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
         const pluginConfig = stage.plugin.properties;
 
         if (pluginType === PluginType.source) {
-          sourcePlugin$ = fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType);
+          sourcePlugin$ = fetchPluginInfo(
+            parentArtifact,
+            artifactName,
+            artifactScope,
+            pluginName,
+            pluginType
+          );
           sourceWidget$ = fetchPluginWidget(
             artifactName,
             artifactVersion,
@@ -227,7 +235,13 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
           );
           sourceConfig = pluginConfig;
         } else {
-          targetPlugin$ = fetchPluginInfo(artifactName, artifactScope, pluginName, pluginType);
+          targetPlugin$ = fetchPluginInfo(
+            parentArtifact,
+            artifactName,
+            artifactScope,
+            pluginName,
+            pluginType
+          );
           targetWidget$ = fetchPluginWidget(
             artifactName,
             artifactVersion,

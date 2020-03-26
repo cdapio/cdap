@@ -50,6 +50,7 @@ export default class ProfilesListViewInPipeline extends Component {
     showProfilesCount: PropTypes.bool,
     disabled: PropTypes.bool,
     provisionersMap: PropTypes.object,
+    appName: PropTypes.string,
   };
 
   static defaultProps = {
@@ -80,7 +81,7 @@ export default class ProfilesListViewInPipeline extends Component {
   }
 
   componentWillMount() {
-    let appId = PipelineDetailStore.getState().name;
+    let appId = this.props.appName || PipelineDetailStore.getState().name;
     let namespace = getCurrentNamespace();
 
     Observable.forkJoin(

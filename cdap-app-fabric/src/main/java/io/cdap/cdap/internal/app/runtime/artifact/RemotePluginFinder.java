@@ -65,6 +65,7 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   private static final Type PLUGIN_INFO_LIST_TYPE = new TypeToken<List<PluginInfo>>() { }.getType();
 
   private final RemoteClient remoteClient;
+  private final RemoteClient remoteClientInternal;
   private final boolean authorizationEnabled;
   private final AuthenticationContext authenticationContext;
   private final LocationFactory locationFactory;
@@ -77,6 +78,9 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
                                          new DefaultHttpRequestConfig(false),
                                          String.format("%s", Constants.Gateway.API_VERSION_3));
+    this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.APP_FABRIC_HTTP,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 String.format("%s", Constants.Gateway.INTERNAL_API_VERSION_3));
     this.authorizationEnabled = cConf.getBoolean(Constants.Security.Authorization.ENABLED);
     this.authenticationContext = authenticationContext;
     this.locationFactory = locationFactory;
@@ -114,7 +118,8 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
           throw new PluginNotExistsException(pluginNamespaceId, pluginType, pluginName);
         }
 
-        Location artifactLocation = getArtifactLocation(Artifacts.toArtifactId(pluginNamespaceId, selected.getKey()));
+        Location artifactLocation = getArtifactLocation(Artifacts.toProtoArtifactId(pluginNamespaceId,
+                                                                                    selected.getKey()));
         return Maps.immutableEntry(new ArtifactDescriptor(selected.getKey(), artifactLocation), selected.getValue());
       }, retryStrategy);
     } catch (PluginNotExistsException e) {
@@ -180,15 +185,15 @@ public class RemotePluginFinder implements PluginFinder, ArtifactFinder {
   @Override
   public Location getArtifactLocation(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
     HttpRequest.Builder requestBuilder =
-      remoteClient.requestBuilder(
-        HttpMethod.GET, String.format("namespaces/%s/artifact-internals/artifacts/%s/versions/%s/location",
+      remoteClientInternal.requestBuilder(
+        HttpMethod.GET, String.format("namespaces/%s/artifacts/%s/versions/%s/location",
                                       artifactId.getNamespace(), artifactId.getArtifact(), artifactId.getVersion()));
     // add header if auth is enabled
     if (authorizationEnabled) {
       requestBuilder.addHeader(Constants.Security.Headers.USER_ID, authenticationContext.getPrincipal().getName());
     }
 
-    HttpResponse response = remoteClient.execute(requestBuilder.build());
+    HttpResponse response = remoteClientInternal.execute(requestBuilder.build());
 
     if (response.getResponseCode() == HttpResponseStatus.NOT_FOUND.code()) {
       throw new ArtifactNotFoundException(artifactId);

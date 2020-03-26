@@ -22,7 +22,9 @@ import io.cdap.cdap.etl.api.MultiOutputStageConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.validation.DefaultFailureCollector;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -40,10 +42,12 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   private boolean errorSchemaSet;
   private FailureCollector collector;
   protected Map<String, Schema> inputSchemas;
+  protected List<String> inputStages;
   protected Map<String, Schema> outputPortSchemas;
 
   public DefaultStageConfigurer(String stageName) {
     this.inputSchemas = new HashMap<>();
+    this.inputStages = new ArrayList<>();
     this.outputPortSchemas = new HashMap<>();
     this.errorSchemaSet = false;
     this.stageName = stageName;
@@ -76,6 +80,11 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
   }
 
   @Override
+  public List<String> getInputStages() {
+    return inputStages;
+  }
+
+  @Override
   public void setOutputSchema(@Nullable Schema outputSchema) {
     this.outputSchema = outputSchema;
   }
@@ -104,6 +113,10 @@ public class DefaultStageConfigurer implements StageConfigurer, MultiInputStageC
 
   public void addInputSchema(String inputStageName, @Nullable Schema inputSchema) {
     inputSchemas.put(inputStageName, inputSchema);
+  }
+
+  public void addInputStage(String inputStageName) {
+    inputStages.add(inputStageName);
   }
 }
 

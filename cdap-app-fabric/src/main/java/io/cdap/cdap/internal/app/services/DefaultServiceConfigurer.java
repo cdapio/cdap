@@ -34,7 +34,7 @@ import io.cdap.cdap.api.service.http.SystemHttpServiceConfigurer;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -50,7 +50,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
 
   private final String className;
   private final Id.Artifact artifactId;
-  private final ArtifactRepository artifactRepository;
+  private final PluginFinder pluginFinder;
   private final PluginInstantiator pluginInstantiator;
   private final SystemTableConfigurer systemTableConfigurer;
 
@@ -64,9 +64,9 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
    * Create an instance of {@link DefaultServiceConfigurer}
    */
   public DefaultServiceConfigurer(Service service, Id.Namespace namespace, Id.Artifact artifactId,
-                                  ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator,
+                                  PluginFinder pluginFinder, PluginInstantiator pluginInstantiator,
                                   DefaultSystemTableConfigurer systemTableConfigurer) {
-    super(namespace, artifactId, artifactRepository, pluginInstantiator);
+    super(namespace, artifactId, pluginFinder, pluginInstantiator);
     this.className = service.getClass().getName();
     this.name = service.getClass().getSimpleName();
     this.description = "";
@@ -74,7 +74,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
     this.resources = new Resources();
     this.instances = 1;
     this.artifactId = artifactId;
-    this.artifactRepository = artifactRepository;
+    this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
     this.systemTableConfigurer = systemTableConfigurer;
   }
@@ -120,7 +120,7 @@ public class DefaultServiceConfigurer extends AbstractConfigurer implements Syst
     Map<String, HttpServiceHandlerSpecification> handleSpecs = Maps.newHashMap();
     for (HttpServiceHandler handler : handlers) {
       DefaultHttpServiceHandlerConfigurer configurer = new DefaultHttpServiceHandlerConfigurer(
-        handler, deployNamespace, artifactId, artifactRepository, pluginInstantiator, systemTableConfigurer);
+        handler, deployNamespace, artifactId, pluginFinder, pluginInstantiator, systemTableConfigurer);
       handler.configure(configurer);
       HttpServiceHandlerSpecification spec = configurer.createSpecification();
       Preconditions.checkArgument(!handleSpecs.containsKey(spec.getName()),

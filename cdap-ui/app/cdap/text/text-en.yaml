@@ -1571,6 +1571,8 @@ features:
           causeImpact: "Pin field"
           viewIncoming: "View cause"
           viewOutgoing: "View impact"
+        FllTableHeader:
+          viewLineage: "View lineage"
         noRelatedTables: "There is no {type} for {target}"
         relatedFieldsCount:
           1: "{context} related field"
@@ -1709,6 +1711,10 @@ features:
       namespaceLabel: Namespace
       systemLabel: System
       title: Manage
+    Ingestion:
+      description: Set one time transfer of your data
+      linkLabel: Transfer
+      title: Ingest Data
     Metadata:
       description: Discover data using metadata. Perform root cause and impact analysis using lineage.
       linkLabel: Metadata

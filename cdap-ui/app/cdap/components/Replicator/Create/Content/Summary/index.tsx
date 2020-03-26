@@ -67,6 +67,7 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   description,
   draftId,
   getReplicatorConfig,
+  parentArtifact,
 }) => {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
@@ -74,18 +75,20 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
   // TODO: Fetch artifacts version from Backend service
   function constructJson() {
+    const config = {
+      ...getReplicatorConfig(),
+    };
+
+    if (window.CDAP_CONFIG.delta.defaultCheckpointDir) {
+      config.offsetBasePath = window.CDAP_CONFIG.delta.defaultCheckpointDir;
+    }
+
     return {
       name,
       artifact: {
-        name: 'delta-app',
-        version: '0.1.0-SNAPSHOT',
-        scope: 'SYSTEM',
+        ...parentArtifact,
       },
-      config: {
-        ...getReplicatorConfig(),
-        // TODO: replace with actual textbox step to configure offsetBasePath
-        offsetBasePath: window.CDAP_CONFIG.hydrator.defaultCheckpointDir || '/tmp/Replicator',
-      },
+      config,
     };
   }
 

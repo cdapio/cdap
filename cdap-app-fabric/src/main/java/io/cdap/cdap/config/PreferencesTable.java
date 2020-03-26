@@ -122,7 +122,7 @@ public class PreferencesTable {
   /**
    * Get the resolved preferences for the entity id, the preferences are resolved from
    * instance -> namespace -> application -> program level
-   * (e.g. preferences at instance level take precedence over those at child level)
+   * (i.e. preferences at child level e.g. program take precedence over those at parent level e.g. application)
    *
    * @param entityId the entity id to get the preferences from
    * @return preferences detail

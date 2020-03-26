@@ -23,11 +23,9 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.util.Modules;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.ClusterMode;
@@ -39,46 +37,33 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
-import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
-import io.cdap.cdap.internal.app.program.StateChangeListener;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
-import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
-import io.cdap.cdap.messaging.server.MessagingHttpService;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.security.UserGroupInformation;
-import org.apache.tephra.TransactionManager;
 import org.apache.twill.api.Command;
-import org.apache.twill.api.ElectionHandler;
-import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.api.TwillContext;
 import org.apache.twill.api.TwillRunnable;
 import org.apache.twill.api.TwillRunnableSpecification;
-import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
-import org.apache.twill.discovery.ServiceDiscovered;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.Constants;
-import org.apache.twill.internal.EnvKeys;
-import org.apache.twill.internal.TwillRuntimeSpecification;
-import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.apache.twill.kafka.client.BrokerService;
 import org.apache.twill.kafka.client.KafkaClientService;
 import org.apache.twill.zookeeper.ZKClientService;
@@ -92,8 +77,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
+import java.net.Authenticator;
+import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collection;
@@ -105,7 +90,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.locks.Lock;
 import javax.annotation.Nullable;
 
 /**
@@ -128,7 +112,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private LogAppenderInitializer logAppenderInitializer;
   private ProgramOptions programOptions;
   private Deque<Service> coreServices;
-  private Injector injector;
+  private ProxySelector oldProxySelector;
   private T programRunner;
   private Program program;
   private ProgramRunId programRunId;
@@ -138,46 +122,12 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private long maxStopSeconds;
 
   /**
-   * Helper method to get the name of the runnable from the environment.
-   */
-  protected static String getRunnableNameFromEnv() {
-    String runnableName = System.getenv(EnvKeys.TWILL_RUNNABLE_NAME);
-    if (runnableName == null) {
-      throw new IllegalArgumentException("Missing environment variable " + EnvKeys.TWILL_RUNNABLE_NAME);
-    }
-    return runnableName;
-  }
-
-  /**
    * Constructor.
    *
    * @param name Name of the TwillRunnable
    */
   protected AbstractProgramTwillRunnable(String name) {
     this.name = name;
-  }
-
-  protected void doMain() throws Exception {
-    TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create()
-      .fromJson(new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.TWILL_SPEC));
-    org.apache.twill.internal.Arguments arguments = readJsonFile(new File(Constants.Files.RUNTIME_CONFIG_JAR,
-                                                                          Constants.Files.ARGUMENTS),
-                                                                 org.apache.twill.internal.Arguments.class);
-
-    TwillContext context = new DirectExecutionTwillContext(name, twillRuntimeSpec, arguments);
-    initialize(context);
-    Runtime.getRuntime().addShutdownHook(new Thread(AbstractProgramTwillRunnable.this::stop));
-
-    // Add the program state writer listener when the program controller is available
-    ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
-    controllerFuture.thenAcceptAsync(
-      c -> c.addListener(new StateChangeListener(c.getProgramRunId(), null,
-                                                 programStateWriter), Threads.SAME_THREAD_EXECUTOR),
-      command -> {
-        Thread t = new Thread(command);
-        t.start();
-      });
-    run();
   }
 
   @Override
@@ -245,12 +195,16 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     maxStopSeconds = cConf.getLong(io.cdap.cdap.common.conf.Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
 
-    if (clusterMode == ClusterMode.ISOLATED) {
-      String hostName = context.getHost().getCanonicalHostName();
-      cConf.set(io.cdap.cdap.common.conf.Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);
-    }
+    Injector injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
 
-    injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
+    // Setup the proxy selector for in active monitoring mode
+    if (cConf.getBoolean(io.cdap.cdap.common.conf.Constants.RuntimeMonitor.ACTIVE_MONITORING, true)) {
+      oldProxySelector = ProxySelector.getDefault();
+      if (clusterMode == ClusterMode.ISOLATED) {
+        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
+        Authenticator.setDefault(injector.getInstance(Authenticator.class));
+      }
+    }
 
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
@@ -281,24 +235,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       // Start the program.
       ProgramController controller = programRunner.run(program, programOptions);
       controller.addListener(new AbstractListener() {
-        @Override
-        public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-          switch (currentState) {
-            case ALIVE:
-              alive();
-              break;
-            case COMPLETED:
-              completed();
-              break;
-            case KILLED:
-              killed();
-              break;
-            case ERROR:
-              error(cause);
-              break;
-          }
-        }
-
         @Override
         public void alive() {
           controllerFuture.complete(controller);
@@ -389,14 +325,14 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   @Override
   public void destroy() {
-    // no-op
+    ProxySelector.setDefault(oldProxySelector);
   }
 
   /**
    * Returns a set of extra system arguments that will be available through the {@link ProgramOptions#getArguments()}
    * for the program execution.
    */
-  protected Map<String, String> getExtraSystemArguments() {
+  private Map<String, String> getExtraSystemArguments() {
     Map<String, String> args = new HashMap<>();
     args.put(ProgramOptionConstants.INSTANCE_ID, context == null ? "0" : Integer.toString(context.getInstanceId()));
     args.put(ProgramOptionConstants.INSTANCES, context == null ? "1" : Integer.toString(context.getInstanceCount()));
@@ -417,25 +353,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
-    Module module = new DistributedProgramContainerModule(cConf, hConf, programRunId,
-                                                          programOptions.getArguments(), getServiceAnnouncer());
-
-    if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ISOLATED) {
-      // In isolated mode, TMS runs in the "launcher" container.
-      // We don't do this in the DistributedProgramContainerModule
-      // because that module is used in both launcher and task containers
-      module = Modules.override(module).with(
-        new MessagingServerRuntimeModule().getStandaloneModules(),
-        new AbstractModule() {
-          @Override
-          protected void configure() {
-            // Bind a Cancellable for the RuntimeMonitor to stop this program run.
-            bind(Cancellable.class).toInstance(() -> stop());
-          }
-      });
-    }
-
-    return module;
+    return new DistributedProgramContainerModule(cConf, hConf, programRunId,
+                                                 programOptions.getArguments(), getServiceAnnouncer());
   }
 
   /**
@@ -445,13 +364,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   @Nullable
   protected ServiceAnnouncer getServiceAnnouncer() {
     return context;
-  }
-
-  /**
-   * Resolve the scope of the user arguments from the {@link Arguments}
-   */
-  protected Arguments resolveScope(Arguments args) {
-    return args;
   }
 
   /**
@@ -485,7 +397,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     // Use the name passed in by the constructor as the program name to construct the ProgramId
     return new SimpleProgramOptions(original.getProgramId(), new BasicArguments(arguments),
-                                    resolveScope(original.getUserArguments()), original.isDebug());
+                                    original.getUserArguments(), original.isDebug());
   }
 
   /**
@@ -507,15 +419,8 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     services.add(metricsCollectionService);
     services.add(injector.getInstance(LogAppenderLoaderService.class));
 
-    switch (ProgramRunners.getClusterMode(programOptions)) {
-      case ON_PREMISE:
-        addOnPremiseServices(injector, programOptions, metricsCollectionService, services);
-        break;
-      case ISOLATED:
-        addIsolatedServices(injector, services);
-        break;
-      default:
-        // This shouldn't happen. Just do nothing.
+    if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE) {
+      addOnPremiseServices(injector, programOptions, metricsCollectionService, services);
     }
 
     return services;
@@ -529,19 +434,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));
   }
 
-  private void addIsolatedServices(Injector injector, Collection<Service> services) {
-    MessagingService messagingService = injector.getInstance(MessagingService.class);
-    if (messagingService instanceof Service) {
-      services.add((Service) messagingService);
-    }
-    services.add(injector.getInstance(TransactionManager.class));
-    services.add(injector.getInstance(MessagingHttpService.class));
-    services.add(injector.getInstance(RuntimeMonitorServer.class));
-  }
-
   private void startCoreServices() {
     // Initialize log appender
     logAppenderInitializer.initialize();
+    SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
     try {
       // Starts the core services
@@ -564,106 +460,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       }
     }
     logAppenderInitializer.close();
-  }
-
-  /**
-   * A {@link TwillContext} implementation for direct execution from the {@link #doMain()}.
-   */
-  private static final class DirectExecutionTwillContext implements TwillContext {
-
-    private final String runnableName;
-    private final TwillRuntimeSpecification runtimeSpec;
-    private final String[] applicationArgs;
-    private final String[] args;
-
-    private DirectExecutionTwillContext(String runnableName,
-                                        TwillRuntimeSpecification runtimeSpec,
-                                        org.apache.twill.internal.Arguments arguments) {
-      this.runnableName = runnableName;
-      this.runtimeSpec = runtimeSpec;
-      this.applicationArgs = arguments.getArguments().toArray(new String[0]);
-      this.args = arguments.getRunnableArguments().get(runnableName).toArray(new String[0]);
-    }
-
-    @Override
-    public RunId getRunId() {
-      return runtimeSpec.getTwillAppRunId();
-    }
-
-    @Override
-    public RunId getApplicationRunId() {
-      return runtimeSpec.getTwillAppRunId();
-    }
-
-    @Override
-    public int getInstanceCount() {
-      // Only support one instance on direct execution
-      return 1;
-    }
-
-    @Override
-    public InetAddress getHost() {
-      try {
-        return InetAddress.getLocalHost();
-      } catch (UnknownHostException e) {
-        return InetAddress.getLoopbackAddress();
-      }
-    }
-
-    @Override
-    public String[] getArguments() {
-      return args;
-    }
-
-    @Override
-    public String[] getApplicationArguments() {
-      return applicationArgs;
-    }
-
-    @Override
-    public TwillRunnableSpecification getSpecification() {
-      return runtimeSpec.getTwillSpecification().getRunnables().get(runnableName).getRunnableSpecification();
-    }
-
-    @Override
-    public int getInstanceId() {
-      return 0;
-    }
-
-    @Override
-    public int getVirtualCores() {
-      return 0;
-    }
-
-    @Override
-    public int getMaxMemoryMB() {
-      return 0;
-    }
-
-    @Override
-    public ServiceDiscovered discover(String name) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Cancellable electLeader(String name, ElectionHandler participantHandler) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Lock createLock(String name) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Cancellable announce(String serviceName, int port) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public Cancellable announce(String serviceName, int port, byte[] payload) {
-      throw new UnsupportedOperationException();
-    }
   }
 }
 

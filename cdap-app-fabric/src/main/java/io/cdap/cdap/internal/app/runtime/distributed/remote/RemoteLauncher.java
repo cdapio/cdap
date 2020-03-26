@@ -51,7 +51,7 @@ public class RemoteLauncher {
    */
   public static void main(String[] args) throws Exception {
     if (args.length < 2) {
-      System.out.println("Usage: java " + TwillLauncher.class.getName() + " [mainClass] [use_classpath] [args...]");
+      System.out.println("Usage: java " + RemoteLauncher.class.getName() + " [mainClass] [use_classpath] [args...]");
       return;
     }
 
@@ -85,14 +85,8 @@ public class RemoteLauncher {
 
     // For backward compatibility, sort jars from twill and jars from application together
     // With TWILL-179, this will change as the user can have control on how it should be.
-    List<File> libJarFiles = listJarFiles(new File(appJarDir, "lib"), new ArrayList<File>());
-    Collections.sort(listJarFiles(new File(twillJarDir, "lib"), libJarFiles), new Comparator<File>() {
-      @Override
-      public int compare(File file1, File file2) {
-        // order by the file name only. If the name are the same, the one in application jar will prevail.
-        return file1.getName().compareTo(file2.getName());
-      }
-    });
+    List<File> libJarFiles = listJarFiles(new File(appJarDir, "lib"), new ArrayList<>());
+    listJarFiles(new File(twillJarDir, "lib"), libJarFiles).sort(Comparator.comparing(File::getName));
 
     // Add the app jar, resources jar and twill jar directories to the classpath as well
     for (File dir : Arrays.asList(appJarDir, twillJarDir)) {
@@ -115,7 +109,7 @@ public class RemoteLauncher {
     }
 
     addClassPathsToList(urls, new File(Constants.Files.RUNTIME_CONFIG_JAR, Constants.Files.APPLICATION_CLASSPATH));
-    return urls.toArray(new URL[urls.size()]);
+    return urls.toArray(new URL[0]);
   }
 
   /**
@@ -160,7 +154,7 @@ public class RemoteLauncher {
     if (classpath.endsWith("/*")) {
       // Grab all .jar files
       File dir = new File(classpath.substring(0, classpath.length() - 2));
-      List<File> files = listJarFiles(dir, new ArrayList<File>());
+      List<File> files = listJarFiles(dir, new ArrayList<>());
       Collections.sort(files);
       if (files.isEmpty()) {
         return singleItem(dir.toURI().toURL());

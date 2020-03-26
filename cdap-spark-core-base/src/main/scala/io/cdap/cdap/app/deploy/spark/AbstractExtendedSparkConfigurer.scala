@@ -26,6 +26,7 @@ import io.cdap.cdap.api.spark.service.SparkHttpServiceHandler
 import io.cdap.cdap.app.runtime.spark.dynamic.AbstractSparkCompiler
 import io.cdap.cdap.common.id.Id
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator
 import io.cdap.cdap.internal.app.runtime.service.http.HttpHandlerFactory
 import io.cdap.cdap.internal.app.services.ServiceEndpointExtractor
@@ -47,9 +48,9 @@ import scala.tools.nsc.Settings
 abstract class AbstractExtendedSparkConfigurer(spark: Spark,
                                                deployNamespace: Id.Namespace,
                                                artifactId: Id.Artifact,
-                                               artifactRepository: ArtifactRepository,
+                                               pluginFinder: PluginFinder,
                                                pluginInstantiator: PluginInstantiator)
-  extends DefaultSparkConfigurer(spark, deployNamespace, artifactId, artifactRepository, pluginInstantiator)
+  extends DefaultSparkConfigurer(spark, deployNamespace, artifactId, pluginFinder, pluginInstantiator)
   with ExtendedSparkConfigurer {
 
   private val handlers = new mutable.ArrayBuffer[SparkHttpServiceHandler]()

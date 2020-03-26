@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2016 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.proto.id.NamespaceId;
 
@@ -69,7 +70,7 @@ public final class Artifacts {
    * @param namespaceId the user namespace to use
    * @param artifactId the artifact id to convert
    */
-  public static io.cdap.cdap.proto.id.ArtifactId toArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
+  public static io.cdap.cdap.proto.id.ArtifactId toProtoArtifactId(NamespaceId namespaceId, ArtifactId artifactId) {
     ArtifactScope scope = artifactId.getScope();
     NamespaceId artifactNamespace = scope == ArtifactScope.SYSTEM ? NamespaceId.SYSTEM : namespaceId;
     return artifactNamespace.artifact(artifactId.getName(), artifactId.getVersion().getVersion());

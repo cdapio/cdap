@@ -17,6 +17,7 @@
 import T from 'i18n-react';
 T.setTexts(require('../cdap/text/text-en.yaml'));
 var Store = require('../cdap/services/NamespaceStore').default;
+var IsValidNS = require('../cdap/services/NamespaceStore').isValidNamespace;
 var NameSpaceStoreActions = require('../cdap/services/NamespaceStore/NamespaceActions').default;
 var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
 var DataPrepHome = require('../cdap/components/DataPrepHome').default;
@@ -28,6 +29,8 @@ var VersionActions = require('../cdap/services/VersionStore/VersionActions').def
 var Version = require('../cdap/services/VersionRange/Version').default;
 var VersionRange = require('../cdap/services/VersionRange').default;
 var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
+var KeyValuePairsMaterial = require('../cdap/components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper/RuntimeArgsPairsMaterial.tsx')
+  .default;
 var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
 var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
 var PipelineSummary = require('../cdap/components/PipelineSummary').default;
@@ -114,6 +117,7 @@ var Clipboard = require('../cdap/services/Clipboard');
 var Page404 = require('../cdap/components/404').default;
 var Page500 = require('../cdap/components/500').default;
 var WindowManager = require('../cdap/services/WindowManager').default;
+var { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } = require('../cdap/services/WindowManager');
 
 export {
   Store,
@@ -128,6 +132,7 @@ export {
   Version,
   ResourceCenterButton,
   KeyValuePairs,
+  KeyValuePairsMaterial,
   KeyValueStore,
   KeyValueStoreActions,
   Mousetrap,
@@ -202,4 +207,7 @@ export {
   Page404,
   Page500,
   WindowManager,
+  IsValidNS,
+  WINDOW_ON_FOCUS,
+  WINDOW_ON_BLUR,
 };

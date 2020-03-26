@@ -74,6 +74,24 @@ public interface ProgramManager<T extends ProgramManager> {
     throws InterruptedException, ExecutionException, TimeoutException;
 
   /**
+   * Starts the program with arguments and waits for one additional run of the specified status.
+   * This method assumes another run is not started by another thread. This is essentially a
+   * call to {@link #start(Map)} ()} followed by a call to {@link #waitForRuns(ProgramRunStatus, int, long, TimeUnit)}.
+   * It should not be used if there is another run in progress.
+   *
+   * @param arguments the arguments to start the program with
+   * @param status the status of the run to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @param sleepTime amount of time to sleep in between polls
+   * @param sleepUnit sleep time unit type
+   * @return the program manager itself
+   */
+  T startAndWaitForRun(Map<String, String> arguments, ProgramRunStatus status, long timeout, TimeUnit timeoutUnit,
+                       long sleepTime, TimeUnit sleepUnit)
+    throws InterruptedException, ExecutionException, TimeoutException;
+
+  /**
    * Stops the program.
    */
   void stop();
@@ -133,6 +151,22 @@ public interface ProgramManager<T extends ProgramManager> {
    */
   void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit)
     throws InterruptedException, ExecutionException, TimeoutException;
+
+  /**
+   * Blocks until at least {@code runCount} number of run records with the given {@link ProgramRunStatus}.
+   *
+   * @param status the status of the run record
+   * @param runCount the number of run records to wait for
+   * @param timeout amount of time units to wait
+   * @param timeoutUnit time unit type
+   * @param sleepTime amount of time to sleep in between polls
+   * @param sleepUnit sleep time unit type
+   * @throws InterruptedException if method is interrupted while waiting for runs
+   * @throws TimeoutException if timeout reached
+   * @throws ExecutionException if error getting runs
+   */
+  void waitForRuns(ProgramRunStatus status, int runCount, long timeout, TimeUnit timeoutUnit, long sleepTime,
+                   TimeUnit sleepUnit) throws InterruptedException, ExecutionException, TimeoutException;
 
   /**
    * Wait for the status of the program, retrying a given number of times with a timeout between attempts.

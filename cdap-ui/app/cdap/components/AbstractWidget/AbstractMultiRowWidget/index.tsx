@@ -150,8 +150,9 @@ export default class AbstractMultiRowWidget<
 
     this.onChange();
   };
-
-  public constructValues = () => {
+  // Need any here to allow constructValues in extended classes
+  // to return types other than string
+  public constructValues = (): any => {
     const delimiter = objectQuery(this.props, 'widgetProps', 'delimiter') || ',';
 
     const values = this.state.rows

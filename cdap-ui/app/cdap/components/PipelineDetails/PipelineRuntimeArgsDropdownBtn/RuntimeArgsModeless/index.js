@@ -101,6 +101,7 @@ class RuntimeArgsModeless extends PureComponent {
           onClick={this.saveRuntimeArgs}
           disabled={this.state.saving || !isEmpty(this.state.savedSuccessMessage)}
           label="Save"
+          dataCy="save-runtimeargs-deployed-pipeline-modal-btn"
         />
       );
     };
@@ -112,6 +113,7 @@ class RuntimeArgsModeless extends PureComponent {
           onClick={this.saveRuntimeArgsAndRun}
           disabled={this.state.saving}
           label="Run"
+          data-cy="run-deployed-pipeline-modal-btn"
         />
       );
     };

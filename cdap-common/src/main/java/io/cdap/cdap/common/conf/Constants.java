@@ -142,6 +142,9 @@ public final class Constants {
     public static final String CFG_SESSION_TIMEOUT_MILLIS = "zookeeper.session.timeout.millis";
     public static final String CLIENT_STARTUP_TIMEOUT_MILLIS = "zookeeper.client.startup.timeout.millis";
     public static final int DEFAULT_SESSION_TIMEOUT_MILLIS = 40000;
+
+    // System property name to control the InMemoryZKServer to bind to localhost only or not
+    public static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
   }
 
   /**
@@ -862,6 +865,15 @@ public final class Constants {
     public static final String GRACEFUL_SHUTDOWN_MS = "app.program.runtime.monitor.graceful.shutdown.ms";
     public static final String THREADS = "app.program.runtime.monitor.threads";
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
+
+    /**
+     * Configuration to tell if the runtime monitoring is active
+     * An active monitoring is the app-fabric polling the remote runtime for status
+     * This is temporary until we move the SSH approach to use the RuntimeClient for monitoring.
+     */
+    public static final String ACTIVE_MONITORING = "app.program.runtime.monitor.active.monitoring";
+    public static final String SERVER_KEYSTORE_PATH = "app.program.runtime.monitor.server.keystore.path";
+    public static final String CLIENT_KEYSTORE_PATH = "app.program.runtime.monitor.client.keystore.path";
 
     public static final String BIND_ADDRESS = "app.program.runtime.monitor.server.bind.address";
     public static final String BIND_PORT = "app.program.runtime.monitor.server.bind.port";

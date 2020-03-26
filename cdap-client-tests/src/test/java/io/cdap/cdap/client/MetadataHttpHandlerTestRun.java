@@ -78,6 +78,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -665,7 +666,11 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
 
     // verify that system scope artifacts can be returned by a search in the default namespace
     // with no target type
-    assertSearch(searchMetadata(ImmutableList.of(NamespaceId.DEFAULT, NamespaceId.SYSTEM), "system*"), systemId);
+    MetadataSearchResponse response = searchMetadata(ImmutableList.of(NamespaceId.DEFAULT, NamespaceId.SYSTEM),
+                                                     "system*");
+    MetadataEntity expectedEntity = systemId.toMetadataEntity();
+    Set<MetadataEntity> actualEntities = new HashSet<>(extractMetadataEntities(response.getResults()));
+    Assert.assertTrue(actualEntities.contains(expectedEntity));
 
     // with target type as artifact
     assertSearch(searchMetadata(ImmutableList.of(NamespaceId.DEFAULT, NamespaceId.SYSTEM),

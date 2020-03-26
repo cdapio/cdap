@@ -22,13 +22,6 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
  */
 public final class MapReduceTwillRunnable extends AbstractProgramTwillRunnable<MapReduceProgramRunner> {
 
-  /**
-   * Main method for the remote execution mode.
-   */
-  public static void main(String[] args) throws Exception {
-    new MapReduceTwillRunnable(getRunnableNameFromEnv()).doMain();
-  }
-
   public MapReduceTwillRunnable(String name) {
     super(name);
   }

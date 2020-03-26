@@ -28,6 +28,7 @@ import Search from '@material-ui/icons/Search';
 import { objectQuery } from 'services/helpers';
 import If from 'components/If';
 import LoadingSVG from 'components/LoadingSVG';
+import { MyReplicatorApi } from 'api/replicator';
 
 const styles = (): StyleRules => {
   return {
@@ -72,10 +73,12 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [loading, setLoading] = React.useState(true);
 
   React.useEffect(() => {
-    fetchPluginsAndWidgets(PluginType.source).subscribe((res) => {
-      setSources(res.plugins);
-      setWidgetMap(res.widgetMap);
-      setLoading(false);
+    MyReplicatorApi.getDeltaApp().subscribe((appInfo) => {
+      fetchPluginsAndWidgets(appInfo.artifact, PluginType.source).subscribe((res) => {
+        setSources(res.plugins);
+        setWidgetMap(res.widgetMap);
+        setLoading(false);
+      });
     });
   }, []);
 

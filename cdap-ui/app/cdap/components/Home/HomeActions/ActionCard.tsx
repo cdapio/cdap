@@ -89,6 +89,7 @@ interface IActionCardProps extends WithStyles<typeof styles> {
     title: string;
     description: string;
     links: ILink[];
+    experiment?: string;
   };
 }
 

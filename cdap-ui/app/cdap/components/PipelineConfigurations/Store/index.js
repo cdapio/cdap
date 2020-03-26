@@ -111,7 +111,7 @@ const DEFAULT_CONFIGURE_OPTIONS = {
   previewTimeoutInMin: HYDRATOR_DEFAULT_VALUES.previewTimeoutInMin,
   batchInterval: HYDRATOR_DEFAULT_VALUES.batchInterval,
   postActions: [],
-  schedule: HYDRATOR_DEFAULT_VALUES.cron,
+  schedule: HYDRATOR_DEFAULT_VALUES.schedule,
   maxConcurrentRuns: 1,
   isMissingKeyValues: false,
   modelessOpen: false,

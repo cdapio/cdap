@@ -47,8 +47,8 @@ const keyValuePairsHaveMissingValues = (keyValues) => {
       if (keyValuePair.notDeletable && keyValuePair.provided) {
         return false;
       }
-      let emptyKeyField = keyValuePair.key.length === 0;
-      let emptyValueField = keyValuePair.value.length === 0;
+      let emptyKeyField = keyValuePair.key ? keyValuePair.key.length === 0 : true;
+      let emptyValueField = keyValuePair.value ? keyValuePair.value.length === 0 : true;
       // buttons are disabled when either the key or the value of a pair is empty, but not both
       return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
     });

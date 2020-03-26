@@ -23,21 +23,18 @@ import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.apache.twill.discovery.ZKDiscoveryService;
 import org.apache.twill.filesystem.FileContextLocationFactory;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.yarn.YarnTwillRunnerService;
-import org.apache.twill.zookeeper.RetryStrategies;
-import org.apache.twill.zookeeper.ZKClientService;
-import org.apache.twill.zookeeper.ZKClientServices;
-import org.apache.twill.zookeeper.ZKClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Dataproc runtime job environment . This class will provide implementation of {@link TwillRunner},
@@ -46,58 +43,41 @@ import java.util.concurrent.TimeUnit;
  */
 @SuppressWarnings("unused")
 public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocRuntimeEnvironment.class);
+
   private static final String TWILL_ZK_SERVER_LOCALHOST = "twill.zk.server.localhost";
   private static final String ZK_QUORUM = "zookeeper.quorum";
+  private static final String APP_SPARK_COMPAT = "app.program.spark.compat";
   private InMemoryZKServer zkServer;
-  private ZKClientService zkClientService;
-  private ZKDiscoveryService zkDiscoveryService;
   private TwillRunnerService yarnTwillRunnerService;
-  private String connectionStr;
+  private LocationFactory locationFactory;
+  private Map<String, String> properties;
 
   /**
    * This method initializes the dataproc runtime environment.
    *
+   * @param sparkCompat spark compat version supported by dataproc cluster
    * @throws Exception any exception while initializing the environment.
    */
-  public void initialize() throws Exception {
+  public void initialize(String sparkCompat) throws Exception {
     System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
     zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
 
     InetSocketAddress resolved = resolve(zkServer.getLocalAddress());
-    connectionStr = resolved.getHostString() + ":" + resolved.getPort();
-
-    zkClientService = ZKClientServices.delegate(
-      ZKClients.reWatchOnExpire(
-        ZKClients.retryOnFailure(
-          ZKClientService.Builder.of(connectionStr)
-            .setSessionTimeout(40000)
-            .build(),
-          RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS)
-        )
-      )
-    );
-
-    // Invoke method through reflection. This is needed because of conflict in guava versions during compilation
-    Method startAndWait = zkClientService.getClass().getMethod("startAndWait");
-    startAndWait.invoke(zkClientService);
-
-    zkDiscoveryService = new ZKDiscoveryService(zkClientService);
+    String connectionStr = resolved.getHostString() + ":" + resolved.getPort();
 
     YarnConfiguration conf = new YarnConfiguration();
-    LocationFactory locationFactory = new FileContextLocationFactory(conf);
+    locationFactory = new FileContextLocationFactory(conf);
     yarnTwillRunnerService = new YarnTwillRunnerService(conf, connectionStr, locationFactory);
     yarnTwillRunnerService.start();
+    properties = ImmutableMap.of(ZK_QUORUM, connectionStr, APP_SPARK_COMPAT, sparkCompat);
   }
 
   @Override
-  public DiscoveryService getDiscoveryService() {
-    return zkDiscoveryService;
-  }
-
-  @Override
-  public DiscoveryServiceClient getDiscoveryServiceClient() {
-    return zkDiscoveryService;
+  public LocationFactory getLocationFactory() {
+    return locationFactory;
   }
 
   @Override
@@ -107,7 +87,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
 
   @Override
   public Map<String, String> getProperties() {
-    return ImmutableMap.of(ZK_QUORUM, connectionStr);
+    return properties;
   }
 
   /**
@@ -117,16 +97,12 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     if (yarnTwillRunnerService != null) {
       yarnTwillRunnerService.stop();
     }
-    if (zkDiscoveryService != null) {
-      zkDiscoveryService.close();
-    }
-    if (zkClientService != null) {
+    if (locationFactory != null) {
+      Location location = locationFactory.create("/");
       try {
-        // Invoke method through reflection. This is needed because of conflict in guava versions during compilation
-        Method stopAndWait = zkClientService.getClass().getMethod("stopAndWait");
-        stopAndWait.invoke(zkClientService);
-      } catch (Exception e) {
-        throw new RuntimeException("Error occurred while invoking stop on zk client service", e);
+        location.delete(true);
+      } catch (IOException e) {
+        LOG.warn("Failed to delete location {}", location, e);
       }
     }
     if (zkServer != null) {
