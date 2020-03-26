@@ -38,7 +38,7 @@ import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.workflow.condition.DefaultConditionConfigurer;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
@@ -60,7 +60,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   private final DatasetConfigurer datasetConfigurer;
   private final Id.Namespace deployNamespace;
   private final Id.Artifact artifactId;
-  private final ArtifactRepository artifactRepository;
+  private final PluginFinder pluginFinder;
   private final PluginInstantiator pluginInstantiator;
   private final List<WorkflowNode> nodes = Lists.newArrayList();
 
@@ -71,15 +71,15 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
 
   public DefaultWorkflowConfigurer(Workflow workflow, DatasetConfigurer datasetConfigurer,
                                    Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                   ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                   PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
     this.className = workflow.getClass().getName();
     this.name = workflow.getClass().getSimpleName();
     this.description = "";
     this.datasetConfigurer = datasetConfigurer;
     this.deployNamespace = deployNamespace;
     this.artifactId = artifactId;
-    this.artifactRepository = artifactRepository;
+    this.pluginFinder = pluginFinder;
     this.pluginInstantiator = pluginInstantiator;
   }
 
@@ -111,24 +111,24 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
   @Override
   public void addAction(CustomAction action) {
     nodes.add(WorkflowNodeCreator.createWorkflowCustomActionNode(action, deployNamespace, artifactId,
-                                                                 artifactRepository, pluginInstantiator));
+                                                                 pluginFinder, pluginInstantiator));
   }
 
   @Override
   public WorkflowForkConfigurer<? extends WorkflowConfigurer> fork() {
-    return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, artifactRepository,
+    return new DefaultWorkflowForkConfigurer<>(this, deployNamespace, artifactId, pluginFinder,
                                                pluginInstantiator);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Predicate<WorkflowContext> predicate) {
     return new DefaultWorkflowConditionConfigurer<>(predicate, this, deployNamespace, artifactId,
-                                                    artifactRepository, pluginInstantiator);
+                                                    pluginFinder, pluginInstantiator);
   }
 
   @Override
   public WorkflowConditionConfigurer<? extends WorkflowConfigurer> condition(Condition condition) {
-    return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId, artifactRepository,
+    return new DefaultWorkflowConditionConfigurer<>(condition, this, deployNamespace, artifactId, pluginFinder,
                                                     pluginInstantiator);
   }
 
@@ -234,7 +234,7 @@ public class DefaultWorkflowConfigurer extends AbstractConfigurer
                                        List<WorkflowNode> elseBranch) {
     Preconditions.checkArgument(condition != null, "Condition is null.");
     ConditionSpecification spec = DefaultConditionConfigurer.configureCondition(condition, deployNamespace,
-                                                                                artifactId, artifactRepository,
+                                                                                artifactId, pluginFinder,
                                                                                 pluginInstantiator);
     nodes.add(new WorkflowConditionNode(spec.getName(), spec, ifBranch, elseBranch));
   }

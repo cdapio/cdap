@@ -57,6 +57,8 @@ import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
@@ -353,6 +355,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             .to(DefaultArtifactRepository.class)
             .in(Scopes.SINGLETON);
           bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
+
+          bind(PluginFinder.class).to(LocalPluginFinder.class);
         }
 
         @Provides

@@ -22,7 +22,7 @@ import io.cdap.cdap.api.workflow.ConditionConfigurer;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
@@ -44,8 +44,8 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
   private Map<String, String> properties;
 
   private DefaultConditionConfigurer(Condition condition, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                     ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                     PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
     this.condition = condition;
     this.name = condition.getClass().getSimpleName();
     this.description = "";
@@ -78,10 +78,10 @@ public class DefaultConditionConfigurer extends AbstractConfigurer implements Co
   }
 
   public static ConditionSpecification configureCondition(Condition condition, Id.Namespace deployNamespace,
-                                                          Id.Artifact artifactId, ArtifactRepository artifactRepository,
+                                                          Id.Artifact artifactId, PluginFinder pluginFinder,
                                                           PluginInstantiator pluginInstantiator) {
     DefaultConditionConfigurer configurer = new DefaultConditionConfigurer(condition, deployNamespace, artifactId,
-                                                                           artifactRepository, pluginInstantiator);
+                                                                           pluginFinder, pluginInstantiator);
 
     condition.configure(configurer);
     return configurer.createSpecification();

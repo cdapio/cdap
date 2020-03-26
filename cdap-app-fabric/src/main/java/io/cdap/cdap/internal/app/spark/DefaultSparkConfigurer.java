@@ -24,7 +24,7 @@ import io.cdap.cdap.api.spark.SparkHttpServiceHandlerSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.internal.specification.DataSetFieldExtractor;
@@ -52,8 +52,8 @@ public class DefaultSparkConfigurer extends AbstractConfigurer implements SparkC
   private Resources executorResources;
 
   public DefaultSparkConfigurer(Spark spark, Id.Namespace deployNamespace, Id.Artifact artifactId,
-                                ArtifactRepository artifactRepository, PluginInstantiator pluginInstantiator) {
-    super(deployNamespace, artifactId, artifactRepository, pluginInstantiator);
+                                PluginFinder pluginFinder, PluginInstantiator pluginInstantiator) {
+    super(deployNamespace, artifactId, pluginFinder, pluginInstantiator);
     this.spark = spark;
     this.name = spark.getClass().getSimpleName();
     this.description = "";
