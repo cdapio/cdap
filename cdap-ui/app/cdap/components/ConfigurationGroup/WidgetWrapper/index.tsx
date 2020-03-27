@@ -157,7 +157,7 @@ const WidgetWrapperView: React.FC<IWidgetWrapperProps> = ({
           dataCy={pluginProperty.name}
         />
       </div>
-      <If condition={!hideDescription}>
+      <If condition={!hideDescription && !hideWrapper}>
         <div className={classes.tooltipContainer}>
           <DescriptionTooltip description={pluginProperty.description} />
         </div>
