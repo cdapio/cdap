@@ -108,15 +108,6 @@ public interface ArtifactRepository extends ArtifactRepositoryReader {
    */
   List<ArtifactSummary> getArtifactSummaries(ArtifactRange range, int limit,
                                              ArtifactSortOrder order) throws Exception;
-  /**
-   * Get all artifact details that match artifacts in the given ranges.
-   *
-   * @param range the range to match artifacts in
-   * @param limit the limit number of the result
-   * @param order the order of the result
-   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
-   */
-  List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order) throws Exception;
 
   /**
    * Get all application classes in the given namespace, optionally including classes from system artifacts as well.

@@ -180,7 +180,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @Override
   public List<ArtifactDetail> getArtifactDetails(final ArtifactRange range, int limit,
                                                  ArtifactSortOrder order) throws Exception {
-    return artifactStore.getArtifacts(range, limit, order);
+    return artifactRepositoryReader.getArtifactDetails(range, limit, order);
   }
 
   @Override

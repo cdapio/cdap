@@ -17,7 +17,11 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
+
+import java.util.List;
 
 /**
  * Implementation for {@link ArtifactRepositoryReader} to fetch artifact metadata directly from local
@@ -34,5 +38,10 @@ public class LocalArtifactRepositoryReader implements ArtifactRepositoryReader {
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
     return artifactStore.getArtifact(artifactId);
+  }
+
+  @Override
+  public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order) {
+    return artifactStore.getArtifacts(range, limit, order);
   }
 }
