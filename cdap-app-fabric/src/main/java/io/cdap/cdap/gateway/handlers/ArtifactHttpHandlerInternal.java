@@ -23,11 +23,14 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -39,9 +42,11 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.QueryParam;
 
 /**
  * Internal {@link io.cdap.http.HttpHandler} for managing artifacts.
@@ -56,10 +61,13 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
 
   private final ArtifactRepository artifactRepository;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
 
   @Inject
-  ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository) {
+  ArtifactHttpHandlerInternal(ArtifactRepository artifactRepository,
+                              NamespaceQueryAdmin namespaceQueryAdmin) {
     this.artifactRepository = artifactRepository;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
   @GET
@@ -75,6 +83,24 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
     }
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions/{artifact-version}")
+  public void getArtifactDetail(HttpRequest request, HttpResponder responder,
+                                @PathParam("namespace-id") String namespace,
+                                @PathParam("artifact-name") String artifactName,
+                                @PathParam("artifact-version") String artifactVersion,
+                                @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceId.equals(NamespaceId.SYSTEM)) {
+      if (!namespaceQueryAdmin.exists(namespaceId)) {
+        throw new NamespaceNotFoundException(namespaceId);
+      }
+    }
+    ArtifactId artifactId = new ArtifactId(namespace, artifactName, artifactVersion);
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(Id.Artifact.fromEntityId(artifactId));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactDetail));
   }
 
   @GET

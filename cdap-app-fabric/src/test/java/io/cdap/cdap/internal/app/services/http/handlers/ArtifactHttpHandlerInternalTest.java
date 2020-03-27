@@ -20,6 +20,8 @@ import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.RemoteArtifactRepositoryReader;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import org.junit.Assert;
@@ -91,5 +93,23 @@ public class ArtifactHttpHandlerInternalTest extends ArtifactHttpHandlerTestBase
     ArtifactDetail expectedArtifactDetail = getArtifactDetailFromRepository(Id.Artifact.fromEntityId(systemArtifactId));
     Assert.assertEquals(expectedArtifactDetail.getDescriptor().getLocation().toURI().getPath(),
                         locationPath);
+  }
+
+  /**
+   * Test {@link RemoteArtifactRepositoryReader}
+   */
+  @Test
+  public void testRemoteArtifactRepositoryReader() throws Exception {
+    // Add a system artifact
+    String systemArtfiactName = "sysApp";
+    String systemArtifactVeresion = "1.0.0";
+    ArtifactId systemArtifactId = NamespaceId.SYSTEM.artifact(systemArtfiactName, systemArtifactVeresion);
+    addAppAsSystemArtifacts(systemArtifactId);
+
+    ArtifactRepositoryReader remoteReader = getInjector().getInstance(RemoteArtifactRepositoryReader.class);
+    ArtifactDetail detail = remoteReader.getArtifact(Id.Artifact.fromEntityId(systemArtifactId));
+    Assert.assertNotNull(detail);
+    ArtifactDetail expectedDetail = getArtifactDetailFromRepository(Id.Artifact.fromEntityId(systemArtifactId));
+    Assert.assertTrue(detail.equals(expectedDetail));
   }
 }

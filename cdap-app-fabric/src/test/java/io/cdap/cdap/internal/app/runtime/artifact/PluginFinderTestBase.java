@@ -53,7 +53,7 @@ public abstract class PluginFinderTestBase extends AppFabricTestBase {
 
   @BeforeClass
   public static void setup() {
-    artifactRepo = getInjector().getInstance(DefaultArtifactRepository.class);
+    artifactRepo = getInjector().getInstance(ArtifactRepository.class);
   }
 
   @AfterClass

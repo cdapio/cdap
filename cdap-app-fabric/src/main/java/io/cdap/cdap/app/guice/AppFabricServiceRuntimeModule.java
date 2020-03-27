@@ -21,6 +21,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -73,9 +74,11 @@ import io.cdap.cdap.internal.app.namespace.DistributedStorageProviderNamespaceAd
 import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.AuthorizationArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.schedule.DistributedTimeSchedulerService;
@@ -297,11 +300,23 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(CoreSchedulerService.class);
-      bind(ArtifactRepository.class)
-        .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))
-        .to(DefaultArtifactRepository.class)
-        .in(Scopes.SINGLETON);
-      bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class).in(Scopes.SINGLETON);
+      install(new PrivateModule() {
+        @Override
+        protected void configure() {
+          // ArtifactRepositoryReader is required by DefaultArtifactRepository.
+          // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
+          bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+
+          bind(ArtifactRepository.class)
+            .annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO))
+            .to(DefaultArtifactRepository.class)
+            .in(Scopes.SINGLETON);
+          expose(ArtifactRepository.class).annotatedWith(Names.named(NOAUTH_ARTIFACT_REPO));
+
+          bind(ArtifactRepository.class).to(AuthorizationArtifactRepository.class).in(Scopes.SINGLETON);
+          expose(ArtifactRepository.class);
+        }
+      });
       bind(ProfileService.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
