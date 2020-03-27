@@ -50,7 +50,7 @@ import javax.annotation.Nullable;
  * This class manages artifact and artifact metadata. It is mainly responsible for inspecting artifacts to determine
  * metadata for the artifact.
  */
-public interface ArtifactRepository {
+public interface ArtifactRepository extends ArtifactRepositoryReader {
 
   /**
    * Create a classloader that uses the artifact at the specified location to load classes, with access to
@@ -108,18 +108,6 @@ public interface ArtifactRepository {
    */
   List<ArtifactSummary> getArtifactSummaries(ArtifactRange range, int limit,
                                              ArtifactSortOrder order) throws Exception;
-
-  /**
-   * Get details about the given artifact. Will never return null.
-   * If no such artifact exist, an exception is thrown. Namespace existence is not checked.
-   *
-   * @param artifactId the id of the artifact to get
-   * @return details about the given artifact
-   * @throws IOException if there as an exception reading from the meta store
-   * @throws ArtifactNotFoundException if the given artifact does not exist
-   */
-  ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception;
-
   /**
    * Get all artifact details that match artifacts in the given ranges.
    *

@@ -89,6 +89,7 @@ import javax.annotation.Nullable;
 public class DefaultArtifactRepository implements ArtifactRepository {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultArtifactRepository.class);
   private final ArtifactStore artifactStore;
+  private final ArtifactRepositoryReader artifactRepositoryReader;
   private final ArtifactClassLoaderFactory artifactClassLoaderFactory;
   private final ArtifactInspector artifactInspector;
   private final Set<File> systemArtifactDirs;
@@ -99,10 +100,12 @@ public class DefaultArtifactRepository implements ArtifactRepository {
   @VisibleForTesting
   @Inject
   public DefaultArtifactRepository(CConfiguration cConf, ArtifactStore artifactStore,
+                                   ArtifactRepositoryReader artifactRepositoryReader,
                                    MetadataServiceClient metadataServiceClient,
                                    ProgramRunnerFactory programRunnerFactory,
                                    Impersonator impersonator) {
     this.artifactStore = artifactStore;
+    this.artifactRepositoryReader = artifactRepositoryReader;
     this.artifactClassLoaderFactory = new ArtifactClassLoaderFactory(cConf, programRunnerFactory);
     this.artifactInspector = new ArtifactInspector(cConf, artifactClassLoaderFactory);
     this.systemArtifactDirs = new HashSet<>();
@@ -171,7 +174,7 @@ public class DefaultArtifactRepository implements ArtifactRepository {
 
   @Override
   public ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception {
-    return artifactStore.getArtifact(artifactId);
+    return artifactRepositoryReader.getArtifact(artifactId);
   }
 
   @Override
