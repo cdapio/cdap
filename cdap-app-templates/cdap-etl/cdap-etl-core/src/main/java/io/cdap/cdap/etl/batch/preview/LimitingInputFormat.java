@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.batch.preview;
 
+import org.apache.hadoop.conf.Configurable;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -32,9 +33,12 @@ import java.util.List;
  * @param <K> type of key to read
  * @param <V> type of value to read
  */
-public class LimitingInputFormat<K, V> extends InputFormat<K, V> {
+public class LimitingInputFormat<K, V> extends InputFormat<K, V> implements Configurable {
   public static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.preview.input.classname";
   public static final String MAX_RECORDS = "io.cdap.pipeline.preview.max.records";
+
+  private InputFormat<K, V> delegateFormat;
+  private Configuration conf;
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
@@ -47,7 +51,6 @@ public class LimitingInputFormat<K, V> extends InputFormat<K, V> {
     throws IOException, InterruptedException {
     Configuration conf = context.getConfiguration();
     int maxRecords = conf.getInt(MAX_RECORDS, 100);
-    InputFormat<K, V> delegateFormat = createDelegate(conf);
     RecordReader<K, V> delegate = delegateFormat.createRecordReader(split, context);
     return new LimitingRecordReader<>(delegate, maxRecords);
   }
@@ -60,5 +63,23 @@ public class LimitingInputFormat<K, V> extends InputFormat<K, V> {
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
       throw new IOException("Unable to instantiate delegate input format " + delegateClassName, e);
     }
+  }
+
+  @Override
+  public void setConf(Configuration conf) {
+    try {
+      delegateFormat = createDelegate(conf);
+      if (delegateFormat instanceof Configurable) {
+        ((Configurable) delegateFormat).setConf(conf);
+      }
+      this.conf = conf;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public Configuration getConf() {
+    return conf;
   }
 }
