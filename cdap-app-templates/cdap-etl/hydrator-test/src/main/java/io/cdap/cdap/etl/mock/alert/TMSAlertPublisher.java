@@ -62,7 +62,8 @@ public class TMSAlertPublisher extends AlertPublisher {
   public void publish(Iterator<Alert> alerts) throws Exception {
     MessagePublisher messagePublisher = getContext().getDirectMessagePublisher();
     while (alerts.hasNext()) {
-      messagePublisher.publish(conf.topicNamespace, conf.topic, GSON.toJson(alerts.next()));
+      Alert alert = alerts.next();
+      messagePublisher.publish(conf.topicNamespace, conf.topic, GSON.toJson(alert));
     }
   }
 
