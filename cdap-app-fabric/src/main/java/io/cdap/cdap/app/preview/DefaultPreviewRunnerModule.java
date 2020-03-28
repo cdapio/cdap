@@ -52,7 +52,9 @@ import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.MetadataAdmin;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -162,6 +164,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerAdmin.class);
 
     bind(PreviewRequest.class).toInstance(previewRequest);
+
+    bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,40 +20,44 @@ import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import io.cdap.cdap.common.NamespaceNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
-import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.security.impersonation.ImpersonationInfo;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Used to provide default user and system properties that can be used while starting a Program.
  */
 public class PropertiesResolver {
-
-  private final PreferencesService prefStore;
+  private final PreferencesFetcher preferencesFetcher;
   private final CConfiguration cConf;
   private final OwnerAdmin ownerAdmin;
   private final SchedulerQueueResolver queueResolver;
 
   @Inject
-  PropertiesResolver(PreferencesService prefStore, CConfiguration cConf,
+  PropertiesResolver(PreferencesFetcher preferencesFetcher, CConfiguration cConf,
                      OwnerAdmin ownerAdmin,
                      SchedulerQueueResolver schedulerQueueResolver) {
-    this.prefStore = prefStore;
+    this.preferencesFetcher = preferencesFetcher;
     this.cConf = cConf;
     this.ownerAdmin = ownerAdmin;
     this.queueResolver = schedulerQueueResolver;
   }
 
-  public Map<String, String> getUserProperties(Id.Program id) {
-    Map<String, String> userArgs = prefStore.getResolvedProperties(id.toEntityId());
+  public Map<String, String> getUserProperties(Id.Program id) throws IOException, NotFoundException {
+    PreferencesDetail preferencesDetail = null;
+    preferencesDetail = preferencesFetcher.get(id.toEntityId(), true);
+    Map<String, String> userArgs = new HashMap<String, String>(preferencesDetail.getProperties());
     userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
     return userArgs;
   }
