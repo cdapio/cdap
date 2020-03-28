@@ -19,16 +19,12 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PreferencesDetail;
-import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -37,7 +33,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -77,9 +72,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
                                       @PathParam("namespace-id") String namespace,
                                       @QueryParam("resolved") boolean resolved) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
-    }
+    // No need to check if namespace exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
       detail = preferencesService.getResolvedPreferences(namespaceId);
@@ -96,7 +89,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
                                         @PathParam("application-id") String appId,
                                         @QueryParam("resolved") boolean resolved) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
-    applicationLifecycleService.getAppDetail(applicationId);
+    // No need to check if application exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
       detail = preferencesService.getResolvedPreferences(applicationId);
@@ -115,10 +108,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
                                     @PathParam("program-id") String programId,
                                     @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
-    ApplicationDetail applicationDetail = applicationLifecycleService.getAppDetail(program.getParent());
-    if (!programExists(applicationDetail, program)) {
-      throw new ProgramNotFoundException(program);
-    }
+    // No need to check if program exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
       detail = preferencesService.getResolvedPreferences(program);
@@ -140,20 +130,5 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
-  }
-
-  /**
-   * Returns true if the given program id exists in the {@code applicationDetail}
-   */
-  private boolean programExists(ApplicationDetail applicationDetail, ProgramId programId) {
-    List<ProgramRecord> programs = applicationDetail.getPrograms();
-    for (ProgramRecord program : programs) {
-      if (program.getApp().equals(programId.getApplication()) &&
-          program.getName().equals(programId.getProgram()) &&
-          program.getType().equals(programId.getType())) {
-        return true;
-      }
-    }
-    return false;
   }
 }

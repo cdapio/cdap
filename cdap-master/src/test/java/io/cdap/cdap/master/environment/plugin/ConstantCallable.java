@@ -19,16 +19,16 @@ package io.cdap.cdap.master.environment.plugin;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.plugin.PluginConfig;
-import io.cdap.cdap.master.environment.ServiceWithPluginApp;
 
 import java.util.concurrent.Callable;
 
 /**
  * Used to test plugins in apps.
  */
-@Plugin(type = ServiceWithPluginApp.PLUGIN_TYPE)
+@Plugin(type = ConstantCallable.PLUGIN_TYPE)
 @Name(ConstantCallable.NAME)
 public class ConstantCallable implements Callable<String> {
+  public static final String PLUGIN_TYPE = "callable";
   public static final String NAME = "constant";
   private final Conf conf;
 
