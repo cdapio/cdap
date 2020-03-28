@@ -24,6 +24,7 @@ import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.internal.profile.ProfileService;
+import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
@@ -60,6 +61,12 @@ public class PreferencesServiceTest extends AppFabricTestBase {
     store.deleteProperties();
     store.deleteProperties(NamespaceId.DEFAULT);
     store.deleteProperties(new ProgramId("a", "x", ProgramType.WORKFLOW, "z"));
+
+    // Get instance level PreferencesDetail. None has been set, so seqId should be 0 and it should monotonically
+    // increasing as preferences are mutated (i.e. set or deleted) for the entity.
+    PreferencesDetail detail = store.getPreferences();
+    Assert.assertEquals(emptyMap, detail.getProperties());
+    Assert.assertEquals(0, detail.getSeqId());
   }
 
   @Test
