@@ -22,6 +22,9 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -30,6 +33,7 @@ import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.http.AbstractHttpHandler;
@@ -59,6 +63,7 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
   private static final Type ARTIFACT_INFO_LIST_TYPE = new TypeToken<List<ArtifactInfo>>() { }.getType();
+  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
@@ -83,6 +88,31 @@ public class ArtifactHttpHandlerInternal extends AbstractHttpHandler {
       LOG.warn("Exception reading artifact metadata for namespace {} from the store.", namespaceId, e);
       responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, "Error reading artifact metadata from the store.");
     }
+  }
+
+  @GET
+  @Path("/namespaces/{namespace-id}/artifacts/{artifact-name}/versions")
+  public void getArtifactDetailForVersions(HttpRequest request, HttpResponder responder,
+                                           @PathParam("namespace-id") String namespace,
+                                           @PathParam("artifact-name") String artifactName,
+                                           @QueryParam("lower") String lower,
+                                           @QueryParam("upper") String upper,
+                                           @QueryParam("limit") @DefaultValue("1") int limit,
+                                           @QueryParam("order") String order,
+                                           @QueryParam("scope") @DefaultValue("user") String scope) throws Exception {
+    NamespaceId namespaceId = new NamespaceId(namespace);
+    if (!namespaceId.equals(NamespaceId.SYSTEM)) {
+      if (!namespaceQueryAdmin.exists(namespaceId)) {
+        throw new NamespaceNotFoundException(namespaceId);
+      }
+    }
+    ArtifactRange range =
+      new ArtifactRange(namespaceId.getNamespace(), artifactName,
+                        new ArtifactVersionRange(new ArtifactVersion(lower), true,
+                                                 new ArtifactVersion(upper),  true));
+    ArtifactSortOrder sortOrder = ArtifactSortOrder.valueOf(order);
+    List<ArtifactDetail> artifactDetailList = artifactRepository.getArtifactDetails(range, limit, sortOrder);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(artifactDetailList, ARTIFACT_DETAIL_LIST_TYPE));
   }
 
   @GET

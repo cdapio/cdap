@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -30,6 +31,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.gateway.handlers.AppLifecycleHttpHandler;
 import io.cdap.cdap.gateway.handlers.ArtifactHttpHandlerInternal;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
@@ -40,6 +42,8 @@ import sun.net.www.protocol.http.HttpURLConnection;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -50,6 +54,7 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
   private static final Type ARTIFACT_DETAIL_TYPE = new TypeToken<ArtifactDetail>() { }.getType();
+  private static final Type ARTIFACT_DETAIL_LIST_TYPE = new TypeToken<List<ArtifactDetail>>() { }.getType();
 
   private final RemoteClient remoteClient;
   private final LocationFactory locationFactory;
@@ -85,6 +90,29 @@ public class RemoteArtifactRepositoryReader implements ArtifactRepositoryReader 
       new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
                          detail.getMeta());
     return artifactDetail;
+  }
+
+  @Override
+  public List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order)
+    throws Exception {
+    String url = String.format("namespaces/%s/artifacts/%s/versions?lower=%s&upper=%s&limit=%s&order=%s",
+                               range.getNamespace(),
+                               range.getName(),
+                               range.getLower().toString(),
+                               range.getUpper().toString(),
+                               String.valueOf(limit),
+                               order.name());
+    HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
+    HttpResponse httpResponse = execute(requestBuilder.build());
+    List<ArtifactDetail> details = GSON.fromJson(httpResponse.getResponseBodyAsString(), ARTIFACT_DETAIL_LIST_TYPE);
+    List<ArtifactDetail> detailList = new ArrayList<>();
+    for (ArtifactDetail detail : details) {
+      Location artifactLocation = locationFactory.create(detail.getDescriptor().getLocationURI());
+      detailList.add(
+        new ArtifactDetail(new ArtifactDescriptor(detail.getDescriptor().getArtifactId(), artifactLocation),
+                           detail.getMeta()));
+    }
+    return detailList;
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {

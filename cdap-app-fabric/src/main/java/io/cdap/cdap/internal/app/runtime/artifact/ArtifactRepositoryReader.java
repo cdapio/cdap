@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import io.cdap.cdap.api.artifact.ArtifactRange;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  *  Interface to fetch artifact metadata
@@ -35,4 +38,14 @@ public interface ArtifactRepositoryReader {
    * @throws ArtifactNotFoundException if the given artifact does not exist
    */
   ArtifactDetail getArtifact(Id.Artifact artifactId) throws Exception;
+
+  /**
+   * Get all artifact details that match artifacts in the given ranges.
+   *
+   * @param range the range to match artifacts in
+   * @param limit the limit number of the result
+   * @param order the order of the result
+   * @return an unmodifiable list of all artifacts that match the given ranges. If none exist, an empty list is returned
+   */
+  List<ArtifactDetail> getArtifactDetails(ArtifactRange range, int limit, ArtifactSortOrder order) throws Exception;
 }
