@@ -27,26 +27,57 @@ import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Tests for {@link RemoteApplicationDetailFetcher} and {@link AppLifecycleHttpHandlerInternal}
+ * Tests for {@link RemoteApplicationDetailFetcher} {@link LocalApplicationDetailFetcher} and
+ * {@link AppLifecycleHttpHandlerInternal}
  */
-public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
-  private static ApplicationDetailFetcher fetcher = null;
+@RunWith(Parameterized.class)
+public class ApplicationDetailFetcherTest extends AppFabricTestBase {
+  private enum ApplicationDetailFetcherType {
+    LOCAL,
+    REMOTE,
+  }
 
-  @BeforeClass
-  public static void init() {
-    fetcher = getInjector().getInstance(RemoteApplicationDetailFetcher.class);
+  private final ApplicationDetailFetcherType fetcherType;
+
+  public ApplicationDetailFetcherTest(ApplicationDetailFetcherType type) {
+    this.fetcherType = type;
+  }
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> parameters() {
+    return Arrays.asList(new Object[][]{
+      {ApplicationDetailFetcherType.LOCAL},
+      {ApplicationDetailFetcherType.REMOTE},
+    });
+  }
+
+  private ApplicationDetailFetcher getApplicationDetailFetcher(ApplicationDetailFetcherType type) {
+    ApplicationDetailFetcher fetcher = null;
+    switch (type) {
+      case LOCAL:
+        fetcher = AppFabricTestBase.getInjector().getInstance(LocalApplicationDetailFetcher.class);
+        break;
+      case REMOTE:
+        fetcher = AppFabricTestBase.getInjector().getInstance(RemoteApplicationDetailFetcher.class);
+        break;
+    }
+    return fetcher;
   }
 
   @Test(expected = NotFoundException.class)
   public void testGetApplicationNotFound() throws Exception {
+    ApplicationDetailFetcher fetcher = getApplicationDetailFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
     String appName = AllProgramsApp.NAME;
     ApplicationId appId = new ApplicationId(namespace, appName);
@@ -80,6 +111,7 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
 
   @Test
   public void testGetApplication() throws Exception {
+    ApplicationDetailFetcher fetcher = getApplicationDetailFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
     String appName = AllProgramsApp.NAME;
 
@@ -100,12 +132,14 @@ public class RemoteApplicationDetailFetcherTest extends AppFabricTestBase {
 
   @Test(expected = NamespaceNotFoundException.class)
   public void testGetAllApplicationNamespaceNotFound() throws Exception {
+    ApplicationDetailFetcher fetcher = getApplicationDetailFetcher(fetcherType);
     String namespace = "somenamespace";
     fetcher.list(namespace);
   }
 
   @Test
   public void testGetAllApplications() throws Exception {
+    ApplicationDetailFetcher fetcher = getApplicationDetailFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
     List<ApplicationDetail> appDetailList = Collections.emptyList();
     ApplicationDetail appDetail = null;
