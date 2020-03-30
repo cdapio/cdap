@@ -31,7 +31,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramStatus;
@@ -227,9 +226,8 @@ public abstract class AppFabricTestBase {
     initializeAndStartServices(cConf, sConf, new AbstractModule() {
       @Override
       protected void configure() {
-        // needed because we set Kerberos to true in DefaultNamespaceAdminTest
+        // Override the binding since we set Kerberos to true in DefaultNamespaceAdminTest
         bind(UGIProvider.class).to(CurrentUGIProvider.class);
-        bind(MetadataSubscriberService.class).in(Scopes.SINGLETON);
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,26 +17,30 @@
 
 package io.cdap.cdap.metadata.profile;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.config.PreferencesTable;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.schedule.ProgramSchedule;
-import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
-import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
-import io.cdap.cdap.internal.app.store.AppMetadataStore;
-import io.cdap.cdap.internal.app.store.ApplicationMeta;
-import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import io.cdap.cdap.internal.app.runtime.schedule.ScheduleNotFoundException;
+import io.cdap.cdap.metadata.ApplicationDetailFetcher;
 import io.cdap.cdap.metadata.MetadataMessageProcessor;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.ScheduleFetcher;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.PreferencesDetail;
+import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -46,6 +50,7 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
+import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
@@ -53,7 +58,6 @@ import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
-import io.cdap.cdap.store.NamespaceTable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,9 +67,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -86,20 +89,31 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     new GsonBuilder().registerTypeAdapter(EntityId.class, new EntityIdTypeAdapter())).create();
 
   private final MetadataStorage metadataStorage;
-  private final NamespaceTable namespaceTable;
-  private final AppMetadataStore appMetadataStore;
-  private final ProgramScheduleStoreDataset scheduleDataset;
-  private final PreferencesTable preferencesTable;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final ApplicationDetailFetcher appDetailFetcher;
+  private final PreferencesFetcher preferencesFetcher;
+  private final ScheduleFetcher scheduleFetcher;
 
   public ProfileMetadataMessageProcessor(MetadataStorage metadataStorage,
-                                         StructuredTableContext structuredTableContext) {
-    namespaceTable = new NamespaceTable(structuredTableContext);
-    appMetadataStore = AppMetadataStore.create(structuredTableContext);
-    scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
-    preferencesTable = new PreferencesTable(structuredTableContext);
+                                NamespaceQueryAdmin namespaceQueryAdmin,
+                                         ApplicationDetailFetcher applicationDetailFetcher,
+                                         PreferencesFetcher preferencesFetcher,
+                                         ScheduleFetcher scheduleFetcher) {
     this.metadataStorage = metadataStorage;
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.appDetailFetcher = applicationDetailFetcher;
+    this.preferencesFetcher = preferencesFetcher;
+    this.scheduleFetcher = scheduleFetcher;
   }
 
+  /**
+   *  Process the given {@link MetadataMessage} and update profile metadata
+   *
+   * @param message published {@link MetadataMessage}
+   * @param context context to initiate {@link StructuredTable}. Not used in this method.
+   * @throws IOException if failed to process due to unable to get information or update metadata
+   * @throws ConflictException if failed to process due to {@link MetadataMessage} conflicts with the current state
+   */
   @Override
   public void processMessage(MetadataMessage message, StructuredTableContext context)
     throws IOException, ConflictException {
@@ -114,7 +128,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         updateProfileMetadata(entityId, message);
         break;
       case ENTITY_CREATION:
-        validateCreateEntityUpdateTime(entityId, message);
+        validateEntityCreationTimestamp(entityId, message);
         updateProfileMetadata(entityId, message);
         break;
       case ENTITY_DELETION:
@@ -127,21 +141,84 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     }
   }
 
-  private void validateCreateEntityUpdateTime(EntityId entityId, MetadataMessage message)
-    throws IOException, ConflictException {
-    // here we expect only APP and SCHEDULE. For apps, no need to validate: that message
-    // is emitted after the app is committed to the store. So, only validate for schedules.
-    if (entityId.getEntityType() != EntityType.SCHEDULE) {
+  /**
+   * Validate the timestamp in the published creation event (i.e. the timestamp of creation event is in the past,
+   * in other words: timestamp of published creation event < the timestamp of the most recent update on that entity)
+   *
+   * @param entityId the id of the entity that was created
+   * @param message published message that is received
+   * @throws ConflictException if unable to validate or validation failed
+   *                           (i.e. published creation timestamp >  most recent update timestamp)
+   * @throws IOException if failed to get the timestamp of the most recent update on the entity
+   */
+  private void validateEntityCreationTimestamp(EntityId entityId, MetadataMessage message)
+    throws ConflictException, IOException {
+    // Only entity type APPLICATION or SCHEDULE are expected to reach here.
+    if (entityId.getEntityType() != EntityType.APPLICATION && entityId.getEntityType() != EntityType.SCHEDULE) {
+      LOG.warn("Unexpected entity encountered when validating creation timestamp. Expected types are: {}, {}",
+               entityId.toString(), EntityType.APPLICATION, EntityType.SCHEDULE);
+    }
+
+    // For APPLICATION, no need to validate, because message is emitted after the app is committed to the store.
+    if (entityId.getEntityType() == EntityType.APPLICATION) {
       return;
     }
-    long expectedUpdateTime = GSON.fromJson(message.getRawPayload(), long.class);
-    scheduleDataset.ensureUpdateTime((ScheduleId) entityId, expectedUpdateTime);
+
+    // Get the timestamp of the most recent update on the entity (i.e. schedule)
+    ScheduleId scheduleId = (ScheduleId) entityId;
+    ScheduleDetail schedule = null;
+    try {
+      schedule = scheduleFetcher.get(scheduleId);
+    } catch (NotFoundException e) {
+      throw new ConflictException(String.format("Unable to creation time of entity %s due to schedule not found",
+                                                entityId.toString()),
+                                  e);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, ConflictException.class, IOException.class);
+      throw new IOException(String.format("Unable to get schedule %s to validate its update time ",
+                                          entityId.toString()),
+                            e);
+    }
+
+    Long lastUpdateTime = schedule.getLastUpdateTime();
+    // This should never happen.
+    if (lastUpdateTime == null) {
+      throw new ConflictException(String.format("Unexpected null last update timestamp for schedule %s",
+                                                entityId.toString()));
+    }
+
+    long creationTimeInMessage = GSON.fromJson(message.getRawPayload(), long.class);
+    if (creationTimeInMessage > lastUpdateTime.longValue()) {
+      throw new ConflictException(String.format("Unexpected: creation time %d > last update time %d for schedule %s",
+                                                creationTimeInMessage, lastUpdateTime, scheduleId.toString()));
+    }
   }
 
+  /**
+   * Validate the sequence id in the published preferences change event (i.e. sequence id in the published message
+   * should be less than the latest sequence id for the given entity)
+   *
+   * @param entityId the id of the entity for the creation event
+   * @param message published message received
+   * @throws ConflictException if validation failed (i.e. published sequence id > the latest sequence id)
+   * @throws IOException if failed to get the latest sequence id for the given entity
+   */
   private void validatePreferenceSequenceId(EntityId entityId, MetadataMessage message)
-    throws IOException, ConflictException {
-    long seqId = GSON.fromJson(message.getRawPayload(), long.class);
-    preferencesTable.ensureSequence(entityId, seqId);
+    throws ConflictException, IOException {
+    long receivedSeqId = GSON.fromJson(message.getRawPayload(), long.class);
+    PreferencesDetail preferences = null;
+    try {
+      preferences = preferencesFetcher.get(entityId, false);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, ConflictException.class, IOException.class);
+      throw new IOException(
+        String.format("Unable to get the preferences %s to validate its sequence id", entityId.toString()), e);
+    }
+    long latestSeqId = preferences.getSeqId();
+    if (receivedSeqId > latestSeqId) {
+      throw new ConflictException(String.format("Unexpected: received seq id %d > latest seq id %d for preferences %s",
+                                                receivedSeqId, latestSeqId, entityId.toString()));
+    }
   }
 
   private void updateProfileMetadata(EntityId entityId, MetadataMessage message) throws IOException {
@@ -154,66 +231,136 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private void collectProfileMetadata(EntityId entityId, MetadataMessage message,
                                       List<MetadataMutation> updates) throws IOException {
     switch (entityId.getEntityType()) {
-      case INSTANCE:
-        for (NamespaceMeta meta : namespaceTable.list()) {
-          collectProfileMetadata(meta.getNamespaceId(), message, updates);
-        }
+      case INSTANCE: {
+        buildUpdatesForInstance(message, updates);
         break;
-      case NAMESPACE:
-        NamespaceId namespaceId = (NamespaceId) entityId;
-        // make sure namespace exists before updating
-        if (namespaceTable.get(namespaceId) == null) {
-          LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
-                      "updated. Ignoring the message {}", namespaceId, message);
-          return;
-        }
-        ProfileId namespaceProfile = getResolvedProfileId(namespaceId);
-        List<ApplicationMeta> applicationMetas = appMetadataStore.getAllApplications(namespaceId.getNamespace());
-        for (ApplicationMeta meta : applicationMetas) {
-          collectAppProfileMetadata(namespaceId.app(meta.getId()), meta.getSpec(), namespaceProfile, updates);
-        }
+      }
+      case NAMESPACE: {
+        buildUpdatesForNamespace((NamespaceId) entityId, message, updates);
         break;
-      case APPLICATION:
-        ApplicationId appId = (ApplicationId) entityId;
-        // make sure app exists before updating
-        ApplicationMeta meta = appMetadataStore.getApplication(appId);
-        if (meta == null) {
-          LOG.debug("Application {} is not found, so the profile metadata of its programs/schedules will not get " +
-                      "updated. Ignoring the message {}", appId, message);
-          return;
-        }
-        collectAppProfileMetadata(appId, meta.getSpec(), null, updates);
+      }
+      case APPLICATION: {
+        buildUpdatesForApplication((ApplicationId) entityId, message, updates);
         break;
-      case PROGRAM:
-        ProgramId programId = (ProgramId) entityId;
-        // make sure the app of the program exists before updating
-        meta = appMetadataStore.getApplication(programId.getParent());
-        if (meta == null) {
-          LOG.debug("Application {} is not found, so the profile metadata of program {} will not get updated. " +
-                      "Ignoring the message {}", programId.getParent(), programId, message);
-          return;
-        }
-        if (SystemArguments.isProfileAllowed(programId.getType())) {
-          collectProgramProfileMetadata(programId, null, updates);
-        }
+      }
+      case PROGRAM: {
+        buildUpdatesForProgram((ProgramId) entityId, message, updates);
         break;
-      case SCHEDULE:
-        ScheduleId scheduleId = (ScheduleId) entityId;
-        // make sure the schedule exists before updating
-        try {
-          ProgramSchedule schedule = scheduleDataset.getSchedule(scheduleId);
-          collectScheduleProfileMetadata(schedule, getResolvedProfileId(schedule.getProgramId()), updates);
-        } catch (NotFoundException e) {
-          LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
-                      "Ignoring the message {}", scheduleId, message);
-          return;
-        }
+      }
+      case SCHEDULE: {
+        buildUpdatesForSchedule((ScheduleId) entityId, message, updates);
         break;
+      }
       default:
         // this should not happen
         LOG.warn("Type of the entity id {} cannot be used to update profile metadata. " +
                    "Ignoring the message {}", entityId, message);
     }
+  }
+
+  private void buildUpdatesForInstance(MetadataMessage message,
+                                              List<MetadataMutation> updates) throws IOException {
+    List<NamespaceMeta> namespaceMetaList = Collections.EMPTY_LIST;
+    try {
+      namespaceMetaList = namespaceQueryAdmin.list();
+    } catch (Exception e) {
+      throw new IOException("Failed to list namespaces", e);
+    }
+    for (NamespaceMeta meta : namespaceMetaList) {
+      buildUpdatesForNamespace(meta.getNamespaceId(), message, updates);
+    }
+  }
+
+  private void buildUpdatesForNamespace(NamespaceId namespaceId, MetadataMessage message,
+                                              List<MetadataMutation> updates) throws IOException {
+    // make sure namespace exists before updating
+    try {
+      namespaceQueryAdmin.get(namespaceId);
+    } catch (NamespaceNotFoundException e) {
+      LOG.debug("Namespace {} is not found, so the profile metadata of programs or schedules in it will not get " +
+                  "updated. Ignoring the message {}", namespaceId, message);
+      return;
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(String.format("Failed to check if namespace %s eixsts", namespaceId.toString()),
+                            e);
+    }
+
+    List<ApplicationDetail> appDetailList = Collections.emptyList();
+    try {
+      appDetailList = appDetailFetcher.list(namespaceId.getNamespace());
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e, IOException.class);
+      throw new IOException(String.format("Failed to get details of applications in namespace %s",
+                                          namespaceId.toString()),
+                            e);
+    }
+
+    ProfileId namespaceProfileId = getAssignedProfileId(namespaceId, true, ProfileId.NATIVE);
+    // TODO: switch to batch calls
+    for (ApplicationDetail appDetail : appDetailList) {
+      collectAppProfileMetadata(namespaceId.app(appDetail.getName()), appDetail, namespaceProfileId, updates);
+    }
+  }
+
+  private void buildUpdatesForApplication(ApplicationId appId, MetadataMessage message,
+                                                List<MetadataMutation> updates) throws IOException {
+    // make sure app exists before updating
+    ApplicationDetail appDetail;
+    try {
+      appDetail = appDetailFetcher.get(appId);
+    } catch (NotFoundException e) {
+      LOG.debug("Fail to get metadata of application {}, so the profile metadata of its programs/schedules " +
+                  "will not get updated. Ignoring the message {}: {}", appId, message, e);
+      return;
+    } catch (Exception e) {
+      throw new IOException(String.format("Failed to get application detail for application %s", appId.toString()),
+                            e);
+    }
+    collectAppProfileMetadata(appId, appDetail, null, updates);
+  }
+
+
+  private void buildUpdatesForProgram(ProgramId programId, MetadataMessage message,
+                                            List<MetadataMutation> updates) throws IOException {
+    ApplicationId appId = programId.getParent();
+    // make sure the app of the program exists before updating
+    try {
+      appDetailFetcher.get(appId);
+    } catch (NotFoundException e) {
+      LOG.debug("Application {} is not found, so the profile metadata of program {} will not get updated. " +
+                  "Ignoring the message {}", appId, programId, message);
+      return;
+    }
+    if (SystemArguments.isProfileAllowed(programId.getType())) {
+      collectProgramProfileMetadata(programId, null, updates);
+    }
+  }
+
+  private void buildUpdatesForSchedule(ScheduleId scheduleId, MetadataMessage message,
+                                             List<MetadataMutation> updates) throws IOException {
+    // Make sure the schedule exists before updating
+    ScheduleDetail schedule = null;
+    try {
+      schedule = scheduleFetcher.get(scheduleId);
+    } catch (ScheduleNotFoundException e) {
+      LOG.debug("Schedule {} is not found, so its profile metadata will not get updated. " +
+                  "Ignoring the message {}", scheduleId, message);
+      return;
+    } catch (Exception e) {
+      throw new IOException(String.format("Unable to get the detail of schedule %s",
+                                          scheduleId.toString()),
+                            e);
+    }
+    // Get the profile id assigned to the program that this schedule is for.
+    // This is used as default profile id for the schedule if there is no profile id set on the schedule.
+    ProgramType programType = ProgramType.valueOfSchedulableType(schedule.getProgram().getProgramType());
+    ProgramId programId = new ProgramId(schedule.getNamespace(), schedule.getApplication(), programType,
+                                        schedule.getProgram().getProgramName());
+    ProfileId programProfileId = getAssignedProfileId(programId, true, ProfileId.NATIVE);
+
+    // Build profile metadata updates for ScheduleId -> ProfileId mapping
+    collectScheduleProfileMetadata(schedule, programProfileId, updates);
   }
 
   /**
@@ -228,10 +375,10 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       LOG.trace("Removing profile metadata for {}", entity);
       ApplicationId appId = (ApplicationId) message.getEntityId();
       ApplicationSpecification appSpec = message.getPayload(GSON, ApplicationSpecification.class);
-      for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, appId)) {
+      for (ProgramId programId : getProfileAllowedPrograms(appSpec, appId)) {
         addProfileMetadataDelete(programId, deletes);
       }
-      for (ScheduleId scheduleId : getSchedulesInApp(appId, appSpec.getProgramSchedules())) {
+      for (ScheduleId scheduleId : getScheduleIdsFromNames(appId, appSpec.getProgramSchedules().keySet())) {
         addProfileMetadataDelete(scheduleId, deletes);
       }
     } else if (entity.getEntityType().equals(EntityType.SCHEDULE)) {
@@ -242,38 +389,71 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     }
   }
 
-  private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
-                                         @Nullable ProfileId namespaceProfile,
+  /**
+   * Find the profile ids assigned to all schedules and programs in the given application and add
+   * metadata update operations for these assignments to the list of mutations that will be applied on
+   * {@link MetadataStorage}
+   *
+   * @param applicationId the id of the application for which to find all profiles assigned to schedules of its programs
+   * @param appDetail details of the given application
+   * @param defaultProfileId default profile id to use if no profile found for a schedule
+   * @param updates a list of mutations to be applied on {@link MetadataStorage}
+   * @throws IOException if failed to get
+   */
+  private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationDetail appDetail,
+                                         @Nullable ProfileId defaultProfileId,
                                          List<MetadataMutation> updates) throws IOException {
-    ProfileId appProfile = namespaceProfile == null
-      ? getResolvedProfileId(applicationId)
-      : getProfileId(applicationId).orElse(namespaceProfile);
-    for (ProgramId programId : getAllProfileAllowedPrograms(appSpec, applicationId)) {
+    ProfileId appProfile = defaultProfileId == null
+      ? getAssignedProfileId(applicationId, true, ProfileId.NATIVE)
+      : getAssignedProfileId(applicationId, false, defaultProfileId);
+    for (ProgramId programId : getProfileAllowedPrograms(appDetail, applicationId)) {
       collectProgramProfileMetadata(programId, appProfile, updates);
     }
   }
 
-  private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId appProfile,
+  /**
+   * Find the profile ids assigned to all schedules set on the given program and add metadata update operations
+   * for these assignments to the list of mutations that will be applied on {@link MetadataStorage}
+   *
+   * @param programId the id of the program for which to find all profiles assigned to schedules configured for it
+   * @param defaultProfileId default profile id to use when no profile assigned to a schedule
+   * @param updates a list of mutations to be applied on {@link MetadataStorage}
+   * @throws IOException if failed to list all schedules configured for the given program
+   */
+  private void collectProgramProfileMetadata(ProgramId programId, @Nullable ProfileId defaultProfileId,
                                              List<MetadataMutation> updates) throws IOException {
-    ProfileId programProfile = appProfile == null
-      ? getResolvedProfileId(programId)
-      : getProfileId(programId).orElse(appProfile);
-    addProfileMetadataUpdate(programId, programProfile, updates);
+    ProfileId programProfileId = defaultProfileId == null
+      ? getAssignedProfileId(programId, true, ProfileId.NATIVE)
+      : getAssignedProfileId(programId, false, defaultProfileId);
+    addProfileMetadataUpdate(programId, programProfileId, updates);
 
-    for (ProgramSchedule schedule : scheduleDataset.listSchedules(programId)) {
-      collectScheduleProfileMetadata(schedule, programProfile, updates);
+    List<ScheduleDetail> scheduleList = Collections.emptyList();
+    try {
+      scheduleList = scheduleFetcher.list(programId);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e);
+      throw new IOException(String.format("Failed to list scheudles for program id %s", programId.toString()),
+                            e.getCause());
     }
+    scheduleList.forEach(schedule -> collectScheduleProfileMetadata(schedule, programProfileId, updates));
   }
 
-  private void collectScheduleProfileMetadata(ProgramSchedule schedule, ProfileId programProfile,
+  /**
+   * Find the profile id assigned to the schedule from the given {@link ScheduleDetail} and add an metadata
+   * update operation for this assignment to the list of mutations that will be applied to metadata storage.
+   *
+   * @param schedule details of a schedule containing profile id assigned to this schedule, if any, in its property map
+   * @param defaultProfileId default profile id to use if no profile id found in schedule detail
+   * @param updates a list of mutations to be applied on {@link MetadataStorage}
+   */
+  private void collectScheduleProfileMetadata(ScheduleDetail schedule, ProfileId defaultProfileId,
                                               List<MetadataMutation> updates) {
-    ScheduleId scheduleId = schedule.getScheduleId();
-    // if we are able to get profile from preferences or schedule properties, use it
+    ScheduleId scheduleId = schedule.toScheduleId();
+    // If we are able to get profile from preferences or schedule properties, use it
     // otherwise default profile will be used
-    Optional<ProfileId> scheduleProfileId =
-      SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(), schedule.getProperties());
-    programProfile = scheduleProfileId.orElse(programProfile);
-    addProfileMetadataUpdate(scheduleId, programProfile, updates);
+    ProfileId profileId = SystemArguments.getProfileIdFromArgs(scheduleId.getNamespaceId(),
+                                                               schedule.getProperties()).orElse(defaultProfileId);
+    addProfileMetadataUpdate(scheduleId, profileId, updates);
   }
 
   private void addProfileMetadataUpdate(NamespacedEntityId entityId, ProfileId profileId,
@@ -291,56 +471,66 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   /**
-   * Get the profile id for the provided entity id from the resolved preferences from preference dataset,
-   * if no profile is inside, it will return the default profile
+   * Get the profile id assigned to the given entity id from the preferences associated with it
    *
-   * @param entityId entity id to lookup the profile id
-   * @return the profile id which will be used by this entity id, default profile if not find
+   * @param entityId entity id for which to look up assigned profile id
+   * @param resolved whether to use resolve preferences for looking up assigned profile id
+   * @param defaultId default profile id to use if no assigned profile id for the entity is found
+   * @return profile id assigned to the entity
+   * @throws IOException
    */
-  // TODO: CDAP-13579 consider preference key starts with [scope].[name].system.profile.name
-  private ProfileId getResolvedProfileId(EntityId entityId) throws IOException {
+  private ProfileId getAssignedProfileId(EntityId entityId, boolean resolved, ProfileId defaultId) throws IOException {
     NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
       NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getResolvedPreference(entityId, SystemArguments.PROFILE_NAME);
-    return profileName == null ? ProfileId.NATIVE : ProfileId.fromScopedName(namespaceId, profileName);
-  }
-
-  /**
-   * Get the profile id for the provided entity id from its own preferences from preference dataset.
-   *
-   * @param entityId entity id to lookup the profile id
-   * @return the profile id configured for this entity id, if any
-   */
-  private Optional<ProfileId> getProfileId(EntityId entityId) throws IOException {
-    NamespaceId namespaceId = entityId.getEntityType().equals(EntityType.INSTANCE) ?
-      NamespaceId.SYSTEM : ((NamespacedEntityId) entityId).getNamespaceId();
-    String profileName = preferencesTable.getPreferences(entityId).getProperties().get(SystemArguments.PROFILE_NAME);
-    return profileName == null ? Optional.empty() : Optional.of(ProfileId.fromScopedName(namespaceId, profileName));
-  }
-
-  /**
-   * Get the schedule id from the schedule spec
-   */
-  private Set<ScheduleId> getSchedulesInApp(ApplicationId appId,
-                                            Map<String, ? extends ScheduleCreationSpec> scheduleSpecs) {
-    Set<ScheduleId> result = new HashSet<>();
-
-    for (String programName : scheduleSpecs.keySet()) {
-      result.add(appId.schedule(programName));
+    PreferencesDetail preferences = null;
+    try {
+      preferences = preferencesFetcher.get(entityId, resolved);
+    } catch (Exception e) {
+      Throwables.propagateIfPossible(e);
+      throw new IOException(String.format("Failed to get preferences for entity %s", entityId.toString()),
+                            e.getCause());
     }
-    return result;
+    String profileName = preferences.getProperties().get(SystemArguments.PROFILE_NAME);
+    return profileName == null ? defaultId : ProfileId.fromScopedName(namespaceId, profileName);
   }
 
   /**
-   * Gets all programIds which are defined in the appSpec which are allowed to use profiles.
+   * Get the schedule ids for the given list of schedule names in the supplied appliation.
    */
-  private Set<ProgramId> getAllProfileAllowedPrograms(ApplicationSpecification appSpec, ApplicationId appId) {
-    Set<ProgramId> programIds = new HashSet<>();
-    for (ProgramType programType : PROFILE_ALLOWED_PROGRAM_TYPES) {
-      for (String name : appSpec.getProgramsByType(programType.getApiProgramType())) {
-        programIds.add(appId.program(programType, name));
+  private Set<ScheduleId> getScheduleIdsFromNames(ApplicationId appId,
+                                                  Set<String> scheduleSet) {
+    return scheduleSet.stream().map(appId::schedule).collect(Collectors.toSet());
+  }
+
+  /**
+   * Gets all programIds in the {code appSpec} which are allowed to use profiles.
+   */
+  private Set<ProgramId> getProfileAllowedPrograms(ApplicationSpecification appSpec, ApplicationId appId) {
+    Function<ProgramType, Set<String>> getProgramsByType =
+      programType -> appSpec.getProgramsByType(programType.getApiProgramType());
+    return getProfileAllowedProgramsInternal(getProgramsByType, appId);
+  }
+
+  /**
+   * Gets all programIds in the {@code appDetail} which are allowed to use profiles.
+   */
+  private Set<ProgramId> getProfileAllowedPrograms(ApplicationDetail appDetail, ApplicationId appId) {
+    Function<ProgramType, Set<String>> getProgramsByType = programType -> {
+      Set<String> programs = new HashSet<>();
+      for (ProgramRecord programRecord : appDetail.getPrograms()) {
+        if (programRecord.getType() == programType) {
+          programs.add(programRecord.getName());
+        }
       }
-    }
-    return programIds;
+      return programs;
+    };
+    return getProfileAllowedProgramsInternal(getProgramsByType, appId);
+  }
+
+  private Set<ProgramId> getProfileAllowedProgramsInternal(Function<ProgramType, Set<String>> getProgramByType,
+                                                           ApplicationId appId) {
+    return PROFILE_ALLOWED_PROGRAM_TYPES.stream()
+      .flatMap(type -> getProgramByType.apply(type).stream().map(name -> appId.program(type, name)))
+      .collect(Collectors.toSet());
   }
 }

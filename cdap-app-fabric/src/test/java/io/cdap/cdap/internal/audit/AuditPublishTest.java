@@ -34,6 +34,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.data.RawMessage;
 import io.cdap.cdap.proto.audit.AuditMessage;
@@ -77,6 +78,7 @@ public class AuditPublishTest {
 
   private static CConfiguration cConf;
   private static MessagingService messagingService;
+  private static AppFabricServer appFabricServer;
   private static TopicId auditTopic;
 
   @BeforeClass
@@ -89,11 +91,14 @@ public class AuditPublishTest {
     if (messagingService instanceof Service) {
       ((Service) messagingService).startAndWait();
     }
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
     auditTopic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Audit.TOPIC));
   }
 
   @AfterClass
   public static void stop() {
+    appFabricServer.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }

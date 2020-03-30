@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2019 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -426,50 +426,50 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     ProgramId workflowId = appId.workflow("SampleWorkflow");
     ScheduleId scheduleId = appId.schedule("tsched1");
 
-    // publish a creation of a schedule that will never exist
-    // this tests that such a message is eventually discarded
-    // note that for this test, we configure a fast retry strategy and a small number of retries
-    // therefore this will cost only a few seconds delay
+    // Publish a creation of a schedule that will never exist.
+    // This tests that such a message is eventually discarded.
+    // Note that for this test, we configure a fast retry strategy and a small number of retries
+    // therefore this will cost only a few seconds delay.
     publishBogusCreationEvent();
 
-    // get the mds should be empty property since we haven't started the MetadataSubscriberService
+    // Getting the metadata should return empty property since we haven't started the MetadataSubscriberService
     MetadataStorage mds = injector.getInstance(MetadataStorage.class);
     Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(workflowId.toMetadataEntity())).getProperties());
     Assert.assertEquals(Collections.emptyMap(), mds.read(new Read(scheduleId.toMetadataEntity())).getProperties());
 
-    // add a app with workflow to app meta store
-    // note: since we bypass the app-fabric when adding this app, no ENTITY_CREATION message
+    // Add an app with workflow to app meta store
+    // Note: since we bypass the app-fabric when adding this app, no ENTITY_CREATION message
     // will be published for the app (it happens in app lifecycle service). Therefore this
     // app must exist before assigning the profile for the namespace, otherwise the app's
     // programs will not receive the profile metadata.
     Store store = injector.getInstance(DefaultStore.class);
     store.addApplication(appId, appSpec);
 
-    // set default namespace to use the profile, since now MetadataSubscriberService is not started,
+    // Set default namespace to use NATIVE profile, since now MetadataSubscriberService is not started,
     // it should not affect the mds
     PreferencesService preferencesService = injector.getInstance(PreferencesService.class);
     preferencesService.setProperties(NamespaceId.DEFAULT,
                                      Collections.singletonMap(SystemArguments.PROFILE_NAME,
                                                               ProfileId.NATIVE.getScopedName()));
 
-    // add a schedule to schedule store
+    // Add a schedule to schedule store
     ProgramScheduleService scheduleService = injector.getInstance(ProgramScheduleService.class);
     scheduleService.add(new ProgramSchedule("tsched1", "one time schedule", workflowId,
                                             Collections.emptyMap(),
                                             new TimeTrigger("* * ? * 1"), ImmutableList.of()));
 
-    // add a new profile in default namespace
+    // Add a new profile in default namespace
     ProfileService profileService = injector.getInstance(ProfileService.class);
-    ProfileId myProfile = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile");
-    Profile profile1 = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
-                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
-    profileService.saveProfile(myProfile, profile1);
+    ProfileId myProfile1Id = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile");
+    Profile myProfile1 = new Profile("MyProfile", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                     Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile1Id, myProfile1);
 
-    // add a second profile in default namespace
-    ProfileId myProfile2 = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile2");
-    Profile profile2 = new Profile("MyProfile2", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
-                                   Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
-    profileService.saveProfile(myProfile2, profile2);
+    // Add a second profile in default namespace
+    ProfileId myProfile2Id = new ProfileId(NamespaceId.DEFAULT.getNamespace(), "MyProfile2");
+    Profile myProfile2 = new Profile("MyProfile2", Profile.NATIVE.getLabel(), Profile.NATIVE.getDescription(),
+                                     Profile.NATIVE.getScope(), Profile.NATIVE.getProvisioner());
+    profileService.saveProfile(myProfile2Id, myProfile2);
 
     try {
       // Verify the workflow profile metadata is updated to default profile
@@ -487,10 +487,10 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                        Collections.singletonMap(SystemArguments.PROFILE_NAME, "USER:MyProfile"));
 
       // Verify the workflow profile metadata is updated to my profile
-      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, workflowId),
+      Tasks.waitFor(myProfile1Id.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to my profile
-      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, scheduleId),
+      Tasks.waitFor(myProfile1Id.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // set app level to use my profile 2
@@ -502,30 +502,30 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
                                                                 ProfileId.NATIVE.getScopedName()));
 
       // Verify the workflow profile metadata is updated to MyProfile2 which is at app level
-      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, workflowId),
+      Tasks.waitFor(myProfile2Id.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to MyProfile2 which is at app level
-      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, scheduleId),
+      Tasks.waitFor(myProfile2Id.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove the preferences at instance level, should not affect the metadata
       preferencesService.deleteProperties();
 
       // Verify the workflow profile metadata is updated to default profile
-      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, workflowId),
+      Tasks.waitFor(myProfile2Id.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to default profile
-      Tasks.waitFor(myProfile2.getScopedName(), () -> getProfileProperty(mds, scheduleId),
+      Tasks.waitFor(myProfile2Id.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove app level pref should let the programs/schedules use ns level pref
       preferencesService.deleteProperties(appId);
 
       // Verify the workflow profile metadata is updated to MyProfile
-      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, workflowId),
+      Tasks.waitFor(myProfile1Id.getScopedName(), () -> getProfileProperty(mds, workflowId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
       // Verify the schedule profile metadata is updated to MyProfile
-      Tasks.waitFor(myProfile.getScopedName(), () -> getProfileProperty(mds, scheduleId),
+      Tasks.waitFor(myProfile1Id.getScopedName(), () -> getProfileProperty(mds, scheduleId),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
       // remove ns level pref so no pref is there
@@ -546,9 +546,9 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
       preferencesService.deleteProperties(appId);
       store.removeAll(NamespaceId.DEFAULT);
       scheduleService.delete(scheduleId);
-      profileService.disableProfile(myProfile);
-      profileService.disableProfile(myProfile2);
-      profileService.deleteAllProfiles(myProfile.getNamespaceId());
+      profileService.disableProfile(myProfile1Id);
+      profileService.disableProfile(myProfile2Id);
+      profileService.deleteAllProfiles(myProfile1Id.getNamespaceId());
       mds.apply(new MetadataMutation.Drop(workflowId.toMetadataEntity()), MutationOptions.DEFAULT);
       mds.apply(new MetadataMutation.Drop(scheduleId.toMetadataEntity()), MutationOptions.DEFAULT);
     }
