@@ -192,6 +192,10 @@ export default class DataPrepTable extends Component {
   }
 
   handleSaveEditedColumnName(index, changedValue, noChange) {
+    if (!changedValue || changedValue.length === 0) {
+      return;
+    }
+
     let headers = this.state.headers;
     let matchedHeader = headers[index];
     if (!noChange) {

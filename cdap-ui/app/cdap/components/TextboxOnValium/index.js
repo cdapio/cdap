@@ -43,7 +43,9 @@ export default class TextboxOnValium extends Component {
     if (!this.props.allowSpace) {
       textValue = textValue.trim();
     }
+
     if (
+      textValue.length > 0 &&
       !isNil(this.props.validCharacterRegex) &&
       this.props.validCharacterRegex instanceof RegExp &&
       !this.props.validCharacterRegex.test(textValue)
