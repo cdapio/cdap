@@ -18,15 +18,14 @@ package io.cdap.cdap.app.runtime.spark
 
 import java.io.Closeable
 import java.io.File
-import java.io.IOException
+import java.lang
 import java.net.URI
 import java.net.URL
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
+import java.util
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-import java.lang
-import java.util
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 import io.cdap.cdap.api._
 import io.cdap.cdap.api.app.ApplicationSpecification
@@ -45,10 +44,10 @@ import io.cdap.cdap.api.plugin.PluginContext
 import io.cdap.cdap.api.preview.DataTracer
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo
 import io.cdap.cdap.api.security.store.SecureStore
-import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext
 import io.cdap.cdap.api.spark.SparkExecutionContext
 import io.cdap.cdap.api.spark.SparkSpecification
+import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
 import io.cdap.cdap.api.workflow.WorkflowInfo
 import io.cdap.cdap.api.workflow.WorkflowToken
 import io.cdap.cdap.app.runtime.spark.SparkTransactional.TransactionType
@@ -61,18 +60,17 @@ import io.cdap.cdap.app.runtime.spark.preview.SparkDataTracer
 import io.cdap.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
 import io.cdap.cdap.app.runtime.spark.service.SparkHttpServiceServer
 import io.cdap.cdap.common.conf.ConfigurationUtil
-import io.cdap.cdap.common.conf.Constants
 import io.cdap.cdap.common.utils.DirUtils
 import io.cdap.cdap.data.LineageDatasetContext
 import io.cdap.cdap.data2.metadata.lineage.AccessType
 import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.mapreduce.MRJobConfig
+import org.apache.spark.SparkContext
+import org.apache.spark.TaskContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.apache.spark.scheduler._
-import org.apache.spark.SparkContext
-import org.apache.spark.TaskContext
 import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
@@ -235,15 +233,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   }
 
   override def createInterpreter(): SparkInterpreter = {
-    // Create the class directory
-    val cConf = runtimeContext.getCConfiguration
-    val tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile
-    val classDir = new File(tempDir,
- 	runtimeContext.getProgramRunId.toIdParts.mkString(".") + "-classes-" + interpreterCount.incrementAndGet())
-    if (!DirUtils.mkdirs(classDir)) {
-      throw new IOException("Failed to create directory " + classDir + " for storing compiled class files.")
-    }
+    val classDir = createInterpreterOutputDir(interpreterCount.incrementAndGet())
 
     // Setup classpath and classloader
     val settings = AbstractSparkCompiler.setClassPath(new Settings())
@@ -270,7 +260,6 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
       override def close(): Unit = {
         if (closed.compareAndSet(false, true)) {
           sparkClassFileHandler.removeURLs(urlAdded)
-          DirUtils.deleteDirectoryContents(classDir, true)
         }
       }
     }
@@ -549,6 +538,11 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
     */
   protected def createInterpreter(settings: Settings, classDir: File,
                                   urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter
+
+  /**
+    * Returns a local directory for the interpreter to use for storing dynamic class files.
+    */
+  protected def createInterpreterOutputDir(interpreterCount: Int): File
 }
 
 /**
