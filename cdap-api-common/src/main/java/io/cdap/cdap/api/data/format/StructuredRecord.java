@@ -49,17 +49,19 @@ import javax.annotation.Nullable;
 @Beta
 public class StructuredRecord implements Serializable {
   private static final SimpleDateFormat DEFAULT_FORMAT = new SimpleDateFormat("YYYY-MM-DD'T'HH:mm:ss z");
+  private static final LRUCache<String, Schema> SCHEMA_CACHE = new LRUCache<>(100);
+
   private final Schema schema;
   private final Map<String, Object> fields;
 
   private static final long serialVersionUID = -6547770456592865613L;
 
-  {
+  static {
     DEFAULT_FORMAT.setTimeZone(TimeZone.getTimeZone("UTC"));
   }
 
   private StructuredRecord(Schema schema, Map<String, Object> fields) {
-    this.schema = schema;
+    this.schema = SCHEMA_CACHE.putIfAbsent(schema.getSchemaHash().toString(), schema);
     this.fields = fields;
   }
 
