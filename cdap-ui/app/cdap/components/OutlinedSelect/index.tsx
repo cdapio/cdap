@@ -72,6 +72,7 @@ const OutlinedSelect: React.FC<IOutlinedSelectProps> = ({ options, value, onChan
       onChange={handleOnChange}
       disabled={disabled}
       input={<CustomizedInput />}
+      title={value}
     >
       {dropdownOptions.map((opt) => {
         return (
