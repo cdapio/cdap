@@ -193,7 +193,16 @@ function FllTable({ tableId, tableInfo, type, isActive, classes }: ITableProps) 
         { [classes.activeTable]: isActive }
       )}
       renderGridHeader={renderGridHeader.bind(null, tableInfo, fields, isTarget, false, classes)}
-      renderGridBody={renderGridBody.bind(this, fields, tableId, activeFieldIds, classes)}
+      renderGridBody={renderGridBody.bind(
+        this,
+        fields,
+        tableId,
+        activeFieldIds,
+        hasUnrelatedFields,
+        isExpanded,
+        handleClick,
+        classes
+      )}
     />
   );
 }
