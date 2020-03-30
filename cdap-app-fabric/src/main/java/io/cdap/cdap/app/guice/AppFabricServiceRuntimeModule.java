@@ -233,7 +233,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
                            new AuthenticationContextModules().getMasterModule(),
-                           new MetadataServiceModule(),
                            new ProvisionerModule(),
                            BootstrapModules.getFileBasedModule(),
                            new AbstractModule() {
