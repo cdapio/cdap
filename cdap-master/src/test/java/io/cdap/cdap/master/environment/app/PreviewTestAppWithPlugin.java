@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,34 +14,30 @@
  * the License.
  */
 
-package io.cdap.cdap.master.environment;
+package io.cdap.cdap.master.environment.app;
 
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.plugin.PluginProperties;
-import io.cdap.cdap.api.service.AbstractService;
-import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
-import io.cdap.cdap.api.service.http.HttpServiceRequest;
-import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.api.workflow.AbstractWorkflow;
 import io.cdap.cdap.master.environment.plugin.ConstantCallable;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
 
 /**
- * An application that uses a service that uses a plugin.
+ * An app with a workflow that just writes a single tracer value. Used to test preview.
  */
-public class ServiceWithPluginApp extends AbstractApplication<ServiceWithPluginApp.Conf> {
-  public static final String NAME = ServiceWithPluginApp.class.getSimpleName();
+public class PreviewTestAppWithPlugin extends AbstractApplication<PreviewTestAppWithPlugin.Conf> {
+  public static final String TRACER_NAME = "trace";
+  public static final String TRACER_KEY = "k";
   public static final String PLUGIN_TYPE = ConstantCallable.PLUGIN_TYPE;
   public static final String PLUGIN_ID = "id";
 
   @Override
   public void configure() {
-    setName(NAME);
-    addService(new ServiceWithPlugin());
+    addWorkflow(new TestWorkflow());
     Conf conf = getConfig();
     usePlugin(PLUGIN_TYPE, conf.pluginName, PLUGIN_ID,
               PluginProperties.builder().addAll(conf.pluginProperties).build());
@@ -61,26 +57,28 @@ public class ServiceWithPluginApp extends AbstractApplication<ServiceWithPluginA
     }
   }
 
-  public static class ServiceWithPlugin extends AbstractService {
-    public static final String NAME = ServiceWithPlugin.class.getSimpleName();
+  /**
+   * Workflow that has a single action that writes to a tracer.
+   */
+  public static class TestWorkflow extends AbstractWorkflow {
+    public static final String NAME = TestWorkflow.class.getSimpleName();
 
     @Override
     protected void configure() {
       setName(NAME);
-      addHandler(new HandlerWithPlugin());
+      addAction(new TracerWriter());
     }
   }
 
   /**
-   * A handler that uses a plugin
+   * Writes a value to the tracer.
    */
-  public static class HandlerWithPlugin extends AbstractHttpServiceHandler {
+  public static class TracerWriter extends AbstractCustomAction {
 
-    @GET
-    @Path("call")
-    public void call(HttpServiceRequest request, HttpServiceResponder responder) throws Exception {
+    @Override
+    public void run() throws Exception {
       Callable<String> plugin = getContext().newPluginInstance(PLUGIN_ID);
-      responder.sendString(plugin.call());
+      getContext().getDataTracer(TRACER_NAME).info(TRACER_KEY, plugin.call());
     }
   }
 }
