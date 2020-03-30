@@ -17,15 +17,22 @@
 package io.cdap.cdap.app.runtime.spark
 
 import java.io.File
+import java.io.IOException
 import java.util
 
 import io.cdap.cdap.api.spark.dynamic.SparkInterpreter
-import io.cdap.cdap.app.runtime.spark.dynamic.{DefaultSparkInterpreter, URLAdder}
+import io.cdap.cdap.app.runtime.spark.dynamic.DefaultSparkInterpreter
+import io.cdap.cdap.app.runtime.spark.dynamic.URLAdder
+import io.cdap.cdap.common.conf.Constants
+import io.cdap.cdap.common.utils.DirUtils
 import org.apache.hadoop.conf.Configuration
-import org.apache.spark.{SparkContext, TaskContext}
-import org.apache.spark.executor.{DataWriteMethod, OutputMetrics}
+import org.apache.spark.SparkContext
+import org.apache.spark.TaskContext
+import org.apache.spark.executor.DataWriteMethod
+import org.apache.spark.executor.OutputMetrics
 import org.apache.spark.rdd.RDD
 
+import scala.collection.JavaConversions._
 import scala.reflect.io.PlainFile
 import scala.tools.nsc.Settings
 
@@ -49,7 +56,25 @@ class DefaultSparkExecutionContext(sparkClassLoader: SparkClassLoader, localizeR
 
   override protected def createInterpreter(settings: Settings, classDir: File,
                                            urlAdder: URLAdder, onClose: () => Unit): SparkInterpreter = {
-    new DefaultSparkInterpreter(settings, new PlainFile(classDir), urlAdder, onClose)
+    new DefaultSparkInterpreter(settings, new PlainFile(classDir), urlAdder, () => {
+      onClose()
+      if (classDir.isDirectory) {
+        DirUtils.deleteDirectoryContents(classDir, false)
+      }
+    })
+  }
+
+  override protected def createInterpreterOutputDir(interpreterCount: Int): File = {
+    val cConf = runtimeContext.getCConfiguration
+    val tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+      cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile
+    val classDir = new File(tempDir,
+                            runtimeContext.getProgramRunId.toIdParts.mkString(".")
+                              + "-classes-" + interpreterCount)
+    if (!DirUtils.mkdirs(classDir)) {
+      throw new IOException("Failed to create directory " + classDir + " for storing compiled class files.")
+    }
+    classDir
   }
 
   override protected[spark] def createSparkMetricsWriterFactory(): (TaskContext) => SparkMetricsWriter = {
