@@ -232,12 +232,12 @@ function LogViewerPreviewController ($scope, $window, LogViewerStore, myPreviewL
         },
         (statusErr) => {
           console.log('ERROR: ', statusErr);
-          let errorMsg = `Error getting preview logs: ${statusErr.data}`
+          let errorMsg = `Error getting preview logs: ${statusErr.data}`;
 
           if (statusErr.statusCode === 404) {
-            errorMsg = 'Logs for this preview run are not available. Please try re-running preview.'
+            errorMsg = 'Logs for this preview run are not available. Please try re-running preview.';
             vm.loading = false;
-          };
+          }
 
           myAlertOnValium.show({
             type: 'danger',
