@@ -38,7 +38,9 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.StreamSupport;
 
@@ -54,13 +56,16 @@ public class MasterServiceMainTestBase {
   private static Map<Class<?>, ServiceMainManager<?>> serviceManagers = new LinkedHashMap<>();
   protected static String[] initArgs;
 
+  protected static CConfiguration cConf;
+  protected static SConfiguration sConf;
+
   @BeforeClass
   public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setAutoCleanDataDir(false).setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
 
-    CConfiguration cConf = CConfiguration.create();
-    SConfiguration sConf = SConfiguration.create();
+    cConf = CConfiguration.create();
+    sConf = SConfiguration.create();
 
     // Set the HDFS directory as well as we are using DFSLocationModule in the master services
     cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
@@ -94,20 +99,51 @@ public class MasterServiceMainTestBase {
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
     cConf.setInt(Constants.Router.ROUTER_SSL_PORT, 0);
 
-    // Start the master main services
-    serviceManagers.put(RouterServiceMain.class, runMain(cConf, sConf, RouterServiceMain.class));
-    serviceManagers.put(MessagingServiceMain.class, runMain(cConf, sConf, MessagingServiceMain.class));
-    serviceManagers.put(MetricsServiceMain.class, runMain(cConf, sConf, MetricsServiceMain.class));
-    serviceManagers.put(LogsServiceMain.class, runMain(cConf, sConf, LogsServiceMain.class));
-    serviceManagers.put(MetadataServiceMain.class, runMain(cConf, sConf, MetadataServiceMain.class));
-    serviceManagers.put(AppFabricServiceMain.class, runMain(cConf, sConf, AppFabricServiceMain.class));
+    // Starting all master service mains
+    List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses =
+      Arrays.asList(RouterServiceMain.class,
+                    MessagingServiceMain.class,
+                    MetricsServiceMain.class,
+                    LogsServiceMain.class,
+                    MetadataServiceMain.class,
+                    AppFabricServiceMain.class);
+    for (Class<? extends AbstractServiceMain> serviceMainClass : serviceMainClasses) {
+      startService(serviceMainClass);
+    }
   }
 
   @AfterClass
   public static void finish() {
     // Reverse stop services
-    Lists.reverse(new ArrayList<>(serviceManagers.values())).forEach(ServiceMainManager::cancel);
+    Lists.reverse(new ArrayList<>(serviceManagers.keySet())).forEach(
+      (serviceMainClass) -> {
+        stopService((Class<? extends AbstractServiceMain>) serviceMainClass);
+      });
     zkServer.stopAndWait();
+  }
+
+  /**
+   * Instantiate and start up the given service main class and add it to the map from {@link AbstractServiceMain}
+   * to {@link ServiceMainManager}
+   *
+   * @param serviceMainClass the service main class to start
+   * @param <T> the type of service main class (e.g. {@link AppFabricServiceMain})
+   * @throws Exception if failed to start service main
+   */
+  protected static <T extends AbstractServiceMain> void startService(Class<T> serviceMainClass) throws Exception {
+    serviceManagers.put(serviceMainClass, runMain(cConf, sConf, serviceMainClass));
+  }
+
+  /**
+   * Stop the given service main and remove it from the map from {@link AbstractServiceMain}
+   * to {@link ServiceMainManager}
+   *
+   * @param serviceMainClass the service main class to stop
+   * @param <T> the type of service main class (e.g. {@link AppFabricServiceMain})
+   */
+  protected static <T extends AbstractServiceMain> void stopService(Class<T> serviceMainClass) {
+    final ServiceMainManager<?> serviceMainManager = serviceManagers.remove(serviceMainClass);
+    serviceMainManager.cancel();
   }
 
   /**
@@ -201,6 +237,7 @@ public class MasterServiceMainTestBase {
 
   /**
    * Represents a started main service.
+   *
    * @param <T> type of the service main class
    */
   private interface ServiceMainManager<T extends AbstractServiceMain> extends Cancellable {

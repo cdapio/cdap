@@ -77,6 +77,7 @@ import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisionerModule;
@@ -204,6 +205,7 @@ public class TestBase {
   private static MetadataAdmin metadataAdmin;
   private static FieldLineageAdmin fieldLineageAdmin;
   private static LineageAdmin lineageAdmin;
+  private static AppFabricServer appFabricServer;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -369,6 +371,8 @@ public class TestBase {
     provisioningService = injector.getInstance(ProvisioningService.class);
     provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
     if (previewManager instanceof Service) {
       ((Service) previewManager).startAndWait();
     }
@@ -504,6 +508,7 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                          principal, ImmutableSet.of(Action.ADMIN));
     }
+    appFabricServer.stopAndWait();
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
 
