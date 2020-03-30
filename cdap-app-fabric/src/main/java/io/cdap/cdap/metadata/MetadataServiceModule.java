@@ -31,7 +31,6 @@ import java.util.Set;
  * Guice module for metadata service.
  */
 public class MetadataServiceModule extends PrivateModule {
-
   @Override
   protected void configure() {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
@@ -41,7 +40,14 @@ public class MetadataServiceModule extends PrivateModule {
     handlerBinder.addBinding().to(MetadataHttpHandler.class);
     handlerBinder.addBinding().to(LineageHTTPHandler.class);
     expose(Key.get(new TypeLiteral<Set<HttpHandler>>() { }, Names.named(Constants.Metadata.HANDLERS_NAME)));
+
     bind(MetadataAdmin.class).to(DefaultMetadataAdmin.class);
     expose(MetadataAdmin.class);
+
+    bind(ApplicationDetailFetcher.class).toProvider(ApplicationDetailFetcherProvider.class);
+    bind(PreferencesFetcher.class).toProvider(PreferencesFetcherProvider.class);
+    bind(ScheduleFetcher.class).toProvider(ScheduleFetcherProvider.class);
+    bind(MetadataSubscriberService.class);
+    expose(MetadataSubscriberService.class);
   }
 }

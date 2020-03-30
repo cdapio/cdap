@@ -92,6 +92,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.services.LocalRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
+import io.cdap.cdap.internal.app.services.PropertiesResolver;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -101,7 +102,6 @@ import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
-import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -319,7 +319,18 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         }
       });
       bind(ProfileService.class).in(Scopes.SINGLETON);
-      bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+      install(new PrivateModule() {
+        @Override
+        protected void configure() {
+          // Keep PreferencesFetcher binding private since metadata service
+          // also uses AppFabricServiceRuntimeModule but may need to to bind
+          // PreferencesFetcher differently.
+          bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+          bind(PropertiesResolver.class);
+          expose(PropertiesResolver.class);
+        }
+      });
+
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

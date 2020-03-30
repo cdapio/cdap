@@ -30,6 +30,7 @@ import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.data2.audit.AuditTestModule;
 import io.cdap.cdap.data2.audit.InMemoryAuditPublisher;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.audit.AuditMessage;
 import io.cdap.cdap.proto.audit.AuditPayload;
 import io.cdap.cdap.proto.audit.AuditType;
@@ -56,6 +57,7 @@ public class SystemMetadataAuditPublishTest {
   private static InMemoryAuditPublisher auditPublisher;
   private static NamespaceAdmin namespaceAdmin;
   private static Scheduler scheduler;
+  private static AppFabricServer appFabricServer;
 
   @BeforeClass
   public static void setup() {
@@ -73,10 +75,13 @@ public class SystemMetadataAuditPublishTest {
     if (scheduler instanceof Service) {
       ((Service) scheduler).startAndWait();
     }
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
   }
 
   @AfterClass
   public static void tearDown() {
+    appFabricServer.stopAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }
