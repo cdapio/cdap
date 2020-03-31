@@ -38,6 +38,7 @@ $key-value-pair-visible-number: 6;
     grid-template-columns: 1fr 1fr 62px;
     grid-gap: 10px;
     margin-right: -25px;
+    width: 100%;
 
     &.wider {
       grid-template-columns: 1.5fr 1.5fr auto 100px;
@@ -102,6 +103,7 @@ $key-value-pair-visible-number: 6;
       display: grid;
       grid-template-columns: 1fr 1fr auto;
       grid-gap: 10px;
+      width: 100%;
 
       input[type="checkbox"] {
         width: 12px;
