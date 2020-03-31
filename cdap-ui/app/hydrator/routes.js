@@ -74,7 +74,7 @@ angular.module(PKG.name + '.feature.hydrator')
               window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
           },
           rValidNamespace: function($stateParams, myNamespace, myHelpers){
-            myHelpers.validNamespaceResolver($stateParams, myNamespace);
+            return myHelpers.validNamespaceResolver($stateParams, myNamespace);
           },
         },
         data: {
@@ -117,7 +117,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
             },
             rValidNamespace: function($stateParams, myNamespace, myHelpers){
-              myHelpers.validNamespaceResolver($stateParams, myNamespace);
+              return myHelpers.validNamespaceResolver($stateParams, myNamespace);
             },
             rConfig: function(rCDAPVersion, $stateParams, mySettings, $q, myHelpers, $window, HydratorPlusPlusHydratorService) {
               var defer = $q.defer();
@@ -378,7 +378,7 @@ angular.module(PKG.name + '.feature.hydrator')
                 window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
             },
             rValidNamespace: function($stateParams, myNamespace, myHelpers){
-              myHelpers.validNamespaceResolver($stateParams, myNamespace);
+              return myHelpers.validNamespaceResolver($stateParams, myNamespace);
             },
           },
           ncyBreadcrumb: {

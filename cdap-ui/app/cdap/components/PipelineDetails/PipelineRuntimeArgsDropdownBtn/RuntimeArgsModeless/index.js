@@ -20,14 +20,17 @@ import RuntimeArgsTabContent from 'components/PipelineDetails/PipelineRuntimeArg
 import {
   updatePreferences,
   runPipeline,
+  fetchAndUpdateRuntimeArgs,
 } from 'components/PipelineConfigurations/Store/ActionCreator';
 import BtnWithLoading from 'components/BtnWithLoading';
 import PipelineRunTimeArgsCounter from 'components/PipelineDetails/PipelineRuntimeArgsCounter';
 import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
-import { convertKeyValuePairsToMap } from 'services/helpers';
+import { convertKeyValuePairsToMap, preventPropagation } from 'services/helpers';
 import Popover from 'components/Popover';
 import T from 'i18n-react';
+import If from 'components/If';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 require('./RuntimeArgsModeless.scss');
 
 const I18N_PREFIX =
@@ -43,6 +46,7 @@ class RuntimeArgsModeless extends PureComponent {
     savedSuccessMessage: null,
     savingAndRun: false,
     error: null,
+    initialPropsLoading: true,
   };
 
   componentWillReceiveProps() {
@@ -63,14 +67,18 @@ class RuntimeArgsModeless extends PureComponent {
     });
   };
 
-  saveRuntimeArgs = () => {
+  saveRuntimeArgs = (e) => {
+    preventPropagation(e);
     this.toggleSaving();
     updatePreferences().subscribe(
       () => {
-        this.setState({
-          savedSuccessMessage: 'Runtime arguments saved successfully',
-          saving: false,
-        });
+        this.setState(
+          {
+            savedSuccessMessage: 'Runtime arguments saved successfully',
+            saving: false,
+          },
+          this.props.onClose
+        );
       },
       (err) => {
         this.setState({
@@ -91,6 +99,12 @@ class RuntimeArgsModeless extends PureComponent {
     this.props.onClose();
   };
 
+  componentDidMount() {
+    fetchAndUpdateRuntimeArgs().subscribe(() => {
+      this.setState({ initialPropsLoading: false });
+    });
+  }
+
   render() {
     const SaveBtn = () => {
       return (
@@ -101,7 +115,6 @@ class RuntimeArgsModeless extends PureComponent {
           onClick={this.saveRuntimeArgs}
           disabled={this.state.saving || !isEmpty(this.state.savedSuccessMessage)}
           label="Save"
-          dataCy="save-runtimeargs-deployed-pipeline-modal-btn"
         />
       );
     };
@@ -118,23 +131,30 @@ class RuntimeArgsModeless extends PureComponent {
       );
     };
     return (
-      <div className="runtime-args-modeless">
-        <div className="arguments-label">{T.translate(`${I18N_PREFIX}.specifyArgs`)}</div>
-        <RuntimeArgsTabContent />
-        <div className="tab-footer">
-          <div className="btns-container">
-            <Popover target={SaveBtn} placement="left" showOn="Hover">
-              {T.translate(`${I18N_PREFIX}.saveBtnPopover`)}
-            </Popover>
-            <Popover target={RunBtn} showOn="Hover" placement="right">
-              {T.translate(`${I18N_PREFIX}.runBtnPopover`)}
-            </Popover>
+      <div className="runtime-args-modeless" data-cy="runtime-args-modeless">
+        <If condition={this.state.initialPropsLoading}>
+          <div className="loading">
+            <LoadingSVGCentered data-cy="runtime-args-modeless-loading" />
+          </div>
+        </If>
+        <If condition={!this.state.initialPropsLoading}>
+          <div className="arguments-label">{T.translate(`${I18N_PREFIX}.specifyArgs`)}</div>
+          <RuntimeArgsTabContent runtimeArgs={this.props.runtimeArgs} />
+          <div className="tab-footer">
+            <div className="btns-container">
+              <Popover target={SaveBtn} placement="left" showOn="Hover">
+                {T.translate(`${I18N_PREFIX}.saveBtnPopover`)}
+              </Popover>
+              <Popover target={RunBtn} showOn="Hover" placement="right">
+                {T.translate(`${I18N_PREFIX}.runBtnPopover`)}
+              </Popover>
+            </div>
             {!isEmpty(this.state.savedSuccessMessage) ? (
               <span className="text-success">{this.state.savedSuccessMessage}</span>
             ) : null}
+            <PipelineRunTimeArgsCounter />
           </div>
-          <PipelineRunTimeArgsCounter />
-        </div>
+        </If>
       </div>
     );
   }

@@ -15,12 +15,19 @@
 */
 
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
-import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
+import {
+  DEFAULT_GCP_PROJECTID,
+  DEFAULT_GCP_SERVICEACCOUNT_PATH,
+  RUNTIME_ARGS_DEPLOYED_SELECTOR,
+  RUNTIME_ARGS_KEY_SELECTOR,
+  RUNTIME_ARGS_VALUE_SELECTOR
+} from "../support/constants";
 import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
 import {
   getGenericEndpoint,
   getConditionNodeEndpoint,
   getNodeSelectorFromNodeIndentifier,
+  dataCy
 } from '../helpers';
 /**
  * Uploads a pipeline json from fixtures to input file element.
@@ -523,4 +530,70 @@ Cypress.Commands.add('open_node_property', (element: INodeIdentifier) => {
 
 Cypress.Commands.add('close_node_property', () => {
   cy.get('[data-testid="close-config-popover"]').click();
+});
+
+/**
+ * row - row index for the runtime argument key value pair.
+ */
+Cypress.Commands.add('add_runtime_args_row_with_value', (row: number, key: string, value: string) => {
+  // clicking add on previous row.
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row - 1)} ${
+    dataCy('add-row')}`)
+    .click();
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
+    .should('exist');
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`)
+    .type(key);
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`)
+    .type(value);
+});
+
+
+/**
+ * row - row index for the runtime argument key value pair.
+ */
+Cypress.Commands.add('update_runtime_args_row', (row: number, key: string, value: string, macro: boolean = false) => {
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
+    .should('exist');
+  if (!macro) {
+    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+      dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`).clear();
+    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+      dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
+      .type(key);
+  }
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`).should('exist');
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`).clear();
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)}`)
+    .type(value);
+});
+
+/**
+ * row - row index for the runtime argument key value pair.
+ */
+Cypress.Commands.add('assert_runtime_args_row', (row: number, key: string, value: string, macro: boolean = false) => {
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
+    .should('exist');
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`)
+    .should('have.value', key);
+  if (macro) {
+    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+      dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`)
+      .should('be.disabled');
+  }
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)}`)
+    .should('exist');
+  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
+    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`)
+    .should('have.value', value);
 });

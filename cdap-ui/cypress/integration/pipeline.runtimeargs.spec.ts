@@ -16,13 +16,12 @@
 
 import { loginIfRequired, getArtifactsPoll } from '../helpers';
 import { dataCy } from '../helpers';
-
+import { RUNTIME_ARGS_DEPLOYED_SELECTOR, RUNTIME_ARGS_KEY_SELECTOR, RUNTIME_ARGS_VALUE_SELECTOR } from '../support/constants';
 let headers = {};
 const PIPELINE_RUN_TIMEOUT = 360000;
 const RUNTIME_ARGS_PREVIEW_SELECTOR = 'runtimeargs-preview';
-const RUNTIME_ARGS_DEPLOYED_SELECTOR = 'runtimeargs-deployed';
-const RUNTIME_ARGS_KEY_SELECTOR = 'runtimeargs-key';
-const RUNTIME_ARGS_VALUE_SELECTOR = 'runtimeargs-value';
+
+const RUNTIME_ARGS_MODELESS_LOADING_SELECTOR = 'runtime-args-modeless-loading';
 const PREVIEW_FAILED_BANNER_MSG =
   'The preview of the pipeline "Airport_test_macros" has failed. Please check the logs for more information.';
 const PREVIEW_SUCCESS_BANNER_MSG =
@@ -234,89 +233,43 @@ describe('Deploying pipeline with temporary runtime arguments', () => {
 
   it('and running it should succeed.', () => {
     cy.get('.arrow-btn-container').click();
+    cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('be.disabled');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('have.value', 'source_path');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )}`
-    ).type('random value1');
-
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('be.disabled');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('have.value', 'sink_path');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )}`
-    ).type('random value2');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`
-    ).should('not.exist');
-    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy('add-row')}`).click();
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`
-    ).should('exist');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).type('test key 2');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('have.value', 'test key 2');
-
+    cy.update_runtime_args_row(0, 'source_path', 'random value 1', true);
+    cy.update_runtime_args_row(1, 'sink_path', 'random value 2', true);
+    cy.assert_runtime_args_row(0, 'source_path', 'random value 1');
+    cy.assert_runtime_args_row(1, 'sink_path', 'random value 2');
+    cy.add_runtime_args_row_with_value(2, 'test key 3', 'test value 3');
+    cy.assert_runtime_args_row(2, 'test key 3', 'test value 3', false);
     cy.get(
       `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy('remove-row')}`
     ).click();
     cy.get(
       `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`
     ).should('not.exist');
-
     cy.get(dataCy('run-deployed-pipeline-modal-btn')).click();
     cy.get(dataCy('Failed'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
-
     cy.get('.arrow-btn-container').click();
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )} input`
-    ).clear();
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )}`
-    ).type(SOURCE_PATH_VAL);
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )} input`
-    ).clear();
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )}`
-    ).type(SINK_PATH_VAL);
+    cy.update_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
+    cy.update_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
     cy.get(dataCy('run-deployed-pipeline-modal-btn')).click();
     cy.get(dataCy('Succeeded'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
+  });
+
+  it('should not persist unsaved arguments', () => {
+    cy.get('.arrow-btn-container').click();
+    cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
+    cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
+    cy.add_runtime_args_row_with_value(2, 'runtime_args_key2', 'runtime_args_value2');
+    cy.add_runtime_args_row_with_value(3, 'runtime_args_key3', 'runtime_args_value3');
+    // dismissing the modeless by clicking outside.
+    cy.get('h1.pipeline-name').click();
+    cy.get('.arrow-btn-container').click();
+    cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
+    cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
+    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${
+      dataCy(RUNTIME_ARGS_VALUE_SELECTOR)}`)
+      .should('not.exist');
   });
 });
 
@@ -339,7 +292,7 @@ describe('Deploying pipeline with saved runtime arguments', () => {
     getArtifactsPoll(headers);
   });
   after(() => {
-    // cy.cleanup_pipelines(headers, runtimeArgsPipeline);
+    cy.cleanup_pipelines(headers, runtimeArgsPipeline);
   });
 
   it('should be successful', () => {
@@ -364,50 +317,56 @@ describe('Deploying pipeline with saved runtime arguments', () => {
 
   it('and running it should succeed.', () => {
     cy.get('.arrow-btn-container').click();
+    cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('be.disabled');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('have.value', 'source_path');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )} input`
-    ).clear();
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(0)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )}`
-    ).type(SOURCE_PATH_VAL);
-
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('be.disabled');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_KEY_SELECTOR
-      )} input`
-    ).should('have.value', 'sink_path');
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )} input`
-    ).clear();
-    cy.get(
-      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(1)} ${dataCy(
-        RUNTIME_ARGS_VALUE_SELECTOR
-      )}`
-    ).type(SINK_PATH_VAL);
+    cy.assert_runtime_args_row(0, 'source_path', '', true);
+    cy.assert_runtime_args_row(1, 'sink_path', '', true);
+    cy.update_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
+    cy.update_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
     cy.get(dataCy('save-runtime-args-btn')).click();
-    cy.get(dataCy('pipeline-run-btn')).click();
+    cy.get(dataCy('save-runtime-args-btn')).should('not.be.visible');
+    cy.get(dataCy("pipeline-run-btn")).should('be.visible');
+    cy.get(dataCy('pipeline-run-btn')).click({ force: true });
     cy.get(dataCy('Succeeded'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
+  });
+
+  it('should have saved runtime arguments available and validating other valid actions with runtime arguments', () => {
+    //Verifying values are persisted
+    cy.get('.arrow-btn-container').click();
+    cy.assert_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
+    cy.assert_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
+    // adding bunch of rows
+    cy.add_runtime_args_row_with_value(2, 'runtime_args_key2', 'runtime_args_value2');
+    cy.add_runtime_args_row_with_value(3, 'runtime_args_key3', 'runtime_args_value3');
+    cy.add_runtime_args_row_with_value(4, 'runtime_args_key4', 'runtime_args_value4');
+    cy.assert_runtime_args_row(2, 'runtime_args_key2', 'runtime_args_value2');
+    cy.assert_runtime_args_row(3, 'runtime_args_key3', 'runtime_args_value3');
+    cy.assert_runtime_args_row(4, 'runtime_args_key4', 'runtime_args_value4');
+    //saving previously entered arguments and openeing the modal again to verify
+    cy.get(dataCy('save-runtime-args-btn')).click();
+    cy.get(dataCy('save-runtime-args-btn')).should('not.be.visible');
+    cy.get('.arrow-btn-container').click();
+    cy.assert_runtime_args_row(2, 'runtime_args_key2', 'runtime_args_value2');
+    cy.assert_runtime_args_row(3, 'runtime_args_key3', 'runtime_args_value3');
+    cy.assert_runtime_args_row(4, 'runtime_args_key4', 'runtime_args_value4');
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy('remove-row')}`
+    ).click();
+    // row 3 and 4 becomes row 2 and 3
+    cy.assert_runtime_args_row(2, 'runtime_args_key3', 'runtime_args_value3', false);
+    cy.assert_runtime_args_row(3, 'runtime_args_key4', 'runtime_args_value4', false);
+    // removing middle row ( row 2 ), row 3 becomes row 2, deleting that too 
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy('remove-row')}`
+    ).click();
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy('remove-row')}`
+    ).click();
+    // we should be left with original macros
+    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${
+      dataCy(RUNTIME_ARGS_VALUE_SELECTOR)}`)
+      .should('not.exist');
+    cy.assert_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
+    cy.assert_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
   });
 });

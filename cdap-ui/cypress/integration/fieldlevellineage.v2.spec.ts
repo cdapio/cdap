@@ -37,6 +37,8 @@ describe('Generating and navigating field level lineage for datasets', () => {
     Helpers.deployAndTestPipeline('fll_wrangler-test-pipeline.json', fllPipeline, () => {
       // Update and save runtime arguments
       cy.get('.arrow-btn-container').click();
+      cy.get(dataCy("runtime-args-modeless")).should('exist');
+      cy.get(dataCy("runtime-args-modeless-loading")).should('not.exist');
       cy.get(
         `${dataCy('runtimeargs-deployed')} ${dataCy(0)} ${dataCy('runtimeargs-value')}`
       ).should('exist');
@@ -50,9 +52,10 @@ describe('Generating and navigating field level lineage for datasets', () => {
         DEFAULT_GCP_PROJECTID
       );
       cy.get('[data-cy="save-runtime-args-btn"]').click();
-
+      cy.get(dataCy('save-runtime-args-btn')).should('not.be.visible');
       // Run pipeline to generate lineage
-      cy.get('[data-cy="pipeline-run-btn"]').click();
+      cy.get('[data-cy="pipeline-run-btn"]').should('be.visible');
+      cy.get('[data-cy="pipeline-run-btn"]').click({force: true});
       cy.get('[data-cy="Succeeded"]', { timeout: 720000 }).should('contain', 'Succeeded');
     });
   });
