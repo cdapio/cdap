@@ -23,6 +23,7 @@ import io.cdap.cdap.api.service.AbstractService;
 import io.cdap.cdap.api.service.http.AbstractHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
 import io.cdap.cdap.api.service.http.HttpServiceResponder;
+import io.cdap.cdap.master.environment.plugin.ConstantCallable;
 
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -34,7 +35,7 @@ import javax.ws.rs.Path;
  */
 public class ServiceWithPluginApp extends AbstractApplication<ServiceWithPluginApp.Conf> {
   public static final String NAME = ServiceWithPluginApp.class.getSimpleName();
-  public static final String PLUGIN_TYPE = "callable";
+  public static final String PLUGIN_TYPE = ConstantCallable.PLUGIN_TYPE;
   public static final String PLUGIN_ID = "id";
 
   @Override
