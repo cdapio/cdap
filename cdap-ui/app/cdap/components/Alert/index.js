@@ -84,9 +84,14 @@ export default class Alert extends Component {
     if (this.state.element) {
       msgElem = <span className="message truncate">{this.state.element}</span>;
     } else if (this.state.message) {
+      let message = this.state.message;
+      if (typeof message !== 'string') {
+        message = JSON.stringify(message);
+      }
+
       msgElem = (
         <span className="message truncate" title={this.state.message}>
-          {this.state.message}
+          {message}
         </span>
       );
     }
