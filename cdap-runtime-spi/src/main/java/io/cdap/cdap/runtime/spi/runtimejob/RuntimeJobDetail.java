@@ -22,19 +22,19 @@ import java.util.Objects;
  * Represents runtime job details.
  */
 public class RuntimeJobDetail {
-  private final RuntimeJobId runtimeJobId;
+  private final ProgramRunInfo runInfo;
   private final RuntimeJobStatus status;
 
-  public RuntimeJobDetail(RuntimeJobId runtimeJobId, RuntimeJobStatus status) {
-    this.runtimeJobId = runtimeJobId;
+  public RuntimeJobDetail(ProgramRunInfo runInfo, RuntimeJobStatus status) {
+    this.runInfo = runInfo;
     this.status = status;
   }
 
   /**
-   * Returns runtime job id.
+   * Returns program run info.
    */
-  public RuntimeJobId getRuntimeJobId() {
-    return runtimeJobId;
+  public ProgramRunInfo getRunInfo() {
+    return runInfo;
   }
 
   /**
@@ -53,11 +53,11 @@ public class RuntimeJobDetail {
       return false;
     }
     RuntimeJobDetail that = (RuntimeJobDetail) o;
-    return runtimeJobId.equals(that.runtimeJobId) && status == that.status;
+    return runInfo.equals(that.runInfo) && status == that.status;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(runtimeJobId, status);
+    return Objects.hash(runInfo, status);
   }
 }

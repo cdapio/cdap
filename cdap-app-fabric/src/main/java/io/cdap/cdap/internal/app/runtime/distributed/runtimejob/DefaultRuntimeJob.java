@@ -69,6 +69,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRun
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
 import io.cdap.cdap.messaging.MessagingService;
@@ -310,7 +311,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     });
 
     // Active monitoring means we need to start the RuntimeMonitorServer for app-fabric to poll
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING)) {
+    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING, false)) {
       modules.add(createRuntimeMonitorServerModule(cConf));
     }
 
@@ -356,8 +357,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     services.add(metricsCollectionService);
 
-    // TODO (CDAP-16438): Add the log appender loader
-    // services.add(injector.getInstance(LogAppenderLoaderService.class));
+    services.add(injector.getInstance(LogAppenderLoaderService.class));
 
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
@@ -366,7 +366,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     services.add(injector.getInstance(MessagingHttpService.class));
 
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING)) {
+    if (cConf.getBoolean(Constants.RuntimeMonitor.ACTIVE_MONITORING, false)) {
       services.add(injector.getInstance(RuntimeMonitorServer.class));
     }
 
