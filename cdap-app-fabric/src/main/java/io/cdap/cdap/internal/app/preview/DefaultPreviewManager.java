@@ -350,20 +350,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         }
       }),
       new ProvisionerModule(),
-      new PrivateModule() {
-        @Override
-        protected void configure() {
-          // ArtifactRepositoryReader is required by DefaultArtifactRepository.
-          // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
-          bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
-          bind(ArtifactRepository.class)
-            .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-            .to(DefaultArtifactRepository.class)
-            .in(Scopes.SINGLETON);
-          expose(ArtifactRepository.class)
-            .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
-        }
-      },
       new AbstractModule() {
         @Override
         protected void configure() {
