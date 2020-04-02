@@ -732,11 +732,15 @@ public class AppMetadataStore {
       return null;
     }
 
+    Map<String, String> newSystemArgs = new HashMap<>(existing.getSystemArgs());
+    newSystemArgs.putAll(systemArgs);
+
     // Delete the old run record
     delete(existing);
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     meta = RunRecordDetail.builder(existing)
       .setStatus(ProgramRunStatus.STARTING)
+      .setSystemArgs(newSystemArgs)
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
       .build();
