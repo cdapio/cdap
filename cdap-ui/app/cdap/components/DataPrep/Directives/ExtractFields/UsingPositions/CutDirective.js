@@ -56,6 +56,9 @@ export default class CutDirective extends Component {
   }
 
   applyDirective() {
+    if (!this.newColName || this.newColName.length === 0) {
+      return;
+    }
     let { start, end } = this.state.textSelectionRange;
     if (!isNil(start) && !isNil(end)) {
       let directive = `cut-character ${this.props.columns[0]} ${this.newColName} ${start +
