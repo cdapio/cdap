@@ -81,6 +81,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -1019,6 +1020,44 @@ public class AppMetadataStore {
       iterator.forEachRemaining(m -> count.getAndIncrement());
     }
     return count.get();
+  }
+
+  /**
+   * Represents a position for scanning.
+   */
+  public static final class Cursor {
+
+    private final Collection<Field<?>> fields;
+    private final Range.Bound bound;
+
+    Cursor(Collection<Field<?>> fields, Range.Bound bound) {
+      this.fields = fields;
+      this.bound = bound;
+    }
+  }
+
+  /**
+   * Scans active runs, starting from the given cursor.
+   *
+   * @param cursor the cursor to start the scan, or {@code null} for the first scan. A cursor can be obtained
+   *               from the call to the given {@link BiConsumer} for some previous scan.
+   * @param limit maximum number of records to scan
+   * @param consumer a {@link BiConsumer} to consume the scan result
+   * @throws IOException if failed to query the storage
+   */
+  public void scanActiveRuns(@Nullable Cursor cursor, int limit,
+                             BiConsumer<Cursor, RunRecordDetail> consumer) throws IOException {
+    Collection<Field<?>> begin = cursor == null ? getRunRecordStatusPrefix(TYPE_RUN_RECORD_ACTIVE) : cursor.fields;
+    Range range = Range.create(begin, cursor == null ? Range.Bound.INCLUSIVE : cursor.bound,
+                               getRunRecordStatusPrefix(TYPE_RUN_RECORD_ACTIVE), Range.Bound.INCLUSIVE);
+
+    StructuredTable table = getRunRecordsTable();
+    try (CloseableIterator<StructuredRow> iterator = table.scan(range, limit)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        consumer.accept(new Cursor(row.getPrimaryKeys(), Range.Bound.EXCLUSIVE), deserializeRunRecordMeta(row));
+      }
+    }
   }
 
   /**

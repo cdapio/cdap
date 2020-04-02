@@ -55,6 +55,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -587,6 +588,75 @@ public abstract class AppMetadataStoreTest {
       assertSecondCallIsNull(() -> store.recordProgramDeprovisioning(runId, sourceId));
       assertSecondCallIsNull(() -> store.recordProgramDeprovisioned(runId, System.currentTimeMillis(), sourceId));
     });
+  }
+
+  @Test
+  public void testScanActiveRuns() {
+    // Insert 10 Running programs
+    List<ProgramRunId> runIds = new ArrayList<>();
+    for (int i = 0; i < 10; i++) {
+      final ProgramRunId runId = new ProgramRunId("test", "test" + i, ProgramType.SERVICE, "service" + i,
+                                                  RunIds.generate().getId());
+      runIds.add(runId);
+
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        String twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      });
+    }
+    // Insert 10 completed programs
+    for (int i = 10; i < 20; i++) {
+      final ProgramRunId runId = new ProgramRunId("test", "test" + i, ProgramType.SERVICE, "service" + i,
+                                                  RunIds.generate().getId());
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.recordProgramProvisioning(runId, Collections.emptyMap(), SINGLETON_PROFILE_MAP,
+                                        AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()), ARTIFACT_ID);
+        store.recordProgramProvisioned(runId, 3, AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        String twillRunId = UUID.randomUUID().toString();
+        store.recordProgramStart(runId, twillRunId, Collections.emptyMap(),
+                                 AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramRunning(runId, System.currentTimeMillis(), twillRunId,
+                                   AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+        store.recordProgramStop(runId, System.currentTimeMillis(), ProgramRunStatus.COMPLETED, null,
+                                AppFabricTestHelper.createSourceId(sourceId.incrementAndGet()));
+      });
+    }
+
+    // Scan the active runs with batch size of 2
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>();
+    AtomicInteger count = new AtomicInteger();
+    AtomicBoolean completed = new AtomicBoolean();
+    while (!completed.get()) {
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        completed.set(true);
+        store.scanActiveRuns(cursorRef.get(), 2, (cursor, runRecordDetail) -> {
+          completed.set(false);
+          cursorRef.set(cursor);
+          Assert.assertEquals(runIds.get(count.get()), runRecordDetail.getProgramRunId());
+          count.incrementAndGet();
+        });
+      });
+    }
+
+    // Scan from the last cursor should have empty result
+    AtomicBoolean hasResult = new AtomicBoolean();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.scanActiveRuns(cursorRef.get(), 1, (cursor, runRecordDetail) -> {
+        hasResult.set(true);
+      });
+    });
+
+    Assert.assertFalse(hasResult.get());
   }
 
   private <T> void assertSecondCallIsNull(Callable<T> callable) throws Exception {
