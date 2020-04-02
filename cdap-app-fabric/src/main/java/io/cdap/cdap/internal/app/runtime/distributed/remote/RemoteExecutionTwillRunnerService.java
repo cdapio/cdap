@@ -29,7 +29,6 @@ import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
-import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -58,6 +57,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.MonitorSocksProxy;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenticator;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.profile.ProfileMetricService;
 import io.cdap.cdap.internal.provision.LocationBasedSSHKeyPair;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -123,6 +123,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -415,36 +416,73 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
    */
   private void initializeRuntimeMonitors(long startMillis) {
     int limit = cConf.getInt(Constants.RuntimeMonitor.INIT_BATCH_SIZE);
-    AtomicReference<ProgramRunId> lastProgramRunId = new AtomicReference<>();
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>();
+    AtomicBoolean completed = new AtomicBoolean();
+
     RetryStrategy retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor.");
 
-    boolean completed = false;
-
     try {
-      while (!completed) {
-        // Scan the dataset and update the controllers map. Retry on all exception.
-        completed = Retries.callWithRetries(() -> TransactionRunners.run(transactionRunner, context -> {
-          RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
-          List<Map.Entry<ProgramRunId, ProgramOptions>> scanResult = dataset.scan(limit, lastProgramRunId.get());
-          for (Map.Entry<ProgramRunId, ProgramOptions> entry : scanResult) {
-            ProgramRunId programRunId = entry.getKey();
-            ProgramOptions programOptions = entry.getValue();
+      while (!completed.get()) {
+        TransactionRunners.run(transactionRunner, context -> {
+          AppMetadataStore store = AppMetadataStore.create(context);
+          completed.set(true);
+          store.scanActiveRuns(cursorRef.get(), limit, (cursor, runRecordDetail) -> {
+            completed.set(false);
 
-            lastProgramRunId.set(programRunId);
-
-            if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) > startMillis) {
-              continue;
+            Cluster cluster = GSON.fromJson(runRecordDetail.getSystemArgs().get(ProgramOptionConstants.CLUSTER),
+                                            Cluster.class);
+            if (cluster == null) {
+              return;
             }
-
-            ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOptions, locationFactory);
-            // Creates a controller via the controller factory.
-            // Since there is no startup start needed, the timeout is arbitrarily short
-            new ControllerFactory(programRunId, programOptions, clusterKeyInfo).create(null, 5, TimeUnit.SECONDS);
-          }
-
-          return scanResult.isEmpty();
-        }, RetryableException.class), retryStrategy, e -> true);
+            Map<String, String> properties = cluster.getProperties();
+            String launchType = properties.get(Constants.RuntimeMonitor.LAUNCH_TYPE);
+            if (launchType == null) {
+              // Backward compatible check for runs predate addition of RuntimeJob in master-spi
+              properties.get(Constants.RuntimeMonitor.SSH_USER)
+            }
+          });
+        }, IOException.class);
       }
+
+//
+//      while (!completed) {
+//        // Scan the run records and update the controllers map. Retry on all exception.
+//        Map<ProgramRunId, RunRecordDetail> runRecords = TransactionRunners.run(transactionRunner, context -> {
+//          AppMetadataStore store = AppMetadataStore.create(context);
+//          return store.getActiveRuns(runRecordDetail -> {
+//            String clusterJson = runRecordDetail.getSystemArgs().get(ProgramOptionConstants.CLUSTER);
+//            Cluster cluster = GSON.fromJson(clusterJson, Cluster.class);
+//            if (cluster == null) {
+//              return false;
+//            }
+//            String launchType = cluster.getProperties().get(Constants.RuntimeMonitor.LAUNCH_TYPE);
+//            return launchType == null || Constants.RuntimeMonitor.LAUNCH_TYPE_SSH.equals(launchType);
+//          });
+//        });
+//
+//        // Scan the dataset and update the controllers map. Retry on all exception.
+//        completed = Retries.callWithRetries(() -> TransactionRunners.run(transactionRunner, context -> {
+//          RemoteRuntimeTable dataset = RemoteRuntimeTable.create(context);
+//          List<Map.Entry<ProgramRunId, ProgramOptions>> scanResult = dataset.scan(limit, lastProgramRunId.get());
+//          for (Map.Entry<ProgramRunId, ProgramOptions> entry : scanResult) {
+//            ProgramRunId programRunId = entry.getKey();
+//            ProgramOptions programOptions = entry.getValue();
+//
+//            lastProgramRunId.set(programRunId);
+//
+//            if (RunIds.getTime(programRunId.getRun(), TimeUnit.MILLISECONDS) > startMillis) {
+//              continue;
+//            }
+//
+//            ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOptions, locationFactory);
+//            // Creates a controller via the controller factory.
+//            // Since there is no startup start needed, the timeout is arbitrarily short
+//            new ControllerFactory(programRunId, programOptions, clusterKeyInfo).create(null, 5, TimeUnit.SECONDS);
+//          }
+//
+//          return scanResult.isEmpty();
+//        }, RetryableException.class), retryStrategy, e -> true);
+//      }
     } catch (Exception e) {
       LOG.error("Failed to load runtime dataset", e);
     }

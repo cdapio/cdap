@@ -21,7 +21,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
@@ -40,7 +39,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -120,13 +118,10 @@ public final class DirectRuntimeRequestValidator implements RuntimeRequestValida
       return;
     }
 
-    Map<String, String> properties = runRecord.getProperties();
-    Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"),
-                                                    new TypeToken<Map<String, String>>() { }.getType());
     try {
       TransactionRunners.run(txRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
-        store.recordProgramProvisioning(programRunId, runtimeArgs, runRecord.getSystemArgs(),
+        store.recordProgramProvisioning(programRunId, runRecord.getUserArgs(), runRecord.getSystemArgs(),
                                         runRecord.getSourceId(), runRecord.getArtifactId());
         store.recordProgramProvisioned(programRunId, 1, runRecord.getSourceId());
         store.recordProgramStart(programRunId, null, runRecord.getSystemArgs(), runRecord.getSourceId());

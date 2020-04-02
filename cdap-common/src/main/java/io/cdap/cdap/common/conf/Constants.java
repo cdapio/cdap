@@ -893,6 +893,11 @@ public final class Constants {
     public static final String SERVER_KEYSTORE = "server.jks";
     public static final String CLIENT_KEYSTORE = "client.jks";
 
+    // Constants for job launch type
+    public static final String LAUNCH_TYPE = "launch.type";
+    public static final String LAUNCH_TYPE_SSH = "ssh";
+    public static final String LAUNCH_TYPE_SPI = "spi";
+
     // Configurations related to the Service Proxy that runs in the remote runtime for proxying traffic from
     // remote cluster back into calling CDAP services.
     // File name that stores the service proxy information

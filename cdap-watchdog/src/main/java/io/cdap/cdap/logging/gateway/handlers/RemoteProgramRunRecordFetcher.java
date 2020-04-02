@@ -66,7 +66,9 @@ public class RemoteProgramRunRecordFetcher implements ProgramRunRecordFetcher {
     HttpRequest.Builder requestBuilder = remoteClient.requestBuilder(HttpMethod.GET, url);
     HttpResponse httpResponse;
     httpResponse = execute(requestBuilder.build());
-    return GSON.fromJson(httpResponse.getResponseBodyAsString(), RunRecordDetail.class);
+    return RunRecordDetail.builder(GSON.fromJson(httpResponse.getResponseBodyAsString(), RunRecordDetail.class))
+      .setProgramRunId(runId)
+      .build();
   }
 
   private HttpResponse execute(HttpRequest request) throws IOException, NotFoundException {
