@@ -3861,4 +3861,12 @@
     </description>
   </property>
 
+  <property>
+    <name>profile.update.allowed</name>
+    <value>true</value>
+    <description>
+      Determine if new profile can be created or existing profile can be updated.
+    </description>
+  </property>
+
 </configuration>

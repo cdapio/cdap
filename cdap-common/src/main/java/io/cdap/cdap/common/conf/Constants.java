@@ -1462,4 +1462,15 @@ public final class Constants {
       BOTH
     }
   }
+
+  /**
+   * Constants for profile
+   */
+  public static final class Profile {
+    private static final String PREFIX = "profile.";
+    /**
+     * Whether or not to allow creating new profiles.
+     */
+    public static final String UPDATE_ALLOWED = PREFIX + "update.allowed";
+  }
 }

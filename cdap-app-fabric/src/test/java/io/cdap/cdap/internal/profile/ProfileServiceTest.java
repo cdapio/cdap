@@ -27,12 +27,14 @@ import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -51,6 +53,7 @@ import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.store.StoreDefinition;
 import org.apache.twill.api.RunId;
 import org.junit.Assert;
@@ -84,6 +87,7 @@ public abstract class ProfileServiceTest {
   protected abstract StructuredTableAdmin getTableAdmin();
   protected abstract DefaultStore getDefaultStore();
 
+  protected static CConfiguration cConf;
   private ProfileService profileService;
 
   @Before
@@ -456,6 +460,42 @@ public abstract class ProfileServiceTest {
     Tasks.waitFor(0L, () -> getMetric(metricStore, runId, myProfile,
                                        "system." + Constants.Metrics.Program.PROGRAM_NODE_MINUTES),
                   10, TimeUnit.SECONDS);
+  }
+
+  @Test(expected = MethodNotAllowedException.class)
+  public void testProfileCreationDisabled() throws Exception {
+    CConfiguration cConfWithProfileCreationDisabled = CConfiguration.copy(cConf);
+    cConfWithProfileCreationDisabled.setBoolean(Constants.Profile.UPDATE_ALLOWED, false);
+
+    ProfileService service = new ProfileService(cConfWithProfileCreationDisabled,
+                                                getInjector().getInstance(MetricsSystemClient.class),
+                                                getInjector().getInstance(TransactionRunner.class));
+
+    ProfileId profileId = NamespaceId.DEFAULT.profile("MyProfile");
+    Profile profile = new Profile("MyProfile", "label", "my profile for testing",
+                                  new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));
+    // Add a profile
+    service.saveProfile(profileId, profile);
+  }
+
+  @Test(expected = MethodNotAllowedException.class)
+  public void testProfileUpdateDisallowed() throws Exception {
+    ProfileId profileId = NamespaceId.DEFAULT.profile("MyProfile");
+    Profile profile = new Profile("MyProfile", "label", "my profile for testing",
+                                  new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));
+    profileService.saveProfile(profileId, profile);
+
+    CConfiguration cConfWithProfileCreationDisabled = CConfiguration.copy(cConf);
+    cConfWithProfileCreationDisabled.setBoolean(Constants.Profile.UPDATE_ALLOWED, false);
+
+    ProfileService service = new ProfileService(cConfWithProfileCreationDisabled,
+                                                getInjector().getInstance(MetricsSystemClient.class),
+                                                getInjector().getInstance(TransactionRunner.class));
+
+    Profile newProfile = new Profile("MyProfile", "label", "my new profile for testing",
+                                  new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));
+    // Update the profile
+    service.saveProfile(profileId, newProfile);
   }
 
   private Map<String, String> getMetricsTags(ProgramRunId programRunId, ProfileId profileId) {

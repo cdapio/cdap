@@ -36,7 +36,7 @@ public class NoSqlProfileServiceTest extends ProfileServiceTest {
 
   @BeforeClass
   public static void setup() {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
