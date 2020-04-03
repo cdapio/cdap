@@ -11,9 +11,138 @@
       "runCondition": "ONCE"
     },
     {
+      "label": "Create dataproc profile",
+      "type": "CREATE_SYSTEM_PROFILE",
+      "runCondition": "ONCE", "arguments": {
+        "name": "dataproc",
+        "label": "Dataproc",
+        "description": "Creates Dataproc clusters for program runs",
+        "provisioner": {
+          "name": "gcp-dataproc",
+          "properties": [
+            {
+              "name": "masterNumNodes",
+              "value": "1",
+              "isEditable": true
+            },
+            {
+              "name": "masterCPUs",
+              "value": "1",
+              "isEditable": true
+            },
+            {
+              "name": "masterMemoryMB",
+              "value": "4096",
+              "isEditable": true
+            },
+            {
+              "name": "masterDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "workerNumNodes",
+              "value": "2",
+              "isEditable": true
+            },
+            {
+              "name": "workerCPUs",
+              "value": "2",
+              "isEditable": true
+            },
+            {
+              "name": "workerMemoryMB",
+              "value": "8192",
+              "isEditable": true
+            },
+            {
+              "name": "workerDiskGB",
+              "value": "1000",
+              "isEditable": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "Set dataproc as sytem default",
+      "type": "SET_SYSTEM_PROPERTIES",
+      "runCondition": "ONCE",
+      "arguments": {
+        "preferences": {
+          "system.profile.name": "SYSTEM:dataproc"
+        }
+      }
+    },
+    {
       "label": "Load system artifacts",
       "type": "LOAD_SYSTEM_ARTIFACTS",
       "runCondition": "ALWAYS"
+    },
+    {
+      "label": "Create dataprep application",
+      "type": "CREATE_APPLICATION",
+      "runCondition": "ALWAYS",
+      "arguments": {
+        "namespace": "system",
+        "name": "dataprep",
+        "overwrite": true,
+        "artifact": {
+          "name": "wrangler-service",
+          "version": "[4.0.0-SNAPSHOT, 10.0.0)",
+          "scope": "SYSTEM"
+        },
+        "config": {
+          "defaultConnection": "cloud_storage_default",
+          "disabledTypes": [
+            "FILE"
+          ],
+          "connections": [
+            {
+              "name": "Cloud Storage Default",
+              "description": "Cloud Storage connection for your project",
+              "type": "GCS"
+            },
+            {
+              "name": "BigQuery Default",
+              "description": "BigQuery connection for your project",
+              "type": "BIGQUERY"
+            },
+            {
+              "name": "Cloud Spanner Default",
+              "description": "Cloud Spanner connection for your project",
+              "type": "SPANNER"
+            },
+            {
+              "name": "Sample Buckets",
+              "description": "Cloud Storage buckets with sample data",
+              "type": "GCS",
+              "properties": {
+                "bucketWhitelist": "campaign-tutorial"
+              }
+            },
+            {
+              "name": "Sample Datasets",
+              "description": "BigQuery datasets with sample data",
+              "type": "BIGQUERY",
+              "properties": {
+                "datasetWhitelist": "dis-user-guide:campaign_tutorial"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "Start dataprep service",
+      "type": "START_PROGRAM",
+      "runCondition": "ALWAYS",
+      "arguments": {
+        "namespace": "system",
+        "application": "dataprep",
+        "type": "service",
+        "name": "service"
+      }
     },
     {
       "label": "Create pipeline application",
@@ -22,15 +151,15 @@
       "arguments": {
         "namespace": "system",
         "name": "pipeline",
+        "overwrite": true,
         "artifact": {
           "name": "cdap-data-pipeline",
-          "version": "[6.0.0, 10.0.0)",
+          "version": "[6.0.0-SNAPSHOT, 10.0.0)",
           "scope": "SYSTEM"
         },
         "config": {
           "service": true
-        },
-        "overwrite": true
+        }
       }
     },
     {
