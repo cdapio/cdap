@@ -58,7 +58,7 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
 
   @BeforeClass
   public static void setup() throws IOException, TableAlreadyExistsException {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     // any plugin which requires transaction will be excluded
     cConf.set(Constants.REQUIREMENTS_DATASET_TYPE_EXCLUDE, Joiner.on(",").join(Table.TYPE, KeyValueTable.TYPE));
     cConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_SQL);
@@ -74,7 +74,7 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
     StoreDefinition.createAllTables(structuredTableAdmin, registry);
 
     injector = AppFabricTestHelper.getInjector();
-    profileService = new ProfileService(injector.getInstance(MetricsSystemClient.class), transactionRunner);
+    profileService = new ProfileService(cConf, injector.getInstance(MetricsSystemClient.class), transactionRunner);
     defaultStore = new DefaultStore(transactionRunner);
   }
 

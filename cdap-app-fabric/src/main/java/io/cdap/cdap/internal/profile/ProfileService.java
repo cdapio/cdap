@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.MethodNotAllowedException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
@@ -60,12 +61,16 @@ import javax.inject.Inject;
  */
 public class ProfileService {
   private static final Logger LOG = LoggerFactory.getLogger(ProfileService.class);
+  private final CConfiguration cConf;
   private final MetricsSystemClient metricsSystemClient;
   private final TransactionRunner transactionRunner;
 
+
   @Inject
-  public ProfileService(MetricsSystemClient metricsSystemClient,
+  public ProfileService(CConfiguration cConf,
+                        MetricsSystemClient metricsSystemClient,
                         TransactionRunner transactionRunner) {
+    this.cConf = cConf;
     this.metricsSystemClient = metricsSystemClient;
     this.transactionRunner = transactionRunner;
   }
@@ -142,10 +147,13 @@ public class ProfileService {
    *
    * @param profileId the id of the profile to save
    * @param profile the information of the profile
-   * @throws MethodNotAllowedException if trying to update the Native profile
+   * @throws MethodNotAllowedException if trying to update the Native profile or creating a new profile when disallowed.
    */
   public void saveProfile(ProfileId profileId, Profile profile) throws MethodNotAllowedException {
     TransactionRunners.run(transactionRunner, context -> {
+      if (!cConf.getBoolean(Constants.Profile.UPDATE_ALLOWED)) {
+        throw new MethodNotAllowedException("Compute profile creation and update are not allowed");
+      }
       ProfileStore dataset = ProfileStore.get(context);
       if (profileId.equals(ProfileId.NATIVE)) {
         try {
