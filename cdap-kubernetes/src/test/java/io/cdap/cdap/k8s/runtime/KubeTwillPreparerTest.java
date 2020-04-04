@@ -16,11 +16,16 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.gson.Gson;
 import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.models.V1Deployment;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 /**
  * Test for {@link KubeTwillPreparer}. The test is disabled by default since it requires a running
@@ -37,12 +42,11 @@ public class KubeTwillPreparerTest {
   }
 
   @Test
-  public void testStatefulSet() {
-/*
-    path =
-    File file = new File(path);
-    String absolutePath = file.getAbsolutePath();
-
- */
+  public void testStatefulSet() throws IOException {
+    String filePath = "src/test/resources/dataprep.json";
+    Gson gson = new Gson();
+    System.out.println(new String(Files.readAllBytes(Paths.get(filePath))));
+    V1Deployment deployment = gson.fromJson(new String(Files.readAllBytes(Paths.get(filePath))),
+                                            V1Deployment.class);
   }
 }

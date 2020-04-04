@@ -17,6 +17,7 @@
 package io.cdap.cdap.k8s.runtime;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -440,6 +441,8 @@ class KubeTwillPreparer implements TwillPreparer {
 
     LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
+    Gson gson = new Gson();
+    gson.toJson(statefulSet.toString());
     LOG.info("wyzhang: created statefulset {}", statefulSet.toString());
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
     return statefulSet;

@@ -7,7 +7,6 @@
             "cdap.twill.app": "service.system.dataprep.service",
             "deployment.kubernetes.io/revision": "1"
         },
-        "creationTimestamp": "2020-04-04T17:28:46Z",
         "generation": 1,
         "labels": {
             "cdap.container": "cdap-app-container",
@@ -240,16 +239,12 @@
         "availableReplicas": 1,
         "conditions": [
             {
-                "lastTransitionTime": "2020-04-04T17:29:46Z",
-                "lastUpdateTime": "2020-04-04T17:29:46Z",
                 "message": "Deployment has minimum availability.",
                 "reason": "MinimumReplicasAvailable",
                 "status": "True",
                 "type": "Available"
             },
             {
-                "lastTransitionTime": "2020-04-04T17:28:46Z",
-                "lastUpdateTime": "2020-04-04T17:29:46Z",
                 "message": "ReplicaSet \"cdap-test-service-system-dataprep-service-26587f80-b16f-4674-af8d-ad0149dc8bae-6dd7887f69\" has successfully progressed.",
                 "reason": "NewReplicaSetAvailable",
                 "status": "True",
