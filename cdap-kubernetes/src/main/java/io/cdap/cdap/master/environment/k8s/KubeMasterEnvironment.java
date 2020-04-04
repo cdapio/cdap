@@ -159,6 +159,11 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
+    LOG.info("wyzhang: print conf start");
+    for (String key : conf.keySet()) {
+      LOG.info("wyzhang cconf: {} {}", key, conf.get(key));
+    }
+    LOG.info("wyzhang: pritn conf end");
     twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName),
                                              getDefaultResourceSpecification(conf));

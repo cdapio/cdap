@@ -38,6 +38,8 @@ import io.kubernetes.client.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodTemplateSpec;
 import io.kubernetes.client.models.V1ResourceRequirements;
+import io.kubernetes.client.models.V1StatefulSet;
+import io.kubernetes.client.models.V1StatefulSetSpec;
 import io.kubernetes.client.models.V1Volume;
 import io.kubernetes.client.models.V1VolumeMount;
 import org.apache.twill.api.ClassAcceptor;
@@ -84,8 +86,10 @@ class KubeTwillPreparer implements TwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
   // Just use a static for the container inside pod that runs CDAP app.
   private static final String CONTAINER_NAME = "cdap-app-container";
+  private static final String INIT_CONTAINER_NAME = "cdap-app-container-stoarge-main";
 
-  private static final double VCORES_TO_CPU_MULTIPLIER = 0.001;
+  // Map from virtual cores to k8s cpus. TODO: this should be a config
+  private static final double VCORES_TO_CPU_MULTIPLIER = 0.1;
 
   @VisibleForTesting
   /**
@@ -113,9 +117,14 @@ class KubeTwillPreparer implements TwillPreparer {
   private final URI programOptions;
   private final int memoryMB;
   private final int vcores;
+  private final String applicationName;
 
   KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
                     RunId twillRunId, V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
+    LOG.info("wyzhang: init kubetwillpreparer");
+    for (StackTraceElement ste : Thread.currentThread().getStackTrace()) {
+      LOG.info("wyzhang: " + ste.toString());
+    }
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
@@ -143,6 +152,7 @@ class KubeTwillPreparer implements TwillPreparer {
       .orElseThrow(() -> new IllegalStateException("Program Options not found in files to localize."));
     this.memoryMB = resourceSpecification.getMemorySize();
     this.vcores = resourceSpecification.getVirtualCores();
+    this.applicationName = spec.getName();
   }
 
   @Override
@@ -327,11 +337,112 @@ class KubeTwillPreparer implements TwillPreparer {
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
       V1ConfigMap configMap = createConfigMap();
-      createDeployment(configMap, timeoutUnit.toMillis(timeout));
+      createStatefulSet(configMap, timeoutUnit.toMillis(timeout));
       return controllerFactory.create(timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
+  }
+
+  private V1StatefulSet createStatefulSet(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+    AppsV1Api appsApi = new AppsV1Api(apiClient);
+    V1StatefulSet statefulSet = new V1StatefulSet();
+
+    // k8s object metadata
+    V1ObjectMeta statefulsetMetadata = new V1ObjectMetaBuilder(resourceMeta).build();
+    statefulsetMetadata.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
+    statefulsetMetadata.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
+                           Long.toString(startTimeoutMillis));
+    statefulSet.setMetadata(statefulsetMetadata);
+
+    V1StatefulSetSpec spec = new V1StatefulSetSpec();
+    V1LabelSelector labelSelector = new V1LabelSelector();
+    labelSelector.matchLabels(statefulsetMetadata.getLabels());
+    spec.setSelector(labelSelector);
+    // TODO: figure out where number of instances is specified in twill spec
+    spec.setReplicas(1);
+
+    V1PodTemplateSpec templateSpec = new V1PodTemplateSpec();
+    templateSpec.setMetadata(statefulsetMetadata);
+
+    V1PodSpec podSpec = new V1PodSpec();
+
+    // Define volumes in the pod.
+    V1Volume podInfoVolume = getPodInfoVolume();
+    V1Volume configVolume = getConfigVolume(configMap);
+    List<V1Volume> volumes = new ArrayList<>(podInfo.getVolumes());
+    volumes.add(podInfoVolume);
+    volumes.add(configVolume);
+    podSpec.setVolumes(volumes);
+
+    // Set the service for RBAC control for app.
+    podSpec.setServiceAccountName(podInfo.getServiceAccountName());
+
+    // Set the runtime class name to be the same as app-fabric
+    // This is for protection against running user code
+    podSpec.setRuntimeClassName(podInfo.getRuntimeClassName());
+
+    // Init container
+    String persistentVolumeName = applicationName + "-data";
+    V1Container initContainer = new V1Container();
+    initContainer.setName(INIT_CONTAINER_NAME);
+    initContainer.setImage(podInfo.getContainerImage());
+    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    // TODO: get data from cconf
+    volumeMounts.add(new V1VolumeMount().name(persistentVolumeName).mountPath("/data"));
+    initContainer.setVolumeMounts(volumeMounts);
+    initContainer.setArgs(Arrays.asList("io.cdap.cdap.master.environment.k8s.StorageMain"));
+    podSpec.setInitContainers(Collections.singletonList(initContainer));
+
+    // Application container
+    V1Container container = new V1Container();
+    container.setName(CONTAINER_NAME);
+    container.setImage(podInfo.getContainerImage());
+    String configDir = podInfo.getPodInfoDir() + "-app";
+    volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
+                       .mountPath(podInfo.getPodInfoDir()).readOnly(true));
+    volumeMounts.add(new V1VolumeMount().name(configVolume.getName())
+                       .mountPath(configDir).readOnly(true));
+    volumeMounts.add(new V1VolumeMount().name(persistentVolumeName).mountPath("/data"));
+    container.setVolumeMounts(volumeMounts);
+
+    V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
+    Map<String, Quantity> quantityMap = new HashMap<>();
+    quantityMap.put("cpu", vCoresToCpuQuantity(vcores));
+    quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
+    resourceRequirements.setRequests(quantityMap);
+    container.setResources(resourceRequirements);
+
+    // Setup the container environment. Inherit everything from the current pod.
+    Map<String, String> environs = podInfo.getContainerEnvironments().stream()
+      .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+
+    // assumption is there is only a single runnable
+    environs.putAll(environments.values().iterator().next());
+
+    // Set the process memory is through the JAVA_HEAPMAX variable.
+    environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", memoryMB));
+    container.setEnv(environs.entrySet().stream()
+                       .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
+                       .collect(Collectors.toList()));
+
+    // when other program types are supported, there will need to be a mapping from program type to main class
+    container.setArgs(Arrays.asList("io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
+                                    String.format("--appSpecPath=%s/%s", configDir, APP_SPEC),
+                                    String.format("--programOptions=%s/%s", configDir, PROGRAM_OPTIONS),
+                                    String.format("--twillRunId=%s", twillRunId.getId())));
+    podSpec.setContainers(Collections.singletonList(container));
+
+    templateSpec.setSpec(podSpec);
+    spec.setTemplate(templateSpec);
+    statefulSet.setSpec(spec);
+
+    LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
+    statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
+    LOG.info("wyzhang: created statefulset {}", statefulSet.toString());
+    LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
+    return statefulSet;
   }
 
   private V1Deployment createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
@@ -486,6 +597,14 @@ class KubeTwillPreparer implements TwillPreparer {
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
     return deployment;
+  }
+
+  private V1ObjectMeta createObjectMetadata(long startTimeoutMillis) {
+    V1ObjectMeta objectMeta = new V1ObjectMetaBuilder(resourceMeta).build();
+    objectMeta.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
+    objectMeta.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
+                                      Long.toString(startTimeoutMillis));
+    return objectMeta;
   }
 
   /*

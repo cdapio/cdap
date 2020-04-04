@@ -74,9 +74,12 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) {
-
+    System.out.println("wyzhang: setupLaunchConfig start");
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     ServiceSpecification serviceSpec = appSpec.getServices().get(program.getName());
+    System.out.println("wyzhang: setupLaunchConfig vcores " +
+                       serviceSpec.getResources().getVirtualCores() + " mem " +
+                       serviceSpec.getResources().getMemoryMB());
 
     // Add a runnable for the service handler
     launchConfig.addRunnable(serviceSpec.getName(), new ServiceTwillRunnable(serviceSpec.getName()),

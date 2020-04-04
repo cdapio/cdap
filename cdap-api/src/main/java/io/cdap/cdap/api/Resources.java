@@ -24,7 +24,8 @@ import java.util.Objects;
 public final class Resources {
 
   private static final int DEFAULT_VIRTUAL_CORES = 1;
-  private static final int DEFAULT_MEMORY_MB = 512;
+  // Test if this is where resource comes from
+  private static final int DEFAULT_MEMORY_MB = 128;
 
   private final int virtualCores;
   private final int memoryMB;

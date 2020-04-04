@@ -248,6 +248,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       Callable<ProgramController> callable = new Callable<ProgramController>() {
         @Override
         public ProgramController call() throws Exception {
+          LOG.info("wyzhang: DistributedProgramRunner:call() start");
+          for (String key : launchConfig.getRunnables().keySet()) {
+            LOG.info("wyzhang: launch config runnables {}, {}", key, launchConfig.getRunnables().get(key));
+          }
           ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
           ProgramTwillApplication twillApplication = new ProgramTwillApplication(
             programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),

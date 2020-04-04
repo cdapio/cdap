@@ -257,6 +257,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
 
   @Override
   public TwillPreparer prepare(TwillRunnable runnable) {
+    LOG.info("wyzhang: Remoteexecutiontwillrunnerservice prepare: using basic resource");
     return prepare(runnable, ResourceSpecification.BASIC);
   }
 

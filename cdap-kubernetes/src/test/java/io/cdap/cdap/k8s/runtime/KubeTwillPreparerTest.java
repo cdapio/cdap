@@ -20,6 +20,8 @@ import io.kubernetes.client.custom.Quantity;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.io.File;
+
 /**
  * Test for {@link KubeTwillPreparer}. The test is disabled by default since it requires a running
  * kubernetes cluster for the test to run. This class is kept for development purpose.
@@ -28,9 +30,19 @@ public class KubeTwillPreparerTest {
 
   @Test
   public void testVirtualCoresToCpu() {
-    int vCoresMilli = 200;
-    Quantity cpuQuantity = KubeTwillPreparer.vCoresToCpuQuantity(vCoresMilli);
-    Quantity expectedCpuQuantity = new Quantity(String.valueOf((double) vCoresMilli / 1000.0));
+    int vCores = 1;
+    Quantity cpuQuantity = KubeTwillPreparer.vCoresToCpuQuantity(vCores);
+    Quantity expectedCpuQuantity = new Quantity(String.valueOf((double) vCores * 0.1));
     Assert.assertTrue(cpuQuantity.equals(expectedCpuQuantity));
+  }
+
+  @Test
+  public void testStatefulSet() {
+/*
+    path =
+    File file = new File(path);
+    String absolutePath = file.getAbsolutePath();
+
+ */
   }
 }

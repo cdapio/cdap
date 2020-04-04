@@ -81,12 +81,14 @@ public final class ProgramLaunchConfig {
 
   public ProgramLaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
                                          Map<String, String> args, Resources defaultResource) {
+    System.out.println("wyzhang: addRunnable(.....)");
     return addRunnable(name, runnable, instances, args, defaultResource, null);
   }
 
   public ProgramLaunchConfig addRunnable(String name, TwillRunnable runnable, int instances,
                                          Map<String, String> args, Resources defaultResources,
                                          @Nullable Integer maxRetries) {
+    System.out.println("wyzhang: addRunnable(............)");
     ResourceSpecification resourceSpec = createResourceSpec(SystemArguments.getResources(args, defaultResources),
                                                             instances);
 

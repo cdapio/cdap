@@ -1,0 +1,223 @@
+{
+    "apiVersion": "extensions/v1beta1",
+    "kind": "Deployment",
+    "metadata": {
+        "annotations": {
+            "cdap.app.start.timeout.millis": "300000",
+            "cdap.twill.app": "service.system.dataprep.service",
+            "deployment.kubernetes.io/revision": "1"
+        },
+        "creationTimestamp": "2020-04-04T19:15:15Z",
+        "generation": 1,
+        "labels": {
+            "cdap.container": "cdap-app-container",
+            "cdap.instance": "test",
+            "cdap.twill.app": "service-system-dataprep-service",
+            "cdap.twill.run.id": "2ae7cffb-34e7-440f-8068-09f5e2b3ce56",
+            "cdap.twill.runner": "k8s"
+        },
+        "name": "cdap-test-service-system-dataprep-service-2ae7cffb-34e7-440f-8068-09f5e2b3ce56",
+        "namespace": "default",
+        "ownerReferences": [
+            {
+                "apiVersion": "apps/v1",
+                "blockOwnerDeletion": true,
+                "controller": true,
+                "kind": "StatefulSet",
+                "name": "cdap-test-appfabric",
+                "uid": "ab845821-76a6-11ea-87dd-42010a8000ce"
+            }
+        ],
+        "resourceVersion": "18272319",
+        "selfLink": "/apis/extensions/v1beta1/namespaces/default/deployments/cdap-test-service-system-dataprep-service-2ae7cffb-34e7-440f-8068-09f5e2b3ce56",
+        "uid": "9d544fde-76a8-11ea-87dd-42010a8000ce"
+    },
+    "spec": {
+        "progressDeadlineSeconds": 600,
+        "replicas": 1,
+        "revisionHistoryLimit": 10,
+        "selector": {
+            "matchLabels": {
+                "cdap.container": "cdap-app-container",
+                "cdap.instance": "test",
+                "cdap.twill.app": "service-system-dataprep-service",
+                "cdap.twill.run.id": "2ae7cffb-34e7-440f-8068-09f5e2b3ce56",
+                "cdap.twill.runner": "k8s"
+            }
+        },
+        "strategy": {
+            "rollingUpdate": {
+                "maxSurge": "25%",
+                "maxUnavailable": "25%"
+            },
+            "type": "RollingUpdate"
+        },
+        "template": {
+            "metadata": {
+                "annotations": {
+                    "cdap.app.start.timeout.millis": "300000",
+                    "cdap.twill.app": "service.system.dataprep.service"
+                },
+                "creationTimestamp": null,
+                "labels": {
+                    "cdap.container": "cdap-app-container",
+                    "cdap.instance": "test",
+                    "cdap.twill.app": "service-system-dataprep-service",
+                    "cdap.twill.run.id": "2ae7cffb-34e7-440f-8068-09f5e2b3ce56",
+                    "cdap.twill.runner": "k8s"
+                },
+                "name": "cdap-test-service-system-dataprep-service-2ae7cffb-34e7-440f-8068-09f5e2b3ce56",
+                "ownerReferences": [
+                    {
+                        "apiVersion": "apps/v1",
+                        "blockOwnerDeletion": true,
+                        "controller": true,
+                        "kind": "StatefulSet",
+                        "name": "cdap-test-appfabric",
+                        "uid": "ab845821-76a6-11ea-87dd-42010a8000ce"
+                    }
+                ]
+            },
+            "spec": {
+                "containers": [
+                    {
+                        "args": [
+                            "io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain",
+                            "--env=k8s",
+                            "--appSpecPath=/etc/podinfo-app/appSpec.json",
+                            "--programOptions=/etc/podinfo-app/program.options.json",
+                            "--twillRunId=2ae7cffb-34e7-440f-8068-09f5e2b3ce56"
+                        ],
+                        "env": [
+                            {
+                                "name": "JAVA_HEAPMAX",
+                                "value": "-Xmx128m"
+                            }
+                        ],
+                        "image": "us.gcr.io/wyzhang-dev/wyzhang-dev-cloud-data-fusion:latest",
+                        "imagePullPolicy": "Always",
+                        "name": "cdap-app-container",
+                        "resources": {
+                            "requests": {
+                                "cpu": "1m",
+                                "memory": "153Mi"
+                            }
+                        },
+                        "terminationMessagePath": "/dev/termination-log",
+                        "terminationMessagePolicy": "File",
+                        "volumeMounts": [
+                            {
+                                "mountPath": "/etc/cdap/conf",
+                                "name": "cdap-conf",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/etc/hadoop/conf",
+                                "name": "hadoop-conf",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/etc/cdap/security",
+                                "name": "cdap-security",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/etc/podinfo",
+                                "name": "pod-info",
+                                "readOnly": true
+                            },
+                            {
+                                "mountPath": "/etc/podinfo-app",
+                                "name": "app-config",
+                                "readOnly": true
+                            }
+                        ]
+                    }
+                ],
+                "dnsPolicy": "ClusterFirst",
+                "restartPolicy": "Always",
+                "schedulerName": "default-scheduler",
+                "securityContext": {},
+                "serviceAccount": "cdap",
+                "serviceAccountName": "cdap",
+                "terminationGracePeriodSeconds": 30,
+                "volumes": [
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "cdap-test-cconf"
+                        },
+                        "name": "cdap-conf"
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "cdap-test-hconf"
+                        },
+                        "name": "hadoop-conf"
+                    },
+                    {
+                        "name": "cdap-security",
+                        "secret": {
+                            "defaultMode": 420,
+                            "secretName": "cdap-secret"
+                        }
+                    },
+                    {
+                        "downwardAPI": {
+                            "defaultMode": 420,
+                            "items": [
+                                {
+                                    "fieldRef": {
+                                        "apiVersion": "v1",
+                                        "fieldPath": "metadata.name"
+                                    },
+                                    "path": "pod.name"
+                                },
+                                {
+                                    "fieldRef": {
+                                        "apiVersion": "v1",
+                                        "fieldPath": "metadata.labels"
+                                    },
+                                    "path": "pod.labels.properties"
+                                }
+                            ]
+                        },
+                        "name": "pod-info"
+                    },
+                    {
+                        "configMap": {
+                            "defaultMode": 420,
+                            "name": "cdap-test-service-system-dataprep-service-2ae7cffb-34e7-440f-8068-09f5e2b3ce56"
+                        },
+                        "name": "app-config"
+                    }
+                ]
+            }
+        }
+    },
+    "status": {
+        "conditions": [
+            {
+                "lastTransitionTime": "2020-04-04T19:15:15Z",
+                "lastUpdateTime": "2020-04-04T19:15:18Z",
+                "message": "ReplicaSet \"cdap-test-service-system-dataprep-service-2ae7cffb-34e7-440f-8068-09f5e2b3ce56-7cfff784f6\" has successfully progressed.",
+                "reason": "NewReplicaSetAvailable",
+                "status": "True",
+                "type": "Progressing"
+            },
+            {
+                "lastTransitionTime": "2020-04-04T21:10:25Z",
+                "lastUpdateTime": "2020-04-04T21:10:25Z",
+                "message": "Deployment does not have minimum availability.",
+                "reason": "MinimumReplicasUnavailable",
+                "status": "False",
+                "type": "Available"
+            }
+        ],
+        "observedGeneration": 1,
+        "replicas": 1,
+        "unavailableReplicas": 1,
+        "updatedReplicas": 1
+    }
+}

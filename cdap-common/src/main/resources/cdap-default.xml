@@ -440,7 +440,7 @@
 
   <property>
     <name>app.program.runid.corrector.interval</name>
-    <value>180</value>
+    <value>30</value>
     <description>
       Interval in seconds of how often the run id corrector thread will run;
       this value should be greater than 0
