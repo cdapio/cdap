@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -83,6 +84,18 @@ class KubeTwillPreparer implements TwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
   // Just use a static for the container inside pod that runs CDAP app.
   private static final String CONTAINER_NAME = "cdap-app-container";
+
+  private static final double VCORES_TO_CPU_MULTIPLIER = 0.001;
+
+  @VisibleForTesting
+  /**
+   * Convert from vcores to k8s CPU quantity
+   *
+   * vCores for {@link KubeTwillPreparer} should have milli as the unit for vcores.
+   */
+  public static Quantity vCoresToCpuQuantity(int vCores) {
+    return new Quantity(String.valueOf(vCores * VCORES_TO_CPU_MULTIPLIER));
+  }
 
   // These are equal to the constants used in DistributedProgramRunner
   private static final String APP_SPEC = "appSpec.json";
@@ -439,7 +452,7 @@ class KubeTwillPreparer implements TwillPreparer {
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
-    quantityMap.put("cpu", new Quantity(String.valueOf(vcores)));
+    quantityMap.put("cpu", vCoresToCpuQuantity(vcores));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
     resourceRequirements.setRequests(quantityMap);

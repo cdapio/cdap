@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
@@ -32,6 +33,7 @@ import io.kubernetes.client.models.V1Pod;
 import io.kubernetes.client.models.V1Volume;
 import io.kubernetes.client.models.V1VolumeMount;
 import io.kubernetes.client.util.Config;
+import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -79,6 +81,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
+  @VisibleForTesting
+  public static final String POD_REQUEST_CPU_MILLIS = "master.environment.k8s.pod.request.cpu.millis";
+  @VisibleForTesting
+  public static final String POD_REQUEST_MEMORY_MB = "master.environment.k8s.pod.request.memory.mb";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -88,6 +94,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
   private static final String DEFAULT_POD_KILLER_SELECTOR = "cdap.container=preview";
   private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
+  @VisibleForTesting
+  public static final String DEFAULT_POD_REQUEST_CPU_MILLIS = "1000";
+  @VisibleForTesting
+  public static final String DEFAULT_POD_REQUEST_MEMORY_MB = "512";
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
 
@@ -150,8 +160,21 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix,
-                                             Collections.singletonMap(instanceLabel, instanceName));
+                                             Collections.singletonMap(instanceLabel, instanceName),
+                                             getDefaultResourceSpecification(conf));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
+  }
+
+  @VisibleForTesting
+  public static ResourceSpecification getDefaultResourceSpecification(Map<String, String> conf) {
+    return
+      ResourceSpecification.Builder.with()
+        .setVirtualCores(Integer.valueOf(conf.getOrDefault(POD_REQUEST_CPU_MILLIS,
+                                                           DEFAULT_POD_REQUEST_CPU_MILLIS)).intValue())
+        .setMemory(Integer.valueOf(conf.getOrDefault(POD_REQUEST_MEMORY_MB,
+                                                     DEFAULT_POD_REQUEST_MEMORY_MB)).intValue(),
+                   ResourceSpecification.SizeUnit.MEGA)
+        .build();
   }
 
   @Override

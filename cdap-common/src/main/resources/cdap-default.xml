@@ -3861,4 +3861,28 @@
     </description>
   </property>
 
+  <property>
+    <name>profile.update.allowed</name>
+    <value>true</value>
+    <description>
+      Determine if new profile can be created or existing profile can be updated.
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.pod.request.cpu.millis</name>
+    <value>200</value>
+    <description>
+      Amount of CPU in millis to request for the pod
+    </description>
+  </property>
+
+  <property>
+    <name>master.environment.k8s.pod.request.memory.mb</name>
+    <value>256</value>
+    <description>
+      Amount of memory in MB to request for the pod
+    </description>
+  </property>
+
 </configuration>

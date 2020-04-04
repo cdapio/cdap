@@ -101,9 +101,11 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private final Lock liveInfoLock;
   private ScheduledExecutorService monitorScheduler;
   private ApiClient apiClient;
+  private final ResourceSpecification defaultResourceSpec;
 
   public KubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels) {
+                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels,
+                                ResourceSpecification defaultResrouceSpec) {
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.resourcePrefix = resourcePrefix;
@@ -115,11 +117,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
                                                                                 RUN_ID_LABEL));
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
+    this.defaultResourceSpec = defaultResrouceSpec;
   }
 
   @Override
   public TwillPreparer prepare(TwillRunnable runnable) {
-    return prepare(runnable, ResourceSpecification.BASIC);
+    return prepare(runnable, defaultResourceSpec);
   }
 
   @Override
