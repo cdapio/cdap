@@ -416,13 +416,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   }
 
   /**
-   * Kubernetes names can be at max 253 characters and only contain lowercase alphanumeric, '-', and '.'.
+   * Kubernetes names can be at max 63 characters and only contain lowercase alphanumeric, '-', and '.'.
    * This will lowercase the twill name, and append -[runid] to the end. If the result would be longer than 253
    * characters, the twill name is truncated.
    */
   private String getName(String applicationName, RunId runId) {
     String suffix = "-" + runId.getId();
-    return resourcePrefix + cleanse(applicationName, 253 - suffix.length() - resourcePrefix.length()) + suffix;
+    return resourcePrefix + cleanse(applicationName, 63 - suffix.length() - resourcePrefix.length()) + suffix;
   }
 
   /**
