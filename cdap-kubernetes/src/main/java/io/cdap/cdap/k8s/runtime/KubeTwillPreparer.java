@@ -442,8 +442,7 @@ class KubeTwillPreparer implements TwillPreparer {
     LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
     Gson gson = new Gson();
-    gson.toJson(statefulSet.toString());
-    LOG.info("wyzhang: created statefulset {}", statefulSet.toString());
+    LOG.info("wyzhang: created statefulset {}", gson.toJson(statefulSet));
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
     return statefulSet;
   }
