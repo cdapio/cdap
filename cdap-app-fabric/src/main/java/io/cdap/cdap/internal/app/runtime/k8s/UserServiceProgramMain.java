@@ -124,7 +124,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
 
-
 /**
  * Run a {@link Service}.
  */
@@ -141,44 +140,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
    * Main entry point
    */
   public static void main(String[] args) throws Exception {
-    createStorage();
     main(UserServiceProgramMain.class, args);
-  }
-
-  public static void createStorage() throws Exception {
-    LOG.info("Creating storages");
-    Injector injector = Guice.createInjector(
-      new SystemDatasetRuntimeModule().getStandaloneModules(),
-      // We actually only need the MetadataStore createIndex.
-      // But due to the DataSetsModules, we need to pull in more modules.
-      new DataSetsModules().getStandaloneModules(),
-      new InMemoryDiscoveryModule(),
-      new StorageModule(),
-      new DFSLocationModule(),
-      new AuthenticationContextModules().getNoOpModule(),
-      new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(AuthorizationEnforcer.class).to(NoOpAuthorizer.class);
-          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class);
-          // The metrics collection service might not get started at this moment,
-          // so inject a NoopMetricsCollectionService.
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class).in(Scopes.SINGLETON);
-        }
-      }
-    );
-
-    // Create stores definitions
-    StructuredTableRegistry tableRegistry = injector.getInstance(StructuredTableRegistry.class);
-    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
-
-    try {
-      StoreDefinition.createAllTables(tableAdmin, tableRegistry);
-      LOG.info("Storage definitions creation completed");
-    } catch (TableAlreadyExistsException e) {
-      // Ignore the error
-      LOG.debug("Store table already exists", e);
-    }
   }
 
   @Override

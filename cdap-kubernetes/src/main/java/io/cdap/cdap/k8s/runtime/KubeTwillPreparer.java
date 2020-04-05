@@ -338,14 +338,14 @@ class KubeTwillPreparer implements TwillPreparer {
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
       V1ConfigMap configMap = createConfigMap();
-      createStatefulSet(configMap, timeoutUnit.toMillis(timeout));
+      createStatefulSet(podInfo, configMap, timeoutUnit.toMillis(timeout));
       return controllerFactory.create(timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
   }
 
-  private V1StatefulSet createStatefulSet(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+  private V1StatefulSet createStatefulSet(PodInfo podinfo, V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
     V1StatefulSet statefulSet = new V1StatefulSet();
 
