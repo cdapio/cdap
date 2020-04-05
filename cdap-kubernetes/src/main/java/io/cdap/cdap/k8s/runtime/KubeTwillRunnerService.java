@@ -422,7 +422,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
    */
   private String getName(String applicationName, RunId runId) {
     String suffix = "-" + runId.getId();
-    return resourcePrefix + cleanse(applicationName, 60 - suffix.length() - resourcePrefix.length()) + suffix;
+    return resourcePrefix + cleanse(applicationName, 50 - suffix.length() - resourcePrefix.length()) + suffix;
   }
 
   /**
