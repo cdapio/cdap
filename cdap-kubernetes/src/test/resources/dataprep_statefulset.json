@@ -1,0 +1,226 @@
+{
+  "napiVersion": "apps/v1",
+  "kind": "StatefulSet",
+  "metadata": {
+    "annotations": {
+      "cdap.app.start.timeout.millis": "300000",
+      "cdap.twill.app": "service.system.pipeline.studio"
+    },
+    "labels": {
+      "cdap.container": "cdap-app-container",
+      "cdap.instance": "test",
+      "cdap.twill.app": "service-system-pipeline-studio",
+      "cdap.twill.run.id": "e841d3a2-df58-4491-a1c2-42debde158c4",
+      "cdap.twill.runner": "k8s"
+    },
+    "name": "cdap-test-service-system-p-e841d3a2",
+    "namespace": "default"
+  },
+  "spec": {
+    "selector": {
+      "matchLabels": {
+        "cdap.container": "cdap-app-container",
+        "cdap.instance": "test",
+        "cdap.twill.app": "service-system-pipeline-studio",
+        "cdap.twill.run.id": "e841d3a2-df58-4491-a1c2-42debde158c4",
+        "cdap.twill.runner": "k8s"
+      }
+    },
+    "serviceName": "",
+    "template": {
+      "metadata": {
+        "annotations": {
+          "cdap.app.start.timeout.millis": "300000",
+          "cdap.twill.app": "service.system.pipeline.studi o"
+        },
+        "labels": {
+          "cdap.container": "cdap-app-container",
+          "cdap.instance": "test",
+          "cdap.twill.app": "service-system-pipeline-studio",
+          "cdap.twill.run.id": "e841d3a2-df58-4491-a1c2-42debde158c4",
+          "cdap.twill.runner": "k8s"
+        },
+        "name": "cdap-test-ser vice-system-p-e841d3a2"
+      },
+      "spec": {
+        "containers": [
+          {
+            "args": [
+              "io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain",
+              "--env=k8s",
+              "--appSpecPath=/etc/podinfo-app/appSpec.json",
+              "--programOptions=/etc/podinfo-app/program.options.json",
+              "-- twillRunId=e841d3a2-df58-4491-a1c2-42debde158c4"
+            ],
+            "env": [
+              {
+                "name": "JAVA_HEAPMAX",
+                "value": "-Xmx512m"
+              }
+            ],
+            "image": "us.gcr.io/wyzhang-dev/wyzhang-dev-cloud-data-fusion:latest",
+            "imagePullPolicy": "Always",
+            "name": "cdap-app-container",
+            "resources": {
+              "requests": {
+                "cpu": "100m",
+                "memory": "614Mi"
+              }
+            },
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/cdap/conf",
+                "name": "cdap-conf",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/etc/hadoop/conf",
+                "name": "hadoop-conf",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/etc/cdap/security",
+                "name": "cdap-security",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/etc/podinfo",
+                "name": "pod-info",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/etc/podinfo-app",
+                "name": "app-config",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/data",
+                "name": "service-system-pipeline-studio-data"
+              }
+            ]
+          }
+        ],
+        "dnsPolicy": "ClusterFirst",
+        "initContainers": [
+          {
+            "args": [
+              "io.cdap.cdap.master.environment.k8s.StorageMain"
+            ],
+            "image": "us.gcr.io/wyzhang-dev/wyzhang-dev-cloud-data-fusion:latest",
+            "imagePullPolicy": "Always",
+            "name": "cdap-app-container-stoarge-main",
+            "resources": {},
+            "terminationMessagePath": "/dev/termination-log",
+            "terminationMessagePolicy": "File",
+            "volumeMounts": [
+              {
+                "mountPath": "/etc/cdap/conf",
+                "name": "cdap-conf",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/etc/hadoop/conf",
+                "name": "hadoop-conf",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/etc/cdap/security",
+                "name": "cdap-security",
+                "readOnly": true
+              },
+              {
+                "mountPath": "/data",
+                "name": "service-system-pipeline-studio-data"
+              }
+            ]
+          }
+        ],
+        "restartPolicy": "Always",
+        "schedulerName": "default-scheduler",
+        "securityContext": {},
+        "serviceAccount": "cdap",
+        "serviceAccountName": "cdap",
+        "terminationGracePeriodSeconds": 30,
+        "volumes": [
+          {
+            "configMap": {
+              "defaultMode": 420,
+              "name": "cdap-test-cconf"
+            },
+            "name": "cdap-conf"
+          },
+          {
+            "configMap": {
+              "defaultMode": 420,
+              "name": "cdap-test-hconf"
+            },
+            "name": "hadoop-conf"
+          },
+          {
+            "name": "cdap-security",
+            "secret": {
+              "defaultMode": 420,
+              "secretName": "cdap-secret"
+            }
+          },
+          {
+            "downwardAPI": {
+              "defaultMode": 420,
+              "items": [
+                {
+                  "fieldRef": {
+                    "apiVersion": "v1",
+                    "fieldPath": "metadata.name"
+                  },
+                  "path": "pod.name"
+                },
+                {
+                  "fieldRef": {
+                    "apiVersion": "v1",
+                    "fieldPath": "metadata.labels"
+                  },
+                  "path": "pod.labels.properties"
+                }
+              ]
+            },
+            "name": "pod-info"
+          },
+          {
+            "configMap": {
+              "defaultMode": 420,
+              "name": "cdap-test-service-system-d-b5503065-4742-4f3b-bbab-4ecdf512bb6fcdap-test-service-system-p-e841d3a2-df58-4491-a1c2-42debde158c4"
+            },
+            "name": "app-config"
+          }
+        ]
+      }
+    },
+    "updateStrategy": {
+      "rollingUpdate": {
+        "partition": 0
+      },
+      "type": "RollingUpdate"
+    },
+    "volumeClaimTemplates": [
+      {
+        "metadata": {
+          "creationTimestamp": null,
+          "name": "service-system-pipeline-studio-data"
+        },
+        "spec": {
+          "accessModes": [
+            "ReadWriteOnce"
+          ],
+          "resources": {
+            "requests": {
+              "storage": "200Gi"
+            }
+          },
+          "volumeMode": "Filesystem"
+        }
+      }
+    ]
+  }
+}

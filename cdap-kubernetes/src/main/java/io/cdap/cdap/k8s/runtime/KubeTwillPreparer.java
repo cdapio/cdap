@@ -36,6 +36,8 @@ import io.kubernetes.client.models.V1LabelSelector;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ObjectMetaBuilder;
+import io.kubernetes.client.models.V1PersistentVolumeClaim;
+import io.kubernetes.client.models.V1PersistentVolumeClaimSpec;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodTemplateSpec;
 import io.kubernetes.client.models.V1ResourceRequirements;
@@ -74,11 +76,11 @@ import java.util.stream.Collectors;
 
 /**
  * Kubernetes version of a TwillRunner.
- *
+ * <p>
  * Runs a program in Kubernetes by creating a config-map of the app spec and program options resources that are
  * expected to be found in the local files of the RuntimeSpecification for the TwillRunnable.
  * A deployment is created that mounts the created config-map.
- *
+ * <p>
  * Most of these operations are no-ops as many of these methods and pretty closely coupled to the Hadoop implementation
  * and have no analogy in Kubernetes.
  */
@@ -334,26 +336,40 @@ class KubeTwillPreparer implements TwillPreparer {
     return start(60, TimeUnit.SECONDS);
   }
 
+  private String cleanse(String name) {
+    return name.replaceAll("[^A-Za-z0-9\\-]", "-");
+  }
+
   @Override
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
       V1ConfigMap configMap = createConfigMap();
-      createStatefulSet(podInfo, configMap, timeoutUnit.toMillis(timeout));
+      createStatefulSet(configMap, timeoutUnit.toMillis(timeout));
       return controllerFactory.create(timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
   }
 
-  private V1StatefulSet createStatefulSet(PodInfo podinfo, V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
-    AppsV1Api appsApi = new AppsV1Api(apiClient);
+  @VisibleForTesting
+  private V1StatefulSet constructStatefulSet(RunId runid,
+                                             String appSpec,
+                                             String programOptions,
+                                             V1ObjectMeta deploymentMetadata,
+                                             String containerName,
+                                             int vCores,
+                                             int memoryMB,
+                                             Map<String, Map<String, String>> environments,
+                                             V1ConfigMap configMap,
+                                             PodInfo currentPodInfo,
+                                             long startTimeoutMillis) {
     V1StatefulSet statefulSet = new V1StatefulSet();
 
     // k8s object metadata
-    V1ObjectMeta statefulsetMetadata = new V1ObjectMetaBuilder(resourceMeta).build();
-    statefulsetMetadata.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
+    V1ObjectMeta statefulsetMetadata = new V1ObjectMetaBuilder(deploymentMetadata).build();
+    statefulsetMetadata.putLabelsItem(podInfo.getContainerLabelName(), containerName);
     statefulsetMetadata.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
-                           Long.toString(startTimeoutMillis));
+                                           Long.toString(startTimeoutMillis));
     statefulSet.setMetadata(statefulsetMetadata);
 
     V1StatefulSetSpec spec = new V1StatefulSetSpec();
@@ -384,7 +400,7 @@ class KubeTwillPreparer implements TwillPreparer {
     podSpec.setRuntimeClassName(podInfo.getRuntimeClassName());
 
     // Init container
-    String persistentVolumeName = applicationName + "-data";
+    String persistentVolumeName = cleanse(applicationName) + "-data";
     V1Container initContainer = new V1Container();
     initContainer.setName(INIT_CONTAINER_NAME);
     initContainer.setImage(podInfo.getContainerImage());
@@ -437,7 +453,24 @@ class KubeTwillPreparer implements TwillPreparer {
 
     templateSpec.setSpec(podSpec);
     spec.setTemplate(templateSpec);
+
+    // Persistent Volume Claim
+    V1PersistentVolumeClaim volumeClaim = new V1PersistentVolumeClaim()
+      .metadata(new V1ObjectMeta().name(persistentVolumeName))
+      .spec(new V1PersistentVolumeClaimSpec()
+              .accessModes(Arrays.asList("ReadWriteOnce"))
+              .resources(new V1ResourceRequirements()
+                           .requests(Collections.singletonMap("storage", new Quantity("200Gi")))));
+    spec.setVolumeClaimTemplates(Arrays.asList(volumeClaim));
+
     statefulSet.setSpec(spec);
+  }
+
+  private V1StatefulSet createStatefulSet(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+    AppsV1Api appsApi = new AppsV1Api(apiClient);
+    V1StatefulSet statefulSet = constructStatefulSet(twillRunId, APP_SPEC, PROGRAM_OPTIONS, resourceMeta, CONTAINER_NAME,
+                                                     vcores, memoryMB, environments, configMap, podInfo,
+                                                     startTimeoutMillis);
 
     LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
@@ -605,7 +638,7 @@ class KubeTwillPreparer implements TwillPreparer {
     V1ObjectMeta objectMeta = new V1ObjectMetaBuilder(resourceMeta).build();
     objectMeta.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
     objectMeta.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
-                                      Long.toString(startTimeoutMillis));
+                                  Long.toString(startTimeoutMillis));
     return objectMeta;
   }
 
