@@ -21,6 +21,8 @@ import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+import io.cdap.cdap.spi.data.table.field.Field;
+import io.cdap.cdap.spi.data.table.field.FieldType;
 import io.cdap.cdap.spi.data.table.field.Fields;
 
 import java.io.IOException;
@@ -68,11 +70,174 @@ public final class StoreDefinition {
     UsageStore.createTables(tableAdmin, overWrite);
     FieldLineageStore.createTables(tableAdmin, overWrite);
     LogFileMetaStore.createTables(tableAdmin, overWrite);
+    DataprepStore.createTable(tableAdmin, overWrite);
   }
 
   public static void createAllTables(StructuredTableAdmin tableAdmin, StructuredTableRegistry registry)
     throws IOException, TableAlreadyExistsException {
     createAllTables(tableAdmin, registry, false);
+  }
+
+  /**
+   * Namespace store schema
+   */
+  public static final class DataprepStore {
+    /**
+     * Wrangler ConfigStore
+     */
+    public static class ConfigStore {
+      private static final String KEY_COL = "key";
+      private static final String VAL_COL = "value";
+      private static final Field<String> keyField = Fields.stringField(KEY_COL, "directives");
+      public static final StructuredTableId TABLE_ID = new StructuredTableId("dataprep_config");
+      public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
+        .withId(TABLE_ID)
+        .withFields(new FieldType(KEY_COL, FieldType.Type.STRING), new FieldType(VAL_COL, FieldType.Type.STRING))
+        .withPrimaryKeys(KEY_COL)
+        .build();
+    }
+
+    /**
+     * SchemaRegistry
+     */
+    public static final class SchemaRegistry {
+      private static final String NAMESPACE_COL = "namespace";
+      private static final String GENERATION_COL = "generation";
+      private static final String ID_COL = "id";
+
+      /**
+       * Columns specific to the meta table
+       */
+      private static class MetaColumn {
+        private static final String NAME = "name";
+        private static final String DESC = "description";
+        private static final String CREATED = "created";
+        private static final String UPDATED = "updated";
+        private static final String TYPE = "type";
+        private static final String AUTO_VERSION = "auto";
+        private static final String CURRENT_VERSION = "current";
+      }
+
+      /**
+       * Columns specific to the entry table
+       */
+      private static class EntryColumn {
+        private static final String VERSION = "version";
+        private static final String SCHEMA = "schema";
+      }
+
+      private static final StructuredTableId META_TABLE_ID = new StructuredTableId("schema_registry_meta");
+      private static final StructuredTableId ENTRY_TABLE_ID = new StructuredTableId("schema_registry_entries");
+      public static final StructuredTableSpecification META_TABLE_SPEC = new StructuredTableSpecification.Builder()
+        .withId(META_TABLE_ID)
+        .withFields(new FieldType(NAMESPACE_COL, FieldType.Type.STRING),
+                    new FieldType(GENERATION_COL, FieldType.Type.LONG),
+                    new FieldType(ID_COL, FieldType.Type.STRING),
+                    new FieldType(MetaColumn.NAME, FieldType.Type.STRING),
+                    new FieldType(MetaColumn.DESC, FieldType.Type.STRING),
+                    new FieldType(MetaColumn.CREATED, FieldType.Type.LONG),
+                    new FieldType(MetaColumn.UPDATED, FieldType.Type.LONG),
+                    new FieldType(MetaColumn.TYPE, FieldType.Type.STRING),
+                    new FieldType(MetaColumn.AUTO_VERSION, FieldType.Type.LONG),
+                    new FieldType(MetaColumn.CURRENT_VERSION, FieldType.Type.LONG))
+        .withPrimaryKeys(NAMESPACE_COL, GENERATION_COL, ID_COL)
+        .build();
+      public static final StructuredTableSpecification ENTRY_TABLE_SPEC = new StructuredTableSpecification.Builder()
+        .withId(ENTRY_TABLE_ID)
+        .withFields(new FieldType(NAMESPACE_COL, FieldType.Type.STRING),
+                    new FieldType(GENERATION_COL, FieldType.Type.LONG),
+                    new FieldType(ID_COL, FieldType.Type.STRING),
+                    new FieldType(EntryColumn.VERSION, FieldType.Type.LONG),
+                    new FieldType(EntryColumn.SCHEMA, FieldType.Type.BYTES))
+        .withPrimaryKeys(NAMESPACE_COL, GENERATION_COL, ID_COL, EntryColumn.VERSION)
+        .build();
+    }
+
+    /**
+     * Connection
+     */
+    public static class ConnectionStore {
+      private static final String NAMESPACE_COL = "namespace";
+      private static final String GENERATION_COL = "generation";
+      private static final String ID_COL = "id";
+      private static final String TYPE_COL = "type";
+      private static final String NAME_COL = "name";
+      private static final String DESC_COL = "description";
+      private static final String PROPERTIES_COL = "properties";
+      private static final String CREATED_COL = "created";
+      private static final String UPDATED_COL = "updated";
+      private static final String PRECONFIGURED_COL = "preconfigured";
+      private static final StructuredTableId TABLE_ID = new StructuredTableId("connections");
+      public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
+        .withId(TABLE_ID)
+        .withFields(new FieldType(NAMESPACE_COL, FieldType.Type.STRING),
+                    new FieldType(GENERATION_COL, FieldType.Type.LONG),
+                    new FieldType(ID_COL, FieldType.Type.STRING),
+                    new FieldType(TYPE_COL, FieldType.Type.STRING),
+                    new FieldType(NAME_COL, FieldType.Type.STRING),
+                    new FieldType(DESC_COL, FieldType.Type.STRING),
+                    new FieldType(PROPERTIES_COL, FieldType.Type.STRING),
+                    new FieldType(CREATED_COL, FieldType.Type.LONG),
+                    new FieldType(UPDATED_COL, FieldType.Type.LONG),
+                    new FieldType(PRECONFIGURED_COL, FieldType.Type.STRING))
+        .withPrimaryKeys(NAMESPACE_COL, GENERATION_COL, ID_COL)
+        .build();
+    }
+
+    /**
+     * WorkspaceDataSet
+     */
+    public static class WorkspaceDataset {
+      private static final String NAMESPACE_COL = "namespace";
+      private static final String GENERATION_COL = "generation";
+      private static final String ID_COL = "id";
+      private static final String NAME_COL = "name";
+      private static final String TYPE_COL = "type";
+      private static final String SCOPE_COL = "scope";
+      private static final String CREATED_COL = "created";
+      private static final String UPDATED_COL = "updated";
+      private static final String PROPERTIES_COL = "properties";
+      private static final String DATA_COL = "data";
+      private static final String REQUEST_COL = "request";
+      private static final StructuredTableId TABLE_ID = new StructuredTableId("workspaces");
+      public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
+        .withId(TABLE_ID)
+        .withFields(new FieldType(NAMESPACE_COL, FieldType.Type.STRING),
+                    new FieldType(GENERATION_COL, FieldType.Type.LONG),
+                    new FieldType(ID_COL, FieldType.Type.STRING),
+                    new FieldType(NAME_COL, FieldType.Type.STRING),
+                    new FieldType(TYPE_COL, FieldType.Type.STRING),
+                    new FieldType(SCOPE_COL, FieldType.Type.STRING),
+                    new FieldType(CREATED_COL, FieldType.Type.LONG),
+                    new FieldType(UPDATED_COL, FieldType.Type.LONG),
+                    new FieldType(PROPERTIES_COL, FieldType.Type.STRING),
+                    new FieldType(DATA_COL, FieldType.Type.BYTES),
+                    new FieldType(REQUEST_COL, FieldType.Type.STRING))
+        .withPrimaryKeys(NAMESPACE_COL, GENERATION_COL, ID_COL)
+        .build();
+    }
+
+    public static void createTable(StructuredTableAdmin tableAdmin,
+                                   boolean overWrite) throws IOException, TableAlreadyExistsException {
+      if (overWrite || tableAdmin.getSpecification(ConfigStore.TABLE_ID) == null) {
+        tableAdmin.create(ConfigStore.TABLE_SPEC);
+      }
+      if (overWrite || tableAdmin.getSpecification(SchemaRegistry.META_TABLE_ID) == null) {
+        tableAdmin.create(SchemaRegistry.META_TABLE_SPEC);
+      }
+      if (overWrite || tableAdmin.getSpecification(SchemaRegistry.ENTRY_TABLE_ID) == null) {
+        tableAdmin.create(SchemaRegistry.ENTRY_TABLE_SPEC);
+      }
+      if (overWrite || tableAdmin.getSpecification(ConnectionStore.TABLE_ID) == null) {
+        tableAdmin.create(ConnectionStore.TABLE_SPEC);
+      }
+      if (overWrite || tableAdmin.getSpecification(ConnectionStore.TABLE_ID) == null) {
+        tableAdmin.create(ConnectionStore.TABLE_SPEC);
+      }
+      if (overWrite || tableAdmin.getSpecification(WorkspaceDataset.TABLE_ID) == null) {
+        tableAdmin.create(WorkspaceDataset.TABLE_SPEC);
+      }
+    }
   }
 
   /**
@@ -372,8 +537,9 @@ public final class StoreDefinition {
       }
     }
   }
+
   /**
-   *  Defines schema for AppMetadata tables
+   * Defines schema for AppMetadata tables
    */
   public static final class AppMetadataStore {
 
@@ -914,7 +1080,7 @@ public final class StoreDefinition {
   }
 
   /**
-   *  Schema for usage table
+   * Schema for usage table
    */
   public static final class UsageStore {
     public static final StructuredTableId USAGES = new StructuredTableId("usages");
@@ -948,10 +1114,10 @@ public final class StoreDefinition {
 
   /**
    * Schema for field lineage.
-   *
+   * <p>
    * Endpoint checksum table is used to store endpoints/properties of endpoints to a checksum. Checksum can then be
    * used the query the other tables. Also contains the program run info for that checksum.
-   *
+   * <p>
    * The remaining tables store various endpoint data keyed by checksum.
    */
   public static final class FieldLineageStore {
