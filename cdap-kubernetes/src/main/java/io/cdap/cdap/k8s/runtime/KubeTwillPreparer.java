@@ -464,13 +464,14 @@ class KubeTwillPreparer implements TwillPreparer {
     spec.setVolumeClaimTemplates(Arrays.asList(volumeClaim));
 
     statefulSet.setSpec(spec);
+    return statefulSet;
   }
 
   private V1StatefulSet createStatefulSet(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
-    V1StatefulSet statefulSet = constructStatefulSet(twillRunId, APP_SPEC, PROGRAM_OPTIONS, resourceMeta, CONTAINER_NAME,
-                                                     vcores, memoryMB, environments, configMap, podInfo,
-                                                     startTimeoutMillis);
+    V1StatefulSet statefulSet = constructStatefulSet(twillRunId, APP_SPEC, PROGRAM_OPTIONS, resourceMeta,
+                                                     CONTAINER_NAME, vcores, memoryMB, environments, configMap,
+                                                     podInfo, startTimeoutMillis);
 
     LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
