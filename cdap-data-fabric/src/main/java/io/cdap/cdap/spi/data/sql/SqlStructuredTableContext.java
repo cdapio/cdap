@@ -21,12 +21,14 @@ import io.cdap.cdap.spi.data.StructuredTable;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.StructuredTableInstantiationException;
+import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.common.MetricStructuredTable;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
 import io.cdap.cdap.spi.data.table.StructuredTableSchema;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 
+import java.io.IOException;
 import java.sql.Connection;
 
 /**
@@ -56,5 +58,22 @@ public class SqlStructuredTableContext implements StructuredTableContext {
     return new MetricStructuredTable(
       tableId, new PostgresSqlStructuredTable(connection, new StructuredTableSchema(specification)),
       metricsCollector, emitTimeMetrics);
+  }
+
+  @Override
+  public StructuredTable getOrCreateTable(StructuredTableId tableId, StructuredTableSpecification tableSpec)
+    throws StructuredTableInstantiationException, IOException, TableNotFoundException {
+    StructuredTableSpecification specification = admin.getSpecification(tableId);
+    if (specification == null) {
+      try {
+        admin.create(tableSpec);
+      } catch (TableAlreadyExistsException e) {
+        // Possibly due to a race condition if this call isn't running in a transaction and someone else just created
+        // the table, in such case just proceed.
+      }
+    }
+    // Note that getTable call may fail with TableNotFoundException for the same reason:
+    // this call isn't running in a transaction and getTable call races with someone else's table deletion operation.
+    return getTable(tableId);
   }
 }

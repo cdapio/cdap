@@ -18,6 +18,9 @@ package io.cdap.cdap.spi.data;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
+
+import java.io.IOException;
 
 /**
  * This interface provides methods that instantiate a {@link StructuredTable} during the runtime.
@@ -36,4 +39,18 @@ public interface StructuredTableContext {
    */
   StructuredTable getTable(StructuredTableId tableId)
     throws StructuredTableInstantiationException, TableNotFoundException;
+
+  /**
+   * Get an instance of the specified Dataset. If none exist, create one based on the given
+   * {@link StructuredTableSpecification} first and then returns it.
+   *
+   * @param tableId the table id
+   * @return An instance of the specified table, never null
+   * @throws StructuredTableInstantiationException if the table cannot be instantiated
+   * @throws TableNotFoundException if table was deleted after existence check, therefore leading to table not found
+   * @throws IOException if table creation failed
+   */
+  StructuredTable getOrCreateTable(StructuredTableId tableId, StructuredTableSpecification tableSpec)
+    throws StructuredTableInstantiationException, IOException, TableNotFoundException;
 }
+
