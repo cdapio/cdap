@@ -215,14 +215,6 @@
   </property>
 
   <property>
-    <name>twill.kube.cpu.scaling.factor</name>
-    <value>1.0</value>
-    <description>
-      The cpu scaling factor.
-    </description>
-  </property>
-
-  <property>
     <name>twill.java.heap.memory.ratio</name>
     <value>0.6</value>
     <description>
