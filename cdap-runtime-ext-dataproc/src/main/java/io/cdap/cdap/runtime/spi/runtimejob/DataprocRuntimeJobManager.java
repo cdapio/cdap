@@ -242,7 +242,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Returns list of runtime local files with twill.jar and launcher.jar added to it.
    */
   private List<LocalFile> getRuntimeLocalFiles(Collection<? extends LocalFile> runtimeLocalFiles,
-                                                      File tempDir) throws Exception {
+                                               File tempDir) throws Exception {
     LocationFactory locationFactory = new LocalLocationFactory(tempDir);
     List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
     localFiles.add(DataprocJarUtil.getTwillJar(locationFactory));
@@ -254,6 +254,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * Uploads files to gcs.
    */
   private void uploadFile(String targetFilePath, LocalFile localFile) throws IOException, StorageException {
+    String bucket = DataprocUtils.getBucketName(this.bucket);
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
 
@@ -302,7 +303,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     for (LocalFile localFile : localFiles) {
       String localFileName = localFile.getName();
-      String fileName = getPath("gs:/", bucket, DataprocUtils.CDAP_GCS_ROOT, runId, localFileName);
+      String fileName = getPath(bucket, DataprocUtils.CDAP_GCS_ROOT, runId, localFileName);
 
       // add jar file
       if (localFile.getName().endsWith("jar")) {
