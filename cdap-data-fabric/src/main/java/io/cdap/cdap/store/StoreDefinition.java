@@ -217,25 +217,34 @@ public final class StoreDefinition {
         .build();
     }
 
+    public static final String PREFIX = "app_";
+
+    public static StructuredTableId getId(StructuredTableId id) {
+      return new StructuredTableId(PREFIX + id.getName());
+    }
+
+    public static StructuredTableSpecification getSpec(StructuredTableSpecification spec) {
+      return new StructuredTableSpecification.Builder(spec)
+        .withId(getId(spec.getTableId()))
+        .build();
+    }
+
     public static void createTable(StructuredTableAdmin tableAdmin,
                                    boolean overWrite) throws IOException, TableAlreadyExistsException {
-      if (overWrite || tableAdmin.getSpecification(ConfigStore.TABLE_ID) == null) {
-        tableAdmin.create(ConfigStore.TABLE_SPEC);
+      if (overWrite || tableAdmin.getSpecification(getId(ConfigStore.TABLE_ID)) == null) {
+        tableAdmin.create(getSpec(ConfigStore.TABLE_SPEC));
       }
-      if (overWrite || tableAdmin.getSpecification(SchemaRegistry.META_TABLE_ID) == null) {
-        tableAdmin.create(SchemaRegistry.META_TABLE_SPEC);
+      if (overWrite || tableAdmin.getSpecification(getId(SchemaRegistry.META_TABLE_ID)) == null) {
+        tableAdmin.create(getSpec(SchemaRegistry.META_TABLE_SPEC));
       }
-      if (overWrite || tableAdmin.getSpecification(SchemaRegistry.ENTRY_TABLE_ID) == null) {
-        tableAdmin.create(SchemaRegistry.ENTRY_TABLE_SPEC);
+      if (overWrite || tableAdmin.getSpecification(getId(SchemaRegistry.ENTRY_TABLE_ID)) == null) {
+        tableAdmin.create(getSpec(SchemaRegistry.ENTRY_TABLE_SPEC));
       }
-      if (overWrite || tableAdmin.getSpecification(ConnectionStore.TABLE_ID) == null) {
-        tableAdmin.create(ConnectionStore.TABLE_SPEC);
+      if (overWrite || tableAdmin.getSpecification(getId(ConnectionStore.TABLE_ID)) == null) {
+        tableAdmin.create(getSpec(ConnectionStore.TABLE_SPEC));
       }
-      if (overWrite || tableAdmin.getSpecification(ConnectionStore.TABLE_ID) == null) {
-        tableAdmin.create(ConnectionStore.TABLE_SPEC);
-      }
-      if (overWrite || tableAdmin.getSpecification(WorkspaceDataset.TABLE_ID) == null) {
-        tableAdmin.create(WorkspaceDataset.TABLE_SPEC);
+      if (overWrite || tableAdmin.getSpecification(getId(WorkspaceDataset.TABLE_ID)) == null) {
+        tableAdmin.create(getSpec(WorkspaceDataset.TABLE_SPEC));
       }
     }
   }
