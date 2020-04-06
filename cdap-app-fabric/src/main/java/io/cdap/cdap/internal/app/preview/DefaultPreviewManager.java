@@ -23,14 +23,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
-import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
@@ -56,12 +53,6 @@ import io.cdap.cdap.data.runtime.preview.PreviewDataModules;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
-import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
-import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
@@ -353,7 +344,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(PluginFinder.class).to(LocalPluginFinder.class);
           bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
         }
         @Provides
