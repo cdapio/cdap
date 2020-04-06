@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -80,6 +81,7 @@ import java.util.stream.Collectors;
  */
 class KubeTwillPreparer implements TwillPreparer {
 
+  private final CConfiguration cConf;
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
   // Just use a static for the container inside pod that runs CDAP app.
   private static final String CONTAINER_NAME = "cdap-app-container";
@@ -87,6 +89,7 @@ class KubeTwillPreparer implements TwillPreparer {
   // These are equal to the constants used in DistributedProgramRunner
   private static final String APP_SPEC = "appSpec.json";
   private static final String PROGRAM_OPTIONS = "program.options.json";
+  private static final String TWILL_KUBE_CPU_SCALING = "twill.kube.cpu.scaling.factor";
   private final ApiClient apiClient;
   private final String kubeNamespace;
   private final PodInfo podInfo;
@@ -101,12 +104,13 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int memoryMB;
   private final int vcores;
 
-  KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
+  KubeTwillPreparer(CConfiguration cConf, ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
                     RunId twillRunId, V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
     }
+    this.cConf = cConf;
     this.apiClient = apiClient;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -439,7 +443,7 @@ class KubeTwillPreparer implements TwillPreparer {
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
-    quantityMap.put("cpu", new Quantity(String.valueOf(vcores)));
+    quantityMap.put("cpu", new Quantity(String.valueOf(vcores * cConf.getFloat(TWILL_KUBE_CPU_SCALING))));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
     resourceRequirements.setRequests(quantityMap);
