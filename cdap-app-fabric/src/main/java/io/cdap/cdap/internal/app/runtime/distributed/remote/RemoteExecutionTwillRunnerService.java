@@ -49,6 +49,7 @@ import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
+import io.cdap.cdap.internal.app.runtime.distributed.runtime.TwillControllerFactory;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitor;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorClient;
@@ -165,14 +166,15 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   private Path cachePath;
   private ExecutorService startupTaskExecutor;
   private ScheduledExecutorService monitorScheduler;
-  
+
   @Inject
   RemoteExecutionTwillRunnerService(CConfiguration cConf, Configuration hConf,
                                     DiscoveryServiceClient discoveryServiceClient,
                                     LocationFactory locationFactory, MessagingService messagingService,
                                     RemoteExecutionLogProcessor logProcessor,
                                     MetricsCollectionService metricsCollectionService,
-                                    ProvisioningService provisioningService, ProgramStateWriter programStateWriter,
+                                    ProvisioningService provisioningService,
+                                    ProgramStateWriter programStateWriter,
                                     TransactionRunner transactionRunner) {
     this.cConf = cConf;
     this.hConf = hConf;
@@ -292,7 +294,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOptions, locationFactory);
       return new RemoteExecutionTwillPreparer(cConf, config, clusterKeyInfo.getSSHConfig(),
                                               serverKeyStore, clientKeyStore,
-                                              application.configure(), programRunId, programOptions, null,
+                                              application.configure(), programRunId, programOptions,
                                               locationCache, locationFactory,
                                               new ControllerFactory(programRunId, programOptions, clusterKeyInfo)) {
         @Override
@@ -340,7 +342,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
     // Groups the controllers by the ProgramId, then transform it to an Iterator of LiveInfo
     return controllers.entrySet().stream()
       .collect(Collectors.groupingBy(e -> e.getKey().getParent(),
-                                     Collectors.mapping(e -> TwillController.class.cast(e.getValue()),
+                                     Collectors.mapping(e -> (TwillController) e.getValue(),
                                                         Collectors.toList())))
       .entrySet().stream()
       .map(e -> new LiveInfo() {
@@ -358,6 +360,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       ::iterator;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public Cancellable scheduleSecureStoreUpdate(SecureStoreUpdater updater, long initialDelay,
                                                long delay, TimeUnit unit) {
@@ -488,9 +491,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
   }
 
   /**
-   * Implementation of {@link RemoteExecutionTwillControllerFactory}.
+   * Implementation of {@link TwillControllerFactory}.
    */
-  private final class ControllerFactory implements RemoteExecutionTwillControllerFactory {
+  private final class ControllerFactory implements TwillControllerFactory {
 
     private final ProgramRunId programRunId;
     private final ProgramOptions programOptions;
@@ -600,8 +603,12 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
                                                          messagingContext, monitorScheduler, logProcessor,
                                                          processController, programStateWriter,
                                                          transactionRunner, profileMetricsService);
-      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(
-        RunIds.fromString(programRunId.getRun()), runtimeMonitor);
+
+      // Create the controller and start the runtime monitor when the startup task completed successfully.
+      RemoteExecutionTwillController controller = new RemoteExecutionTwillController(programRunId,
+                                                                                     startupTaskCompletion,
+                                                                                     runtimeMonitor);
+      startupTaskCompletion.thenAccept(o -> runtimeMonitor.start());
 
       // When the program completed, remove the controller from the map.
       // Also remove the ssh config from the session manager so that it can't be used again.
@@ -613,7 +620,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
         removeSSHConfig.cancel();
       }, Threads.SAME_THREAD_EXECUTOR);
 
-      controller.start(startupTaskCompletion);
       return controller;
     }
   }

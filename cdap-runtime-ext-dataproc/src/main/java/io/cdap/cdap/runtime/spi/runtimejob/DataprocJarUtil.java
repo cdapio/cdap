@@ -20,10 +20,12 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
 import joptsimple.OptionSpec;
 import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.ApplicationBundler;
 import org.apache.twill.internal.Constants;
+import org.apache.twill.internal.DefaultLocalFile;
 import org.apache.twill.internal.appmaster.ApplicationMasterMain;
 import org.apache.twill.internal.container.TwillContainerMain;
 import org.apache.twill.internal.utils.Dependencies;
@@ -46,7 +48,7 @@ final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  static RuntimeLocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
+  static LocalFile getTwillJar(LocationFactory locationFactory) throws IOException {
     ApplicationBundler bundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
@@ -66,7 +68,7 @@ final class DataprocJarUtil {
    * @return a runtime jar file
    * @throws IOException any error while building the jar
    */
-  static RuntimeLocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
+  static LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
     Location location = locationFactory.create("launcher.jar");
     try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
       ClassLoader classLoader = DataprocRuntimeJobManager.class.getClassLoader();
@@ -91,8 +93,9 @@ final class DataprocJarUtil {
     return createLocalFile(location, false);
   }
 
-  private static RuntimeLocalFile createLocalFile(Location location, boolean archive) {
-    return new RuntimeLocalFile(location.getName(), location.toURI(), archive);
+  static LocalFile createLocalFile(Location location, boolean archive) throws IOException {
+    return new DefaultLocalFile(location.getName(), location.toURI(),
+                                location.lastModified(), location.length(), archive, null);
   }
 
   private DataprocJarUtil() {

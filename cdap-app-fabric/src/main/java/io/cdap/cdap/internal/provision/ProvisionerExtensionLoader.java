@@ -19,20 +19,45 @@ package io.cdap.cdap.internal.provision;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.ClassPathResources;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.extension.AbstractExtensionLoader;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Loads provisioners from the extensions directory.
  */
 public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, Provisioner>
   implements ProvisionerProvider {
+
+  private static final Set<String> ALLOWED_RESOURCES = createAllowedResources();
+  private static final Set<String> ALLOWED_PACKAGES = createPackageSets(ALLOWED_RESOURCES);
+
+  private static Set<String> createAllowedResources() {
+    try {
+      return ClassPathResources.getResourcesWithDependencies(Provisioner.class.getClassLoader(), Provisioner.class);
+    } catch (IOException e) {
+      throw new RuntimeException("Failed to trace dependencies for provisioner extension. " +
+                                   "Usage of provisioner might fail.", e);
+    }
+  }
+
+  private static Set<String> createPackageSets(Set<String> resources) {
+    return resources.stream()
+      .map(resource -> {
+        int idx = resource.lastIndexOf("/");
+        return idx < 0 ? "" : resource.substring(0, idx).replace('/', '.');
+      })
+      .filter(s -> !s.isEmpty())
+      .collect(Collectors.toSet());
+  }
 
   @Inject
   ProvisionerExtensionLoader(CConfiguration cConf) {
@@ -51,12 +76,12 @@ public class ProvisionerExtensionLoader extends AbstractExtensionLoader<String, 
     return new FilterClassLoader.Filter() {
       @Override
       public boolean acceptResource(String resource) {
-        return resource.startsWith("io/cdap/cdap/runtime/spi");
+        return ALLOWED_RESOURCES.contains(resource);
       }
 
       @Override
       public boolean acceptPackage(String packageName) {
-        return packageName.startsWith("io.cdap.cdap.runtime.spi");
+        return ALLOWED_PACKAGES.contains(packageName);
       }
     };
   }

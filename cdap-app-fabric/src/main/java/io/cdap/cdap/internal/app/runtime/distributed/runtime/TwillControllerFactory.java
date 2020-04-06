@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.internal.app.runtime.distributed.runtime;
 
 import org.apache.twill.api.TwillController;
 
@@ -23,12 +23,12 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A package local interface for creating instance of {@link RemoteExecutionTwillController}.
+ * Interface for creating instance of {@link TwillControllerFactory}.
  */
-interface RemoteExecutionTwillControllerFactory {
+public interface TwillControllerFactory {
 
   /**
-   * Creates a new instance of {@link RemoteExecutionTwillController}.
+   * Creates a new instance of {@link TwillControllerFactory}.
    *
    * @param startupTask an optional task to run to start the program execution.
    *                    This task will be executed asynchronously.

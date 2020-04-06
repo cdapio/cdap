@@ -670,10 +670,16 @@ class HydratorPlusPlusTopPanelCtrl {
       }
     }, (err) => {
       this.stopTimer();
-        this.myAlertOnValium.show({
-          type: 'danger',
-          content: 'Pipeline preview failed : ' + err
-        });
+
+      let errorMsg = this.myHelpers.objectQuery(err, 'data') || this.myHelpers.objectQuery(err, 'response') || err;
+      if (typeof errorMsg !== 'string') {
+        errorMsg = JSON.stringify(errorMsg);
+      }
+
+      this.myAlertOnValium.show({
+        type: 'danger',
+        content: 'Pipeline preview failed : ' + errorMsg,
+      });
       this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);
     });

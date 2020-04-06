@@ -133,7 +133,7 @@ public class StageSpec implements Serializable {
     return Objects.equals(name, that.name) &&
       Objects.equals(plugin, that.plugin) &&
       Objects.equals(inputSchemas, that.inputSchemas) &&
-      Objects.equals(new HashSet<>(inputStages), new HashSet<>(that.inputStages)) &&
+      Objects.equals(new HashSet<>(getInputStages()), new HashSet<>(that.getInputStages())) &&
       Objects.equals(outputPorts, that.outputPorts) &&
       Objects.equals(outputSchema, that.outputSchema) &&
       Objects.equals(errorSchema, that.errorSchema) &&
@@ -143,7 +143,7 @@ public class StageSpec implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, plugin, inputSchemas, new HashSet<>(inputStages),
+    return Objects.hash(name, plugin, inputSchemas, new HashSet<>(getInputStages()),
                         outputSchema, errorSchema, stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
   }
 

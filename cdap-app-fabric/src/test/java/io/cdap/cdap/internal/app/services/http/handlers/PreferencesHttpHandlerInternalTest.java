@@ -206,8 +206,12 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     Assert.assertTrue(detail1.getSeqId() > 0);
     Assert.assertEquals(detail1, detail2);
 
-    // Get preferences on invalid namespace should fail
-    getPreferencesInternal(getPreferenceURI("invalidNamespace"), true, HttpResponseStatus.NOT_FOUND);
+    // Get preferences on invalid namespace should succeed, but get back a PreferencesDetail with empty property.
+    PreferencesDetail detail = getPreferencesInternal(getPreferenceURI("invalidNamespace"), false,
+                                                      HttpResponseStatus.OK);
+    Assert.assertTrue(detail.getProperties().isEmpty());
+    Assert.assertFalse(detail.getResolved());
+    Assert.assertEquals(0, detail.getSeqId());
   }
 
   @Test
@@ -220,9 +224,12 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     PreferencesDetail detail;
     Map<String, String> combinedProperties = Maps.newHashMap();
 
-    // Application not created yet, thus get preferences fails with NOT_FOUND
-    getPreferencesInternal(getPreferenceURI(namespace1, "some_non_existing_app"), false,
-                           HttpResponseStatus.NOT_FOUND);
+    // Application not created yet. Get preferences should succeed and get back one with empty properties.
+    detail = getPreferencesInternal(getPreferenceURI(namespace1, "some_non_existing_app"), false,
+                                    HttpResponseStatus.OK);
+    Assert.assertTrue(detail.getProperties().isEmpty());
+    Assert.assertFalse(detail.getResolved());
+    Assert.assertEquals(0, detail.getSeqId());
 
     // Create the app.
     addApplication(namespace1, new AllProgramsApp());
@@ -317,9 +324,13 @@ public class PreferencesHttpHandlerInternalTest extends AppFabricTestBase {
     getPreferencesInternal(getPreferenceURI(
       namespace2, appName, "invalidType", "somename"), false, HttpResponseStatus.BAD_REQUEST);
 
-    // Get preferences on non-existing program id
-    getPreferencesInternal(getPreferenceURI(
-      namespace2, appName, "services", "somename"), false, HttpResponseStatus.NOT_FOUND);
+    // Get preferences on non-existing program id. Should succeed and get back a PreferencesDetail with empty properites
+    detail = getPreferencesInternal(getPreferenceURI(namespace2, appName, "services", "somename"),
+                                    false,
+                                    HttpResponseStatus.OK);
+    Assert.assertTrue(detail.getProperties().isEmpty());
+    Assert.assertFalse(detail.getResolved());
+    Assert.assertEquals(0, detail.getSeqId());
 
     // Set preferences on the program
     programProperties.clear();

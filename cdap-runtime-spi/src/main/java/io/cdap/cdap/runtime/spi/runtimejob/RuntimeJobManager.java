@@ -34,18 +34,17 @@ public interface RuntimeJobManager {
    * This method uses runtime job information to launch the job.
    *
    * @param runtimeJobInfo runtime job information
-   * @return unique runtime job id
    */
-  RuntimeJobId launch(RuntimeJobInfo runtimeJobInfo) throws Exception;
+  void launch(RuntimeJobInfo runtimeJobInfo) throws Exception;
 
   /**
    * Gets job details. If the job does not exist, it should return empty job details.
    *
-   * @param runtimeJobId runtime job id
+   * @param programRunInfo program run info
    * @return runtime job details
    * @throws Exception thrown if any exception while getting job details
    */
-  Optional<RuntimeJobDetail> getDetail(RuntimeJobId runtimeJobId) throws Exception;
+  Optional<RuntimeJobDetail> getDetail(ProgramRunInfo programRunInfo) throws Exception;
 
   /**
    * Provides all the jobs that are in running state. If there are no running jobs, it should return empty list.
@@ -59,19 +58,19 @@ public interface RuntimeJobManager {
    * Gracefully stops a running job. If the job is already in terminal status, then this method should be a no-op. If
    * the job does not exist, this method should be a no-op.
    *
-   * @param runtimeJobId job to be stopped
+   * @param programRunInfo program run info
    * @throws Exception thrown if any exception while stopping the job
    */
-  void stop(RuntimeJobId runtimeJobId) throws Exception;
+  void stop(ProgramRunInfo programRunInfo) throws Exception;
 
   /**
    * Forcefully kills a running job. If the job is already in terminal status, then this method should be a no-op. If
    * the job does not exist, this method should be a no-op.
    *
-   * @param runtimeJobId job to be killed
+   * @param programRunInfo program run info
    * @throws Exception thrown if any exception while killing the job
    */
-  void kill(RuntimeJobId runtimeJobId) throws Exception;
+  void kill(ProgramRunInfo programRunInfo) throws Exception;
 
   /**
    * This method is responsible to perform clean up for runtime manager.

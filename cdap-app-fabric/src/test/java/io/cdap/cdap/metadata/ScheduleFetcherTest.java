@@ -27,27 +27,56 @@ import io.cdap.cdap.proto.ScheduleDetail;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 /**
- * Tests for {@link RemoteScheduleFetcher}
+ * Tests for {@link RemoteScheduleFetcher} and {@link LocalScheduleFetcher}
  */
-public class RemoteScheduleFetcherTest extends AppFabricTestBase {
-  private static ScheduleFetcher fetcher = null;
+@RunWith(Parameterized.class)
+public class ScheduleFetcherTest extends AppFabricTestBase {
+  public enum ScheduleFetcherType {
+    LOCAL,
+    REMOTE,
+  };
 
-  @BeforeClass
-  public static void setUp() {
-    fetcher = getInjector().getInstance(RemoteScheduleFetcher.class);
+  private final ScheduleFetcherType fetcherType;
+
+  public ScheduleFetcherTest(ScheduleFetcherType type) {
+    this.fetcherType = type;
+  }
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> parameters() {
+    return Arrays.asList(new Object[][] {
+      {ScheduleFetcherType.LOCAL},
+      {ScheduleFetcherType.REMOTE},
+    });
+  }
+
+  private ScheduleFetcher getScheduleFetcher(ScheduleFetcherType type) {
+    ScheduleFetcher fetcher = null;
+    switch (type) {
+      case LOCAL:
+        fetcher = AppFabricTestBase.getInjector().getInstance(LocalScheduleFetcher.class);
+        break;
+      case REMOTE:
+        fetcher = AppFabricTestBase.getInjector().getInstance(RemoteScheduleFetcher.class);
+        break;
+    }
+    return fetcher;
   }
 
   @Test(expected = ScheduleNotFoundException.class)
   public void testGetScheduleNotFound() throws Exception {
+    ScheduleFetcher fetcher = getScheduleFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
     String appName = AllProgramsApp.NAME;
-
     // Deploy the application.
     deploy(AllProgramsApp.class, 200, Constants.Gateway.API_VERSION_3_TOKEN, namespace);
 
@@ -66,6 +95,7 @@ public class RemoteScheduleFetcherTest extends AppFabricTestBase {
 
   @Test
   public void testGetSchedule() throws Exception {
+    ScheduleFetcher fetcher = getScheduleFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
     String appName = AppWithSchedule.NAME;
     String schedule = AppWithSchedule.SCHEDULE;
@@ -88,6 +118,7 @@ public class RemoteScheduleFetcherTest extends AppFabricTestBase {
 
   @Test
   public void testListSchedules() throws Exception {
+    ScheduleFetcher fetcher = getScheduleFetcher(fetcherType);
     String namespace = TEST_NAMESPACE1;
     String appName = AppWithSchedule.NAME;
 

@@ -20,9 +20,7 @@ import org.apache.twill.internal.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
@@ -30,8 +28,10 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -40,6 +40,7 @@ import java.util.zip.ZipInputStream;
  * Main class that will be called from dataproc driver.
  */
 public class DataprocJobMain {
+
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
 
   /**
@@ -54,6 +55,11 @@ public class DataprocJobMain {
                                    "job arguments.");
     }
 
+    Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception from thread {}", t, e));
+
+    // expand archive jars. This is needed because of CDAP-16456
+    expandArchives(Arrays.asList(args).subList(2, args.length));
+
     String runtimeJobClassName = args[0];
     String sparkCompat = args[1];
 
@@ -62,9 +68,11 @@ public class DataprocJobMain {
       throw new RuntimeException("Classloader is expected to be an instance of URLClassLoader");
     }
 
-    // get classpath
-    Path tempDir = Files.createTempDirectory("expanded.jars");
-    URL[] urls = getClasspath((URLClassLoader) cl, tempDir.toFile());
+    // create classpath from resources, application and twill jars
+    URL[] urls = getClasspath((URLClassLoader) cl, Arrays.asList(Constants.Files.RESOURCES_JAR,
+                                                                 Constants.Files.APPLICATION_JAR,
+                                                                 Constants.Files.TWILL_JAR));
+    Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
 
     // create new URL classloader with provided classpath
     try (URLClassLoader newCL = new URLClassLoader(urls, cl.getParent())) {
@@ -93,11 +101,13 @@ public class DataprocJobMain {
         Method closeMethod = dataprocEnvClass.getMethod("destroy");
         LOG.info("Invoking destroy() on {}", runtimeJobClassName);
         closeMethod.invoke(newDataprocEnvInstance);
-        // make sure directory is cleaned before exiting
-        deleteDirectoryContents(tempDir.toFile());
       }
 
       LOG.info("Runtime job completed.");
+    } catch (Throwable t) {
+      // We log here and rethrow to make sure the exception log is captured in the job output
+      LOG.error("Runtime job failed", t);
+      throw t;
     }
   }
 
@@ -113,14 +123,11 @@ public class DataprocJobMain {
    * expanded.twill.jar/classes
    *
    */
-  private static URL[] getClasspath(URLClassLoader cl, File tempDir) throws IOException {
+  private static URL[] getClasspath(URLClassLoader cl, List<String> jarFiles) throws IOException {
     URL[] urls = cl.getURLs();
     List<URL> urlList = new ArrayList<>();
-    for (String file : Arrays.asList(Constants.Files.RESOURCES_JAR, Constants.Files.APPLICATION_JAR,
-                                     Constants.Files.TWILL_JAR)) {
-      File jar = new File(file);
-      File jarDir = new File(tempDir, "expanded." + file);
-      expand(jar, jarDir);
+    for (String file : jarFiles) {
+      File jarDir = new File(file);
       // add url for dir
       urlList.add(jarDir.toURI().toURL());
       if (file.equals(Constants.Files.RESOURCES_JAR)) {
@@ -130,31 +137,7 @@ public class DataprocJobMain {
     }
 
     urlList.addAll(Arrays.asList(urls));
-
-    LOG.info("Classpath URLs: {}", urlList);
     return urlList.toArray(new URL[0]);
-  }
-
-  /**
-   * Expands jar into destination directory.
-   */
-  private static void expand(File jarFile, File destDir) throws IOException {
-    try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(new FileInputStream(jarFile)))) {
-      Path targetPath = destDir.toPath();
-      Files.createDirectories(targetPath);
-
-      ZipEntry entry;
-      while ((entry = zipIn.getNextEntry()) != null) {
-        Path output = targetPath.resolve(entry.getName());
-
-        if (entry.isDirectory()) {
-          Files.createDirectories(output);
-        } else {
-          Files.createDirectories(output.getParent());
-          Files.copy(zipIn, output);
-        }
-      }
-    }
   }
 
   private static List<URL> createClassPathURLs(File dir) throws MalformedURLException {
@@ -167,30 +150,52 @@ public class DataprocJobMain {
   }
 
   private static void addJarURLs(File dir, List<URL> result) throws MalformedURLException {
-    if (dir.listFiles() == null) {
+    File[] files = dir.listFiles(f -> f.getName().endsWith(".jar"));
+    if (files == null) {
       return;
     }
-    for (File file : dir.listFiles()) {
-      if (file.getName().endsWith(".jar")) {
-        result.add(file.toURI().toURL());
-      }
+    for (File file : files) {
+      result.add(file.toURI().toURL());
     }
   }
 
-  /**
-   * Recursively deletes all the contents of the directory and the directory itself.
-   */
-  private static void deleteDirectoryContents(File file) {
-    if (file.isDirectory()) {
-      File[] entries = file.listFiles();
-      if (entries != null) {
-        for (File entry : entries) {
-          deleteDirectoryContents(entry);
+
+  private static void expandArchives(Collection<String> archiveNames) throws IOException {
+    for (String archive : archiveNames) {
+      unpack(Paths.get(archive));
+    }
+  }
+
+  private static void unpack(Path archiveFile) throws IOException {
+    if (!Files.isRegularFile(archiveFile)) {
+      LOG.warn("Skip archive expansion due to {} is not a file", archiveFile);
+      return;
+    }
+    unJar(archiveFile);
+  }
+
+  private static void unJar(Path archiveFile) throws IOException {
+    Path targetDir = archiveFile.resolveSibling(archiveFile.getFileName() + ".tmp");
+    LOG.debug("Expanding archive {} to {}", archiveFile, targetDir);
+
+    try (ZipInputStream zipIn = new ZipInputStream(Files.newInputStream(archiveFile))) {
+      Files.createDirectories(targetDir);
+
+      ZipEntry entry;
+      while ((entry = zipIn.getNextEntry()) != null) {
+        Path output = targetDir.resolve(entry.getName());
+
+        if (entry.isDirectory()) {
+          Files.createDirectories(output);
+        } else {
+          Files.createDirectories(output.getParent());
+          Files.copy(zipIn, output);
         }
       }
     }
-    if (!file.delete()) {
-      LOG.warn("Failed to delete temp file {}", file);
-    }
+
+    Files.deleteIfExists(archiveFile);
+    Files.move(targetDir, archiveFile);
+    LOG.debug("Archive expanded to {}", targetDir);
   }
 }

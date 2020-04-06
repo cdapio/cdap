@@ -164,6 +164,8 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
       };
     }
 
+    const widgetCategory = updatedWidgetProperty['widget-category'];
+
     // When there is only one error and it does not have element property,
     // it is a property level error.
     const propertyLevelErrorMsg =
@@ -186,7 +188,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
             disabled={disabled}
             errors={errors}
           />
-          <If condition={pluginProperty.macroSupported}>
+          <If condition={pluginProperty.macroSupported && widgetCategory !== 'plugin'}>
             <MacroIndicator
               onClick={this.toggleMacro}
               disabled={disabled}
@@ -194,7 +196,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
             />
           </If>
         </div>
-        <If condition={propertyLevelErrorMsg !== ''}>
+        <If condition={propertyLevelErrorMsg !== '' && widgetCategory !== 'plugin'}>
           <div
             className={classnames(classes.errorText, classes.errorRow, 'propertyError')}
             data-cy="property-row-error"

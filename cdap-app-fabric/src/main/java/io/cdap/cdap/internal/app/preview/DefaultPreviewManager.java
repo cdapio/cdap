@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.name.Named;
@@ -56,7 +57,9 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.LocalPluginFinder;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
@@ -350,15 +353,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new AbstractModule() {
         @Override
         protected void configure() {
-          bind(ArtifactRepository.class)
-            .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
-            .to(DefaultArtifactRepository.class)
-            .in(Scopes.SINGLETON);
-          bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
-
           bind(PluginFinder.class).to(LocalPluginFinder.class);
+          bind(LogReader.class).to(FileLogReader.class).in(Scopes.SINGLETON);
         }
-
         @Provides
         @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS)
         @SuppressWarnings("unused")
@@ -366,8 +363,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
           String address = cConf.get(Constants.Preview.ADDRESS);
           return Networks.resolve(address, new InetSocketAddress("localhost", 0).getAddress());
         }
-      }
-    );
+      });
   }
 
   @VisibleForTesting

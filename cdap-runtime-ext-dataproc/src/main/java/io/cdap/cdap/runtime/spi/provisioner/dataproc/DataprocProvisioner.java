@@ -18,9 +18,12 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -36,6 +39,7 @@ import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
+import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +71,9 @@ public class DataprocProvisioner implements Provisioner {
 
   // Key which is set to true if the instance only have private ip assigned to it else false
   private static final String PRIVATE_INSTANCE = "privateInstance";
+  // system properties passed to provisioner from system
   private static final String BUCKET = "bucket";
+  private static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
   // keys and values cannot be longer than 63 characters
   // keys and values can only contain lowercase letters, numbers, underscores, and dashes
@@ -156,17 +162,21 @@ public class DataprocProvisioner implements Provisioner {
     // Generates and set the ssh key if it does not have one.
     // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
     SSHContext sshContext = context.getSSHContext();
-    SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
-    if (sshKeyPair == null) {
-      sshKeyPair = sshContext.generate("cdap");
-      sshContext.setSSHKeyPair(sshKeyPair);
+    SSHPublicKey sshPublicKey = null;
+    if (sshContext != null) {
+      SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
+      if (sshKeyPair == null) {
+        sshKeyPair = sshContext.generate("cdap");
+        sshContext.setSSHKeyPair(sshKeyPair);
+      }
+      sshPublicKey = sshKeyPair.getPublicKey();
     }
 
     // Reload system context properties and get system labels
     systemContext.reloadProperties();
     Map<String, String> systemLabels = getSystemLabels(systemContext);
 
-    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshPublicKey);
     String clusterName = getClusterName(context.getProgramRun());
 
     try (DataprocClient client =
@@ -237,14 +247,21 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
+    Map<String, String> systemProperties = systemContext.getProperties();
+    // if this system property is provided, we will assume that job manager apis have been used to launch job.
+    if (systemProperties.containsKey(RUNTIME_JOB_MANAGER)) {
+      Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
+        .setCredentials(conf.getDataprocCredentials()).build().getService();
+      DataprocUtils.deleteGCSPath(storageClient, getBucket(systemProperties, conf),
+                                  DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRun().getRun());
+    }
     String clusterName = getClusterName(context.getProgramRun());
 
     // Reload system context properties
     systemContext.reloadProperties();
     try (DataprocClient client =
            DataprocClient.fromConf(conf,
-                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
-                                                                                                   "false")))) {
+                                   Boolean.parseBoolean(systemProperties.getOrDefault(PRIVATE_INSTANCE, "false")))) {
       client.deleteCluster(clusterName);
     }
   }
@@ -346,15 +363,18 @@ public class DataprocProvisioner implements Provisioner {
    */
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
+    Map<String, String> systemProperties = systemContext.getProperties();
+    // if this system property is not provided, we will assume that ssh should be used instead of
+    // runtime job manager for job launch.
+    if (!systemProperties.containsKey(RUNTIME_JOB_MANAGER)) {
+      return Optional.empty();
+    }
     DataprocConf conf = DataprocConf.create(createContextProperties(context), null);
     String clusterName = getClusterName(context.getProgramRun());
     String projectId = conf.getProjectId();
     String region = conf.getRegion();
     String sparkCompat = context.getSparkCompat().getCompat();
-    String bucket = conf.getGcsBucket();
-    if (Strings.isNullOrEmpty(bucket)) {
-      bucket = systemContext.getProperties().get(BUCKET);
-    }
+    String bucket = getBucket(systemProperties, conf);
     Map<String, String> systemLabels = getSystemLabels(systemContext);
     GoogleCredentials dataprocCredentials;
     try {
@@ -367,5 +387,13 @@ public class DataprocProvisioner implements Provisioner {
       new DataprocRuntimeJobManager(new DataprocClusterInfo(clusterName, dataprocCredentials,
                                                             DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
                                                             projectId, region, bucket, systemLabels, sparkCompat)));
+  }
+
+  private String getBucket(Map<String, String> systemProperties, DataprocConf conf) {
+    String bucket = conf.getGcsBucket();
+    if (Strings.isNullOrEmpty(bucket)) {
+      bucket = systemProperties.get(BUCKET);
+    }
+    return bucket;
   }
 }

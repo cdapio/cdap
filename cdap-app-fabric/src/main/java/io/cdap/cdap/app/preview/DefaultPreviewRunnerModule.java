@@ -24,8 +24,10 @@ import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -45,14 +47,19 @@ import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
+import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.MetadataAdmin;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -103,8 +110,20 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   protected void configure() {
     bind(ArtifactRepository.class).toInstance(artifactRepository);
     expose(ArtifactRepository.class);
+
+    // ArtifactRepositoryReader is required by DefaultArtifactRepository.
+    // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
+    bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
+    bind(ArtifactRepository.class)
+      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+      .to(DefaultArtifactRepository.class)
+      .in(Scopes.SINGLETON);
+    expose(ArtifactRepository.class)
+      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
+
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
     expose(AuthorizerInstantiator.class);
     bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
@@ -162,6 +181,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerAdmin.class);
 
     bind(PreviewRequest.class).toInstance(previewRequest);
+
+    bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
   }
 
   /**

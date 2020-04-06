@@ -19,16 +19,12 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.NamespaceNotFoundException;
-import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.gateway.handlers.util.AbstractAppFabricHttpHandler;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
-import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.PreferencesDetail;
-import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -37,7 +33,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
-import java.util.List;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -64,6 +59,12 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
+  /**
+   * Get instance level preferences
+   *
+   * @param request {@link HttpRequest}
+   * @param responder the responder used for sending response back to client
+   */
   @Path("/preferences")
   @GET
   public void getInstancePreferences(HttpRequest request, HttpResponder responder) {
@@ -71,15 +72,25 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, PreferencesDetail.class));
   }
 
+  /**
+   * Get namespace level preferences.
+   *
+   * Note that if the given namespace doesn't exist, the return {@link PreferencesDetail} will be empty
+   * (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of requesting resolved preferences,
+   * the returned {@link PreferencesDetail} will include preferences from ancestor (i.e. preferences at instance level)
+   *
+   * @param request {@link HttpRequest}
+   * @param responder the responder used for sending response back to client
+   * @param namespace the namespace to get preferences for
+   * @param resolved whether to return resolved preferences or not
+   */
   @Path("/namespaces/{namespace-id}/preferences")
   @GET
   public void getNamespacePreferences(HttpRequest request, HttpResponder responder,
                                       @PathParam("namespace-id") String namespace,
-                                      @QueryParam("resolved") boolean resolved) throws Exception {
+                                      @QueryParam("resolved") boolean resolved) {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
-      throw new NamespaceNotFoundException(namespaceId);
-    }
+    // No need to check if namespace exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
       detail = preferencesService.getResolvedPreferences(namespaceId);
@@ -89,14 +100,28 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, PreferencesDetail.class));
   }
 
+  /**
+   * Get application level preferences
+   *
+   * Note that if the given application doesn't exist, the return {@link PreferencesDetail} will be empty
+   * (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of requesting resolved preferences,
+   * the returned {@link PreferencesDetail} will include preferences from ancestor (i.e. preferences at namespace
+   * and instance level)
+   *
+   * @param request {@link HttpRequest}
+   * @param responder the responder used for sending response back to client
+   * @param namespace the namespace of the application
+   * @param appId the application to get preferences for
+   * @param resolved whether to return resolved preferences or not
+   */
   @Path("/namespaces/{namespace-id}/apps/{application-id}/preferences")
   @GET
   public void getApplicationPreferences(HttpRequest request, HttpResponder responder,
                                         @PathParam("namespace-id") String namespace,
                                         @PathParam("application-id") String appId,
-                                        @QueryParam("resolved") boolean resolved) throws Exception {
+                                        @QueryParam("resolved") boolean resolved) {
     ApplicationId applicationId = new ApplicationId(namespace, appId);
-    applicationLifecycleService.getAppDetail(applicationId);
+    // No need to check if application exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
       detail = preferencesService.getResolvedPreferences(applicationId);
@@ -106,6 +131,23 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail, PreferencesDetail.class));
   }
 
+  /**
+   * Get program level preferences
+   *
+   * Note that if the given program doesn't exist, the return {@link PreferencesDetail} will be empty
+   * (i.e. {@link PreferencesDetail#properties} will be an empty map). In the case of requesting resolved preferences,
+   * the returned {@link PreferencesDetail} will include preferences from ancestor (i.e. preferences at application,
+   * namespace and instance level)
+   *
+   * @param request {@link HttpRequest}
+   * @param responder the responder used for sending response back to client
+   * @param namespace the namespace of the application
+   * @param appId the application to get preferences for
+   * @param programType the type of the program
+   * @param programId id of the program to get preferences for
+   * @param resolved whether to return resolved preferences or not
+   * @throws Exception
+   */
   @Path("/namespaces/{namespace-id}/apps/{application-id}/{program-type}/{program-id}/preferences")
   @GET
   public void getProgramPreferences(HttpRequest request, HttpResponder responder,
@@ -115,10 +157,7 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
                                     @PathParam("program-id") String programId,
                                     @QueryParam("resolved") boolean resolved) throws Exception {
     ProgramId program = new ProgramId(namespace, appId, getProgramType(programType), programId);
-    ApplicationDetail applicationDetail = applicationLifecycleService.getAppDetail(program.getParent());
-    if (!programExists(applicationDetail, program)) {
-      throw new ProgramNotFoundException(program);
-    }
+    // No need to check if program exists. PreferencesService returns an empty PreferencesDetail when that happens.
     PreferencesDetail detail;
     if (resolved) {
       detail = preferencesService.getResolvedPreferences(program);
@@ -140,20 +179,5 @@ public class PreferencesHttpHandlerInternal extends AbstractAppFabricHttpHandler
     } catch (Exception e) {
       throw new BadRequestException(String.format("Invalid program type '%s'", programType), e);
     }
-  }
-
-  /**
-   * Returns true if the given program id exists in the {@code applicationDetail}
-   */
-  private boolean programExists(ApplicationDetail applicationDetail, ProgramId programId) {
-    List<ProgramRecord> programs = applicationDetail.getPrograms();
-    for (ProgramRecord program : programs) {
-      if (program.getApp().equals(programId.getApplication()) &&
-          program.getName().equals(programId.getProgram()) &&
-          program.getType().equals(programId.getType())) {
-        return true;
-      }
-    }
-    return false;
   }
 }

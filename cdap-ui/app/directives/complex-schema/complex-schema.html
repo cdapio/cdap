@@ -99,11 +99,13 @@
 
               <div class="actions-buttons text-right" ng-if="!ComplexSchema.isDisabled">
                 <button class="btn btn-link"
-                        ng-click="ComplexSchema.removeField($index)">
+                        ng-click="ComplexSchema.removeField($index)"
+                        data-cy="schema-row-remove-button">
                   <i class="text-danger fa fa-trash"></i>
                 </button>
                 <button class="btn btn-link"
-                        ng-click="ComplexSchema.addField($index)">
+                        ng-click="ComplexSchema.addField($index)"
+                        data-cy="schema-row-add-button">
                   <i class="fa fa-plus"></i>
                 </button>
               </div>

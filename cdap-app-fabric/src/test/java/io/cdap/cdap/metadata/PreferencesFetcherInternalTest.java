@@ -25,40 +25,74 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Tests for {@link RemotePreferencesFetcherInternal}
+ * Tests for {@link RemotePreferencesFetcherInternal} and {@link LocalPreferencesFetcherInternal}
  */
-public class RemotePreferencesFetcherInternalTest extends AppFabricTestBase {
-  private static PreferencesFetcher fetcher = null;
+@RunWith(Parameterized.class)
+public class PreferencesFetcherInternalTest extends AppFabricTestBase {
+  public enum PreferencesFetcherType {
+    LOCAL,
+    REMOTE,
+  };
 
-  @BeforeClass
-  public static void init() {
-    fetcher = getInjector().getInstance(RemotePreferencesFetcherInternal.class);
+  private PreferencesFetcherType fetcherType = null;
+
+  public PreferencesFetcherInternalTest(PreferencesFetcherType type) {
+    this.fetcherType = type;
+  }
+
+  @Parameterized.Parameters
+  public static Collection<Object[]> parameters() {
+    return Arrays.asList(new Object[][] {
+      {PreferencesFetcherType.LOCAL},
+      {PreferencesFetcherType.REMOTE},
+    });
+  }
+
+ private PreferencesFetcher getPreferencesFetcher(PreferencesFetcherType type) {
+    PreferencesFetcher fetcher = null;
+    switch (type) {
+      case LOCAL:
+        fetcher = AppFabricTestBase.getInjector().getInstance(LocalPreferencesFetcherInternal.class);
+        break;
+      case REMOTE:
+        fetcher = AppFabricTestBase.getInjector().getInstance(RemotePreferencesFetcherInternal.class);
+        break;
+    }
+    return fetcher;
   }
 
   @Test
   public void testGetPreferences() throws Exception {
+    PreferencesFetcher fetcher = getPreferencesFetcher(fetcherType);
     PreferencesDetail preferences = null;
     EntityId entityId = null;
+    // Used to keep track of preferences being set in order to facilitate clean up at the end of the test
+    List<String> preferenceURIList = new ArrayList<>();
 
     // Get preferences on instance, but none was set.
     entityId = new InstanceId("");
     preferences = fetcher.get(entityId, false);
     Assert.assertEquals(Collections.emptyMap(), preferences.getProperties());
     Assert.assertFalse(preferences.getResolved());
-    // SeqId should be 0 when preferences never get set on the entity.
-    Assert.assertEquals(0, preferences.getSeqId());
 
     // Set preferences on instance and fetch again.
     Map<String, String> instanceProperties = ImmutableMap.of("instance-key1", "instance-val1");
     setPreferences(getPreferenceURI(), instanceProperties, 200);
+    preferenceURIList.add(getPreferenceURI());
+    entityId = new InstanceId("");
     preferences = fetcher.get(entityId, false);
     Assert.assertEquals(instanceProperties, preferences.getProperties());
     Assert.assertFalse(preferences.getResolved());
@@ -74,7 +108,6 @@ public class RemotePreferencesFetcherInternalTest extends AppFabricTestBase {
     preferences = fetcher.get(entityId, false);
     Assert.assertEquals(Collections.emptyMap(), preferences.getProperties());
     Assert.assertFalse(preferences.getResolved());
-    Assert.assertEquals(0, preferences.getSeqId());
 
     // Get resolved preferences on the application, preferences on instance should be returned.
     entityId = new ApplicationId(namespace, appName);
@@ -86,6 +119,7 @@ public class RemotePreferencesFetcherInternalTest extends AppFabricTestBase {
     // Set preferences on application and fetch again, resolved preferences should be returned.
     Map<String, String> appProperties = ImmutableMap.of("app-key1", "app-val1");
     setPreferences(getPreferenceURI(namespace, appName), appProperties, 200);
+    preferenceURIList.add(getPreferenceURI(namespace, appName));
     preferences = fetcher.get(entityId, true);
     Map<String, String> resolvedProperites = new HashMap<>();
     resolvedProperites.putAll(instanceProperties);
@@ -94,7 +128,12 @@ public class RemotePreferencesFetcherInternalTest extends AppFabricTestBase {
     Assert.assertTrue(preferences.getResolved());
     Assert.assertTrue(preferences.getSeqId() > 0);
 
-    // Delete the app
+    // Cleanup: delete preferences that were set
+    for (String uri : preferenceURIList) {
+      deletePreferences(uri, 200);
+    }
+
+    // Cleanup: delete the app
     Assert.assertEquals(
       200,
       doDelete(getVersionedAPIPath("apps/",

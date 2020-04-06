@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.app.runtime.artifact;
 
+import java.util.Objects;
+
 /**
  * Details about an artifact, including info about the artifact itself and metadata about the contents of the artifact.
  */
@@ -34,5 +36,19 @@ public class ArtifactDetail {
 
   public ArtifactMeta getMeta() {
     return meta;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (o == null || getClass() != o.getClass()) {
+      return false;
+    }
+
+    ArtifactDetail that = (ArtifactDetail) o;
+    return Objects.equals(descriptor, that.descriptor) &&
+      Objects.equals(meta, that.meta);
   }
 }

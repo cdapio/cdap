@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.client.config.ClientConfig;
@@ -43,6 +44,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.commons.io.FileUtils;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.junit.After;
@@ -95,6 +97,9 @@ public abstract class ArtifactHttpHandlerTestBase extends AppFabricTestBase {
   public void wipeData() throws Exception {
     artifactRepository.clear(NamespaceId.DEFAULT);
     artifactRepository.clear(NamespaceId.SYSTEM);
+    // Clean up system artifact dir as well so they don't get auto reloaded by system artifact loader
+    // which scans system artifact directory.
+    FileUtils.cleanDirectory(new File(systemArtifactsDir));
   }
 
   /**

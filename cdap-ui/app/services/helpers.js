@@ -222,7 +222,7 @@ angular.module(PKG.name+'.services')
   /* ----------------------------------------------------------------------- */
   function validNamespaceResolver(stateParams) {
     const { namespace } = stateParams;
-    window.CaskCommon.IsValidNS(namespace)
+    return window.CaskCommon.IsValidNS(namespace)
       .then(validNamespace => {
         if (!validNamespace) {
           const error = {
