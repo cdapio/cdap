@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
-import io.cdap.cdap.common.conf.CConfiguration;
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -71,11 +71,11 @@ import java.util.stream.Collectors;
 
 /**
  * Kubernetes version of a TwillRunner.
- *
+ * <p>
  * Runs a program in Kubernetes by creating a config-map of the app spec and program options resources that are
  * expected to be found in the local files of the RuntimeSpecification for the TwillRunnable.
  * A deployment is created that mounts the created config-map.
- *
+ * <p>
  * Most of these operations are no-ops as many of these methods and pretty closely coupled to the Hadoop implementation
  * and have no analogy in Kubernetes.
  */
@@ -325,7 +325,21 @@ class KubeTwillPreparer implements TwillPreparer {
     }
   }
 
-  private V1Deployment createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+  /**
+   * Return a {@link V1Deployment} object that will be deployed in Kubernetes to run the program
+   */
+  @VisibleForTesting
+  V1Deployment buildDeployment(RunId runid,
+                                      String appSpec,
+                                      String programOptions,
+                                      V1ObjectMeta deploymentMetadata,
+                                      String containerName,
+                                      int vCores,
+                                      int memoryMB,
+                                      Map<String, Map<String, String>> environments,
+                                      V1ConfigMap configMap,
+                                      PodInfo currentPodInfo,
+                                      long startTimeoutMillis) {
     /*
        The deployment will look something like:
        apiVersion: apps/v1
@@ -337,7 +351,6 @@ class KubeTwillPreparer implements TwillPreparer {
        template:
          [template spec]
      */
-    AppsV1Api appsApi = new AppsV1Api(apiClient);
     V1Deployment deployment = new V1Deployment();
 
     /*
@@ -351,8 +364,8 @@ class KubeTwillPreparer implements TwillPreparer {
            cdap.twill.run.id: [twill run id]
      */
     // Copy the meta and add the container label
-    V1ObjectMeta deploymentMeta = new V1ObjectMetaBuilder(resourceMeta).build();
-    deploymentMeta.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
+    V1ObjectMeta deploymentMeta = new V1ObjectMetaBuilder(deploymentMetadata).build();
+    deploymentMeta.putLabelsItem(currentPodInfo.getContainerLabelName(), containerName);
     deploymentMeta.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
                                       Long.toString(startTimeoutMillis));
     deployment.setMetadata(deploymentMeta);
@@ -416,41 +429,41 @@ class KubeTwillPreparer implements TwillPreparer {
     // Define volumes in the pod.
     V1Volume podInfoVolume = getPodInfoVolume();
     V1Volume configVolume = getConfigVolume(configMap);
-    List<V1Volume> volumes = new ArrayList<>(podInfo.getVolumes());
+    List<V1Volume> volumes = new ArrayList<>(currentPodInfo.getVolumes());
     volumes.add(podInfoVolume);
     volumes.add(configVolume);
     podSpec.setVolumes(volumes);
 
     // Set the service for RBAC control for app.
-    podSpec.setServiceAccountName(podInfo.getServiceAccountName());
+    podSpec.setServiceAccountName(currentPodInfo.getServiceAccountName());
 
     // Set the runtime class name to be the same as app-fabric
     // This is for protection against running user code
-    podSpec.setRuntimeClassName(podInfo.getRuntimeClassName());
+    podSpec.setRuntimeClassName(currentPodInfo.getRuntimeClassName());
 
     V1Container container = new V1Container();
-    container.setName(CONTAINER_NAME);
-    container.setImage(podInfo.getContainerImage());
+    container.setName(containerName);
+    container.setImage(currentPodInfo.getContainerImage());
 
     // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
-    String configDir = podInfo.getPodInfoDir() + "-app";
-    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    String configDir = currentPodInfo.getPodInfoDir() + "-app";
+    List<V1VolumeMount> volumeMounts = new ArrayList<>(currentPodInfo.getContainerVolumeMounts());
     volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
-                       .mountPath(podInfo.getPodInfoDir()).readOnly(true));
+                       .mountPath(currentPodInfo.getPodInfoDir()).readOnly(true));
     volumeMounts.add(new V1VolumeMount().name(configVolume.getName())
                        .mountPath(configDir).readOnly(true));
     container.setVolumeMounts(volumeMounts);
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
-    quantityMap.put("cpu", new Quantity(String.valueOf(vcores * cConf.getFloat(TWILL_KUBE_CPU_SCALING))));
+    quantityMap.put("cpu", new Quantity(String.valueOf(vCores)));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * 1.2f))));
     resourceRequirements.setRequests(quantityMap);
     container.setResources(resourceRequirements);
 
     // Setup the container environment. Inherit everything from the current pod.
-    Map<String, String> environs = podInfo.getContainerEnvironments().stream()
+    Map<String, String> environs = currentPodInfo.getContainerEnvironments().stream()
       .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
 
     // assumption is there is only a single runnable
@@ -464,16 +477,28 @@ class KubeTwillPreparer implements TwillPreparer {
 
     // when other program types are supported, there will need to be a mapping from program type to main class
     container.setArgs(Arrays.asList("io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
-                                    String.format("--appSpecPath=%s/%s", configDir, APP_SPEC),
-                                    String.format("--programOptions=%s/%s", configDir, PROGRAM_OPTIONS),
-                                    String.format("--twillRunId=%s", twillRunId.getId())));
+                                    String.format("--appSpecPath=%s/%s", configDir, appSpec),
+                                    String.format("--programOptions=%s/%s", configDir, programOptions),
+                                    String.format("--twillRunId=%s", runid.getId())));
     podSpec.setContainers(Collections.singletonList(container));
 
     templateSpec.setSpec(podSpec);
     spec.setTemplate(templateSpec);
     deployment.setSpec(spec);
 
-    LOG.trace("Creating deployment {} in Kubernetes", resourceMeta.getName());
+    return deployment;
+  }
+
+  /**
+   * Build a {@link V1Deployment} object to run the program and deploy it in kubernete
+   */
+  private V1Deployment createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+    AppsV1Api appsApi = new AppsV1Api(apiClient);
+
+    V1Deployment deployment = buildDeployment(twillRunId, APP_SPEC, PROGRAM_OPTIONS, resourceMeta, CONTAINER_NAME,
+                                              vcores, memoryMB, environments, configMap, podInfo,
+                                              startTimeoutMillis);
+
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
     return deployment;
