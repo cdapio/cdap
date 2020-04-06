@@ -49,7 +49,12 @@ import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
+import io.cdap.cdap.spi.data.StructuredTable;
+import io.cdap.cdap.spi.data.StructuredTableContext;
+import io.cdap.cdap.spi.data.StructuredTableInstantiationException;
+import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.data.transaction.TransactionException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TxRunnable;
@@ -221,7 +226,20 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
     }
     // table names are prefixed to prevent clashes with CDAP platform tables.
     transactionRunner.run(context -> runnable.run(
-      tableId -> context.getTable(new StructuredTableId(DefaultSystemTableConfigurer.PREFIX + tableId.getName()))));
+      new StructuredTableContext() {
+        @Override
+        public StructuredTable getTable(StructuredTableId tableId)
+          throws StructuredTableInstantiationException, TableNotFoundException {
+          return context.getTable(tableId);
+        }
+
+        @Override
+        public StructuredTable getOrCreateTable(StructuredTableId tableId, StructuredTableSpecification tableSpec)
+          throws StructuredTableInstantiationException, IOException, TableNotFoundException {
+          return context.getOrCreateTable(tableId, tableSpec);
+        }
+      }
+    ));
   }
 
   /**
