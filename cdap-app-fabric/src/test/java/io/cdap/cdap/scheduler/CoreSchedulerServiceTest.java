@@ -381,7 +381,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
       AppWithMultipleSchedules.NAME, ApplicationId.DEFAULT_VERSION, "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap());
+      Collections.emptyMap(), Collections.emptyList());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(anotherWorkflowRun.getParent(), appSpec);
     BasicArguments systemArgs =
       new BasicArguments(ImmutableMap.of(ProgramOptionConstants.SKIP_PROVISIONING, Boolean.TRUE.toString()));

@@ -48,7 +48,7 @@ public class DistributedWorkerProgramRunner extends DistributedProgramRunner
   DistributedWorkerProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                  Impersonator impersonator, ClusterMode clusterMode,
                                  @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, null);
   }
 
   @Override

@@ -36,6 +36,7 @@ import io.cdap.cdap.proto.codec.AbstractSpecificationCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -63,6 +64,7 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
     jsonObj.add("programSchedules", serializeMap(src.getProgramSchedules(), context, ScheduleCreationSpec.class));
     jsonObj.add("workers", serializeMap(src.getWorkers(), context, WorkerSpecification.class));
     jsonObj.add("plugins", serializeMap(src.getPlugins(), context, Plugin.class));
+    jsonObj.add("systemTableNames", serializeList(src.getSystemTableNames(), context, String.class));
 
     return jsonObj;
   }
@@ -107,9 +109,12 @@ final class ApplicationSpecificationCodec extends AbstractSpecificationCodec<App
                                                               WorkerSpecification.class);
     Map<String, Plugin> plugins = deserializeMap(jsonObj.get("plugins"), context, Plugin.class);
 
+    List<String> systemTableNames =  deserializeList(jsonObj.get("systemTableNames"), context, String.class);
+
     return new DefaultApplicationSpecification(name, appVersion, description, configuration, artifactId,
                                                datasetModules, datasetInstances,
                                                mapReduces, sparks,
-                                               workflows, services, programSchedules, workers, plugins);
+                                               workflows, services, programSchedules, workers, plugins,
+                                               systemTableNames);
   }
 }

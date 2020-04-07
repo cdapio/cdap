@@ -50,6 +50,7 @@ import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.StorageModule;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -82,12 +83,15 @@ import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.filesystem.Location;
+import org.datanucleus.store.types.backed.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -121,6 +125,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     .create();
   private ProgramRunId programRunId;
   private ProgramOptions programOptions;
+  private List<StructuredTableSpecification> tableSpecifications;
 
   /**
    * Main entry point
@@ -147,6 +152,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       new DataSetsModules().getDistributedModules(),
       getDataFabricModule(),
       new DFSLocationModule(),
+      new StorageModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -200,11 +206,19 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
     ArtifactFinder artifactFinder = injector.getInstance(ArtifactFinder.class);
     ProgramRunner programRunner = injector.getInstance(ServiceProgramRunner.class);
+
     File appSpecFile = new File(options.getAppSpecPath());
     ApplicationSpecification appSpec = readJsonFile(appSpecFile, ApplicationSpecification.class);
+
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+
+    File tableSpecFile = new File(options.getSystemTableSpecsPath());
+    List<StructuredTableSpecification> tableSpecifications = readJsonFile(tableSpecFile, ArrayList.class);
+    StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+
     UserService userService = new UserService(cConf, artifactFinder, programRunner, programStateWriter, appSpec,
-                                              programOptions, programRunId, options);
+                                              programOptions, tableSpecifications, programRunId, options,
+                                              tableAdmin);
     services.add(userService);
     closeableResources.add(userService);
   }
@@ -235,8 +249,10 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     private final CConfiguration cConf;
     private final ProgramRunner programRunner;
     private final ArtifactFinder artifactFinder;
+    private final StructuredTableAdmin tableAdmin;
     private final ApplicationSpecification appSpec;
     private final ProgramOptions programOptions;
+    private final List<StructuredTableSpecification> tableSpecifications;
     private final ProgramRunId programRunId;
     private final String bindHost;
     private final long maxStopSeconds;
@@ -245,7 +261,9 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
 
     private UserService(CConfiguration cConf, ArtifactFinder artifactFinder, ProgramRunner programRunner,
                         ProgramStateWriter programStateWriter, ApplicationSpecification appSpec,
-                        ProgramOptions programOptions, ProgramRunId programRunId, ServiceOptions serviceOptions) {
+                        ProgramOptions programOptions,
+                        List<StructuredTableSpecification> tableSpecifications,
+                        ProgramRunId programRunId, ServiceOptions serviceOptions, StructuredTableAdmin tableAdmin) {
       this.controllerFuture = new CompletableFuture<>();
       this.controllerFuture.thenAcceptAsync(
         c -> c.addListener(new StateChangeListener(programRunId, serviceOptions.getTwillRunId(), programStateWriter),
@@ -256,6 +274,8 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       this.artifactFinder = artifactFinder;
       this.appSpec = appSpec;
       this.programOptions = programOptions;
+      this.tableAdmin = tableAdmin;
+      this.tableSpecifications = tableSpecifications;
       this.bindHost = serviceOptions.getBindAddress();
       this.programRunId = programRunId;
       this.maxStopSeconds = cConf.getLong(Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS, 60);
@@ -268,6 +288,12 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       Set<ArtifactId> pluginArtifacts = new HashSet<>();
       for (Plugin plugin : appSpec.getPlugins().values()) {
         pluginArtifacts.add(convert(programNamespace, plugin.getArtifactId()));
+      }
+
+      // Create system tables
+      for (StructuredTableSpecification spec : tableSpecifications) {
+        LOG.info("wyzhang: creating {}", spec.toString());
+        tableAdmin.create(spec);
       }
 
       // need to set the plugins directory in system args, as well as the host to bind to

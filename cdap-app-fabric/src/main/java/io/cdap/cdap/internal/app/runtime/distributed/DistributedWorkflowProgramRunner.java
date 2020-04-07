@@ -83,7 +83,7 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
                                    Impersonator impersonator, ClusterMode clusterMode,
                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
                                    @Constants.AppFabric.ProgramRunner ProgramRunnerFactory programRunnerFactory) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, null);
     this.programRunnerFactory = programRunnerFactory;
   }
 

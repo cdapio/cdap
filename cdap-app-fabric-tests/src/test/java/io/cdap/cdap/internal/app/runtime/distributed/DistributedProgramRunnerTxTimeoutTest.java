@@ -77,12 +77,16 @@ public class DistributedProgramRunnerTxTimeoutTest {
     // System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(appSpec));
 
     cConf.setInt(TxConstants.Manager.CFG_TX_MAX_TIMEOUT, 60);
-    serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, cConf, yConf, null, null,
-                                                    ClusterMode.ON_PREMISE, null);
-    workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null, null);
+    serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE,
+                                                        null, null);
+    workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE,
+                                                      null);
+    mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE,
+                                                            null, null);
+    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, cConf, yConf, null,
+                                                    null, ClusterMode.ON_PREMISE, null);
+    workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE,
+                                                          null, null);
   }
 
   @Test
@@ -159,42 +163,52 @@ public class DistributedProgramRunnerTxTimeoutTest {
       public String getMainClassName() {
         return null;
       }
+
       @Override
       public <T> Class<T> getMainClass() {
         return null;
       }
+
       @Override
       public ProgramType getType() {
         return type;
       }
+
       @Override
       public ProgramId getId() {
         return new ProgramId(getNamespaceId(), getApplicationId(), getType(), getName());
       }
+
       @Override
       public String getName() {
         return name;
       }
+
       @Override
       public String getNamespaceId() {
         return Id.Namespace.DEFAULT.getId();
       }
+
       @Override
       public String getApplicationId() {
         return appSpec.getName();
       }
+
       @Override
       public ApplicationSpecification getApplicationSpecification() {
         return appSpec;
       }
+
       @Override
       public Location getJarLocation() {
         return null;
       }
+
       @Override
       public ClassLoader getClassLoader() {
         return null;
       }
+
       @Override
       public void close() {
       }
@@ -210,6 +224,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
         public void configure() {
           setName("worker");
         }
+
         @Override
         public void run() {
           // no-op
@@ -219,7 +234,8 @@ public class DistributedProgramRunnerTxTimeoutTest {
         @Override
         protected void configure() {
           setName("service");
-          addHandler(new AbstractHttpServiceHandler() { });
+          addHandler(new AbstractHttpServiceHandler() {
+          });
         }
       });
       addMapReduce(new AbstractMapReduce() {

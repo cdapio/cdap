@@ -33,6 +33,8 @@ public final class ProgramOptionConstants {
 
   public static final String APP_SPEC_FILE = "appSpecFile";
 
+  public static final String SYSTEM_TABLE_SPEC_FILE = "sysTableSpecFile";
+
   public static final String RUN_ID = "runId";
 
   public static final String TWILL_RUN_ID = "twillRunId";

@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHel
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapred.YarnClientProtocolProvider;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
@@ -52,8 +53,9 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
   @Inject
   DistributedMapReduceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                     Impersonator impersonator, ClusterMode clusterMode,
-                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+                                    @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                    StructuredTableAdmin tableAdmin) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, null);
   }
 
   @Override

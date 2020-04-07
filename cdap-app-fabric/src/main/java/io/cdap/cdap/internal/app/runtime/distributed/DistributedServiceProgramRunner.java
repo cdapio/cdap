@@ -29,6 +29,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.Impersonator;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.RunId;
@@ -46,8 +47,9 @@ public class DistributedServiceProgramRunner extends DistributedProgramRunner
   @Inject
   DistributedServiceProgramRunner(CConfiguration cConf, YarnConfiguration hConf,
                                   Impersonator impersonator, ClusterMode clusterMode,
-                                  @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+                                  @Constants.AppFabric.ProgramRunner TwillRunner twillRunner,
+                                  StructuredTableAdmin tableAdmin) {
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, tableAdmin);
   }
 
   @Override

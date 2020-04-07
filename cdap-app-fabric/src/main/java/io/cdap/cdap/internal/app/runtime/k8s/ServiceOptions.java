@@ -25,6 +25,7 @@ import io.cdap.cdap.master.environment.k8s.EnvironmentOptions;
 public class ServiceOptions extends EnvironmentOptions {
   public static final String APP_SPEC_PATH = "appSpecPath";
   public static final String PROGRAM_OPTIONS_PATH = "programOptions";
+  public static final String SYSTEM_TABLE_SPECS_PATH = "systemTableSpecs";
   public static final String BIND_ADDRESS = "bindAddress";
   public static final String TWILL_RUN_ID = "twillRunId";
 
@@ -33,6 +34,9 @@ public class ServiceOptions extends EnvironmentOptions {
 
   @Option(name = PROGRAM_OPTIONS_PATH, usage = "Path to program options file")
   private String programOptionsPath;
+
+  @Option(name = SYSTEM_TABLE_SPECS_PATH, usage = "Path to system table specification file")
+  private String systemTableSpecPath;
 
   @Option(name = BIND_ADDRESS, usage = "The address to bind to")
   private String bindAddress;
@@ -46,6 +50,10 @@ public class ServiceOptions extends EnvironmentOptions {
 
   public String getProgramOptionsPath() {
     return programOptionsPath;
+  }
+
+  public String getSystemTableSpecsPath() {
+    return systemTableSpecPath;
   }
 
   public String getBindAddress() {

@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 import io.cdap.cdap.proto.id.ApplicationId;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -54,6 +55,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
   private final Map<String, ScheduleCreationSpec> programSchedules;
   private final Map<String, WorkerSpecification> workers;
   private final Map<String, Plugin> plugins;
+  private final List<String> systemTableNames;
 
   public DefaultApplicationSpecification(String name, String description, String configuration,
                                          ArtifactId artifactId,
@@ -65,10 +67,10 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ServiceSpecification> services,
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
-                                         Map<String, Plugin> plugins) {
+                                         Map<String, Plugin> plugins, List<String> systemTableNames) {
     this(name, ApplicationId.DEFAULT_VERSION, description, configuration, artifactId, datasetModules,
          datasetInstances, mapReduces, sparks, workflows, services, programSchedules, workers,
-         plugins);
+         plugins, systemTableNames);
   }
 
   public DefaultApplicationSpecification(String name, String appVersion, String description, String configuration,
@@ -81,7 +83,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
                                          Map<String, ServiceSpecification> services,
                                          Map<String, ScheduleCreationSpec> programSchedules,
                                          Map<String, WorkerSpecification> workers,
-                                         Map<String, Plugin> plugins) {
+                                         Map<String, Plugin> plugins, List<String> systemTableNames) {
     this.name = name;
     this.appVersion = appVersion;
     this.description = description;
@@ -96,6 +98,7 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
     this.programSchedules = ImmutableMap.copyOf(programSchedules);
     this.workers = ImmutableMap.copyOf(workers);
     this.plugins = ImmutableMap.copyOf(plugins);
+    this.systemTableNames = systemTableNames;
   }
 
   @Override
@@ -185,5 +188,10 @@ public final class DefaultApplicationSpecification implements ApplicationSpecifi
       default:
         return ImmutableSet.of();
     }
+  }
+
+  @Override
+  public List<String> getSystemTableNames() {
+    return systemTableNames;
   }
 }

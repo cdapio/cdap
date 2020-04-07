@@ -87,7 +87,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
                                        Impersonator impersonator, LocationFactory locationFactory,
                                        ClusterMode clusterMode,
                                        @Constants.AppFabric.ProgramRunner TwillRunner twillRunner) {
-    super(cConf, hConf, impersonator, clusterMode, twillRunner);
+    super(cConf, hConf, impersonator, clusterMode, twillRunner, null);
     this.sparkCompat = sparkComat;
     this.locationFactory = locationFactory;
   }

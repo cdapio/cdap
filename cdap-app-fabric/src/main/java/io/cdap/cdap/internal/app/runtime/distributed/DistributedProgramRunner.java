@@ -60,6 +60,9 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.store.SecureStoreUtils;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableId;
+import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import io.cdap.cdap.spi.hbase.HBaseDDLExecutor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.yarn.api.ApplicationConstants;
@@ -107,10 +110,10 @@ import javax.annotation.Nullable;
  * Defines the base framework for starting {@link Program} in the cluster.
  */
 public abstract class DistributedProgramRunner implements ProgramRunner, ProgramControllerCreator {
-
   public static final String CDAP_CONF_FILE_NAME = "cConf.xml";
   public static final String APP_SPEC_FILE_NAME = "appSpec.json";
   public static final String PROGRAM_OPTIONS_FILE_NAME = "program.options.json";
+  public static final String SYSTEM_TABLE_SPEC_FILE_NAME = "system.table.spec.json";
 
   private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramRunner.class);
   private static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
@@ -125,14 +128,17 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   protected final ClusterMode clusterMode;
   private final TwillRunner twillRunner;
   private final Impersonator impersonator;
+  private final StructuredTableAdmin tableAdmin;
 
   protected DistributedProgramRunner(CConfiguration cConf, Configuration hConf, Impersonator impersonator,
-                                     ClusterMode clusterMode, TwillRunner twillRunner) {
+                                     ClusterMode clusterMode, TwillRunner twillRunner,
+                                     StructuredTableAdmin tableAdmin) {
     this.twillRunner = twillRunner;
     this.hConf = hConf;
     this.cConf = cConf;
     this.impersonator = impersonator;
     this.clusterMode = clusterMode;
+    this.tableAdmin = tableAdmin;
   }
 
   /**
@@ -221,6 +227,21 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                               ApplicationSpecification.class,
                                                               File.createTempFile("appSpec", ".json", tempDir))));
 
+      // Localize system table spec
+      List<StructuredTableSpecification> tableSpecificationList = new ArrayList<>();
+      for (String name : program.getApplicationSpecification().getSystemTableNames()) {
+        StructuredTableSpecification spec = tableAdmin.getSpecification(new StructuredTableId(name));
+        if (spec == null) {
+          LOG.error("Failed to find system table spec for {}", name);
+          continue;
+        }
+        tableSpecificationList.add(spec);
+      }
+      localizeResources.put(SYSTEM_TABLE_SPEC_FILE_NAME,
+                            new LocalizeResource(saveJsonFile(tableSpecificationList,
+                                                              File.createTempFile("system.table.spec",
+                                                                                  ".json", tempDir))));
+
       final URI logbackURI = getLogBackURI(program);
       if (logbackURI != null) {
         // Localize the logback xml
@@ -235,6 +256,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       extraSystemArgs.put(ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME);
       extraSystemArgs.put(ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME);
       extraSystemArgs.put(ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME);
+      extraSystemArgs.put(ProgramOptionConstants.SYSTEM_TABLE_SPEC_FILE, SYSTEM_TABLE_SPEC_FILE_NAME);
 
       ProgramOptions options = updateProgramOptions(oldOptions, localizeResources,
                                                     DirUtils.createTempDir(tempDir), extraSystemArgs);
@@ -600,6 +622,13 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   private <T> File saveJsonFile(T obj, Class<T> type, File file) throws IOException {
     try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
       GSON.toJson(obj, type, writer);
+    }
+    return file;
+  }
+
+  private <T> File saveJsonFile(T obj, File file) throws IOException {
+    try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
+      GSON.toJson(obj, writer);
     }
     return file;
   }

@@ -275,6 +275,7 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
       Collections.emptyMap(), Collections.emptyMap(),
       Collections.singletonMap(ServiceWithPluginApp.ServiceWithPlugin.NAME, serviceSpecification),
       Collections.emptyMap(), Collections.emptyMap(),
-      Collections.singletonMap(ServiceWithPluginApp.PLUGIN_ID, plugin));
+      Collections.singletonMap(ServiceWithPluginApp.PLUGIN_ID, plugin),
+      Collections.emptyList());
   }
 }

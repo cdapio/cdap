@@ -28,6 +28,7 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -117,5 +118,10 @@ public abstract class ForwardingApplicationSpecification implements ApplicationS
   @Override
   public Set<String> getProgramsByType(ProgramType programType) {
     return delegate.getProgramsByType(programType);
+  }
+
+  @Override
+  public List<String> getSystemTableNames() {
+    return delegate.getSystemTableNames();
   }
 }

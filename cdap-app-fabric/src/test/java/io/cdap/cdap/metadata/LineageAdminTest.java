@@ -485,7 +485,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(workflowId.getProgram(), wfSpec),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap());
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyList());
 
     Store store = getInjector().getInstance(Store.class);
     store.addApplication(testApp, appSpec);
@@ -657,7 +658,8 @@ public class LineageAdminTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(workflowId.getProgram(), wfSpec),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap());
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyList());
 
     Store store = getInjector().getInstance(Store.class);
     store.addApplication(testApp, appSpec);

@@ -88,6 +88,7 @@ class KubeTwillPreparer implements TwillPreparer {
   // These are equal to the constants used in DistributedProgramRunner
   private static final String APP_SPEC = "appSpec.json";
   private static final String PROGRAM_OPTIONS = "program.options.json";
+  private static final String SYSTEM_TABLE_SPEC = "system.table.spec.json";
   private final ApiClient apiClient;
   private final String kubeNamespace;
   private final PodInfo podInfo;
@@ -99,6 +100,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final KubeTwillControllerFactory controllerFactory;
   private final URI appSpec;
   private final URI programOptions;
+  private final URI systemTableSpecs;
   private final int memoryMB;
   private final int vcores;
 
@@ -129,6 +131,11 @@ class KubeTwillPreparer implements TwillPreparer {
       .map(LocalFile::getURI)
       .findFirst()
       .orElseThrow(() -> new IllegalStateException("Program Options not found in files to localize."));
+    this.systemTableSpecs = runtimeSpecification.getLocalFiles().stream()
+      .filter(f -> SYSTEM_TABLE_SPEC.equals(f.getName()))
+      .map(LocalFile::getURI)
+      .findFirst()
+      .orElseThrow(() -> new IllegalStateException("System table spec not found in files to localize."));
     this.memoryMB = resourceSpecification.getMemorySize();
     this.vcores = resourceSpecification.getVirtualCores();
   }
@@ -326,17 +333,10 @@ class KubeTwillPreparer implements TwillPreparer {
    * Return a {@link V1Deployment} object that will be deployed in Kubernetes to run the program
    */
   @VisibleForTesting
-  V1Deployment buildDeployment(RunId runid,
-                                      String appSpec,
-                                      String programOptions,
-                                      V1ObjectMeta deploymentMetadata,
-                                      String containerName,
-                                      int vCores,
-                                      int memoryMB,
-                                      Map<String, Map<String, String>> environments,
-                                      V1ConfigMap configMap,
-                                      PodInfo currentPodInfo,
-                                      long startTimeoutMillis) {
+  V1Deployment buildDeployment(RunId runid, String appSpec, String programOptions, String systemTableSpecs,
+                               V1ObjectMeta deploymentMetadata, String containerName, int vCores, int memoryMB,
+                               Map<String, Map<String, String>> environments, V1ConfigMap configMap,
+                               PodInfo currentPodInfo, long startTimeoutMillis) {
     /*
        The deployment will look something like:
        apiVersion: apps/v1
@@ -476,6 +476,7 @@ class KubeTwillPreparer implements TwillPreparer {
     container.setArgs(Arrays.asList("io.cdap.cdap.internal.app.runtime.k8s.UserServiceProgramMain", "--env=k8s",
                                     String.format("--appSpecPath=%s/%s", configDir, appSpec),
                                     String.format("--programOptions=%s/%s", configDir, programOptions),
+                                    String.format("--systemTableSpecs=%s/%s", configDir, systemTableSpecs),
                                     String.format("--twillRunId=%s", runid.getId())));
     podSpec.setContainers(Collections.singletonList(container));
 
@@ -489,16 +490,15 @@ class KubeTwillPreparer implements TwillPreparer {
   /**
    * Build a {@link V1Deployment} object to run the program and deploy it in kubernete
    */
-  private V1Deployment createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+  private void createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
-    V1Deployment deployment = buildDeployment(twillRunId, APP_SPEC, PROGRAM_OPTIONS, resourceMeta, CONTAINER_NAME,
-                                              vcores, memoryMB, environments, configMap, podInfo,
-                                              startTimeoutMillis);
+    V1Deployment deployment = buildDeployment(twillRunId, APP_SPEC, PROGRAM_OPTIONS, SYSTEM_TABLE_SPEC, resourceMeta,
+                                              CONTAINER_NAME, vcores, memoryMB, environments, configMap,
+                                              podInfo, startTimeoutMillis);
 
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
-    return deployment;
   }
 
   /*

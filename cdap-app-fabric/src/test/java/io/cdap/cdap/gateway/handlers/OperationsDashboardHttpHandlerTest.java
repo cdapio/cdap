@@ -293,7 +293,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG1_ID.getProgram(), scheduledWorfklow1),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap());
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyList());
 
     store.addApplication(APP1_ID, dummyAppSpec1);
     WorkflowSpecification scheduledWorfklow2 =
@@ -307,7 +308,8 @@ public class OperationsDashboardHttpHandlerTest extends AppFabricTestBase {
                                           Collections.emptyMap(), Collections.emptyMap(),
                                           ImmutableMap.of(SCHEDULED_PROG2_ID.getProgram(), scheduledWorfklow2),
                                           Collections.emptyMap(), Collections.emptyMap(),
-                                          Collections.emptyMap(), Collections.emptyMap());
+                                          Collections.emptyMap(), Collections.emptyMap(),
+                                          Collections.emptyList());
     store.addApplication(APP2_ID, dummyAppSpec2);
   }
 

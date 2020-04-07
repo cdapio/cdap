@@ -80,7 +80,7 @@ public class ProgramStateWriterWithHeartBeatTest {
       "name", "1.0.0", "desc", null, artifactId,
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
       Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(), Collections.emptyMap(),
-      Collections.emptyMap());
+      Collections.emptyMap(), Collections.emptyList());
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // start the program and ensure heart beat is 0 before we call running

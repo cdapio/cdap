@@ -44,7 +44,6 @@ import io.cdap.cdap.internal.api.DefaultDatasetConfigurer;
 import io.cdap.cdap.internal.app.AbstractConfigurer;
 import io.cdap.cdap.internal.app.DefaultApplicationSpecification;
 import io.cdap.cdap.internal.app.mapreduce.DefaultMapReduceConfigurer;
-import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.DefaultScheduleBuilder;
@@ -64,7 +63,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -276,11 +277,17 @@ public class DefaultAppConfigurer extends AbstractConfigurer implements Applicat
       }
     }
 
+    List<String> systemTableNames =
+      systemTables.keySet().stream().map(tableId -> {
+        return tableId.getName();
+      }).collect(Collectors.toList());
+
     return new DefaultApplicationSpecification(appName, appVersion, description,
                                                configuration, artifactId,
                                                getDatasetModules(), getDatasetSpecs(),
                                                mapReduces, sparks, workflows, services,
-                                               builtScheduleSpecs, workers, getPlugins());
+                                               builtScheduleSpecs, workers, getPlugins(),
+                                               systemTableNames);
   }
 
   public Collection<StructuredTableSpecification> getSystemTables() {

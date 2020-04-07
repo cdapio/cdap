@@ -31,6 +31,7 @@ import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.internal.dataset.DatasetCreationSpec;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
@@ -122,4 +123,6 @@ public interface ApplicationSpecification {
    * @return The names of all programs of a given {@link ProgramType}.
    */
   Set<String> getProgramsByType(ProgramType programType);
+
+  List<String> getSystemTableNames();
 }
