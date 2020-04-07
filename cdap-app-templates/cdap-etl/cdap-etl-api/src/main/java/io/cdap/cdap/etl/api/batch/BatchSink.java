@@ -17,10 +17,14 @@
 package io.cdap.cdap.etl.api.batch;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.StageLifecycle;
 import io.cdap.cdap.etl.api.Transformation;
+import io.cdap.plugin.common.LineageRecorder;
+
+import java.util.List;
 
 /**
  * Batch Sink forms the last stage of a Batch ETL Pipeline. In addition to configuring the Batch run, it
@@ -73,5 +77,24 @@ public abstract class BatchSink<IN, KEY_OUT, VAL_OUT> extends BatchConfigurable<
   @Override
   public void destroy() {
     // no-op
+  }
+
+  /**
+   * Record field-level lineage for sink plugins (WriteOperation). This method should be called from prepareRun of any
+   * sink plugin.
+   * @param context BatchSinkContext from prepareRun
+   * @param outputName name of output dataset
+   * @param tableSchema schema of fields
+   * @param fieldNames list of field names
+   * @param operationName name of the operation
+   * @param description operation description; complete sentences preferred
+   */
+  protected void recordLineage(BatchSinkContext context, String outputName, Schema tableSchema, List<String> fieldNames,
+      String operationName, String description) {
+    LineageRecorder lineageRecorder = new LineageRecorder(context, outputName);
+    lineageRecorder.createExternalDataset(tableSchema);
+    if (!fieldNames.isEmpty()) {
+      lineageRecorder.recordWrite(operationName, description, fieldNames);
+    }
   }
 }
