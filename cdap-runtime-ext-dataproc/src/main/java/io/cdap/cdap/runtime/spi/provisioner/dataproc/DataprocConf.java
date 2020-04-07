@@ -19,7 +19,9 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
@@ -30,7 +32,9 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -88,6 +92,10 @@ final class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
+  private final Map<String, String> clusterMetaData;
+  private final String networkTags;
+  private final String initActions;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
@@ -95,7 +103,8 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.dataprocProperties);
+         conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags, conf.initActions,
+         conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -106,7 +115,8 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion,
+                       @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
+                       @Nullable String networkTags, @Nullable String initActions,
                        Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
@@ -135,6 +145,9 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
+    this.clusterMetaData = clusterMetaData;
+    this.networkTags = networkTags;
+    this.initActions = initActions;
     this.dataprocProperties = dataprocProperties;
   }
 
@@ -241,6 +254,27 @@ final class DataprocConf {
   @Nullable
   SSHPublicKey getPublicKey() {
     return publicKey;
+  }
+
+  Map<String, String> getClusterMetaData() {
+    return clusterMetaData;
+  }
+
+  List<String> getNetworkTags() {
+    if (Strings.isNullOrEmpty(networkTags)) {
+      return Collections.emptyList();
+    }
+    return Arrays.stream(networkTags.split(","))
+      .map(String::trim)
+      .collect(Collectors.toList());
+  }
+
+  List<String> getInitActions() {
+    if (Strings.isNullOrEmpty(initActions)) {
+      return Collections.emptyList();
+    }
+    return Arrays.stream(initActions.split(","))
+      .map(String::trim).collect(Collectors.toList());
   }
 
   Map<String, String> getDataprocProperties() {
@@ -386,16 +420,22 @@ final class DataprocConf {
     );
 
     String imageVersion = getString(properties, IMAGE_VERSION);
-
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
+
+    Map<String, String> clusterMetaData = Collections.unmodifiableMap(
+      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"),
+                                        ";", "\\|"));
+    String networkTags = getString(properties, "networkTags");
+    String initActions = getString(properties, "initActions");
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP, stackdriverLoggingEnabled,
-                            stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
+                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
+                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
+                            imageVersion, clusterMetaData, networkTags, initActions, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
