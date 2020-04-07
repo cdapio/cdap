@@ -152,7 +152,6 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       new DataSetsModules().getDistributedModules(),
       getDataFabricModule(),
       new DFSLocationModule(),
-      new StorageModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
