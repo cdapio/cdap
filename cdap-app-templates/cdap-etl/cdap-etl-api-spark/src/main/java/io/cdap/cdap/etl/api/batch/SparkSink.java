@@ -23,6 +23,7 @@ import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 /**
@@ -51,19 +52,20 @@ public abstract class SparkSink<IN> extends BatchConfigurable<SparkPluginContext
   public abstract void run(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception;
 
   /**
-   * Record field-level lineage for sink plugins (WriteOperation). This method should be called from prepareRun of any
-   * sink plugin.
+   * Record field-level lineage for spark sink plugins (WriteOperation). This method should be called from prepareRun of
+   * any spark sink plugin.
    * @param context BatchContext from prepareRun
    * @param outputName name of output dataset
-   * @param tableSchema schema of fields
-   * @param fieldNames list of field names
+   * @param tableSchema schema of fields. Also used to determine list of field names. Schema and schema.getFields() must
+   * not be null.
    * @param operationName name of the operation
    * @param description operation description; complete sentences preferred
    */
-  protected void recordLineage(BatchContext context, String outputName, Schema tableSchema, List<String> fieldNames,
-      String operationName, String description) {
+  protected void recordLineage(BatchContext context, String outputName, Schema tableSchema, String operationName,
+                               String description) {
     LineageRecorder lineageRecorder = new LineageRecorder(context, outputName);
     lineageRecorder.createExternalDataset(tableSchema);
+    List<String> fieldNames = tableSchema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList());
     if (!fieldNames.isEmpty()) {
       lineageRecorder.recordWrite(operationName, description, fieldNames);
     }

@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.plugin.common.LineageRecorder;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Batch Source forms the first stage of a Batch ETL Pipeline. In addition to configuring the Batch run, it
@@ -80,19 +81,20 @@ public abstract class BatchSource<KEY_IN, VAL_IN, OUT> extends BatchConfigurable
   }
 
   /**
-   * Record field-level lineage for source plugins (ReadOperation). This method should be called from prepareRun of any
-   * source plugin.
+   * Record field-level lineage for batch source plugins (ReadOperation). This method should be called from prepareRun
+   * of any batch source plugin.
    * @param context BatchSourceContext from prepareRun
    * @param outputName name of output dataset
-   * @param tableSchema schema of fields
-   * @param fieldNames list of field names
+   * @param tableSchema schema of fields. Also used to determine list of field names. Schema and schema.getFields() must
+   * not be null.
    * @param operationName name of the operation
    * @param description operation description; complete sentences preferred
    */
-  protected void recordLineage(BatchSourceContext context, String outputName, Schema tableSchema,
-      List<String> fieldNames, String operationName, String description) {
+  protected void recordLineage(BatchSourceContext context, String outputName, Schema tableSchema, String operationName,
+                               String description) {
     LineageRecorder lineageRecorder = new LineageRecorder(context, outputName);
     lineageRecorder.createExternalDataset(tableSchema);
+    List<String> fieldNames = tableSchema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList());
     if (!fieldNames.isEmpty()) {
       lineageRecorder.recordRead(operationName, description, fieldNames);
     }

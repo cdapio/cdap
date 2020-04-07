@@ -26,6 +26,7 @@ import org.apache.spark.streaming.api.java.JavaDStream;
 
 import java.io.Serializable;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Source for Spark Streaming pipelines.
@@ -64,19 +65,20 @@ public abstract class StreamingSource<T> implements PipelineConfigurable,
   }
 
   /**
-   * Record field-level lineage for streaming source plugins. This method should be called from prepareRun of any source
-   * plugin.
-   * @param context Streaming from prepareRun
+   * Record field-level lineage for streaming source plugins (ReadOperation). This method should be called from
+   * prepareRun of any streaming source plugin.
+   * @param context StreamingSourceContext from prepareRun
    * @param outputName name of output dataset
-   * @param tableSchema schema of fields
-   * @param fieldNames list of field names
+   * @param tableSchema schema of fields. Also used to determine list of field names. Schema and schema.getFields() must
+   * not be null.
    * @param operationName name of the operation
    * @param description operation description; complete sentences preferred
    */
   protected void recordLineage(StreamingSourceContext context, String outputName, Schema tableSchema,
-      List<String> fieldNames, String operationName, String description) {
+                               String operationName, String description) {
     LineageRecorder lineageRecorder = new LineageRecorder(context, outputName);
     lineageRecorder.createExternalDataset(tableSchema);
+    List<String> fieldNames = tableSchema.getFields().stream().map(Schema.Field::getName).collect(Collectors.toList());
     if (!fieldNames.isEmpty()) {
       lineageRecorder.recordRead(operationName, description, fieldNames);
     }
