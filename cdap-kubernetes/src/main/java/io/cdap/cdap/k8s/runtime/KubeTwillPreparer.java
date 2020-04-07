@@ -471,14 +471,6 @@ class KubeTwillPreparer implements TwillPreparer {
                        .mountPath(configDir).readOnly(true));
     volumeMounts.add(new V1VolumeMount().name(persistentVolumeMountName).mountPath("/data"));
 
-    // Init container
-    V1Container initContainer = new V1Container();
-    initContainer.setName("storage-main");
-    initContainer.setImage(podInfo.getContainerImage());
-    initContainer.setVolumeMounts(volumeMounts);
-    initContainer.setArgs(Arrays.asList("io.cdap.cdap.master.environment.k8s.StorageMain"));
-    podSpec.setInitContainers(Collections.singletonList(initContainer));
-
     // UserServiceMain container
     V1Container container = new V1Container();
     container.setName(containerName);

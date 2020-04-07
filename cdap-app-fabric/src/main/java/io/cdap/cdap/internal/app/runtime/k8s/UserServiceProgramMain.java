@@ -84,6 +84,7 @@ import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.spi.data.table.StructuredTableSpecification;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
@@ -214,10 +215,11 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     File tableSpecFile = new File(options.getSystemTableSpecsPath());
     List<StructuredTableSpecification> tableSpecifications = readJsonFile(tableSpecFile, ArrayList.class);
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
+    StructuredTableRegistry tableRegistry = injector.getInstance(StructuredTableRegistry.class);
 
     UserService userService = new UserService(cConf, artifactFinder, programRunner, programStateWriter, appSpec,
                                               programOptions, tableSpecifications, programRunId, options,
-                                              tableAdmin);
+                                              tableAdmin, tableRegistry);
     services.add(userService);
     closeableResources.add(userService);
   }
@@ -249,6 +251,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     private final ProgramRunner programRunner;
     private final ArtifactFinder artifactFinder;
     private final StructuredTableAdmin tableAdmin;
+    private final StructuredTableRegistry tableRegistry;
     private final ApplicationSpecification appSpec;
     private final ProgramOptions programOptions;
     private final List<StructuredTableSpecification> tableSpecifications;
@@ -262,7 +265,9 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
                         ProgramStateWriter programStateWriter, ApplicationSpecification appSpec,
                         ProgramOptions programOptions,
                         List<StructuredTableSpecification> tableSpecifications,
-                        ProgramRunId programRunId, ServiceOptions serviceOptions, StructuredTableAdmin tableAdmin) {
+                        ProgramRunId programRunId, ServiceOptions serviceOptions,
+                        StructuredTableAdmin tableAdmin,
+                        StructuredTableRegistry tableRegistry) {
       this.controllerFuture = new CompletableFuture<>();
       this.controllerFuture.thenAcceptAsync(
         c -> c.addListener(new StateChangeListener(programRunId, serviceOptions.getTwillRunId(), programStateWriter),
@@ -274,6 +279,7 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       this.appSpec = appSpec;
       this.programOptions = programOptions;
       this.tableAdmin = tableAdmin;
+      this.tableRegistry = tableRegistry;
       this.tableSpecifications = tableSpecifications;
       this.bindHost = serviceOptions.getBindAddress();
       this.programRunId = programRunId;
@@ -290,6 +296,9 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
       }
 
       // Create system tables
+      if (!tableSpecifications.isEmpty()) {
+        tableRegistry.initialize();
+      }
       for (StructuredTableSpecification spec : tableSpecifications) {
         LOG.info("wyzhang: creating {}", spec.toString());
         tableAdmin.create(spec);
