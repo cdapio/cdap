@@ -469,7 +469,7 @@ class KubeTwillPreparer implements TwillPreparer {
                        .mountPath(currentPodInfo.getPodInfoDir()).readOnly(true));
     volumeMounts.add(new V1VolumeMount().name(configVolume.getName())
                        .mountPath(configDir).readOnly(true));
-    volumeMounts.add(new V1VolumeMount().name(persistentVolumeName).mountPath("/data"));
+    volumeMounts.add(new V1VolumeMount().name(persistentVolumeMountName).mountPath("/data"));
 
     // Init container
     V1Container initContainer = new V1Container();
