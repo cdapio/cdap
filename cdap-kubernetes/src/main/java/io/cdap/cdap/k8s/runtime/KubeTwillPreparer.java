@@ -146,8 +146,13 @@ class KubeTwillPreparer implements TwillPreparer {
       .orElseThrow(() -> new IllegalStateException("System table spec not found in files to localize."));
     this.memoryMB = resourceSpecification.getMemorySize();
     this.vcores = resourceSpecification.getVirtualCores();
-    this.persistentVolumeName = spec.getName();
-    this.persistentVolumeMountName = this.persistentVolumeName + "-data";
+    this.persistentVolumeName = cleanse("cdap-" + spec.getName());
+    this.persistentVolumeMountName = cleanse("cdap-" + this.persistentVolumeName + "-data");
+  }
+
+  private static String cleanse(String val) {
+    String cleansed = val.replaceAll("[^A-Za-z0-9\\-]", "-");
+    return cleansed;
   }
 
   @Override
