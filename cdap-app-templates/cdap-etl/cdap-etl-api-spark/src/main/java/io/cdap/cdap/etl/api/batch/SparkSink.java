@@ -17,9 +17,12 @@
 package io.cdap.cdap.etl.api.batch;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.plugin.common.LineageRecorder;
 import org.apache.spark.api.java.JavaRDD;
 
 import java.io.Serializable;
+import java.util.List;
 
 
 /**
@@ -47,4 +50,22 @@ public abstract class SparkSink<IN> extends BatchConfigurable<SparkPluginContext
    */
   public abstract void run(SparkExecutionPluginContext context, JavaRDD<IN> input) throws Exception;
 
+  /**
+   * Record field-level lineage for sink plugins (WriteOperation). This method should be called from prepareRun of any
+   * sink plugin.
+   * @param context BatchContext from prepareRun
+   * @param outputName name of output dataset
+   * @param tableSchema schema of fields
+   * @param fieldNames list of field names
+   * @param operationName name of the operation
+   * @param description operation description; complete sentences preferred
+   */
+  protected void recordLineage(BatchContext context, String outputName, Schema tableSchema, List<String> fieldNames,
+      String operationName, String description) {
+    LineageRecorder lineageRecorder = new LineageRecorder(context, outputName);
+    lineageRecorder.createExternalDataset(tableSchema);
+    if (!fieldNames.isEmpty()) {
+      lineageRecorder.recordWrite(operationName, description, fieldNames);
+    }
+  }
 }

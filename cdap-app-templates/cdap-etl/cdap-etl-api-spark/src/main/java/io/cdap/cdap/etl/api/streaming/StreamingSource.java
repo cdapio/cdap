@@ -17,12 +17,15 @@
 package io.cdap.cdap.etl.api.streaming;
 
 import io.cdap.cdap.api.annotation.Beta;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.SubmitterLifecycle;
+import io.cdap.plugin.common.LineageRecorder;
 import org.apache.spark.streaming.api.java.JavaDStream;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * Source for Spark Streaming pipelines.
@@ -58,6 +61,25 @@ public abstract class StreamingSource<T> implements PipelineConfigurable,
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     // no-op
+  }
+
+  /**
+   * Record field-level lineage for streaming source plugins. This method should be called from prepareRun of any source
+   * plugin.
+   * @param context Streaming from prepareRun
+   * @param outputName name of output dataset
+   * @param tableSchema schema of fields
+   * @param fieldNames list of field names
+   * @param operationName name of the operation
+   * @param description operation description; complete sentences preferred
+   */
+  protected void recordLineage(StreamingSourceContext context, String outputName, Schema tableSchema,
+      List<String> fieldNames, String operationName, String description) {
+    LineageRecorder lineageRecorder = new LineageRecorder(context, outputName);
+    lineageRecorder.createExternalDataset(tableSchema);
+    if (!fieldNames.isEmpty()) {
+      lineageRecorder.recordRead(operationName, description, fieldNames);
+    }
   }
 
   /**
