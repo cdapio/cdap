@@ -17,6 +17,7 @@
 package io.cdap.cdap.k8s.runtime;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.gson.Gson;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -35,11 +36,15 @@ import io.kubernetes.client.models.V1LabelSelector;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ObjectMetaBuilder;
+import io.kubernetes.client.models.V1PersistentVolumeClaim;
+import io.kubernetes.client.models.V1PersistentVolumeClaimSpec;
+import io.kubernetes.client.models.V1PersistentVolumeClaimVolumeSource;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodTemplateSpec;
 import io.kubernetes.client.models.V1ResourceRequirements;
 import io.kubernetes.client.models.V1Volume;
 import io.kubernetes.client.models.V1VolumeMount;
+import io.kubernetes.client.proto.V1;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;
@@ -51,6 +56,7 @@ import org.apache.twill.api.TwillPreparer;
 import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
+import org.omg.PortableInterceptor.SYSTEM_EXCEPTION;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +86,7 @@ import java.util.stream.Collectors;
  * and have no analogy in Kubernetes.
  */
 class KubeTwillPreparer implements TwillPreparer {
-
+  private static final Gson gson = new Gson();
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
   // Just use a static for the container inside pod that runs CDAP app.
   private static final String CONTAINER_NAME = "cdap-app-container";
@@ -103,6 +109,8 @@ class KubeTwillPreparer implements TwillPreparer {
   private final URI systemTableSpecs;
   private final int memoryMB;
   private final int vcores;
+  private final String persistentVolumeName;
+  private final String persistentVolumeMountName;
 
   KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
                     RunId twillRunId, V1ObjectMeta resourceMeta, KubeTwillControllerFactory controllerFactory) {
@@ -138,6 +146,8 @@ class KubeTwillPreparer implements TwillPreparer {
       .orElseThrow(() -> new IllegalStateException("System table spec not found in files to localize."));
     this.memoryMB = resourceSpecification.getMemorySize();
     this.vcores = resourceSpecification.getVirtualCores();
+    this.persistentVolumeName = spec.getName();
+    this.persistentVolumeMountName = this.persistentVolumeName + "-data";
   }
 
   @Override
@@ -419,7 +429,10 @@ class KubeTwillPreparer implements TwillPreparer {
                name: service-runid
            - name: pod-info
              downwardAPI:
-               ...
+           - name: zookeeper-data
+             persistentVolumeClaim:
+               claimName: zookeeper-vol
+           ...
      */
     V1PodSpec podSpec = new V1PodSpec();
 
@@ -429,6 +442,12 @@ class KubeTwillPreparer implements TwillPreparer {
     List<V1Volume> volumes = new ArrayList<>(currentPodInfo.getVolumes());
     volumes.add(podInfoVolume);
     volumes.add(configVolume);
+    V1Volume dataVolume = new V1Volume();
+    dataVolume.setName(persistentVolumeMountName);
+    V1PersistentVolumeClaimVolumeSource claimVolumeSource = new V1PersistentVolumeClaimVolumeSource();
+    claimVolumeSource.setClaimName(persistentVolumeName);
+    dataVolume.setPersistentVolumeClaim(claimVolumeSource);
+    volumes.add(dataVolume);
     podSpec.setVolumes(volumes);
 
     // Set the service for RBAC control for app.
@@ -438,10 +457,6 @@ class KubeTwillPreparer implements TwillPreparer {
     // This is for protection against running user code
     podSpec.setRuntimeClassName(currentPodInfo.getRuntimeClassName());
 
-    V1Container container = new V1Container();
-    container.setName(containerName);
-    container.setImage(currentPodInfo.getContainerImage());
-
     // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
     String configDir = currentPodInfo.getPodInfoDir() + "-app";
     List<V1VolumeMount> volumeMounts = new ArrayList<>(currentPodInfo.getContainerVolumeMounts());
@@ -449,6 +464,20 @@ class KubeTwillPreparer implements TwillPreparer {
                        .mountPath(currentPodInfo.getPodInfoDir()).readOnly(true));
     volumeMounts.add(new V1VolumeMount().name(configVolume.getName())
                        .mountPath(configDir).readOnly(true));
+    volumeMounts.add(new V1VolumeMount().name(persistentVolumeName).mountPath("/data"));
+
+    // Init container
+    V1Container initContainer = new V1Container();
+    initContainer.setName("storage-main");
+    initContainer.setImage(podInfo.getContainerImage());
+    initContainer.setVolumeMounts(volumeMounts);
+    initContainer.setArgs(Arrays.asList("io.cdap.cdap.master.environment.k8s.StorageMain"));
+    podSpec.setInitContainers(Collections.singletonList(initContainer));
+
+    // UserServiceMain container
+    V1Container container = new V1Container();
+    container.setName(containerName);
+    container.setImage(currentPodInfo.getContainerImage());
     container.setVolumeMounts(volumeMounts);
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
@@ -482,20 +511,43 @@ class KubeTwillPreparer implements TwillPreparer {
 
     templateSpec.setSpec(podSpec);
     spec.setTemplate(templateSpec);
+
+
     deployment.setSpec(spec);
 
     return deployment;
+  }
+
+  private V1PersistentVolumeClaim buildPersistentVolumeClaim() {
+    // TODO(wyzhang): move pvc name
+    String persistentVolumeName = this.persistentVolumeName;
+    // Persistent Volume Claim
+    V1PersistentVolumeClaim volumeClaim = new V1PersistentVolumeClaim()
+      .metadata(new V1ObjectMeta().name(persistentVolumeName))
+      .spec(new V1PersistentVolumeClaimSpec()
+              .accessModes(Arrays.asList("ReadWriteOnce"))
+              .resources(new V1ResourceRequirements()
+                           .requests(Collections.singletonMap("storage", new Quantity("200Gi")))));
+    return volumeClaim;
   }
 
   /**
    * Build a {@link V1Deployment} object to run the program and deploy it in kubernete
    */
   private void createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
+    CoreV1Api coreV1Api = new CoreV1Api(apiClient);
+    // TODO: wyzhang check before create
+    V1PersistentVolumeClaim persistentVolumeClaim = buildPersistentVolumeClaim();
+    LOG.info("wyzhang: pvc {}", gson.toJson(persistentVolumeClaim));
+    coreV1Api.createNamespacedPersistentVolumeClaim(kubeNamespace, buildPersistentVolumeClaim(),
+                                                    "true", null, null);
+
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1Deployment deployment = buildDeployment(twillRunId, APP_SPEC, PROGRAM_OPTIONS, SYSTEM_TABLE_SPEC, resourceMeta,
                                               CONTAINER_NAME, vcores, memoryMB, environments, configMap,
                                               podInfo, startTimeoutMillis);
+    LOG.info("wyzhang: deployment {}", gson.toJson(deployment));
 
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
     LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
@@ -564,9 +616,11 @@ class KubeTwillPreparer implements TwillPreparer {
     configMap.setMetadata(resourceMeta);
     configMap.putBinaryDataItem(APP_SPEC, Files.readAllBytes(new File(appSpec).toPath()));
     configMap.putBinaryDataItem(PROGRAM_OPTIONS, Files.readAllBytes(new File(programOptions).toPath()));
-    LOG.trace("Creating config-map {} in Kubernetes", resourceMeta.getName());
+    configMap.putBinaryDataItem(SYSTEM_TABLE_SPEC, Files.readAllBytes(new File(systemTableSpecs).toPath()));
+    // TODO(wyzhang) revert to trace
+    LOG.info("Creating config-map {} in Kubernetes", resourceMeta.getName());
     configMap = api.createNamespacedConfigMap(kubeNamespace, configMap, "true", null, null);
-    LOG.trace("Created config-map {} in Kubernetes", resourceMeta.getName());
+    LOG.info("Created config-map {} in Kubernetes", resourceMeta.getName());
     return configMap;
   }
 }
