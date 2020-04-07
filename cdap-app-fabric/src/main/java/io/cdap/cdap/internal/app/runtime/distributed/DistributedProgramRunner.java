@@ -24,6 +24,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.app.guice.ClusterMode;
@@ -631,9 +632,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     return file;
   }
 
-  private <T> File saveJsonFile(T obj, File file) throws IOException {
+  private <T> File saveJsonFile(List<T> obj, File file) throws IOException {
     try (Writer writer = Files.newBufferedWriter(file.toPath(), StandardCharsets.UTF_8)) {
-      GSON.toJson(obj, writer);
+      GSON.toJson(obj, new TypeToken<List<T>>() { }.getType(), writer);
     }
     return file;
   }

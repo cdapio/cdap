@@ -20,6 +20,7 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
@@ -102,6 +103,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
+import java.lang.reflect.Type;
 import java.net.InetSocketAddress;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -126,7 +128,6 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     .create();
   private ProgramRunId programRunId;
   private ProgramOptions programOptions;
-  private List<StructuredTableSpecification> tableSpecifications;
 
   /**
    * Main entry point
@@ -213,7 +214,8 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
 
     File tableSpecFile = new File(options.getSystemTableSpecsPath());
-    List<StructuredTableSpecification> tableSpecifications = readJsonFile(tableSpecFile, ArrayList.class);
+    List<StructuredTableSpecification> tableSpecifications =
+      readJsonFile(tableSpecFile, new TypeToken<List<StructuredTableSpecification>>() { }.getType());
     StructuredTableAdmin tableAdmin = injector.getInstance(StructuredTableAdmin.class);
     StructuredTableRegistry tableRegistry = injector.getInstance(StructuredTableRegistry.class);
 
@@ -238,6 +240,15 @@ public class UserServiceProgramMain extends AbstractServiceMain<ServiceOptions> 
     } catch (Exception e) {
       throw new IllegalArgumentException(
         String.format("Unable to read %s file at %s", type.getSimpleName(), file.getAbsolutePath()), e);
+    }
+  }
+
+  private static <T> List<T> readJsonFile(File file, Type type) {
+    try (Reader reader = new BufferedReader(new FileReader(file))) {
+      return GSON.fromJson(reader, type);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(
+        String.format("Unable to read %s file at %s", type.getTypeName(), file.getAbsolutePath()), e);
     }
   }
 
