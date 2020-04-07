@@ -37,6 +37,7 @@ import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.models.V1PersistentVolumeClaim;
+import io.kubernetes.client.models.V1PersistentVolumeClaimList;
 import io.kubernetes.client.models.V1PersistentVolumeClaimSpec;
 import io.kubernetes.client.models.V1PersistentVolumeClaimVolumeSource;
 import io.kubernetes.client.models.V1PodSpec;
@@ -528,16 +529,32 @@ class KubeTwillPreparer implements TwillPreparer {
     return volumeClaim;
   }
 
+  private boolean existPersistentVolumeClaim(CoreV1Api coreV1Api, String name) throws ApiException {
+    V1PersistentVolumeClaimList volumeClaims =
+      coreV1Api.listNamespacedPersistentVolumeClaim(kubeNamespace, "true", null,
+                                                    null, null, null,
+                                                    null, null, null);
+    for (V1PersistentVolumeClaim item : volumeClaims.getItems()) {
+      if (item.getMetadata().getName() == name) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   /**
    * Build a {@link V1Deployment} object to run the program and deploy it in kubernete
    */
   private void createDeployment(V1ConfigMap configMap, long startTimeoutMillis) throws ApiException {
     CoreV1Api coreV1Api = new CoreV1Api(apiClient);
-    // TODO: wyzhang check before create
-    V1PersistentVolumeClaim persistentVolumeClaim = buildPersistentVolumeClaim();
-    LOG.info("wyzhang: pvc {}", gson.toJson(persistentVolumeClaim));
-    coreV1Api.createNamespacedPersistentVolumeClaim(kubeNamespace, buildPersistentVolumeClaim(),
-                                                    "true", null, null);
+    if (!existPersistentVolumeClaim(coreV1Api, persistentVolumeName)) {
+      V1PersistentVolumeClaim persistentVolumeClaim = buildPersistentVolumeClaim();
+      LOG.info("wyzhang: create pvc {}", gson.toJson(persistentVolumeClaim));
+      coreV1Api.createNamespacedPersistentVolumeClaim(kubeNamespace, buildPersistentVolumeClaim(),
+                                                      "true", null, null);
+    } else {
+      LOG.info("wyzhang: pvc already exists");
+    }
 
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
