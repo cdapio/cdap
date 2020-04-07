@@ -36,6 +36,8 @@ import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
+
+import com.google.cloud.dataproc.v1.AutoscalingConfig;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -48,6 +50,7 @@ import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
@@ -340,6 +343,12 @@ final class DataprocClient implements AutoCloseable {
         metadata.put("enable-oslogin", "false");
       }
 
+      //Check if ClusterMetaData is provided and add them.
+      Map<String, String> clusterMetadata = conf.getClusterMetaData();
+      clusterMetadata.forEach(
+              (key, value) -> metadata.merge(key, value, (v1, v2) -> v2)
+      );
+
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
         .putAllMetadata(metadata);
@@ -368,6 +377,8 @@ final class DataprocClient implements AutoCloseable {
           clusterConfig.addTags(targetTag);
         }
       }
+      //Add any defined Network Tags
+      clusterConfig.addAllTags(conf.getNetworkTags());
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security
       if (useInternalIP) {
@@ -410,6 +421,23 @@ final class DataprocClient implements AutoCloseable {
         .setSoftwareConfig(SoftwareConfig.newBuilder()
                              .setImageVersion(imageVersion)
                              .putAllProperties(dataprocProps));
+
+      //Add any Node Initialization action scripts
+      for (String action : conf.getInitActions()) {
+        builder.addInitializationActions(NodeInitializationAction.
+                newBuilder()
+                .setExecutableFile(action)
+                .build());
+      }
+
+      //Set Auto Scaling Policy
+      if (conf.isAutoPolicyEnabled()) {
+        builder.setAutoscalingConfig(AutoscalingConfig.
+                newBuilder()
+                .setPolicyUri(conf.getAutoScalingPolicy())
+                .build());
+      }
+
 
       if (conf.getEncryptionKeyName() != null) {
         builder.setEncryptionConfig(EncryptionConfig.newBuilder()

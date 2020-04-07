@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
@@ -30,10 +31,17 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+
+
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -88,6 +96,12 @@ final class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
+  private final String clustermetadata;
+  private final String networktags;
+  private final String initactions;
+  private final boolean enableautoscaling;
+  private final String autoscalingpolicy;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
@@ -95,7 +109,8 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.dataprocProperties);
+         conf.publicKey, conf.imageVersion, conf.clustermetadata, conf.networktags, conf.initactions,
+         conf.enableautoscaling, conf.autoscalingpolicy, conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -106,8 +121,9 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion,
-                       Map<String, String> dataprocProperties) {
+                       @Nullable String imageVersion, @Nullable String clustermetadata, @Nullable String networktags,
+                       @Nullable String initactions, @Nullable Boolean enableautoscaling,
+                       @Nullable String autoscalingpolicy, Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -135,6 +151,11 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
+    this.clustermetadata = clustermetadata;
+    this.networktags = networktags;
+    this.initactions = initactions;
+    this.enableautoscaling = enableautoscaling;
+    this.autoscalingpolicy = autoscalingpolicy;
     this.dataprocProperties = dataprocProperties;
   }
 
@@ -242,6 +263,69 @@ final class DataprocConf {
   SSHPublicKey getPublicKey() {
     return publicKey;
   }
+
+
+  @Nullable
+  Map<String, String> getClusterMetaData() {
+
+    LOG.debug("Inside getClusterMetaData Method.  ");
+
+    if (Strings.isNullOrEmpty(clustermetadata)) {
+      LOG.debug("No getClusterMetaData Method is provided.  ");
+      return Collections.emptyMap();
+    }
+
+    LOG.debug("String parsing data..   " + clustermetadata);
+    return StreamSupport.stream(KV_PARSER.parse(clustermetadata).spliterator(), false)
+            .collect(Collectors.toMap(
+                    KeyValue::getKey,
+                    KeyValue::getValue,
+                    (o, n) -> n,
+                    LinkedHashMap::new));
+  }
+
+
+  @Nullable
+  List<String> getNetworkTags() {
+
+    if (Strings.isNullOrEmpty(networktags)) {
+      return Collections.emptyList();
+    }
+
+    return Arrays.stream(Objects.requireNonNull(networktags).split(","))
+            .map(String::trim)
+//            .filter(e -> NETWORK_TAGS_PATTERN.matcher(e).find())
+            .collect(Collectors.toList());
+
+  }
+
+
+
+
+  @Nullable
+  List<String> getInitActions() {
+
+    if (Strings.isNullOrEmpty(initactions)) {
+      return Collections.emptyList();
+    }
+
+    return Arrays.stream(Objects.requireNonNull(initactions).split(","))
+            .map(String::trim).collect(Collectors.toList());
+
+  }
+
+   @Nullable
+   Boolean isAutoPolicyEnabled() {
+     return enableautoscaling;
+
+   }
+
+  @Nullable
+  String getAutoScalingPolicy() {
+    return autoscalingpolicy;
+  }
+
+
 
   Map<String, String> getDataprocProperties() {
     return dataprocProperties;
@@ -390,12 +474,22 @@ final class DataprocConf {
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
+    String clustermetadata = getString(properties, "clustermetadata");
+    String networktags = getString(properties, "networktags");
+    String initactions = getString(properties, "initactions");
+    boolean enableautoscaling = Boolean.parseBoolean(properties.getOrDefault("enableautoscaling",
+            "true"));
+    String autoscalingpolicy = getString(properties, "autoscalingpolicy");
+
+
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP, stackdriverLoggingEnabled,
-                            stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
+                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
+                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
+                            imageVersion, clustermetadata, networktags, initactions, enableautoscaling,
+                            autoscalingpolicy, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
