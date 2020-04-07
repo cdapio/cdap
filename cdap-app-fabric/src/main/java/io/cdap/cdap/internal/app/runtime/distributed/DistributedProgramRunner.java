@@ -90,6 +90,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -230,17 +231,21 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Localize system table spec
       List<StructuredTableSpecification> tableSpecificationList = new ArrayList<>();
       for (String name : program.getApplicationSpecification().getSystemTableNames()) {
+        LOG.info("wyzhang: add spec name {}", name);
         StructuredTableSpecification spec = tableAdmin.getSpecification(new StructuredTableId(name));
         if (spec == null) {
           LOG.error("Failed to find system table spec for {}", name);
           continue;
         }
+        LOG.info("wyzhang: add spec {}", spec.toString());
         tableSpecificationList.add(spec);
       }
       localizeResources.put(SYSTEM_TABLE_SPEC_FILE_NAME,
                             new LocalizeResource(saveJsonFile(tableSpecificationList,
                                                               File.createTempFile("system.table.spec",
                                                                                   ".json", tempDir))));
+      LOG.info("wyzhang: sys table spec file content: {}",
+               new String (Files.readAllBytes(Paths.get(localizeResources.get(SYSTEM_TABLE_SPEC_FILE_NAME).getURI()))));
 
       final URI logbackURI = getLogBackURI(program);
       if (logbackURI != null) {

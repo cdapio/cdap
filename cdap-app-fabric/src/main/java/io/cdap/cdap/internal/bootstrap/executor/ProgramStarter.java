@@ -55,9 +55,11 @@ public class ProgramStarter extends BaseStepExecutor<ProgramStarter.Arguments> {
       // do nothing if the program is already running
       ProgramStatus currentStatus = programLifecycleService.getProgramStatus(programId);
       if (currentStatus != ProgramStatus.STOPPED) {
-        LOG.info("Program {} is in the {} state, skipping start program bootstrap step.", programId, currentStatus);
-        return;
+        LOG.info("wyzhang: Program {} is in the {} state, stopping start ...", programId, currentStatus);
+        programLifecycleService.stop(programId);
+        LOG.info("wyzhang: Program {} is in the {} state, stopping end ...", programId, currentStatus);
       }
+      LOG.info("wyzhang: start program {} ", programId);
       programLifecycleService.run(programId, Collections.emptyMap(), false);
     } catch (ConflictException e) {
       // thrown if the program is already running, which means it was started after the status check above.
