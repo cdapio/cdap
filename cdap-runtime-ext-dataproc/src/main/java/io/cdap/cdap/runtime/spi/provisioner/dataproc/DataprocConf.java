@@ -21,6 +21,8 @@ import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.runtime.spi.common.KeyValue;
+import io.cdap.cdap.runtime.spi.common.KeyValueListParser;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
@@ -61,6 +63,7 @@ final class DataprocConf {
   static final String IMAGE_VERSION = "imageVersion";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
+  private static final KeyValueListParser KV_PARSER = new KeyValueListParser(";", "\\|");
 
   private final String accountKey;
   private final String region;
@@ -268,14 +271,14 @@ final class DataprocConf {
   @Nullable
   Map<String, String> getClusterMetaData() {
 
-    LOG.debug("Inside getClusterMetaData Method.  ");
+
 
     if (Strings.isNullOrEmpty(clustermetadata)) {
-      LOG.debug("No getClusterMetaData Method is provided.  ");
+
       return Collections.emptyMap();
     }
 
-    LOG.debug("String parsing data..   " + clustermetadata);
+
     return StreamSupport.stream(KV_PARSER.parse(clustermetadata).spliterator(), false)
             .collect(Collectors.toMap(
                     KeyValue::getKey,
