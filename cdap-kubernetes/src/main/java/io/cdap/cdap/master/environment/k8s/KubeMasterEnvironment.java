@@ -74,8 +74,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String INSTANCE_LABEL = "master.environment.k8s.instance.label";
   // Label for the container name
   private static final String CONTAINER_LABEL = "master.environment.k8s.container.label";
-  private static final String CPU_SCALING_FACTOR = "master.environment.k8s.container.cpu.scaling.factor";
-  private static final String MEMORY_SCALING_FACTOR = "master.environment.k8s.container.memory.scaling.factor";
   private static final String POD_INFO_DIR = "master.environment.k8s.pod.info.dir";
   private static final String POD_NAME_FILE = "master.environment.k8s.pod.name.file";
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
@@ -85,7 +83,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
   private static final String DEFAULT_CONTAINER_LABEL = "cdap.container";
-  private static final String DEFAULT_SCALING_FACTOR = "1.0";
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
   private static final String DEFAULT_POD_NAME_FILE = "pod.name";
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
@@ -152,12 +149,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
-    Map<String, Float> kubeScalingFactors = new HashMap<String, Float>();
-    kubeScalingFactors.put("cpu", Float.parseFloat(conf.getOrDefault(CPU_SCALING_FACTOR, DEFAULT_SCALING_FACTOR)));
-    kubeScalingFactors.put("memory",
-                           Float.parseFloat(conf.getOrDefault(MEMORY_SCALING_FACTOR, DEFAULT_SCALING_FACTOR)));
-
-    twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, kubeScalingFactors,
+    twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, conf,
                                              Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
