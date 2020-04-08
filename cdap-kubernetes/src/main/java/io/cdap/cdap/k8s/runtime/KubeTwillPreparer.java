@@ -99,7 +99,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final Map<String, Map<String, String>> environments;
   private final RunId twillRunId;
   private final V1ObjectMeta resourceMeta;
-  private final Map<String, String> kubeMasterConf;
+  private final Map<String, String> cConf;
   private final KubeTwillControllerFactory controllerFactory;
   private final URI appSpec;
   private final URI programOptions;
@@ -107,7 +107,7 @@ class KubeTwillPreparer implements TwillPreparer {
   private final int vcores;
 
   KubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
-                    RunId twillRunId, V1ObjectMeta resourceMeta, Map<String, String> kubeMasterConf,
+                    RunId twillRunId, V1ObjectMeta resourceMeta, Map<String, String> cConf,
                     KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
@@ -122,7 +122,7 @@ class KubeTwillPreparer implements TwillPreparer {
     this.environments = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
     this.twillRunId = twillRunId;
     this.resourceMeta = resourceMeta;
-    this.kubeMasterConf = kubeMasterConf;
+    this.cConf = cConf;
     RuntimeSpecification runtimeSpecification = spec.getRunnables().values().iterator().next();
     ResourceSpecification resourceSpecification = runtimeSpecification.getResourceSpecification();
     this.appSpec = runtimeSpecification.getLocalFiles().stream()
@@ -459,8 +459,8 @@ class KubeTwillPreparer implements TwillPreparer {
 
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     Map<String, Quantity> quantityMap = new HashMap<>();
-    float cpuMultiplier = Float.parseFloat(kubeMasterConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
-    float memoryMultiplier = Float.parseFloat(kubeMasterConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
+    float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
+    float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
     quantityMap.put("cpu", new Quantity(String.valueOf((float) (vCores * cpuMultiplier))));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * memoryMultiplier * 1.2f))));
