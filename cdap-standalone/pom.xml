@@ -614,6 +614,14 @@
                         <include>sandbox.json</include>
                       </includes>
                     </resource>
+                    <!-- copy system app configs -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-common/src/main/resources/system-apps</directory>
+                      <targetPath>system-app-config</targetPath>
+                      <includes>
+                        <include>*.json</include>
+                      </includes>
+                    </resource>
                     <!-- copy runtime provider extensions -->
                     <resource>
                       <directory>${project.parent.basedir}/cdap-runtime-ext-dataproc/target/libexec</directory>

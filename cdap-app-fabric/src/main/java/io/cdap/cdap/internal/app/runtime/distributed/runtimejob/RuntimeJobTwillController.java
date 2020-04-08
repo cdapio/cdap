@@ -49,8 +49,9 @@ class RuntimeJobTwillController extends AbstractRuntimeTwillController {
     this.programRunInfo = new ProgramRunInfo.Builder()
       .setNamespace(programRunId.getNamespace())
       .setApplication(programRunId.getApplication())
-      .setProgram(programRunId.getProgram())
+      .setVersion(programRunId.getVersion())
       .setProgramType(programRunId.getType().getPrettyName())
+      .setProgram(programRunId.getProgram())
       .setRun(programRunId.getRun()).build();
   }
 
