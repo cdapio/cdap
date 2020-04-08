@@ -24,15 +24,18 @@ import java.util.Objects;
 public class ProgramRunInfo {
   private final String namespace;
   private final String application;
-  private final String program;
+  private final String version;
   private final String programType;
+  private final String program;
   private final String run;
 
-  private ProgramRunInfo(String namespace, String application, String program, String programType, String run) {
+  private ProgramRunInfo(String namespace, String application,
+                         String version, String programType, String program, String run) {
     this.namespace = namespace;
     this.application = application;
-    this.program = program;
+    this.version = version;
     this.programType = programType;
+    this.program = program;
     this.run = run;
   }
 
@@ -42,8 +45,9 @@ public class ProgramRunInfo {
   public static class Builder {
     private String namespace;
     private String application;
-    private String program;
+    private String version;
     private String programType;
+    private String program;
     private String run;
 
     /**
@@ -65,6 +69,17 @@ public class ProgramRunInfo {
      */
     public Builder setApplication(String application) {
       this.application = application;
+      return this;
+    }
+
+    /**
+     * Sets the application version.
+     *
+     * @param version the application version
+     * @return this builder
+     */
+    public Builder setVersion(String version) {
+      this.version = version;
       return this;
     }
 
@@ -105,7 +120,25 @@ public class ProgramRunInfo {
      * Returns program run info.
      */
     public ProgramRunInfo build() {
-      return new ProgramRunInfo(namespace, application, program, programType, run);
+      if (namespace == null) {
+        throw new IllegalArgumentException("Missing namespace");
+      }
+      if (application == null) {
+        throw new IllegalArgumentException("Missing application");
+      }
+      if (version == null) {
+        throw new IllegalArgumentException("Missing version");
+      }
+      if (programType == null) {
+        throw new IllegalArgumentException("Missing program type");
+      }
+      if (program == null) {
+        throw new IllegalArgumentException("Missing program");
+      }
+      if (run == null) {
+        throw new IllegalArgumentException("Missing run");
+      }
+      return new ProgramRunInfo(namespace, application, version, programType, program, run);
     }
   }
 
@@ -115,6 +148,10 @@ public class ProgramRunInfo {
 
   public String getApplication() {
     return application;
+  }
+
+  public String getVersion() {
+    return version;
   }
 
   public String getProgram() {
@@ -129,6 +166,7 @@ public class ProgramRunInfo {
     return run;
   }
 
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -138,13 +176,17 @@ public class ProgramRunInfo {
       return false;
     }
     ProgramRunInfo that = (ProgramRunInfo) o;
-    return Objects.equals(namespace, that.namespace) && Objects.equals(application, that.application)
-      && Objects.equals(program, that.program) && Objects.equals(run, that.run);
+    return namespace.equals(that.namespace) &&
+      application.equals(that.application) &&
+      version.equals(that.version) &&
+      programType.equals(that.programType) &&
+      program.equals(that.program) &&
+      run.equals(that.run);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespace, application, program, run);
+    return Objects.hash(namespace, application, version, programType, program, run);
   }
 
   @Override
@@ -152,8 +194,9 @@ public class ProgramRunInfo {
     return "ProgramRunInfo{" +
       "namespace='" + namespace + '\'' +
       ", application='" + application + '\'' +
-      ", program='" + program + '\'' +
+      ", version='" + version + '\'' +
       ", programType='" + programType + '\'' +
+      ", program='" + program + '\'' +
       ", run='" + run + '\'' +
       '}';
   }
