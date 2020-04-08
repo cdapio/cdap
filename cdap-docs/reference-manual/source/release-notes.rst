@@ -30,6 +30,63 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 6.1.2 <http://docs.cask.co/cdap/6.1.2/index.html>`__
+=============================================================
+
+Summary
+-------
+
+This release primarily focuses on bugfixes and performance improvements. Some of the highlights include,
+
+1. **Performance improvements**
+    - Improve preview performance & limits concurrent preview runs to 10 by default
+    - Shift in polling logic to UI to avoid polling leaks in Nodejs server
+    - Batch API usage in UI to reduce the load on backend services
+
+2. **Pipeline and Plugin fixes**
+    - Support Field Level Lineage for Streaming pipelines
+    - Improve Field Level Lineage computation algorithm
+    - Add support for Spark 2.4
+    - Improves memory consumption during pipeline execution
+
+New Features
+------------
+
+- :cask-issue:`CDAP-15579` - Added the ability for SparkCompute and SparkSink to record field lineage.
+
+- :cask-issue:`CDAP-16107` - Adds support for Spark 2.4
+
+- :cask-issue:`CDAP-13643` - Added the ability to record field lineage for streaming pipelines.
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-16002` - Fixed a bug that caused errors when Wrangler's parse-as-csv with header was used when reading multiple small files.
+
+- :cask-issue:`CDAP-16526` - Fixed the BigQuery sink to properly allow certain types as clustering fields.
+
+- :cask-issue:`CDAP-16471` - Fixed a bug that would cause zombie processes when using the Remote Hadoop Provisioner
+
+- :cask-issue:`CDAP-16472` - Fixed a bug that getSchema is not working for database plugins.
+
+- :cask-issue:`CDAP-16453` - Fixed a bug that made DBSource plugin fail in preview mode
+
+- :cask-issue:`CDAP-16309` - Fixed a race condition bug that can cause failure when running Spark program
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-16517` - Added an option to skip header in the files in delimited, csv, tsv and text formats.
+
+- :cask-issue:`CDAP-16525` - Added an option for database source to replace the characters in the field names.
+
+- :cask-issue:`CDAP-16308` - Reduces preview startup by by 60%. Also adds limit to max concurrent preview runs (10 by default).
+
+- :cask-issue:`CDAP-16509` - Reduce memory footprint for StructureRecord which improves overall memory consumption for pipeline execution
+
+- :cask-issue:`CDAP-16339` - Introduced a new REST endpoint for fetching scheduled time for multiple programs
+
+
 `Release 6.1.1 <http://docs.cask.co/cdap/6.1.1/index.html>`__
 =============================================================
 

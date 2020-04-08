@@ -1,13 +1,13 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2020 Cask Data, Inc.
-    :version: 6.1.1
+    :version: 6.1.2
 
 =================================================
 Cask Data Application Platform |version|
 =================================================
 
-Cask Data Application Level 1 Dependencies
+Cask Data Application Platform Level 1 Dependencies
 --------------------------------------------------------------------------------
 
 .. rst2pdf: PageBreak
