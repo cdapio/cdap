@@ -432,6 +432,56 @@ export async function fetchModelList(dataModel) {
     dataModelRevision: dataModel.revision,
   };
 
+  // Response message example:
+  // {
+  //   "type": "record",
+  //   "name": "OMOP_6_0_0",
+  //   "namespace": "google.com.datamodels.omop",
+  //   "doc": "See https://github.com/OHDSI/CommonDataModel/blob/v6.0.0/OMOP_CDM_v6_0.pdf for information about the OMOP Schemas",
+  //   "fields": [
+  //     {
+  //       "name": "CARE_SITE",
+  //       "type": [
+  //         "null",
+  //         {
+  //           "type": "record",
+  //           "name": "CARE_SITE",
+  //           "namespace": "google.com.datamodels.omop.Models",
+  //           "doc": "The CARE_SITE table contains a list of uniquely identified institutional units...",
+  //           "fields": [
+  //             {
+  //               "name": "care_site_id",
+  //               "type": ["int"],
+  //               "doc": "A unique identifier for each Care Site."
+  //             },
+  //             {
+  //               "name": "care_site_name",
+  //               "type": ["null", "string"],
+  //               "doc": "The verbatim description or name of the Care Site as in data source"
+  //             },
+  //             ...
+  //           ]
+  //         }
+  //       ]
+  //     },
+  //     {
+  //       "name": "CDM_SOURCE",
+  //       "type": [
+  //         "null",
+  //         {
+  //           "type": "record",
+  //           "name": "CDM_SOURCE",
+  //           "namespace": "google.com.datamodels.omop.Models",
+  //           "doc": "The CDM_SOURCE table contains detail about the source database and the process...",
+  //           "fields": [
+  //             ...
+  //           ]
+  //         }
+  //       }
+  //     },
+  //     ...
+  //   ]
+  // }
   const response = await MyDataPrepApi.getDataModel(params).toPromise();
 
   try {
@@ -439,36 +489,41 @@ export async function fetchModelList(dataModel) {
     if (data && Array.isArray(data.fields)) {
       dataModel.models = [];
       data.fields.forEach((entry) => {
-        if (Array.isArray(entry.type)) {
-          const model = entry.type.find((record) => typeof record === 'object');
-          if (model && typeof model.name === 'string') {
-            if ((model.name = model.name.trim()).length > 0) {
-              const fields = [];
-              if (Array.isArray(model.fields)) {
-                model.fields.forEach((field) => {
-                  if (field && typeof field.name === 'string') {
-                    if ((field.name = field.name.trim()).length > 0) {
-                      fields.push({
-                        uuid: uuidV4(),
-                        id: field.name,
-                        name: field.name,
-                        description: field.doc,
-                      });
-                    }
-                  }
-                });
-                fields.sort((a, b) => a.name.localeCompare(b.name));
-              }
-              dataModel.models.push({
-                uuid: uuidV4(),
-                id: model.name,
-                name: model.name,
-                description: model.doc,
-                fields,
-              });
-            }
-          }
+        if (!Array.isArray(entry.type)) {
+          return;
         }
+        const model = entry.type.find((record) => typeof record === 'object');
+        if (!model || typeof model.name !== 'string') {
+          return;
+        }
+        if ((model.name = model.name.trim()).length === 0) {
+          return;
+        }
+        const fields = [];
+        if (Array.isArray(model.fields)) {
+          model.fields.forEach((field) => {
+            if (!field || typeof field.name !== 'string') {
+              return;
+            }
+            if ((field.name = field.name.trim()).length === 0) {
+              return;
+            }
+            fields.push({
+              uuid: uuidV4(),
+              id: field.name,
+              name: field.name,
+              description: field.doc,
+            });
+          });
+          fields.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        dataModel.models.push({
+          uuid: uuidV4(),
+          id: model.name,
+          name: model.name,
+          description: model.doc,
+          fields,
+        });
       });
       dataModel.models.sort((a, b) => a.name.localeCompare(b.name));
     }

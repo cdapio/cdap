@@ -18,12 +18,65 @@ import { combineReducers, createStore } from 'redux';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import { composeEnhancers } from 'services/helpers';
 
-const defaultAction = {
+export interface IDataPrepAction {
+  type: string;
+  action?: string;
+  payload?: any;
+}
+
+const defaultAction: IDataPrepAction = {
+  type: '',
   action: '',
   payload: {},
 };
 
-const defaultInitialState = {
+export interface IDataModel {
+  uuid: string;
+  id: string;
+  revision: number;
+  name: string;
+  description?: string;
+  url?: string;
+  models?: IModel[];
+}
+
+export interface IModel {
+  uuid: string;
+  id: string;
+  name: string;
+  description?: string;
+  fields?: IModelField[];
+}
+
+export interface IModelField {
+  uuid: string;
+  id: string;
+  name: string;
+  description?: string;
+}
+
+export interface IDataPrepState {
+  initialized?: boolean;
+  workspaceId?: string;
+  workspaceUri?: string;
+  data?: any;
+  headers?: any;
+  types?: any; // pure column types from backend. Used for display
+  typesCheck?: any; // case sensitive column types, Should be used when checking types of column
+  selectedHeaders?: any;
+  highlightColumns?: any;
+  directives?: any;
+  higherVersion?: any;
+  loading?: boolean;
+  singleWorkspaceMode?: boolean;
+  workspaceInfo?: any;
+  properties?: any;
+  dataModelList?: IDataModel[];
+  targetDataModel?: IDataModel;
+  targetModel?: IModel;
+}
+
+const defaultInitialState: IDataPrepState = {
   initialized: false,
   workspaceId: '',
   workspaceUri: '',
@@ -99,7 +152,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
       });
       break;
     case DataPrepActions.setProperties: {
-      let properties = {
+      const properties = {
         ...state.properties,
         ...action.payload.properties,
       };
