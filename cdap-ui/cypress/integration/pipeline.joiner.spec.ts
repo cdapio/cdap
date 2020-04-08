@@ -14,6 +14,7 @@
  * the License.
  */
 
+<<<<<<< HEAD
 import { loginIfRequired, getArtifactsPoll, dataCy } from '../helpers';
 
 let headers = {};
@@ -27,6 +28,24 @@ const skip = () => {
   const ctx = getMochaContext();
   return ctx.skip();
 };
+=======
+import { loginIfRequired, getGenericEndpoint, getArtifactsPoll } from '../helpers';
+import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
+import { INodeInfo, INodeIdentifier } from '../typings';
+import { dataCy } from '../helpers';
+
+let headers = {};
+
+const TEST_BQ_DATASET_PROJECT = 'datasetproject';
+const TEST_DATASET = 'joiner_test';
+const TABLE1 = 'test1';
+const TABLE2 = 'test2';
+const TABLE1_FIELDS = ['field1', 'field2', 'field3'];
+const TABLE2_FIELDS = ['field1', 'field4'];
+const ALL_FIELDS_ALIASED = ['field', 'field2', 'field3', 'field1', 'field4'];
+const joinerNode: INodeInfo = { nodeName: 'Joiner', nodeType: 'batchjoiner' };
+const joinerNodeId: INodeIdentifier = { ...joinerNode, nodeId: '2' };
+>>>>>>> 49626ab4537... [CDAP-16490] fix get schema button to ignore macro value
 
 const closeButton = '[data-testid="close-config-popover"]';
 
@@ -170,4 +189,5 @@ describe('Running preview with joiner plugin in pipeline studio', () => {
 
     cy.get(closeButton).click();
   });
+
 });
