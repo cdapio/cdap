@@ -40,7 +40,6 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import org.apache.twill.api.LocalFile;
@@ -59,6 +58,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -78,8 +78,9 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   // dataproc job properties
   private static final String CDAP_RUNTIME_NAMESPACE = "cdap.runtime.namespace";
   private static final String CDAP_RUNTIME_APPLICATION = "cdap.runtime.application";
-  private static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
+  private static final String CDAP_RUNTIME_VERSION = "cdap.runtime.version";
   private static final String CDAP_RUNTIME_PROGRAM_TYPE = "cdap.runtime.program.type";
+  private static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
   private static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
   private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
 
@@ -289,16 +290,20 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         .filter(LocalFile::isArchive).map(LocalFile::getName)
     ).collect(Collectors.toList());
 
+    Map<String, String> properties = new LinkedHashMap<>();
+    properties.put(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace());
+    properties.put(CDAP_RUNTIME_APPLICATION, runInfo.getApplication());
+    properties.put(CDAP_RUNTIME_VERSION, runInfo.getVersion());
+    properties.put(CDAP_RUNTIME_PROGRAM, runInfo.getProgram());
+    properties.put(CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType());
+    properties.put(CDAP_RUNTIME_RUNID, runId);
+
     HadoopJob.Builder hadoopJobBuilder = HadoopJob.newBuilder()
       // set main class
       .setMainClass(DataprocJobMain.class.getName())
       // set main class arguments
       .addAllArgs(arguments)
-      .putAllProperties(ImmutableMap.of(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace(),
-                                        CDAP_RUNTIME_APPLICATION, runInfo.getApplication(),
-                                        CDAP_RUNTIME_PROGRAM, runInfo.getProgram(),
-                                        CDAP_RUNTIME_PROGRAM_TYPE, runInfo.getProgramType(),
-                                        CDAP_RUNTIME_RUNID, runId));
+      .putAllProperties(properties);
 
     for (LocalFile localFile : localFiles) {
       String localFileName = localFile.getName();
@@ -333,12 +338,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private ProgramRunInfo getProgramRunInfo(Job job) {
     Map<String, String> jobProperties = job.getHadoopJob().getPropertiesMap();
 
-    ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder();
-    builder.setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE));
-    builder.setApplication(jobProperties.get(CDAP_RUNTIME_APPLICATION));
-    builder.setProgram(jobProperties.get(CDAP_RUNTIME_PROGRAM));
-    builder.setProgramType(jobProperties.get(CDAP_RUNTIME_PROGRAM_TYPE));
-    builder.setRun(jobProperties.get(CDAP_RUNTIME_RUNID));
+    ProgramRunInfo.Builder builder = new ProgramRunInfo.Builder()
+      .setNamespace(jobProperties.get(CDAP_RUNTIME_NAMESPACE))
+      .setApplication(jobProperties.get(CDAP_RUNTIME_APPLICATION))
+      .setVersion(jobProperties.get(CDAP_RUNTIME_VERSION))
+      .setProgramType(jobProperties.get(CDAP_RUNTIME_PROGRAM_TYPE))
+      .setProgram(jobProperties.get(CDAP_RUNTIME_PROGRAM))
+      .setRun(jobProperties.get(CDAP_RUNTIME_RUNID));
     return builder.build();
   }
 

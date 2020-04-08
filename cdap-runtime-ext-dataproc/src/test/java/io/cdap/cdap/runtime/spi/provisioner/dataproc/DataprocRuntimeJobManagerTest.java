@@ -31,8 +31,8 @@ public class DataprocRuntimeJobManagerTest {
   @Test
   public void jobNameTest() {
     ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-      .setNamespace("namespace").setApplication("application").setProgram("program")
-      .setRun(UUID.randomUUID().toString()).build();
+      .setNamespace("namespace").setApplication("application").setVersion("1.0")
+      .setProgramType("workflow").setProgram("program").setRun(UUID.randomUUID().toString()).build();
     String jobName = DataprocRuntimeJobManager.getJobId(runInfo);
     Assert.assertTrue(jobName.startsWith("namespace_application_program"));
   }
@@ -42,6 +42,8 @@ public class DataprocRuntimeJobManagerTest {
     ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
       .setNamespace("namespace").setApplication("very_very_long_app_name_is_provided_this_should_be" +
                                                   "_trimed_so_that_correct_name_is_produced")
+      .setVersion("1.0")
+      .setProgramType("workflow")
       .setProgram("program").setRun(UUID.randomUUID().toString()).build();
     String jobName = DataprocRuntimeJobManager.getJobId(runInfo);
     Assert.assertTrue(jobName.startsWith("namespace_very_very_long_app_name_is_provided_this_should_be_tr_"));
@@ -51,7 +53,10 @@ public class DataprocRuntimeJobManagerTest {
   @Test (expected = IllegalArgumentException.class)
   public void invalidJobNameTest() {
     ProgramRunInfo runInfo = new ProgramRunInfo.Builder()
-      .setNamespace("namespace").setApplication("application$$$").setProgram("program")
+      .setNamespace("namespace").setApplication("application$$$")
+      .setVersion("1.0")
+      .setProgramType("workflow")
+      .setProgram("program")
       .setRun(UUID.randomUUID().toString()).build();
     String jobName = DataprocRuntimeJobManager.getJobId(runInfo);
     Assert.assertTrue(jobName.startsWith("namespace_application_program"));
