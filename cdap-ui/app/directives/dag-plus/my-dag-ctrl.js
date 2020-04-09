@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusPreviewActions, HydratorPlusPlusPreviewStore) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $modifiedPopover, uuid, DAGPlusPlusNodesDispatcher, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusPreviewActions, HydratorPlusPlusPreviewStore) {
 
     var vm = this;
 
@@ -495,7 +495,7 @@ angular.module(PKG.name + '.commons')
       }
 
       if (nodeInfo.element && nodeInfo.scope) {
-        nodeInfo.popover = $popover(nodeInfo.element, {
+        nodeInfo.popover = $modifiedPopover(nodeInfo.element, {
           trigger: 'manual',
           placement: 'auto right',
           target: angular.element(nodeInfo.element[0]),
