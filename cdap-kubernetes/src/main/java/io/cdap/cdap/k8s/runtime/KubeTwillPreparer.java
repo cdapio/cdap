@@ -461,7 +461,7 @@ class KubeTwillPreparer implements TwillPreparer {
     Map<String, Quantity> quantityMap = new HashMap<>();
     float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
     float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
-    quantityMap.put("cpu", new Quantity(String.valueOf((float) (vCores * cpuMultiplier))));
+    quantityMap.put("cpu", new Quantity(String.format("%dm", (int) (vCores * 1000 * cpuMultiplier))));
     // Use slight larger container size
     quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * memoryMultiplier * 1.2f))));
     resourceRequirements.setRequests(quantityMap);
