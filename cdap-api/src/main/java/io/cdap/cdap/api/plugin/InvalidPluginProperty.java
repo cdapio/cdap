@@ -17,6 +17,7 @@
 package io.cdap.cdap.api.plugin;
 
 import java.util.Objects;
+import javax.annotation.Nullable;
 
 /**
  * An invalid plugin property.
@@ -24,10 +25,20 @@ import java.util.Objects;
 public class InvalidPluginProperty {
   private final String name;
   private final String errorMessage;
+  private final Exception cause;
 
   public InvalidPluginProperty(String name, String errorMessage) {
+    this(name, errorMessage, null);
+  }
+
+  public InvalidPluginProperty(String name, Exception cause) {
+    this(name, cause.getMessage(), cause);
+  }
+
+  private InvalidPluginProperty(String name, String errorMessage, Exception cause) {
     this.name = name;
     this.errorMessage = errorMessage;
+    this.cause = cause;
   }
 
   public String getName() {
@@ -36,6 +47,11 @@ public class InvalidPluginProperty {
 
   public String getErrorMessage() {
     return errorMessage;
+  }
+
+  @Nullable
+  public Exception getCause() {
+    return cause;
   }
 
   @Override
@@ -49,11 +65,12 @@ public class InvalidPluginProperty {
 
     InvalidPluginProperty that = (InvalidPluginProperty) o;
 
-    return Objects.equals(name, that.name) && Objects.equals(errorMessage, that.errorMessage);
+    return Objects.equals(name, that.name) && Objects.equals(errorMessage, that.errorMessage) &&
+      Objects.equals(cause, that.cause);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, errorMessage);
+    return Objects.hash(name, errorMessage, errorMessage);
   }
 }
