@@ -503,7 +503,7 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                          principal, ImmutableSet.of(Action.ADMIN));
     }
-    appFabricServer.stopAndWait();
+    
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
 
@@ -524,10 +524,10 @@ public class TestBase {
     metadataSubscriberService.stopAndWait();
     Closeables.closeQuietly(metadataStorage);
     txService.stopAndWait();
-
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
+    appFabricServer.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {
