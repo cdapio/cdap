@@ -175,7 +175,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(ARCHIVE_NAME_HEADER) final String archiveName,
                              @HeaderParam(APP_CONFIG_HEADER) String configString,
                              @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal,
-                             @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean  updateSchedules)
+                             @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean updateSchedules)
     throws BadRequestException, NamespaceNotFoundException {
 
     NamespaceId namespace = validateNamespace(namespaceId);
@@ -195,14 +195,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/versions/{version-id}/create")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public BodyConsumer createAppVersion(HttpRequest request, HttpResponder responder,
-                                         @PathParam("namespace-id") final String namespaceId,
-                                         @PathParam("app-id") final String appId,
-                                         @PathParam("version-id") final String versionId)
+                                       @PathParam("namespace-id") final String namespaceId,
+                                       @PathParam("app-id") final String appId,
+                                       @PathParam("version-id") final String versionId)
     throws Exception {
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
 
-    if (!applicationLifecycleService.updateAppAllowed(applicationId))  {
+    if (!applicationLifecycleService.updateAppAllowed(applicationId)) {
       responder.sendString(HttpResponseStatus.CONFLICT,
                            String.format("Cannot update the application because version %s already exists", versionId));
     }
@@ -306,8 +306,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps/{app-id}")
   public void deleteApp(HttpRequest request, HttpResponder responder,
-                               @PathParam("namespace-id") String namespaceId,
-                               @PathParam("app-id") final String appId) throws Exception {
+                        @PathParam("namespace-id") String namespaceId,
+                        @PathParam("app-id") final String appId) throws Exception {
     ApplicationId id = validateApplicationId(namespaceId, appId);
     applicationLifecycleService.removeApplication(id);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -319,9 +319,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @DELETE
   @Path("/apps/{app-id}/versions/{version-id}")
   public void deleteAppVersion(HttpRequest request, HttpResponder responder,
-                        @PathParam("namespace-id") final String namespaceId,
-                        @PathParam("app-id") final String appId,
-                        @PathParam("version-id") final String versionId) throws Exception {
+                               @PathParam("namespace-id") final String namespaceId,
+                               @PathParam("app-id") final String appId,
+                               @PathParam("version-id") final String versionId) throws Exception {
     ApplicationId id = validateApplicationVersionId(namespaceId, appId, versionId);
     applicationLifecycleService.removeApplication(id);
     responder.sendStatus(HttpResponseStatus.OK);
@@ -391,7 +391,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * ]
    * }
    * </pre>
-   *
    * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
    * failure for each of the requested application in the same order as the request.
    */
@@ -469,7 +468,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 
           // if we don't null check, it gets serialized to "null"
-          String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
+          Object config = appRequest.getConfig();
+          String configString = config == null ? null :
+            config instanceof String ? (String) config : GSON.toJson(config);
 
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
