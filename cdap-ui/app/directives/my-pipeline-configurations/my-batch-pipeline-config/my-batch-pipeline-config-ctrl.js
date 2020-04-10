@@ -21,7 +21,7 @@ class MyBatchPipelineConfigCtrl {
     this.myAlertOnValium = myAlertOnValium;
 
     this.engine = this.store.getEngine();
-    this.engineForDisplay = this.engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark Streaming';
+    this.engineForDisplay = this.engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark';
     this.instrumentation = this.store.getInstrumentation();
     this.stageLogging = this.store.getStageLogging();
     this.numRecordsPreview = this.store.getNumRecordsPreview();
@@ -86,7 +86,7 @@ class MyBatchPipelineConfigCtrl {
   }
 
   onEngineChange() {
-    this.engineForDisplay = this.engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark Streaming';
+    this.engineForDisplay = this.engine === 'mapreduce' ? 'MapReduce' : 'Apache Spark';
   }
 
   applyConfig() {
