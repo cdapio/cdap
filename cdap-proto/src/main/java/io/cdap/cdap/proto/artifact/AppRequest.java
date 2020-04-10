@@ -56,14 +56,17 @@ public class AppRequest<T> {
 
   public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
                     @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules) {
+    this(artifact, config, preview, ownerPrincipal, updateSchedules, null);
+  }
+
+  public AppRequest(ArtifactSummary artifact, @Nullable T config, @Nullable PreviewConfig preview,
+                    @Nullable String ownerPrincipal, @Nullable Boolean updateSchedules, @Nullable T configuration) {
     this.artifact = artifact;
     this.config = config;
     this.preview = preview;
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
-
-    // This should never be set programmatically, this is added as a workaround for JIRA issue CDAP-16211
-    this.configuration = null;
+    this.configuration = configuration;
   }
 
   public ArtifactSummary getArtifact() {

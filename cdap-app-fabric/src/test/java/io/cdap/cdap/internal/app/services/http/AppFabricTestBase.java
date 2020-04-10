@@ -522,7 +522,7 @@ public abstract class AppFabricTestBase {
   }
 
   protected HttpResponse deploy(Id.Application appId,
-                                AppRequest<? extends Config> appRequest) throws Exception {
+                                AppRequest<?> appRequest) throws Exception {
     String deployPath = getVersionedAPIPath("apps/" + appId.getId(), appId.getNamespaceId());
     return executeDeploy(HttpRequest.put(getEndPoint(deployPath).toURL()), appRequest);
   }
@@ -535,7 +535,7 @@ public abstract class AppFabricTestBase {
   }
 
   private HttpResponse executeDeploy(HttpRequest.Builder requestBuilder,
-                                     AppRequest<? extends Config> appRequest) throws Exception {
+                                     AppRequest<?> appRequest) throws Exception {
     requestBuilder.addHeader(Constants.Gateway.API_KEY, "api-key-example");
     requestBuilder.addHeader(HttpHeaderNames.CONTENT_TYPE.toString(), MediaType.APPLICATION_JSON);
     requestBuilder.withBody(GSON.toJson(appRequest));
