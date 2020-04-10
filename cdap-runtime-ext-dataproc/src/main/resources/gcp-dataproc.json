@@ -344,7 +344,7 @@
         {
           "widget-type": "keyvalue",
           "label": "Metadata",
-          "name": "clustermetadata",
+          "name": "clusterMetaData",
           "description": "Add additional metadata for instances that run in your cluster. You can typically use it for tracking billing and chargebacks. For more details, see https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/metadata",
           "widget-attributes": {
             "showDelimiter": "false",
@@ -355,7 +355,7 @@
           }
         },
         {
-          "name": "networktags",
+          "name": "networkTags",
           "label": "Network Tags",
           "widget-type": "csv",
           "description": "Assign Network tags to apply firewall rules to specific nodes of cluster. Network tags must start with a lowercase letter and can contain lowercase letters, numbers, and hyphens. Tags must end with a lowercase letter or number. ",
@@ -368,7 +368,7 @@
       "label": "Advanced Settings",
       "properties": [
         {
-          "name": "initactions",
+          "name": "initActions",
           "label": "Initialization Actions",
           "widget-type": "csv",
           "description": "A list of scripts to be executed during initialization of cluster.",
@@ -380,7 +380,7 @@
       "label": "Experimental Features (BETA)",
       "properties": [
         {
-          "name": "enableautoscaling",
+          "name": "autoScaling",
           "widget-type": "toggle",
           "label": "Enable Autoscaling",
           "widget-attributes": {
@@ -398,13 +398,12 @@
         {
           "widget-type": "textbox",
           "label": "Autoscaling Policy",
-          "name": "autoscalingpolicy",
-          "description": "Specify the autoscaling policy id(name) or the resource URI",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id(name) or the resource URI",
           "widget-attributes": {
             "size": "medium"
           }
         }
-
       ]
     }
   ]

@@ -175,7 +175,6 @@ public class DataprocProvisioner implements Provisioner {
         throw new IllegalArgumentException("Autoscaling is enabled but no AutoScaling policy provided. " +
                                              "Provide AutoScaling Policy.");
       }
-
     }
   }
 
