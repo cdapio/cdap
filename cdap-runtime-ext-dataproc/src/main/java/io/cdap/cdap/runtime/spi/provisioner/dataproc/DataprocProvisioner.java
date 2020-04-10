@@ -169,14 +169,6 @@ public class DataprocProvisioner implements Provisioner {
     if (networkTags.size() > 64) {
       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
     }
-    //Validate if AutoScaling is enabled and Policy is provided
-    if (conf.isAutoPolicyEnabled()) {
-      if (conf.getAutoScalingPolicy() == null || conf.getAutoScalingPolicy().isEmpty()) {
-        throw new IllegalArgumentException("Enabke AutoScaling is set to true but no AutoScaling policy provided. " +
-                                             "Provide AutoScaling Policy to use. ");
-      }
-
-    }
   }
 
   @Override

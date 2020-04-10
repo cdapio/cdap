@@ -95,8 +95,6 @@ final class DataprocConf {
   private final String clustermetadata;
   private final String networktags;
   private final String initactions;
-  private final boolean enableautoscaling;
-  private final String autoscalingpolicy;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
@@ -106,7 +104,7 @@ final class DataprocConf {
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.publicKey, conf.imageVersion, conf.clustermetadata, conf.networktags, conf.initactions,
-         conf.enableautoscaling, conf.autoscalingpolicy, conf.dataprocProperties);
+         conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -118,8 +116,7 @@ final class DataprocConf {
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion, @Nullable String clustermetadata, @Nullable String networktags,
-                       @Nullable String initactions, @Nullable Boolean enableautoscaling,
-                       @Nullable String autoscalingpolicy, Map<String, String> dataprocProperties) {
+                       @Nullable String initactions, Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -150,8 +147,6 @@ final class DataprocConf {
     this.clustermetadata = clustermetadata;
     this.networktags = networktags;
     this.initactions = initactions;
-    this.enableautoscaling = enableautoscaling;
-    this.autoscalingpolicy = autoscalingpolicy;
     this.dataprocProperties = dataprocProperties;
   }
 
@@ -282,17 +277,6 @@ final class DataprocConf {
     }
     return Arrays.stream(Objects.requireNonNull(initactions).split(","))
       .map(String::trim).collect(Collectors.toList());
-  }
-
-  @Nullable
-  Boolean isAutoPolicyEnabled() {
-    return enableautoscaling;
-
-  }
-
-  @Nullable
-  String getAutoScalingPolicy() {
-    return autoscalingpolicy;
   }
 
   Map<String, String> getDataprocProperties() {
@@ -445,10 +429,6 @@ final class DataprocConf {
     String clustermetadata = getString(properties, "clustermetadata");
     String networktags = getString(properties, "networktags");
     String initactions = getString(properties, "initactions");
-    boolean enableautoscaling = Boolean.parseBoolean(properties.getOrDefault("enableautoscaling",
-                                                                             "true"));
-    String autoscalingpolicy = getString(properties, "autoscalingpolicy");
-
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -456,8 +436,7 @@ final class DataprocConf {
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
-                            imageVersion, clustermetadata, networktags, initactions, enableautoscaling,
-                            autoscalingpolicy, dataprocProps);
+                            imageVersion, clustermetadata, networktags, initactions, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
