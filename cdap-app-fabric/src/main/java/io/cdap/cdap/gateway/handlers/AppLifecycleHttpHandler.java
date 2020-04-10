@@ -469,7 +469,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
             appRequest.getOwnerPrincipal() == null ? null : new KerberosPrincipalId(appRequest.getOwnerPrincipal());
 
           // if we don't null check, it gets serialized to "null"
-          String configString = appRequest.getConfig() == null ? null : GSON.toJson(appRequest.getConfig());
+          Object config = appRequest.getConfig();
+          String configString = config == null ? null :
+            config instanceof String ? (String) config : GSON.toJson(config);
 
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
