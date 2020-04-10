@@ -391,7 +391,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * ]
    * }
    * </pre>
-   * <p>
    * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
    * failure for each of the requested application in the same order as the request.
    */
