@@ -29,6 +29,7 @@ import If from 'components/If';
 import { generateTableKey, extractErrorMessage } from 'components/Replicator/utilities';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Heading, { HeadingTypes } from 'components/Heading';
+import ManualSelectTable from 'components/Replicator/Create/Content/SelectTables/ManualSelectTable';
 
 const styles = (theme): StyleRules => {
   return {
@@ -82,7 +83,7 @@ interface IColumn {
   type: string;
 }
 
-enum DML {
+export enum DML {
   insert = 'INSERT',
   update = 'UPDATE',
   delete = 'DELETE',
@@ -284,6 +285,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
           <Heading type={HeadingTypes.h5} label="Error" />
           <span>{this.state.error}</span>
         </div>
+        <ManualSelectTable />
       </React.Fragment>
     );
   };
@@ -300,121 +302,124 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     const { classes } = this.props;
 
     return (
-      <div className={`grid-wrapper ${classes.gridWrapper}`}>
-        <div className={`grid grid-container grid-compact`}>
-          <div className="grid-header">
-            <div className="grid-row">
-              <div>
-                <Checkbox
-                  checked={this.state.selectedTables.size === this.state.tables.length}
-                  indeterminate={
-                    this.state.selectedTables.size < this.state.tables.length &&
-                    this.state.selectedTables.size > 0
-                  }
-                  onChange={this.toggleSelectAll}
-                  color="primary"
-                />
-              </div>
-              <div>Table name</div>
-              <div>Total columns</div>
-              <div>Selected columns</div>
-              <div />
-              <div>
-                <Checkbox
-                  color="primary"
-                  className={classes.headerDMLcheckbox}
-                  checked={this.dmlSelectAllIndicator(DML.insert) === 1}
-                  indeterminate={this.dmlSelectAllIndicator(DML.insert) === 0}
-                  onChange={this.toggleAllDML.bind(this, DML.insert)}
-                />
-              </div>
-              <div>
-                <Checkbox
-                  color="primary"
-                  className={classes.headerDMLcheckbox}
-                  checked={this.dmlSelectAllIndicator(DML.update) === 1}
-                  indeterminate={this.dmlSelectAllIndicator(DML.update) === 0}
-                  onChange={this.toggleAllDML.bind(this, DML.update)}
-                />
-              </div>
-              <div>
-                <Checkbox
-                  color="primary"
-                  className={classes.headerDMLcheckbox}
-                  checked={this.dmlSelectAllIndicator(DML.delete) === 1}
-                  indeterminate={this.dmlSelectAllIndicator(DML.delete) === 0}
-                  onChange={this.toggleAllDML.bind(this, DML.delete)}
-                />
+      <React.Fragment>
+        <div className={`grid-wrapper ${classes.gridWrapper}`}>
+          <div className={`grid grid-container grid-compact`}>
+            <div className="grid-header">
+              <div className="grid-row">
+                <div>
+                  <Checkbox
+                    checked={this.state.selectedTables.size === this.state.tables.length}
+                    indeterminate={
+                      this.state.selectedTables.size < this.state.tables.length &&
+                      this.state.selectedTables.size > 0
+                    }
+                    onChange={this.toggleSelectAll}
+                    color="primary"
+                  />
+                </div>
+                <div>Table name</div>
+                <div>Total columns</div>
+                <div>Selected columns</div>
+                <div />
+                <div>
+                  <Checkbox
+                    color="primary"
+                    className={classes.headerDMLcheckbox}
+                    checked={this.dmlSelectAllIndicator(DML.insert) === 1}
+                    indeterminate={this.dmlSelectAllIndicator(DML.insert) === 0}
+                    onChange={this.toggleAllDML.bind(this, DML.insert)}
+                  />
+                </div>
+                <div>
+                  <Checkbox
+                    color="primary"
+                    className={classes.headerDMLcheckbox}
+                    checked={this.dmlSelectAllIndicator(DML.update) === 1}
+                    indeterminate={this.dmlSelectAllIndicator(DML.update) === 0}
+                    onChange={this.toggleAllDML.bind(this, DML.update)}
+                  />
+                </div>
+                <div>
+                  <Checkbox
+                    color="primary"
+                    className={classes.headerDMLcheckbox}
+                    checked={this.dmlSelectAllIndicator(DML.delete) === 1}
+                    indeterminate={this.dmlSelectAllIndicator(DML.delete) === 0}
+                    onChange={this.toggleAllDML.bind(this, DML.delete)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="grid-body">
-            {this.state.tables.map((row) => {
-              const key = generateTableKey(row);
-              const checked = !!this.state.selectedTables.get(key);
-              const columns = this.state.columns.get(key);
-              const tableDML = this.state.dmlBlacklist.get(key) || Set<DML>();
+            <div className="grid-body">
+              {this.state.tables.map((row) => {
+                const key = generateTableKey(row);
+                const checked = !!this.state.selectedTables.get(key);
+                const columns = this.state.columns.get(key);
+                const tableDML = this.state.dmlBlacklist.get(key) || Set<DML>();
 
-              return (
-                <div key={key} className="grid-row">
-                  <div>
-                    <Checkbox
-                      checked={checked}
-                      onChange={this.toggleSelected.bind(this, row)}
-                      color="primary"
-                    />
+                return (
+                  <div key={key} className="grid-row">
+                    <div>
+                      <Checkbox
+                        checked={checked}
+                        onChange={this.toggleSelected.bind(this, row)}
+                        color="primary"
+                      />
+                    </div>
+                    <div>{row.table}</div>
+                    <div>{row.numColumns}</div>
+                    <div>{columns ? columns.size : 'All'}</div>
+                    <div>
+                      <span onClick={this.openTable.bind(this, row)} className={classes.changeLink}>
+                        Change
+                      </span>
+                    </div>
+                    <div>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            color="primary"
+                            onClick={this.toggleDML.bind(this, key, DML.insert)}
+                            checked={!tableDML.has(DML.insert)}
+                          />
+                        }
+                        label="Inserts"
+                      />
+                    </div>
+                    <div>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            color="primary"
+                            onClick={this.toggleDML.bind(this, key, DML.update)}
+                            checked={!tableDML.has(DML.update)}
+                          />
+                        }
+                        label="Updates"
+                      />
+                    </div>
+                    <div>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            color="primary"
+                            onClick={this.toggleDML.bind(this, key, DML.delete)}
+                            checked={!tableDML.has(DML.delete)}
+                          />
+                        }
+                        label="Deletes"
+                      />
+                    </div>
                   </div>
-                  <div>{row.table}</div>
-                  <div>{row.numColumns}</div>
-                  <div>{columns ? columns.size : 'All'}</div>
-                  <div>
-                    <span onClick={this.openTable.bind(this, row)} className={classes.changeLink}>
-                      Change
-                    </span>
-                  </div>
-                  <div>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          color="primary"
-                          onClick={this.toggleDML.bind(this, key, DML.insert)}
-                          checked={!tableDML.has(DML.insert)}
-                        />
-                      }
-                      label="Inserts"
-                    />
-                  </div>
-                  <div>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          color="primary"
-                          onClick={this.toggleDML.bind(this, key, DML.update)}
-                          checked={!tableDML.has(DML.update)}
-                        />
-                      }
-                      label="Updates"
-                    />
-                  </div>
-                  <div>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          color="primary"
-                          onClick={this.toggleDML.bind(this, key, DML.delete)}
-                          checked={!tableDML.has(DML.delete)}
-                        />
-                      }
-                      label="Deletes"
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+        <StepButtons onNext={this.handleNext} />
+      </React.Fragment>
     );
   };
 
@@ -432,8 +437,6 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
 
           {this.renderError()}
           {this.renderContent()}
-
-          <StepButtons onNext={this.handleNext} />
         </div>
 
         <If condition={this.state.openTable}>
