@@ -21,10 +21,8 @@ import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
-import io.cdap.cdap.runtime.spi.common.KeyValue;
-import io.cdap.cdap.runtime.spi.common.KeyValueListParser;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,15 +33,11 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-
-
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -63,7 +57,6 @@ final class DataprocConf {
   static final String IMAGE_VERSION = "imageVersion";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
-  private static final KeyValueListParser KV_PARSER = new KeyValueListParser(";", "\\|");
 
   private final String accountKey;
   private final String region;
@@ -267,68 +260,40 @@ final class DataprocConf {
     return publicKey;
   }
 
-
-  @Nullable
   Map<String, String> getClusterMetaData() {
-
-
-
     if (Strings.isNullOrEmpty(clustermetadata)) {
-
       return Collections.emptyMap();
     }
-
-
-    return StreamSupport.stream(KV_PARSER.parse(clustermetadata).spliterator(), false)
-            .collect(Collectors.toMap(
-                    KeyValue::getKey,
-                    KeyValue::getValue,
-                    (o, n) -> n,
-                    LinkedHashMap::new));
+    return DataprocUtils.parseKeyValueConfig(clustermetadata, ";", "\\|");
   }
 
-
-  @Nullable
   List<String> getNetworkTags() {
-
     if (Strings.isNullOrEmpty(networktags)) {
       return Collections.emptyList();
     }
-
     return Arrays.stream(Objects.requireNonNull(networktags).split(","))
-            .map(String::trim)
-//            .filter(e -> NETWORK_TAGS_PATTERN.matcher(e).find())
-            .collect(Collectors.toList());
-
+      .map(String::trim)
+      .collect(Collectors.toList());
   }
 
-
-
-
-  @Nullable
   List<String> getInitActions() {
-
     if (Strings.isNullOrEmpty(initactions)) {
       return Collections.emptyList();
     }
-
     return Arrays.stream(Objects.requireNonNull(initactions).split(","))
-            .map(String::trim).collect(Collectors.toList());
-
+      .map(String::trim).collect(Collectors.toList());
   }
 
-   @Nullable
-   Boolean isAutoPolicyEnabled() {
-     return enableautoscaling;
+  @Nullable
+  Boolean isAutoPolicyEnabled() {
+    return enableautoscaling;
 
-   }
+  }
 
   @Nullable
   String getAutoScalingPolicy() {
     return autoscalingpolicy;
   }
-
-
 
   Map<String, String> getDataprocProperties() {
     return dataprocProperties;
@@ -481,7 +446,7 @@ final class DataprocConf {
     String networktags = getString(properties, "networktags");
     String initactions = getString(properties, "initactions");
     boolean enableautoscaling = Boolean.parseBoolean(properties.getOrDefault("enableautoscaling",
-            "true"));
+                                                                             "true"));
     String autoscalingpolicy = getString(properties, "autoscalingpolicy");
 
 
@@ -489,7 +454,7 @@ final class DataprocConf {
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
+                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
                             imageVersion, clustermetadata, networktags, initactions, enableautoscaling,
                             autoscalingpolicy, dataprocProps);

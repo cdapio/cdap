@@ -22,6 +22,8 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This class contains common methods that are needed by DataprocProvisioner and DataprocRuntimeJobManager.
@@ -56,6 +58,25 @@ public final class DataprocUtils {
       LOG.warn(String.format("GCS path %s was not cleaned up for bucket %s due to %s. ",
                              path, bucket, e.getMessage()), e);
     }
+  }
+
+  /**
+   * Utilty class to parse the keyvalue string from UI Widget and return back HashMap
+   * @param configValue
+   * @param delimiter
+   * @param keyValueDelimiter
+   * @return
+   */
+  public static Map<String, String> parseKeyValueConfig(String configValue, String delimiter,
+                                                        String keyValueDelimiter) {
+    Map<String, String> map = new HashMap<>();
+    for (String property : configValue.split(delimiter)) {
+      String[] parts = property.split(keyValueDelimiter);
+      String key = parts[0];
+      String value = parts[1];
+      map.put(key, value);
+    }
+    return map;
   }
 
   private DataprocUtils() {

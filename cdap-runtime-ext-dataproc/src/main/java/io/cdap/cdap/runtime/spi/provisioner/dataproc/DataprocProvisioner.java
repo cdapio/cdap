@@ -97,12 +97,12 @@ public class DataprocProvisioner implements Provisioner {
 
   /**
    * Parses labels that are expected to be of the form key1=val1,key2=val2 into a map of key values.
-   *
+   * <p>
    * If a label key or value is invalid, a message will be logged but the key-value will not be returned in the map.
    * Keys and values cannot be longer than 63 characters.
    * Keys and values can only contain lowercase letters, numeric characters, underscores, and dashes.
    * Keys must start with a lowercase letter and must not be empty.
-   *
+   * <p>
    * If a label is given without a '=', the label value will be empty.
    * If a label is given as 'key=', the label value will be empty.
    * If a label has multiple '=', it will be ignored. For example, 'key=val1=val2' will be ignored.
@@ -161,29 +161,22 @@ public class DataprocProvisioner implements Provisioner {
     // Total of 64 Tags Allowed
     // Each tag length cannot exceed 63 chars
     // Lower case letters and dashes allowed only.
-
     List<String> networkTags = conf.getNetworkTags();
-     if (!networkTags.stream().allMatch(e -> NETWORK_TAGS_PATTERN.matcher(e).matches())) {
-       throw new IllegalArgumentException("Invalid Network Tags: Ensure tag length is max 63 chars"
-               + " and contains  lowercase letters, numbers and dashes only. ");
-     }
-     if (networkTags.size() > 64) {
-       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
-     }
-
+    if (!networkTags.stream().allMatch(e -> NETWORK_TAGS_PATTERN.matcher(e).matches())) {
+      throw new IllegalArgumentException("Invalid Network Tags: Ensure tag length is max 63 chars"
+                                           + " and contains  lowercase letters, numbers and dashes only. ");
+    }
+    if (networkTags.size() > 64) {
+      throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
+    }
     //Validate if AutoScaling is enabled and Policy is provided
-
     if (conf.isAutoPolicyEnabled()) {
-      if (conf.getAutoScalingPolicy() == null  || conf.getAutoScalingPolicy().isEmpty()) {
+      if (conf.getAutoScalingPolicy() == null || conf.getAutoScalingPolicy().isEmpty()) {
         throw new IllegalArgumentException("Enabke AutoScaling is set to true but no AutoScaling policy provided. " +
-                "Provide AutoScaling Policy to use. ");
+                                             "Provide AutoScaling Policy to use. ");
       }
 
     }
-
-
-
-
   }
 
   @Override
@@ -285,7 +278,6 @@ public class DataprocProvisioner implements Provisioner {
                                   DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRun().getRun());
     }
     String clusterName = getClusterName(context.getProgramRun());
-
     // Reload system context properties
     systemContext.reloadProperties();
     try (DataprocClient client =
@@ -328,7 +320,6 @@ public class DataprocProvisioner implements Provisioner {
     if (extraLabelsStr != null) {
       labels.putAll(parseLabels(extraLabelsStr));
     }
-
     return Collections.unmodifiableMap(labels);
   }
 
