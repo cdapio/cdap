@@ -304,6 +304,7 @@ function download_file() {
 
   echo "Downloading using curl ${file_name}"
   echo "from ${source_dir}"
+  echo "curl --silent ${source_dir}/${file_name} --output ${target}"
   curl --silent ${source_dir}/${file_name} --output ${target}
   test_an_include ${md5_hash} ${target}
 }
