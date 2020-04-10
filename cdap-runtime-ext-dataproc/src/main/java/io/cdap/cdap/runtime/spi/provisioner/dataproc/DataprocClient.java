@@ -429,9 +429,15 @@ final class DataprocClient implements AutoCloseable {
 
       //Set Auto Scaling Policy
       if (conf.isAutoPolicyEnabled()) {
+        String policyURI = conf.getAutoScalingPolicy();
+        //Check if policy is URI or ID. If ID Convert to URI
+        if (!policyURI.contains("/")) {
+          policyURI = "projects/" + conf.getProjectId() + "/regions/" + conf.getRegion()
+            + "/autoscalingPolicies/" + conf.getAutoScalingPolicy();
+        }
         builder.setAutoscalingConfig(
           AutoscalingConfig.newBuilder()
-            .setPolicyUri(conf.getAutoScalingPolicy())
+            .setPolicyUri(policyURI)
             .build());
       }
 

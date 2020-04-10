@@ -23,6 +23,7 @@ import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -287,7 +288,6 @@ final class DataprocConf {
   @Nullable
   Boolean isAutoPolicyEnabled() {
     return enableautoscaling;
-
   }
 
   @Nullable

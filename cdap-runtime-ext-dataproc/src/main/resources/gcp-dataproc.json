@@ -373,7 +373,12 @@
           "widget-type": "csv",
           "description": "A list of scripts to be executed during initialization of cluster.",
           "widget-attributes" : {}
-        },
+        }
+      ]
+    },
+    {
+      "label": "Experimental Features (BETA)",
+      "properties": [
         {
           "name": "enableautoscaling",
           "widget-type": "toggle",

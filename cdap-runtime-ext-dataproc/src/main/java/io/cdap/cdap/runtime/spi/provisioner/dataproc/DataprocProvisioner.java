@@ -173,7 +173,7 @@ public class DataprocProvisioner implements Provisioner {
     if (conf.isAutoPolicyEnabled()) {
       if (conf.getAutoScalingPolicy() == null || conf.getAutoScalingPolicy().isEmpty()) {
         throw new IllegalArgumentException("Autoscaling is enabled but no AutoScaling policy provided. " +
-                                             "Provide AutoScaling Policy (Format: resource URI ).");
+                                             "Provide AutoScaling Policy.");
       }
 
     }
