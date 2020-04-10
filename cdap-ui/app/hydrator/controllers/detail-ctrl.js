@@ -132,7 +132,12 @@ angular.module(PKG.name + '.feature.hydrator')
       }
 
       // let latestRunId = latestRun.runid;
-      if (currentRun && currentRun.runid === latestRun.runid && currentRun.status === latestRun.status) {
+      if (
+        currentRun &&
+        currentRun.runid === latestRun.runid &&
+        currentRun.status === latestRun.status &&
+        currentRun.status !== 'RUNNING'
+      ) {
         return;
       }
 
