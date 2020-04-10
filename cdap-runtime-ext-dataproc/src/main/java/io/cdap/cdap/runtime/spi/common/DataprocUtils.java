@@ -22,6 +22,7 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,8 +37,8 @@ public final class DataprocUtils {
    * Deletes provided directory path on GCS.
    *
    * @param storageClient storage client
-   * @param bucket bucket
-   * @param path dir path to delete
+   * @param bucket        bucket
+   * @param path          dir path to delete
    */
   public static void deleteGCSPath(Storage storageClient, String bucket, String path) {
     try {
@@ -62,6 +63,7 @@ public final class DataprocUtils {
 
   /**
    * Utilty class to parse the keyvalue string from UI Widget and return back HashMap
+   *
    * @param configValue
    * @param delimiter
    * @param keyValueDelimiter
@@ -71,10 +73,12 @@ public final class DataprocUtils {
                                                         String keyValueDelimiter) {
     Map<String, String> map = new HashMap<>();
     for (String property : configValue.split(delimiter)) {
-      String[] parts = property.split(keyValueDelimiter);
-      String key = parts[0];
-      String value = parts[1];
-      map.put(key, value);
+      String[] parts = property.split(keyValueDelimiter, 2);
+      if (parts.length == 2) {
+        String key = parts[0];
+        String value = parts[1];
+        map.put(key, value);
+      }
     }
     return map;
   }
