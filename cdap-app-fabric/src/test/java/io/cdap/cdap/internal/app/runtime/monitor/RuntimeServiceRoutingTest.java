@@ -103,6 +103,7 @@ public class RuntimeServiceRoutingTest {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+          bind(RemoteExecutionLogProcessor.class).toInstance(bytes -> { });
           bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
             String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
             String expected = "test " + Base64.getEncoder().encodeToString(

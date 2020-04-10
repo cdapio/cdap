@@ -201,7 +201,7 @@ public final class RunRecordDetail extends RunRecord {
       return this;
     }
 
-    public Builder setTwillRunId(String twillRunId) {
+    public Builder setTwillRunId(@Nullable String twillRunId) {
       this.twillRunId = twillRunId;
       return this;
     }

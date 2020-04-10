@@ -38,6 +38,7 @@ import io.cdap.cdap.store.StoreDefinition;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,18 @@ public class RemoteRuntimeTable {
   @VisibleForTesting
   void deleteAll() throws IOException {
     table.deleteAll(Range.all());
+  }
+
+  /**
+   * Checks if the given program run id exists.
+   *
+   * @param programRunId the program run id to check
+   * @return {@code true} if the id exists; {@code false} otherwise
+   * @throws IOException if failed to read from the underlying table
+   */
+  public boolean exists(ProgramRunId programRunId) throws IOException {
+    List<Field<?>> key = getKey(programRunId);
+    return table.read(key).isPresent();
   }
 
   /**
@@ -112,12 +125,7 @@ public class RemoteRuntimeTable {
     try (CloseableIterator<StructuredRow> iterator = table.scan(range, limit)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
-        ProgramRunId programRunId = getProgramRunId(row);
-
-        result.add(
-          Maps.immutableEntry(
-            programRunId, GSON.fromJson(
-              row.getString(StoreDefinition.RemoteRuntimeStore.PROGRAM_OPTIONS_FIELD), ProgramOptions.class)));
+        result.add(Maps.immutableEntry(getProgramRunId(row), getProgramOptions(row)));
       }
     }
 
@@ -125,26 +133,31 @@ public class RemoteRuntimeTable {
   }
 
   private List<Field<?>> getKey(ProgramRunId programRunId) {
-    List<Field<?>> fields = new ArrayList();
-    fields.add(Fields.stringField(StoreDefinition.RemoteRuntimeStore.NAMESPACE_FIELD, programRunId.getNamespace()));
-    fields.add(Fields.stringField(StoreDefinition.RemoteRuntimeStore.APPLICATION_FIELD, programRunId.getApplication()));
-    fields.add(Fields.stringField(StoreDefinition.RemoteRuntimeStore.VERSION_FIELD, programRunId.getVersion()));
-    fields.add(
-      Fields.stringField(StoreDefinition.RemoteRuntimeStore.PROGRAM_TYPE_FIELD, programRunId.getType().name()));
-    fields.add(Fields.stringField(StoreDefinition.RemoteRuntimeStore.PROGRAM_FIELD, programRunId.getProgram()));
-    fields.add(Fields.stringField(StoreDefinition.RemoteRuntimeStore.RUN_FIELD, programRunId.getRun()));
-    return fields;
+    return new ArrayList<>(Arrays.asList(
+      Fields.stringField(StoreDefinition.RemoteRuntimeStore.NAMESPACE_FIELD, programRunId.getNamespace()),
+      Fields.stringField(StoreDefinition.RemoteRuntimeStore.APPLICATION_FIELD, programRunId.getApplication()),
+      Fields.stringField(StoreDefinition.RemoteRuntimeStore.VERSION_FIELD, programRunId.getVersion()),
+      Fields.stringField(StoreDefinition.RemoteRuntimeStore.PROGRAM_TYPE_FIELD, programRunId.getType().name()),
+      Fields.stringField(StoreDefinition.RemoteRuntimeStore.PROGRAM_FIELD, programRunId.getProgram()),
+      Fields.stringField(StoreDefinition.RemoteRuntimeStore.RUN_FIELD, programRunId.getRun())
+    ));
   }
 
   /**
    * Parses the {@link ProgramRunId} from the {@link StructuredRow}.
    */
   private ProgramRunId getProgramRunId(StructuredRow row) {
-    return new ProgramRunId(new ApplicationId(row.getString(StoreDefinition.RemoteRuntimeStore.NAMESPACE_FIELD),
-                                              row.getString(StoreDefinition.RemoteRuntimeStore.APPLICATION_FIELD),
-                                              row.getString(StoreDefinition.RemoteRuntimeStore.VERSION_FIELD)),
-                            ProgramType.valueOf(row.getString(StoreDefinition.RemoteRuntimeStore.PROGRAM_TYPE_FIELD)),
-                            row.getString(StoreDefinition.RemoteRuntimeStore.PROGRAM_FIELD),
-                            row.getString(StoreDefinition.RemoteRuntimeStore.RUN_FIELD));
+    return new ProgramRunId(
+      new ApplicationId(row.getString(StoreDefinition.RemoteRuntimeStore.NAMESPACE_FIELD),
+                        row.getString(StoreDefinition.RemoteRuntimeStore.APPLICATION_FIELD),
+                        row.getString(StoreDefinition.RemoteRuntimeStore.VERSION_FIELD)),
+      ProgramType.valueOf(row.getString(StoreDefinition.RemoteRuntimeStore.PROGRAM_TYPE_FIELD)),
+      row.getString(StoreDefinition.RemoteRuntimeStore.PROGRAM_FIELD),
+      row.getString(StoreDefinition.RemoteRuntimeStore.RUN_FIELD)
+    );
+  }
+
+  private ProgramOptions getProgramOptions(StructuredRow row) {
+    return GSON.fromJson(row.getString(StoreDefinition.RemoteRuntimeStore.PROGRAM_OPTIONS_FIELD), ProgramOptions.class);
   }
 }

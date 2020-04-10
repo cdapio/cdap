@@ -65,7 +65,7 @@ public final class DefaultServiceDiscovered implements ServiceDiscovered {
       return;
     }
 
-    LOG.debug("Discoverables for service {} changed from {} to {}", name, oldDiscoverables, newDiscoverables);
+    LOG.trace("Discoverables for service {} changed from {} to {}", name, oldDiscoverables, newDiscoverables);
 
     // Collect all listeners with a read lock to the listener list.
     List<ListenerCaller> callers = new ArrayList<>();

@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
@@ -61,9 +60,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 /**
  * Runtime Monitor Service responsible for fetching program status, audit messages, metrics, data events and metadata
@@ -120,7 +116,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     this.logProcessor = logProcessor;
     this.programFinishTime = -1L;
     this.lastProgramStateMessages = new LinkedList<>();
-    this.requestKeyToLocalTopic = createTopicConfigs(cConf);
+    this.requestKeyToLocalTopic = RuntimeMonitors.createTopicConfigs(cConf);
     this.remoteProcessController = remoteProcessController;
     this.programStateWriter = programStateWriter;
     this.transactionRunner = transactionRunner;
@@ -479,37 +475,5 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private long getMessagePublishTime(MonitorMessage message) {
     return new MessageId(Bytes.fromHexString(message.getMessageId())).getPublishTimestamp();
-  }
-
-  /**
-   * Creates a map from topic configuration name to the actual TMS topic based on the list of topic configuration names
-   * specified by the {@link Constants.RuntimeMonitor#TOPICS_CONFIGS} key.
-   */
-  private static Map<String, String> createTopicConfigs(CConfiguration cConf) {
-    return cConf.getTrimmedStringCollection(Constants.RuntimeMonitor.TOPICS_CONFIGS).stream().flatMap(key -> {
-      int idx = key.lastIndexOf(':');
-      if (idx < 0) {
-        return Stream.of(Maps.immutableEntry(key, cConf.get(key)));
-      }
-
-      try {
-        int totalTopicCount = Integer.parseInt(key.substring(idx + 1));
-        if (totalTopicCount <= 0) {
-          throw new IllegalArgumentException("Total topic number must be positive for system topic config '" +
-                                               key + "'.");
-        }
-        // For metrics, We make an assumption that number of metrics topics on runtime are not different than
-        // cdap system. So, we will add same number of topic configs as number of metrics topics so that we can
-        // keep track of different offsets for each metrics topic.
-        // TODO: CDAP-13303 - Handle different number of metrics topics between runtime and cdap system
-        String topicPrefix = key.substring(0, idx);
-        return IntStream
-          .range(0, totalTopicCount)
-          .mapToObj(i -> Maps.immutableEntry(topicPrefix + ":" + i, cConf.get(topicPrefix) + i));
-      } catch (NumberFormatException e) {
-        throw new IllegalArgumentException("Total topic number must be a positive number for system topic config'"
-                                             + key + "'.", e);
-      }
-    }).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 }

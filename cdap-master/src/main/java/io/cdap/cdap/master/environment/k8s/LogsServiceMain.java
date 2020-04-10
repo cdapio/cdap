@@ -32,7 +32,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
-import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
@@ -77,7 +76,6 @@ public class LogsServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
-      new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new MessagingClientModule(),

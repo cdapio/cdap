@@ -18,6 +18,8 @@ package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import io.cdap.cdap.api.retry.RetriesExhaustedException;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractRetryableScheduledService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryableScheduledService.class);
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
   private final RetryStrategy retryStrategy;
 
@@ -149,28 +152,35 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
   @Override
   protected final void runOneIteration() throws Exception {
     try {
-      if (nonFailureStartTime == 0L) {
-        nonFailureStartTime = System.currentTimeMillis();
-      }
+      try {
+        if (nonFailureStartTime == 0L) {
+          nonFailureStartTime = System.currentTimeMillis();
+        }
 
-      delayMillis = runTask();
-      nonFailureStartTime = 0L;
-      failureCount = 0;
-    } catch (Exception e) {
-      if (!shouldRetry(e)) {
-        throw e;
-      }
-
-      long delayMillis = retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
-      if (delayMillis < 0) {
-        e.addSuppressed(new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
-                                                                    failureCount,
-                                                                    System.currentTimeMillis() - nonFailureStartTime)));
-        delayMillis = Math.max(0L, handleRetriesExhausted(e));
+        delayMillis = runTask();
         nonFailureStartTime = 0L;
         failureCount = 0;
+      } catch (Exception e) {
+        OUTAGE_LOG.warn("Failed to execute task for scheduled service {}", getServiceName(), e);
+        if (!shouldRetry(e)) {
+          throw e;
+        }
+
+        long delayMillis = retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
+        if (delayMillis < 0) {
+          e.addSuppressed(
+            new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
+                                                        failureCount,
+                                                        System.currentTimeMillis() - nonFailureStartTime)));
+          delayMillis = Math.max(0L, handleRetriesExhausted(e));
+          nonFailureStartTime = 0L;
+          failureCount = 0;
+        }
+        this.delayMillis = delayMillis;
       }
-      this.delayMillis = delayMillis;
+    } catch (Exception e) {
+      LOG.error("Aborting service {} due to non-retryable error", getServiceName(), e);
+      throw e;
     }
   }
 
