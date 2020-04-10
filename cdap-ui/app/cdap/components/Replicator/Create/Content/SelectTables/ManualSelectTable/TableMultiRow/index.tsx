@@ -31,7 +31,7 @@ class TableMultiRow extends AbstractMultiRowWidget<ITableMultiRowProps> {
   }
 
   public deconstructValues = (props) => {
-    if (!props.value || props.value.size === 0) {
+    if (!props.value || props.value.length === 0) {
       return [];
     }
     return props.value;
