@@ -70,15 +70,19 @@ public final class DataprocUtils {
    * @return
    */
   public static Map<String, String> parseKeyValueConfig(String configValue, String delimiter,
-                                                        String keyValueDelimiter) {
+                                                        String keyValueDelimiter) throws IllegalArgumentException {
     Map<String, String> map = new HashMap<>();
+    if (configValue == null) {
+      return map;
+    }
     for (String property : configValue.split(delimiter)) {
       String[] parts = property.split(keyValueDelimiter, 2);
-      if (parts.length == 2) {
-        String key = parts[0];
-        String value = parts[1];
-        map.put(key, value);
+      if (parts.length != 2) {
+        throw new IllegalArgumentException("Invalid KeyValue " + property);
       }
+      String key = parts[0];
+      String value = parts[1];
+      map.put(key, value);
     }
     return map;
   }
