@@ -124,7 +124,7 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
 
     ConfigTestApp.ConfigClass configuration = new ConfigTestApp.ConfigClass("abc", "def");
     String configurationString = GSON.toJson(configuration);
-    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), null,null,null,null,
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null,
                                               configurationString));
     Assert.assertEquals(200, response.getResponseCode());
     JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
@@ -141,12 +141,12 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
     HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
     Assert.assertEquals(200, response.getResponseCode());
 
-    ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("abc", "def");
-    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), null,null,null,null,
-                                              config));
+    ConfigTestApp.ConfigClass configuration = new ConfigTestApp.ConfigClass("abc", "def");
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null,
+                                              configuration));
     Assert.assertEquals(200, response.getResponseCode());
     JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
-    Assert.assertEquals(GSON.toJson(config), appDetails.get("configuration").getAsString());
+    Assert.assertEquals(GSON.toJson(configuration), appDetails.get("configuration").getAsString());
 
     deleteApp(appId, 200);
     deleteArtifact(artifactId, 200);
