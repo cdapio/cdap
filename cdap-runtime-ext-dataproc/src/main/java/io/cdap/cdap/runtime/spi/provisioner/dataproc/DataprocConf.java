@@ -92,7 +92,7 @@ final class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
-  private final String clusterMetaData;
+  private final Map<String, String> clusterMetaData;
   private final String networkTags;
   private final String initActions;
   private final boolean autoScaling;
@@ -117,8 +117,8 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion, @Nullable String clusterMetaData, @Nullable String networkTags,
-                       @Nullable String initActions, @Nullable Boolean autoScaling,
+                       @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
+                       @Nullable String networkTags, @Nullable String initActions, @Nullable Boolean autoScaling,
                        @Nullable String autoScalingPolicy, Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
@@ -261,10 +261,7 @@ final class DataprocConf {
   }
 
   Map<String, String> getClusterMetaData() {
-    if (Strings.isNullOrEmpty(clusterMetaData)) {
-      return Collections.emptyMap();
-    }
-    return DataprocUtils.parseKeyValueConfig(clusterMetaData, ";", "\\|");
+    return clusterMetaData;
   }
 
   List<String> getNetworkTags() {
@@ -441,11 +438,12 @@ final class DataprocConf {
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
-    String clusterMetaData = getString(properties, "clusterMetaData");
+    Map<String, String> clusterMetaData = Collections.unmodifiableMap(
+      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"),
+                                        ";", "\\|"));
     String networkTags = getString(properties, "networkTags");
     String initActions = getString(properties, "initActions");
-    boolean autoScaling = Boolean.parseBoolean(properties.getOrDefault("autoScaling",
-                                                                             "false"));
+    boolean autoScaling = Boolean.parseBoolean(properties.get("autoScaling"));
     String autoScalingPolicy = getString(properties, "autoScalingPolicy");
 
 
