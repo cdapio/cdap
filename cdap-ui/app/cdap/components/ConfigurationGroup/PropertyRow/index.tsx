@@ -74,6 +74,10 @@ const EditorTypeWidgets = [
   'wrangler-directives',
 ];
 
+const WIDGET_TYPE = 'widget-type';
+const PLUGIN = 'plugin';
+const WIDGET_CATEGORY = 'widget-category';
+
 interface IState {
   isMacroTextbox: boolean;
 }
@@ -84,19 +88,26 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
   };
 
   public state = {
-    isMacroTextbox:
-      isMacro(this.props.value) && objectQuery(this.props.pluginProperty, 'macroSupported'),
+    isMacroTextbox: this.isMacroTextbox(),
   };
 
   public shouldComponentUpdate(nextProps) {
     const rule =
       nextProps.value !== this.props.value ||
-      nextProps.widgetProperty['widget-type'] !== this.props.widgetProperty['widget-type'];
+      nextProps.widgetProperty[WIDGET_TYPE] !== this.props.widgetProperty[WIDGET_TYPE];
     // Comparison of array of objects
     const isArrayEqual = (x: IErrorObj[], y: IErrorObj[]) => isEmpty(xorWith(x, y, isEqual));
     const errorChange = isArrayEqual(nextProps.errors, this.props.errors);
 
     return rule || !errorChange;
+  }
+
+  private isMacroTextbox() {
+    return (
+      this.props.widgetProperty[WIDGET_CATEGORY] !== PLUGIN &&
+      isMacro(this.props.value) &&
+      objectQuery(this.props.pluginProperty, 'macroSupported')
+    );
   }
 
   private toggleMacro = () => {
@@ -143,7 +154,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
       errors,
     } = this.props;
 
-    if (widgetProperty['widget-type'] === 'hidden') {
+    if (widgetProperty[WIDGET_TYPE] === 'hidden') {
       return null;
     }
 
@@ -151,10 +162,13 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
     const updatedWidgetProperty = {
       ...widgetProperty,
     };
-    if (this.state.isMacroTextbox) {
-      const currentWidget = updatedWidgetProperty['widget-type'];
+
+    const widgetCategory = updatedWidgetProperty[WIDGET_CATEGORY];
+
+    if (this.state.isMacroTextbox && widgetCategory !== PLUGIN) {
+      const currentWidget = updatedWidgetProperty[WIDGET_TYPE];
       if (EditorTypeWidgets.indexOf(currentWidget) === -1) {
-        updatedWidgetProperty['widget-type'] = 'textbox';
+        updatedWidgetProperty[WIDGET_TYPE] = 'textbox';
         updatedWidgetProperty['widget-attributes'] = {};
       }
 
@@ -164,7 +178,8 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
       };
     }
 
-    const widgetCategory = updatedWidgetProperty['widget-category'];
+    const cypressId =
+      widgetCategory !== PLUGIN ? widgetProperty.name : `${widgetCategory}-${widgetProperty.name}`;
 
     // When there is only one error and it does not have element property,
     // it is a property level error.
@@ -174,7 +189,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
     return (
       <div className={classes.root}>
         <div
-          data-cy={widgetProperty.name}
+          data-cy={cypressId}
           className={classnames(classes.row, { [classes.macroRow]: this.state.isMacroTextbox })}
         >
           <WidgetWrapper
@@ -188,7 +203,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
             disabled={disabled}
             errors={errors}
           />
-          <If condition={pluginProperty.macroSupported && widgetCategory !== 'plugin'}>
+          <If condition={pluginProperty.macroSupported && widgetCategory !== PLUGIN}>
             <MacroIndicator
               onClick={this.toggleMacro}
               disabled={disabled}
@@ -196,7 +211,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
             />
           </If>
         </div>
-        <If condition={propertyLevelErrorMsg !== '' && widgetCategory !== 'plugin'}>
+        <If condition={propertyLevelErrorMsg !== '' && widgetCategory !== PLUGIN}>
           <div
             className={classnames(classes.errorText, classes.errorRow, 'propertyError')}
             data-cy="property-row-error"
