@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 
@@ -29,8 +30,15 @@ public interface ProvisionerContext {
 
   /**
    * @return the program run
+   * @deprecated Use {@link #getProgramRunInfo()} instead
    */
+  @Deprecated
   ProgramRun getProgramRun();
+
+  /**
+   * @return the program run information
+   */
+  ProgramRunInfo getProgramRunInfo();
 
   /**
    * Get the provisioner properties for this program run. These properties will start off as the provisioner properties

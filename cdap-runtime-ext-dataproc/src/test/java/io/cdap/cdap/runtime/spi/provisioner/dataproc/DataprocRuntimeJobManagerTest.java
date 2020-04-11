@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
-import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunInfo;
 import org.junit.Assert;
 import org.junit.Test;
 

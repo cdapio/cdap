@@ -17,7 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.distributed.runtimejob;
 
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import org.apache.twill.api.LocalFile;
 
@@ -38,7 +38,7 @@ public class DefaultRuntimeInfo implements RuntimeJobInfo {
       .setNamespace(programRunId.getNamespace())
       .setApplication(programRunId.getApplication())
       .setVersion(programRunId.getVersion())
-      .setProgramType(programRunId.getType().getPrettyName())
+      .setProgramType(programRunId.getType().name())
       .setProgram(programRunId.getProgram())
       .setRun(programRunId.getRun()).build();
     this.files = Collections.unmodifiableCollection(new ArrayList<>(files));

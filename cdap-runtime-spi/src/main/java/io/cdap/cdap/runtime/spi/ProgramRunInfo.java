@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.runtime.spi.runtimejob;
+package io.cdap.cdap.runtime.spi;
 
 import java.util.Objects;
 
@@ -154,12 +154,12 @@ public class ProgramRunInfo {
     return version;
   }
 
-  public String getProgram() {
-    return program;
-  }
-
   public String getProgramType() {
     return programType;
+  }
+
+  public String getProgram() {
+    return program;
   }
 
   public String getRun() {

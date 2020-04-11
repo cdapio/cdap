@@ -70,7 +70,7 @@ public class NativeProvisioner implements Provisioner {
 
   @Override
   public Cluster createCluster(ProvisionerContext context) {
-    return new Cluster(context.getProgramRun().getRun(), ClusterStatus.RUNNING,
+    return new Cluster(context.getProgramRunInfo().getRun(), ClusterStatus.RUNNING,
                        Collections.emptyList(), Collections.emptyMap());
   }
 

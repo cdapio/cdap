@@ -20,7 +20,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.internal.app.runtime.ThrowingRunnable;
 import io.cdap.cdap.internal.app.runtime.distributed.AbstractRuntimeTwillController;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.twill.api.ServiceController;
 import org.apache.twill.api.TwillController;

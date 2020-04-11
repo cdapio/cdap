@@ -20,12 +20,12 @@ import com.google.inject.Singleton;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
-import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
@@ -57,7 +57,7 @@ public class MockProvisioner implements Provisioner {
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     NAME, "Native", "Runs programs on the CDAP master cluster. Does not provision any resources.");
   private final AtomicInteger callCount;
-  private final Set<ProgramRun> seenRuns;
+  private final Set<ProgramRunInfo> seenRuns;
 
   public MockProvisioner() {
     this.callCount = new AtomicInteger(0);
@@ -79,7 +79,7 @@ public class MockProvisioner implements Provisioner {
     failIfConfigured(context, FAIL_CREATE);
     failRetryablyEveryN(context);
     waitIfConfigured(context, WAIT_CREATE_MS);
-    return new Cluster(context.getProgramRun().getRun(), ClusterStatus.CREATING,
+    return new Cluster(context.getProgramRunInfo().getRun(), ClusterStatus.CREATING,
                        Collections.emptyList(), Collections.emptyMap());
   }
 
@@ -96,7 +96,7 @@ public class MockProvisioner implements Provisioner {
     ClusterStatus status = cluster.getStatus();
     ClusterStatus newStatus;
     String firstClusterStatus = context.getProperties().get(FIRST_CLUSTER_STATUS);
-    if (seenRuns.add(context.getProgramRun()) && firstClusterStatus != null) {
+    if (seenRuns.add(context.getProgramRunInfo()) && firstClusterStatus != null) {
       newStatus = ClusterStatus.valueOf(firstClusterStatus);
     } else {
       switch (status) {
