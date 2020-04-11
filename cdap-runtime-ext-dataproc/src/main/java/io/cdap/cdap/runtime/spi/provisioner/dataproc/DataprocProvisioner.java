@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
@@ -373,20 +372,17 @@ public class DataprocProvisioner implements Provisioner {
     String clusterName = getClusterName(context.getProgramRunInfo());
     String projectId = conf.getProjectId();
     String region = conf.getRegion();
-    String sparkCompat = context.getSparkCompat().getCompat();
     String bucket = getBucket(systemProperties, conf);
     Map<String, String> systemLabels = getSystemLabels(systemContext);
-    GoogleCredentials dataprocCredentials;
     try {
-      dataprocCredentials = conf.getDataprocCredentials();
+      return Optional.of(
+        new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
+                                                              DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
+                                                              projectId, region, bucket, systemLabels)));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
 
-    return Optional.of(
-      new DataprocRuntimeJobManager(new DataprocClusterInfo(clusterName, dataprocCredentials,
-                                                            DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
-                                                            projectId, region, bucket, systemLabels, sparkCompat)));
   }
 
   private String getBucket(Map<String, String> systemProperties, DataprocConf conf) {

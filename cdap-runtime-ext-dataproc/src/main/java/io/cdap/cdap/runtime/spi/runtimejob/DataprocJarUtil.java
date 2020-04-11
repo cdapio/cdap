@@ -93,7 +93,7 @@ final class DataprocJarUtil {
     return createLocalFile(location, false);
   }
 
-  static LocalFile createLocalFile(Location location, boolean archive) throws IOException {
+  private static LocalFile createLocalFile(Location location, boolean archive) throws IOException {
     return new DefaultLocalFile(location.getName(), location.toURI(),
                                 location.lastModified(), location.length(), archive, null);
   }
