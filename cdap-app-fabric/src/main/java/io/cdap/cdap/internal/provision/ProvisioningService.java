@@ -151,7 +151,8 @@ public class ProvisioningService extends AbstractIdleService {
     LOG.info("Starting {}", getClass().getSimpleName());
     initializeProvisioners();
     this.taskExecutor = new KeyedExecutor<>(Executors.newScheduledThreadPool(
-      0, Threads.createDaemonThreadFactory("provisioning-service-%d")));
+      cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+      Threads.createDaemonThreadFactory("provisioning-service-%d")));
     resumeTasks(taskStateCleanup);
   }
 
