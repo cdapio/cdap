@@ -27,8 +27,9 @@ import org.slf4j.LoggerFactory;
  * This class contains common methods that are needed by DataprocProvisioner and DataprocRuntimeJobManager.
  */
 public final class DataprocUtils {
-  private static final Logger LOG = LoggerFactory.getLogger(DataprocUtils.class);
   public static final String CDAP_GCS_ROOT = "cdap-job";
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocUtils.class);
+  private static final String GS_PREFIX = "gs://";
 
   /**
    * Deletes provided directory path on GCS.
@@ -39,8 +40,9 @@ public final class DataprocUtils {
    */
   public static void deleteGCSPath(Storage storageClient, String bucket, String path) {
     try {
+      String bucketName = getBucketName(bucket);
       StorageBatch batch = storageClient.batch();
-      Page<Blob> blobs = storageClient.list(bucket, Storage.BlobListOption.currentDirectory(),
+      Page<Blob> blobs = storageClient.list(bucketName, Storage.BlobListOption.currentDirectory(),
                                             Storage.BlobListOption.prefix(path + "/"));
       boolean addedToDelete = false;
       for (Blob blob : blobs.iterateAll()) {
@@ -56,6 +58,16 @@ public final class DataprocUtils {
       LOG.warn(String.format("GCS path %s was not cleaned up for bucket %s due to %s. ",
                              path, bucket, e.getMessage()), e);
     }
+  }
+
+  /**
+   * Removes prefix gs:// and returns bucket name
+   */
+  public static String getBucketName(String bucket) {
+    if (bucket.startsWith(GS_PREFIX)) {
+      return bucket.substring(GS_PREFIX.length());
+    }
+    return bucket;
   }
 
   private DataprocUtils() {
