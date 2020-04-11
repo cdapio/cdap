@@ -19,6 +19,7 @@ package io.cdap.cdap.runtime.spi.provisioner;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -67,4 +68,9 @@ public interface ProvisionerContext {
    * @return the CDAP version
    */
   String getCDAPVersion();
+
+  /**
+   * Returns the {@link LocationFactory} used by the CDAP system.
+   */
+  LocationFactory getLocationFactory();
 }

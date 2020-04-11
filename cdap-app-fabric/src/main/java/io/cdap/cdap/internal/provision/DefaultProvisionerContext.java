@@ -24,6 +24,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,9 +42,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final SSHContext sshContext;
   private final SparkCompat sparkCompat;
   private final String cdapVersion;
+  private final LocationFactory locationFactory;
 
   DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
-                            SparkCompat sparkCompat, @Nullable SSHContext sshContext) {
+                            SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -57,6 +59,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.properties = Collections.unmodifiableMap(new HashMap<>(properties));
     this.sshContext = sshContext;
     this.sparkCompat = sparkCompat;
+    this.locationFactory = locationFactory;
     this.cdapVersion = ProjectInfo.getVersion().toString();
   }
 
@@ -89,5 +92,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public String getCDAPVersion() {
     return cdapVersion;
+  }
+
+  @Override
+  public LocationFactory getLocationFactory() {
+    return locationFactory;
   }
 }
