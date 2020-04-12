@@ -189,7 +189,7 @@ public final class SparkRuntimeContextProvider {
 
       ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        RuntimeMonitors.setupMonitoring(injector);
+        RuntimeMonitors.setupMonitoring(injector, programOptions);
       }
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -340,8 +340,7 @@ public final class SparkRuntimeContextProvider {
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId),
-                                                      programOptions.getArguments()));
+    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId), programOptions));
 
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
     modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {

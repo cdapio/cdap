@@ -57,10 +57,10 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   private final Discoverable runtimeMonitorDiscoverable;
 
   @Inject
-  RemoteExecutionDiscoveryService(CConfiguration cConf) {
+  RemoteExecutionDiscoveryService(CConfiguration cConf, RemoteMonitorType monitorType) {
     this.cConf = cConf;
     this.services = new ConcurrentHashMap<>();
-    this.runtimeMonitorDiscoverable = createMonitorDiscoverable(cConf);
+    this.runtimeMonitorDiscoverable = createMonitorDiscoverable(cConf, monitorType);
   }
 
   @Override
@@ -144,23 +144,23 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   }
 
   /**
-   * Creates a {@link Discoverable} for the runtime monitor service based on the given configuration.
+   * Creates a {@link Discoverable} for the runtime monitor service.
    */
-  private static Discoverable createMonitorDiscoverable(CConfiguration cConf) {
-    String url = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
-    if (url == null) {
-      // If there is no runtime monitor URL, default to the service socks proxy mechanism, in which the
-      // hostname is the service name with port == 0.
-      URIScheme scheme = cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
-      return scheme.createDiscoverable(Constants.Service.RUNTIME,
-                                       InetSocketAddress.createUnresolved(Constants.Service.RUNTIME, 0));
+  private static Discoverable createMonitorDiscoverable(CConfiguration cConf, RemoteMonitorType monitorType) {
+    if (monitorType == RemoteMonitorType.URL) {
+      // For monitor type URL, the monitor url is always set
+      String url = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
+      try {
+        return URIScheme.createDiscoverable(Constants.Service.RUNTIME, new URL(url));
+      } catch (MalformedURLException e) {
+        throw new IllegalArgumentException("Invalid monitor URL " + url, e);
+      }
     }
 
-    // If there is a monitor url setting, parse it to create the discoverable
-    try {
-      return URIScheme.createDiscoverable(Constants.Service.RUNTIME, new URL(url));
-    } catch (MalformedURLException e) {
-      throw new IllegalArgumentException("Invalid monitor URL " + url, e);
-    }
+    // If there is no runtime monitor URL, default to the service socks proxy mechanism, in which the
+    // hostname is the service name with port == 0.
+    URIScheme scheme = cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
+    return scheme.createDiscoverable(Constants.Service.RUNTIME,
+                                     InetSocketAddress.createUnresolved(Constants.Service.RUNTIME, 0));
   }
 }

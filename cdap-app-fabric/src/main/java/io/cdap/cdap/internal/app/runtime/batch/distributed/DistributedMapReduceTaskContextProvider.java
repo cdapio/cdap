@@ -79,17 +79,17 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   @Override
   protected void startUp() throws Exception {
     super.startUp();
+    ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
     try {
       oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        RuntimeMonitors.setupMonitoring(getInjector());
+        RuntimeMonitors.setupMonitoring(getInjector(), programOptions);
       }
 
       for (Service service : coreServices) {
         service.startAndWait();
       }
       logAppenderInitializer.initialize();
-      ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
     } catch (Exception e) {
       // Try our best to stop services. Chain stop guarantees it will stop everything, even some of them failed.
@@ -138,7 +138,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     Arguments systemArgs = programOptions.getArguments();
     String runId = systemArgs.getOption(ProgramOptionConstants.RUN_ID);
     return Guice.createInjector(
-      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), systemArgs)
+      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId),
+                                            programOptions)
     );
   }
 }

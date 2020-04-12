@@ -200,7 +200,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     // Setup the proxy selector for in active monitoring mode
     oldProxySelector = ProxySelector.getDefault();
     if (clusterMode == ClusterMode.ISOLATED) {
-      RuntimeMonitors.setupMonitoring(injector);
+      RuntimeMonitors.setupMonitoring(injector, programOptions);
     }
 
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -350,8 +350,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
-    return new DistributedProgramContainerModule(cConf, hConf, programRunId,
-                                                 programOptions.getArguments(), getServiceAnnouncer());
+    return new DistributedProgramContainerModule(cConf, hConf, programRunId, programOptions, getServiceAnnouncer());
   }
 
   /**

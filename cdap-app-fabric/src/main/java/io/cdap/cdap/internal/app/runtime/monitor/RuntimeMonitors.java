@@ -18,10 +18,13 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.collect.Maps;
 import com.google.inject.Injector;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,19 +95,21 @@ public final class RuntimeMonitors {
   /**
    * Setups the monitoring routes and proxy for runtime monitoring.
    */
-  public static void setupMonitoring(Injector injector) throws Exception {
+  public static void setupMonitoring(Injector injector, ProgramOptions programOpts) throws Exception {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    String monitorURL = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
-    if (monitorURL == null) {
-      Authenticator.setDefault(injector.getInstance(Authenticator.class));
-      ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-    } else {
-      Class<? extends RemoteAuthenticator> monitorAuthClass =
-        cConf.getClass(Constants.RuntimeMonitor.MONITOR_AUTHENTICATOR_CLASS, null, RemoteAuthenticator.class);
+    RemoteMonitorType monitorType = injector.getInstance(RemoteMonitorType.class);
+    if (monitorType == RemoteMonitorType.URL) {
+      String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
+      String authenticatorKey = String.format("%s%s", Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX,
+                                              provisioner);
+      Class<? extends RemoteAuthenticator> monitorAuthClass = cConf.getClass(authenticatorKey, null,
+                                                                             RemoteAuthenticator.class);
       if (monitorAuthClass != null) {
         RemoteAuthenticator.setDefaultAuthenticator(monitorAuthClass.newInstance());
       }
 
+      // This shouldn't be null, otherwise the type won't be URL.
+      String monitorURL = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
       monitorURL = monitorURL.endsWith("/") ? monitorURL : monitorURL + "/";
       ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);
       URI runtimeServiceBaseURI = URI.create(monitorURL).resolve(
@@ -115,6 +120,9 @@ public final class RuntimeMonitors {
       System.setProperty(RemoteClient.RUNTIME_SERVICE_ROUTING_BASE_URI, runtimeServiceBaseURI.toString());
 
       LOG.debug("Setting runtime service routing base URI to {}", runtimeServiceBaseURI);
+    } else {
+      Authenticator.setDefault(injector.getInstance(Authenticator.class));
+      ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
     }
   }
 

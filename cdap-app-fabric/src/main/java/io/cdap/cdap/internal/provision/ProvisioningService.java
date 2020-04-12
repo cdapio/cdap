@@ -559,13 +559,10 @@ public class ProvisioningService extends AbstractIdleService {
 
     ProvisionerContext context;
     try {
-      DefaultSSHContext defaultSSHContext = null;
-      if (!getRuntimeJobManager(programRunId, programOptions).isPresent()) {
-        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                  locationFactory.create(taskInfo.getSecureKeysDir()),
-                                                  createSSHKeyPair(taskInfo));
-      }
-      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), defaultSSHContext);
+      SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    locationFactory.create(taskInfo.getSecureKeysDir()),
+                                                    createSSHKeyPair(taskInfo));
+      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), sshContext);
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -614,15 +611,11 @@ public class ProvisioningService extends AbstractIdleService {
     }
 
     ProgramRunId programRunId = taskInfo.getProgramRunId();
-    ProgramOptions programOptions = taskInfo.getProgramOptions();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
     try {
-      DefaultSSHContext defaultSSHContext = null;
-      if (!getRuntimeJobManager(programRunId, programOptions).isPresent()) {
-        defaultSSHContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
-                                                  null, sshKeyPair);
-      }
-      context = createContext(programRunId, taskInfo.getUser(), properties, defaultSSHContext);
+      SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
+                                                    null, sshKeyPair);
+      context = createContext(programRunId, taskInfo.getUser(), properties, sshContext);
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "

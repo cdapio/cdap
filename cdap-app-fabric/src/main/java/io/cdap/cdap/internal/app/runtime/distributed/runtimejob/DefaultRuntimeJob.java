@@ -72,6 +72,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgram
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
@@ -171,11 +172,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
-    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv), programRunId));
+    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv), programRunId,
+                                                           programOpts));
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
     ProxySelector oldProxySelector = ProxySelector.getDefault();
-    RuntimeMonitors.setupMonitoring(injector);
+    RuntimeMonitors.setupMonitoring(injector, programOpts);
 
     LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
@@ -313,7 +315,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * Returns list of guice modules used to start the program run.
    */
   @VisibleForTesting
-  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf, ProgramRunId programRunId) {
+  List<Module> createModules(RuntimeJobEnvironment runtimeJobEnv, CConfiguration cConf, ProgramRunId programRunId,
+                             ProgramOptions programOpts) {
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf));
     modules.add(new IOModule());
@@ -351,6 +354,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
+        bind(RemoteMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
       }
     });
 
@@ -373,7 +377,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     services.add(injector.getInstance(MessagingHttpService.class));
 
     // Starts the traffic relay if monitoring is done through SSH tunnel
-    if (injector.getInstance(CConfiguration.class).get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
+    if (injector.getInstance(RemoteMonitorType.class) == RemoteMonitorType.SSH) {
       services.add(injector.getInstance(TrafficRelayService.class));
     }
     services.add(injector.getInstance(RuntimeClientService.class));

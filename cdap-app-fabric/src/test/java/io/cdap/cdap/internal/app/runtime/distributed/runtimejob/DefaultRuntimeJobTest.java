@@ -24,9 +24,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
@@ -57,6 +59,13 @@ public class DefaultRuntimeJobTest {
     LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFile());
 
     DefaultRuntimeJob defaultRuntimeJob = new DefaultRuntimeJob();
+    Arguments systemArgs = new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_NAME, "test"));
+    Node node = new Node("test", Node.Type.MASTER, "127.0.0.1", System.currentTimeMillis(), Collections.emptyMap());
+    Cluster cluster = new Cluster("test", ClusterStatus.RUNNING, Collections.singleton(node), Collections.emptyMap());
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    SimpleProgramOptions programOpts = new SimpleProgramOptions(programRunId.getParent(), systemArgs,
+                                                                new BasicArguments());
+
     Injector injector = Guice.createInjector(defaultRuntimeJob.createModules(new RuntimeJobEnvironment() {
 
       @Override
@@ -73,12 +82,9 @@ public class DefaultRuntimeJobTest {
       public Map<String, String> getProperties() {
         return Collections.emptyMap();
       }
-    }, cConf, NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate())));
+    }, cConf, programRunId, programOpts));
 
     injector.getInstance(LogAppenderInitializer.class);
-    Arguments systemArgs = new BasicArguments(Collections.singletonMap(SystemArguments.PROFILE_NAME, "test"));
-    Node node = new Node("test", Node.Type.MASTER, "127.0.0.1", System.currentTimeMillis(), Collections.emptyMap());
-    Cluster cluster = new Cluster("test", ClusterStatus.RUNNING, Collections.singleton(node), Collections.emptyMap());
     defaultRuntimeJob.createCoreServices(injector, systemArgs, cluster);
   }
 }

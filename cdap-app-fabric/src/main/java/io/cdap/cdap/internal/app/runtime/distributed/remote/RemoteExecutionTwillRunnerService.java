@@ -42,6 +42,7 @@ import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.distributed.ProgramTwillApplication;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxyAuthenticator;
@@ -233,10 +234,10 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
     ProgramTwillApplication programTwillApp = (ProgramTwillApplication) application;
     ProgramRunId programRunId = programTwillApp.getProgramRunId();
-    ProgramOptions programOptions = programTwillApp.getProgramOptions();
+    ProgramOptions programOpts = programTwillApp.getProgramOptions();
 
-    return createPreparer(cConfCopy, hConfCopy, programRunId, programOptions, application.configure(), locationCache,
-                          new ControllerFactory(programRunId, programOptions));
+    return createPreparer(cConfCopy, hConfCopy, programRunId, programOpts, application.configure(), locationCache,
+                          new ControllerFactory(programRunId, programOpts));
   }
 
   @Nullable
@@ -432,6 +433,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       ClusterMode clusterMode = ClusterMode.valueOf(systemArgs.getOrDefault(ProgramOptionConstants.CLUSTER_MODE,
                                                                             ClusterMode.ON_PREMISE.name()));
       if (clusterMode != ClusterMode.ISOLATED) {
+        LOG.debug("Ignore run {} of non supported cluster mode {}", runRecordDetail.getProgramRunId(), clusterMode);
         return false;
       }
     } catch (IllegalArgumentException e) {
@@ -442,7 +444,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     ProgramOptions programOpts = new SimpleProgramOptions(runRecordDetail.getProgramRunId().getParent(),
                                                           new BasicArguments(runRecordDetail.getSystemArgs()),
                                                           new BasicArguments(runRecordDetail.getUserArgs()));
-
     // Creates a controller via the controller factory.
     // Since there is no startup start needed, the timeout is arbitrarily short
     new ControllerFactory(runRecordDetail.getProgramRunId(), programOpts).create(null, 5, TimeUnit.SECONDS);
@@ -583,18 +584,22 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     private RemoteExecutionService createRemoteExecutionService(ProgramRunId programRunId, ProgramOptions programOpts,
                                                                 RemoteProcessController processController)
       throws IOException {
-      // If monitor URL is set, we don't need the service socks proxy.
-      if (cConf.get(Constants.RuntimeMonitor.MONITOR_URL) != null) {
+      // If monitor via URL directly, no need to run service socks proxy
+      RemoteMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+      if (monitorType == RemoteMonitorType.URL) {
+        LOG.debug("Monitor program run {} with direct url", programRunId);
         return new RemoteExecutionService(cConf, programRunId, scheduler, processController, programStateWriter);
       }
 
-      // Create a SSH tunnel for service socks proxy
+      // SSH monitor. The remote exeuction service will starts the service proxy
       ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
+      SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
       RemoteExecutionService remoteExecutionService = new SSHRemoteExecutionService(cConf, programRunId,
-                                                                                    clusterKeyInfo.getSSHConfig(),
+                                                                                    sshConfig,
                                                                                     getServiceSocksProxyPort(),
                                                                                     processController,
                                                                                     programStateWriter, scheduler);
+      LOG.debug("Monitor program run {} with SSH config {}", programRunId, sshConfig);
       String proxySecret = clusterKeyInfo.getServerProxySecret();
       remoteExecutionService.addListener(new ServiceListenerAdapter() {
         @Override

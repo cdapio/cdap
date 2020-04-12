@@ -21,6 +21,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -47,6 +48,8 @@ import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -70,8 +73,6 @@ import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,33 +85,31 @@ import javax.annotation.Nullable;
  */
 public class DistributedProgramContainerModule extends AbstractModule {
 
-  private static final Logger LOG = LoggerFactory.getLogger(DistributedProgramContainerModule.class);
-
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final ProgramRunId programRunId;
-  private final Arguments systemArgs;
+  private final ProgramOptions programOpts;
   @Nullable
   private final ServiceAnnouncer serviceAnnouncer;
 
   public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf,
-                                           ProgramRunId programRunId, Arguments systemArgs) {
-    this(cConf, hConf, programRunId, systemArgs, null);
+                                           ProgramRunId programRunId, ProgramOptions programOpts) {
+    this(cConf, hConf, programRunId, programOpts, null);
   }
 
   public DistributedProgramContainerModule(CConfiguration cConf, Configuration hConf, ProgramRunId programRunId,
-                                           Arguments systemArgs, @Nullable ServiceAnnouncer serviceAnnouncer) {
+                                           ProgramOptions programOpts, @Nullable ServiceAnnouncer serviceAnnouncer) {
     this.cConf = cConf;
     this.hConf = hConf;
     this.programRunId = programRunId;
-    this.systemArgs = systemArgs;
+    this.programOpts = programOpts;
     this.serviceAnnouncer = serviceAnnouncer;
   }
 
   @Override
   protected void configure() {
     List<Module> modules = getCoreModules();
-    String principal = systemArgs.getOption(ProgramOptionConstants.PRINCIPAL);
+    String principal = programOpts.getArguments().getOption(ProgramOptionConstants.PRINCIPAL);
 
     AuthenticationContextModules authModules = new AuthenticationContextModules();
     modules.add(principal == null
@@ -128,9 +127,12 @@ public class DistributedProgramContainerModule extends AbstractModule {
         bind(MetadataStorage.class).to(NoopMetadataStorage.class);
       }
     }));
+
+    bind(RemoteMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
   }
 
   private List<Module> getCoreModules() {
+    Arguments systemArgs = programOpts.getArguments();
     ClusterMode clusterMode = systemArgs.hasOption(ProgramOptionConstants.CLUSTER_MODE)
       ? ClusterMode.valueOf(systemArgs.getOption(ProgramOptionConstants.CLUSTER_MODE))
       : ClusterMode.ON_PREMISE;
@@ -182,7 +184,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
   }
 
   private void addOnPremiseModules(List<Module> modules) {
-    String instanceId = systemArgs.getOption(ProgramOptionConstants.INSTANCE_ID);
+    String instanceId = programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
 
     modules.add(new ZKClientModule());
     modules.add(new ZKDiscoveryModule());

@@ -874,7 +874,9 @@ public final class Constants {
     // Configuration key for specifying the base URL for sending monitoring messages.
     // If it is missing from the configuration, SSH tunnel will be used.
     public static final String MONITOR_URL = "app.program.runtime.monitor.url";
-    public static final String MONITOR_AUTHENTICATOR_CLASS = "app.program.runtime.monitor.authenticator.class";
+    public static final String MONITOR_TYPE_PREFIX = "app.program.runtime.monitor.type.";
+    public static final String MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX =
+      "app.program.runtime.monitor.url.authenticator.class.";
 
     // Configuration keys for the runtime monitor server
     public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
