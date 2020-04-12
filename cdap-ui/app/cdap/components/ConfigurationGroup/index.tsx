@@ -38,10 +38,12 @@ const styles = (theme): StyleRules => {
     },
     groupTitle: {
       marginBottom: '15px',
+      marginLeft: '10px',
+      marginRight: '15px',
     },
     h2Title: {
-      ...h2Styles(theme),
-      marginBottom: 0,
+      ...h2Styles(theme).root,
+      marginBottom: '5px',
     },
     groupSubTitle: {
       color: theme.palette.grey[200],
