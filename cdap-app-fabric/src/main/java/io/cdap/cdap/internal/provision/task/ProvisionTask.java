@@ -21,6 +21,7 @@ import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -51,6 +52,7 @@ import java.util.concurrent.TimeoutException;
  *
  * PollingCreate -- (state == ORPHANED) --> Failed
  *
+ * RequestingDelete -- (state == RUNNING) --> RequestingDelete
  *
  * PollingDelete -- (state == RUNNING) --> Initializing --> Created
  *
@@ -82,7 +84,9 @@ public class ProvisionTask extends ProvisioningTask {
     subtasks.put(ProvisioningOp.Status.POLLING_CREATE, createPollingCreateSubtask());
     subtasks.put(ProvisioningOp.Status.REQUESTING_DELETE,
                  new ClusterDeleteSubtask(provisioner, provisionerContext,
-                                          cluster -> Optional.of(ProvisioningOp.Status.POLLING_DELETE)));
+                                          cluster -> Optional.of(cluster.getStatus() == ClusterStatus.RUNNING
+                                                                   ? ProvisioningOp.Status.REQUESTING_DELETE
+                                                                   : ProvisioningOp.Status.POLLING_DELETE)));
     subtasks.put(ProvisioningOp.Status.POLLING_DELETE, createPollingDeleteSubtask());
     subtasks.put(ProvisioningOp.Status.INITIALIZING, createInitializeSubtask(initialTaskInfo));
     subtasks.put(ProvisioningOp.Status.FAILED, EndSubtask.INSTANCE);

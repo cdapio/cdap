@@ -132,8 +132,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String bucket = DataprocUtils.getBucketName(this.bucket);
 
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    LOG.info("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
-             runInfo.getRun(), clusterName, projectId, region, bucket);
+    LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
+              runInfo.getRun(), clusterName, projectId, region, bucket);
 
     // TODO: CDAP-16408 use fixed directory for caching twill, application, artifact jars
     File tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
@@ -156,9 +156,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClassname(), runInfo, uploadedFiles);
 
       // step 4: submit hadoop job to dataproc
-      LOG.info("Submitting hadoop job {} to cluster {}.", request.getJob().getReference().getJobId(), clusterName);
       Job job = jobControllerClient.submitJob(request);
-      LOG.info("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
@@ -208,7 +207,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     }
     String jobFilter = Joiner.on(" AND ").join(filters);
 
-    LOG.info("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
+    LOG.debug("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
              clusterName, jobFilter);
     JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
       jobControllerClient.listJobs(ListJobsRequest.newBuilder()
@@ -224,13 +223,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void stop(ProgramRunInfo programRunInfo) throws Exception {
-    Optional<RuntimeJobDetail> jobDetail = getDetail(programRunInfo);
-    // if the job does not exist, it can be safely assume that job has been deleted. Hence has reached terminal state.
-    if (!jobDetail.isPresent()) {
+    RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
+    if (jobDetail == null || jobDetail.getStatus().isTerminated()) {
       return;
     }
     // stop dataproc job
-    stopJob(getJobId(programRunInfo));
+    stopJob(getJobId(jobDetail.getRunInfo()));
   }
 
   @Override
@@ -405,7 +403,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private void stopJob(String jobId) throws Exception {
     try {
       jobControllerClient.cancelJob(projectId, region, jobId);
-      LOG.info("Stopped the job {} on cluster {}.", jobId, clusterName);
+      LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() == StatusCode.Code.FAILED_PRECONDITION) {
         LOG.warn("Job {} is already stopped on cluster {}.", jobId, clusterName);

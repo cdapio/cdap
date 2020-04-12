@@ -35,6 +35,7 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
@@ -245,24 +246,43 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+    deleteClusterWithStatus(context, cluster);
+  }
+
+  @Override
+  public ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+    // Reload system context properties
+    systemContext.reloadProperties();
+
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     Map<String, String> systemProperties = systemContext.getProperties();
-    // if this system property is provided, we will assume that job manager apis have been used to launch job.
-    if (systemProperties.containsKey(RUNTIME_JOB_MANAGER)) {
+    RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
+
+    if (jobManager != null) {
+      jobManager.initialize();
+      try {
+        // If there is job manager, check to make sure the job is completed.
+        // Also cleanup files created by the job run.
+        RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
+        if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
+          return ClusterStatus.RUNNING;
+        }
+      } finally {
+        jobManager.destroy();
+      }
+
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
         .setCredentials(conf.getDataprocCredentials()).build().getService();
       DataprocUtils.deleteGCSPath(storageClient, getBucket(systemProperties, conf),
                                   DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRunInfo().getRun());
     }
     String clusterName = getClusterName(context.getProgramRunInfo());
-
-    // Reload system context properties
-    systemContext.reloadProperties();
     try (DataprocClient client =
            DataprocClient.fromConf(conf,
                                    Boolean.parseBoolean(systemProperties.getOrDefault(PRIVATE_INSTANCE, "false")))) {
       client.deleteCluster(clusterName);
     }
+    return ClusterStatus.DELETING;
   }
 
   @Override

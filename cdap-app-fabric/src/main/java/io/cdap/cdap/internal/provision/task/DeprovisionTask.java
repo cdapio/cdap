@@ -21,6 +21,7 @@ import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
 import io.cdap.cdap.internal.provision.ProvisioningOp;
 import io.cdap.cdap.internal.provision.ProvisioningTaskInfo;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -43,6 +44,8 @@ import java.util.Optional;
  *                                                        |-- (state == FAILED || state == ORPHANED) --> Orphaned
  *
  * Some cluster statuses are not expected when polling for delete state. They are handled as follows:
+ *
+ * RequestingDelete -- (state == RUNNING) --> RequestingDelete
  *
  * PollingDelete -- (state == RUNNING) --> RequestingDelete
  *
@@ -71,7 +74,9 @@ public class DeprovisionTask extends ProvisioningTask {
     // RequestingDelete
     ProvisioningSubtask subtask =
       new ClusterDeleteSubtask(provisioner, provisionerContext,
-                               cluster -> Optional.of(ProvisioningOp.Status.POLLING_DELETE));
+                               cluster -> Optional.of(cluster.getStatus() == ClusterStatus.RUNNING
+                                                        ? ProvisioningOp.Status.REQUESTING_DELETE
+                                                        : ProvisioningOp.Status.POLLING_DELETE));
     subtasks.put(ProvisioningOp.Status.REQUESTING_DELETE, subtask);
 
     // PollingDelete
