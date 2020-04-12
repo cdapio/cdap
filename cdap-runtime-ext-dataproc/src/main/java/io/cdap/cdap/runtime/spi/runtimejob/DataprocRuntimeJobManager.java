@@ -41,14 +41,16 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.LocationFactory;
+import org.apache.twill.internal.DefaultLocalFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -84,6 +86,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
   private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
 
+  private final ProvisionerContext provisionerContext;
   private final String clusterName;
   private final GoogleCredentials credentials;
   private final String endpoint;
@@ -91,7 +94,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String region;
   private final String bucket;
   private final Map<String, String> labels;
-  private final String sparkCompat;
 
   private Storage storageClient;
   private JobControllerClient jobControllerClient;
@@ -102,6 +104,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    * @param clusterInfo dataproc cluster information
    */
   public DataprocRuntimeJobManager(DataprocClusterInfo clusterInfo) {
+    this.provisionerContext = clusterInfo.getProvisionerContext();
     this.clusterName = clusterInfo.getClusterName();
     this.credentials = clusterInfo.getCredentials();
     this.endpoint = clusterInfo.getEndpoint();
@@ -109,7 +112,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     this.region = clusterInfo.getRegion();
     this.bucket = clusterInfo.getBucket();
     this.labels = clusterInfo.getLabels();
-    this.sparkCompat = clusterInfo.getSparkCompat();
   }
 
   @Override
@@ -127,9 +129,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
+    String bucket = DataprocUtils.getBucketName(this.bucket);
+
     ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
-    LOG.info("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
-             runInfo.getRun(), clusterName, projectId, region, bucket);
+    LOG.debug("Launching run {} with following configurations: cluster {}, project {}, region {}, bucket {}.",
+              runInfo.getRun(), clusterName, projectId, region, bucket);
 
     // TODO: CDAP-16408 use fixed directory for caching twill, application, artifact jars
     File tempDir = Files.createTempDirectory("dataproc.launcher").toFile();
@@ -141,20 +145,19 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
+      List<LocalFile> uploadedFiles = new ArrayList<>();
       for (LocalFile fileToUpload : localFiles) {
         String targetFilePath = getPath(runRootPath, fileToUpload.getName());
-        LOG.debug("Uploading file {} to gcs bucket {}.", targetFilePath, bucket);
-        uploadFile(targetFilePath, fileToUpload);
-        LOG.debug("Uploaded file {} to gcs bucket {}.", targetFilePath, bucket);
+        uploadedFiles.add(uploadFile(bucket, targetFilePath, fileToUpload));
+        LOG.debug("Uploaded file from {} to gs://{}/{}.", fileToUpload.getURI(), bucket, targetFilePath);
       }
 
       // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClassname(), runInfo, localFiles);
+      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClassname(), runInfo, uploadedFiles);
 
       // step 4: submit hadoop job to dataproc
-      LOG.info("Submitting hadoop job {} to cluster {}.", request.getJob().getReference().getJobId(), clusterName);
       Job job = jobControllerClient.submitJob(request);
-      LOG.info("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
@@ -204,7 +207,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     }
     String jobFilter = Joiner.on(" AND ").join(filters);
 
-    LOG.info("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
+    LOG.debug("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
              clusterName, jobFilter);
     JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
       jobControllerClient.listJobs(ListJobsRequest.newBuilder()
@@ -220,13 +223,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
   @Override
   public void stop(ProgramRunInfo programRunInfo) throws Exception {
-    Optional<RuntimeJobDetail> jobDetail = getDetail(programRunInfo);
-    // if the job does not exist, it can be safely assume that job has been deleted. Hence has reached terminal state.
-    if (!jobDetail.isPresent()) {
+    RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
+    if (jobDetail == null || jobDetail.getStatus().isTerminated()) {
       return;
     }
     // stop dataproc job
-    stopJob(getJobId(programRunInfo));
+    stopJob(getJobId(jobDetail.getRunInfo()));
   }
 
   @Override
@@ -254,27 +256,40 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Uploads files to gcs.
    */
-  private void uploadFile(String targetFilePath, LocalFile localFile) throws IOException, StorageException {
-    String bucket = DataprocUtils.getBucketName(this.bucket);
+  private LocalFile uploadFile(String bucket, String targetFilePath,
+                               LocalFile localFile) throws IOException, StorageException {
     BlobId blobId = BlobId.of(bucket, targetFilePath);
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
 
-    URI fileURI = localFile.getURI();
-    if (fileURI.getScheme().startsWith("file")) {
-      try (InputStream inputStream = fileURI.toURL().openStream()) {
-        try (WriteChannel writer = storageClient.writer(blobInfo)) {
-          ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
-        }
-      }
-    } else {
-      BlobId sourceBlobId = BlobId.of(fileURI.getAuthority(), fileURI.getPath().substring(1));
-      Storage client = StorageOptions.getDefaultInstance().getService();
-      try (InputStream inputStream = new ByteArrayInputStream(client.get(sourceBlobId).getContent())) {
-        try (WriteChannel writer = storageClient.writer(blobInfo)) {
-          ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
-        }
-      }
+    try (InputStream inputStream = openStream(localFile.getURI());
+         WriteChannel writer = storageClient.writer(blobInfo)) {
+      ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
     }
+
+    return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
+                                localFile.getLastModified(), localFile.getSize(),
+                                localFile.isArchive(), localFile.getPattern());
+  }
+
+  /**
+   * Opens an {@link InputStream} to read from the given URI.
+   */
+  private InputStream openStream(URI uri) throws IOException {
+    if ("file".equals(uri.getScheme())) {
+      return Files.newInputStream(new File(uri).toPath());
+    }
+    LocationFactory locationFactory = provisionerContext.getLocationFactory();
+    if (locationFactory.getHomeLocation().toURI().getScheme().equals(uri.getScheme())) {
+      return locationFactory.create(uri).getInputStream();
+    }
+    if ("gs".equals(uri.getScheme())) {
+      BlobId blobId = BlobId.of(uri.getAuthority(), uri.getPath().substring(1));
+      Storage client = StorageOptions.getDefaultInstance().getService();
+      return Channels.newInputStream(client.get(blobId).reader());
+    }
+
+    // Default to Java URL stream implementation.
+    return uri.toURL().openStream();
   }
 
   /**
@@ -286,9 +301,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
     // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
     List<String> arguments = Stream.concat(
-      Stream.of(jobMainClassName, sparkCompat),
-      localFiles.stream()
-        .filter(LocalFile::isArchive).map(LocalFile::getName)
+      Stream.of(jobMainClassName, provisionerContext.getSparkCompat().getCompat()),
+      localFiles.stream().filter(LocalFile::isArchive).map(LocalFile::getName)
     ).collect(Collectors.toList());
 
     Map<String, String> properties = new LinkedHashMap<>();
@@ -307,17 +321,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       .putAllProperties(properties);
 
     for (LocalFile localFile : localFiles) {
-      String localFileName = localFile.getName();
-      String fileName = getPath(bucket, DataprocUtils.CDAP_GCS_ROOT, runId, localFileName);
-
       // add jar file
+      URI uri = localFile.getURI();
       if (localFile.getName().endsWith("jar")) {
-        LOG.info("Adding {} as jar.", localFileName);
-        hadoopJobBuilder.addJarFileUris(fileName);
+        hadoopJobBuilder.addJarFileUris(uri.toString());
       } else {
-        // add all the other files as file
-        LOG.info("Adding {} as file.", localFileName);
-        hadoopJobBuilder.addFileUris(fileName);
+        hadoopJobBuilder.addFileUris(uri.toString());
       }
     }
 
@@ -354,8 +363,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
    */
   private RuntimeJobStatus getRuntimeJobStatus(Job job) {
     JobStatus.State state = job.getStatus().getState();
-    LOG.debug("Dataproc job {} is in state {}.", job.getReference().getJobId(), state);
-
     RuntimeJobStatus runtimeJobStatus;
     switch (state) {
       case STATE_UNSPECIFIED:
@@ -396,7 +403,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private void stopJob(String jobId) throws Exception {
     try {
       jobControllerClient.cancelJob(projectId, region, jobId);
-      LOG.info("Stopped the job {} on cluster {}.", jobId, clusterName);
+      LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
       if (e.getStatusCode().getCode() == StatusCode.Code.FAILED_PRECONDITION) {
         LOG.warn("Job {} is already stopped on cluster {}.", jobId, clusterName);

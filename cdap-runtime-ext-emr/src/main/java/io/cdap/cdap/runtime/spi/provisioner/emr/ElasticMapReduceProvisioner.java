@@ -18,6 +18,7 @@ package io.cdap.cdap.runtime.spi.provisioner.emr;
 
 import com.amazonaws.services.elasticmapreduce.model.ClusterSummary;
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -25,7 +26,6 @@ import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
-import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
@@ -72,7 +72,7 @@ public class ElasticMapReduceProvisioner implements Provisioner {
     context.getSSHContext().setSSHKeyPair(sshKeyPair);
 
     EMRConf conf = EMRConf.fromProvisionerContext(context);
-    String clusterName = getClusterName(context.getProgramRun());
+    String clusterName = getClusterName(context.getProgramRunInfo());
 
     try (EMRClient client = EMRClient.fromConf(conf)) {
       // if it already exists, it means this is a retry. We can skip actually making the request
@@ -133,14 +133,14 @@ public class ElasticMapReduceProvisioner implements Provisioner {
   // numbers, or hyphens, and cannot end with a hyphen
   // We'll use app-runid, where app is truncated to fit, lowercased, and stripped of invalid characters
   @VisibleForTesting
-  static String getClusterName(ProgramRun programRun) {
-    String cleanedAppName = programRun.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
+  static String getClusterName(ProgramRunInfo programRunInfo) {
+    String cleanedAppName = programRunInfo.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
     // 51 is max length, need to subtract the prefix and 1 extra for the '-' separating app name and run id
-    int maxAppLength = 51 - CLUSTER_PREFIX.length() - 1 - programRun.getRun().length();
+    int maxAppLength = 51 - CLUSTER_PREFIX.length() - 1 - programRunInfo.getRun().length();
     if (cleanedAppName.length() > maxAppLength) {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
-    return CLUSTER_PREFIX + cleanedAppName + "-" + programRun.getRun();
+    return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
   }
 
   @Override

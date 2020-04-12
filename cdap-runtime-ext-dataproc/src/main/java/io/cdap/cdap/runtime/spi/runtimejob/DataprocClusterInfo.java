@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.auth.oauth2.GoogleCredentials;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,6 +27,8 @@ import java.util.Map;
  * Class to carry information about dataproc cluster. Instance of this class will be created by provisioner.
  */
 public class DataprocClusterInfo {
+
+  private final ProvisionerContext provisionerContext;
   private final String clusterName;
   private final String endpoint;
   private final GoogleCredentials credentials;
@@ -33,10 +36,11 @@ public class DataprocClusterInfo {
   private final String region;
   private final String bucket;
   private final Map<String, String> labels;
-  private final String sparkCompat;
 
-  public DataprocClusterInfo(String clusterName, GoogleCredentials credentials, String endpoint, String projectId,
-                             String region, String bucket, Map<String, String> labels, String sparkCompat) {
+  public DataprocClusterInfo(ProvisionerContext provisionerContext,
+                             String clusterName, GoogleCredentials credentials, String endpoint, String projectId,
+                             String region, String bucket, Map<String, String> labels) {
+    this.provisionerContext = provisionerContext;
     this.clusterName = clusterName;
     this.endpoint = endpoint;
     this.credentials = credentials;
@@ -44,7 +48,10 @@ public class DataprocClusterInfo {
     this.region = region;
     this.bucket = bucket;
     this.labels = Collections.unmodifiableMap(new HashMap<>(labels));
-    this.sparkCompat = sparkCompat;
+  }
+
+  ProvisionerContext getProvisionerContext() {
+    return provisionerContext;
   }
 
   String getClusterName() {
@@ -73,9 +80,5 @@ public class DataprocClusterInfo {
 
   Map<String, String> getLabels() {
     return labels;
-  }
-
-  String getSparkCompat() {
-    return sparkCompat;
   }
 }

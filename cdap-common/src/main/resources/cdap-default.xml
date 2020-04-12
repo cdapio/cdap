@@ -2640,6 +2640,15 @@
     </description>
   </property>
 
+  <!-- Provisioner Configuration -->
+  <property>
+    <name>provisioner.executor.threads</name>
+    <value>10</value>
+    <description>
+      Thread pool size for the executor in the provisioning service
+    </description>
+  </property>
+
 
   <!-- Runtime Monitor Configuration -->
 

@@ -16,26 +16,26 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategy;
-import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
@@ -177,7 +177,7 @@ public class DataprocProvisioner implements Provisioner {
     Map<String, String> systemLabels = getSystemLabels(systemContext);
 
     DataprocConf conf = DataprocConf.create(createContextProperties(context), sshPublicKey);
-    String clusterName = getClusterName(context.getProgramRun());
+    String clusterName = getClusterName(context.getProgramRunInfo());
 
     try (DataprocClient client =
            DataprocClient.fromConf(conf,
@@ -218,7 +218,7 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
-    String clusterName = getClusterName(context.getProgramRun());
+    String clusterName = getClusterName(context.getProgramRunInfo());
     // Reload system context properties
     systemContext.reloadProperties();
     try (DataprocClient client =
@@ -232,7 +232,7 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public Cluster getClusterDetail(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
-    String clusterName = getClusterName(context.getProgramRun());
+    String clusterName = getClusterName(context.getProgramRunInfo());
     // Reload system context properties
     systemContext.reloadProperties();
     try (DataprocClient client =
@@ -246,24 +246,43 @@ public class DataprocProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
+    deleteClusterWithStatus(context, cluster);
+  }
+
+  @Override
+  public ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+    // Reload system context properties
+    systemContext.reloadProperties();
+
     DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
     Map<String, String> systemProperties = systemContext.getProperties();
-    // if this system property is provided, we will assume that job manager apis have been used to launch job.
-    if (systemProperties.containsKey(RUNTIME_JOB_MANAGER)) {
+    RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
+
+    if (jobManager != null) {
+      jobManager.initialize();
+      try {
+        // If there is job manager, check to make sure the job is completed.
+        // Also cleanup files created by the job run.
+        RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
+        if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
+          return ClusterStatus.RUNNING;
+        }
+      } finally {
+        jobManager.destroy();
+      }
+
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
         .setCredentials(conf.getDataprocCredentials()).build().getService();
       DataprocUtils.deleteGCSPath(storageClient, getBucket(systemProperties, conf),
-                                  DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRun().getRun());
+                                  DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRunInfo().getRun());
     }
-    String clusterName = getClusterName(context.getProgramRun());
-
-    // Reload system context properties
-    systemContext.reloadProperties();
+    String clusterName = getClusterName(context.getProgramRunInfo());
     try (DataprocClient client =
            DataprocClient.fromConf(conf,
                                    Boolean.parseBoolean(systemProperties.getOrDefault(PRIVATE_INSTANCE, "false")))) {
       client.deleteCluster(clusterName);
     }
+    return ClusterStatus.DELETING;
   }
 
   @Override
@@ -348,14 +367,14 @@ public class DataprocProvisioner implements Provisioner {
   // numbers, or hyphens, and cannot end with a hyphen
   // We'll use app-runid, where app is truncated to fit, lowercased, and stripped of invalid characters
   @VisibleForTesting
-  static String getClusterName(ProgramRun programRun) {
-    String cleanedAppName = programRun.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
+  static String getClusterName(ProgramRunInfo programRunInfo) {
+    String cleanedAppName = programRunInfo.getApplication().replaceAll("[^A-Za-z0-9\\-]", "").toLowerCase();
     // 51 is max length, need to subtract the prefix and 1 extra for the '-' separating app name and run id
-    int maxAppLength = 51 - CLUSTER_PREFIX.length() - 1 - programRun.getRun().length();
+    int maxAppLength = 51 - CLUSTER_PREFIX.length() - 1 - programRunInfo.getRun().length();
     if (cleanedAppName.length() > maxAppLength) {
       cleanedAppName = cleanedAppName.substring(0, maxAppLength);
     }
-    return CLUSTER_PREFIX + cleanedAppName + "-" + programRun.getRun();
+    return CLUSTER_PREFIX + cleanedAppName + "-" + programRunInfo.getRun();
   }
 
   /**
@@ -370,23 +389,20 @@ public class DataprocProvisioner implements Provisioner {
       return Optional.empty();
     }
     DataprocConf conf = DataprocConf.create(createContextProperties(context), null);
-    String clusterName = getClusterName(context.getProgramRun());
+    String clusterName = getClusterName(context.getProgramRunInfo());
     String projectId = conf.getProjectId();
     String region = conf.getRegion();
-    String sparkCompat = context.getSparkCompat().getCompat();
     String bucket = getBucket(systemProperties, conf);
     Map<String, String> systemLabels = getSystemLabels(systemContext);
-    GoogleCredentials dataprocCredentials;
     try {
-      dataprocCredentials = conf.getDataprocCredentials();
+      return Optional.of(
+        new DataprocRuntimeJobManager(new DataprocClusterInfo(context, clusterName, conf.getDataprocCredentials(),
+                                                              DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
+                                                              projectId, region, bucket, systemLabels)));
     } catch (Exception e) {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
 
-    return Optional.of(
-      new DataprocRuntimeJobManager(new DataprocClusterInfo(clusterName, dataprocCredentials,
-                                                            DataprocClient.DATAPROC_GOOGLEAPIS_COM_443,
-                                                            projectId, region, bucket, systemLabels, sparkCompat)));
   }
 
   private String getBucket(Map<String, String> systemProperties, DataprocConf conf) {

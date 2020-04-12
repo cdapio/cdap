@@ -151,7 +151,8 @@ public class ProvisioningService extends AbstractIdleService {
     LOG.info("Starting {}", getClass().getSimpleName());
     initializeProvisioners();
     this.taskExecutor = new KeyedExecutor<>(Executors.newScheduledThreadPool(
-      0, Threads.createDaemonThreadFactory("provisioning-service-%d")));
+      cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+      Threads.createDaemonThreadFactory("provisioning-service-%d")));
     resumeTasks(taskStateCleanup);
   }
 
@@ -733,7 +734,7 @@ public class ProvisioningService extends AbstractIdleService {
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
                                            @Nullable SSHContext sshContext) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
-    return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext);
+    return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext, locationFactory);
   }
 
   /**

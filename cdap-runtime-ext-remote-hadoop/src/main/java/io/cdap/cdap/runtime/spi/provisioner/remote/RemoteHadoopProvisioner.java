@@ -127,8 +127,8 @@ public class RemoteHadoopProvisioner implements Provisioner {
   public void deleteCluster(ProvisionerContext context, Cluster cluster) {
     // delete jars copied over by CDAP
     // TODO: (CDAP-13795) move this logic into the platform
-    String programName = context.getProgramRun().getProgram();
-    String runId = context.getProgramRun().getRun();
+    String programName = context.getProgramRunInfo().getProgram();
+    String runId = context.getProgramRunInfo().getRun();
     String remoteIP = getMasterExternalIp(cluster);
     try (SSHSession session = createSSHSession(context, remoteIP)) {
       LOG.debug("Cleaning up remote cluster resources for program {} run {}", programName, runId);

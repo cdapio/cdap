@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.runtimejob;
 
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+
 import java.util.Objects;
 
 /**

@@ -20,10 +20,23 @@ package io.cdap.cdap.runtime.spi.runtimejob;
  * Status for a runtime job.
  */
 public enum RuntimeJobStatus {
-  STARTING,
-  RUNNING,
-  STOPPING,
-  STOPPED,
-  COMPLETED,
-  FAILED
+  STARTING(false),
+  RUNNING(false),
+  STOPPING(false),
+  STOPPED(true),
+  COMPLETED(true),
+  FAILED(true);
+
+  private final boolean terminated;
+
+  RuntimeJobStatus(boolean terminated) {
+    this.terminated = terminated;
+  }
+
+  /**
+   * Returns true if this status represents a terminated state.
+   */
+  public boolean isTerminated() {
+    return terminated;
+  }
 }

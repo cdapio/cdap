@@ -35,7 +35,7 @@ import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.cdap.runtime.spi.runtimejob.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ResourceSpecification;
