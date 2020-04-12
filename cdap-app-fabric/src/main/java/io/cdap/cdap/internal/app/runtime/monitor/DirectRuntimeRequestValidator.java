@@ -47,7 +47,6 @@ import java.util.concurrent.TimeUnit;
 public final class DirectRuntimeRequestValidator implements RuntimeRequestValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(DirectRuntimeRequestValidator.class);
-  private static final Gson GSON = new Gson();
 
   private final TransactionRunner txRunner;
   private final ProgramRunRecordFetcher runRecordFetcher;

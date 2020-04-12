@@ -878,9 +878,6 @@ public final class Constants {
     public static final String MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX =
       "app.program.runtime.monitor.url.authenticator.class.";
 
-    // Configuration keys for the runtime monitor server
-    public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
-
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
 
