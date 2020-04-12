@@ -29,6 +29,7 @@ import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -113,12 +114,21 @@ public class RuntimeClientServiceTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new RuntimeServerModule() {
+        @Override
+        protected void bindRequestValidator() {
+          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+        }
+
+        @Override
+        protected void bindLogProcessor() {
+          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
+        }
+      },
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
-          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
           bind(DiscoveryService.class).toInstance(discoveryService);
           bind(DiscoveryServiceClient.class).toInstance(discoveryService);
         }

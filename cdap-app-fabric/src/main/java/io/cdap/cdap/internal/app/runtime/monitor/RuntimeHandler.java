@@ -17,12 +17,15 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -69,11 +72,12 @@ public class RuntimeHandler extends AbstractHttpHandler {
   private final RemoteExecutionLogProcessor logProcessor;
   private final String logsTopicPrefix;
 
-  RuntimeHandler(CConfiguration cConf, MessagingContext messagingContext,
+  @Inject
+  RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
                  RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator) {
     this.requestValidator = requestValidator;
     this.logProcessor = logProcessor;
-    this.messagingContext = messagingContext;
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
   }
 

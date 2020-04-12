@@ -97,8 +97,11 @@ public final class RunRecordDetail extends RunRecord {
     }
     Map<String, String> properties = getProperties();
     if (properties != null) {
-      userArgs = new LinkedHashMap<>(new Gson().fromJson(properties.get("runtimeArgs"),
-                                                         new TypeToken<Map<String, String>>() { }.getType()));
+      String runtimeArgs = properties.get("runtimeArgs");
+      if (runtimeArgs != null) {
+        userArgs = new LinkedHashMap<>(new Gson().fromJson(runtimeArgs,
+                                                           new TypeToken<Map<String, String>>() { }.getType()));
+      }
     } else {
       userArgs = Collections.emptyMap();
     }

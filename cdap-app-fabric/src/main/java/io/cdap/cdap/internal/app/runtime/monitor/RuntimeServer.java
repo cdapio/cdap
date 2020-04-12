@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.HttpExceptionHandler;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -28,18 +29,16 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.gateway.handlers.PingHandler;
-import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
+import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * The runtime server for accepting runtime calls from the program runtime.
@@ -53,15 +52,10 @@ public class RuntimeServer extends AbstractIdleService {
   private Cancellable cancelDiscovery;
 
   @Inject
-  RuntimeServer(CConfiguration cConf, SConfiguration sConf, RuntimeRequestValidator requestValidator,
-                DiscoveryService discoveryService, DiscoveryServiceClient discoveryServiceClient,
-                MessagingService messagingService, MetricsCollectionService metricsCollectionService,
-                RemoteExecutionLogProcessor logProcessor) {
+  RuntimeServer(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Service.RUNTIME) Set<HttpHandler> handlers,
+                DiscoveryService discoveryService, MetricsCollectionService metricsCollectionService) {
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.RUNTIME)
-      .setHttpHandlers(new PingHandler(),
-                       new RuntimeHandler(cConf, new MultiThreadMessagingContext(messagingService),
-                                          logProcessor, requestValidator),
-                       new RuntimeServiceRoutingHandler(discoveryServiceClient, requestValidator))
+      .setHttpHandlers(handlers)
       .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.RUNTIME)))

@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceException;
@@ -82,6 +83,7 @@ public class RuntimeServiceRoutingHandler extends AbstractHttpHandler {
   private final RuntimeRequestValidator requestValidator;
   private final LoadingCache<String, EndpointStrategy> endpointStrategyLoadingCache;
 
+  @Inject
   RuntimeServiceRoutingHandler(DiscoveryServiceClient discoveryServiceClient,
                                RuntimeRequestValidator requestValidator) {
     this.requestValidator = requestValidator;
