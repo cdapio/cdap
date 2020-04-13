@@ -224,7 +224,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   @Override
   public void stop(ProgramRunInfo programRunInfo) throws Exception {
     RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
-    if (jobDetail == null || jobDetail.getStatus().isTerminated()) {
+    if (jobDetail == null) {
+      return;
+    }
+    RuntimeJobStatus status = jobDetail.getStatus();
+    if (status.isTerminated() || status == RuntimeJobStatus.STOPPING) {
       return;
     }
     // stop dataproc job
