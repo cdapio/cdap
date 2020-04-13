@@ -240,7 +240,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
   }
 
   @Override
-  public void stop() {
+  public void requestStop() {
     try {
       stopRequested = true;
       ProgramController controller = Uninterruptibles.getUninterruptibly(controllerFuture);

@@ -61,16 +61,12 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
   protected void launch(TwillRuntimeSpecification twillRuntimeSpec, RuntimeSpecification runtimeSpec,
                         JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
                         TimeoutChecker timeoutChecker) throws Exception {
-    RuntimeJobManager jobManager = jobManagerSupplier.get();
-    jobManager.initialize();
-    try {
+    try (RuntimeJobManager jobManager = jobManagerSupplier.get()) {
       timeoutChecker.throwIfTimeout();
       DefaultRuntimeInfo defaultRuntimeInfo = createRuntimeJobInfo(runtimeSpec, localFiles);
       LOG.info("Starting runnable {} for runId {} with job manager.", runtimeSpec.getName(), getProgramRunId());
       // launch job using job manager
       jobManager.launch(defaultRuntimeInfo);
-    } finally {
-      jobManager.destroy();
     }
   }
 

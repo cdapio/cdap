@@ -93,7 +93,7 @@ public class DataprocJobMain {
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
         Class<?> runnerCls = newCL.loadClass(runtimeJobClassName);
         Method runMethod = runnerCls.getMethod("run", runEnvCls);
-        Method stopMethod = runnerCls.getMethod("stop");
+        Method stopMethod = runnerCls.getMethod("requestStop");
 
         Object runner = runnerCls.newInstance();
 

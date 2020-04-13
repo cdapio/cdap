@@ -318,7 +318,9 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     if (jobManager != null) {
       return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
                                          locationCache, locationFactory,
-                                         controllerFactory, () -> jobManager);
+                                         controllerFactory,
+                                         () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
+                                           .orElseThrow(IllegalStateException::new));
     }
 
     // Use SSH if there is no RuntimeJobManager

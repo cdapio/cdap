@@ -95,7 +95,7 @@ public class RemoteExecutionJobMain {
     }
 
     // Stop the job when this process get terminated
-    Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::stop));
+    Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::requestStop));
 
     System.setProperty(Constants.Zookeeper.TWILL_ZK_SERVER_LOCALHOST, "false");
     RunId runId = RunIds.fromString(args[0]);

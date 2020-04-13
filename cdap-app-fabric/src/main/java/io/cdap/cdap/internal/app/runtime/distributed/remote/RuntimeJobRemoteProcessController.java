@@ -52,39 +52,27 @@ class RuntimeJobRemoteProcessController implements RemoteProcessController {
 
   @Override
   public boolean isRunning() throws Exception {
-    RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get();
-    runtimeJobManager.initialize();
-    try {
+    try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       return !runtimeJobManager.getDetail(programRunInfo)
         .map(RuntimeJobDetail::getStatus)
         .map(RuntimeJobStatus::isTerminated)
         .orElse(true);
-    } finally {
-      runtimeJobManager.destroy();
     }
   }
 
   @Override
   public void terminate() throws Exception {
     LOG.debug("Stopping program run {}", programRunId);
-    RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get();
-    runtimeJobManager.initialize();
-    try {
+    try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       runtimeJobManager.stop(programRunInfo);
-    } finally {
-      runtimeJobManager.destroy();
     }
   }
 
   @Override
   public void kill() throws Exception {
     LOG.debug("Force stopping program run {}", programRunId);
-    RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get();
-    runtimeJobManager.initialize();
-    try {
+    try (RuntimeJobManager runtimeJobManager = runtimeJobManagerSupplier.get()) {
       runtimeJobManager.kill(programRunInfo);
-    } finally {
-      runtimeJobManager.destroy();
     }
   }
 }
