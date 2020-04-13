@@ -34,6 +34,7 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -167,6 +168,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     private final TopicId topicId;
     private String lastMessageId;
     private long nextPublishTimeMillis;
+    private int totalPublished;
+
 
     TopicRelayer(TopicId topicId) {
       this.topicId = topicId;
@@ -210,7 +213,8 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
           // Update the lastMessageId if sendMessages succeeded
           lastMessageId = messageId[0] == null ? lastMessageId : messageId[0];
-          progressLog.debug("Processed {} messages on topic {}", messageCount.get(), topicId);
+          totalPublished += messageCount.get();
+          progressLog.debug("Processed in total {} messages on topic {}", totalPublished, topicId);
         }
 
         // If we fetched all messages, then delay the next poll by pollTimeMillis.
@@ -286,12 +290,14 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     @Override
     public void close() throws IOException {
       // Keep polling until it sees the program completion
+      RetryStrategy retryStrategy = RetryStrategies.timeLimit(gracefulShutdownMillis, TimeUnit.MILLISECONDS,
+                                                              getRetryStrategy());
       Retries.runWithRetries(() -> {
         ProgramStatusTopicRelayer.super.close();
         if (programFinishTime < 0) {
           throw new RetryableException("Program completion is not yet observed");
         }
-      }, getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
+      }, retryStrategy, t -> t instanceof IOException || t instanceof RetryableException);
 
       if (!lastProgramStateMessages.isEmpty()) {
         try {
