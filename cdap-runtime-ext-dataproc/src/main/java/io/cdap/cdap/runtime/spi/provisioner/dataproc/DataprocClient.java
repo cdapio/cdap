@@ -162,7 +162,7 @@ final class DataprocClient implements AutoCloseable {
     // Network peering is done between customer network and system network and is in ACTIVE mode).
     boolean useInternalIP = privateInstance ||
       !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId)) ||
-        state == PeeringState.ACTIVE);
+      state == PeeringState.ACTIVE);
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
