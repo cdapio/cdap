@@ -157,7 +157,7 @@ public class DataprocProvisioner implements Provisioner {
                                            "deselecting preferExternalIP.");
     }
 
-    //Validate Network Tags as per https://cloud.google.com/vpc/docs/add-remove-network-tags
+    // Validate Network Tags as per https://cloud.google.com/vpc/docs/add-remove-network-tags
     // Total of 64 Tags Allowed
     // Each tag length cannot exceed 63 chars
     // Lower case letters and dashes allowed only.
