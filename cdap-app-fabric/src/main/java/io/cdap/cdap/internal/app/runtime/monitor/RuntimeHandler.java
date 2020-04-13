@@ -220,6 +220,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
         }
       } finally {
         Closeables.closeQuietly(inputStream);
+        buffer.release();
       }
     }
 
