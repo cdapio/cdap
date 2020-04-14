@@ -1261,19 +1261,13 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
     final ApplicationManager appManager = deployApplication(testSpace, AppWithCustomTx.class);
     try {
       // attempt to start with a tx timeout that exceeds the max tx timeout
-      try {
-        appManager.getServiceManager(AppWithCustomTx.SERVICE)
-          .start(txTimeoutArguments(100000));
-      } catch (IllegalArgumentException e) {
-        //expected, this will finally cause AppWithCustomTx.SERVICE to have FAILED status
-      }
+      appManager.getServiceManager(AppWithCustomTx.SERVICE).start(txTimeoutArguments(100000));
+
       // wait for the failed status of AppWithCustomTx.SERVICE to be persisted, so that it can be started again
-      Tasks.waitFor(1, new Callable<Integer>() {
-        @Override
-        public Integer call() throws Exception {
-          return appManager.getServiceManager(AppWithCustomTx.SERVICE).getHistory(ProgramRunStatus.FAILED).size();
-        }
-      }, 30L, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
+      Tasks.waitFor(1,
+                    () -> appManager.getServiceManager(AppWithCustomTx.SERVICE)
+                      .getHistory(ProgramRunStatus.FAILED).size(),
+                    30L, TimeUnit.SECONDS, 1, TimeUnit.SECONDS);
       ServiceManager serviceManager = appManager.getServiceManager(AppWithCustomTx.SERVICE)
         .start(txTimeoutArguments(txDefaulTimeoutService));
       WorkerManager notxWorkerManager = appManager.getWorkerManager(AppWithCustomTx.WORKER_NOTX)

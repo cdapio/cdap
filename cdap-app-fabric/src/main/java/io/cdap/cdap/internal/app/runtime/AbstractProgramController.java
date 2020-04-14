@@ -54,7 +54,6 @@ public abstract class AbstractProgramController implements ProgramController {
   private final ProgramId programId;
   private final ProgramRunId programRunId;
   private final RunId runId;
-  private final String componentName;
   private final Map<ListenerCaller, Cancellable> listeners;
   private final Listener caller;
   private final ExecutorService executor;
@@ -63,18 +62,13 @@ public abstract class AbstractProgramController implements ProgramController {
   private Throwable failureCause;
 
   protected AbstractProgramController(ProgramRunId programRunId) {
-    this(programRunId, null);
-  }
-
-  protected AbstractProgramController(ProgramRunId programRunId, @Nullable String componentName) {
     this.state = new AtomicReference<>(State.STARTING);
     this.programRunId = programRunId;
     this.programId = programRunId.getParent();
     this.runId = RunIds.fromString(programRunId.getRun());
-    this.componentName = componentName;
     this.listeners = new HashMap<>();
     this.caller = new MultiListenerCaller();
-    this.name = programId + (componentName == null ? "" : "-" + componentName) + "-" + runId.getId();
+    this.name = programId + "-" + runId.getId();
 
     // Create a single thread executor that doesn't keep core thread and the thread will shutdown when there
     // is no pending task. In this way, we don't need to shutdown the executor since there will be no thread
@@ -92,12 +86,6 @@ public abstract class AbstractProgramController implements ProgramController {
   @Override
   public RunId getRunId() {
     return runId;
-  }
-
-  @Nullable
-  @Override
-  public String getComponentName() {
-    return componentName;
   }
 
   @Override

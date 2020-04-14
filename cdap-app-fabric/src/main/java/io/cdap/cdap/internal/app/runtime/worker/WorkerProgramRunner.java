@@ -119,7 +119,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
     WorkerSpecification newWorkerSpec = new WorkerSpecification(workerSpec.getClassName(), workerSpec.getName(),
                                                                 workerSpec.getDescription(), workerSpec.getProperties(),
                                                                 workerSpec.getDatasets(), workerSpec.getResources(),
-                                                                Integer.valueOf(instances), workerSpec.getPlugins());
+                                                                Integer.parseInt(instances), workerSpec.getPlugins());
 
     // Setup dataset framework context, if required
     if (datasetFramework instanceof ProgramContextAware) {
@@ -143,8 +143,7 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
       worker.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
                          Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId().run(runId),
-                                                                        workerSpec.getName() + "-" + instanceId);
+      ProgramController controller = new WorkerControllerServiceAdapter(worker, program.getId().run(runId));
       worker.start();
       return controller;
     } catch (Throwable t) {
@@ -156,8 +155,8 @@ public class WorkerProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class WorkerControllerServiceAdapter extends ProgramControllerServiceAdapter {
     private final WorkerDriver workerDriver;
 
-    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramRunId programRunId, String componentName) {
-      super(workerDriver, programRunId, componentName);
+    WorkerControllerServiceAdapter(WorkerDriver workerDriver, ProgramRunId programRunId) {
+      super(workerDriver, programRunId);
       this.workerDriver = workerDriver;
     }
 
