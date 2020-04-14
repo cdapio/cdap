@@ -18,6 +18,7 @@ package io.cdap.cdap.common.internal.remote;
 
 import com.google.common.base.Objects;
 
+import java.io.IOException;
 import javax.annotation.Nullable;
 
 /**
@@ -91,11 +92,11 @@ public abstract class RemoteAuthenticator {
   /**
    * Returns the type of the authentication.
    */
-  public abstract String getType();
+  public abstract String getType() throws IOException;
 
   /**
    * Returns the credentials for the authentication. It must be conformed to the requirement of the type returned by
    * {@link #getType()}.
    */
-  public abstract String getCredentials();
+  public abstract String getCredentials() throws IOException;
 }

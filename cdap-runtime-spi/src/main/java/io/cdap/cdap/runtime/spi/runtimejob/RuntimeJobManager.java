@@ -18,13 +18,14 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 
+import java.io.Closeable;
 import java.util.List;
 import java.util.Optional;
 
 /**
  * Runtime job manager to prepare and launch the job.
  */
-public interface RuntimeJobManager {
+public interface RuntimeJobManager extends Closeable {
   /**
    * Initialize the clients for job launch.
    *
@@ -77,5 +78,6 @@ public interface RuntimeJobManager {
   /**
    * This method is responsible to perform clean up for runtime manager.
    */
-  void destroy();
+  @Override
+  void close();
 }

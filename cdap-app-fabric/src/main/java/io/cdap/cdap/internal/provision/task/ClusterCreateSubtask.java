@@ -49,13 +49,14 @@ public class ClusterCreateSubtask extends ProvisioningSubtask {
                          nextCluster.getProperties());
     }
 
-    // Add the ssh user property to the resulting Cluster if SSHKeyPair is present in the context
-    return provisionerContext.getSSHContext().getSSHKeyPair()
-      .map(sshKeyPair -> {
-        Map<String, String> properties = new HashMap<>(nextCluster.getProperties());
+    Map<String, String> properties = new HashMap<>(nextCluster.getProperties());
+
+    // If no runtime job manager is present, default to use SSH for job launching
+    if (!provisioner.getRuntimeJobManager(provisionerContext).isPresent()) {
+      provisionerContext.getSSHContext().getSSHKeyPair().ifPresent(sshKeyPair -> {
         properties.put(Constants.RuntimeMonitor.SSH_USER, sshKeyPair.getPublicKey().getUser());
-        return new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(), properties);
-      })
-      .orElse(nextCluster);
+      });
+    }
+    return new Cluster(nextCluster.getName(), nextCluster.getStatus(), nextCluster.getNodes(), properties);
   }
 }

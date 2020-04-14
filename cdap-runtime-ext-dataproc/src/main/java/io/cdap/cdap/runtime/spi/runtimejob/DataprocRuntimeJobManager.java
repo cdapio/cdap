@@ -95,8 +95,8 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private final String bucket;
   private final Map<String, String> labels;
 
-  private Storage storageClient;
-  private JobControllerClient jobControllerClient;
+  private volatile Storage storageClient;
+  private volatile JobControllerClient jobControllerClient;
 
   /**
    * Created by dataproc provisioner with properties that are needed by dataproc runtime job manager.
@@ -114,17 +114,54 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     this.labels = clusterInfo.getLabels();
   }
 
+  /**
+   * Returns a {@link Storage} object for interacting with GCS.
+   */
+  private Storage getStorageClient() {
+    Storage client = storageClient;
+    if (client != null) {
+      return client;
+    }
+
+    synchronized (this) {
+      client = storageClient;
+      if (client != null) {
+        return client;
+      }
+
+      // instantiate a gcs client
+      this.storageClient = client = StorageOptions.newBuilder().setProjectId(projectId)
+        .setCredentials(credentials).build().getService();
+    }
+    return client;
+  }
+
+  /**
+   * Returns a {@link JobControllerClient} to interact with Dataproc Job API.
+   */
+  private JobControllerClient getJobControllerClient() throws IOException {
+    JobControllerClient client = jobControllerClient;
+    if (client != null) {
+      return client;
+    }
+
+    synchronized (this) {
+      client = jobControllerClient;
+      if (client != null) {
+        return client;
+      }
+
+      // instantiate a dataproc job controller client
+      CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
+      this.jobControllerClient = client = JobControllerClient.create(
+        JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
+          .setEndpoint(region + endpoint).build());
+    }
+    return client;
+  }
+
   @Override
   public void initialize() throws Exception {
-    // instantiate a gcs client
-    this.storageClient = StorageOptions.newBuilder().setProjectId(projectId)
-      .setCredentials(credentials).build().getService();
-
-    // instantiate a dataproc job controller client
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(credentials);
-    this.jobControllerClient = JobControllerClient.create(
-      JobControllerSettings.newBuilder().setCredentialsProvider(credentialsProvider)
-        .setEndpoint(region + endpoint).build());
   }
 
   @Override
@@ -156,11 +193,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClassname(), runInfo, uploadedFiles);
 
       // step 4: submit hadoop job to dataproc
-      Job job = jobControllerClient.submitJob(request);
+      Job job = getJobControllerClient().submitJob(request);
       LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
-      DataprocUtils.deleteGCSPath(storageClient, bucket, runRootPath);
+      DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
       throw new Exception(String.format("Error while launching job %s on cluster %s",
                                         getJobId(runInfo), clusterName), e);
     } finally {
@@ -174,29 +211,25 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String jobId = getJobId(programRunInfo);
 
     try {
-      LOG.info("Getting job details for {} under project {}, region {}.", projectId, region, jobId);
-      Job job = jobControllerClient.getJob(GetJobRequest.newBuilder()
-                                             .setProjectId(projectId)
-                                             .setRegion(region)
-                                             .setJobId(jobId)
-                                             .build());
-      RuntimeJobStatus runtimeJobStatus = getRuntimeJobStatus(job);
-
-      return Optional.of(new RuntimeJobDetail(programRunInfo, runtimeJobStatus));
+      Job job = getJobControllerClient().getJob(GetJobRequest.newBuilder()
+                                                  .setProjectId(projectId)
+                                                  .setRegion(region)
+                                                  .setJobId(jobId)
+                                                  .build());
+      return Optional.of(new RuntimeJobDetail(getProgramRunInfo(job), getRuntimeJobStatus(job)));
     } catch (ApiException e) {
-      // this may happen if job is manually deleted by user
-      if (e.getStatusCode().getCode() == StatusCode.Code.NOT_FOUND) {
-        LOG.warn("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId, region);
-      } else {
+      if (e.getStatusCode().getCode() != StatusCode.Code.NOT_FOUND) {
         throw new Exception(String.format("Error while getting details for job %s on cluster %s.",
                                           jobId, clusterName), e);
       }
+      // Status is not found if job is finished or manually deleted by the user
+      LOG.debug("Dataproc job {} does not exist in project {}, region {}.", jobId, projectId, region);
     }
     return Optional.empty();
   }
 
   @Override
-  public List<RuntimeJobDetail> list() {
+  public List<RuntimeJobDetail> list() throws IOException {
     Set<String> filters = new HashSet<>();
     // Dataproc jobs can be filtered by status.state filter. In this case we only want ACTIVE jobs.
     filters.add("status.state=ACTIVE");
@@ -210,9 +243,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     LOG.debug("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
              clusterName, jobFilter);
     JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
-      jobControllerClient.listJobs(ListJobsRequest.newBuilder()
-                                     .setProjectId(projectId).setRegion(region).setClusterName(clusterName)
-                                     .setFilter(jobFilter).build());
+      getJobControllerClient().listJobs(
+        ListJobsRequest.newBuilder()
+          .setProjectId(projectId).setRegion(region).setClusterName(clusterName)
+          .setFilter(jobFilter).build());
 
     List<RuntimeJobDetail> jobsDetail = new ArrayList<>();
     for (Job job : listJobsPagedResponse.iterateAll()) {
@@ -224,7 +258,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   @Override
   public void stop(ProgramRunInfo programRunInfo) throws Exception {
     RuntimeJobDetail jobDetail = getDetail(programRunInfo).orElse(null);
-    if (jobDetail == null || jobDetail.getStatus().isTerminated()) {
+    if (jobDetail == null) {
+      return;
+    }
+    RuntimeJobStatus status = jobDetail.getStatus();
+    if (status.isTerminated() || status == RuntimeJobStatus.STOPPING) {
       return;
     }
     // stop dataproc job
@@ -237,8 +275,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   @Override
-  public void destroy() {
-    jobControllerClient.close();
+  public void close() {
+    JobControllerClient client = this.jobControllerClient;
+    if (client != null) {
+      client.close();
+    }
   }
 
   /**
@@ -262,7 +303,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     BlobInfo blobInfo = BlobInfo.newBuilder(blobId).setContentType("application/octet-stream").build();
 
     try (InputStream inputStream = openStream(localFile.getURI());
-         WriteChannel writer = storageClient.writer(blobInfo)) {
+         WriteChannel writer = getStorageClient().writer(blobInfo)) {
       ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
     }
 
@@ -405,12 +446,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       jobControllerClient.cancelJob(projectId, region, jobId);
       LOG.debug("Stopped the job {} on cluster {}.", jobId, clusterName);
     } catch (ApiException e) {
-      if (e.getStatusCode().getCode() == StatusCode.Code.FAILED_PRECONDITION) {
-        LOG.warn("Job {} is already stopped on cluster {}.", jobId, clusterName);
-      } else {
+      if (e.getStatusCode().getCode() != StatusCode.Code.FAILED_PRECONDITION) {
         throw new Exception(String.format("Error occurred while stopping job %s on cluster %s.",
                                           jobId, clusterName), e);
       }
+      LOG.debug("Job {} is already stopped on cluster {}.", jobId, clusterName);
     }
   }
 

@@ -259,7 +259,6 @@ public class DataprocProvisioner implements Provisioner {
     RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
 
     if (jobManager != null) {
-      jobManager.initialize();
       try {
         // If there is job manager, check to make sure the job is completed.
         // Also cleanup files created by the job run.
@@ -268,7 +267,7 @@ public class DataprocProvisioner implements Provisioner {
           return ClusterStatus.RUNNING;
         }
       } finally {
-        jobManager.destroy();
+        jobManager.close();
       }
 
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())

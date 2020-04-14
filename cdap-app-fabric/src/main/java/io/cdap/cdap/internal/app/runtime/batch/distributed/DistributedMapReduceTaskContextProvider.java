@@ -31,6 +31,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -78,18 +79,17 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   @Override
   protected void startUp() throws Exception {
     super.startUp();
+    ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
     try {
       oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
-        Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
+        RuntimeMonitors.setupMonitoring(getInjector(), programOptions);
       }
 
       for (Service service : coreServices) {
         service.startAndWait();
       }
       logAppenderInitializer.initialize();
-      ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
       SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
     } catch (Exception e) {
       // Try our best to stop services. Chain stop guarantees it will stop everything, even some of them failed.
@@ -138,7 +138,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     Arguments systemArgs = programOptions.getArguments();
     String runId = systemArgs.getOption(ProgramOptionConstants.RUN_ID);
     return Guice.createInjector(
-      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), systemArgs)
+      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId),
+                                            programOptions)
     );
   }
 }

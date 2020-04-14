@@ -513,11 +513,7 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       RunRecordDetail runRecord = getAppMetadataStore(context).getRun(programRunId);
       if (runRecord != null) {
-        Map<String, String> properties = runRecord.getProperties();
-        Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), STRING_MAP_TYPE);
-        if (runtimeArgs != null) {
-          return runtimeArgs;
-        }
+        return runRecord.getUserArgs();
       }
       LOG.debug("Runtime arguments for program {}, run {} not found. Returning empty.",
                 programRunId.getProgram(), programRunId.getRun());

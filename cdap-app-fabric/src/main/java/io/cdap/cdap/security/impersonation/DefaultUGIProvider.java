@@ -17,10 +17,7 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
-
 import com.google.inject.Inject;
-
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.FeatureDisabledException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -36,7 +33,6 @@ import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramRunId;
-
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.apache.twill.filesystem.Location;
@@ -47,7 +43,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.Type;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -207,7 +202,7 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   /**
    * Returns the runtime user supplied arguments to a program if entity is of type ProgramRun
    *
-   * @param programId the entity id
+   * @param entityId the entity to lookup for runtime arguments.
    * @return properties map
    */
   private Map<String, String> getRuntimeProperties(NamespacedEntityId entityId) {
@@ -236,16 +231,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       LOG.warn("Failed to fetch run record for {} due to {}", runId, e.getMessage(), e);
       return Collections.emptyMap();
     }
-
-    Type stringStringMap = new TypeToken<Map<String, String>>() { }.getType();
-
-    Map<String, String> properties = runRecord.getProperties();
-    String runtimeArgsJson = properties.get("runtimeArgs");
-    if (runtimeArgsJson == null) {
-      LOG.debug("Could not find any runtime args");
-      return Collections.emptyMap();
-    }
-
-    return gson.fromJson(runtimeArgsJson, stringStringMap);
+    return runRecord.getUserArgs();
   }
 }

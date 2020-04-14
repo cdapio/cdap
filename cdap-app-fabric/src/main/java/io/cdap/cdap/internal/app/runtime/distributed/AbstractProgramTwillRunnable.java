@@ -50,6 +50,7 @@ import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.appender.loader.LogAppenderLoaderService;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
@@ -77,7 +78,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.Authenticator;
 import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -198,12 +198,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     Injector injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
 
     // Setup the proxy selector for in active monitoring mode
-    if (cConf.getBoolean(io.cdap.cdap.common.conf.Constants.RuntimeMonitor.ACTIVE_MONITORING, true)) {
-      oldProxySelector = ProxySelector.getDefault();
-      if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-        Authenticator.setDefault(injector.getInstance(Authenticator.class));
-      }
+    oldProxySelector = ProxySelector.getDefault();
+    if (clusterMode == ClusterMode.ISOLATED) {
+      RuntimeMonitors.setupMonitoring(injector, programOptions);
     }
 
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
@@ -353,8 +350,7 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
    */
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
-    return new DistributedProgramContainerModule(cConf, hConf, programRunId,
-                                                 programOptions.getArguments(), getServiceAnnouncer());
+    return new DistributedProgramContainerModule(cConf, hConf, programRunId, programOptions, getServiceAnnouncer());
   }
 
   /**

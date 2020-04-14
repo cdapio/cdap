@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -70,23 +71,29 @@ public class RuntimeClientServerTest {
   public void beforeTest() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(Constants.RuntimeMonitor.BIND_PORT, 0);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new AbstractModule() {
+      new RuntimeServerModule() {
         @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
-            // no-op
-          });
+        protected void bindRequestValidator() {
+          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+        }
+
+        @Override
+        protected void bindLogProcessor() {
           bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> {
             // For testing purpose, we just store logs to a list
             payloads.forEachRemaining(bytes -> logEntries.add(new String(bytes, StandardCharsets.UTF_8)));
           });
+        }
+      },
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       }
     );

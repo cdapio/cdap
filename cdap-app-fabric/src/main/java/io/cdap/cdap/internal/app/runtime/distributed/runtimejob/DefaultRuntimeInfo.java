@@ -33,7 +33,7 @@ public class DefaultRuntimeInfo implements RuntimeJobInfo {
   private final ProgramRunInfo info;
   private final Collection<? extends LocalFile> files;
 
-  DefaultRuntimeInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files) {
+  public DefaultRuntimeInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files) {
     this.info = new ProgramRunInfo.Builder()
       .setNamespace(programRunId.getNamespace())
       .setApplication(programRunId.getApplication())

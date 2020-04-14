@@ -35,7 +35,7 @@ import io.cdap.cdap.store.StoreDefinition;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -132,27 +132,19 @@ public class ProgramHeartbeatTable {
    */
   private void performScanAddToList(List<Field<?>> startRowKey, List<Field<?>> endRowKey,
                                     List<RunRecordDetail> runRecordMetas) throws IOException {
+    Map<ProgramRunId, RunRecordDetail> latestRunRecords = new LinkedHashMap<>();;
     try (CloseableIterator<StructuredRow> iterator =
       table.scan(Range.create(startRowKey, Range.Bound.INCLUSIVE, endRowKey, Range.Bound.EXCLUSIVE),
                  Integer.MAX_VALUE)) {
-      Map<ProgramRunId, RunRecordDetail> runIdToRunRecordMap = new HashMap<>();
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
-        RunRecordDetail runRecordMeta = GSON.fromJson(row.getString(StoreDefinition.ProgramHeartbeatStore.RUN_RECORD),
-                                                      RunRecordDetail.class);
+        RunRecordDetail existing = GSON.fromJson(row.getString(StoreDefinition.ProgramHeartbeatStore.RUN_RECORD),
+                                                 RunRecordDetail.class);
         ProgramRunId runId = getProgramRunIdFromRow(row);
-        runIdToRunRecordMap.put(runId, runRecordMeta);
+        latestRunRecords.put(runId, RunRecordDetail.builder(existing).setProgramRunId(runId).build());
       }
-
-      // since the serialized runRecordMeta doesn't have programRunId (transient), we will create and
-      // add the programRunId to RunRecordDetail and add to result list
-
-      runIdToRunRecordMap.entrySet().forEach((entry) -> {
-        RunRecordDetail.Builder builder = RunRecordDetail.builder(entry.getValue());
-        builder.setProgramRunId(entry.getKey());
-        runRecordMetas.add(builder.build());
-      });
     }
+    runRecordMetas.addAll(latestRunRecords.values());
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,13 @@
  * the License.
  */
 
-/**
- * This package contains implementation for launch CDAP program on a remote hadoop cluster.
- */
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
+
+/**
+ * Defines the supported remote monitor type.
+ */
+public enum RemoteMonitorType {
+
+  SSH,
+  URL
+}

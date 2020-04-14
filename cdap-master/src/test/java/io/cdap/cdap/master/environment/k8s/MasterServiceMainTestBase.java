@@ -102,9 +102,6 @@ public class MasterServiceMainTestBase {
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
     cConf.setInt(Constants.Router.ROUTER_SSL_PORT, 0);
 
-    // Set runtime server to bind to random port
-    cConf.setInt(Constants.RuntimeMonitor.BIND_PORT, 0);
-
     // Use remote fetcher for runtime server
     cConf.setClass(Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS,
                    RemoteProgramRunRecordFetcher.class, ProgramRunRecordFetcher.class);

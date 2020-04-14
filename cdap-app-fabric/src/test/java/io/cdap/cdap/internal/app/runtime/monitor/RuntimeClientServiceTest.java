@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.monitor;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
@@ -28,6 +29,7 @@ import io.cdap.cdap.api.messaging.MessagePublisher;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -48,6 +50,7 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -61,6 +64,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -101,7 +105,6 @@ public class RuntimeClientServiceTest {
 
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.RuntimeMonitor.TOPICS_CONFIGS, TOPIC_CONFIGS_VALUE);
-    cConf.setInt(Constants.RuntimeMonitor.BIND_PORT, 0);
 
     topicConfigs = RuntimeMonitors.createTopicConfigs(cConf);
 
@@ -111,12 +114,21 @@ public class RuntimeClientServiceTest {
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new RuntimeServerModule() {
+        @Override
+        protected void bindRequestValidator() {
+          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+        }
+
+        @Override
+        protected void bindLogProcessor() {
+          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
+        }
+      },
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
-          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
           bind(DiscoveryService.class).toInstance(discoveryService);
           bind(DiscoveryServiceClient.class).toInstance(discoveryService);
         }
@@ -213,8 +225,14 @@ public class RuntimeClientServiceTest {
                       5, TimeUnit.SECONDS);
       }
     }
+
+    // Writes a program terminate message to unblock stopping of the client service
+    programStateWriter.completed(PROGRAM_RUN_ID);
   }
 
+  /**
+   * Test for {@link RuntimeClientService} that will terminate itself when seeing program completed message.
+   */
   @Test
   public void testProgramTerminate() throws Exception {
     MessagingContext messagingContext = new MultiThreadMessagingContext(clientMessagingService);
@@ -260,6 +278,26 @@ public class RuntimeClientServiceTest {
                       5, TimeUnit.SECONDS);
       }
     }
+  }
+
+  /**
+   * Test for {@link RuntimeClientService} that will block termination until a program completed mess
+   */
+  @Test(timeout = 10000L)
+  public void testRuntimeClientStop() throws Exception {
+    ProgramStateWriter programStateWriter = new MessagingProgramStateWriter(clientCConf, clientMessagingService);
+
+    ListenableFuture<Service.State> stopFuture = runtimeClientService.stop();
+    try {
+      stopFuture.get(2, TimeUnit.SECONDS);
+      Assert.fail("Expected runtime client service not stopped");
+    } catch (TimeoutException e) {
+      // Expected
+    }
+
+    // Publish a program completed state, which should unblock the client service stop.
+    programStateWriter.completed(PROGRAM_RUN_ID);
+    stopFuture.get();
   }
 
   private List<Message> fetchMessages(MessagingContext messagingContext, String topic, int limit,

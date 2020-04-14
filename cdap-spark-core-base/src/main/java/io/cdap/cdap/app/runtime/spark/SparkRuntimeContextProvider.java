@@ -59,6 +59,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -188,8 +189,7 @@ public final class SparkRuntimeContextProvider {
 
       ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-        Authenticator.setDefault(injector.getInstance(Authenticator.class));
+        RuntimeMonitors.setupMonitoring(injector, programOptions);
       }
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
@@ -340,8 +340,7 @@ public final class SparkRuntimeContextProvider {
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId),
-                                                      programOptions.getArguments()));
+    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId), programOptions));
 
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
     modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {

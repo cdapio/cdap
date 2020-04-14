@@ -35,6 +35,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.guice.TwillModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.MasterUtils;
@@ -75,6 +76,7 @@ import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.hive.ExploreUtils;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -574,6 +576,7 @@ public class MasterServiceMain extends DaemonMain {
       new MonitorHandlerModule(true),
       new ProgramRunnerRuntimeModule().getDistributedModules(),
       new SecureStoreServerModule(),
+      new RuntimeServerModule(),
       new OperationalStatsModule(),
       new AbstractModule() {
         @Override
@@ -656,6 +659,7 @@ public class MasterServiceMain extends DaemonMain {
       ServiceStore serviceStore = getAndStart(injector, ServiceStore.class);
       services.add(serviceStore);
       services.add(injector.getInstance(SecureStoreService.class));
+      services.add(injector.getInstance(RuntimeServer.class));
 
       twillRunner = injector.getInstance(TwillRunnerService.class);
       twillRunner.start();

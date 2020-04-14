@@ -95,8 +95,6 @@ public class TriggerInfoContext {
     if (runRecordMeta == null) {
       return Collections.emptyMap();
     }
-    Map<String, String> properties = runRecordMeta.getProperties();
-    String runtimeArgsJson = properties.get("runtimeArgs");
-    return runtimeArgsJson == null ? Collections.emptyMap() : GSON.fromJson(runtimeArgsJson, STRING_STRING_MAP);
+    return runRecordMeta.getUserArgs();
   }
 }

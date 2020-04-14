@@ -34,6 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.InetSocketAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -52,11 +54,13 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
   private final CConfiguration cConf;
   private final Map<String, DefaultServiceDiscovered> services;
+  private final Discoverable runtimeMonitorDiscoverable;
 
   @Inject
-  RemoteExecutionDiscoveryService(CConfiguration cConf) {
+  RemoteExecutionDiscoveryService(CConfiguration cConf, RemoteMonitorType monitorType) {
     this.cConf = cConf;
     this.services = new ConcurrentHashMap<>();
+    this.runtimeMonitorDiscoverable = createMonitorDiscoverable(cConf, monitorType);
   }
 
   @Override
@@ -114,12 +118,19 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     Set<Discoverable> discoverables = Networks.getDiscoverables(cConf, key);
 
     if (discoverables.isEmpty()) {
-      // If there is no address from the configuration, assuming it is using the service proxy,
-      // hence the discovery name is the hostname. Also use port == 0 so that the RemoteExecutionProxySelector
-      // knows that it need to use service proxy.
-      URIScheme scheme = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
-      discoverables = Collections.singleton(scheme.createDiscoverable(name,
-                                                                      InetSocketAddress.createUnresolved(name, 0)));
+      Discoverable discoverable;
+
+      if (name.equals(runtimeMonitorDiscoverable.getName())) {
+        discoverable = runtimeMonitorDiscoverable;
+      } else {
+        // If there is no address from the configuration, assuming it is using the service proxy,
+        // hence the discovery name is the hostname. Also use port == 0 so that the RemoteExecutionProxySelector
+        // knows that it need to use service proxy.
+        URIScheme scheme = cConf.getBoolean(Constants.Security.SSL.INTERNAL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
+        discoverable = scheme.createDiscoverable(name, InetSocketAddress.createUnresolved(name, 0));
+      }
+
+      discoverables = Collections.singleton(discoverable);
     }
 
     if (LOG.isDebugEnabled()) {
@@ -130,5 +141,26 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
     }
 
     serviceDiscovered.setDiscoverables(discoverables);
+  }
+
+  /**
+   * Creates a {@link Discoverable} for the runtime monitor service.
+   */
+  private static Discoverable createMonitorDiscoverable(CConfiguration cConf, RemoteMonitorType monitorType) {
+    if (monitorType == RemoteMonitorType.URL) {
+      // For monitor type URL, the monitor url is always set
+      String url = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
+      try {
+        return URIScheme.createDiscoverable(Constants.Service.RUNTIME, new URL(url));
+      } catch (MalformedURLException e) {
+        throw new IllegalArgumentException("Invalid monitor URL " + url, e);
+      }
+    }
+
+    // If there is no runtime monitor URL, default to the service socks proxy mechanism, in which the
+    // hostname is the service name with port == 0.
+    URIScheme scheme = cConf.getBoolean(Constants.RuntimeMonitor.SSL_ENABLED) ? URIScheme.HTTPS : URIScheme.HTTP;
+    return scheme.createDiscoverable(Constants.Service.RUNTIME,
+                                     InetSocketAddress.createUnresolved(Constants.Service.RUNTIME, 0));
   }
 }

@@ -50,6 +50,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -67,10 +71,16 @@ public class RemoteExecutionJobMain {
   private InMemoryZKServer zkServer;
   private TwillRunnerService twillRunnerService;
   private LocationFactory locationFactory;
+  private Path serviceProxySecretPath = Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
 
   public static void main(String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     new RemoteExecutionJobMain().doMain(args);
+  }
+
+  @VisibleForTesting
+  void setServiceProxySecretPath(Path path) {
+    this.serviceProxySecretPath = path;
   }
 
   /**
@@ -83,6 +93,9 @@ public class RemoteExecutionJobMain {
     if (args.length < 1) {
       throw new IllegalArgumentException("Missing runId from the first argument");
     }
+
+    // Stop the job when this process get terminated
+    Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::requestStop));
 
     System.setProperty(Constants.Zookeeper.TWILL_ZK_SERVER_LOCALHOST, "false");
     RunId runId = RunIds.fromString(args[0]);
@@ -141,9 +154,8 @@ public class RemoteExecutionJobMain {
 
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.Zookeeper.QUORUM, zkConnectStr);
-    properties.put(Constants.RuntimeMonitor.ACTIVE_MONITORING, Boolean.TRUE.toString());
-    properties.put(Constants.RuntimeMonitor.SERVER_KEYSTORE_PATH, Constants.RuntimeMonitor.SERVER_KEYSTORE);
-    properties.put(Constants.RuntimeMonitor.CLIENT_KEYSTORE_PATH, Constants.RuntimeMonitor.CLIENT_KEYSTORE);
+    properties.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD,
+                   new String(Files.readAllBytes(serviceProxySecretPath), StandardCharsets.UTF_8));
 
     locationFactory = injector.getInstance(LocationFactory.class);
     locationFactory.create("/").mkdirs();
