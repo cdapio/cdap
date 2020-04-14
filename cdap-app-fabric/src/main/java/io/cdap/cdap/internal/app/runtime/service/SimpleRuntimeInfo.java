@@ -32,7 +32,7 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
 
   private final ProgramController controller;
   private final ProgramId programId;
-  private final RunId twillRunId;
+  private volatile RunId twillRunId;
 
   public SimpleRuntimeInfo(ProgramController controller, ProgramId programId) {
     this(controller, programId, null);
@@ -41,6 +41,10 @@ public final class SimpleRuntimeInfo implements ProgramRuntimeService.RuntimeInf
   public SimpleRuntimeInfo(ProgramController controller, ProgramId programId, @Nullable RunId twillRunId) {
     this.controller = controller;
     this.programId = programId;
+    this.twillRunId = twillRunId;
+  }
+
+  public void setTwillRunId(RunId twillRunId) {
     this.twillRunId = twillRunId;
   }
 

@@ -20,7 +20,6 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Table;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -32,6 +31,7 @@ import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.common.twill.TwillAppNames;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -52,6 +52,7 @@ import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillController;
 import org.apache.twill.api.TwillRunResources;
 import org.apache.twill.api.TwillRunner;
+import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -88,46 +89,55 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
                                    @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                      ArtifactRepository noAuthArtifactRepository,
                                    Impersonator impersonator, ProgramStateWriter programStateWriter) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository);
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
     this.twillRunner = twillRunner;
     this.store = store;
     this.impersonator = impersonator;
     this.programStateWriter = programStateWriter;
   }
 
-  @Nullable
   @Override
   protected RuntimeInfo createRuntimeInfo(final ProgramController controller, final ProgramId programId,
                                           final Runnable cleanUpTask) {
-    if (controller instanceof AbstractTwillProgramController) {
-      RunId twillRunId = ((AbstractTwillProgramController) controller).getTwillRunId();
+    SimpleRuntimeInfo runtimeInfo = new SimpleRuntimeInfo(controller, programId, null);
 
-      // Add a listener that publishes KILLED status notification when the YARN application is killed in case that
-      // the KILLED status notification is not published from the YARN application container, so we don't need to wait
-      // for the run record corrector to mark the status as KILLED.
-      controller.addListener(new AbstractListener() {
-        @Override
-        public void init(ProgramController.State currentState, @Nullable Throwable cause) {
-          if (currentState == ProgramController.State.ALIVE) {
-            alive();
-          } else if (currentState == ProgramController.State.KILLED) {
-            killed();
-          }
+    // Add a listener that publishes KILLED status notification when the YARN application is killed in case that
+    // the KILLED status notification is not published from the YARN application container, so we don't need to wait
+    // for the run record corrector to mark the status as KILLED.
+    // Also, the local staging files can be deleted when the twill program is alive.
+    controller.addListener(new AbstractListener() {
+
+      ProgramController actualController = controller;
+
+      @Override
+      public void init(ProgramController.State currentState, @Nullable Throwable cause) {
+        while (actualController instanceof Delegator) {
+          //noinspection unchecked
+          actualController = ((Delegator<ProgramController>) actualController).getDelegate();
         }
+        if (actualController instanceof AbstractTwillProgramController) {
+          runtimeInfo.setTwillRunId(((AbstractTwillProgramController) actualController).getTwillRunId());
+        }
+        if (currentState == ProgramController.State.ALIVE) {
+          alive();
+        } else if (currentState == ProgramController.State.KILLED) {
+          killed();
+        }
+      }
 
-        @Override
-        public void alive() {
+      @Override
+      public void alive() {
+        if (actualController instanceof AbstractTwillProgramController) {
           cleanUpTask.run();
         }
+      }
 
-        @Override
-        public void killed() {
-          programStateWriter.killed(programId.run(controller.getRunId()));
-        }
-      }, MoreExecutors.sameThreadExecutor());
-      return new SimpleRuntimeInfo(controller, programId, twillRunId);
-    }
-    return null;
+      @Override
+      public void killed() {
+        programStateWriter.killed(programId.run(controller.getRunId()));
+      }
+    }, Threads.SAME_THREAD_EXECUTOR);
+    return runtimeInfo;
   }
 
   @Override
@@ -268,10 +278,5 @@ public final class DistributedProgramRuntimeService extends AbstractProgramRunti
     }
 
     return super.getLiveInfo(program);
-  }
-
-  @Override
-  protected void startUp() {
-    LOG.debug("started distributed program runtime service");
   }
 }

@@ -128,13 +128,6 @@ public interface ProgramController {
   RunId getRunId();
 
   /**
-   * Returns the component name within a given program which this controller is controlling
-   * or {@code null} if there is no component name for this controller.
-   */
-  @Nullable
-  String getComponentName();
-
-  /**
    * Suspend the running {@link ProgramRunner}.
    * @return A {@link ListenableFuture} that will be completed when the program is actually suspended.
    */

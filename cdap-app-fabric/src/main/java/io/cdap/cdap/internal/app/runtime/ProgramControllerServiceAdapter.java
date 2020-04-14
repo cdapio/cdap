@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import javax.annotation.Nullable;
 
 /**
  * A {@link ProgramController} implementation that control a guava Service.
@@ -47,11 +46,7 @@ public class ProgramControllerServiceAdapter extends AbstractProgramController {
   private final CountDownLatch serviceStoppedLatch;
 
   public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId) {
-    this(service, programRunId, null);
-  }
-
-  public ProgramControllerServiceAdapter(Service service, ProgramRunId programRunId, @Nullable String componentName) {
-    super(programRunId, componentName);
+    super(programRunId);
     this.service = service;
     this.serviceStoppedLatch = new CountDownLatch(1);
     listenToRuntimeState(service);
