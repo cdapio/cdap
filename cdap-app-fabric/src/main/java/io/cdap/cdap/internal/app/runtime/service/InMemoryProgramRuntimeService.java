@@ -26,6 +26,7 @@ import io.cdap.cdap.app.runtime.AbstractProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -58,8 +59,9 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
                                 // no privileges needed for artifacts
                                 @Named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO)
                                   ArtifactRepository noAuthArtifactRepository,
-                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname) {
-    super(cConf, programRunnerFactory, noAuthArtifactRepository);
+                                @Named(Constants.Service.MASTER_SERVICES_BIND_ADDRESS) InetAddress hostname,
+                                ProgramStateWriter programStateWriter) {
+    super(cConf, programRunnerFactory, noAuthArtifactRepository, programStateWriter);
     this.hostname = hostname.getCanonicalHostName();
   }
 
@@ -70,6 +72,7 @@ public final class InMemoryProgramRuntimeService extends AbstractProgramRuntimeS
 
   @Override
   protected void shutDown() throws Exception {
+    super.shutDown();
     stopAllPrograms();
   }
 

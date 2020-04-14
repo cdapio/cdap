@@ -519,6 +519,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             try {
               programLifecycleService.startInternal(programDescriptor, newProgramOptions, programRunId);
             } catch (Exception e) {
+              LOG.error("Failed to start program {}", programRunId, e);
               programStateWriter.error(programRunId, e);
             }
           } finally {

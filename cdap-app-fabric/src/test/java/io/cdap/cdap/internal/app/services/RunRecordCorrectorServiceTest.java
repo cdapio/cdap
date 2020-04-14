@@ -166,7 +166,8 @@ public class RunRecordCorrectorServiceTest extends AppFabricTestBase {
 
     // Use a ProgramRuntimeService that only reports running state based on a set of know ids
     final Map<ProgramId, RunId> runningSet = new HashMap<>();
-    ProgramRuntimeService programRuntimeService = new AbstractProgramRuntimeService(cConf, null, null) {
+    ProgramRuntimeService programRuntimeService = new AbstractProgramRuntimeService(cConf, null, null,
+                                                                                    new NoOpProgramStateWriter()) {
 
       @Override
       public ProgramLiveInfo getLiveInfo(ProgramId programId) {
