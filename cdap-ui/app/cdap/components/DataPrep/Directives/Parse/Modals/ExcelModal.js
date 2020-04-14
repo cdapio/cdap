@@ -34,7 +34,6 @@ export default class ExcelModal extends Component {
       sheetNumber: 0,
       firstRowHeader: false,
     };
-    this.numberTextBox = null;
     this.onSheetNumberChange = this.onSheetNumberChange.bind(this);
     this.onSheetNameChange = this.onSheetNameChange.bind(this);
     this.onSheetSourceChange = this.onSheetSourceChange.bind(this);
@@ -45,9 +44,6 @@ export default class ExcelModal extends Component {
 
   componentDidMount() {
     MouseTrap.bind('enter', this.applyDirective);
-    if (this.numberTextBox) {
-      this.numberTextBox.focus();
-    }
   }
 
   componentWillUnmount() {
@@ -115,6 +111,7 @@ export default class ExcelModal extends Component {
         backdrop="static"
         zIndex="1061"
         className="dataprep-parse-modal parse-as-excel cdap-modal"
+        autoFocus={false}
       >
         <ModalHeader>
           <span>
@@ -144,12 +141,7 @@ export default class ExcelModal extends Component {
                 className="form-control mousetrap"
                 value={this.state.sheetNumber}
                 onChange={this.onSheetNumberChange}
-                ref={(ref) => {
-                  if (ref) {
-                    this.numberTextBox = ref;
-                    ref.focus();
-                  }
-                }}
+                autoFocus
               />
             ) : null}
           </FormGroup>
@@ -170,11 +162,7 @@ export default class ExcelModal extends Component {
                 value={this.state.sheetName}
                 onChange={this.onSheetNameChange}
                 placeholder={T.translate(`${PREFIX}.modal.sheetNameInputPlaceholder`)}
-                ref={(ref) => {
-                  if (ref) {
-                    ref.focus();
-                  }
-                }}
+                autoFocus
               />
             ) : null}
           </FormGroup>

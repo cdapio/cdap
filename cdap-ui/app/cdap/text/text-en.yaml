@@ -600,7 +600,7 @@ features:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
-          textareaplaceholder: "Enter column names seperated by comma. Special characters (eg., @ - #) are not allowed"
+          textareaplaceholder: "Enter column names separated by commas. Special characters (eg., @ - #) are not allowed"
         ReplaceColumns:
           applyButton: Replace
           ignoreCase: Ignore case

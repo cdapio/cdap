@@ -46,11 +46,7 @@ export default class Bulkset extends Component {
     this.onColumnNamesChange = this.onColumnNamesChange.bind(this);
     this.handleKeyPress = this.handleKeyPress.bind(this);
   }
-  componentDidMount() {
-    if (this.textarea) {
-      this.textarea.focus();
-    }
-  }
+
   applyDirective() {
     let columns = this.state.columnNames.toString();
     let directive = `set columns ${columns}`;
@@ -136,6 +132,7 @@ export default class Bulkset extends Component {
         backdrop="static"
         zIndex="1061"
         className="bulkset-columnactions-modal cdap-modal"
+        autoFocus={false}
       >
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.modalTitle`)}</span>
@@ -154,7 +151,7 @@ export default class Bulkset extends Component {
               value={this.state.columnNames}
               onChange={this.onColumnNamesChange}
               onKeyPress={this.handleKeyPress}
-              ref={(ref) => (this.textarea = ref)}
+              autoFocus
             />
             <div className="text-danger">{this.state.error}</div>
           </fieldset>
