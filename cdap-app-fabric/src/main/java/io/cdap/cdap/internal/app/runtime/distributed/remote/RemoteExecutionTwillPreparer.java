@@ -66,6 +66,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TwillPreparer} implementation that uses ssh to launch a single {@link TwillRunnable}.
@@ -81,7 +82,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private final Location serviceProxySecretLocation;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               SSHConfig sshConfig, Location serviceProxySecretLocation,
+                               SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
                                TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
                                TwillControllerFactory controllerFactory) {
@@ -337,6 +338,9 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
    * Localize key store files to the remote host.
    */
   private void localizeServiceProxySecret(SSHSession session, String targetPath) throws Exception {
+    if (serviceProxySecretLocation == null) {
+      return;
+    }
     try (InputStream is = serviceProxySecretLocation.getInputStream()) {
       //noinspection OctalInteger
       session.copy(is, targetPath, io.cdap.cdap.common.conf.Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,

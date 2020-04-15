@@ -25,9 +25,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -44,11 +41,7 @@ public class RemoteExecutionJobMainTest {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
 
-    File secretFile = new File(TEMP_FOLDER.newFolder(), Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
-    Files.write(secretFile.toPath(), Collections.singletonList("testing"));
-
     RemoteExecutionJobMain runner = new RemoteExecutionJobMain();
-    runner.setServiceProxySecretPath(secretFile.toPath());
     RuntimeJobEnvironment jobEnv = runner.initialize(cConf);
     try {
       Assert.assertNotNull(jobEnv.getLocationFactory());

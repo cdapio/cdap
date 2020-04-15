@@ -50,10 +50,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -71,16 +67,10 @@ public class RemoteExecutionJobMain {
   private InMemoryZKServer zkServer;
   private TwillRunnerService twillRunnerService;
   private LocationFactory locationFactory;
-  private Path serviceProxySecretPath = Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
 
   public static void main(String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     new RemoteExecutionJobMain().doMain(args);
-  }
-
-  @VisibleForTesting
-  void setServiceProxySecretPath(Path path) {
-    this.serviceProxySecretPath = path;
   }
 
   /**
@@ -154,8 +144,6 @@ public class RemoteExecutionJobMain {
 
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.Zookeeper.QUORUM, zkConnectStr);
-    properties.put(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD,
-                   new String(Files.readAllBytes(serviceProxySecretPath), StandardCharsets.UTF_8));
 
     locationFactory = injector.getInstance(LocationFactory.class);
     locationFactory.create("/").mkdirs();

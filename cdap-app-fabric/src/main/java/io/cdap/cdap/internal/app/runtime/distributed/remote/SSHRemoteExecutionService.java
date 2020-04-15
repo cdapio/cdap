@@ -98,11 +98,11 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
     String targetPath = session.executeAndWait("echo `pwd`/" + programRunId.getRun()).trim();
     session.executeAndWait("mkdir -p " + targetPath);
     byte[] content = GSON.toJson(info).getBytes(StandardCharsets.UTF_8);
-    String tmpFileName = Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "." + System.currentTimeMillis() + ".tmp";
+    String targetFileName = Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json";
+    String tmpFileName = targetFileName + "-" + System.currentTimeMillis() + ".tmp";
     //noinspection OctalInteger
-    session.copy(new ByteArrayInputStream(content), targetPath, tmpFileName, content.length, 0600, null, null);
-    session.executeAndWait(String.format("mv %s/%s %s/%s", targetPath, tmpFileName,
-                                         targetPath, Constants.RuntimeMonitor.SERVICE_PROXY_FILE));
+    session.copy(new ByteArrayInputStream(content), "/tmp", tmpFileName, content.length, 0600, null, null);
+    session.executeAndWait(String.format("mv /tmp/%s /tmp/%s", tmpFileName, targetFileName));
     LOG.debug("Service proxy file uploaded to remote runtime for program run {}", programRunId);
 
     return session;
