@@ -47,15 +47,19 @@ const HomeActionsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     <div className={classes.root}>
       <div className={classes.scrollContainer}>
         <div className={classes.cardsContainer}>
-          {ActionConfig.map((action) =>
-            action.experiment ? (
+          {ActionConfig.map((action) => {
+            if (action.featureFlag === false) {
+              return null;
+            }
+
+            return action.experiment ? (
               <ExperimentalFeature key={action.title} name={action.experiment}>
                 <ActionCard key={action.title} config={action} />
               </ExperimentalFeature>
             ) : (
               <ActionCard key={action.title} config={action} />
-            )
-          )}
+            );
+          })}
         </div>
       </div>
       <Welcome />
