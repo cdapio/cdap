@@ -266,7 +266,7 @@ public class PluginInstantiator implements Closeable {
       Reflections.visit(config, configFieldType.getType(), fieldSetter);
 
       if (!fieldSetter.invalidProperties.isEmpty() || !fieldSetter.missingProperties.isEmpty()) {
-        throw new InvalidPluginConfigException("Unable to create plugin config.", fieldSetter.missingProperties,
+        throw new InvalidPluginConfigException(pluginClass, fieldSetter.missingProperties,
                                                fieldSetter.invalidProperties);
       }
 
@@ -549,7 +549,9 @@ public class PluginInstantiator implements Closeable {
       Name nameAnnotation = field.getAnnotation(Name.class);
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
-      if (pluginPropertyField.isRequired() && !properties.getProperties().containsKey(name)) {
+      // if the property is required and it's not a macro and the property doesn't exist
+      if (pluginPropertyField.isRequired() && !macroFields.contains(name) &&
+        properties.getProperties().get(name) == null) {
         missingProperties.add(name);
         return;
       }
@@ -558,7 +560,7 @@ public class PluginInstantiator implements Closeable {
         try {
           field.set(instance, convertValue(name, declareTypeToken.resolveType(field.getGenericType()), value));
         } catch (Exception e) {
-          invalidProperties.add(new InvalidPluginProperty(name, e.getMessage()));
+          invalidProperties.add(new InvalidPluginProperty(name, e));
         }
       }
     }
