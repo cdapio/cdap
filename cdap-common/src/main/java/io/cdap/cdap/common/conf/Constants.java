@@ -889,12 +889,12 @@ public final class Constants {
     // Configurations related to the Service Proxy that runs in the remote runtime for proxying traffic from
     // remote cluster back into calling CDAP services.
     // File name that stores the service proxy information
-    public static final String SERVICE_PROXY_FILE = "service.proxy.json";
+    public static final String SERVICE_PROXY_FILE = "cdap.service.proxy.json";
     // Configuration key for the service proxy in the format of "host:port"
     public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
     // Configuration key for the service proxy password. It is only used within a runtime cluster.
     public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
-    public static final String SERVICE_PROXY_PASSWORD_FILE = "service.proxy.secret";
+    public static final String SERVICE_PROXY_PASSWORD_FILE = "cdap.service.proxy.secret";
   }
 
   /**

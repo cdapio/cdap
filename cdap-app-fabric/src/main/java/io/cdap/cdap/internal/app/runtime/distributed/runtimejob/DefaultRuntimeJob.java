@@ -116,6 +116,7 @@ import java.net.InetSocketAddress;
 import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -172,8 +173,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
     ProgramDescriptor programDescriptor = new ProgramDescriptor(programId, appSpec);
 
     // Create injector and get program runner
-    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv), programRunId,
-                                                           programOpts));
+    Injector injector = Guice.createInjector(createModules(runtimeJobEnv, createCConf(runtimeJobEnv, programOpts),
+                                                           programRunId, programOpts));
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
     ProxySelector oldProxySelector = ProxySelector.getDefault();
@@ -262,7 +263,8 @@ public class DefaultRuntimeJob implements RuntimeJob {
    * Properties returned by the {@link RuntimeJobEnvironment#getProperties()} will be set into the returned
    * {@link CConfiguration} instance.
    */
-  private CConfiguration createCConf(RuntimeJobEnvironment runtimeJobEnv) throws IOException {
+  private CConfiguration createCConf(RuntimeJobEnvironment runtimeJobEnv,
+                                     ProgramOptions programOpts) throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.clear();
     cConf.addResource(new File(DistributedProgramRunner.CDAP_CONF_FILE_NAME).toURI().toURL());
@@ -272,6 +274,16 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     String hostName = InetAddress.getLocalHost().getCanonicalHostName();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);
+
+    // If using SSH for monitoring and if the service proxy password file exists,
+    // set the password into the cConf so that it can be used in the distributed jobs launched by this process.
+    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RemoteMonitorType.SSH) {
+      Path serviceProxySecretFile = Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
+      if (Files.exists(serviceProxySecretFile)) {
+        cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD,
+                  new String(Files.readAllBytes(serviceProxySecretFile), StandardCharsets.UTF_8));
+      }
+    }
 
     return cConf;
   }
@@ -429,11 +441,13 @@ public class DefaultRuntimeJob implements RuntimeJob {
   private static final class TrafficRelayService extends AbstractIdleService {
 
     private final CConfiguration cConf;
+    private final ProgramRunId programRunId;
     private TrafficRelayServer relayServer;
 
     @Inject
-    TrafficRelayService(CConfiguration cConf) {
+    TrafficRelayService(CConfiguration cConf, ProgramRunId programRunId) {
       this.cConf = cConf;
+      this.programRunId = programRunId;
     }
 
     @Override
@@ -452,18 +466,23 @@ public class DefaultRuntimeJob implements RuntimeJob {
     @Override
     protected void shutDown() {
       relayServer.stopAndWait();
+      getServiceProxyFile().delete();
     }
 
     @Nullable
     private InetSocketAddress getTrafficRelayTarget() {
-      try (Reader reader = Files.newBufferedReader(Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_FILE),
-                                                   StandardCharsets.UTF_8)) {
+      File serviceProxyFile = getServiceProxyFile();
+      try (Reader reader = Files.newBufferedReader(serviceProxyFile.toPath(), StandardCharsets.UTF_8)) {
         int port = GSON.fromJson(reader, ServiceSocksProxyInfo.class).getPort();
         return port == 0 ? null : new InetSocketAddress(InetAddress.getLoopbackAddress(), port);
       } catch (Exception e) {
-        OUTAGE_LOG.warn("Failed to open service proxy file {}", Constants.RuntimeMonitor.SERVICE_PROXY_FILE, e);
+        OUTAGE_LOG.warn("Failed to open service proxy file {}", serviceProxyFile, e);
         return null;
       }
+    }
+
+    private File getServiceProxyFile() {
+      return new File("/tmp", Constants.RuntimeMonitor.SERVICE_PROXY_FILE + "-" + programRunId.getRun() + ".json");
     }
   }
 }

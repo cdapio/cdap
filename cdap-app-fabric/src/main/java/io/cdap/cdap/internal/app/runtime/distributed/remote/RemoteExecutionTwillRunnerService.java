@@ -314,10 +314,17 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                        ProgramOptions programOpts, TwillSpecification twillSpec,
                                        LocationCache locationCache, TwillControllerFactory controllerFactory) {
 
+    Location serviceProxySecretLocation = null;
+    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RemoteMonitorType.SSH) {
+      serviceProxySecretLocation = generateAndSaveServiceProxySecret(programRunId,
+                                                                     getKeysDirLocation(programOpts, locationFactory));
+    }
+
     RuntimeJobManager jobManager = provisioningService.getRuntimeJobManager(programRunId, programOpts).orElse(null);
     // Use RuntimeJobManager to launch the remote process if it is supported
     if (jobManager != null) {
       return new RuntimeJobTwillPreparer(cConf, hConf, twillSpec, programRunId, programOpts,
+                                         serviceProxySecretLocation,
                                          locationCache, locationFactory,
                                          controllerFactory,
                                          () -> provisioningService.getRuntimeJobManager(programRunId, programOpts)
@@ -325,9 +332,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
     }
 
     // Use SSH if there is no RuntimeJobManager
-    Location keysDir = getKeysDirLocation(programOpts, locationFactory);
-    Location serviceProxySecretLocation = generateAndSaveServiceProxySecret(programRunId, keysDir);
-
     ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
     return new RemoteExecutionTwillPreparer(cConf, hConf, clusterKeyInfo.getSSHConfig(),
                                             serviceProxySecretLocation,
