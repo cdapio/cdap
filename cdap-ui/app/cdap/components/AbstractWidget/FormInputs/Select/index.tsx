@@ -75,7 +75,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
       }}
     >
       {optionValues.map((opt) => (
-        <MenuItem value={opt.value} key={opt.value}>
+        <MenuItem value={opt.value} key={opt.value} disabled={opt.disabled}>
           {opt.label}
         </MenuItem>
       ))}

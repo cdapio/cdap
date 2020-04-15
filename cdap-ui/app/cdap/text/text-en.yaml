@@ -118,6 +118,8 @@ features:
       apply: Apply
       on: on
       within: within
+    PluginListWidget:
+      emptyLabel: "No {pluginType} plugins"
     SecureKeyTextarea:
       customEntryHelper: Specify a different secure key
       customEntryPlaceholder: Type the name of secure key
@@ -1541,7 +1543,7 @@ features:
         InputHeader: "Input datasets to {target}"
         NoRelatedSubheader: "0 datasets"
         OutputHeader: "Output datasets from {target}"
-        RelatedSubheader: 
+        RelatedSubheader:
           1: "Viewing {first} of {total} dataset"
           _: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and transformations'
