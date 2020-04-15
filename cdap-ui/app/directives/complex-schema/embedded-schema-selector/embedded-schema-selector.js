@@ -24,13 +24,14 @@ angular.module(PKG.name+'.commons')
       displayType: '=',
       index: '=',
       parentFormatOutput: '&',
-      isDisabled: '='
+      isDisabled: '=',
+      initCollapse: '='
     },
     bindToController: true,
     controller: function (SchemaHelper) {
       var vm = this;
       vm.checkComplexType = SchemaHelper.checkComplexType;
-      vm.expanded = true;
+      vm.expanded = vm.initCollapse === true ? false : true;
     },
     controllerAs: 'Embedded'
   };
