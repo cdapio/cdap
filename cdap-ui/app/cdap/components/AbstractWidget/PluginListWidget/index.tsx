@@ -22,6 +22,9 @@ import VersionStore from 'services/VersionStore';
 import { objectQuery } from 'services/helpers';
 import { MyPipelineApi } from 'api/pipeline';
 import CustomSelect from 'components/AbstractWidget/FormInputs/Select';
+import T from 'i18n-react';
+
+const PREFIX = 'features.AbstractWidget.PluginListWidget';
 
 interface IPluginListWidgetProps {
   'plugin-type': string;
@@ -60,6 +63,19 @@ const PluginListWidget: React.FC<IPluginListProps> = ({
     };
 
     MyPipelineApi.getExtensions(params).subscribe((res: IPlugin[]) => {
+      if (res.length === 0) {
+        const emptyOptions = [
+          {
+            value: '',
+            label: T.translate(`${PREFIX}.emptyLabel`, { pluginType: params.extension }).toString(),
+            disabled: true,
+          },
+        ];
+        setOptions(emptyOptions);
+
+        return;
+      }
+
       const displayOptions = res.map((plugin) => {
         return {
           value: plugin.name,

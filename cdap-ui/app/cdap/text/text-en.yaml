@@ -118,6 +118,8 @@ features:
       apply: Apply
       on: on
       within: within
+    PluginListWidget:
+      emptyLabel: "No {pluginType} plugins"
     SecureKeyTextarea:
       customEntryHelper: Specify a different secure key
       customEntryPlaceholder: Type the name of secure key
