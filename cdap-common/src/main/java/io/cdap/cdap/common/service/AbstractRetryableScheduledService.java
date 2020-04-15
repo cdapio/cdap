@@ -160,15 +160,19 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         delayMillis = runTask();
         nonFailureStartTime = 0L;
         failureCount = 0;
-      } catch (Exception e) {
-        logTaskFailure(e);
+      } catch (Throwable t) {
+        logTaskFailure(t);
+        if (!(t instanceof Exception)) {
+          throw t;
+        }
+        Exception e = (Exception) t;
         if (!shouldRetry(e)) {
-          throw e;
+          throw t;
         }
 
         long delayMillis = retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
         if (delayMillis < 0) {
-          e.addSuppressed(
+          t.addSuppressed(
             new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
                                                         failureCount,
                                                         System.currentTimeMillis() - nonFailureStartTime)));
@@ -178,9 +182,9 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         }
         this.delayMillis = delayMillis;
       }
-    } catch (Exception e) {
-      LOG.error("Aborting service {} due to non-retryable error", getServiceName(), e);
-      throw e;
+    } catch (Throwable t) {
+      LOG.error("Aborting service {} due to non-retryable error", getServiceName(), t);
+      throw t;
     }
   }
 
