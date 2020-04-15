@@ -1541,7 +1541,7 @@ features:
         InputHeader: "Input datasets to {target}"
         NoRelatedSubheader: "0 datasets"
         OutputHeader: "Output datasets from {target}"
-        RelatedSubheader: 
+        RelatedSubheader:
           1: "Viewing {first} of {total} dataset"
           _: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and transformations'
@@ -1720,6 +1720,10 @@ features:
       listLabel: List
       studioLabel: Studio
       title: Integrate
+    Replicator:
+      description: 'Replicate data changes in real-time from operational databases into analytical databases.'
+      linkLabel: 'Delta replicator'
+      title: Replicate
     Wrangler:
       description: Explore, transform, cleanse, and enrich data using a code-free environment.
       linkLabel: Wrangler

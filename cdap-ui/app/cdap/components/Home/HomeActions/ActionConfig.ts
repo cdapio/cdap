@@ -15,9 +15,24 @@
  */
 
 import T from 'i18n-react';
+import { Theme } from 'services/ThemeHelper';
 const PREFIX = 'features.Home';
 
-export const ActionConfig = [
+interface ILink {
+  label: string;
+  url: string;
+}
+
+interface IAction {
+  img: string;
+  title: string;
+  description: string;
+  links: ILink[];
+  experiment?: string;
+  featureFlag?: boolean;
+}
+
+export const ActionConfig: IAction[] = [
   {
     img: '/cdap_assets/img/cleanse_data.svg',
     title: T.translate(`${PREFIX}.Ingestion.title`).toString(),
@@ -55,6 +70,18 @@ export const ActionConfig = [
         url: '/cdap/ns/:namespace/pipelines',
       },
     ],
+  },
+  {
+    img: '/cdap_assets/img/replicator.svg',
+    title: T.translate(`${PREFIX}.Replicator.title`).toString(),
+    description: T.translate(`${PREFIX}.Replicator.description`).toString(),
+    links: [
+      {
+        label: T.translate(`${PREFIX}.Replicator.linkLabel`).toString(),
+        url: '/cdap/ns/:namespace/replicator',
+      },
+    ],
+    featureFlag: Theme.showCDC,
   },
   {
     img: '/cdap_assets/img/metadata.svg',
