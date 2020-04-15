@@ -152,6 +152,10 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       return;
     }
 
+    if (vm.parsedSchema.length > 5) {
+      vm.collapseChildren = true;
+    }
+
     vm.formatOutput(true);
   }
 
@@ -251,7 +255,7 @@ angular.module(PKG.name+'.commons')
       typeIndex: '=',
       parentFormatOutput: '&',
       isDisabled: '=',
-      schemaPrefix: '='
+      schemaPrefix: '=',
     },
     link: (scope, element) => {
       let elemString = `<my-complex-schema
@@ -261,7 +265,7 @@ angular.module(PKG.name+'.commons')
                           is-record-schema="true"
                           parent-format-output="parentFormatOutput()"
                           is-disabled="isDisabled"
-                          schema-prefix="schemaPrefix"
+                          schema-prefix="schemaPrefix">
                         </my-complex-schema>`;
 
       $compile(elemString)(scope, (cloned) => {
