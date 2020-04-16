@@ -51,6 +51,11 @@ const styles = (): StyleRules => {
     search: {
       width: '200px',
       marginLeft: '20px',
+
+      '& input': {
+        paddingTop: '10px',
+        paddingBottom: '10px',
+      },
     },
     listContainer: {
       marginTop: '15px',
@@ -118,7 +123,6 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             className={classes.search}
             value={search}
             onChange={handleSearch}
-            size="small"
             variant="outlined"
             placeholder="Search sources by name"
             InputProps={{
