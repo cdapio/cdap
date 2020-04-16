@@ -16,7 +16,6 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import ThemeWrapper from 'components/ThemeWrapper';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import { objectQuery } from 'services/helpers';

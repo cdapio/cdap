@@ -16,8 +16,7 @@
 
 import * as React from 'react';
 import TextField from '@material-ui/core/TextField';
-import { KeyValueRow } from 'components/AbstractWidget/KeyValueWidget/KeyValueRow';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import AbstractRow, {
   IAbstractRowProps,
   AbstractRowStyles,
@@ -30,6 +29,11 @@ const styles = (theme): StyleRules => {
       display: 'grid',
       gridTemplateColumns: '50% 50%',
       gridGap: '10px',
+      // TODO: clean up this additional styling for legend after upgrading bootstrap
+      // and verifying bootstrap does not add additional border-bottom.
+      '& legend': {
+        border: '0px',
+      },
     },
     disabled: {
       '& .Mui-disabled': {
