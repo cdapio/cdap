@@ -170,7 +170,7 @@ export default class FilterDirective extends Component {
 
     switch (this.state.selectedCondition) {
       case 'EMPTY':
-        directive = `${condition} ${column} == null || ${column} =~ "^\s*$"`;
+        directive = `${condition} ${column} == null || ${column} =~ "^\\W*$"`;
         break;
       case 'TEXTCONTAINS':
         if (this.state.ignoreCase) {
