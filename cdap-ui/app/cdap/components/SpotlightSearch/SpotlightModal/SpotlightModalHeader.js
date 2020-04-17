@@ -41,12 +41,12 @@ export default class SpotlightModalHeader extends Component {
   render() {
     return (
       <ModalHeader>
-        <span className="float-left">
+        <span className="tag-title">
           {T.translate('features.SpotlightSearch.SpotlightModal.headerTagResults', {
             tag: this.props.tag,
           })}
         </span>
-        <div className="close-section float-right text-right">
+        <div className="close-section text-right">
           <span className="search-results-total">
             {this.props.total === 1
               ? T.translate('features.SpotlightSearch.SpotlightModal.numResult', {
@@ -56,13 +56,11 @@ export default class SpotlightModalHeader extends Component {
                   total: this.props.total,
                 })}
           </span>
-          <span>
-            <PaginationDropdown
-              numberOfPages={this.props.numPages}
-              currentPage={this.props.currentPage}
-              onPageChange={this.props.handleSearch.bind(this)}
-            />
-          </span>
+          <PaginationDropdown
+            numberOfPages={this.props.numPages}
+            currentPage={this.props.currentPage}
+            onPageChange={this.props.handleSearch.bind(this)}
+          />
           <span className="fa fa-times" onClick={this.props.toggle} />
         </div>
       </ModalHeader>
