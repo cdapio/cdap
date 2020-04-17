@@ -21,7 +21,6 @@ import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
@@ -71,7 +70,8 @@ public class DataprocProvisioner implements Provisioner {
 
   // Key which is set to true if the instance only have private ip assigned to it else false
   private static final String PRIVATE_INSTANCE = "privateInstance";
-  // system properties passed to provisioner from system
+  // The GCS bucket used by the runtime job manager for launching jobs via the job API
+  // It can be overridden by profile runtime arguments (system.profile.properties.bucket)
   private static final String BUCKET = "bucket";
   private static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
@@ -254,8 +254,8 @@ public class DataprocProvisioner implements Provisioner {
     // Reload system context properties
     systemContext.reloadProperties();
 
-    DataprocConf conf = DataprocConf.fromProperties(createContextProperties(context));
-    Map<String, String> systemProperties = systemContext.getProperties();
+    Map<String, String> properties = createContextProperties(context);
+    DataprocConf conf = DataprocConf.fromProperties(properties);
     RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
 
     if (jobManager != null) {
@@ -272,13 +272,12 @@ public class DataprocProvisioner implements Provisioner {
 
       Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
         .setCredentials(conf.getDataprocCredentials()).build().getService();
-      DataprocUtils.deleteGCSPath(storageClient, getBucket(systemProperties, conf),
+      DataprocUtils.deleteGCSPath(storageClient, properties.get(BUCKET),
                                   DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRunInfo().getRun());
     }
     String clusterName = getClusterName(context.getProgramRunInfo());
     try (DataprocClient client =
-           DataprocClient.fromConf(conf,
-                                   Boolean.parseBoolean(systemProperties.getOrDefault(PRIVATE_INSTANCE, "false")))) {
+           DataprocClient.fromConf(conf, Boolean.parseBoolean(systemContext.getProperties().get(PRIVATE_INSTANCE)))) {
       client.deleteCluster(clusterName);
     }
     return ClusterStatus.DELETING;
@@ -381,17 +380,18 @@ public class DataprocProvisioner implements Provisioner {
    */
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
-    Map<String, String> systemProperties = systemContext.getProperties();
+    Map<String, String> properties = createContextProperties(context);
     // if this system property is not provided, we will assume that ssh should be used instead of
     // runtime job manager for job launch.
-    if (!systemProperties.containsKey(RUNTIME_JOB_MANAGER)) {
+    if (!Boolean.parseBoolean(systemContext.getProperties().get(RUNTIME_JOB_MANAGER))) {
       return Optional.empty();
     }
-    DataprocConf conf = DataprocConf.create(createContextProperties(context), null);
+    DataprocConf conf = DataprocConf.create(properties, null);
     String clusterName = getClusterName(context.getProgramRunInfo());
     String projectId = conf.getProjectId();
     String region = conf.getRegion();
-    String bucket = getBucket(systemProperties, conf);
+    String bucket = properties.get(BUCKET);
+
     Map<String, String> systemLabels = getSystemLabels(systemContext);
     try {
       return Optional.of(
@@ -402,13 +402,5 @@ public class DataprocProvisioner implements Provisioner {
       throw new RuntimeException("Error while getting credentials for dataproc. ", e);
     }
 
-  }
-
-  private String getBucket(Map<String, String> systemProperties, DataprocConf conf) {
-    String bucket = conf.getGcsBucket();
-    if (Strings.isNullOrEmpty(bucket)) {
-      bucket = systemProperties.get(BUCKET);
-    }
-    return bucket;
   }
 }
