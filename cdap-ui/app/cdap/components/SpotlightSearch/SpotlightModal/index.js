@@ -126,7 +126,7 @@ export default class SpotlightModal extends Component {
       this.setState({
         searchResults: res,
         currentPage: page,
-        numPages: Math.ceil(res.total / PAGE_SIZE),
+        numPages: Math.ceil(res.totalResults / PAGE_SIZE),
         focusIndex: 0,
       });
     });
