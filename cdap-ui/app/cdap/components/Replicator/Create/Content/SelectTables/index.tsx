@@ -114,6 +114,39 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     this.fetchTables();
   }
 
+  private removeNonExistingTable = (tables) => {
+    const existingTableMap = {};
+    tables.forEach((table) => {
+      const tableKey = generateTableKey(table);
+      existingTableMap[tableKey] = true;
+    });
+
+    let updatedSelectedTables = this.props.tables;
+    let updatedColumns = this.props.columns;
+    let updatedDmlBlacklist = this.props.dmlBlacklist;
+    let hasChange = false;
+
+    this.props.tables.toList().forEach((table) => {
+      const tableKey = generateTableKey(table);
+
+      if (!existingTableMap[tableKey]) {
+        updatedSelectedTables = updatedSelectedTables.delete(tableKey);
+        updatedColumns = updatedColumns.delete(tableKey);
+        updatedDmlBlacklist = updatedDmlBlacklist.delete(tableKey);
+        hasChange = true;
+      }
+    });
+
+    if (hasChange) {
+      this.props.setTables(updatedSelectedTables, updatedColumns, updatedDmlBlacklist);
+      this.setState({
+        selectedTables: updatedSelectedTables,
+        columns: updatedColumns,
+        dmlBlacklist: updatedDmlBlacklist,
+      });
+    }
+  };
+
   private fetchTables = () => {
     this.setState({
       loading: true,
@@ -126,6 +159,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
 
     MyReplicatorApi.listTables(params).subscribe(
       (res) => {
+        this.removeNonExistingTable(res.tables);
         this.setState({ tables: orderBy(res.tables, ['table'], ['asc']), loading: false });
       },
       (err) => {
@@ -185,8 +219,14 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
   };
 
   public onColumnsSelection = (tableKey, columns: List<IColumn>) => {
+    let newColumns = this.state.columns.set(tableKey, columns);
+
+    if (columns.size === 0) {
+      newColumns = newColumns.delete(tableKey);
+    }
+
     this.setState({
-      columns: this.state.columns.set(tableKey, columns),
+      columns: newColumns,
     });
   };
 
