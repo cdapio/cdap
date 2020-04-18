@@ -161,10 +161,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   }
 
   @Override
-  public void initialize() throws Exception {
-  }
-
-  @Override
   public void launch(RuntimeJobInfo runtimeJobInfo) throws Exception {
     String bucket = DataprocUtils.getBucketName(this.bucket);
 

@@ -26,12 +26,6 @@ import java.util.Optional;
  * Runtime job manager to prepare and launch the job.
  */
 public interface RuntimeJobManager extends Closeable {
-  /**
-   * Initialize the clients for job launch.
-   *
-   * @throws Exception thrown if any exception while initializing the manager
-   */
-  void initialize() throws Exception;
 
   /**
    * This method uses runtime job information to launch the job.
