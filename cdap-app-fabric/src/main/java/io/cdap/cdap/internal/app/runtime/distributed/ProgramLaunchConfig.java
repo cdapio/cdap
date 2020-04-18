@@ -20,7 +20,7 @@ import ch.qos.logback.classic.Level;
 import com.google.common.collect.Iterables;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.common.twill.HadoopClassExcluder;
+import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.ResourceSpecification;
@@ -48,7 +48,7 @@ public final class ProgramLaunchConfig {
   private final List<Set<String>> launchOrder = new ArrayList<>();
   private final Set<Class<?>> extraDependencies = new HashSet<>();
   private final Map<String, String> extraSystemArguments = new HashMap<>();
-  private ClassAcceptor classAcceptor = new HadoopClassExcluder();
+  private ClassAcceptor classAcceptor = new ProgramRuntimeClassAcceptor();
 
   /**
    * Adds extra system arguments that will be available through the {@link ProgramOptions#getArguments()}

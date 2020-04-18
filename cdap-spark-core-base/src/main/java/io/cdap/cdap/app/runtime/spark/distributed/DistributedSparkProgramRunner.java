@@ -36,7 +36,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.common.twill.HadoopClassExcluder;
+import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -62,7 +62,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -173,7 +172,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
       urls.add(file.toURI().toURL());
     }
 
-    return new HadoopClassExcluder() {
+    return new ProgramRuntimeClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Exclude both hadoop and spark classes.
