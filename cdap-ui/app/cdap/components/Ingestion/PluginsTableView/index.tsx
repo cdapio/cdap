@@ -16,28 +16,17 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { IWidgetProps } from 'components/AbstractWidget';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import PropTypes from 'prop-types';
 import ThemeWrapper from 'components/ThemeWrapper';
-import { MyPipelineApi } from 'api/pipeline';
-import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
 import { objectQuery } from 'services/helpers';
-import Popover from '@material-ui/core/Popover';
 import If from 'components/If';
 import { getIcon } from 'components/Ingestion/helpers';
-import HorizontalCarousel from 'components/HorizontalCarousel';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import Paper from '@material-ui/core/Paper';
-import SinkList from 'components/Ingestion/SinkList';
 import { getPluginDisplayName } from 'components/Ingestion/helpers';
+import Paper from '@material-ui/core/Paper';
 
 const styles = (theme): StyleRules => {
   return {
@@ -123,7 +112,7 @@ const PluginListView: React.FC<ICodeEditorProps> = ({
 }) => {
   return (
     <div className={classes.root}>
-      <TableContainer component={Paper} className={classes.sourceListTable}>
+      <Paper className={classes.sourceListTable}>
         <Table className={classes.table}>
           <TableHead className={classes.ingestionHeader}>
             <TableRow>
@@ -178,7 +167,7 @@ const PluginListView: React.FC<ICodeEditorProps> = ({
             })}
           </TableBody>
         </Table>
-      </TableContainer>
+      </Paper>
     </div>
   );
 };

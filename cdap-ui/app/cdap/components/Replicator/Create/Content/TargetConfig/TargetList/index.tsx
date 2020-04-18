@@ -30,6 +30,9 @@ import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
+    root: {
+      minHeight: '160px',
+    },
     header: {
       display: 'grid',
       gridTemplateColumns: '1fr 400px',
@@ -49,6 +52,11 @@ const styles = (theme): StyleRules => {
     search: {
       width: '200px',
       marginLeft: '20px',
+
+      '& input': {
+        paddingTop: '10px',
+        paddingBottom: '10px',
+      },
     },
     listContainer: {
       marginTop: '15px',
@@ -105,7 +113,7 @@ const TargetListView: React.FC<ITargetListProps> = ({
   }
 
   return (
-    <div>
+    <div className={classes.root}>
       <div className={classes.header}>
         <div>
           <Heading type={HeadingTypes.h4} label="Select target" />
@@ -118,7 +126,6 @@ const TargetListView: React.FC<ITargetListProps> = ({
             className={classes.search}
             value={search}
             onChange={handleSearch}
-            size="small"
             variant="outlined"
             placeholder="Search targets by name"
             InputProps={{
