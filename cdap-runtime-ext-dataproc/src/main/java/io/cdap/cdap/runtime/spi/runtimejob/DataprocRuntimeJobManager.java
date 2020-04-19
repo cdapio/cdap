@@ -111,6 +111,12 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     this.projectId = clusterInfo.getProjectId();
     this.region = clusterInfo.getRegion();
     this.bucket = clusterInfo.getBucket();
+    LOG.info("wyzhang: DataprocRuntimeJobManager clusterInfo = {}", clusterInfo.toString());
+    if (this.bucket == null) {
+      LOG.info("wyzhang: DataprocRuntimeJobManager bucket is null");
+    } else {
+      LOG.info("wyzhang: DataprocRuntimeJobManager bucket is {}", this.bucket);
+    }
     this.labels = clusterInfo.getLabels();
   }
 

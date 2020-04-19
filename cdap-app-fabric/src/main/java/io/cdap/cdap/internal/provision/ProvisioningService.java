@@ -370,10 +370,19 @@ public class ProvisioningService extends AbstractIdleService {
    * @return an object of runtime job manager
    */
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramRunId programRunId, ProgramOptions programOptions) {
+    LOG.info("wyzhang: PrivosingService::getRuntimeJobManager start");
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
     Provisioner provisioner = provisionerInfo.get().provisioners.get(SystemArguments.getProfileProvisioner(systemArgs));
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
+    LOG.info("wyzhang: PrivosingService::getRuntimeJobManager system args");
+    for (Map.Entry<String, String> e : systemArgs.entrySet()) {
+      LOG.info("wyzhang: system args: {} : {}", e.getKey(), e.getValue());
+    }
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
+    LOG.info("wyzhang: PrivosingService::getRuntimeJobManager system args getProfileProperteis");
+    for (Map.Entry<String, String> e : properties.entrySet()) {
+      LOG.info("wyzhang: properties {} : {}", e.getKey(), e.getValue());
+    }
     ProvisionerContext context = createContext(programRunId, user, properties, null);
     return provisioner.getRuntimeJobManager(context);
   }
@@ -726,6 +735,10 @@ public class ProvisioningService extends AbstractIdleService {
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
                                            @Nullable SSHContext sshContext) {
+    LOG.info("wyzhang: ProvisioningService::createContext properties");
+    for (Map.Entry<String, String> entry : properties.entrySet()) {
+      LOG.info("wyzhang: {} : {}", entry.getKey(), entry.getValue());
+    }
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext, locationFactory);
   }

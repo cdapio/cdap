@@ -325,6 +325,10 @@ public class DataprocProvisioner implements Provisioner {
    */
   private Map<String, String> createContextProperties(ProvisionerContext context) {
     Map<String, String> contextProperties = new HashMap<>(context.getProperties());
+    LOG.info("wyzhang: DataprocProvisioner: createContextProperites");
+    for (Map.Entry<String, String> e : contextProperties.entrySet()) {
+      LOG.info("wyzhang: {} : {}", e.getKey(), e.getValue());
+    }
 
     // Default the project id from system config if missing or if it is auto-detect
     String contextProjectId = contextProperties.get(DataprocConf.PROJECT_ID_KEY);
@@ -358,6 +362,10 @@ public class DataprocProvisioner implements Provisioner {
     contextProperties.put("yarn:yarn.nodemanager.pmem-check-enabled", "false");
     contextProperties.put("yarn:yarn.nodemanager.vmem-check-enabled", "false");
 
+    LOG.info("wyzhang: DataprocProvisioner: createContextProperites final contextProperites");
+    for (Map.Entry<String, String> e : contextProperties.entrySet()) {
+      LOG.info("wyzhang: {} : {}", e.getKey(), e.getValue());
+    }
     return contextProperties;
   }
 
@@ -381,6 +389,10 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     Map<String, String> properties = createContextProperties(context);
+    LOG.info("wyzhang: DataprocProvisioner::getRuntimeJobManager properties=");
+    for (Map.Entry<String, String> e : properties.entrySet()) {
+      LOG.info("wyzhang: {} : {}", e.getKey(), e.getValue());
+    }
     // if this system property is not provided, we will assume that ssh should be used instead of
     // runtime job manager for job launch.
     if (!Boolean.parseBoolean(systemContext.getProperties().get(RUNTIME_JOB_MANAGER))) {
