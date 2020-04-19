@@ -346,7 +346,14 @@ public class DataprocProvisioner implements Provisioner {
                                       DataprocConf.NETWORK_HOST_PROJECT_ID,
                                       DataprocConf.STACKDRIVER_LOGGING_ENABLED,
                                       DataprocConf.STACKDRIVER_MONITORING_ENABLED,
+                                      DataprocConf.BUCKET,
                                       DataprocConf.IMAGE_VERSION);
+    LOG.info("wyzhang: DataprocProvisioner createContextProperites systemContext.getProperties");
+    Map<String, String> p = systemContext.getProperties();
+    for (Map.Entry<String, String> e : p.entrySet()) {
+      LOG.info("wyzhang: systemContext properties {} : {}", e.getKey(), e.getValue());
+    }
+
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);

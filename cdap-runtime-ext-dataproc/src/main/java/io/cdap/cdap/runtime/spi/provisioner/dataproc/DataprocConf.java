@@ -50,6 +50,7 @@ final class DataprocConf {
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
+  static final String BUCKET = "bucket";
   static final String IMAGE_VERSION = "imageVersion";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
@@ -85,6 +86,7 @@ final class DataprocConf {
   private final boolean preferExternalIP;
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
+  private final String bucket;
   private final SSHPublicKey publicKey;
   private final Map<String, String> dataprocProperties;
 
@@ -95,7 +97,7 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.dataprocProperties);
+         conf.publicKey, conf.imageVersion, conf.dataprocProperties, conf.bucket);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -107,7 +109,7 @@ final class DataprocConf {
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion,
-                       Map<String, String> dataprocProperties) {
+                       Map<String, String> dataprocProperties, String bucket) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -136,6 +138,7 @@ final class DataprocConf {
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
     this.dataprocProperties = dataprocProperties;
+    this.bucket = bucket;
   }
 
   String getRegion() {
@@ -389,13 +392,15 @@ final class DataprocConf {
 
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
+    String bucket = getString(properties,
+                              "bucket");
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP, stackdriverLoggingEnabled,
-                            stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
+                            stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps, bucket);
   }
 
   // the UI never sends nulls, it only sends empty strings.
