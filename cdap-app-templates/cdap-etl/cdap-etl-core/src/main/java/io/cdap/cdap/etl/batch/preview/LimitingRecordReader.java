@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.etl.batch.preview;
 
+import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 /**
  * A record reader that limits the number of records read.
@@ -29,47 +31,77 @@ import java.io.IOException;
  * @param <V> type of value to read
  */
 public class LimitingRecordReader<K, V> extends RecordReader<K, V> {
-  private final RecordReader<K, V> delegate;
-  private final int maxToRead;
-  private int numRead;
 
-  public LimitingRecordReader(RecordReader<K, V> delegate, int maxToRead) {
-    this.delegate = delegate;
-    this.maxToRead = maxToRead;
+  private final InputFormat<K, V> delegateFormat;
+  private TaskAttemptContext context;
+  private LimitingInputSplit inputSplit;
+  private int perSplitLimit;
+  private int numRead;
+  private Iterator<InputSplit> splitIterator;
+  private RecordReader<K, V> currentReader;
+
+  LimitingRecordReader(InputFormat<K, V> delegateFormat) {
+    this.delegateFormat = delegateFormat;
   }
 
   @Override
   public void initialize(InputSplit split, TaskAttemptContext context) throws IOException, InterruptedException {
-    delegate.initialize(split, context);
+    if (!(split instanceof LimitingInputSplit)) {
+      throw new IOException("Expected input split class " + LimitingInputSplit.class.getName()
+                              + ", but got " + split.getClass().getName());
+    }
+    this.context = context;
+    this.inputSplit = (LimitingInputSplit) split;
+    this.splitIterator = inputSplit.getInputSplits().iterator();
+
+    // Round up the per split limit so that each reader at most is opened once
+    int numberOfSplits = inputSplit.getInputSplits().size();
+    int perSplitLimit = (inputSplit.getRecordLimit() + numberOfSplits - 1) / numberOfSplits;
+    this.perSplitLimit = Math.max(1, perSplitLimit);
   }
 
   @Override
   public boolean nextKeyValue() throws IOException, InterruptedException {
-    if (numRead > maxToRead) {
+    if (numRead >= inputSplit.getRecordLimit()) {
       return false;
     }
-    boolean answer = delegate.nextKeyValue();
-    numRead++;
+
+    // Find the next reader when hitting the per split boundary or the current reader is exhausted
+    boolean answer = (numRead % perSplitLimit != 0) && currentReader.nextKeyValue();
+    while (!answer && splitIterator.hasNext()) {
+      if (currentReader != null) {
+        currentReader.close();
+      }
+      InputSplit split = splitIterator.next();
+      currentReader = delegateFormat.createRecordReader(split, context);
+      currentReader.initialize(split, context);
+      answer = currentReader.nextKeyValue();
+    }
+    if (answer) {
+      numRead++;
+    }
     return answer;
   }
 
   @Override
   public K getCurrentKey() throws IOException, InterruptedException {
-    return delegate.getCurrentKey();
+    return currentReader.getCurrentKey();
   }
 
   @Override
   public V getCurrentValue() throws IOException, InterruptedException {
-    return delegate.getCurrentValue();
+    return currentReader.getCurrentValue();
   }
 
   @Override
   public float getProgress() throws IOException, InterruptedException {
-    return Math.max(delegate.getProgress(), (float) numRead / maxToRead);
+    return Math.max(currentReader.getProgress(), (float) numRead / inputSplit.getRecordLimit());
   }
 
   @Override
   public void close() throws IOException {
-    delegate.close();
+    if (currentReader != null) {
+      currentReader.close();
+    }
   }
 }
