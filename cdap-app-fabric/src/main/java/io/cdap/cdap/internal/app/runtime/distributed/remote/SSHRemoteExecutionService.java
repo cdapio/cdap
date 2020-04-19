@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -57,25 +58,18 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
   }
 
   @Override
-  protected void doStartUp() throws IOException {
-    LOG.debug("Starting ssh service for run {}", getProgramRunId());
-    sshSession = createServiceProxyTunnel();
-  }
-
-  @Override
   protected void doRunTask() throws Exception {
-    if (!sshSession.isAlive()) {
-      sshSession.close();
-      sshSession = createServiceProxyTunnel();
+    if (sshSession != null && sshSession.isAlive()) {
+      return;
     }
+    Closeables.closeQuietly(sshSession);
+    sshSession = createServiceProxyTunnel();
   }
 
   @Override
   protected void doShutdown() {
     super.doShutdown();
-    if (sshSession != null) {
-      sshSession.close();
-    }
+    Closeables.closeQuietly(sshSession);
     LOG.debug("Stopped ssh service for run {}", getProgramRunId());
   }
 
