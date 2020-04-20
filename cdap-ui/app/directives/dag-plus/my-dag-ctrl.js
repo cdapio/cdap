@@ -447,10 +447,10 @@ angular.module(PKG.name + '.commons')
       });
 
       // Select multiple nodes by manually selecting nodes.
-      Mousetrap.bind('command', () => {
+      Mousetrap.bind('shift', () => {
         vm.selectionBox.isMultiSelectEnabled = true;
       }, 'keydown');
-      Mousetrap.bind('command', () => {
+      Mousetrap.bind('shift', () => {
         vm.selectionBox.isMultiSelectEnabled = false;
       }, 'keyup');
     }
@@ -460,7 +460,7 @@ angular.module(PKG.name + '.commons')
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['command+c', 'ctrl+c']);
       Mousetrap.unbind(['del', 'backspace']);
-      Mousetrap.unbind('command');
+      Mousetrap.unbind('shift');
       Mousetrap.unbind('space');
       Mousetrap.unbind('command+a');
     }
