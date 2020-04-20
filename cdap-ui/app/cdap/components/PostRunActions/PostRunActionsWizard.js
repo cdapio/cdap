@@ -104,7 +104,7 @@ export default class PostRunActionsWizard extends Component {
         isOpen={this.props.isOpen}
         toggle={this.toggleAndPreventPropagation}
         backdrop="static"
-        modalClassName="post-run-actions-modal hydrator-modal"
+        modalClassName="post-run-actions-modal hydrator-modal node-config-modal"
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
         <div className="modal-header">

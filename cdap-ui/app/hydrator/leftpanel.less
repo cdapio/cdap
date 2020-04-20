@@ -617,10 +617,25 @@ body.theme-cdap.state-hydrator-create {
 
   .modal {
     &.plugin-templates-modal {
+      overflow: hidden;
       plugin-templates {
         display: block;
         overflow-y: auto;
         overflow-x: hidden;
+        height: 100%;
+
+        .modal-dialog {
+          height: 100%;
+        }
+        .modal-body {
+          &.plugin-template-modal-body {
+            max-height: calc(100vh - 178px);
+            overflow-y: auto;
+          }
+        }
+        .modal-footer {
+          border-top: 1px solid #ccc;
+        }
 
         h3 {
           strong {
