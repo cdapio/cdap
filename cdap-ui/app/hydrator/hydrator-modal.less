@@ -22,7 +22,6 @@
 .modal.hydrator-modal {
   &.confirm-modal {
     .modal-dialog {
-      margin-top: 40vh;
       max-width: 400px;
 
       .modal-body {
@@ -65,9 +64,9 @@
 
         // Adjust max-width of modal title when my-jump-link is present
         &.with-jump {
-          max-width: ~"calc(100% - 440px)";
-          max-width: ~"-moz-calc(100% - 440px)";
-          max-width: ~"-webkit-calc(100% - 440px)";
+          max-width: ~"calc(100% - 180px)";
+          max-width: ~"-moz-calc(100% - 180px)";
+          max-width: ~"-webkit-calc(100% - 180px)";
         }
 
         p {
@@ -166,16 +165,12 @@
 
   &.node-config-modal,
   &.post-run-actions-modal {
+    overflow: hidden;
     .modal-dialog {
-      width: 80%;
+      width: 100%;
+      height: 100%;
       overflow-y: hidden;
-      margin-left: 200px;
-      margin-top: 90px;
-      margin-bottom: 0;
-
-      @media(max-width: @screen-lg-min) {
-        margin-left: 100px;
-      }
+      margin: 50px 0 50px 0;
 
       &.expand {
         margin-left: 0;
@@ -192,7 +187,8 @@
         .modal-body {
           padding: 10px 10px 0;
           overflow: hidden;
-          max-height: 100%;
+          max-height: unset;
+          height: ~"calc(100% - 60px)";
 
           .console-type {
             border: 1px solid @table-border-color;
@@ -224,9 +220,9 @@
               .bottompanel-body {
                 padding: 0 10px 10px 10px;
                 overflow-y: auto;
-                height: ~"calc(100vh - 240px)";
-                height: ~"-moz-calc(100vh - 240px)";
-                height: ~"-webkit-calc(100vh - 240px)";
+                height: ~"calc(100vh - 180px)";
+                height: ~"-moz-calc(100vh - 180px)";
+                height: ~"-webkit-calc(100vh - 180px)";
                 .reference-tab { padding: 0 10px; }
 
                 .btn-hydrator {
@@ -243,7 +239,7 @@
                   }
                 }
 
-                @media (min-width: @screen-lg-min) {
+                @media (min-width: @screen-md-min) {
                   padding: 0;
                   .no-plugin-properties-message { margin: 10px; }
                   > p,
@@ -387,17 +383,6 @@
         }
       }
     }
-    &.post-run-actions-modal {
-      .modal-dialog {
-        width: 50%;
-        margin-left: 33%;
-        .modal-content {
-          .modal-body {
-            max-height: 75vh;
-          }
-        }
-      }
-    }
   }
 
   &.layered-modal {
@@ -413,22 +398,22 @@ body.theme-cdap {
     .modal.hydrator-modal {
       &.node-config-modal {
         .modal-dialog {
-          margin-top: 100px;
-          &.expand {
-            margin-bottom: 0;
-            height: ~"calc(100vh - 100px)";
-            height: ~"-moz-calc(100vh - 100px)";
-            height: ~"-webkit-calc(100vh - 100px)";
-          }
+          margin-top: 0;
+          margin-top: 50px;
+          height: 100%;
+          width: 100%;
           .modal-content {
+            .modal-header {
+              .modal-title {
+                max-width: ~"calc(100% - 180px)";
+                max-width: ~"-moz-calc(100% - 180px)";
+                max-width: ~"-webkit-calc(100% - 180px)";
+              }
+            }
             .modal-body {
+              max-height: unset;
               .console-type {
                 .node-config {
-                  .bottompanel-body {
-                    height: ~"calc(100vh - 240px)";
-                    height: ~"-moz-calc(100vh - 240px)";
-                    height: ~"-webkit-calc(100vh - 240px)";
-                  }
                   div.config-table {
                     height: ~"calc(100vh - 240px)";
                     height: ~"-moz-calc(100vh - 240px)";
@@ -526,8 +511,20 @@ body.theme-cdap {
   }
 }
 
-.modal.upgrade-modal.hydrator-modal {
-  .modal-content .modal-body { padding-top: 0; }
+.modal.upgrade-modal.hydrator-modal.node-config-modal {
+  .modal-content .modal-body {
+    padding-top: 0;
+    // 180 = 50px header + 62px modal header + 63px for footer
+    // which is inside the modal-body
+    max-height: calc(100vh - 175px);
+    overflow: hidden;
+    padding-bottom: 0;
+    overflow-y: auto;
+
+    .modal-footer {
+      border-top: 1px solid #cccccc;
+    }
+  }
   .import-error-row {
     padding: 10px;
     border-bottom: 1px solid #c9ccd6;

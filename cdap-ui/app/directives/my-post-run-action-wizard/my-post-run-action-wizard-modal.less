@@ -47,3 +47,22 @@
     }
   }
 }
+body.theme-cdap.state-hydrator-detail {
+  .modal.hydrator-modal.node-config-modal {
+    &.post-run-actions-modal {
+      .modal-dialog {
+        .modal-content {
+          .modal-body {
+            height: unset;
+            max-height: ~"calc(100% - 165px)";
+            overflow-y: auto;
+          }
+          .modal-footer {
+            padding: 10px;
+            border-top: 1px solid #cccccc;
+          }
+        }
+      }
+    }
+  }
+}

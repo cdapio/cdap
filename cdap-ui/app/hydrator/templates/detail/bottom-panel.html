@@ -27,40 +27,6 @@
           {{ ::tab.title }}
       </li>
     </ul>
-    <div class="btn-group pull-right">
-      <a ng-click="BottomPanelCtrl.toggleCollapse(BottomPanelCtrl.bottomPanelState)">
-        <span ng-if="BottomPanelCtrl.bottomPanelState !== 0"
-              class="fa fa-minus"
-              uib-tooltip="Minimize"
-              tooltip-class="tooltip-pane"
-              tooltip-placement="top"
-              tooltip-append-to-body="true">
-        </span>
-        <span ng-if="BottomPanelCtrl.bottomPanelState === 0"
-              class="fa fa-expand"
-              uib-tooltip="Grow"
-              tooltip-class="tooltip-pane"
-              tooltip-placement="top"
-              tooltip-append-to-body="true">
-        </span>
-      </a>
-      <a ng-click="BottomPanelCtrl.toggleMaximized(BottomPanelCtrl.bottomPanelState)">
-        <span ng-if="BottomPanelCtrl.bottomPanelState !== 2"
-              class="fa fa-arrows-alt"
-              uib-tooltip="Maximize"
-              tooltip-class="tooltip-pane"
-              tooltip-placement="top"
-              tooltip-append-to-body="true">
-        </span>
-        <span ng-if="BottomPanelCtrl.bottomPanelState === 2"
-              class="fa fa-compress"
-              uib-tooltip="Shrink"
-              tooltip-class="tooltip-pane"
-              tooltip-placement="top"
-              tooltip-append-to-body="true">
-        </span>
-      </a>
-    </div>
   </div>
 
   <div class="console-type">

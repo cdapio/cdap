@@ -42,7 +42,7 @@ angular.module(PKG.name + '.commons')
           rMode: () => mode,
         },
         size: 'lg',
-        windowClass: 'post-run-actions-modal hydrator-modal',
+        windowClass: 'post-run-actions-modal hydrator-modal node-config-modal',
         controller: ['$scope', 'rActionCreator', 'rStore', 'rMode', 'rAction', function($scope, rActionCreator, rStore, rMode, rAction) {
           $scope.actionCreator = rActionCreator;
           $scope.store = rStore;

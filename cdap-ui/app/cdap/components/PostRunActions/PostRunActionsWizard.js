@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyArtifactApi } from 'api/artifact';
-import { Modal, ModalBody } from 'reactstrap';
+import { Modal, ModalBody, ModalFooter } from 'reactstrap';
 import { preventPropagation } from 'services/helpers';
 import { MyPipelineApi } from 'api/pipeline';
 import ConfigurationGroup from 'components/ConfigurationGroup';
@@ -104,7 +104,7 @@ export default class PostRunActionsWizard extends Component {
         isOpen={this.props.isOpen}
         toggle={this.toggleAndPreventPropagation}
         backdrop="static"
-        modalClassName="post-run-actions-modal hydrator-modal"
+        modalClassName="post-run-actions-modal hydrator-modal node-config-modal"
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
         <div className="modal-header">
@@ -123,15 +123,15 @@ export default class PostRunActionsWizard extends Component {
             </a>
           </div>
         </div>
-        <ModalBody>
-          {this.renderBody()}
+        <ModalBody>{this.renderBody()}</ModalBody>
+        <ModalFooter>
           <div
             className="btn btn-blue float-right close-button"
             onClick={this.toggleAndPreventPropagation}
           >
             Close
           </div>
-        </ModalBody>
+        </ModalFooter>
       </Modal>
     );
   }
