@@ -55,18 +55,6 @@
       entities="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets">
     </my-link-button>
     <a class="btn"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'regular'"
-        ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(true)">
-      <span class="fa fa-expand"></span>
-      <span class="sr-only"> Expand </span>
-    </a>
-    <a class="btn"
-        ng-if="HydratorPlusPlusNodeConfigCtrl.state.windowMode === 'expand'"
-        ng-click="HydratorPlusPlusNodeConfigCtrl.toggleMaximizedView(false)">
-      <span class="fa fa-compress"></span>
-      <span class="sr-only"> Compress </span>
-    </a>
-    <a class="btn"
         ng-click="$close()"
         data-testid="close-config-popover">
       <span class="fa fa-remove"></span>

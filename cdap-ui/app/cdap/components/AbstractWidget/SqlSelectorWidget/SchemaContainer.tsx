@@ -117,13 +117,13 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
   };
 
   public componentDidMount() {
-    document.querySelectorAll(`#${this.componentID} tbody tr`).forEach((entry) => {
+    Array.from(document.querySelectorAll(`#${this.componentID} tbody tr`)).forEach((entry) => {
       this.io.observe(entry);
     });
   }
 
   public componentDidUpdate() {
-    document.querySelectorAll(`#${this.componentID} tbody tr`).forEach((entry) => {
+    Array.from(document.querySelectorAll(`#${this.componentID} tbody tr`)).forEach((entry) => {
       this.io.observe(entry);
     });
   }
