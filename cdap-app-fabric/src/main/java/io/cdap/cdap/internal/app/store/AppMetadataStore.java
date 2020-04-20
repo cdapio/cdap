@@ -1114,7 +1114,7 @@ public class AppMetadataStore {
                                                                      limit, filter, TYPE_RUN_RECORD_ACTIVE);
         if (runRecords.size() < limit) {
           runRecords.putAll(getProgramRuns(programId, status, startTime, endTime,
-                                           limit, filter, TYPE_RUN_RECORD_COMPLETED));
+                                           limit - runRecords.size(), filter, TYPE_RUN_RECORD_COMPLETED));
         }
         return runRecords;
       case PENDING:
