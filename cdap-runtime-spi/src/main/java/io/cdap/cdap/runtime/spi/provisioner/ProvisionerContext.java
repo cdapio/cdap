@@ -44,9 +44,9 @@ public interface ProvisionerContext {
   /**
    * Get the provisioner properties for this program run. These properties will start off as the provisioner properties
    * associated with the profile of the program run. The properties will then be overridden by any program preferences
-   * that are prefixed with 'system.provisioner.', with the prefixed stripped. Those properties will then be
-   * overridden by any runtime arguments or schedule properties that are prefixed with 'system.provisioner.', with
-   * the prefixed stripped.
+   * that are prefixed with 'system.profile.properties.', with the prefixed stripped. Those properties will then be
+   * overridden by any runtime arguments or schedule properties that are prefixed with 'system.profile.properties.',
+   * with the prefixed stripped.
    *
    * @return the provisioner properties for the program run
    */
