@@ -194,6 +194,10 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                                                          cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile());
     try {
       final ProgramLaunchConfig launchConfig = new ProgramLaunchConfig();
+      if (clusterMode == ClusterMode.ISOLATED) {
+        // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
+        launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
+      }
       setupLaunchConfig(launchConfig, program, oldOptions, cConf, hConf, tempDir);
 
       // Add extra localize resources needed by the program runner
