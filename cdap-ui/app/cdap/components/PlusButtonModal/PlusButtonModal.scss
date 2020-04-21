@@ -19,14 +19,14 @@
 $sidepanel-width: 160px;
 $horizontal-tab-height: 45px;
 
-.plus-button-modal {
+.plus-button-modal.cdap-modal {
   overflow-x: hidden;
   position: relative;
 
   &.cask-market {
     height: 75vh;
     .modal-body {
-      height: calc(100% - 51px);
+      height: calc(100% - 40px);
       > div {
         height: 100%;
       }
@@ -62,9 +62,12 @@ $horizontal-tab-height: 45px;
   }
 
   &.modal-dialog {
-    width: 70vw;
-    max-width: 1200px;
-    margin-top: 120px;
+    width: 100%;
+    margin: 0;
+    margin-top: 50px;
+    height: calc(100% - 50px);
+    overflow: hidden;
+    max-width: unset;
 
     .modal-content {
       border-radius: 0;
@@ -76,6 +79,7 @@ $horizontal-tab-height: 45px;
       .modal-body {
         padding: 0;
         background: #ffffff;
+        max-height: unset;
         > span,
         > span > div {
           display: inline-block;
@@ -216,13 +220,8 @@ $horizontal-tab-height: 45px;
     &.modal-dialog {
       .modal-content {
         .modal-body {
-          // Having a max-height on parent doesn't have a height reference for the child to take in.
-          // A 100% on max-height doesn't actually take the max-height of the parent but 100% of the HEIGHT of the parent.
-          // So instead of setting a max-height on the modal dialog and having the modal-body take 100% - 52px which doesn't apply
-          // proper scrolling on modal-body I am directly setting the max-height of the modal-body to be 75vh
-          // so that it scrolls normally and doesn't take up extra whitespace on a large display.
-          max-height: 75vh;
           overflow-y: auto;
+          flex: unset;
         }
       }
     }
