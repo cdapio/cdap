@@ -56,17 +56,13 @@
         </span>
         <a href="{{LogViewer.getDownloadUrl('raw')}}"
           target="_blank"
-          class="log-action-btn view-raw btn btn-default"
-          ng-disabled="!LogViewer.displayData.length || LogViewer.loading"
-          ng-click="LogViewer.preventClick($event)">
+          class="log-action-btn view-raw btn btn-default">
           <span>View Raw Logs</span>
         </a>
 
         <a href="{{LogViewer.getDownloadUrl('download')}}"
           target="_blank"
-          class="log-action-btn download-all btn btn-default"
-          ng-disabled="!LogViewer.displayData.length || LogViewer.loading"
-          ng-click="LogViewer.preventClick($event)">
+          class="log-action-btn download-all btn btn-default">
           <span>Download All</span>
         </a>
         <div class="search">
