@@ -58,7 +58,7 @@ angular.module(PKG.name + '.commons')
       }
     };
 
-    this.$get = function ($window, $rootScope, $bsCompiler, $q, $templateCache, $http, $animate, $sce, dimensions, $$rAF, $timeout) {
+    this.$get = function ($window, $rootScope, $bsCompiler, $animate, $sce, dimensions, $$rAF, $timeout) {
 
       var isNative = /(ip[ao]d|iphone|android)/ig.test($window.navigator.userAgent);
       var isTouch = ('createTouch' in $window.document) && isNative;
@@ -194,13 +194,13 @@ angular.module(PKG.name + '.commons')
           }
 
           timeout = setTimeout(function () {
-            if (hoverState === 'in') $tooltip.show();
+            if (hoverState === 'in') { $tooltip.show(); }
           }, options.delay.show);
 
         };
 
         $tooltip.show = function () {
-          if (!options.bsEnabled || $tooltip.$isShown) return;
+          if (!options.bsEnabled || $tooltip.$isShown) { return; }
 
           scope.$emit(options.prefixEvent + '.show.before', $tooltip);
           if (angular.isDefined(options.onBeforeShow) && angular.isFunction(options.onBeforeShow)) {
@@ -222,21 +222,21 @@ angular.module(PKG.name + '.commons')
 
 
           // Hide any existing tipElement
-          if (tipElement) destroyTipElement();
+          if (tipElement) { destroyTipElement(); }
           // Fetch a cloned element linked from template
           tipScope = $tooltip.$scope.$new();
-          tipElement = $tooltip.$element = compileData.link(tipScope, function (clonedElement, scope) {});
+          tipElement = $tooltip.$element = compileData.link(tipScope, function () {});
 
           // Set the initial positioning.  Make the tooltip invisible
           // so IE doesn't try to focus on it off screen.
           tipElement.css({top: '-9999px', left: '-9999px', right: 'auto', display: 'block', visibility: 'hidden'});
 
           // Options: animation
-          if (options.animation) tipElement.addClass(options.animation);
+          if (options.animation) { tipElement.addClass(options.animation); }
           // Options: type
-          if (options.type) tipElement.addClass(options.prefixClass + '-' + options.type);
+          if (options.type) { tipElement.addClass(options.prefixClass + '-' + options.type); }
           // Options: custom classes
-          if (options.customClass) tipElement.addClass(options.customClass);
+          if (options.customClass) { tipElement.addClass(options.customClass); }
 
           // Append the element, without any animations.  If we append
           // using $animate.enter, some of the animations cause the placement
@@ -248,7 +248,9 @@ angular.module(PKG.name + '.commons')
           }
 
           $tooltip.$isShown = scope.$isShown = true;
+          /* jshint ignore:start */
           safeDigest(scope);
+          /* jshint ignore:end */
 
           // Now, apply placement
           $tooltip.$applyPlacement();
@@ -261,11 +263,13 @@ angular.module(PKG.name + '.commons')
           } else {
             $animate.enter(tipElement, parent, after).then(enterAnimateCallback);
           }
+          /* jshint ignore:start */
           safeDigest(scope);
+          /* jshint ignore:end */
 
           $$rAF(function () {
             // Once the tooltip is placed and the animation starts, make the tooltip visible
-            if (tipElement) tipElement.css({visibility: 'visible'});
+            if (tipElement) { tipElement.css({visibility: 'visible'}); }
 
             // Bind events
             if (options.keyboard) {
@@ -308,7 +312,7 @@ angular.module(PKG.name + '.commons')
         var _tipToHide;
         $tooltip.hide = function (blur) {
 
-          if (!$tooltip.$isShown) return;
+          if (!$tooltip.$isShown) { return; }
           scope.$emit(options.prefixEvent + '.hide.before', $tooltip);
           if (angular.isDefined(options.onBeforeHide) && angular.isFunction(options.onBeforeHide)) {
             options.onBeforeHide($tooltip);
@@ -332,7 +336,9 @@ angular.module(PKG.name + '.commons')
           }
 
           $tooltip.$isShown = scope.$isShown = false;
+          /* jshint ignore:start */
           safeDigest(scope);
+          /* jshint ignore:end */
 
           // Unbind events
           if (options.keyboard && tipElement !== null) {
@@ -556,10 +562,12 @@ angular.module(PKG.name + '.commons')
           // IE8 has issues with angular.extend and using elRect directly.
           // By coping the values of elRect into a new object, we can continue to use extend
           /* eslint-disable guard-for-in */
+          /* jshint ignore:start */
           for (var p in elRect) { // eslint-disable-line
             // DO NOT use hasOwnProperty when inspecting the return of getBoundingClientRect.
             rect[p] = elRect[p];
           }
+          /* jshint ignore:end */
           /* eslint-enable guard-for-in */
 
           if (rect.width === null) {
@@ -650,8 +658,8 @@ angular.module(PKG.name + '.commons')
           var marginLeft = parseInt(dimensions.css(tip, 'margin-left'), 10);
 
           // we must check for NaN for ie 8/9
-          if (isNaN(marginTop)) marginTop = 0;
-          if (isNaN(marginLeft)) marginLeft = 0;
+          if (isNaN(marginTop)) { marginTop = 0; }
+          if (isNaN(marginLeft)) { marginLeft = 0; }
 
           offset.top = offset.top + marginTop;
           offset.left = offset.left + marginLeft;
@@ -678,7 +686,7 @@ angular.module(PKG.name + '.commons')
 
           // If it's an exotic placement, exit now instead of
           // applying a delta and changing the arrow
-          if (/top-left|top-right|bottom-left|bottom-right/.test(placement)) return;
+          if (/top-left|top-right|bottom-left|bottom-right/.test(placement)) { return; }
 
           var delta = getViewportAdjustedDelta(placement, offset, actualWidth, actualHeight);
 
@@ -702,7 +710,7 @@ angular.module(PKG.name + '.commons')
         // @source https://github.com/twbs/bootstrap/blob/v3.3.5/js/tooltip.js#L380
         function getViewportAdjustedDelta (placement, position, actualWidth, actualHeight) {
           var delta = {top: 0, left: 0};
-          if (!$tooltip.$viewport) return delta;
+          if (!$tooltip.$viewport) { return delta; }
 
           var viewportPadding = options.viewport && options.viewport.padding || 0;
           var viewportDimensions = getPosition($tooltip.$viewport);
@@ -766,11 +774,13 @@ angular.module(PKG.name + '.commons')
 
       // Helper functions
 
+      /* jshint ignore:start */
       function safeDigest (scope) {
         /* eslint-disable no-unused-expressions */
         scope.$$phase || (scope.$root && scope.$root.$$phase) || scope.$digest();
         /* eslint-enable no-unused-expressions */
       }
+      /* jshint ignore:end */
 
       function findElement (query, element) {
         return angular.element((element || document).querySelectorAll(query));
@@ -782,7 +792,6 @@ angular.module(PKG.name + '.commons')
 
   })
 
-  
   .provider('$modifiedPopover', function () {
 
     var defaults = this.defaults = {
@@ -826,4 +835,4 @@ angular.module(PKG.name + '.commons')
       return PopoverFactory;
 
     };
-  })
+  });
