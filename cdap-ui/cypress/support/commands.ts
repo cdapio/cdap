@@ -338,6 +338,8 @@ Cypress.Commands.add('move_node', (node: INodeIdentifier | string, toX: number, 
 Cypress.Commands.add('select_from_to', (from: INodeIdentifier, to: INodeIdentifier) => {
   let fromNodeElement;
   let toNodeElement;
+  // Make sure nodes are aligned  so that correct nodes are selected
+  cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
   cy.get_node(from).then((sElement) => {
     fromNodeElement = sElement;
     cy.get_node(to).then((tElement) => {
