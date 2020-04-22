@@ -287,10 +287,30 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
       LOG.info("Create new Elasticsearch client for cluster {}", elasticHosts);
       HttpHost[] hosts = Arrays.stream(elasticHosts.split(",")).map(hostAndPort -> {
-        int pos = hostAndPort.indexOf(':');
-        String host = pos < 0 ? hostAndPort : hostAndPort.substring(0, pos);
-        int port = pos < 0 ? 9200 : Integer.parseInt(hostAndPort.substring(pos + 1));
-        return new HttpHost(host, port);
+        String scheme = "http";
+        String host = hostAndPort;
+
+        int schemeIdx = host.indexOf("://");
+        if (schemeIdx > 0) {
+          scheme = host.substring(0, schemeIdx);
+          host = host.substring(schemeIdx + 3);
+        }
+
+        int port;
+        int portIdx = host.lastIndexOf(":");
+        if (portIdx > 0) {
+          try {
+            port = Integer.parseInt(host.substring(portIdx + 1));
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid HTTP host: " + host, e);
+          }
+
+          host = host.substring(0, portIdx);
+        } else {
+          port = scheme.equals("https") ? 9243 : 9200;
+        }
+
+        return new HttpHost(host, port, scheme);
       }).toArray(HttpHost[]::new);
       this.client = client = new RestHighLevelClient(RestClient.builder(hosts));
       return client;
