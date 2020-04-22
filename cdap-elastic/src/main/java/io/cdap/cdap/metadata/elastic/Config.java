@@ -23,6 +23,7 @@ public final class Config {
   private Config() { }
 
   static final String CONF_ELASTIC_HOSTS = "metadata.elasticsearch.cluster.hosts";
+  static final String CONF_ELASTIC_TLS_VERIFY = "metadata.elasticsearch.tls.verify";
   static final String CONF_ELASTIC_INDEX_NAME = "metadata.elasticsearch.index.name";
   static final String CONF_ELASTIC_SCROLL_TIMEOUT = "metadata.elasticsearch.scroll.timeout";
   static final String CONF_ELASTIC_NUM_SHARDS = "metadata.elasticsearch.num.shards";
@@ -37,6 +38,7 @@ public final class Config {
   static final int DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES = 50;
   static final int DEFAULT_ELASTIC_CONFLICT_RETRY_SLEEP_MS = 100;
   static final int DEFAULT_MAX_RESULT_WINDOW = 10000; // this is hardcoded in Elasticsearch
+  static final boolean DEFAULT_ELASTIC_TLS_VERIFY = true;
 
   // index.mappings.json will have a mapping: "cdap_version": "CDAP_VERSION".
   // the latter (placeholder) is replaced with the current CDAP version at index creation
