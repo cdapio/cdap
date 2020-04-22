@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.utils.Checksums;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import org.apache.http.HttpHost;
@@ -51,20 +52,21 @@ public class ElasticConfigurationTest {
   public void testIndexSetup() throws IOException {
 
     CConfiguration cConf = createCConf();
+    SConfiguration sConf = SConfiguration.create();
 
     // shards defaults to 5, and replicas default 1 in Elasticsearch
     // max result window defaults to 10000 but this default is not returned in the settings
-    testIndexConfig(cConf, indexName, elasticPort, 5, 1, null);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 5, 1, null);
 
     cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
-    testIndexConfig(cConf, indexName, elasticPort, 5, 1, 100);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 5, 1, 100);
 
     cConf.setInt(Config.CONF_ELASTIC_NUM_SHARDS, 4);
     cConf.setInt(Config.CONF_ELASTIC_NUM_REPLICAS, 2);
     cConf.setInt(Config.CONF_ELASTIC_WINDOW_SIZE, 100);
 
-    testIndexConfig(cConf, indexName, elasticPort, 4, 2, 100);
+    testIndexConfig(cConf, sConf, indexName, elasticPort, 4, 2, 100);
   }
 
   private CConfiguration createCConf() {
@@ -80,10 +82,10 @@ public class ElasticConfigurationTest {
     return cConf;
   }
 
-  private void testIndexConfig(CConfiguration cConf, String indexName, String elasticPort,
+  private void testIndexConfig(CConfiguration cConf, SConfiguration sConf, String indexName, String elasticPort,
                                @Nullable Integer shards, @Nullable Integer replicas, @Nullable Integer windowSize)
     throws IOException {
-    try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf)) {
+    try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf, sConf)) {
       store.createIndex();
       try {
         try (RestHighLevelClient client = new RestHighLevelClient(
@@ -107,7 +109,8 @@ public class ElasticConfigurationTest {
   @Test
   public void testVersionInfo() throws IOException {
     CConfiguration cConf = createCConf();
-    try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf)) {
+    SConfiguration sConf = SConfiguration.create();
+    try (ElasticsearchMetadataStorage store = new ElasticsearchMetadataStorage(cConf, sConf)) {
       store.createIndex();
       try {
         VersionInfo info = store.getVersionInfo();

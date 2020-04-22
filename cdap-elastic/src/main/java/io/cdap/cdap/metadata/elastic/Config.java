@@ -24,6 +24,8 @@ public final class Config {
 
   static final String CONF_ELASTIC_HOSTS = "metadata.elasticsearch.cluster.hosts";
   static final String CONF_ELASTIC_TLS_VERIFY = "metadata.elasticsearch.tls.verify";
+  static final String CONF_ELASTIC_USERNAME = "metadata.elasticsearch.credentials.username";
+  static final String CONF_ELASTIC_PASSWORD = "metadata.elasticsearch.credentials.password";
   static final String CONF_ELASTIC_INDEX_NAME = "metadata.elasticsearch.index.name";
   static final String CONF_ELASTIC_SCROLL_TIMEOUT = "metadata.elasticsearch.scroll.timeout";
   static final String CONF_ELASTIC_NUM_SHARDS = "metadata.elasticsearch.num.shards";
