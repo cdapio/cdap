@@ -31,6 +31,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataConflictException;
 import io.cdap.cdap.common.metadata.MetadataUtil;
@@ -54,7 +55,11 @@ import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.Sorting;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.ElasticsearchStatusException;
@@ -178,9 +183,13 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String SUPPORTED_SORT_KEYS = String.join(", ", SORT_KEY_MAP.keySet());
 
   private final CConfiguration cConf;
+  private final SConfiguration sConf;
   private final String elasticHosts;
   private final String indexName;
   private final String scrollTimeout;
+
+  private final String credentialsUsername;
+  private final String credentialsPassword;
 
   private final boolean verifyTls;
 
@@ -193,11 +202,14 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private final RetryStrategy retryStrategyOnConflict;
 
   @Inject
-  public ElasticsearchMetadataStorage(CConfiguration cConf) {
+  public ElasticsearchMetadataStorage(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
+    this.sConf = sConf;
     this.indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
     this.scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
     this.elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
+    this.credentialsUsername = sConf.get(Config.CONF_ELASTIC_USERNAME);
+    this.credentialsPassword = sConf.get(Config.CONF_ELASTIC_PASSWORD);
     this.verifyTls = cConf.getBoolean(Config.CONF_ELASTIC_TLS_VERIFY, Config.DEFAULT_ELASTIC_TLS_VERIFY);
     int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
                                   Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
@@ -326,6 +338,14 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
       RestClientBuilder builder = RestClient.builder(hosts);
 
       builder.setHttpClientConfigCallback(httpClientConfigCallback -> {
+        if (credentialsUsername != null && credentialsPassword != null) {
+          LOG.info("Creating REST client with authentication, username: {}", credentialsUsername);
+          CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+          credentialsProvider.setCredentials(
+            AuthScope.ANY, new UsernamePasswordCredentials(credentialsUsername, credentialsPassword));
+          httpClientConfigCallback.setDefaultCredentialsProvider(credentialsProvider);
+        }
+
         if (!verifyTls) {
           LOG.warn("Creating REST client with TLS verification DISABLED");
           try {
