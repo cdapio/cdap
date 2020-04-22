@@ -31,6 +31,9 @@ export interface IAction {
 
 interface IActionsPopoverProps {
   actions: IAction[];
+  targetElem?: (props) => React.ReactElement;
+  showPopover?: boolean;
+  togglePopover?: () => void;
 }
 
 const POPPER_MODIFIERS = {
@@ -42,7 +45,24 @@ const POPPER_MODIFIERS = {
   },
 };
 
-const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
+const ActionsPopover: React.SFC<IActionsPopoverProps> = ({
+  actions,
+  targetElem,
+  showPopover,
+  togglePopover,
+}) => {
+  let target = (props) => (
+    <IconSVG
+      name="icon-cog-empty"
+      {...props}
+      className={`default-target ${props.className}`}
+      onClick={togglePopover}
+    />
+  );
+  if (targetElem) {
+    target = targetElem;
+  }
+
   return (
     <Popover
       target={(props) => <IconSVG name="icon-cog-empty" {...props} />}
@@ -51,6 +71,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({ actions }) => {
       bubbleEvent={false}
       enableInteractionInPopover={true}
       modifiers={POPPER_MODIFIERS}
+      showPopover={showPopover}
     >
       <ul>
         {actions.map((action, i) => {
