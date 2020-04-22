@@ -26,30 +26,10 @@ interface IProps {
   isOpen: boolean;
   onClose: () => void;
   pipelineConfig: any;
+  onExport: (config: any) => void;
 }
 
-const PipelineExportModal: React.SFC<IProps> = ({ isOpen, onClose, pipelineConfig }) => {
-  const exportPipeline = () => {
-    const blob = new Blob([JSON.stringify(pipelineConfig, null, 4)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const exportFileName =
-      (pipelineConfig.name ? pipelineConfig.name : 'noname') + '-' + pipelineConfig.artifact.name;
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${exportFileName}.json`;
-
-    const clickHandler = (event) => {
-      event.stopPropagation();
-      setTimeout(() => {
-        onClose();
-      }, 300);
-    };
-
-    a.addEventListener('click', clickHandler, false);
-    a.click();
-  };
-
+const PipelineExportModal: React.SFC<IProps> = ({ isOpen, onClose, pipelineConfig, onExport }) => {
   return (
     <Modal
       isOpen={isOpen}
@@ -80,7 +60,7 @@ const PipelineExportModal: React.SFC<IProps> = ({ isOpen, onClose, pipelineConfi
         </fieldset>
       </ModalBody>
       <ModalFooter>
-        <div className="btn btn-primary" onClick={exportPipeline}>
+        <div className="btn btn-primary" onClick={onExport.bind(null, pipelineConfig)}>
           {T.translate(`${PREFIX}.export`)}
         </div>
         <div className="btn btn-secondary close-button" onClick={onClose}>
