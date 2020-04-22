@@ -81,6 +81,7 @@ public class DataprocProvisioner implements Provisioner {
   // keys cannot be empty
   private static final Pattern LABEL_KEY_PATTERN = Pattern.compile("^[a-z][a-z0-9_-]{0,62}$");
   private static final Pattern LABEL_VAL_PATTERN = Pattern.compile("^[a-z0-9_-]{0,63}$");
+  private static final Pattern NETWORK_TAGS_PATTERN = Pattern.compile(("^[a-z][a-z0-9-]{0,62}$"));
 
   private ProvisionerSystemContext systemContext;
 
@@ -154,6 +155,19 @@ public class DataprocProvisioner implements Provisioner {
       throw new IllegalArgumentException("The instance is incapable of using external ip for communication " +
                                            "with Dataproc cluster. Please correct profile configuration by " +
                                            "deselecting preferExternalIP.");
+    }
+
+    // Validate Network Tags as per https://cloud.google.com/vpc/docs/add-remove-network-tags
+    // Total of 64 Tags Allowed
+    // Each tag length cannot exceed 63 chars
+    // Lower case letters and dashes allowed only.
+    List<String> networkTags = conf.getNetworkTags();
+    if (!networkTags.stream().allMatch(e -> NETWORK_TAGS_PATTERN.matcher(e).matches())) {
+      throw new IllegalArgumentException("Invalid Network Tags: Ensure tag length is max 63 chars"
+                                           + " and contains  lowercase letters, numbers and dashes only. ");
+    }
+    if (networkTags.size() > 64) {
+      throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
     }
   }
 
