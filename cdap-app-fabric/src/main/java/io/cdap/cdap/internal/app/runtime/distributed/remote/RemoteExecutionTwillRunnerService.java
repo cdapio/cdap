@@ -595,7 +595,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         return new RemoteExecutionService(cConf, programRunId, scheduler, processController, programStateWriter);
       }
 
-      // SSH monitor. The remote exeuction service will starts the service proxy
+      // SSH monitor. The remote execution service will starts the service proxy
       ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
       SSHConfig sshConfig = clusterKeyInfo.getSSHConfig();
       RemoteExecutionService remoteExecutionService = new SSHRemoteExecutionService(cConf, programRunId,

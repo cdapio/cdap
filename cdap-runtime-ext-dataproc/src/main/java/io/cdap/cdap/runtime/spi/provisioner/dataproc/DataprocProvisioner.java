@@ -343,7 +343,7 @@ public class DataprocProvisioner implements Provisioner {
                                       DataprocConf.STACKDRIVER_LOGGING_ENABLED,
                                       DataprocConf.STACKDRIVER_MONITORING_ENABLED,
                                       DataprocConf.IMAGE_VERSION,
-                                      BUCKET);
+                                      BUCKET, RUNTIME_JOB_MANAGER);
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);
@@ -384,7 +384,7 @@ public class DataprocProvisioner implements Provisioner {
     Map<String, String> properties = createContextProperties(context);
     // if this system property is not provided, we will assume that ssh should be used instead of
     // runtime job manager for job launch.
-    if (!Boolean.parseBoolean(systemContext.getProperties().get(RUNTIME_JOB_MANAGER))) {
+    if (!Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER))) {
       return Optional.empty();
     }
     DataprocConf conf = DataprocConf.create(properties, null);

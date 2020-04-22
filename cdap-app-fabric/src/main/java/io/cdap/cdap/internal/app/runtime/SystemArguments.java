@@ -94,7 +94,7 @@ public final class SystemArguments {
   public static final String RUNTIME_KEYTAB_PATH = "system.runtime.keytab.path";
   public static final String RUNTIME_PRINCIPAL_NAME = "system.runtime.principal.name";
 
-  // Runtime arguments for remote exeuction monitor type. Can be "ssh" or "url".
+  // Runtime arguments for remote execution monitor type. Can be "ssh" or "url".
   public static final String RUNTIME_MONITOR_TYPE = "system.runtime.monitor.type";
 
   /**
