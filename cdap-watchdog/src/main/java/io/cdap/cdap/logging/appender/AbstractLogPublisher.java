@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractLogPublisher.class);
   private static final Logger OUTAGE_LOG = Loggers.sampling(
-    Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))), LogSamplers.skipFirstN(1));
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(5), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
 
   private final int queueSize;
   private final BlockingQueue<LogMessage> messageQueue;
