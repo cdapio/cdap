@@ -21,6 +21,7 @@ import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import ActionsPopover, { IAction } from 'components/ActionsPopover';
 import PipelineExportModal from 'components/PipelineExportModal';
 import ConfirmationModal from 'components/ConfirmationModal';
+import downloadFile from 'services/download-file';
 
 const PREFIX = 'features.PipelineList.DeleteConfirmation';
 
@@ -31,18 +32,21 @@ interface IProps {
 interface IState {
   showExport: boolean;
   showDeleteConfirmation: boolean;
+  showPopover?: boolean;
 }
 
 class DraftActions extends React.PureComponent<IProps, IState> {
   public state = {
     showExport: false,
     showDeleteConfirmation: false,
+    showPopover: false,
   };
 
   public pipelineConfig = {};
 
-  private openExportModal = (): void => {
+  private handlePipelineExport = () => {
     const draft = this.props.draft;
+
     this.pipelineConfig = {
       name: draft.name,
       description: draft.description,
@@ -50,13 +54,29 @@ class DraftActions extends React.PureComponent<IProps, IState> {
       config: draft.config,
     };
 
+    if (window.Cypress) {
+      this.openExportModal();
+      return;
+    }
+    const postExportCb = () => {
+      this.pipelineConfig = {};
+      this.setState({ showPopover: false });
+    };
+
+    // Unless we are running an e2e test, just export the pipeline JSON
+    downloadFile(this.pipelineConfig, postExportCb);
+  };
+
+  private openExportModal = (): void => {
     this.setState({
       showExport: true,
+      showPopover: false,
     });
   };
 
   private closeExportModal = (): void => {
     this.pipelineConfig = {};
+
     this.setState({
       showExport: false,
     });
@@ -65,7 +85,12 @@ class DraftActions extends React.PureComponent<IProps, IState> {
   private toggleDeleteConfirmation = () => {
     this.setState({
       showDeleteConfirmation: !this.state.showDeleteConfirmation,
+      showPopover: false,
     });
+  };
+
+  private togglePopover = () => {
+    this.setState({ showPopover: !this.state.showPopover });
   };
 
   private renderConfirmationBody = () => {
@@ -101,7 +126,7 @@ class DraftActions extends React.PureComponent<IProps, IState> {
   private actions: IAction[] = [
     {
       label: T.translate('commons.export'),
-      actionFn: this.openExportModal,
+      actionFn: this.handlePipelineExport,
     },
     {
       label: 'separator',
@@ -116,12 +141,17 @@ class DraftActions extends React.PureComponent<IProps, IState> {
   public render() {
     return (
       <div className="action" onClick={(e) => e.preventDefault()}>
-        <ActionsPopover actions={this.actions} />
+        <ActionsPopover
+          actions={this.actions}
+          showPopover={this.state.showPopover}
+          togglePopover={this.togglePopover}
+        />
 
         <PipelineExportModal
           isOpen={this.state.showExport}
           onClose={this.closeExportModal}
           pipelineConfig={this.pipelineConfig}
+          onExport={this.handlePipelineExport}
         />
 
         {this.renderDeleteConfirmation()}
