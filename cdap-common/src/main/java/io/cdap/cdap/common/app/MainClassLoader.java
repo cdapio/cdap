@@ -28,6 +28,8 @@ import io.cdap.cdap.common.lang.InterceptableClassLoader;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.Classes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -39,6 +41,7 @@ import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -48,6 +51,8 @@ import javax.annotation.Nullable;
  * system.
  */
 public class MainClassLoader extends InterceptableClassLoader {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MainClassLoader.class);
 
   private static final String DATASET_CLASS_NAME = Dataset.class.getName();
   private final DatasetClassRewriter datasetRewriter;
@@ -108,9 +113,22 @@ public class MainClassLoader extends InterceptableClassLoader {
 
     classpath.addAll(Arrays.asList(extraClasspath));
 
+    // Find and move hive-exec to the end. The hive-exec contains a lot of conflicting classes that we don't
+    // want to include during dependency tracing.
+    Iterator<URL> iterator = classpath.iterator();
+    List<URL> hiveExecJars = new ArrayList<>();
+    while (iterator.hasNext()) {
+      URL url = iterator.next();
+      if (url.getPath().contains("hive-exec")) {
+        iterator.remove();
+        hiveExecJars.add(url);
+      }
+    }
+    classpath.addAll(hiveExecJars);
+
     ClassLoader filtered = new FilterClassLoader(classLoader, filter);
     ClassLoader parent = new CombineClassLoader(classLoader.getParent(), filtered);
-    return new MainClassLoader(classpath.toArray(new URL[classpath.size()]), parent);
+    return new MainClassLoader(classpath.toArray(new URL[0]), parent);
   }
 
   /**
