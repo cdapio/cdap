@@ -108,6 +108,7 @@ var WindowManager = require('../cdap/services/WindowManager').default;
 var DownloadFile = require('../cdap/services/download-file').default;
 var PreviewUtilities = require('../cdap/components/PreviewData/utilities');
 var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
+var DownloadFile = require('../cdap/services/download-file').default;
 
 export {
   Store,
@@ -190,4 +191,5 @@ export {
   DownloadFile,
   PreviewUtilities,
   PREVIEW_STATUS,
+  DownloadFile,
 };

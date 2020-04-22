@@ -71,7 +71,7 @@ describe('Creating a pipeline', () => {
     });
   });
 
-  it('can configure simple pipeline, including post-run actions', () => {
+  it('is configured correctly', () => {
     // Go to Pipelines studio
     cy.visit('/cdap/ns/default/pipelines');
     cy.get('#resource-center-btn').click();
