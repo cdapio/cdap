@@ -392,6 +392,36 @@
           "widget-attributes" : {}
         }
       ]
+    },
+    {
+      "label": "Experimental Features (BETA)",
+      "properties": [
+        {
+          "name": "autoScaling",
+          "widget-type": "toggle",
+          "label": "Autoscaling",
+          "widget-attributes": {
+            "on": {
+              "value": "true",
+              "label": "Enable"
+            },
+            "off": {
+              "value": "false",
+              "label": "Disable"
+            },
+            "default": "false"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Autoscaling Policy",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id(name) or the resource URI",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        }
+      ]
     }
   ]
 }

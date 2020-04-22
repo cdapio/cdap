@@ -34,6 +34,7 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
+import com.google.cloud.dataproc.v1.AutoscalingConfig;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterConfig;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
@@ -404,6 +405,18 @@ final class DataprocClient implements AutoCloseable {
             .setExecutableFile(action)
             .build());
       }
+
+      //Set Auto Scaling Policy
+      if (conf.isAutoPolicyEnabled()) {
+        String policyURI = conf.getAutoScalingPolicy();
+        //Check if policy is URI or ID. If ID Convert to URI
+        if (!policyURI.contains("/")) {
+          policyURI = "projects/" + conf.getProjectId() + "/regions/" + conf.getRegion()
+            + "/autoscalingPolicies/" + conf.getAutoScalingPolicy();
+        }
+        builder.setAutoscalingConfig(AutoscalingConfig.newBuilder().setPolicyUri(policyURI).build());
+      }
+
 
       if (conf.getEncryptionKeyName() != null) {
         builder.setEncryptionConfig(EncryptionConfig.newBuilder()

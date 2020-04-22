@@ -17,6 +17,8 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
@@ -85,6 +87,10 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
     }
     if (networkTags.size() > 64) {
       throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
+    }
+    //Validate if AutoScaling is enabled and Policy is provided
+    if (conf.isAutoPolicyEnabled() && Strings.isNullOrEmpty(conf.getAutoScalingPolicy())) {
+      throw new IllegalArgumentException("Autoscaling is enabled, but no policy for scaling is provided.");
     }
   }
 
