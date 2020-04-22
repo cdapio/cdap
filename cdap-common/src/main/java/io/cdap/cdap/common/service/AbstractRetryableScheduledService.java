@@ -94,7 +94,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * @throws Exception if startup of this service failed
    */
   protected void doStartUp() throws Exception {
-    // No-op
+    LOG.debug("Starting scheduled service {}", getServiceName());
   }
 
   /**
@@ -104,7 +104,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * @throws Exception if shutdown of this service failed
    */
   protected void doShutdown() throws Exception {
-    // No-op
+    LOG.debug("Stopping scheduled service {}", getServiceName());
   }
 
   /**

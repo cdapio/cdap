@@ -75,17 +75,18 @@ public final class RuntimeMonitors {
                                              + key + "'.", e);
       }
     }).sorted((o1, o2) -> {
-      // Always put logs the last and program status event to the second to the last
-      if (o1.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
-        return 1;
-      }
-      if (o2.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
-        return -1;
-      }
+      // Always put program status event to the last
+      // Logs to the second to the last
       if (Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC.equals(o1.getKey())) {
         return 1;
       }
       if (Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC.equals(o2.getKey())) {
+        return -1;
+      }
+      if (o1.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
+        return 1;
+      }
+      if (o2.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
         return -1;
       }
       return o1.getKey().compareTo(o2.getKey());
