@@ -40,6 +40,9 @@ public class HadoopClassExcluder extends ClassAcceptor {
         return false;
       }
     }
-    return true;
+    // We don't use the snappy library from org.iq80. We use the one from org.xerial.snappy.
+    // This is an optional dependency from org.iq80.leveldb, hence it is not included in CDAP
+    // However, the hive-exec contains it, which can mess up other dependency if we include it.
+    return !className.startsWith("org.iq80.snappy.");
   }
 }
