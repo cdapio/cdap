@@ -42,7 +42,7 @@
         <span>{{::inputschema.name}}</span>
       </div>
       <div class="content"
-          ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index, '': MyInputSchemaCtrl.currentIndex === $index}">
+          ng-if="MyInputSchemaCtrl.currentIndex === $index">
 
         <my-complex-schema
           ng-model="inputschema.schema"
