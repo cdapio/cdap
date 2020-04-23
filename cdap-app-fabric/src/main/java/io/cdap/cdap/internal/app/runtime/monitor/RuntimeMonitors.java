@@ -24,8 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,8 +98,8 @@ public final class RuntimeMonitors {
    */
   public static void setupMonitoring(Injector injector, ProgramOptions programOpts) throws Exception {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    RemoteMonitorType monitorType = injector.getInstance(RemoteMonitorType.class);
-    if (monitorType == RemoteMonitorType.URL) {
+    RuntimeMonitorType monitorType = injector.getInstance(RuntimeMonitorType.class);
+    if (monitorType == RuntimeMonitorType.URL) {
       String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
       String authenticatorKey = String.format("%s%s", Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX,
                                               provisioner);

@@ -365,14 +365,15 @@ final class DataprocClient implements AutoCloseable {
                                                   conf.getNetwork()));
       }
 
-      // if public key is no null that means ssh should be used to launch job on dataproc
+      //Add any defined Network Tags
+      clusterConfig.addAllTags(conf.getNetworkTags());
+
+      // if public key is not null that means ssh is used to launch / monitor job on dataproc
       if (publicKey != null) {
         for (String targetTag : getFirewallTargetTags()) {
           clusterConfig.addTags(targetTag);
         }
       }
-      //Add any defined Network Tags
-      clusterConfig.addAllTags(conf.getNetworkTags());
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security
       if (useInternalIP) {
