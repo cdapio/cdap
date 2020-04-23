@@ -271,6 +271,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     for (Map.Entry<String, String> entry : runtimeJobEnv.getProperties().entrySet()) {
       cConf.set(entry.getKey(), entry.getValue());
     }
+    cConf.setBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, true);
 
     String hostName = InetAddress.getLocalHost().getCanonicalHostName();
     cConf.set(Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);

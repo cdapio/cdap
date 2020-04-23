@@ -304,7 +304,13 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
   @Override
   public void onProgramCompleted(ProgramRunId programRunId, ProgramRunStatus completionStatus) {
-    RemoteExecutionTwillController controller = controllers.remove(programRunId);
+    RemoteExecutionTwillController controller;
+    controllersLock.lock();
+    try {
+      controller = controllers.remove(programRunId);
+    } finally {
+      controllersLock.unlock();
+    }
     if (controller != null) {
       controller.complete();
     }
