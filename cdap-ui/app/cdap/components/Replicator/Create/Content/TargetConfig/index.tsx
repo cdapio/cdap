@@ -34,7 +34,7 @@ const styles = (theme): StyleRules => {
       padding: '25px 40px',
     },
     header: {
-      marginTop: '15px',
+      marginTop: '35px',
       fontSize: '18px',
       borderBottom: `1px solid ${theme.palette.grey[300]}`,
     },
