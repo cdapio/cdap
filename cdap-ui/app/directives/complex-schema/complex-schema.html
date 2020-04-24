@@ -40,7 +40,8 @@
       <div uib-tooltip="{{ ComplexSchema.disabledTooltip }}"
             tooltip-placement="top"
             tooltip-enable="ComplexSchema.isInStudio && ComplexSchema.isDisabled && ComplexSchema.disabledTooltip"
-            tooltip-append-to-body="true">
+            tooltip-append-to-body="true"
+            id="schema-container-{{id}}">
         <div class="error"
              ng-if="ComplexSchema.error">
           {{ ComplexSchema.error }}
@@ -54,9 +55,10 @@
           </my-record-schema>
         </fieldset>
 
-        <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
+        <div ng-repeat="field in lazyLoadedParsedSchema track by $index"
             class="field-row"
-            ng-class="{'nested-row': !field.nested}">
+            ng-class="{'nested-row': !field.nested}"
+            lazyload-id="{{$index}}">
           <div class="clearfix"
                ng-class="{'error-row': ComplexSchema.errors[field.name]}"
                data-cy="schema-row-{{$index}}">
@@ -122,6 +124,10 @@
             is-disabled="ComplexSchema.isDisabled"
             init-collapse="ComplexSchema.collapseChildren">
           </my-embedded-schema-selector>
+        </div>
+        <div ng-if="ComplexSchema.lazyloading && ComplexSchema.parsedSchema.length > 100">
+          <div class="text-center fa fa-spin fa-spinner"></div>
+          Loading...
         </div>
       </div>
     </fieldset>

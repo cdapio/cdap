@@ -25,6 +25,74 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
   let timeout;
   let addFieldTimeout;
   vm.emptySchema = false;
+  // lazy loading parameters
+  $scope.id = uuid.v4();
+  $scope.lazyLoadedParsedSchema = [];
+  vm.windowSize = 50;
+  vm.DEFAULT_WINDOW_SIZE = 50;
+  vm.lazyloading = false;
+
+  $scope.$watch('domLoaded', () => {
+    /*
+      Wait for the dom to be loaded
+      Equivalent of componentDidMount :sigh:
+    */
+    if (!$scope.domLoaded) {
+      return;
+    }
+    /*
+      For some reason if the dom is loaded but none of the fields are
+      rendered we don't need to do anything.
+    */
+    const fields = document.querySelectorAll(`#schema-container-${$scope.id} .field-row`);
+    if (!fields.length) {
+      return;
+    }
+    vm.io = new IntersectionObserver(
+      (entries) => {
+        let lastVisibleElement = vm.windowSize;
+        for (const entry of entries) {
+          const id = entry.target.getAttribute('lazyload-id');
+          const numID = parseInt(id, 10);
+          if (entry.isIntersecting) {
+            lastVisibleElement = numID + 100 > vm.windowSize ? numID + vm.DEFAULT_WINDOW_SIZE : numID;
+          }
+        }
+        if (lastVisibleElement > vm.windowSize) {
+          vm.windowSize = lastVisibleElement;
+          vm.lazyloading = true;
+          /*
+            The timeout is to sort-of give a smooth transition
+            scroll => loading ... => then after a second show the fields
+            This is the best effort to avoid jankiness while scrolling
+          */
+          $timeout(() => {
+            // This is to trigger a re-render for angular.
+            $scope.$apply(function() {
+              $scope.lazyLoadedParsedSchema = $scope.lazyLoadedParsedSchema.concat(
+                vm.parsedSchema.slice($scope.lazyLoadedParsedSchema.length, lastVisibleElement)
+              );
+              vm.lazyloading = false;
+            });
+          }, 1000);
+        }
+      },
+      {
+        // We don't have a root. Browser fallsback to document
+        threshold: [0, 1],
+      }
+    );
+    $scope.observeFields();
+  });
+
+  $scope.observeFields = () => {
+    if (!vm.io) {
+      return;
+    }
+    document.querySelectorAll(`#schema-container-${$scope.id} .field-row`).forEach((entry) => {
+      vm.io.observe(entry);
+    });
+  };
 
   vm.addField = (index) => {
     let placement = index === undefined ? 0 : index + 1;
@@ -155,6 +223,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     if (vm.parsedSchema.length > 5) {
       vm.collapseChildren = true;
     }
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
 
     vm.formatOutput(true);
   }
@@ -242,6 +311,32 @@ angular.module(PKG.name+'.commons')
       isInputSchema: '=',
       isInStudio: '=',
       errors: '=',
+    },
+    link: (scope, element) => {
+      scope.domLoaded = false;
+      /*
+        This watch is here because when we update the lazyLoadedParsedSchema we need to
+        observe the newly added fields. There is no way to check if new fields are
+        added to the DOM unless we watch it.
+        This cannot be done as soon as we update lazyLoadedParsedSchema in the controller
+        because angular doesn't guarantee that the DOM node will be available immediately
+        after we add new fields to the array.
+      */
+      scope.$watch(
+        function() {
+          return document.querySelectorAll(`#schema-container-${scope.id} .field-row`).length;
+        },
+        function(newValue, oldValue) {
+          if (newValue !== oldValue) {
+            scope.observeFields();
+          }
+        }
+      )
+      element.ready(() => {
+        scope.$apply(() => {
+          scope.domLoaded = true;
+        });
+      });
     }
   };
 })
