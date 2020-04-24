@@ -359,6 +359,12 @@ public class DataprocProvisioner implements Provisioner {
     contextProperties.put("yarn:yarn.nodemanager.pmem-check-enabled", "false");
     contextProperties.put("yarn:yarn.nodemanager.vmem-check-enabled", "false");
 
+    // Allow Application Master (AM) to use up to 50% of the all resources to avoid unschedulable issue due to
+    // limited resource for AM.
+    // By default this is either 10% or 25% depending on the hadoop version, which may not be sufficient.
+    // (e.g. insufficient RAM to run 2 AMs for workflow and mapreduce/spark in a single-node cluster)
+    contextProperties.put("capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent", "0.5");
+
     return contextProperties;
   }
 
