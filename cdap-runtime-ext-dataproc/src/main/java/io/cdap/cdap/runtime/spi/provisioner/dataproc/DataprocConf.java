@@ -55,6 +55,7 @@ final class DataprocConf {
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String IMAGE_VERSION = "imageVersion";
+  static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
 
@@ -96,6 +97,8 @@ final class DataprocConf {
   private final String networkTags;
   private final String initActions;
 
+  private final boolean runtimeJobManagerEnabled;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
@@ -104,7 +107,7 @@ final class DataprocConf {
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags, conf.initActions,
-         conf.dataprocProperties);
+         conf.runtimeJobManagerEnabled, conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -116,7 +119,7 @@ final class DataprocConf {
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
-                       @Nullable String networkTags, @Nullable String initActions,
+                       @Nullable String networkTags, @Nullable String initActions, boolean runtimeJobManagerEnabled,
                        Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
@@ -148,6 +151,7 @@ final class DataprocConf {
     this.clusterMetaData = clusterMetaData;
     this.networkTags = networkTags;
     this.initActions = initActions;
+    this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.dataprocProperties = dataprocProperties;
   }
 
@@ -275,6 +279,10 @@ final class DataprocConf {
     }
     return Arrays.stream(initActions.split(","))
       .map(String::trim).collect(Collectors.toList());
+  }
+
+  boolean isRuntimeJobManagerEnabled() {
+    return runtimeJobManagerEnabled;
   }
 
   Map<String, String> getDataprocProperties() {
@@ -428,6 +436,7 @@ final class DataprocConf {
                                         ";", "\\|"));
     String networkTags = getString(properties, "networkTags");
     String initActions = getString(properties, "initActions");
+    boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -435,7 +444,8 @@ final class DataprocConf {
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
-                            imageVersion, clusterMetaData, networkTags, initActions, dataprocProps);
+                            imageVersion, clusterMetaData, networkTags, initActions,
+                            runtimeJobManagerEnabled, dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.

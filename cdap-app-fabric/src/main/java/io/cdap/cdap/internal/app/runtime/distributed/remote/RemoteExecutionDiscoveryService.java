@@ -25,6 +25,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJo
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -57,7 +58,7 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   private final Discoverable runtimeMonitorDiscoverable;
 
   @Inject
-  RemoteExecutionDiscoveryService(CConfiguration cConf, RemoteMonitorType monitorType) {
+  RemoteExecutionDiscoveryService(CConfiguration cConf, RuntimeMonitorType monitorType) {
     this.cConf = cConf;
     this.services = new ConcurrentHashMap<>();
     this.runtimeMonitorDiscoverable = createMonitorDiscoverable(cConf, monitorType);
@@ -146,8 +147,8 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
   /**
    * Creates a {@link Discoverable} for the runtime monitor service.
    */
-  private static Discoverable createMonitorDiscoverable(CConfiguration cConf, RemoteMonitorType monitorType) {
-    if (monitorType == RemoteMonitorType.URL) {
+  private static Discoverable createMonitorDiscoverable(CConfiguration cConf, RuntimeMonitorType monitorType) {
+    if (monitorType == RuntimeMonitorType.URL) {
       // For monitor type URL, the monitor url is always set
       String url = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
       try {

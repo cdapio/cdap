@@ -55,6 +55,7 @@ import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
@@ -321,7 +322,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                        LocationCache locationCache, TwillControllerFactory controllerFactory) {
 
     Location serviceProxySecretLocation = null;
-    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RemoteMonitorType.SSH) {
+    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RuntimeMonitorType.SSH) {
       serviceProxySecretLocation = generateAndSaveServiceProxySecret(programRunId,
                                                                      getKeysDirLocation(programOpts, locationFactory));
     }
@@ -595,8 +596,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
                                                                 RemoteProcessController processController)
       throws IOException {
       // If monitor via URL directly, no need to run service socks proxy
-      RemoteMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
-      if (monitorType == RemoteMonitorType.URL) {
+      RuntimeMonitorType monitorType = SystemArguments.getRuntimeMonitorType(cConf, programOpts);
+      if (monitorType == RuntimeMonitorType.URL) {
         LOG.debug("Monitor program run {} with direct url", programRunId);
         return new RemoteExecutionService(cConf, programRunId, scheduler, processController, programStateWriter);
       }

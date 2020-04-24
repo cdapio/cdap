@@ -72,7 +72,6 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedMapReduceProgram
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClientService;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.monitor.ServiceSocksProxyInfo;
@@ -90,6 +89,7 @@ import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJob;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
@@ -278,7 +278,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     // If using SSH for monitoring and if the service proxy password file exists,
     // set the password into the cConf so that it can be used in the distributed jobs launched by this process.
-    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RemoteMonitorType.SSH) {
+    if (SystemArguments.getRuntimeMonitorType(cConf, programOpts) == RuntimeMonitorType.SSH) {
       Path serviceProxySecretFile = Paths.get(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE);
       if (Files.exists(serviceProxySecretFile)) {
         cConf.set(Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD,
@@ -367,7 +367,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
         bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
 
         bind(ProgramRunId.class).toInstance(programRunId);
-        bind(RemoteMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+        bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
       }
     });
 
@@ -390,7 +390,7 @@ public class DefaultRuntimeJob implements RuntimeJob {
     services.add(injector.getInstance(MessagingHttpService.class));
 
     // Starts the traffic relay if monitoring is done through SSH tunnel
-    if (injector.getInstance(RemoteMonitorType.class) == RemoteMonitorType.SSH) {
+    if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
       services.add(injector.getInstance(TrafficRelayService.class));
     }
     services.add(injector.getInstance(RuntimeClientService.class));
