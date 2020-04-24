@@ -106,6 +106,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     };
 
     vm.parsedSchema.splice(placement, 0, newField);
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
 
     vm.formatOutput();
 
@@ -123,7 +124,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     if (vm.parsedSchema.length === 0) {
       vm.addField();
     }
-
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
     vm.formatOutput();
   };
 
@@ -164,6 +165,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     }
 
     vm.parsedSchema = vm.parsedSchema.concat(data);
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
     vm.formatOutput();
   };
 
@@ -331,7 +333,7 @@ angular.module(PKG.name+'.commons')
             scope.observeFields();
           }
         }
-      )
+      );
       element.ready(() => {
         scope.$apply(() => {
           scope.domLoaded = true;
