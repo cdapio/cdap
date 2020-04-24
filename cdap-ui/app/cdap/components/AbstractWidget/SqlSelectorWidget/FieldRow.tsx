@@ -76,6 +76,7 @@ interface IFieldRowProps extends WithStyles<typeof styles> {
   error: boolean;
   disabled: boolean;
   validationError: string;
+  rowId: string;
 }
 
 const FieldRow: React.FC<IFieldRowProps> = ({
@@ -85,6 +86,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
   classes,
   disabled,
   validationError,
+  rowId,
 }: IFieldRowProps) => {
   const aliasChange = (event) => {
     onFieldChange({ ...field, alias: event.target.value });
@@ -99,6 +101,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
         [classes.tableRow]: true,
         [classes.errorRow]: error || validationError,
       })}
+      id={rowId}
     >
       <TableCell>
         <div className={classes.innerRowContainer}>
