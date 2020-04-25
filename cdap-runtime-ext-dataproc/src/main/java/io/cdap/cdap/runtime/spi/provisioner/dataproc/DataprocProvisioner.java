@@ -42,6 +42,7 @@ import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -52,6 +53,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * Provisions a cluster using GCP Dataproc.
@@ -323,7 +325,8 @@ public class DataprocProvisioner implements Provisioner {
   /**
    * Creates properties for the current context. It will default missing values from the system context properties.
    */
-  private Map<String, String> createContextProperties(ProvisionerContext context) {
+  @VisibleForTesting
+  Map<String, String> createContextProperties(ProvisionerContext context) {
     Map<String, String> contextProperties = new HashMap<>(context.getProperties());
 
     // Default the project id from system config if missing or if it is auto-detect
@@ -337,13 +340,24 @@ public class DataprocProvisioner implements Provisioner {
     }
 
     // Default settings from the system context
-    List<String> keys = Arrays.asList(DataprocConf.PREFER_EXTERNAL_IP,
-                                      DataprocConf.NETWORK,
-                                      DataprocConf.NETWORK_HOST_PROJECT_ID,
-                                      DataprocConf.STACKDRIVER_LOGGING_ENABLED,
-                                      DataprocConf.STACKDRIVER_MONITORING_ENABLED,
-                                      DataprocConf.IMAGE_VERSION,
-                                      BUCKET, RUNTIME_JOB_MANAGER);
+    ArrayList<String> keys = new ArrayList<>(
+      Arrays.asList(DataprocConf.PREFER_EXTERNAL_IP,
+                    DataprocConf.NETWORK,
+                    DataprocConf.NETWORK_HOST_PROJECT_ID,
+                    DataprocConf.STACKDRIVER_LOGGING_ENABLED,
+                    DataprocConf.STACKDRIVER_MONITORING_ENABLED,
+                    DataprocConf.IMAGE_VERSION,
+                    BUCKET, RUNTIME_JOB_MANAGER)
+    );
+
+    // Default cluster properties (i.e. specifying configuration files of the dataproc cluster and the property
+    // key value paris within those files that should be overridden) from the system context.
+    List<String> clusterPropertyKeys = Collections.unmodifiableList(
+      systemContext.getProperties().keySet().stream()
+        .filter(key -> DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(key).find())
+        .collect(Collectors.toList()));
+    keys.addAll(clusterPropertyKeys);
+
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);

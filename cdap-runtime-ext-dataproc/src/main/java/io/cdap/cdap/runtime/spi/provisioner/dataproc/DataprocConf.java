@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,7 +52,7 @@ final class DataprocConf {
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String IMAGE_VERSION = "imageVersion";
 
-  private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
+  static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
 
   private final String accountKey;
   private final String region;
@@ -86,7 +86,7 @@ final class DataprocConf {
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final SSHPublicKey publicKey;
-  private final Map<String, String> dataprocProperties;
+  private final Map<String, String> clusterProperties;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
@@ -95,7 +95,7 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.dataprocProperties);
+         conf.publicKey, conf.imageVersion, conf.clusterProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -106,8 +106,7 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion,
-                       Map<String, String> dataprocProperties) {
+                       @Nullable String imageVersion, Map<String, String> clusterProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -135,7 +134,7 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
-    this.dataprocProperties = dataprocProperties;
+    this.clusterProperties = clusterProperties;
   }
 
   String getRegion() {
@@ -243,8 +242,8 @@ final class DataprocConf {
     return publicKey;
   }
 
-  Map<String, String> getDataprocProperties() {
-    return dataprocProperties;
+  Map<String, String> getClusterProperties() {
+    return clusterProperties;
   }
 
   /**
@@ -379,7 +378,7 @@ final class DataprocConf {
     boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
                                                                                         "true"));
 
-    Map<String, String> dataprocProps = Collections.unmodifiableMap(
+    Map<String, String> clusterProps = Collections.unmodifiableMap(
       properties.entrySet().stream()
         .filter(e -> CLUSTER_PROPERTIES_PATTERN.matcher(e.getKey()).find())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
@@ -395,7 +394,7 @@ final class DataprocConf {
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP, stackdriverLoggingEnabled,
-                            stackdriverMonitoringEnabled, publicKey, imageVersion, dataprocProps);
+                            stackdriverMonitoringEnabled, publicKey, imageVersion, clusterProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
