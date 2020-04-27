@@ -28,30 +28,57 @@ import FeaturesAssessment from 'components/Replicator/Create/Content/Assessment/
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import Heading, { HeadingTypes } from 'components/Heading';
 import { extractErrorMessage } from 'components/Replicator/utilities';
+import Button from '@material-ui/core/Button';
+import Refresh from '@material-ui/icons/Refresh';
+
+const contentHeight = 'calc(100% - 27px - 87px - 110px)'; // 100% - heading - link - StepButtons
 
 const styles = (theme): StyleRules => {
   return {
     root: {
-      padding: '25px 40px',
+      padding: '10px 40px',
+    },
+    title: {
+      marginBottom: '5px',
+    },
+    heading: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 150px',
+
+      '& > div:last-child': {
+        textAlign: 'right',
+        paddingTop: '10px',
+      },
+    },
+    subHeading: {
+      color: theme.palette.grey[100],
+    },
+    btnText: {
+      marginRight: '5px',
     },
     headerLinks: {
       marginBottom: '20px',
-      marginTop: '30px',
+      marginTop: '20px',
     },
     link: {
-      fontSize: '18px',
+      fontSize: '16px',
       marginRight: '75px',
       cursor: 'pointer',
-      '&:hover': {
-        borderBottom: `3px solid ${theme.palette.grey[300]}`,
+      color: theme.palette.grey[100],
+      '&:not($active):hover': {
+        borderBottom: `2px solid ${theme.palette.grey[300]}`,
       },
     },
     active: {
       fontWeight: 600,
-      borderBottom: `3px solid ${theme.palette.grey[300]}`,
+      color: theme.palette.grey[50],
+      borderBottom: `5px solid ${theme.palette.grey[300]}`,
     },
     contentContainer: {
-      height: 'calc(100% - 27px - 77px - 110px)', // 100% - heading - link - StepButtons
+      height: contentHeight,
+    },
+    schemaContentContainer: {
+      minHeight: contentHeight,
     },
   };
 };
@@ -68,15 +95,18 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const [schemaErrorCount, setSchemaErrorCount] = React.useState(0);
+  const [view, setView] = React.useState(VIEWS.tables);
   const [assessment, setAssessment] = React.useState({
     tables: [],
     features: [],
     connectivity: [],
   });
 
-  const [view, setView] = React.useState(VIEWS.tables);
+  function runAssessment() {
+    setLoading(true);
+    setError(null);
 
-  React.useEffect(() => {
     const params = {
       namespace: getCurrentNamespace(),
       draftId,
@@ -84,6 +114,14 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
     MyReplicatorApi.assessPipeline(params).subscribe(
       (res) => {
+        let schemaError = 0;
+        res.tables.forEach((table) => {
+          if (table.numColumnsPartiallySupported !== 0 || table.numColumnsNotSupported !== 0) {
+            schemaError++;
+          }
+        });
+
+        setSchemaErrorCount(schemaError);
         setAssessment(res);
         setLoading(false);
       },
@@ -92,7 +130,9 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         setLoading(false);
       }
     );
-  }, []);
+  }
+
+  React.useEffect(runAssessment, []);
 
   if (loading) {
     return <LoadingSVGCentered />;
@@ -100,7 +140,18 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
   return (
     <div className={classes.root}>
-      <Heading type={HeadingTypes.h3} label="Assessment summary" />
+      <div className={classes.heading}>
+        <div>
+          <Heading type={HeadingTypes.h4} label="Assessment summary" className={classes.title} />
+          <div className={classes.subHeading}>Resolve all issues to continue</div>
+        </div>
+        <div>
+          <Button color="primary" onClick={runAssessment}>
+            <span className={classes.btnText}>Refresh</span>
+            <Refresh />
+          </Button>
+        </div>
+      </div>
 
       <If condition={error}>
         <React.Fragment>
@@ -119,7 +170,7 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
               className={classnames(classes.link, { [classes.active]: view === VIEWS.tables })}
               onClick={() => setView(VIEWS.tables)}
             >
-              Schema
+              Schema issues ({schemaErrorCount})
             </span>
             <span
               className={classnames(classes.link, { [classes.active]: view === VIEWS.features })}
@@ -137,7 +188,12 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
             </span>
           </div>
 
-          <div className={classes.contentContainer}>
+          <div
+            className={classnames({
+              [classes.contentContainer]: view !== VIEWS.tables,
+              [classes.schemaContentContainer]: view === VIEWS.tables,
+            })}
+          >
             <If condition={view === VIEWS.tables}>
               <TablesAssessment tables={assessment.tables} />
             </If>
