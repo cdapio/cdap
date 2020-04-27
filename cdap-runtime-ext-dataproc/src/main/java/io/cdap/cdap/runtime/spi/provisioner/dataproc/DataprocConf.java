@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -57,7 +57,7 @@ final class DataprocConf {
   static final String IMAGE_VERSION = "imageVersion";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
-  private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
+  static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
 
   private final String accountKey;
   private final String region;
@@ -91,7 +91,7 @@ final class DataprocConf {
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final SSHPublicKey publicKey;
-  private final Map<String, String> dataprocProperties;
+  private final Map<String, String> clusterProperties;
 
   private final Map<String, String> clusterMetaData;
   private final String networkTags;
@@ -107,7 +107,7 @@ final class DataprocConf {
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags, conf.initActions,
-         conf.runtimeJobManagerEnabled, conf.dataprocProperties);
+         conf.runtimeJobManagerEnabled, conf.clusterProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -120,7 +120,7 @@ final class DataprocConf {
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
                        @Nullable String networkTags, @Nullable String initActions, boolean runtimeJobManagerEnabled,
-                       Map<String, String> dataprocProperties) {
+                       Map<String, String> clusterProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -152,7 +152,7 @@ final class DataprocConf {
     this.networkTags = networkTags;
     this.initActions = initActions;
     this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
-    this.dataprocProperties = dataprocProperties;
+    this.clusterProperties = clusterProperties;
   }
 
   String getRegion() {
@@ -285,8 +285,8 @@ final class DataprocConf {
     return runtimeJobManagerEnabled;
   }
 
-  Map<String, String> getDataprocProperties() {
-    return dataprocProperties;
+  Map<String, String> getClusterProperties() {
+    return clusterProperties;
   }
 
   /**
@@ -421,7 +421,7 @@ final class DataprocConf {
     boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
                                                                                         "true"));
 
-    Map<String, String> dataprocProps = Collections.unmodifiableMap(
+    Map<String, String> clusterProps = Collections.unmodifiableMap(
       properties.entrySet().stream()
         .filter(e -> CLUSTER_PROPERTIES_PATTERN.matcher(e.getKey()).find())
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
@@ -445,7 +445,7 @@ final class DataprocConf {
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
                             imageVersion, clusterMetaData, networkTags, initActions,
-                            runtimeJobManagerEnabled, dataprocProps);
+                            runtimeJobManagerEnabled, clusterProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.

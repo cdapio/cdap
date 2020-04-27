@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -380,18 +380,18 @@ final class DataprocClient implements AutoCloseable {
         clusterConfig.setInternalIpOnly(true);
       }
 
-      Map<String, String> dataprocProps = new HashMap<>(conf.getDataprocProperties());
+      Map<String, String> clusterProperties = new HashMap<>(conf.getClusterProperties());
       // The additional property is needed to be able to provision a singlenode cluster on
       // dataproc. Dataproc has an issue that it will treat 0 number of worker
       // nodes as the default number, which means it will always provision a
       // cluster with 2 worker nodes if this property is not set. Refer to
       // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
       // for more information.
-      dataprocProps.put("dataproc:dataproc.allow.zero.workers", "true");
+      clusterProperties.put("dataproc:dataproc.allow.zero.workers", "true");
       // Enable/Disable stackdriver
-      dataprocProps.put("dataproc:dataproc.logging.stackdriver.enable",
+      clusterProperties.put("dataproc:dataproc.logging.stackdriver.enable",
                         Boolean.toString(conf.isStackdriverLoggingEnabled()));
-      dataprocProps.put("dataproc:dataproc.monitoring.stackdriver.enable",
+      clusterProperties.put("dataproc:dataproc.monitoring.stackdriver.enable",
                         Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
 
@@ -415,7 +415,7 @@ final class DataprocClient implements AutoCloseable {
         .setGceClusterConfig(clusterConfig.build())
         .setSoftwareConfig(SoftwareConfig.newBuilder()
                              .setImageVersion(imageVersion)
-                             .putAllProperties(dataprocProps));
+                             .putAllProperties(clusterProperties));
 
       //Add any Node Initialization action scripts
       for (String action : conf.getInitActions()) {
