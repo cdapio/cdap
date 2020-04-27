@@ -340,7 +340,7 @@ public class DataprocProvisioner implements Provisioner {
     }
 
     // Default settings from the system context
-    ArrayList<String> keys = new ArrayList<>(
+    List<String> keys = new ArrayList<>(
       Arrays.asList(DataprocConf.PREFER_EXTERNAL_IP,
                     DataprocConf.NETWORK,
                     DataprocConf.NETWORK_HOST_PROJECT_ID,
@@ -350,13 +350,12 @@ public class DataprocProvisioner implements Provisioner {
                     BUCKET, RUNTIME_JOB_MANAGER)
     );
 
-    // Default cluster properties (i.e. specifying configuration files of the dataproc cluster and the property
-    // key value paris within those files that should be overridden) from the system context.
-    List<String> clusterPropertyKeys = Collections.unmodifiableList(
-      systemContext.getProperties().keySet().stream()
-        .filter(key -> DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(key).find())
-        .collect(Collectors.toList()));
-    keys.addAll(clusterPropertyKeys);
+    // Default dataproc cluster property settings from the system context
+    // (i.e. those settings specifying configuration files of the dataproc cluster and the property
+    // key value paris within those files that should be overridden)
+    systemContext.getProperties().keySet().stream()
+      .filter(key -> DataprocConf.CLUSTER_PROPERTIES_PATTERN.matcher(key).find())
+      .collect(Collectors.toCollection(() -> keys));
 
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
