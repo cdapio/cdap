@@ -17,7 +17,9 @@
 package io.cdap.cdap.runtime.spi.common;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -54,7 +56,15 @@ public final class DataprocUtils {
     return map;
   }
 
+  /**
+   * Parses the given list of IP CIDR blocks into list of {@link IPRange}.
+   */
+  public static List<IPRange> parseIPRanges(List<String> ranges) {
+    return ranges.stream().map(IPRange::new).collect(Collectors.toList());
+  }
+
   private DataprocUtils() {
     // no-op
   }
+
 }
