@@ -34,7 +34,7 @@ interface IAction {
 
 export const ActionConfig: IAction[] = [
   {
-    img: '/cdap_assets/img/cleanse_data.svg',
+    img: '/cdap_assets/img/ingest-tile.svg',
     title: T.translate(`${PREFIX}.Ingestion.title`).toString(),
     description: T.translate(`${PREFIX}.Ingestion.description`).toString(),
     links: [
