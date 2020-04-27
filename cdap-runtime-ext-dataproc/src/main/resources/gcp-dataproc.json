@@ -345,6 +345,44 @@
           }
         }
       ]
+    },
+    {
+      "label": "Cluster Metadata",
+      "properties": [
+        {
+          "widget-type": "keyvalue",
+          "label": "Metadata",
+          "name": "clusterMetaData",
+          "description": "Add additional metadata for instances that run in your cluster. You can typically use it for tracking billing and chargebacks. For more details, see https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/metadata",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "delimiter": ";",
+            "kv-delimiter": "|",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value"
+          }
+        },
+        {
+          "name": "networkTags",
+          "label": "Network Tags",
+          "widget-type": "csv",
+          "description": "Assign Network tags to apply firewall rules to specific nodes of cluster. Network tags must start with a lowercase letter and can contain lowercase letters, numbers, and hyphens. Tags must end with a lowercase letter or number. ",
+          "widget-attributes" : {}
+        }
+
+      ]
+    },
+    {
+      "label": "Advanced Settings",
+      "properties": [
+        {
+          "name": "initActions",
+          "label": "Initialization Actions",
+          "widget-type": "csv",
+          "description": "A list of scripts to be executed during initialization of cluster.",
+          "widget-attributes" : {}
+        }
+      ]
     }
   ]
 }

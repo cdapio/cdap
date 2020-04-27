@@ -50,6 +50,9 @@ export default class PaginationDropdown extends Component {
         </div>
       );
     }
+    if (this.props.numberOfPages === 1) {
+      return null;
+    }
 
     return (
       <Dropdown

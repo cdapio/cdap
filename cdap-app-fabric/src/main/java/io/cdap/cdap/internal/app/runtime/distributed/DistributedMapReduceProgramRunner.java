@@ -90,7 +90,7 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
       .addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()),
                    1, clientArgs, spec.getDriverResources(), 0);
 
-    if (clusterMode == ClusterMode.ON_PREMISE) {
+    if (clusterMode == ClusterMode.ON_PREMISE || cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       // Add extra resources, classpath and dependencies
       launchConfig
         .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<>()))

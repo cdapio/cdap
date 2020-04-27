@@ -216,6 +216,10 @@ public final class Constants {
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
 
+    // A boolean value cConf entry to tell whether a ProgramRunner is running remotely (i.e. not inside app-fabric)
+    // This config is not present in the cdap-default.xml as it is only set internally by CDAP.
+    public static final String PROGRAM_REMOTE_RUNNER = "app.program.remote.runner";
+
     /**
      * Guice named bindings.
      */

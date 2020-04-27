@@ -22,6 +22,7 @@ import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -38,7 +39,6 @@ import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
-import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +75,6 @@ public class DataprocProvisioner implements Provisioner {
   // The GCS bucket used by the runtime job manager for launching jobs via the job API
   // It can be overridden by profile runtime arguments (system.profile.properties.bucket)
   private static final String BUCKET = "bucket";
-  private static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
   // keys and values cannot be longer than 63 characters
   // keys and values can only contain lowercase letters, numbers, underscores, and dashes
@@ -83,6 +82,7 @@ public class DataprocProvisioner implements Provisioner {
   // keys cannot be empty
   private static final Pattern LABEL_KEY_PATTERN = Pattern.compile("^[a-z][a-z0-9_-]{0,62}$");
   private static final Pattern LABEL_VAL_PATTERN = Pattern.compile("^[a-z0-9_-]{0,63}$");
+  private static final Pattern NETWORK_TAGS_PATTERN = Pattern.compile(("^[a-z][a-z0-9-]{0,62}$"));
 
   private ProvisionerSystemContext systemContext;
 
@@ -157,34 +157,47 @@ public class DataprocProvisioner implements Provisioner {
                                            "with Dataproc cluster. Please correct profile configuration by " +
                                            "deselecting preferExternalIP.");
     }
+
+    // Validate Network Tags as per https://cloud.google.com/vpc/docs/add-remove-network-tags
+    // Total of 64 Tags Allowed
+    // Each tag length cannot exceed 63 chars
+    // Lower case letters and dashes allowed only.
+    List<String> networkTags = conf.getNetworkTags();
+    if (!networkTags.stream().allMatch(e -> NETWORK_TAGS_PATTERN.matcher(e).matches())) {
+      throw new IllegalArgumentException("Invalid Network Tags: Ensure tag length is max 63 chars"
+                                           + " and contains  lowercase letters, numbers and dashes only. ");
+    }
+    if (networkTags.size() > 64) {
+      throw new IllegalArgumentException("Exceed Max number of tags. Only Max of 64 allowed. ");
+    }
   }
 
   @Override
   public Cluster createCluster(ProvisionerContext context) throws Exception {
-    // Generates and set the ssh key if it does not have one.
-    // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
-    SSHContext sshContext = context.getSSHContext();
-    SSHPublicKey sshPublicKey = null;
-    if (sshContext != null) {
-      SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
-      if (sshKeyPair == null) {
-        sshKeyPair = sshContext.generate("cdap");
-        sshContext.setSSHKeyPair(sshKeyPair);
+    DataprocConf conf = DataprocConf.create(createContextProperties(context), null);
+
+    if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH || !conf.isRuntimeJobManagerEnabled()) {
+      // Generates and set the ssh key if it does not have one.
+      // Since invocation of this method can come from a retry, we don't need to keep regenerating the keys
+      SSHContext sshContext = context.getSSHContext();
+      if (sshContext != null) {
+        SSHKeyPair sshKeyPair = sshContext.getSSHKeyPair().orElse(null);
+        if (sshKeyPair == null) {
+          sshKeyPair = sshContext.generate("cdap");
+          sshContext.setSSHKeyPair(sshKeyPair);
+        }
+        conf = DataprocConf.create(createContextProperties(context), sshKeyPair.getPublicKey());
       }
-      sshPublicKey = sshKeyPair.getPublicKey();
     }
 
     // Reload system context properties and get system labels
     systemContext.reloadProperties();
     Map<String, String> systemLabels = getSystemLabels(systemContext);
 
-    DataprocConf conf = DataprocConf.create(createContextProperties(context), sshPublicKey);
     String clusterName = getClusterName(context.getProgramRunInfo());
 
     try (DataprocClient client =
-           DataprocClient.fromConf(conf,
-                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
-                                                                                                   "false")))) {
+           DataprocClient.fromConf(conf, Boolean.parseBoolean(systemContext.getProperties().get(PRIVATE_INSTANCE)))) {
       // if it already exists, it means this is a retry. We can skip actually making the request
       Optional<Cluster> existing = client.getCluster(clusterName);
       if (existing.isPresent()) {
@@ -224,9 +237,7 @@ public class DataprocProvisioner implements Provisioner {
     // Reload system context properties
     systemContext.reloadProperties();
     try (DataprocClient client =
-           DataprocClient.fromConf(conf,
-                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
-                                                                                                   "false")))) {
+           DataprocClient.fromConf(conf, Boolean.parseBoolean(systemContext.getProperties().get(PRIVATE_INSTANCE)))) {
       return client.getClusterStatus(clusterName);
     }
   }
@@ -238,9 +249,7 @@ public class DataprocProvisioner implements Provisioner {
     // Reload system context properties
     systemContext.reloadProperties();
     try (DataprocClient client =
-           DataprocClient.fromConf(conf,
-                                   Boolean.parseBoolean(systemContext.getProperties().getOrDefault(PRIVATE_INSTANCE,
-                                                                                                   "false")))) {
+           DataprocClient.fromConf(conf, Boolean.parseBoolean(systemContext.getProperties().get(PRIVATE_INSTANCE)))) {
       Optional<Cluster> existing = client.getCluster(clusterName);
       return existing.orElseGet(() -> new Cluster(cluster, ClusterStatus.NOT_EXISTS));
     }
@@ -347,7 +356,8 @@ public class DataprocProvisioner implements Provisioner {
                     DataprocConf.STACKDRIVER_LOGGING_ENABLED,
                     DataprocConf.STACKDRIVER_MONITORING_ENABLED,
                     DataprocConf.IMAGE_VERSION,
-                    BUCKET, RUNTIME_JOB_MANAGER)
+                    DataprocConf.RUNTIME_JOB_MANAGER,
+                    BUCKET)
     );
 
     // Default dataproc cluster property settings from the system context
@@ -395,12 +405,13 @@ public class DataprocProvisioner implements Provisioner {
   @Override
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProvisionerContext context) {
     Map<String, String> properties = createContextProperties(context);
+    DataprocConf conf = DataprocConf.create(properties, null);
+
     // if this system property is not provided, we will assume that ssh should be used instead of
     // runtime job manager for job launch.
-    if (!Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER))) {
+    if (!conf.isRuntimeJobManagerEnabled()) {
       return Optional.empty();
     }
-    DataprocConf conf = DataprocConf.create(properties, null);
     String clusterName = getClusterName(context.getProgramRunInfo());
     String projectId = conf.getProjectId();
     String region = conf.getRegion();

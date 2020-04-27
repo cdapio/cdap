@@ -45,6 +45,12 @@ const styles = (theme): StyleRules => {
       color: theme.palette.white[50],
       backgroundColor: theme.palette.grey[200],
       minWidth: '24px', // weird thing with material-ui Chip component
+      height: '24px',
+
+      '& span': {
+        paddingLeft: '5px',
+        paddingRight: '5px',
+      },
     },
   };
 };
@@ -64,7 +70,7 @@ const LeftPanelView: React.FC<ILeftPanelProps> = ({ classes, setActiveStep, acti
             className={classnames(classes.row, { [classes.active]: activeStep === i })}
             onClick={setActiveStep.bind(null, i)}
           >
-            <Chip size="small" label={i + 1} className={classes.chip} />
+            <Chip label={i + 1} className={classes.chip} />
             <span>{step.label}</span>
           </div>
         );

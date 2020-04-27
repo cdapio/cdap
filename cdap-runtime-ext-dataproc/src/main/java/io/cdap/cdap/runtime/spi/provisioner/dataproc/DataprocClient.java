@@ -48,6 +48,7 @@ import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
@@ -316,7 +317,6 @@ final class DataprocClient implements AutoCloseable {
   /**
    * Create a cluster. This will return after the initial request to create the cluster is completed.
    * At this point, the cluster is likely not yet running, but in a provisioning state.
-   *
    * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
    * @param labels labels to set on the cluster
@@ -340,6 +340,9 @@ final class DataprocClient implements AutoCloseable {
         metadata.put("enable-oslogin", "false");
       }
 
+      //Check if ClusterMetaData is provided and add them.
+      metadata.putAll(conf.getClusterMetaData());
+
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
         .putAllMetadata(metadata);
@@ -362,7 +365,10 @@ final class DataprocClient implements AutoCloseable {
                                                   conf.getNetwork()));
       }
 
-      // if public key is no null that means ssh should be used to launch job on dataproc
+      //Add any defined Network Tags
+      clusterConfig.addAllTags(conf.getNetworkTags());
+
+      // if public key is not null that means ssh is used to launch / monitor job on dataproc
       if (publicKey != null) {
         for (String targetTag : getFirewallTargetTags()) {
           clusterConfig.addTags(targetTag);
@@ -410,6 +416,14 @@ final class DataprocClient implements AutoCloseable {
         .setSoftwareConfig(SoftwareConfig.newBuilder()
                              .setImageVersion(imageVersion)
                              .putAllProperties(clusterProperties));
+
+      //Add any Node Initialization action scripts
+      for (String action : conf.getInitActions()) {
+        builder.addInitializationActions(
+          NodeInitializationAction.newBuilder()
+            .setExecutableFile(action)
+            .build());
+      }
 
       if (conf.getEncryptionKeyName() != null) {
         builder.setEncryptionConfig(EncryptionConfig.newBuilder()
