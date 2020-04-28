@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -118,6 +118,7 @@ var Page404 = require('../cdap/components/404').default;
 var Page500 = require('../cdap/components/500').default;
 var WindowManager = require('../cdap/services/WindowManager').default;
 var { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } = require('../cdap/services/WindowManager');
+var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
 
 export {
   Store,
@@ -210,4 +211,5 @@ export {
   IsValidNS,
   WINDOW_ON_FOCUS,
   WINDOW_ON_BLUR,
+  PREVIEW_STATUS,
 };

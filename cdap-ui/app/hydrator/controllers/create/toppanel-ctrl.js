@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -108,7 +108,7 @@ class HydratorPlusPlusTopPanelCtrl {
             }
           });
 
-          if (statusRes.status === 'RUNNING') {
+          if (statusRes.status === window.CaskCommon.PREVIEW_STATUS.RUNNING) {
             this.previewRunning = true;
             this.startTimer();
             this.startPollPreviewStatus(this.currentPreviewId);
@@ -642,7 +642,18 @@ class HydratorPlusPlusTopPanelCtrl {
           }
         });
       }
-      if (res.status !== 'RUNNING' && res.status !== 'STARTED') {
+      const {
+        RUNNING,
+        STARTED,
+        INIT,
+        COMPLETED,
+        KILLED_BY_TIMER,
+        KILLED,
+        FAILED,
+        RUN_FAILED,
+        STOPPED,
+      } = window.CaskCommon.PREVIEW_STATUS;
+      if ([RUNNING, STARTED, INIT].indexOf(res.status) === -1) {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
@@ -651,17 +662,17 @@ class HydratorPlusPlusTopPanelCtrl {
         if (pipelineName.length > 0) {
           pipelinePreviewPlaceholder += ` "${pipelineName}"`;
         }
-        if (res.status === 'COMPLETED' || res.status === 'KILLED_BY_TIMER') {
+        if (res.status === COMPLETED || res.status === KILLED_BY_TIMER) {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (res.status === 'STOPPED' || res.status === 'KILLED') {
+        } else if (res.status === STOPPED || res.status === KILLED) {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} was stopped.`
           });
-        } else if (res.status === 'FAILED' || res.status === 'RUN_FAILED') {
+        } else if (res.status === FAILED || res.status === RUN_FAILED) {
           this.myAlertOnValium.show({
             type: 'danger',
             content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
