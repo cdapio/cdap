@@ -24,14 +24,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
  * This class contains common methods that are needed by DataprocProvisioner and DataprocRuntimeJobManager.
  */
 public final class DataprocUtils {
+
   public static final String CDAP_GCS_ROOT = "cdap-job";
+
   private static final Logger LOG = LoggerFactory.getLogger(DataprocUtils.class);
   private static final String GS_PREFIX = "gs://";
 
@@ -103,7 +107,15 @@ public final class DataprocUtils {
     return map;
   }
 
+  /**
+   * Parses the given list of IP CIDR blocks into list of {@link IPRange}.
+   */
+  public static List<IPRange> parseIPRanges(List<String> ranges) {
+    return ranges.stream().map(IPRange::new).collect(Collectors.toList());
+  }
+
   private DataprocUtils() {
     // no-op
   }
+
 }
