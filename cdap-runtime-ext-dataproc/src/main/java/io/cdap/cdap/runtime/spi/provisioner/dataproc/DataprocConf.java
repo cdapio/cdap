@@ -36,6 +36,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -57,6 +58,7 @@ final class DataprocConf {
   static final String IMAGE_VERSION = "imageVersion";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
+  static final int MAX_NETWORK_TAGS = 64;
 
   private final String accountKey;
   private final String region;
@@ -93,7 +95,7 @@ final class DataprocConf {
   private final Map<String, String> dataprocProperties;
 
   private final Map<String, String> clusterMetaData;
-  private final String networkTags;
+  private final List<String> networkTags;
   private final String initActions;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
@@ -116,8 +118,7 @@ final class DataprocConf {
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
                        @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
-                       @Nullable String networkTags, @Nullable String initActions,
-                       Map<String, String> dataprocProperties) {
+                       List<String> networkTags, @Nullable String initActions, Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -261,12 +262,7 @@ final class DataprocConf {
   }
 
   List<String> getNetworkTags() {
-    if (Strings.isNullOrEmpty(networkTags)) {
-      return Collections.emptyList();
-    }
-    return Arrays.stream(networkTags.split(","))
-      .map(String::trim)
-      .collect(Collectors.toList());
+    return Collections.unmodifiableList(networkTags);
   }
 
   List<String> getInitActions() {
@@ -426,7 +422,17 @@ final class DataprocConf {
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
       DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"),
                                         ";", "\\|"));
-    String networkTags = getString(properties, "networkTags");
+
+    String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
+    List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
+      .map(String::trim)
+      .filter(s -> !s.isEmpty())
+      .collect(Collectors.toList()));
+
+    if (networkTags.size() > MAX_NETWORK_TAGS) {
+      throw new IllegalArgumentException("Number of network tags cannot be more than " + MAX_NETWORK_TAGS);
+    }
+
     String initActions = getString(properties, "initActions");
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
