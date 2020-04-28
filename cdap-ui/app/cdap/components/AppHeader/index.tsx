@@ -113,6 +113,11 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
     });
   };
 
+  public componentDidNavigate = () => {
+    this.eventEmitter.emit(globalEvents.CLOSEMARKET);
+    this.toggleDrawer();
+  };
+
   public render() {
     const { classes } = this.props;
     const namespaceLinkContext = {
@@ -138,7 +143,7 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
           <AppDrawer
             open={this.state.toggleDrawer}
             onClose={this.toggleDrawer}
-            componentDidNavigate={this.toggleDrawer}
+            componentDidNavigate={this.componentDidNavigate}
           />
         </NamespaceLinkContext.Provider>
       </AppBar>
