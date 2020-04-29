@@ -22,6 +22,7 @@ import { basepath } from 'components/Replicator';
 import Deployed from 'components/Replicator/List/Deployed';
 import Drafts from 'components/Replicator/List/Drafts';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { PluginCardHeight } from 'components/Replicator/List/PluginCard';
 
 const styles = (theme): StyleRules => {
   return {
@@ -50,8 +51,8 @@ const styles = (theme): StyleRules => {
     contentContainer: {
       marginTop: '15px',
 
-      // 100% - header in source list - source list - (margin top + NavLink) - content marginTop
-      height: 'calc(100% - 50px - 115px - 85px - 15px)',
+      // 100% - header in source list - plugin card - source list padding - (margin top + NavLink) - content marginTop
+      height: `calc(100% - 50px - ${PluginCardHeight}px - 15px - 85px - 15px)`,
     },
   };
 };
