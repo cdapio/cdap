@@ -99,9 +99,9 @@ export default class PublishPipelineWizard extends Component {
           },
         }),
         linkLabel,
-        linkUrl: window.getAbsUIUrl({
+        linkUrl: `${window.getAbsUIUrl({
           namespaceId: namespace,
-        }),
+        })}/control`,
       },
     });
   }

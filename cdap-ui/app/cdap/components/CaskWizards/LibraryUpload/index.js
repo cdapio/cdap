@@ -101,9 +101,9 @@ export default class LibraryUploadWizard extends Component {
           this.eventEmitter.emit(globalEvents.CLOSERESOURCECENTER);
         },
         linkLabel,
-        linkUrl: window.getAbsUIUrl({
+        linkUrl: `${window.getAbsUIUrl({
           namespaceId: namespace,
-        }),
+        })}/control`,
       },
     });
   }

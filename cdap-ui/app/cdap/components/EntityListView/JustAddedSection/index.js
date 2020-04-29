@@ -51,7 +51,6 @@ export default class JustAddedSection extends Component {
     this.eventEmitter.on(globalEvents.PUBLISHPIPELINE, this.fetchEntities);
     this.eventEmitter.on(globalEvents.DELETEENTITY, this.fetchEntities);
     this.eventEmitter.on(globalEvents.ARTIFACTUPLOAD, this.fetchEntities);
-    this.namespaceSub = NamespaceStore.subscribe(this.fetchEntities);
     this.unmounted = false;
   }
 
@@ -101,7 +100,6 @@ export default class JustAddedSection extends Component {
     if (this.searchStoreSubscription) {
       this.searchStoreSubscription();
     }
-    this.namespaceSub();
     this.unmounted = true;
 
     if (this.statusPoll$ && typeof this.statusPoll$.unsubscribe === 'function') {
