@@ -52,6 +52,7 @@ import io.cdap.cdap.internal.provision.task.ProvisioningTask;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.provisioner.ProvisionerDetail;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -202,7 +203,8 @@ public class ProvisioningService extends AbstractIdleService {
         defaultSSHContext = new DefaultSSHContext(
           Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
       }
-      context = createContext(programRunId, userId, properties, defaultSSHContext);
+      context = createContext(programRunId, userId, properties, defaultSSHContext,
+                              SystemArguments.getRuntimeMonitorType(cConf, programOptions));
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -374,7 +376,8 @@ public class ProvisioningService extends AbstractIdleService {
     Provisioner provisioner = provisionerInfo.get().provisioners.get(SystemArguments.getProfileProvisioner(systemArgs));
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
-    ProvisionerContext context = createContext(programRunId, user, properties, null);
+    ProvisionerContext context = createContext(programRunId, user, properties, null,
+                                               SystemArguments.getRuntimeMonitorType(cConf, programOptions));
     return provisioner.getRuntimeJobManager(context);
   }
 
@@ -562,7 +565,8 @@ public class ProvisioningService extends AbstractIdleService {
       SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                     locationFactory.create(taskInfo.getSecureKeysDir()),
                                                     createSSHKeyPair(taskInfo));
-      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), sshContext);
+      context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), sshContext,
+                              SystemArguments.getRuntimeMonitorType(cConf, programOptions));
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -615,7 +619,8 @@ public class ProvisioningService extends AbstractIdleService {
     try {
       SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                     null, sshKeyPair);
-      context = createContext(programRunId, taskInfo.getUser(), properties, sshContext);
+      context = createContext(programRunId, taskInfo.getUser(), properties, sshContext,
+                              SystemArguments.getRuntimeMonitorType(cConf, taskInfo.getProgramOptions()));
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -725,9 +730,10 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           @Nullable SSHContext sshContext) {
+                                           @Nullable SSHContext sshContext, RuntimeMonitorType runtimeMonitorType) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
-    return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext, locationFactory);
+    return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext, locationFactory,
+                                         runtimeMonitorType);
   }
 
   /**

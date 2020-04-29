@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -130,7 +130,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals(conf.getRegion(), "region1");
     Assert.assertEquals(conf.getZone(), "region1-a");
 
-    Map<String, String> dataprocProps = conf.getDataprocProperties();
+    Map<String, String> dataprocProps = conf.getClusterProperties();
     Assert.assertEquals(3, dataprocProps.size());
 
     Assert.assertEquals("100", dataprocProps.get("spark:spark.reducer.maxSizeInFlight"));
@@ -161,5 +161,25 @@ public class DataprocProvisionerTest {
     props.put("network", "network");
 
     DataprocConf.fromProperties(props);
+  }
+
+  @Test
+  public void testCreateContextProperties() {
+    MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
+    String resourceMaxPercentKey = "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
+    String resourceMaxPercentVal = "0.5";
+    provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
+
+    DataprocProvisioner provisioner = new DataprocProvisioner();
+    provisioner.initialize(provisionerSystemContext);
+
+    MockProvisionerContext provisionerContext = new MockProvisionerContext();
+    final String network = "test-network";
+    provisionerContext.addProperty(DataprocConf.NETWORK, network);
+
+    Map<String, String> properties = provisioner.createContextProperties(provisionerContext);
+
+    Assert.assertTrue(properties.get(DataprocConf.NETWORK).equals(network));
+    Assert.assertTrue(properties.get(resourceMaxPercentKey).equals(resourceMaxPercentVal));
   }
 }

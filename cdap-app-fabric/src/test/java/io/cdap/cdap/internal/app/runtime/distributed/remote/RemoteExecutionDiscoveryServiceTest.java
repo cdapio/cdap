@@ -23,6 +23,7 @@ import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.ServiceDiscovered;
@@ -43,7 +44,7 @@ public class RemoteExecutionDiscoveryServiceTest {
   public void testDiscovery() {
     CConfiguration cConf = CConfiguration.create();
     RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RemoteMonitorType.SSH);
+                                                                                           RuntimeMonitorType.SSH);
 
     // Without registering, the service discovered should contain one
     // entry with the host name the same as the service name
@@ -72,7 +73,7 @@ public class RemoteExecutionDiscoveryServiceTest {
     CConfiguration cConf = CConfiguration.create();
     cConf.setBoolean(Constants.Security.SSL.INTERNAL_ENABLED, true);
     RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RemoteMonitorType.SSH);
+                                                                                           RuntimeMonitorType.SSH);
 
     // Without registering, the service discovered should contain one entry, with the payload indicating HTTPS.
     ServiceDiscovered serviceDiscovered = discoveryService.discover("test");
@@ -101,14 +102,14 @@ public class RemoteExecutionDiscoveryServiceTest {
   public void testExplicitConf() {
     CConfiguration cConf = CConfiguration.create();
     RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RemoteMonitorType.SSH);
+                                                                                           RuntimeMonitorType.SSH);
 
     // Register, an entry should be added to the cConf
     discoveryService.register(new Discoverable("test", InetSocketAddress.createUnresolved("xyz", 12345)));
     Assert.assertNotNull(cConf.get(Constants.RuntimeMonitor.DISCOVERY_SERVICE_PREFIX + "test"));
 
     // Create a new discoveryService from the same config, discover() should return the address from the config
-    ServiceDiscovered serviceDiscovered = new RemoteExecutionDiscoveryService(cConf, RemoteMonitorType.SSH)
+    ServiceDiscovered serviceDiscovered = new RemoteExecutionDiscoveryService(cConf, RuntimeMonitorType.SSH)
       .discover("test");
     Assert.assertTrue(
       StreamSupport.stream(serviceDiscovered.spliterator(), false)
@@ -121,7 +122,7 @@ public class RemoteExecutionDiscoveryServiceTest {
   public void testAppDisabled() {
     CConfiguration cConf = CConfiguration.create();
     RemoteExecutionDiscoveryService discoveryService = new RemoteExecutionDiscoveryService(cConf,
-                                                                                           RemoteMonitorType.SSH);
+                                                                                           RuntimeMonitorType.SSH);
 
     // Discovery of app is disabled. It always return a ServiceDiscovered without endpoint in it
     String name = ServiceDiscoverable.getName(NamespaceId.DEFAULT.app("test").service("service"));

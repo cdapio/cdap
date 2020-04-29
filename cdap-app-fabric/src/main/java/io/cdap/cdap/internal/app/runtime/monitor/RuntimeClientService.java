@@ -68,8 +68,8 @@ import java.util.stream.StreamSupport;
 public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeClientService.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG,
-                                                            LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+  private static final Logger OUTAGE_LOG = Loggers.sampling(
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(5), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
   private static final Gson GSON = new Gson();
 
   private final Map<String, TopicRelayer> topicRelayers;
@@ -238,13 +238,16 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
     @Override
     public void close() throws IOException {
       try {
-        // Force one extra poll
+        // Force one extra poll with retry
         nextPublishTimeMillis = 0L;
-        publishMessages();
+        // Retry on all errors
+        Retries.runWithRetries(this::publishMessages, getRetryStrategy(), t -> true);
       } catch (TopicNotFoundException | BadRequestException e) {
         // This shouldn't happen. If it does, it must be some bug in the system and there is no way to recover from it.
         // So just log the cause for debugging.
         LOG.error("Failed to publish messages on close for topic {}", topicId, e);
+      } catch (Exception e) {
+        LOG.error("Retry exhausted when trying to publish message on close for topic {}", topicId, e);
       }
     }
   }
@@ -301,12 +304,15 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
       if (!lastProgramStateMessages.isEmpty()) {
         try {
-          super.processMessages(lastProgramStateMessages.iterator());
+          Retries.runWithRetries(() -> super.processMessages(lastProgramStateMessages.iterator()),
+                                 getRetryStrategy(), t -> t instanceof IOException || t instanceof RetryableException);
         } catch (BadRequestException e) {
           // This shouldn't happen. If it does, that means the server thinks this program is no longer running.
           // The best we can do is to log here, even the log won't be collected by CDAP, but it will be retained
           // on the cluster.
-          LOG.warn("Failed to send program state messages to runtime server: {}", lastProgramStateMessages, e);
+          LOG.warn("Bad request when program state messages to runtime server: {}", lastProgramStateMessages, e);
+        } catch (Exception e) {
+          LOG.error("Failed to send program state messages to runtime server: {}", lastProgramStateMessages, e);
         }
         lastProgramStateMessages.clear();
       }
