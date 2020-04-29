@@ -217,18 +217,8 @@ features:
     Title: Administration
     uptimeLabel: Uptime {time}
   AppDetailedView:
-    History:
-      emptyMessage: No runs found.
-      nameLabel: Program name
-      runIDLabel: Run ID
-      statusLabel: Status
-      startLabel: Start time
     Tabs:
       datasetsLabel: Datasets
-      historyLabel: Program runs
-      programsLabel: Programs
-      propertiesLabel: Properties
-    Title: '{productName} | Applications | {appId}'
   AuthorizationMessage:
     callToAction1: Please contact your system administrator to request access to a namespace
     callToAction2:
@@ -2756,7 +2746,6 @@ features:
         value-label: "Value"
         value-placeholder: "Preference value"
     ApplicationUpload:
-      callToAction: View Application Details
       headerlabel: Upload application
       Step1:
         description: Upload your application JAR file.

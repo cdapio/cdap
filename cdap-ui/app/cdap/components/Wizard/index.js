@@ -30,6 +30,7 @@ import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import T from 'i18n-react';
 import { objectQuery } from 'services/helpers';
+import If from 'components/If';
 
 require('./Wizard.scss');
 
@@ -374,17 +375,24 @@ export default class Wizard extends Component {
           </span>
 
           <div className="clearfix">
-            <a
-              href={callToActionInfo.buttonUrl}
-              title={callToActionInfo.buttonLabel}
-              className={classnames('call-to-action btn btn-primary', {
-                disabled: this.state.loadingCTA,
-              })}
-              onClick={this.handleMainCallToActionClick}
-            >
-              {callToActionInfo.buttonLabel}
-              {this.state.loadingCTA ? <IconSVG name="icon-spinner" className="fa-spin" /> : null}
-            </a>
+            <If condition={callToActionInfo.buttonLabel}>
+              <a
+                href={callToActionInfo.buttonUrl}
+                title={callToActionInfo.buttonLabel}
+                className={classnames('call-to-action btn btn-primary', {
+                  disabled: this.state.loadingCTA,
+                })}
+                onClick={this.handleMainCallToActionClick}
+              >
+                {callToActionInfo.buttonLabel}
+                {this.state.loadingCTA ? <IconSVG name="icon-spinner" className="fa-spin" /> : null}
+              </a>
+            </If>
+            <If condition={!callToActionInfo.buttonLabel}>
+              <button className="btn btn-primary" onClick={this.props.onClose}>
+                Close
+              </button>
+            </If>
             {callToActionInfo.links
               ? callToActionInfo.links.map((link) => {
                   return this.getCallToActionLink(link);
