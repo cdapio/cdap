@@ -205,7 +205,8 @@
           tooltip-placement="bottom"
           tooltip-class="toppanel-tooltip"
           tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.hasNodes">
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.hasNodes"
+          data-cy="preview-top-run-btn">
       <div class="btn-container">
         <span class="fa fa-play text-success"></span>
         <div class="button-label">Run</div>
@@ -262,7 +263,7 @@
     runtime-arguments="HydratorPlusPlusTopPanelCtrl.runtimeArguments"
     apply-runtime-arguments="HydratorPlusPlusTopPanelCtrl.applyRuntimeArguments()"
     resolved-macros="HydratorPlusPlusTopPanelCtrl.resolvedMacros"
-    run-pipeline="HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
+    run-pipeline="HydratorPlusPlusTopPanelCtrl.doStartOrStopPreview()"
     pipeline-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}"
     pipeline-action="Run"
     on-close="HydratorPlusPlusTopPanelCtrl.viewConfig = false"

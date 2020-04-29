@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
@@ -76,6 +77,11 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   @Override
   public LocationFactory getLocationFactory() {
+    return null;
+  }
+
+  @Override
+  public RuntimeMonitorType getRuntimeMonitorType() {
     return null;
   }
 }
