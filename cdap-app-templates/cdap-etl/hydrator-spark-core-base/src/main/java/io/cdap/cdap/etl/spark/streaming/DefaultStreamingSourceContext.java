@@ -43,11 +43,18 @@ public class DefaultStreamingSourceContext extends AbstractBatchContext implemen
   private static final Logger LOG = LoggerFactory.getLogger(DefaultStreamingContext.class);
   private static final String EXTERNAL_DATASET_TYPE = "externalDataset";
   private final JavaSparkExecutionContext sec;
+  private final boolean isPreviewEnabled;
 
   public DefaultStreamingSourceContext(PipelineRuntime pipelineRuntime, StageSpec stageSpec,
                                        DatasetContext datasetContext, JavaSparkExecutionContext sec) {
     super(pipelineRuntime, stageSpec, datasetContext, sec.getAdmin());
     this.sec = sec;
+    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return isPreviewEnabled;
   }
 
   @Override
