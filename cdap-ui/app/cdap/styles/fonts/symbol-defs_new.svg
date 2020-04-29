@@ -199,5 +199,14 @@
 <path fill="#fff" style="fill: var(--color2, #fff)" d="M25 10.385c0 2.761-5.338 5-11.923 5s-11.923-2.239-11.923-5c0-2.761 5.338-5 11.923-5s11.923 2.239 11.923 5z"></path>
 <path fill="#231f20" style="fill: var(--color1, #231f20)" d="M13.077 16.923c-6.538 0-13.462-2.308-13.462-6.538s6.923-6.538 13.462-6.538 13.462 2.308 13.462 6.538c0 4.231-6.923 6.538-13.462 6.538zM13.077 6.923c-6.154 0-10.385 2.308-10.385 3.462s4.231 3.462 10.385 3.462 10.385-2.308 10.385-3.462-4.231-3.462-10.385-3.462z"></path>
 </symbol>
+ <symbol id="icon-ingest" viewBox="0 0 18.1 13">
+ <title>ingest</title>
+ <path class="ast0" d="M17.2 6.8L15 5c-.5-.3-1.1 0-1.1.6V6h-1.7v2.9h1.6v.4c0 .6.6 1 1.1.6l2.2-1.8c.5-.3.5-1 .1-1.3z" fill="none" stroke="#333" stroke-miterlimit="10" stroke-width=".8"/>
+ <path class="ast1" fill="none" stroke="#333" stroke-miterlimit="10" stroke-width=".85" d="M.4.3h7.4V10H.4z"/>
+ <path class="ast2" fill="none" stroke="#333" stroke-miterlimit="10" stroke-width=".413" d="M.4 2.7h7.3M4.2.3v9.9M7.8.3v9.9"/>
+ <path class="ast3" fill="none" stroke="#333" stroke-miterlimit="10" stroke-width=".276" d="M1.5 1.5h1.6M1.5 3.8h1.6M1.5 5h1.6M1.5 6.2h1.6M1.5 7.3h1.6M1.5 8.5h1.6M5.2 1.5h1.6M5.2 3.8h1.6M5.2 5h1.6M5.2 6.2h1.6M5.2 7.3h1.6M5.2 8.5h1.6"/>
+ <path class="ast4" fill="#fff" stroke="#221f1f" stroke-miterlimit="10" stroke-width=".85" d="M3.1 2.9h7.4V13H3.1z"/>
+ <path class="ast5" fill="none" stroke="#221f1f" stroke-miterlimit="10" stroke-width=".276" d="M4.2 5H9M4.2 6.4H9M4.2 7.9H9M4.2 9.3H9M4.2 10.8H9"/>
+ </symbol>
 </defs>
 </svg>

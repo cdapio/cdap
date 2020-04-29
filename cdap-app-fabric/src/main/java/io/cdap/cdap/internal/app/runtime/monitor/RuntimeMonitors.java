@@ -24,8 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,17 +75,18 @@ public final class RuntimeMonitors {
                                              + key + "'.", e);
       }
     }).sorted((o1, o2) -> {
-      // Always put logs the last and program status event to the second to the last
-      if (o1.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
-        return 1;
-      }
-      if (o2.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
-        return -1;
-      }
+      // Always put program status event to the last
+      // Logs to the second to the last
       if (Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC.equals(o1.getKey())) {
         return 1;
       }
       if (Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC.equals(o2.getKey())) {
+        return -1;
+      }
+      if (o1.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
+        return 1;
+      }
+      if (o2.getKey().startsWith(Constants.Logging.TMS_TOPIC_PREFIX)) {
         return -1;
       }
       return o1.getKey().compareTo(o2.getKey());
@@ -97,8 +98,8 @@ public final class RuntimeMonitors {
    */
   public static void setupMonitoring(Injector injector, ProgramOptions programOpts) throws Exception {
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    RemoteMonitorType monitorType = injector.getInstance(RemoteMonitorType.class);
-    if (monitorType == RemoteMonitorType.URL) {
+    RuntimeMonitorType monitorType = injector.getInstance(RuntimeMonitorType.class);
+    if (monitorType == RuntimeMonitorType.URL) {
       String provisioner = SystemArguments.getProfileProvisioner(programOpts.getArguments().asMap());
       String authenticatorKey = String.format("%s%s", Constants.RuntimeMonitor.MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX,
                                               provisioner);

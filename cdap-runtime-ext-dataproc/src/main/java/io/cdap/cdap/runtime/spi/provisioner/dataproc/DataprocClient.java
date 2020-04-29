@@ -48,11 +48,14 @@ import com.google.cloud.dataproc.v1.EncryptionConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.rpc.Status;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
+import io.cdap.cdap.runtime.spi.common.IPRange;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
@@ -66,6 +69,7 @@ import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -86,6 +90,9 @@ final class DataprocClient implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
+  private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIPRanges(Arrays.asList("10.0.0.0/8",
+                                                                                                   "172.16.0.0/12",
+                                                                                                   "192.168.0.0/16"));
   static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
 
   private final DataprocConf conf;
@@ -316,7 +323,6 @@ final class DataprocClient implements AutoCloseable {
   /**
    * Create a cluster. This will return after the initial request to create the cluster is completed.
    * At this point, the cluster is likely not yet running, but in a provisioning state.
-   *
    * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
    * @param labels labels to set on the cluster
@@ -340,6 +346,9 @@ final class DataprocClient implements AutoCloseable {
         metadata.put("enable-oslogin", "false");
       }
 
+      //Check if ClusterMetaData is provided and add them.
+      metadata.putAll(conf.getClusterMetaData());
+
       GceClusterConfig.Builder clusterConfig = GceClusterConfig.newBuilder()
         .addServiceAccountScopes(DataprocConf.CLOUD_PLATFORM_SCOPE)
         .putAllMetadata(metadata);
@@ -362,11 +371,17 @@ final class DataprocClient implements AutoCloseable {
                                                   conf.getNetwork()));
       }
 
-      // if public key is no null that means ssh should be used to launch job on dataproc
+      //Add any defined Network Tags
+      clusterConfig.addAllTags(conf.getNetworkTags());
+
+      // if public key is not null that means ssh is used to launch / monitor job on dataproc
       if (publicKey != null) {
-        for (String targetTag : getFirewallTargetTags()) {
-          clusterConfig.addTags(targetTag);
+        int maxTags = Math.max(0, DataprocConf.MAX_NETWORK_TAGS - clusterConfig.getTagsCount());
+        List<String> tags = getFirewallTargetTags(useInternalIP);
+        if (tags.size() > maxTags) {
+          LOG.warn("No more than 64 tags can be added. Firewall tags ignored: {}", tags.subList(maxTags, tags.size()));
         }
+        tags.stream().limit(maxTags).forEach(clusterConfig::addTags);
       }
 
       // if internal ip is prefered then create dataproc cluster without external ip for better security
@@ -410,6 +425,14 @@ final class DataprocClient implements AutoCloseable {
         .setSoftwareConfig(SoftwareConfig.newBuilder()
                              .setImageVersion(imageVersion)
                              .putAllProperties(clusterProperties));
+
+      //Add any Node Initialization action scripts
+      for (String action : conf.getInitActions()) {
+        builder.addInitializationActions(
+          NodeInitializationAction.newBuilder()
+            .setExecutableFile(action)
+            .build());
+      }
 
       if (conf.getEncryptionKeyName() != null) {
         builder.setEncryptionConfig(EncryptionConfig.newBuilder()
@@ -586,7 +609,7 @@ final class DataprocClient implements AutoCloseable {
    * @return a {@link Collection} of tags that need to be added to the VM to have those firewall rules applies
    * @throws IOException If failed to discover those firewall rules
    */
-  private Collection<String> getFirewallTargetTags() throws IOException {
+  private List<String> getFirewallTargetTags(boolean useInternalIP) throws IOException {
     FirewallList firewalls = compute.firewalls().list(networkHostProjectId).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
@@ -604,6 +627,28 @@ final class DataprocClient implements AutoCloseable {
       String direction = firewall.getDirection();
       if (!"INGRESS".equals(direction) || firewall.getAllowed() == null) {
         continue;
+      }
+
+      if (useInternalIP) {
+        // If the Dataproc cluster is using internal IP only, we are only interested in firewall rule that has source
+        // IP range overlap with one of the private IP block or doesn't have source IP at all.
+        // This is because if Dataproc cluster is using internal IP, the CDAP itself must be running inside one of the
+        // private IP blocks in order to be able to communicate with Dataproc.
+        try {
+          List<IPRange> sourceRanges = Optional.ofNullable(firewall.getSourceRanges())
+            .map(DataprocUtils::parseIPRanges)
+            .orElse(Collections.emptyList());
+
+          if (!sourceRanges.isEmpty()) {
+            boolean isPrivate = PRIVATE_IP_RANGES.stream()
+              .anyMatch(privateRange -> sourceRanges.stream().anyMatch(privateRange::isOverlap));
+            if (!isPrivate) {
+              continue;
+            }
+          }
+        } catch (Exception e) {
+          LOG.warn("Failed to parse source ranges from firewall rule {}", firewall.getName(), e);
+        }
       }
 
       for (Firewall.Allowed allowed : firewall.getAllowed()) {

@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.provision;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
@@ -43,9 +44,11 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final SparkCompat sparkCompat;
   private final String cdapVersion;
   private final LocationFactory locationFactory;
+  private final RuntimeMonitorType runtimeMonitorType;
 
   DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
-                            SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory) {
+                            SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory,
+                            RuntimeMonitorType runtimeMonitorType) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -61,6 +64,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.sparkCompat = sparkCompat;
     this.locationFactory = locationFactory;
     this.cdapVersion = ProjectInfo.getVersion().toString();
+    this.runtimeMonitorType = runtimeMonitorType;
   }
 
   @Override
@@ -97,5 +101,10 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public LocationFactory getLocationFactory() {
     return locationFactory;
+  }
+
+  @Override
+  public RuntimeMonitorType getRuntimeMonitorType() {
+    return runtimeMonitorType;
   }
 }

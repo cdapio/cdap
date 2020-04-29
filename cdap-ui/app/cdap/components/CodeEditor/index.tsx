@@ -21,7 +21,6 @@ import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
-import debounce from 'lodash/debounce';
 
 const styles = (theme): StyleRules => {
   return {
@@ -58,6 +57,7 @@ export interface IBaseCodeEditorProps {
 interface ICodeEditorProps extends IBaseCodeEditorProps, WithStyles<typeof styles> {}
 
 class CodeEditorView extends React.Component<ICodeEditorProps> {
+  private silentOnChange = false;
   public static LINE_HEIGHT = 20;
   public static defaultProps = {
     mode: 'plain_text',
@@ -72,11 +72,24 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
   private editor;
 
   public componentWillReceiveProps(nextProps) {
-    const currentValue = this.editor.getSession().getValue();
-    if (nextProps.value === currentValue) {
+    /**
+     * There are couple of times we need to update via this function,
+     * 1. If the user copy/pastes something else
+     * 2. Wrangler
+     * In both case it should be safe for us to do this comparison and update
+     * the state appropriately.
+     */
+    const currentValue = this.editor
+      .getSession()
+      .getValue()
+      .replace(/\s+/g, '');
+    const nextValue = nextProps.value.replace(/\s+/g, '');
+    if (nextValue === currentValue || this.silentOnChange) {
       return;
     }
+    this.silentOnChange = true;
     this.editor.getSession().setValue(nextProps.value);
+    this.silentOnChange = false;
   }
 
   public componentDidMount() {
@@ -94,32 +107,22 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
       this.editor.setReadOnly(true);
     }
 
-    // TODO: Investigate why this change event is fired multiple times
-    // https://issues.cask.co/browse/CDAP-16477
-    this.editor.getSession().on('change', this.debouncedChangeHandler);
+    this.editor.getSession().on('change', this.valueChangeHandler);
     this.editor.setShowPrintMargin(false);
   }
 
   private valueChangeHandler = () => {
+    if (this.silentOnChange) {
+      return;
+    }
     if (typeof this.props.onChange === 'function') {
       const value = this.editor.getSession().getValue();
       this.props.onChange(value);
     }
   };
 
-  private debouncedChangeHandler = debounce(this.valueChangeHandler, 500);
-
   public shouldComponentUpdate() {
     return false;
-  }
-
-  // This componentWillUnmount is to handle the edge case where the user types something
-  // and hit escape before the 500ms debounce have cleared. So to guarantee the onChange
-  // to fire before the modal closes, the debounce is cancelled and the onChange is called
-  // manually
-  public componentWillUnmount() {
-    this.debouncedChangeHandler.cancel();
-    this.valueChangeHandler();
   }
 
   public render() {

@@ -25,6 +25,7 @@ import DrawerFeatureLink from 'components/AppHeader/AppDrawer/DrawerFeatureLink'
 import { Theme } from 'services/ThemeHelper';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
+import ExperimentalFeature from 'components/Lab/ExperimentalFeature';
 
 const DRAWER_WIDTH = '240px';
 export const appDrawerListItemTextStyles = (theme) => ({
@@ -139,6 +140,16 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             id="navbar-home"
             isActive={location.pathname === `/cdap/${nsurl}`}
           />
+          <ExperimentalFeature name={'data-ingestion'}>
+            <DrawerFeatureLink
+              featureName="Ingest"
+              featureUrl={`/${nsurl}/ingestion`}
+              featureSVGIconName="icon-ingest"
+              componentDidNavigate={componentDidNavigate}
+              data-cy="navbar-ingestion-link"
+              id="navbar-ingestion"
+            />
+          </ExperimentalFeature>
           <DrawerFeatureLink
             featureName={Theme.featureNames.pipelines}
             featureSVGIconName="icon-pipeline_hollow"

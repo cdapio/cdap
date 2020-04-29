@@ -19,7 +19,9 @@ package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
+import com.google.common.base.Strings;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
@@ -30,8 +32,11 @@ import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -51,8 +56,10 @@ final class DataprocConf {
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String IMAGE_VERSION = "imageVersion";
+  static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
+  static final int MAX_NETWORK_TAGS = 64;
 
   private final String accountKey;
   private final String region;
@@ -88,6 +95,12 @@ final class DataprocConf {
   private final SSHPublicKey publicKey;
   private final Map<String, String> clusterProperties;
 
+  private final Map<String, String> clusterMetaData;
+  private final List<String> networkTags;
+  private final String initActions;
+
+  private final boolean runtimeJobManagerEnabled;
+
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
@@ -95,7 +108,8 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.clusterProperties);
+         conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags, conf.initActions,
+         conf.runtimeJobManagerEnabled, conf.clusterProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -106,7 +120,9 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion, Map<String, String> clusterProperties) {
+                       @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
+                       List<String> networkTags, @Nullable String initActions, boolean runtimeJobManagerEnabled,
+                       Map<String, String> clusterProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -134,6 +150,10 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
+    this.clusterMetaData = clusterMetaData;
+    this.networkTags = networkTags;
+    this.initActions = initActions;
+    this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.clusterProperties = clusterProperties;
   }
 
@@ -240,6 +260,26 @@ final class DataprocConf {
   @Nullable
   SSHPublicKey getPublicKey() {
     return publicKey;
+  }
+
+  Map<String, String> getClusterMetaData() {
+    return clusterMetaData;
+  }
+
+  List<String> getNetworkTags() {
+    return Collections.unmodifiableList(networkTags);
+  }
+
+  List<String> getInitActions() {
+    if (Strings.isNullOrEmpty(initActions)) {
+      return Collections.emptyList();
+    }
+    return Arrays.stream(initActions.split(","))
+      .map(String::trim).collect(Collectors.toList());
+  }
+
+  boolean isRuntimeJobManagerEnabled() {
+    return runtimeJobManagerEnabled;
   }
 
   Map<String, String> getClusterProperties() {
@@ -385,16 +425,34 @@ final class DataprocConf {
     );
 
     String imageVersion = getString(properties, IMAGE_VERSION);
-
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
+
+    Map<String, String> clusterMetaData = Collections.unmodifiableMap(
+      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"),
+                                        ";", "\\|"));
+
+    String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
+    List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
+      .map(String::trim)
+      .filter(s -> !s.isEmpty())
+      .collect(Collectors.toList()));
+
+    if (networkTags.size() > MAX_NETWORK_TAGS) {
+      throw new IllegalArgumentException("Number of network tags cannot be more than " + MAX_NETWORK_TAGS);
+    }
+
+    String initActions = getString(properties, "initActions");
+    boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
-                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP, stackdriverLoggingEnabled,
-                            stackdriverMonitoringEnabled, publicKey, imageVersion, clusterProps);
+                            gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
+                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
+                            imageVersion, clusterMetaData, networkTags, initActions,
+                            runtimeJobManagerEnabled, clusterProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.

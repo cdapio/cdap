@@ -16,6 +16,15 @@
 .pagination-dropdown {
   cursor: pointer;
   &.dropdown {
+    &.show {
+      /*
+      * We have important here because the 'show' css class added by reactstrap
+      * has important while showing the dropdown. Because of the display being
+      * set as block by reactstrap dropdown overflows out and screws up the display
+      * FIXME: CDAP-16605
+      */
+      display: inline-block !important;
+    }
     .dropdown-menu {
       .dropdown-item {
         cursor: pointer;

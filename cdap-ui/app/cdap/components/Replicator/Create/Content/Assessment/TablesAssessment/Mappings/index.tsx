@@ -26,6 +26,7 @@ import capitalize from 'lodash/capitalize';
 import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
+import { objectQuery } from 'services/helpers';
 
 function convertHexToRGB(color) {
   function parseHex(hex) {
@@ -40,6 +41,8 @@ function convertHexToRGB(color) {
 }
 
 const styles = (theme): StyleRules => {
+  const headerHeight = '60px';
+
   return {
     root: {
       position: 'absolute',
@@ -53,7 +56,7 @@ const styles = (theme): StyleRules => {
     header: {
       display: 'grid',
       gridTemplateColumns: '70% 30%',
-      height: '60px',
+      height: headerHeight,
       backgroundColor: theme.palette.grey[700],
       borderBottom: `1px solid ${theme.palette.grey[400]}`,
       alignContent: 'center',
@@ -65,13 +68,30 @@ const styles = (theme): StyleRules => {
       textAlign: 'right',
     },
     mappings: {
+      height: `calc(100% - ${headerHeight})`,
+
       '& .grid-wrapper': {
+        height: '100%',
+
         '& .grid.grid-container.grid-compact': {
+          maxHeight: '100%',
+
           '& .grid-row': {
-            gridTemplateColumns: '120px 2fr 1fr 2fr 1fr',
-            '& > div': {
+            gridTemplateColumns: '100px 2fr 1fr 4fr 2fr 1fr',
+
+            '& $target': {
+              // need to beat specificity
+              borderLeft: `1px solid ${theme.palette.grey[400]}`,
+            },
+
+            '& > div:not(.section-heading)': {
+              minHeight: '100%',
+
               '&:nth-child(3)': {
                 borderRight: `1px solid ${theme.palette.grey[400]}`,
+              },
+              '&:nth-child(5)': {
+                borderLeft: `1px solid ${theme.palette.grey[400]}`,
               },
             },
           },
@@ -94,7 +114,7 @@ const styles = (theme): StyleRules => {
       borderRight: `1px solid ${theme.palette.grey[400]}`,
     },
     target: {
-      gridColumn: '4 / span 2',
+      gridColumn: '5 / span 2',
     },
     green: {
       color: theme.palette.green[50],
@@ -180,12 +200,13 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
         <div className={classes.mappings}>
           <div className="grid-wrapper">
             <div className="grid grid-container grid-compact">
-              <div className="grid-row">
+              <div className="grid-row section-heading">
                 <div className={classes.source}>
-                  <h5>SOURCE</h5>
+                  <Heading type={HeadingTypes.h5} label="SOURCE" />
                 </div>
+                <div className={classes.description} />
                 <div className={classes.target}>
-                  <h5>TARGET</h5>
+                  <Heading type={HeadingTypes.h5} label="TARGET" />
                 </div>
               </div>
 
@@ -194,6 +215,7 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
                   <div>Supported</div>
                   <div>Name</div>
                   <div>Data type</div>
+                  <div>Description</div>
                   <div>Name</div>
                   <div>Data type</div>
                 </div>
@@ -201,6 +223,8 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
 
               <div className="grid-body">
                 {columns.map((row, i) => {
+                  const description = objectQuery(row, 'suggestion', 'message');
+
                   return (
                     <div className="grid-row" key={row.sourceName}>
                       <div
@@ -220,6 +244,7 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
                       </div>
                       <div>{row.sourceName}</div>
                       <div>{row.sourceType}</div>
+                      <div>{description}</div>
                       <div>{row.targetName}</div>
                       <div>{row.targetType}</div>
                     </div>

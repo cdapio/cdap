@@ -14,12 +14,12 @@
  * the License.
  */
 
-package io.cdap.cdap.internal.app.runtime.distributed.remote;
+package io.cdap.cdap.runtime.spi;
 
 /**
  * Defines the supported remote monitor type.
  */
-public enum RemoteMonitorType {
+public enum RuntimeMonitorType {
 
   SSH,
   URL

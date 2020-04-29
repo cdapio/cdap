@@ -49,7 +49,6 @@ import io.cdap.cdap.explore.client.ProgramDiscoveryExploreClient;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
@@ -61,6 +60,7 @@ import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
@@ -128,7 +128,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
       }
     }));
 
-    bind(RemoteMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
+    bind(RuntimeMonitorType.class).toInstance(SystemArguments.getRuntimeMonitorType(cConf, programOpts));
   }
 
   private List<Module> getCoreModules() {

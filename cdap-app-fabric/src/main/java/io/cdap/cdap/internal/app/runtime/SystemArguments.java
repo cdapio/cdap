@@ -25,7 +25,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
-import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteMonitorType;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -33,6 +32,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
@@ -432,11 +432,11 @@ public final class SystemArguments {
   }
 
   /**
-   * Gets the {@link RemoteMonitorType} from the given arguments.
+   * Gets the {@link RuntimeMonitorType} from the given arguments.
    */
-  public static RemoteMonitorType getRuntimeMonitorType(CConfiguration cConf, ProgramOptions programOptions) {
+  public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf, ProgramOptions programOptions) {
     if (cConf.get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
-      return RemoteMonitorType.SSH;
+      return RuntimeMonitorType.SSH;
     }
 
     String type = programOptions.getUserArguments().getOption(RUNTIME_MONITOR_TYPE);
@@ -446,14 +446,14 @@ public final class SystemArguments {
       type = cConf.get(String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
     }
     if (type == null) {
-      return RemoteMonitorType.SSH;
+      return RuntimeMonitorType.SSH;
     }
 
     try {
-      return RemoteMonitorType.valueOf(type.toUpperCase());
+      return RuntimeMonitorType.valueOf(type.toUpperCase());
     } catch (Exception e) {
       LOG.warn("Unsupported runtime monitor type {}. Default to SSH", type, e);
-      return RemoteMonitorType.SSH;
+      return RuntimeMonitorType.SSH;
     }
   }
 

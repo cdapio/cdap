@@ -128,6 +128,35 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     this.fetchColumns();
   }
 
+  private getInitialSelectedColumns = (columns): Map<string, Map<string, string>> => {
+    const existingColumns = {};
+    columns.forEach((column) => {
+      existingColumns[column.name] = true;
+    });
+
+    let hasChange = false;
+
+    const selectedColumns = {};
+    if (this.props.initialSelected && this.props.initialSelected.size > 0) {
+      this.props.initialSelected.forEach((row) => {
+        if (existingColumns[row.get('name')]) {
+          selectedColumns[row.get('name')] = row;
+        } else {
+          hasChange = true;
+        }
+      });
+    }
+
+    const response: Map<string, Map<string, string>> = Map(selectedColumns);
+
+    if (hasChange) {
+      const tableKey = generateTableKey(this.props.tableInfo);
+      this.props.onSave(tableKey, response.toList());
+    }
+
+    return response;
+  };
+
   private fetchColumns = () => {
     this.setState({
       loading: true,
@@ -145,17 +174,12 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
 
     MyReplicatorApi.getTableInfo(params, body).subscribe(
       (res) => {
-        const selectedColumns = {};
-        if (this.props.initialSelected && this.props.initialSelected.size > 0) {
-          this.props.initialSelected.forEach((row) => {
-            selectedColumns[row.get('name')] = row;
-          });
-        }
+        const selectedColumns = this.getInitialSelectedColumns(res.columns);
 
         this.setState({
           columns: res.columns,
           primaryKeys: res.primaryKey,
-          selectedColumns: Map(selectedColumns),
+          selectedColumns,
         });
       },
       (err) => {

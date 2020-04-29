@@ -12,15 +12,20 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import {
   loginIfRequired,
   getGenericEndpoint,
   getConditionNodeEndpoint,
-  getArtifactsPoll
+  getArtifactsPoll,
 } from '../helpers';
-import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH, DEFAULT_BIGQUERY_DATASET, DEFAULT_BIGQUERY_TABLE } from '../support/constants';
+import {
+  DEFAULT_GCP_PROJECTID,
+  DEFAULT_GCP_SERVICEACCOUNT_PATH,
+  DEFAULT_BIGQUERY_DATASET,
+  DEFAULT_BIGQUERY_TABLE,
+} from '../support/constants';
 import { INodeInfo, INodeIdentifier } from '../typings';
 let headers = {};
 
@@ -59,14 +64,14 @@ describe('Pipeline Canvas actions', () => {
     cy.get(undoSelector).click();
     cy.get(undoSelector).click();
 
-    cy.get_pipeline_json().then(pipelineConfig => {
+    cy.get_pipeline_json().then((pipelineConfig) => {
       const connections = pipelineConfig.config.connections;
       expect(connections.length).eq(0);
     });
 
     // Redo one connection (connection between source & transform)
     cy.get(redoSelector).click();
-    cy.get_pipeline_json().then(pipelineConfig => {
+    cy.get_pipeline_json().then((pipelineConfig) => {
       const connections = pipelineConfig.config.connections;
       expect(connections.length).eq(1);
     });
@@ -87,7 +92,7 @@ describe('Pipeline Canvas actions', () => {
     cy.get(redoSelector).click();
 
     cy.get('[data-cy="pipeline-export-btn"]').should('not.have.attr', 'disabled');
-    cy.get_pipeline_json().then(pipelineConfig => {
+    cy.get_pipeline_json().then((pipelineConfig) => {
       const connections = pipelineConfig.config.connections;
       const stages = pipelineConfig.config.stages;
       expect(connections.length).eq(2);
@@ -95,7 +100,7 @@ describe('Pipeline Canvas actions', () => {
     });
   });
 
-  it('Should fit pipeline to screen', () => {
+  it('Should fit pipeline to screen and let user select multiple nodes', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.create_complex_pipeline();
     const sink1 = '[data-cy="plugin-node-BigQueryMultiTable-batchsink-7"]';
@@ -104,6 +109,8 @@ describe('Pipeline Canvas actions', () => {
     const fitToScreen = '[data-cy="pipeline-fit-to-screen-control"]';
     const transform1 = '[data-cy="plugin-node-JavaScript-transform-2"]';
     const transform2 = '[data-cy="plugin-node-JavaScript-transform-3"]';
+    const menuItemDelete = '[data-cy="menu-item-plugin delete"]:visible';
+    const undoSelector = '[data-cy="pipeline-undo-action-btn"]';
     cy.get(sink1).should('be.visible');
     cy.get(sink2).should('be.visible');
     cy.get(zoombtn).click();
@@ -117,7 +124,6 @@ describe('Pipeline Canvas actions', () => {
     cy.get(fitToScreen).click();
     cy.get(sink1).should('be.visible');
     cy.get(sink2).should('be.visible');
-
 
     cy.get(transform1)
       .trigger('mousedown', { pageX: 0, pageY: 0 })
@@ -134,8 +140,20 @@ describe('Pipeline Canvas actions', () => {
 
     cy.get(transform1).should('be.visible');
     cy.get(transform2).should('be.visible');
-  });
 
+    // Use shift-click to select and delete two nodes
+    cy.get(transform1).type('{shift}', { release: false });
+    cy.get(transform2).click();
+    cy.get(transform1).rightclick();
+    cy.get(menuItemDelete).click();
+
+    cy.get(transform1).should('not.exist');
+    cy.get(transform2).should('not.exist');
+
+    // Undo deleting nodes
+    cy.get(undoSelector).click();
+    cy.get(undoSelector).click();
+  });
 
   it('Should align the pipeline correctly', () => {
     const cleanupbtn = '[data-cy="pipeline-clean-up-graph-control"]';

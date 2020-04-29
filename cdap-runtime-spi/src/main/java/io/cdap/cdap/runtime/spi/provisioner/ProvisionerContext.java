@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner;
 
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import org.apache.twill.filesystem.LocationFactory;
@@ -73,4 +74,9 @@ public interface ProvisionerContext {
    * Returns the {@link LocationFactory} used by the CDAP system.
    */
   LocationFactory getLocationFactory();
+
+  /**
+   * Returns the runtime monitor type for this provisioner.
+   */
+  RuntimeMonitorType getRuntimeMonitorType();
 }

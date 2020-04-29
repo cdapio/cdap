@@ -15,7 +15,7 @@
  */
 
 import * as React from 'react';
-import { ThemeProvider as MuiThemeProvider } from '@material-ui/core/styles';
+import MuiThemeProvider from '@material-ui/core/styles/MuiThemeProvider';
 import createMuiTheme, { ThemeOptions, Theme } from '@material-ui/core/styles/createMuiTheme';
 import {
   blue,
