@@ -161,7 +161,7 @@ final class DataprocClient extends AbstractDataprocClient implements AutoCloseab
     // Network peering is done between customer network and system network and is in ACTIVE mode).
     boolean useInternalIP = privateInstance ||
       !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId)) ||
-        state == PeeringState.ACTIVE);
+      state == PeeringState.ACTIVE);
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
@@ -254,7 +254,7 @@ final class DataprocClient extends AbstractDataprocClient implements AutoCloseab
                                                          + "Please create a network in the project.", project));
     }
 
-    for (Network network : networks) {
+    for (Network network: networks) {
       if ("default".equals(network.getName())) {
         return network.getName();
       }
@@ -286,14 +286,13 @@ final class DataprocClient extends AbstractDataprocClient implements AutoCloseab
   /**
    * Create a cluster. This will return after the initial request to create the cluster is completed.
    * At this point, the cluster is likely not yet running, but in a provisioning state.
-   *
-   * @param name         the name of the cluster to create
+   * @param name the name of the cluster to create
    * @param imageVersion the image version for the cluster
-   * @param labels       labels to set on the cluster
+   * @param labels labels to set on the cluster
    * @return create operation metadata
-   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
-   * @throws AlreadyExistsException      if the cluster already exists
-   * @throws IOException                 if there was an I/O error talking to Google Compute APIs
+   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
+   * @throws AlreadyExistsException if the cluster already exists
+   * @throws IOException if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public ClusterOperationMetadata createCluster(String name, String imageVersion, Map<String, String> labels)
@@ -363,9 +362,11 @@ final class DataprocClient extends AbstractDataprocClient implements AutoCloseab
       clusterProperties.put("dataproc:dataproc.allow.zero.workers", "true");
       // Enable/Disable stackdriver
       clusterProperties.put("dataproc:dataproc.logging.stackdriver.enable",
-                            Boolean.toString(conf.isStackdriverLoggingEnabled()));
+                        Boolean.toString(conf.isStackdriverLoggingEnabled()));
       clusterProperties.put("dataproc:dataproc.monitoring.stackdriver.enable",
-                            Boolean.toString(conf.isStackdriverMonitoringEnabled()));
+                        Boolean.toString(conf.isStackdriverMonitoringEnabled()));
+      // enable container logs by default for ephemeral clusters.
+      clusterProperties.put("yarn:yarn.nodemanager.delete.debug-delay-sec", "86400");
 
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
@@ -430,7 +431,7 @@ final class DataprocClient extends AbstractDataprocClient implements AutoCloseab
    * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
    *
    * @param name the name of the cluster to delete
-   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
+   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
   public Optional<ClusterOperationMetadata> deleteCluster(String name)

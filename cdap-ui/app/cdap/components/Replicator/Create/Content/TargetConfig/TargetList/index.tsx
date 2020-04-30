@@ -24,15 +24,15 @@ import { objectQuery } from 'services/helpers';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
-import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
+import PluginCard, {
+  PluginCardWidth,
+  PluginCardHeight,
+} from 'components/Replicator/List/PluginCard';
 import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
-    root: {
-      minHeight: '160px',
-    },
     header: {
       display: 'grid',
       gridTemplateColumns: '1fr 400px',
@@ -47,7 +47,8 @@ const styles = (theme): StyleRules => {
       cursor: 'pointer',
     },
     selected: {
-      backgroundColor: theme.palette.grey[700],
+      borderColor: theme.palette.blue[200],
+      borderWidth: '3px',
     },
     search: {
       width: '200px',
@@ -61,6 +62,10 @@ const styles = (theme): StyleRules => {
     listContainer: {
       marginTop: '15px',
       marginBottom: '15px',
+      height: `${PluginCardHeight}px`,
+    },
+    arrow: {
+      top: `${Math.floor(PluginCardHeight / 2)}px`,
     },
   };
 };
@@ -140,7 +145,7 @@ const TargetListView: React.FC<ITargetListProps> = ({
       </div>
 
       <div className={classes.listContainer}>
-        <HorizontalCarousel scrollAmount={PluginCardWidth}>
+        <HorizontalCarousel scrollAmount={PluginCardWidth} classes={{ arrow: classes.arrow }}>
           {filteredTarget.map((target) => {
             const pluginKey = `${target.name}-${target.type}`;
             const widgetInfo = widgetMap[pluginKey];
@@ -153,14 +158,20 @@ const TargetListView: React.FC<ITargetListProps> = ({
             return (
               <div
                 key={target.name}
-                className={classnames(classes.targetItem, {
-                  [classes.selected]:
-                    target.name === currentSelectionName &&
-                    target.artifact.name === currentSelectionArtifact,
-                })}
+                className={classes.targetItem}
                 onClick={onSelect.bind(null, target)}
               >
-                <PluginCard name={targetName} icon={icon} />
+                <PluginCard
+                  name={targetName}
+                  icon={icon}
+                  classes={{
+                    root: classnames({
+                      [classes.selected]:
+                        target.name === currentSelectionName &&
+                        target.artifact.name === currentSelectionArtifact,
+                    }),
+                  }}
+                />
               </div>
             );
           })}
