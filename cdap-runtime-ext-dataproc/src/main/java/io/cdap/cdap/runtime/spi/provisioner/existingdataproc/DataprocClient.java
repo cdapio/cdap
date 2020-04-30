@@ -16,13 +16,8 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.existingdataproc;
 
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.client.util.Throwables;
-import com.google.api.gax.core.CredentialsProvider;
-import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.longrunning.OperationFuture;
 import com.google.api.gax.rpc.ApiException;
 import com.google.api.gax.rpc.NotFoundException;
@@ -32,12 +27,11 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.cloud.dataproc.v1.Cluster;
 import com.google.cloud.dataproc.v1.ClusterControllerClient;
-import com.google.cloud.dataproc.v1.ClusterControllerSettings;
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
-import com.google.cloud.dataproc.v1.ClusterStatus;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.UpdateClusterRequest;
 import com.google.protobuf.FieldMask;
+import io.cdap.cdap.runtime.spi.common.AbstractDataprocClient;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.RetryableProvisionException;
 import org.slf4j.Logger;
@@ -60,59 +54,22 @@ import java.util.concurrent.ExecutionException;
 /**
  * Wrapper around the dataproc client that adheres to our configuration settings.
  */
-final class DataprocClient implements AutoCloseable {
+final class DataprocClient extends AbstractDataprocClient implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
   // something like 2018-04-16T12:09:03.943-07:00
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
-  static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
+
 
   private final ExistingDataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
   private final String projectId;
 
-  private enum PeeringState {
-    ACTIVE,
-    INACTIVE,
-    NONE
-  }
-
   static DataprocClient fromConf(ExistingDataprocConf conf) throws IOException, GeneralSecurityException {
-    ClusterControllerClient client = getClusterControllerClient(conf);
-    Compute compute = getCompute(conf);
+    ClusterControllerClient client = getClusterControllerClient(conf.getDataprocCredentials(), conf.getRegion());
+    Compute compute = getCompute(conf.getComputeCredential());
     return new DataprocClient(new ExistingDataprocConf(conf), client, compute);
-  }
-
-
-  /**
-   * Extracts and returns the zone name from the given full zone URI.
-   */
-  private static String getZone(String zoneUri) {
-    int idx = zoneUri.lastIndexOf("/");
-    if (idx <= 0) {
-      throw new IllegalArgumentException("Invalid zone uri " + zoneUri);
-    }
-    return zoneUri.substring(idx + 1);
-  }
-
-  private static ClusterControllerClient getClusterControllerClient(ExistingDataprocConf conf) throws IOException {
-    CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
-
-    String regionalEndpoint = conf.getRegion() + DATAPROC_GOOGLEAPIS_COM_443;
-
-    ClusterControllerSettings controllerSettings = ClusterControllerSettings.newBuilder()
-      .setCredentialsProvider(credentialsProvider)
-      .setEndpoint(regionalEndpoint)
-      .build();
-    return ClusterControllerClient.create(controllerSettings);
-  }
-
-  private static Compute getCompute(ExistingDataprocConf conf) throws GeneralSecurityException, IOException {
-    HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-    return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), conf.getComputeCredential())
-      .setApplicationName("cdap")
-      .build();
   }
 
   private DataprocClient(ExistingDataprocConf conf, ClusterControllerClient client, Compute compute) {
@@ -132,12 +89,15 @@ final class DataprocClient implements AutoCloseable {
   public ClusterOperationMetadata setSystemLabels(Map<String, String> labels, String name) throws Exception {
     try {
       Optional<Cluster> clusterOptional = getDataprocCluster(name);
+      if (!clusterOptional.isPresent()) {
+        throw new Exception("Error retrieving Dataproc cluster " + name);
+      }
       Cluster cluster = clusterOptional.get();
-      Map<String, String> dplabels = cluster.getLabelsMap();
+      Map<String, String> existingLabels = cluster.getLabelsMap();
       Cluster.Builder clusterSettings = cluster.toBuilder();
 
       for (Map.Entry<String, String> entry : labels.entrySet()) {
-        if (!dplabels.containsKey(entry.getKey())) {
+        if (!existingLabels.containsKey(entry.getKey())) {
           clusterSettings.putLabels(entry.getKey(), entry.getValue());
         }
       }
@@ -155,8 +115,7 @@ final class DataprocClient implements AutoCloseable {
 
       return operationFuture.getMetadata().get();
 
-    } catch (
-      ExecutionException e) {
+    } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
         throw handleApiException((ApiException) cause);
@@ -260,24 +219,6 @@ final class DataprocClient implements AutoCloseable {
     return new Node(nodeName, type, ip, ts, properties);
   }
 
-  private io.cdap.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
-    switch (status.getState()) {
-      case ERROR:
-        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.FAILED;
-      case RUNNING:
-        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
-      case CREATING:
-        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.CREATING;
-      case DELETING:
-        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.DELETING;
-      case UPDATING:
-        // not sure if this is correct, or how it can get to updating state
-        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.RUNNING;
-      default:
-        // unrecognized and unknown
-        return io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.ORPHANED;
-    }
-  }
 
   @Override
   public void close() {

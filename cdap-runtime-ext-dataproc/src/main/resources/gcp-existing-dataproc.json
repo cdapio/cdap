@@ -82,8 +82,8 @@
           "description": "List of label KEY=VALUE pairs to add. Keys must start with a lowercase character and contain only hyphens (-), underscores (_), lowercase characters, and numbers. Values must contain only hyphens (-), underscores (_), lowercase characters, and numbers.",
           "widget-attributes": {
             "showDelimiter": "false",
-            "delimiter": ";",
-            "kv-delimiter": "|",
+            "delimiter": ",",
+            "kv-delimiter": "=",
             "key-placeholder": "Key",
             "value-placeholder": "Value"
           }
@@ -93,20 +93,6 @@
     {
       "label": "Monitoring",
       "properties": [
-        {
-          "widget-type": "select",
-          "label": "Enable Monitoring using SSH",
-          "name": "sshMonitoringEnabled",
-          "description": "Enable or disable SSH monitoring. This has to be set to false for Cloud Data Fusion.",
-          "widget-attributes": {
-            "values": [
-              "false",
-              "true"
-            ],
-            "default": "false",
-            "size": "medium"
-          }
-        },
         {
           "widget-type": "textbox",
           "label": "User",

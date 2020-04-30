@@ -17,8 +17,12 @@
 package io.cdap.cdap.runtime.spi.provisioner.existingdataproc;
 
 import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Splitter;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
+import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
@@ -30,12 +34,14 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSystemContext;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocClusterInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.DataprocRuntimeJobManager;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobDetail;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -170,10 +176,11 @@ public class ExistingDataprocProvisioner implements Provisioner {
     systemContext.reloadProperties();
     ExistingDataprocConf conf = ExistingDataprocConf.create(createContextProperties(context));
 
-    if (conf.getKeyPair() != null) {
-      context.getSSHContext().setSSHKeyPair(conf.getKeyPair());
+    if (context.getRuntimeMonitorType() == RuntimeMonitorType.SSH && conf.getKeyPair() == null) {
+      throw new Exception("SSH User and Key are required for monitoring. Update profile with values.");
     }
 
+    context.getSSHContext().setSSHKeyPair(conf.getKeyPair());
     String clusterName = conf.getClusterName();
     try (DataprocClient client =
            DataprocClient.fromConf(conf)) {
@@ -184,7 +191,7 @@ public class ExistingDataprocProvisioner implements Provisioner {
                                                                               clusterName);
         int numWarnings = createOperationMeta.getWarningsCount();
         if (numWarnings > 0) {
-          LOG.warn("Encountered {} warning{} while creating Dataproc cluster:\n{}",
+          LOG.warn("Encountered {} warning{} while setting labels on cluster:\n{}",
                    numWarnings, numWarnings > 1 ? "s" : "",
                    String.join("\n", createOperationMeta.getWarningsList()));
         }
@@ -206,8 +213,38 @@ public class ExistingDataprocProvisioner implements Provisioner {
 
   @Override
   public void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception {
-    //Need to evaluate if any job clean up needs to be done.
+    deleteClusterWithStatus(context, cluster);
   }
+
+  @Override
+  public ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+    // Reload system context properties
+    systemContext.reloadProperties();
+
+    Map<String, String> properties = createContextProperties(context);
+    ExistingDataprocConf conf = ExistingDataprocConf.fromProperties(properties);
+    RuntimeJobManager jobManager = getRuntimeJobManager(context).orElse(null);
+
+    if (jobManager != null) {
+      try {
+        // If there is job manager, check to make sure the job is completed.
+        // Also cleanup files created by the job run.
+        RuntimeJobDetail jobDetail = jobManager.getDetail(context.getProgramRunInfo()).orElse(null);
+        if (jobDetail != null && !jobDetail.getStatus().isTerminated()) {
+          return ClusterStatus.RUNNING;
+        }
+      } finally {
+        jobManager.close();
+      }
+
+      Storage storageClient = StorageOptions.newBuilder().setProjectId(conf.getProjectId())
+        .setCredentials(conf.getDataprocCredentials()).build().getService();
+      DataprocUtils.deleteGCSPath(storageClient, properties.get(BUCKET),
+                                  DataprocUtils.CDAP_GCS_ROOT + "/" + context.getProgramRunInfo().getRun());
+    }
+    return ClusterStatus.DELETING;
+  }
+
 
   @Override
   public PollingStrategy getPollingStrategy(ProvisionerContext context, Cluster cluster) {
@@ -253,8 +290,11 @@ public class ExistingDataprocProvisioner implements Provisioner {
     }
 
     // Default settings from the system context
-    List<String> keys = Arrays.asList(
-      BUCKET, RUNTIME_JOB_MANAGER);
+    List<String> keys = new ArrayList<>(
+      Arrays.asList(ExistingDataprocConf.RUNTIME_JOB_MANAGER,
+                    BUCKET)
+    );
+
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);

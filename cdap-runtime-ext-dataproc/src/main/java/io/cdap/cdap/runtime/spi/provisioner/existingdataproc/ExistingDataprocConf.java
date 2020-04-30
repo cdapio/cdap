@@ -43,9 +43,10 @@ import javax.annotation.Nullable;
  */
 final class ExistingDataprocConf {
 
-  static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
+  private static final String CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
   static final String PROJECT_ID_KEY = "projectId";
   static final String AUTO_DETECT = "auto-detect";
+  static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
   private final String projectId;
   private final String clusterName;
   private final String region;
@@ -54,7 +55,6 @@ final class ExistingDataprocConf {
   private final Map<String, String> labels;
   private static final Pattern LABEL_KEY_PATTERN = Pattern.compile("^[a-z][a-z0-9_-]{0,62}$");
   private static final Pattern LABEL_VAL_PATTERN = Pattern.compile("^[a-z0-9_-]{0,63}$");
-
 
 
   ExistingDataprocConf(ExistingDataprocConf conf) {
@@ -69,7 +69,6 @@ final class ExistingDataprocConf {
     this.accountKey = accountKey;
     this.sshKeyPair = sshKeyPair;
     this.labels = labels;
-
   }
 
   String getProjectId() {
@@ -96,7 +95,6 @@ final class ExistingDataprocConf {
 
   Map<String, String> getLabels() {
     return labels;
-
   }
 
   /**
@@ -139,12 +137,6 @@ final class ExistingDataprocConf {
     }
   }
 
-  private String getMachineType(int cpus, int memoryGB) {
-    // TODO: there are special names for pre-defined cpu and memory
-    // for example, 4cpu 3.6gb memory is 'n1-highcpu-4', 4cpu 15gb memory is 'n1-standard-4'
-    return String.format("custom-%d-%d", cpus, memoryGB);
-  }
-
   /**
    * Create the conf from a property map while also performing validation.
    *
@@ -176,47 +168,32 @@ final class ExistingDataprocConf {
       throw new IllegalArgumentException("Dataproc ClusterName is mandatory.");
     }
 
-    boolean sshMonitoringEnabled = Boolean.parseBoolean(properties.get("sshMonitoringEnabled"));
     String user = getString(properties, "user");
-    if (sshMonitoringEnabled && Strings.isNullOrEmpty(user)) {
-      throw new IllegalArgumentException("SSH monitoring is enabled but SSH user not provided for monitoring");
-
-    }
-
     String privateKey = getString(properties, "sshKey");
-    if (sshMonitoringEnabled && Strings.isNullOrEmpty(privateKey)) {
-      throw new IllegalArgumentException("SSH monitoring is enabled but SSH key not provided for monitoring");
-
-    }
-
     SSHKeyPair keyPair = null;
-    if (sshMonitoringEnabled) {
+    if (!Strings.isNullOrEmpty(user) && !Strings.isNullOrEmpty(privateKey)) {
       keyPair = new SSHKeyPair(new SSHPublicKey(user, ""), () -> privateKey.getBytes(StandardCharsets.UTF_8));
     }
-    Map<String, String> labels;
-    String labelsStr = getString(properties, "labels");
-    if (Strings.isNullOrEmpty(labelsStr)) {
-      labels = Collections.emptyMap();
-    } else {
-      labels = DataprocUtils.parseKeyValueConfig(labelsStr, ";", "\\|");
-      //Validate Label key/values to conform to Requirements
-      // https://cloud.google.com/dataproc/docs/guides/creating-managing-labels
-      if (labels.size() > 64) {
-        throw new IllegalArgumentException("Exceed Max number of labels. Only Max of 64 allowed. ");
-      }
-      labels.forEach((k, v) -> {
-        if (!LABEL_KEY_PATTERN.matcher(k).matches()) {
-          throw new IllegalArgumentException("Invalid label key " + k + ". Label key cannot be longer than 63"
-                                               + "characters and can only contain lowercase letters, numeric"
-                                               + " characters, underscores, and dashes.");
-        }
-        if (!LABEL_VAL_PATTERN.matcher(v).matches()) {
-          throw new IllegalArgumentException("Invalid label value " + v + ". Label values cannot be longer than 63"
-                                               + "characters and can only contain lowercase letters, numeric"
-                                               + " characters, underscores, and dashes.");
-        }
-      });
+
+    Map<String, String> labels = DataprocUtils.parseKeyValueConfig(getString(properties, "labels"),
+                                                                   ",", "=");
+    //Validate Label key/values to conform to Requirements
+    // https://cloud.google.com/dataproc/docs/guides/creating-managing-labels
+    if (labels.size() > 64) {
+      throw new IllegalArgumentException("Exceeds Maximum number of labels. Only Max of 64 allowed.");
     }
+    labels.forEach((k, v) -> {
+      if (!LABEL_KEY_PATTERN.matcher(k).matches()) {
+        throw new IllegalArgumentException("Invalid label key " + k + ". Label key cannot be longer than 63"
+                                             + " characters and can only contain lowercase letters, numeric"
+                                             + " characters, underscores, and dashes.");
+      }
+      if (!LABEL_VAL_PATTERN.matcher(v).matches()) {
+        throw new IllegalArgumentException("Invalid label value " + v + ". Label value cannot be longer than 63"
+                                             + " characters and can only contain lowercase letters, numeric"
+                                             + " characters, underscores, and dashes.");
+      }
+    });
     return new ExistingDataprocConf(projectId, clustername, region, accountKey, keyPair, labels);
   }
 
@@ -275,8 +252,8 @@ final class ExistingDataprocConf {
   private static String getMetadata(String resource) throws IOException {
     URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
     HttpURLConnection connection = null;
+    connection = (HttpURLConnection) url.openConnection();
     try {
-      connection = (HttpURLConnection) url.openConnection();
       connection.setRequestProperty("Metadata-Flavor", "Google");
       connection.connect();
       try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
