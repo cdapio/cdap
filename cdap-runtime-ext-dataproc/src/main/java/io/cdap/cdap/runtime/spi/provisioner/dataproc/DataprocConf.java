@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018-2020 Cask Data, Inc.
+ * Copyright © 2018 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -55,6 +55,7 @@ final class DataprocConf {
   static final String PREFER_EXTERNAL_IP = "preferExternalIP";
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
+  static final String COMPONENT_GATEWAY_ENABLED = "componentGatewayEnabled";
   static final String IMAGE_VERSION = "imageVersion";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
@@ -92,6 +93,7 @@ final class DataprocConf {
   private final boolean preferExternalIP;
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
+  private final boolean componentGatewayEnabled;
   private final SSHPublicKey publicKey;
   private final Map<String, String> clusterProperties;
 
@@ -108,8 +110,8 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags, conf.initActions,
-         conf.runtimeJobManagerEnabled, conf.clusterProperties);
+         conf.componentGatewayEnabled, conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags,
+         conf.initActions, conf.runtimeJobManagerEnabled, conf.clusterProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -119,9 +121,10 @@ final class DataprocConf {
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
-                       boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
-                       List<String> networkTags, @Nullable String initActions, boolean runtimeJobManagerEnabled,
+                       boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable,
+                       @Nullable SSHPublicKey publicKey, @Nullable String imageVersion,
+                       @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
+                       @Nullable String initActions, boolean runtimeJobManagerEnabled,
                        Map<String, String> clusterProperties) {
     this.accountKey = accountKey;
     this.region = region;
@@ -148,6 +151,7 @@ final class DataprocConf {
     this.preferExternalIP = preferExternalIP;
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
+    this.componentGatewayEnabled = componentGatewayEnable;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
     this.clusterMetaData = clusterMetaData;
@@ -255,6 +259,10 @@ final class DataprocConf {
 
   boolean isStackdriverMonitoringEnabled() {
     return stackdriverMonitoringEnabled;
+  }
+
+  boolean isComponentGatewayEnabled() {
+    return componentGatewayEnabled;
   }
 
   @Nullable
@@ -417,6 +425,7 @@ final class DataprocConf {
                                                                                      "true"));
     boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
                                                                                         "true"));
+    boolean componentGatewayEnabled = Boolean.parseBoolean(properties.get(COMPONENT_GATEWAY_ENABLED));
 
     Map<String, String> clusterProps = Collections.unmodifiableMap(
       properties.entrySet().stream()
@@ -450,8 +459,8 @@ final class DataprocConf {
                             workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
-                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
-                            imageVersion, clusterMetaData, networkTags, initActions,
+                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled, componentGatewayEnabled,
+                            publicKey, imageVersion, clusterMetaData, networkTags, initActions,
                             runtimeJobManagerEnabled, clusterProps);
   }
 

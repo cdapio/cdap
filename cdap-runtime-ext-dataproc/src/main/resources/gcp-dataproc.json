@@ -163,6 +163,20 @@
           }
         },
         {
+          "widget-type": "toggle",
+          "label": "Enable Component Gateway",
+          "name": "componentGatewayEnabled",
+          "description": "Enable or disable Component Gateway.",
+          "widget-attributes": {
+            "values": [
+              "false",
+              "true"
+            ],
+            "default": "false",
+            "size": "medium"
+          }
+        },
+        {
           "widget-type": "textbox",
           "label": "GCS Bucket",
           "name": "gcsBucket",
