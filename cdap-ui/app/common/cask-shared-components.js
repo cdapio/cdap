@@ -118,6 +118,7 @@ var Page404 = require('../cdap/components/404').default;
 var Page500 = require('../cdap/components/500').default;
 var WindowManager = require('../cdap/services/WindowManager').default;
 var { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } = require('../cdap/services/WindowManager');
+var PreviewDataView = require('../cdap/components/PreviewDataView').PreviewDataView;
 
 export {
   Store,
@@ -210,4 +211,5 @@ export {
   IsValidNS,
   WINDOW_ON_FOCUS,
   WINDOW_ON_BLUR,
+  PreviewDataView,
 };
