@@ -38,9 +38,6 @@ const DetailContext = React.createContext({});
 
 const styles = (theme): StyleRules => {
   return {
-    root: {
-      padding: '25px 40px',
-    },
     buttonContainer: {
       '& > *': {
         marginRight: '15px',
@@ -54,7 +51,7 @@ const styles = (theme): StyleRules => {
       padding: '15px',
     },
     body: {
-      padding: '0 40px',
+      padding: '15px 40px',
     },
   };
 };
@@ -351,7 +348,11 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       <DetailContext.Provider value={this.state}>
         <div>
           <TopPanel />
+
           <div className={classes.body}>
+            <Metrics />
+            <hr />
+
             <ConfigDisplay
               sourcePluginInfo={this.state.sourcePluginInfo}
               targetPluginInfo={this.state.targetPluginInfo}
@@ -360,8 +361,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
               sourceConfig={this.state.sourceConfig}
               targetConfig={this.state.targetConfig}
             />
-            <hr />
-            <Metrics />
+
             <hr />
             <TablesList />
           </div>

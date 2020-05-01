@@ -16,13 +16,18 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
+import {
+  createContextConnect,
+  ICreateContext,
+  LEFT_PANEL_WIDTH,
+} from 'components/Replicator/Create';
 import Heading, { HeadingTypes } from 'components/Heading';
 import IconButton from '@material-ui/core/IconButton';
 import Close from '@material-ui/icons/Close';
 import ChevronRight from '@material-ui/icons/ChevronRight';
 import PluginInfo from 'components/Replicator/Create/TopPanel/PluginInfo';
 import If from 'components/If';
+import { STEPS } from 'components/Replicator/Create/steps';
 
 const styles = (theme): StyleRules => {
   return {
@@ -31,13 +36,16 @@ const styles = (theme): StyleRules => {
       backgroundColor: theme.palette.grey[600],
       display: 'flex',
       alignItems: 'center',
+
+      '& > div:first-child': {
+        width: 'calc(100% - 75px)',
+      },
     },
     contentContainer: {
       display: 'flex',
       height: '100%',
       alignItems: 'center',
       paddingLeft: '25px',
-      width: 'calc(100% - 75px)',
     },
     closeButtonContainer: {
       float: 'right',
@@ -48,6 +56,8 @@ const styles = (theme): StyleRules => {
     },
     heading: {
       marginBottom: 0,
+    },
+    contentHeading: {
       maxWidth: '60%',
       overflow: 'hidden',
       whiteSpace: 'nowrap',
@@ -61,6 +71,9 @@ const styles = (theme): StyleRules => {
       fontSize: '35px',
       color: theme.palette.grey[200],
     },
+    reviewContentContainer: {
+      paddingLeft: `calc(${LEFT_PANEL_WIDTH}px + 40px)`,
+    },
   };
 };
 
@@ -71,35 +84,50 @@ const TopPanelView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   sourcePluginWidget,
   targetPluginInfo,
   targetPluginWidget,
+  activeStep,
 }) => {
+  const reviewDisplayCondition = activeStep === STEPS.length - 1;
+
   return (
     <div className={classes.root}>
-      <div className={classes.contentContainer}>
-        <Heading
-          type={HeadingTypes.h5}
-          label={name ? name : 'Create new Replicator'}
-          className={classes.heading}
-        />
-
-        <If condition={name && sourcePluginInfo}>
-          <PluginInfo
-            type="Source"
-            pluginInfo={sourcePluginInfo}
-            pluginWidget={sourcePluginWidget}
+      <If condition={!reviewDisplayCondition}>
+        <div className={classes.contentContainer}>
+          <Heading
+            type={HeadingTypes.h5}
+            label={name ? name : 'Create new Replicator'}
+            className={`${classes.heading} ${classes.contentHeading}`}
           />
-        </If>
 
-        <If condition={targetPluginInfo}>
-          <React.Fragment>
-            <ChevronRight className={classes.divider} />
+          <If condition={name && sourcePluginInfo}>
             <PluginInfo
-              type="Target"
-              pluginInfo={targetPluginInfo}
-              pluginWidget={targetPluginWidget}
+              type="Source"
+              pluginInfo={sourcePluginInfo}
+              pluginWidget={sourcePluginWidget}
             />
-          </React.Fragment>
-        </If>
-      </div>
+          </If>
+
+          <If condition={targetPluginInfo}>
+            <React.Fragment>
+              <ChevronRight className={classes.divider} />
+              <PluginInfo
+                type="Target"
+                pluginInfo={targetPluginInfo}
+                pluginWidget={targetPluginWidget}
+              />
+            </React.Fragment>
+          </If>
+        </div>
+      </If>
+
+      <If condition={reviewDisplayCondition}>
+        <div className={classes.reviewContentContainer}>
+          <Heading
+            type={HeadingTypes.h5}
+            label="Review replication pipeline details"
+            className={classes.heading}
+          />
+        </div>
+      </If>
 
       <div className={classes.closeButtonContainer}>
         <IconButton size="small" onClick={() => history.back()}>

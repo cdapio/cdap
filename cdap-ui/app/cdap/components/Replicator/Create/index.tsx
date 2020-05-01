@@ -34,8 +34,10 @@ import uuidV4 from 'uuid/v4';
 import { MyReplicatorApi } from 'api/replicator';
 import { generateTableKey } from 'components/Replicator/utilities';
 import { List, Map, Set, fromJS } from 'immutable';
+import { Observable } from 'rxjs/Observable';
 
 export const CreateContext = React.createContext({});
+export const LEFT_PANEL_WIDTH = 250;
 
 const styles = (): StyleRules => {
   return {
@@ -45,7 +47,7 @@ const styles = (): StyleRules => {
     content: {
       height: 'calc(100% - 50px)',
       display: 'grid',
-      gridTemplateColumns: '250px 1fr',
+      gridTemplateColumns: `${LEFT_PANEL_WIDTH}px 1fr`,
 
       '& > div': {
         overflowY: 'auto',
@@ -112,6 +114,7 @@ interface ICreateState {
   setTables: (tables, columns, dmlBlacklist) => void;
   setAdvanced: (offsetBasePath, numInstances) => void;
   getReplicatorConfig: () => any;
+  saveDraft: () => Observable<any>;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -165,6 +168,23 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
   public setAdvanced = (offsetBasePath, numInstances) => {
     this.setState({ offsetBasePath, numInstances });
+  };
+
+  private saveDraft = () => {
+    if (!this.state.name) {
+      return;
+    }
+
+    const params = {
+      namespace: getCurrentNamespace(),
+      draftId: this.state.draftId,
+    };
+
+    const body = {
+      label: this.state.name,
+      config: this.getReplicatorConfig(),
+    };
+    return MyReplicatorApi.putDraft(params, body);
   };
 
   // TODO: Refactor
@@ -240,6 +260,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setTables: this.setTables,
     setAdvanced: this.setAdvanced,
     getReplicatorConfig: this.getReplicatorConfig,
+    saveDraft: this.saveDraft,
   };
 
   public componentDidMount() {
@@ -379,7 +400,9 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         newState.columns = columns;
         newState.dmlBlacklist = dmlBlacklist;
 
-        newState.activeStep = 3;
+        if (selectedTables.size > 0) {
+          newState.activeStep = 3;
+        }
       }
 
       // TARGET
@@ -425,23 +448,6 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
       this.setState(newState);
     });
-  };
-
-  private saveDraft = () => {
-    if (!this.state.name) {
-      return;
-    }
-
-    const params = {
-      namespace: getCurrentNamespace(),
-      draftId: this.state.draftId,
-    };
-
-    const body = {
-      label: this.state.name,
-      config: this.getReplicatorConfig(),
-    };
-    return MyReplicatorApi.putDraft(params, body);
   };
 
   private constructStageSpec = (type) => {
