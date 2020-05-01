@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1beta2.ClusterOperationMetadata;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 import com.google.common.annotations.VisibleForTesting;
@@ -355,6 +355,7 @@ public class DataprocProvisioner implements Provisioner {
                     DataprocConf.NETWORK_HOST_PROJECT_ID,
                     DataprocConf.STACKDRIVER_LOGGING_ENABLED,
                     DataprocConf.STACKDRIVER_MONITORING_ENABLED,
+                    DataprocConf.COMPONENT_GATEWAY_ENABLED,
                     DataprocConf.IMAGE_VERSION,
                     DataprocConf.RUNTIME_JOB_MANAGER,
                     BUCKET)

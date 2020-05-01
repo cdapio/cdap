@@ -36,20 +36,21 @@ import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
-import com.google.cloud.dataproc.v1.Cluster;
-import com.google.cloud.dataproc.v1.ClusterConfig;
-import com.google.cloud.dataproc.v1.ClusterControllerClient;
-import com.google.cloud.dataproc.v1.ClusterControllerSettings;
-import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
-import com.google.cloud.dataproc.v1.ClusterStatus;
-import com.google.cloud.dataproc.v1.DeleteClusterRequest;
-import com.google.cloud.dataproc.v1.DiskConfig;
-import com.google.cloud.dataproc.v1.EncryptionConfig;
-import com.google.cloud.dataproc.v1.GceClusterConfig;
-import com.google.cloud.dataproc.v1.GetClusterRequest;
-import com.google.cloud.dataproc.v1.InstanceGroupConfig;
-import com.google.cloud.dataproc.v1.NodeInitializationAction;
-import com.google.cloud.dataproc.v1.SoftwareConfig;
+import com.google.cloud.dataproc.v1beta2.Cluster;
+import com.google.cloud.dataproc.v1beta2.ClusterConfig;
+import com.google.cloud.dataproc.v1beta2.ClusterControllerClient;
+import com.google.cloud.dataproc.v1beta2.ClusterControllerSettings;
+import com.google.cloud.dataproc.v1beta2.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1beta2.ClusterStatus;
+import com.google.cloud.dataproc.v1beta2.DeleteClusterRequest;
+import com.google.cloud.dataproc.v1beta2.DiskConfig;
+import com.google.cloud.dataproc.v1beta2.EncryptionConfig;
+import com.google.cloud.dataproc.v1beta2.EndpointConfig;
+import com.google.cloud.dataproc.v1beta2.GceClusterConfig;
+import com.google.cloud.dataproc.v1beta2.GetClusterRequest;
+import com.google.cloud.dataproc.v1beta2.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1beta2.NodeInitializationAction;
+import com.google.cloud.dataproc.v1beta2.SoftwareConfig;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
@@ -405,6 +406,9 @@ final class DataprocClient implements AutoCloseable {
 
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
+        .setEndpointConfig(EndpointConfig.newBuilder()
+                             .setEnableHttpPortAccess(conf.isComponentGatewayEnabled())
+                             .build())
         .setMasterConfig(InstanceGroupConfig.newBuilder()
                            .setNumInstances(conf.getMasterNumNodes())
                            .setMachineTypeUri(conf.getMasterMachineType())
@@ -443,7 +447,7 @@ final class DataprocClient implements AutoCloseable {
         builder.setConfigBucket(conf.getGcsBucket());
       }
 
-      Cluster cluster = com.google.cloud.dataproc.v1.Cluster.newBuilder()
+      Cluster cluster = com.google.cloud.dataproc.v1beta2.Cluster.newBuilder()
         .setClusterName(name)
         .putAllLabels(labels)
         .setConfig(builder.build())
