@@ -41,6 +41,7 @@ import io.kubernetes.client.models.V1ResourceRequirements;
 import io.kubernetes.client.models.V1Volume;
 import io.kubernetes.client.models.V1VolumeMount;
 import org.apache.twill.api.ClassAcceptor;
+import org.apache.twill.api.Configs;
 import org.apache.twill.api.LocalFile;
 import org.apache.twill.api.ResourceSpecification;
 import org.apache.twill.api.RunId;
@@ -461,9 +462,10 @@ class KubeTwillPreparer implements TwillPreparer {
     Map<String, Quantity> quantityMap = new HashMap<>();
     float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
     float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
-    quantityMap.put("cpu", new Quantity(String.format("%dm", (int) (vCores * 1000 * cpuMultiplier))));
-    // Use slight larger container size
-    quantityMap.put("memory", new Quantity(String.format("%dMi", (int) (memoryMB * memoryMultiplier * 1.2f))));
+    int cpuToRequest = (int) (vCores * 1000 * cpuMultiplier);
+    int memoryToRequest = (int) (memoryMB * memoryMultiplier);
+    quantityMap.put("cpu", new Quantity(String.format("%dm", cpuToRequest)));
+    quantityMap.put("memory", new Quantity(String.format("%dMi", memoryToRequest)));
     resourceRequirements.setRequests(quantityMap);
     container.setResources(resourceRequirements);
 
@@ -475,7 +477,7 @@ class KubeTwillPreparer implements TwillPreparer {
     environs.putAll(environments.values().iterator().next());
 
     // Set the process memory is through the JAVA_HEAPMAX variable.
-    environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", memoryMB));
+    environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", computeMaxHeapSize(memoryToRequest)));
     container.setEnv(environs.entrySet().stream()
                        .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
                        .collect(Collectors.toList()));
@@ -492,6 +494,16 @@ class KubeTwillPreparer implements TwillPreparer {
     deployment.setSpec(spec);
 
     return deployment;
+  }
+
+  /**
+   * Calculates the max heap size for a given total RAM size based on configurations
+   */
+  private int computeMaxHeapSize(int memoryMB) {
+    int reservedMemoryMB = Integer.parseInt(cConf.get(Configs.Keys.JAVA_RESERVED_MEMORY_MB));
+    double minHeapRatio = Double.parseDouble(cConf.get(Configs.Keys.HEAP_RESERVED_MIN_RATIO));
+    return org.apache.twill.internal.utils.Resources.computeMaxHeapSize(memoryMB,
+                                                                        reservedMemoryMB, minHeapRatio);
   }
 
   /**
