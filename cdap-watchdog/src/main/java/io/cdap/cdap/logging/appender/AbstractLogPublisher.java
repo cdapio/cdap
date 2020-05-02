@@ -74,7 +74,11 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
    * @param logMessage the log message to add for publishing
    */
   public final void addMessage(LogMessage logMessage) throws InterruptedException {
-    messageQueue.put(logMessage);
+    // Try to insert new logs, but don't block for longer then a second
+    // If it takes too long, start dropping old logs
+    while (!messageQueue.offer(logMessage, 1, TimeUnit.SECONDS)) {
+      messageQueue.poll();
+    }
   }
 
   @Override

@@ -56,7 +56,7 @@ public class RemoteClient {
   private final HttpRequestConfig httpRequestConfig;
   private final String discoverableServiceName;
   private final String basePath;
-  private final RemoteAuthenticator authenticator;
+  private volatile RemoteAuthenticator authenticator;
 
   public RemoteClient(DiscoveryServiceClient discoveryClient, String discoverableServiceName,
                       HttpRequestConfig httpRequestConfig, String basePath) {
@@ -71,7 +71,7 @@ public class RemoteClient {
     this.endpointStrategy = new RandomEndpointStrategy(() -> discoveryClient.discover(discoverableServiceName));
     String cleanBasePath = basePath.startsWith("/") ? basePath.substring(1) : basePath;
     this.basePath = cleanBasePath.endsWith("/") ? cleanBasePath : cleanBasePath + "/";
-    this.authenticator = authenticator == null ? RemoteAuthenticator.getDefaultAuthenticator() : authenticator;
+    this.authenticator = authenticator;
   }
 
   /**
@@ -101,6 +101,7 @@ public class RemoteClient {
     URL rewrittenURL = rewriteURL(request.getURL());
 
     // Add Authorization header and use a rewritten URL if needed
+    RemoteAuthenticator authenticator = getAuthenticator();
     if (authenticator != null || !rewrittenURL.equals(request.getURL())) {
       Multimap<String, String> headers = request.getHeaders();
       if (authenticator != null) {
@@ -144,6 +145,7 @@ public class RemoteClient {
     if (EnumSet.of(HttpMethod.POST, HttpMethod.PUT).contains(method)) {
       urlConn.setDoOutput(true);
     }
+    RemoteAuthenticator authenticator = getAuthenticator();
     if (authenticator != null) {
       urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
                                  String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
@@ -213,5 +215,19 @@ public class RemoteClient {
     } catch (IllegalArgumentException | MalformedURLException e) {
       return url;
     }
+  }
+
+  /**
+   * Returns an optional {@link RemoteAuthenticator} for the call.
+   */
+  @Nullable
+  private RemoteAuthenticator getAuthenticator() {
+    RemoteAuthenticator authenticator = this.authenticator;
+    if (authenticator != null) {
+      return authenticator;
+    }
+    // No need to synchronize as the get default method is thread safe and we don't need a singleton for authenticator
+    this.authenticator = authenticator = RemoteAuthenticator.getDefaultAuthenticator();
+    return authenticator;
   }
 }

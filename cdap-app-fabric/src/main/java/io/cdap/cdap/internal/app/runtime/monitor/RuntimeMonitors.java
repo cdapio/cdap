@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.internal.remote.RemoteAuthenticator;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.slf4j.Logger;
@@ -112,7 +114,15 @@ public final class RuntimeMonitors {
       // This shouldn't be null, otherwise the type won't be URL.
       String monitorURL = cConf.get(Constants.RuntimeMonitor.MONITOR_URL);
       monitorURL = monitorURL.endsWith("/") ? monitorURL : monitorURL + "/";
+
       ProgramRunId programRunId = injector.getInstance(ProgramRunId.class);
+      WorkflowProgramInfo workflowInfo = WorkflowProgramInfo.create(programOpts.getArguments());
+      if (workflowInfo != null) {
+        // If the program is launched by Workflow, use the Workflow run id to make service request.
+        programRunId = new ProgramRunId(programRunId.getNamespace(), programRunId.getApplication(),
+                                        ProgramType.WORKFLOW, workflowInfo.getName(), workflowInfo.getRunId().getId());
+      }
+
       URI runtimeServiceBaseURI = URI.create(monitorURL).resolve(
         String.format("v3Internal/runtime/namespaces/%s/apps/%s/versions/%s/%s/%s/runs/%s/services/",
                       programRunId.getNamespace(), programRunId.getApplication(), programRunId.getVersion(),

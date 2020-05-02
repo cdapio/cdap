@@ -1589,7 +1589,7 @@
 
   <property>
     <name>log.queue.size</name>
-    <value>512</value>
+    <value>2048</value>
     <description>
       The buffer size used in Log Appender
     </description>
