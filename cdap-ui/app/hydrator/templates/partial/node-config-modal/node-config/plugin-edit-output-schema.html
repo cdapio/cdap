@@ -27,7 +27,7 @@
 
     <span class="fa fa-asterisk ng-scope" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaRequired"></span>
 
-    <div class="pull-right" uib-dropdown>
+    <div class="pull-right" data-cy="schema-action-button" uib-dropdown>
       <button class="btn btn-default" uib-dropdown-toggle>
         <span>Actions</span>
         <span class="fa fa-chevron-down"></span>
@@ -41,7 +41,7 @@
           tooltip-placement="top"
           tooltip-enable="HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists"
           tooltip-append-to-body="true">
-          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()">
+          <a href="" ng-click="HydratorPlusPlusNodeConfigCtrl.toggleAdvance()" data-cy="toggle-schema-editor">
             <span ng-if="!HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">Macro</span>
             <span ng-if="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance">Schema Editor</span>
           </a>

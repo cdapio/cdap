@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016-2017 Cask Data, Inc.
+  Copyright © 2016-2020 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -42,7 +42,8 @@
         <span>{{::inputschema.name}}</span>
       </div>
       <div class="content"
-          ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index, '': MyInputSchemaCtrl.currentIndex === $index}">
+          ng-if="!inputschema.isMacro"
+          ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index}">
 
         <my-complex-schema
           ng-model="inputschema.schema"
@@ -51,6 +52,12 @@
           is-in-studio="MyInputSchemaCtrl.isInStudio"
           errors="errors[inputschema.name]">
         </my-complex-schema>
+      </div>
+      <div
+        ng-if="inputschema.isMacro"
+        ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index}"
+      >
+        {{inputschema.schema}}
       </div>
     </div>
     <div ng-if="!MyInputSchemaCtrl.inputSchemas.length">
@@ -62,7 +69,7 @@
 
   <!-- Section that shows single input schema-->
 
-  <div ng-if="::(!MyInputSchemaCtrl.multipleInputs)">
+  <div ng-if="(!MyInputSchemaCtrl.multipleInputs && !MyInputSchemaCtrl.inputSchemas[0].isMacro)">
     <!-- Section that shows single input schema table-->
 
     <my-complex-schema
@@ -74,8 +81,10 @@
     </my-complex-schema>
 
     <!-- End of section that shows single input schema table-->
+  </div>
 
-
+  <div ng-if="!MyInputSchemaCtrl.multipleInputs && MyInputSchemaCtrl.inputSchemas[0].isMacro" data-cy="macro-input-schema">
+    {{MyInputSchemaCtrl.inputSchemas[0].schema}}
   </div>
 
   <!-- End of section that shows single input schema-->
