@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2017 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,8 +14,9 @@
  * the License.
 */
 angular.module(PKG.name + '.commons')
-  .controller('MyInputSchemaCtrl', function($scope) {
+  .controller('MyInputSchemaCtrl', function($scope, HydratorPlusPlusHydratorService) {
     this.multipleInputs = ($scope.multipleInputs === 'true' ? true : false);
+    var vm = this;
     try {
       this.inputSchemas = JSON.parse($scope.inputSchema);
     } catch(e) {
@@ -23,6 +24,16 @@ angular.module(PKG.name + '.commons')
     }
     this.inputSchemas = this.inputSchemas
       .map( function(node) {
+        if (
+          typeof node.schema === 'string' &&
+          HydratorPlusPlusHydratorService.containsMacro(node.schema)
+        ) {
+          return {
+            name: node.name,
+            schema: node.schema,
+            isMacro: true,
+          };
+        }
         var schema;
         try {
           schema = JSON.parse(node.schema);
@@ -35,7 +46,8 @@ angular.module(PKG.name + '.commons')
         }
         return {
           name: node.name,
-          schema: schema
+          schema: schema,
+          isMacro: false,
         };
       });
     this.currentIndex = 0;

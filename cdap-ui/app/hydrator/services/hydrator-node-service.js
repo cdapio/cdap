@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -68,6 +68,9 @@ class HydratorPlusPlusNodeService {
       }
 
       if (typeof schema === 'string'){
+        if (this.HydratorPlusPlusHydratorService.containsMacro(schema)) {
+          return schema;
+        }
         try {
           inputSchema = JSON.parse(schema);
         } catch(e) {
@@ -80,10 +83,22 @@ class HydratorPlusPlusNodeService {
     };
 
     if (['action', 'source'].indexOf(this.GLOBALS.pluginConvert[node.type]) === -1) {
-      node.inputSchema = sourceNodes.map(sourceNode => ({
-        name: sourceNode.plugin.label,
-        schema: this.HydratorPlusPlusHydratorService.formatSchemaToAvro(getInputSchema(sourceNode, node, sourceConnections))
-      }));
+      node.inputSchema = sourceNodes.map(sourceNode => {
+        const inputSchema = getInputSchema(sourceNode, node, sourceConnections);
+        if (
+          typeof inputSchema === 'string' &&
+          this.HydratorPlusPlusHydratorService.containsMacro(inputSchema)
+        ) {
+          return {
+            name: sourceNode.plugin.label,
+            schema: inputSchema,
+          };
+        }
+        return {
+          name: sourceNode.plugin.label,
+          schema: this.HydratorPlusPlusHydratorService.formatSchemaToAvro(inputSchema)
+        };
+      });
     }
 
     return node;
