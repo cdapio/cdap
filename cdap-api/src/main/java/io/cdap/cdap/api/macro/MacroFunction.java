@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Class representing a macro function
+ * Class representing a macro function.
  */
 public class MacroFunction {
   private final String functionName;
@@ -33,14 +33,14 @@ public class MacroFunction {
 
   /**
    * return the function name
-   * @return funtion name
+   * @return function name
    */
   public String getFunctionName() {
     return functionName;
   }
 
   /**
-   * return the list of arguments to the funcion
+   * return the list of arguments to the function
    * @return the list of arguments
    */
   public List<String> getArguments() {
