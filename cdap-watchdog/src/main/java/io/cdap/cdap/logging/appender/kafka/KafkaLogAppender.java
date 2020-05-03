@@ -27,35 +27,39 @@ import io.cdap.cdap.logging.serialize.LoggingEventSerializer;
 import kafka.producer.KeyedMessage;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Log appender that publishes log messages to Kafka.
  */
 public final class KafkaLogAppender extends LogAppender {
 
-  private static final int QUEUE_SIZE = 512;
-
   private static final String APPENDER_NAME = "KafkaLogAppender";
 
-  private final KafkaLogPublisher kafkaLogPublisher;
+  private final CConfiguration cConf;
+  private final AtomicReference<KafkaLogPublisher> kafkaLogPublisher;
 
   @Inject
   KafkaLogAppender(CConfiguration cConf) {
     setName(APPENDER_NAME);
-    this.kafkaLogPublisher = new KafkaLogPublisher(cConf);
+    this.cConf = cConf;
+    this.kafkaLogPublisher = new AtomicReference<>();
   }
 
   @Override
   public void start() {
-    kafkaLogPublisher.startAndWait();
-    addInfo("Successfully initialized KafkaLogAppender.");
+    KafkaLogPublisher publisher = new KafkaLogPublisher(cConf);
+    Optional.ofNullable(kafkaLogPublisher.getAndSet(publisher)).ifPresent(KafkaLogPublisher::stopAndWait);
+    publisher.startAndWait();
+    addInfo("Successfully started KafkaLogAppender.");
     super.start();
   }
 
   @Override
   public void stop() {
-    kafkaLogPublisher.stopAndWait();
     super.stop();
+    Optional.ofNullable(kafkaLogPublisher.getAndSet(null)).ifPresent(KafkaLogPublisher::stopAndWait);
   }
 
   @Override
@@ -64,7 +68,7 @@ public final class KafkaLogAppender extends LogAppender {
     logMessage.getCallerData();
 
     try {
-      kafkaLogPublisher.addMessage(logMessage);
+      kafkaLogPublisher.get().addMessage(logMessage);
     } catch (InterruptedException e) {
       addInfo("Interrupted when adding log message to queue: " + logMessage.getFormattedMessage());
     }
@@ -82,7 +86,8 @@ public final class KafkaLogAppender extends LogAppender {
     private SimpleKafkaProducer producer;
 
     private KafkaLogPublisher(CConfiguration cConf) {
-      super(QUEUE_SIZE, RetryStrategies.fromConfiguration(cConf, "system.log.process."));
+      super(cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE, 512),
+            RetryStrategies.fromConfiguration(cConf, "system.log.process."));
       this.cConf = cConf;
       this.topic = cConf.get(Constants.Logging.KAFKA_TOPIC);
       this.loggingEventSerializer = new LoggingEventSerializer();
