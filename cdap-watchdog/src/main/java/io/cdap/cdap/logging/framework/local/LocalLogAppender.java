@@ -45,7 +45,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The {@link LogAppender} used in local mode.
@@ -62,10 +62,8 @@ public class LocalLogAppender extends LogAppender {
   private final TransactionRunner transactionRunner;
   private final LocationFactory locationFactory;
   private final MetricsCollectionService metricsCollectionService;
-  private final List<LocalLogProcessorPipeline> pipelines;
-  private final AtomicBoolean started;
-  private final AtomicBoolean stopped;
-  private final Set<Thread> pipelineThreads;
+  private final AtomicReference<List<LocalLogProcessorPipeline>> pipelines;
+  private final AtomicReference<Set<Thread>> pipelineThreads;
 
   @Inject
   LocalLogAppender(CConfiguration cConf, TransactionRunner transactionRunner,
@@ -74,19 +72,13 @@ public class LocalLogAppender extends LogAppender {
     this.transactionRunner = transactionRunner;
     this.locationFactory = locationFactory;
     this.metricsCollectionService = metricsCollectionService;
-    this.pipelines = new ArrayList<>();
-    this.started = new AtomicBoolean();
-    this.stopped = new AtomicBoolean();
-    this.pipelineThreads = Collections.newSetFromMap(new IdentityHashMap<>());
+    this.pipelines = new AtomicReference<>(Collections.emptyList());
+    this.pipelineThreads = new AtomicReference<>(Collections.emptySet());
     setName(getClass().getName());
   }
 
   @Override
   public void start() {
-    if (!started.compareAndSet(false, true)) {
-      return;
-    }
-
     // Load and starts all configured log processing pipelines
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf);
     Map<String, LogPipelineSpecification<AppenderContext>> specs =
@@ -94,6 +86,9 @@ public class LocalLogAppender extends LogAppender {
 
     // Use the event delay as the sync interval
     long syncIntervalMillis = cConf.getLong(Constants.Logging.PIPELINE_EVENT_DELAY_MS);
+
+    List<LocalLogProcessorPipeline> pipelines = new ArrayList<>();
+    Set<Thread> pipelineThreads = Collections.newSetFromMap(new IdentityHashMap<>());
 
     for (LogPipelineSpecification<AppenderContext> spec : specs.values()) {
       LogProcessorPipelineContext context =
@@ -105,23 +100,24 @@ public class LocalLogAppender extends LogAppender {
       pipelines.add(pipeline);
     }
 
+    this.pipelines.getAndSet(pipelines).forEach(LocalLogProcessorPipeline::stopAndWait);
+    this.pipelineThreads.set(pipelineThreads);
+
     super.start();
   }
 
   @Override
   public void stop() {
-    if (!stopped.compareAndSet(false, true)) {
-      return;
-    }
     // Stop all pipelines
     super.stop();
-    for (LocalLogProcessorPipeline pipeline : pipelines) {
+    for (LocalLogProcessorPipeline pipeline : pipelines.getAndSet(Collections.emptyList())) {
       try {
         pipeline.stopAndWait();
       } catch (Throwable t) {
         addError("Exception raised when stopping log processing pipeline " + pipeline.getName(), t);
       }
     }
+    pipelineThreads.set(Collections.emptySet());
   }
 
   @Override
@@ -132,7 +128,7 @@ public class LocalLogAppender extends LogAppender {
     // it, similar to what's being done in here.
     // They are still logged via other log appender (e.g. log to cdap.log), but just not being collected
     // via the log collection system.
-    if (!pipelineThreads.contains(Thread.currentThread())) {
+    if (!pipelineThreads.get().contains(Thread.currentThread())) {
       super.doAppend(eventObject);
     }
   }
@@ -142,9 +138,7 @@ public class LocalLogAppender extends LogAppender {
     logMessage.prepareForDeferredProcessing();
     logMessage.getCallerData();
 
-    for (LocalLogProcessorPipeline pipeline : pipelines) {
-      pipeline.append(logMessage);
-    }
+    pipelines.get().forEach(p -> p.append(logMessage));
   }
 
   /**
@@ -183,7 +177,7 @@ public class LocalLogAppender extends LogAppender {
     }
 
     @Override
-    protected void startUp() throws Exception {
+    protected void startUp() {
       addInfo("Starting log processing pipeline " + getName());
       context.start();
       addInfo("Log processing pipeline " + getName() + " started");
@@ -191,7 +185,7 @@ public class LocalLogAppender extends LogAppender {
     }
 
     @Override
-    protected void shutDown() throws Exception {
+    protected void shutDown() {
       addInfo("Stopping log processing pipeline " + getName());
       // Write all pending events out
       for (ILoggingEvent event : eventQueue) {
