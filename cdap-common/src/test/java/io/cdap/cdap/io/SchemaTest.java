@@ -101,35 +101,15 @@ public class SchemaTest {
   }
 
   @Test
-  public void testSchemaEquals() throws UnsupportedTypeException {
+  public void testSchemaHash() throws UnsupportedTypeException {
     Schema s1 = new ReflectionSchemaGenerator().generate(Node.class);
-    Schema s2 = new ReflectionSchemaGenerator().generate(Node.class);
+    Schema s2 = new ReflectionSchemaGenerator().generate(Node2.class);
 
     Assert.assertEquals(s1.getSchemaHash(), s2.getSchemaHash());
     Assert.assertEquals(s1, s2);
 
     Schema schema = (new ReflectionSchemaGenerator()).generate((new TypeToken<Child<Node>>() { }).getType());
     Assert.assertNotEquals(s1.getSchemaHash(), schema.getSchemaHash());
-  }
-
-  @Test
-  public void testSchemaNotEquals() {
-    Schema r1 = Schema.recordOf("Test1", Schema.Field.of("field", Schema.of(Schema.Type.STRING)));
-    Schema r2 = Schema.recordOf("Test2", Schema.Field.of("field", Schema.of(Schema.Type.STRING)));
-
-    // Record schema of different name should be different
-    Assert.assertNotEquals(r1, r2);
-
-    // Nested record schema should be non-equal if the nested names are different
-    r1 = Schema.recordOf(
-      "Test",
-      Schema.Field.of("field", Schema.recordOf("Nested1", Schema.Field.of("f", Schema.of(Schema.Type.STRING))))
-    );
-    r2 = Schema.recordOf(
-      "Test",
-      Schema.Field.of("field", Schema.recordOf("Nested2", Schema.Field.of("f", Schema.of(Schema.Type.STRING))))
-    );
-    Assert.assertNotEquals(r1, r2);
   }
 
   /**
