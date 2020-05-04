@@ -197,13 +197,16 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     Injector injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
 
+    // Initialize log appender
+    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
+    SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
+
     // Setup the proxy selector for in active monitoring mode
     oldProxySelector = ProxySelector.getDefault();
     if (clusterMode == ClusterMode.ISOLATED) {
       RuntimeMonitors.setupMonitoring(injector, programOptions);
     }
-
-    logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
 
     // Create list of core services. They'll will be started in the run method and shutdown when the run
     // method completed
@@ -431,22 +434,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   private void startCoreServices() {
-    // Initialize log appender
-    logAppenderInitializer.initialize();
-    SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
-
     try {
       // Starts the core services
       for (Service service : coreServices) {
         service.startAndWait();
       }
     } catch (Exception e) {
-      logAppenderInitializer.close();
       throw e;
     }
   }
 
   private void stopCoreServices() {
+    Closeables.closeQuietly(logAppenderInitializer);
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
@@ -455,7 +454,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
       }
     }
-    logAppenderInitializer.close();
   }
 }
 

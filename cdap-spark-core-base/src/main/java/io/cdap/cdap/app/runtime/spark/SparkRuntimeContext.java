@@ -19,6 +19,7 @@ package io.cdap.cdap.app.runtime.spark;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
+import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -47,6 +48,7 @@ import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.filesystem.LocationFactory;
 
+import java.io.Closeable;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -67,6 +69,7 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
   private final ServiceAnnouncer serviceAnnouncer;
   private final PluginFinder pluginFinder;
   private final LocationFactory locationFactory;
+  private final Closeable closeable;
 
   // This is needed to maintain a strong reference while the Spark program is running,
   // since outside of this class, the spark classloader is wrapped with a WeakReferenceDelegatorClassLoader
@@ -87,7 +90,8 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
                       MessagingService messagingService, ServiceAnnouncer serviceAnnouncer,
                       PluginFinder pluginFinder, LocationFactory locationFactory,
                       MetadataReader metadataReader, MetadataPublisher metadataPublisher,
-                      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter) {
+                      NamespaceQueryAdmin namespaceQueryAdmin, FieldLineageWriter fieldLineageWriter,
+                      Closeable closeable) {
     super(program, programOptions, cConf, getSparkSpecification(program).getDatasets(), datasetFramework, txClient,
           discoveryServiceClient, true, metricsCollectionService, createMetricsTags(workflowProgramInfo),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
@@ -103,6 +107,13 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     this.serviceAnnouncer = serviceAnnouncer;
     this.pluginFinder = pluginFinder;
     this.locationFactory = locationFactory;
+    this.closeable = closeable;
+  }
+
+  @Override
+  public void close() {
+    super.close();
+    Closeables.closeQuietly(closeable);
   }
 
   @Override

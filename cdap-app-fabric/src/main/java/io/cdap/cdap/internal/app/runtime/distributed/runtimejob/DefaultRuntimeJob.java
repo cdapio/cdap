@@ -177,18 +177,19 @@ public class DefaultRuntimeJob implements RuntimeJob {
                                                            programRunId, programOpts));
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
 
+    // Initialize log appender
+    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
+    SystemArguments.setLogLevel(programOpts.getUserArguments(), logAppenderInitializer);
+
     ProxySelector oldProxySelector = ProxySelector.getDefault();
     RuntimeMonitors.setupMonitoring(injector, programOpts);
 
-    LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
     Deque<Service> coreServices = createCoreServices(injector, systemArgs, cluster);
-
-    startCoreServices(coreServices, logAppenderInitializer);
+    startCoreServices(coreServices);
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
-
     try {
-      SystemArguments.setLogLevel(programOpts.getUserArguments(), logAppenderInitializer);
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
 
       // Create and run the program. The program files should be present in current working directory.
@@ -404,19 +405,11 @@ public class DefaultRuntimeJob implements RuntimeJob {
     return services;
   }
 
-  private void startCoreServices(Deque<Service> coreServices, LogAppenderInitializer logAppenderInitializer) {
-    // Initialize log appender
-    logAppenderInitializer.initialize();
-
-    try {
-      // Starts the core services
-      for (Service service : coreServices) {
-        LOG.debug("Starting core service {}", service);
-        service.startAndWait();
-      }
-    } catch (Exception e) {
-      logAppenderInitializer.close();
-      throw e;
+  private void startCoreServices(Deque<Service> coreServices) {
+    // Starts the core services
+    for (Service service : coreServices) {
+      LOG.debug("Starting core service {}", service);
+      service.startAndWait();
     }
   }
 
