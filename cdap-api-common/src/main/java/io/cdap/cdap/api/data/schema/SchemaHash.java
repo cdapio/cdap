@@ -154,6 +154,7 @@ public final class SchemaHash implements Serializable {
         break;
       case RECORD:
         md5.update((byte) 11);
+        md5.update(UTF_8.encode(schema.getRecordName()));
         boolean notKnown = knownRecords.add(schema.getRecordName());
         for (Schema.Field field : schema.getFields()) {
           md5.update(UTF_8.encode(field.getName()));
