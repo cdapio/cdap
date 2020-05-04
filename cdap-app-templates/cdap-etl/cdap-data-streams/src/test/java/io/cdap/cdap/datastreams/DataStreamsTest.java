@@ -387,7 +387,7 @@ public class DataStreamsTest extends HydratorTestBase {
     DataSetManager<Table> sink2 = getDataset("sink2");
 
     Schema aggSchema = Schema.recordOf(
-      "user.count",
+      "id.count",
       Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
       Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
     Set<StructuredRecord> expectedAggregates = ImmutableSet.of(
@@ -434,7 +434,7 @@ public class DataStreamsTest extends HydratorTestBase {
     sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     aggSchema = Schema.recordOf(
-      "user.count",
+      "name.count",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("ct", Schema.of(Schema.Type.LONG)));
     Set<StructuredRecord> expectedAggregates2 = ImmutableSet.of(
