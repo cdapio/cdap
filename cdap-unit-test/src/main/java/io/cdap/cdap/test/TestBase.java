@@ -53,6 +53,7 @@ import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
@@ -204,6 +205,7 @@ public class TestBase {
   private static MetadataAdmin metadataAdmin;
   private static FieldLineageAdmin fieldLineageAdmin;
   private static LineageAdmin lineageAdmin;
+  private static ProgramRuntimeService programRuntimeService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -372,6 +374,8 @@ public class TestBase {
     if (previewManager instanceof Service) {
       ((Service) previewManager).startAndWait();
     }
+    programRuntimeService = injector.getInstance(ProgramRuntimeService.class);
+    programRuntimeService.startAndWait();
   }
 
   /**
@@ -493,6 +497,7 @@ public class TestBase {
       return;
     }
 
+    programRuntimeService.stopAndWait();
     if (previewManager instanceof Service) {
       ((Service) previewManager).stopAndWait();
     }
