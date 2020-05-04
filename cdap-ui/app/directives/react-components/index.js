@@ -164,5 +164,5 @@ angular
     return reactDirective(window.CaskCommon.Page500);
   })
   .directive('previewDataView', function(reactDirective) {
-    return reactDirective(window.CaskCommon.PreviewDataView)
+    return reactDirective(window.CaskCommon.PreviewDataView);
   });

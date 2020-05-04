@@ -47,6 +47,8 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.setDefaults(rPlugin);
     this.myAlertOnValium = myAlertOnValium;
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
+    this.getPreviewId = this.getPreviewId.bind(this);
+    this.getStagesAndConnections = this.getStagesAndConnections.bind(this);
     this.tabs = [
       {
         label: 'Properties',
@@ -519,6 +521,14 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.defaultState.node.outputSchema = outputSchema;
       this.defaultState.node.plugin.properties[configOutputSchema.outputSchemaProperty[0]] = this.defaultState.node.outputSchema;
     }
+  }
+
+  getPreviewId() {
+    return this.previewStore.getState().preview.previewId;
+  }
+
+  getStagesAndConnections() {
+    return this.ConfigStore.getConfigForExport().config;
   }
 
   // PREVIEW
