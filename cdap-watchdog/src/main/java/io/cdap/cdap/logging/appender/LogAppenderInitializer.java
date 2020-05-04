@@ -91,7 +91,7 @@ public class LogAppenderInitializer implements Closeable {
   @VisibleForTesting
   public synchronized void initialize(String loggerName) {
     LoggerContext loggerContext = getLoggerContext();
-    if (loggerContext != null) {
+    if (loggerContext != null && loggerNames.add(loggerName)) {
       Logger logger = loggerContext.getLogger(loggerName);
 
       // Check if the logger already contains the logAppender

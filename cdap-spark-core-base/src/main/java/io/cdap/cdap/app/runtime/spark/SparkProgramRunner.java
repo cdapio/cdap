@@ -191,7 +191,7 @@ public final class SparkProgramRunner extends AbstractProgramRunnerWithPlugin
                                                                    authorizationEnforcer, authenticationContext,
                                                                    messagingService, serviceAnnouncer, pluginFinder,
                                                                    locationFactory, metadataReader, metadataPublisher,
-                                                                   namespaceQueryAdmin, fieldLineageWriter);
+                                                                   namespaceQueryAdmin, fieldLineageWriter, () -> { });
       closeables.addFirst(runtimeContext);
 
       Spark spark;

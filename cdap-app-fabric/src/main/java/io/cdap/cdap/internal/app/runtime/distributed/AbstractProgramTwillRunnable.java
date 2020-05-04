@@ -51,6 +51,7 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.codec.ArgumentsCodec;
 import io.cdap.cdap.internal.app.runtime.codec.ProgramOptionsCodec;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitorServer;
@@ -244,7 +245,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
     cConf.addResource(new File(systemArgs.getOption(ProgramOptionConstants.CDAP_CONF_FILE)).toURI().toURL());
 
     maxStopSeconds = cConf.getLong(io.cdap.cdap.common.conf.Constants.AppFabric.PROGRAM_MAX_STOP_SECONDS);
-
     if (clusterMode == ClusterMode.ISOLATED) {
       String hostName = context.getHost().getCanonicalHostName();
       cConf.set(io.cdap.cdap.common.conf.Constants.Service.MASTER_SERVICES_BIND_ADDRESS, hostName);
@@ -252,7 +252,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     injector = Guice.createInjector(createModule(cConf, hConf, programOptions, programRunId));
 
+    // Initialize log appender
     logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
+    SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
 
     // Create list of core services. They'll will be started in the run method and shutdown when the run
     // method completed
@@ -540,21 +543,18 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   }
 
   private void startCoreServices() {
-    // Initialize log appender
-    logAppenderInitializer.initialize();
-
     try {
       // Starts the core services
       for (Service service : coreServices) {
         service.startAndWait();
       }
     } catch (Exception e) {
-      logAppenderInitializer.close();
       throw e;
     }
   }
 
   private void stopCoreServices() {
+    Closeables.closeQuietly(logAppenderInitializer);
     // Stop all services. Reverse the order.
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
@@ -563,7 +563,6 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
         LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
       }
     }
-    logAppenderInitializer.close();
   }
 
   /**
