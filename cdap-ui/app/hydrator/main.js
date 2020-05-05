@@ -175,16 +175,21 @@ angular
     $httpProvider.interceptors.push(function($rootScope, myHelpers) {
       return {
         'request': function(config) {
+          var extendConfig = {
+            headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+            }
+          };
           if (
               $rootScope.currentUser && !myHelpers.objectQuery(config, 'data', 'profile_view')
              ) {
 
-            var extendConfig = {
+            config = angular.extend(config, extendConfig, {
               user: $rootScope.currentUser || null,
               headers: {
                 'Content-Type': 'application/json',
               }
-            };
+            });
 
             // This check is added because of HdInsight gateway security.
             // If we set Authorization to null, it strips off their Auth token
@@ -195,8 +200,8 @@ angular
             }
 
             extendConfig.headers.sessionToken = window.CaskCommon.SessionTokenStore.default.getState();
-            angular.extend(config, extendConfig);
           }
+          angular.extend(config, extendConfig);
           return config;
         }
       };
