@@ -74,6 +74,10 @@ declare global {
       select_from_to: (from: INodeIdentifier, to: INodeIdentifier) => Chainable<any>;
 
       /**
+       * Select a specific connection give source and target node
+       */
+      select_connection: (from: INodeIdentifier, to: INodeIdentifier) => Chainable<JQuery<any>>;
+      /**
        * Creates a simple BQ source -> Wrangler Transform -> BQ Sink pipeline.
        *
        * This is a dumb command to be reused whenever we want to create a basic pipeline
