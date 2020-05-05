@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark.distributed;
 
+import com.google.common.io.Closeables;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
@@ -28,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.bridge.SLF4JBridgeHandler;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -44,6 +46,7 @@ import java.util.Set;
  */
 public final class SparkContainerLauncher {
 
+  // This logger is only for logging for this class.
   private static final Logger LOG = LoggerFactory.getLogger(SparkContainerLauncher.class);
   private static final FilterClassLoader.Filter KAFKA_FILTER = new FilterClassLoader.Filter() {
     @Override
@@ -92,6 +95,10 @@ public final class SparkContainerLauncher {
     // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);
 
+    // Create SLF4J logger from the context classloader. It has to be created from that classloader in order
+    // for logs in this class to be in the same context as the one used in Spark.
+    Object logger = createLogger(classLoader);
+
     // Install the JUL to SLF4J Bridge
     try {
       classLoader.loadClass(SLF4JBridgeHandler.class.getName())
@@ -99,14 +106,19 @@ public final class SparkContainerLauncher {
         .invoke(null);
     } catch (Exception e) {
       // Log the error and continue
-      LOG.warn("Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
+      log(logger, "warn", "Failed to invoke SLF4JBridgeHandler.install() required for jul-to-slf4j bridge", e);
+    }
+
+    // Get the SparkRuntimeContext to initialize all necessary services and logging context
+    // Need to do it using the SparkRunnerClassLoader through reflection.
+    Object sparkRuntimeContext = classLoader.loadClass(SparkRuntimeContextProvider.class.getName())
+      .getMethod("get").invoke(null);
+
+    if (sparkRuntimeContext instanceof Closeable) {
+      System.setSecurityManager(new SparkRuntimeSecurityManager((Closeable) sparkRuntimeContext));
     }
 
     try {
-      // Get the SparkRuntimeContext to initialize all necessary services and logging context
-      // Need to do it using the SparkRunnerClassLoader through reflection.
-      classLoader.loadClass(SparkRuntimeContextProvider.class.getName()).getMethod("get").invoke(null);
-
       // For non-PySpark, do the logs redirection. Otherwise the log redirect is done
       // in the PythonRunner/PythonWorkerFactory via SparkClassRewriter.
       if (!isPySpark()) {
@@ -124,11 +136,11 @@ public final class SparkContainerLauncher {
       }
 
       // Optionally starts Py4j Gateway server in the executor container
-      Runnable stopGatewayServer = startGatewayServerIfNeeded(classLoader);
+      Runnable stopGatewayServer = startGatewayServerIfNeeded(classLoader, logger);
       try {
-        LOG.info("Launch main class {}.main({})", mainClassName, Arrays.toString(args));
+        log(logger, "info", "Launch main class {}.main({})", mainClassName, Arrays.toString(args));
         classLoader.loadClass(mainClassName).getMethod("main", String[].class).invoke(null, new Object[]{args});
-        LOG.info("Main method returned {}", mainClassName);
+        log(logger, "info", "Main method returned {}", mainClassName);
       } finally {
         stopGatewayServer.run();
       }
@@ -136,8 +148,12 @@ public final class SparkContainerLauncher {
       // LOG the exception since this exception will be propagated back to JVM
       // and kill the main thread (hence the JVM process).
       // If we don't log it here as ERROR, it will be logged by UncaughtExceptionHandler as DEBUG level
-      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, t);
+      log(logger, "error", "Exception raised when calling {}.main(String[]) method", mainClassName, t);
       throw t;
+    } finally {
+      if (sparkRuntimeContext instanceof Closeable) {
+        Closeables.closeQuietly((Closeable) sparkRuntimeContext);
+      }
     }
   }
 
@@ -158,7 +174,7 @@ public final class SparkContainerLauncher {
    * @param classLoader the classloader to use for loading classes
    * @return a {@link Runnable} that calling the {@link Runnable#run()} method will stop the server.
    */
-  private static Runnable startGatewayServerIfNeeded(ClassLoader classLoader) {
+  private static Runnable startGatewayServerIfNeeded(ClassLoader classLoader, Object logger) {
     Runnable noopRunnable = new Runnable() {
       @Override
       public void run() {
@@ -179,8 +195,8 @@ public final class SparkContainerLauncher {
       final Object server = classLoader.loadClass(SparkPythonUtil.class.getName())
         .getMethod("startPy4jGateway", Path.class).invoke(null, portFile);
 
-      LOG.info("Py4j GatewayServer started, listening at port {}",
-               new String(Files.readAllBytes(portFile), StandardCharsets.UTF_8));
+      log(logger, "info", "Py4j GatewayServer started, listening at port {}",
+          new String(Files.readAllBytes(portFile), StandardCharsets.UTF_8));
 
       return new Runnable() {
         @Override
@@ -188,12 +204,12 @@ public final class SparkContainerLauncher {
           try {
             server.getClass().getMethod("shutdown").invoke(server);
           } catch (Exception e) {
-            LOG.warn("Failed to shutdown Py4j GatewayServer", e);
+            log(logger, "warn", "Failed to shutdown Py4j GatewayServer", e);
           }
         }
       };
     } catch (Exception e) {
-      LOG.warn("Failed to start Py4j GatewayServer. No CDAP functionality will be available in executor", e);
+      log(logger, "warn", "Failed to start Py4j GatewayServer. No CDAP functionality will be available in executor", e);
       return noopRunnable;
     }
   }
@@ -223,6 +239,20 @@ public final class SparkContainerLauncher {
     if (count > 1) {
       LOG.info("Removing {}", url);
       urls.remove(url);
+    }
+  }
+
+  private static Object createLogger(ClassLoader classLoader) throws Exception {
+    return classLoader.loadClass(LoggerFactory.class.getName())
+      .getMethod("getLogger", Class.class)
+      .invoke(null, SparkContainerLauncher.class);
+  }
+
+  private static void log(Object logger, String level, String message, Object...args) {
+    try {
+      logger.getClass().getMethod(level, String.class, Object[].class).invoke(logger, message, args);
+    } catch (Exception e) {
+
     }
   }
 }
