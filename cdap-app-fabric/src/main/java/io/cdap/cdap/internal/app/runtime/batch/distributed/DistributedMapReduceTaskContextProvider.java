@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -79,6 +80,10 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   protected void startUp() throws Exception {
     super.startUp();
     try {
+      ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
+      logAppenderInitializer.initialize();
+      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
+
       oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
         ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
@@ -88,9 +93,6 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
       for (Service service : coreServices) {
         service.startAndWait();
       }
-      logAppenderInitializer.initialize();
-      ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
-      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
     } catch (Exception e) {
       // Try our best to stop services. Chain stop guarantees it will stop everything, even some of them failed.
       try {
@@ -105,12 +107,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   @Override
   protected void shutDown() throws Exception {
     super.shutDown();
+    Closeables.closeQuietly(logAppenderInitializer);
+
     Exception failure = null;
-    try {
-      logAppenderInitializer.close();
-    } catch (Exception e) {
-      failure = e;
-    }
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
         service.stopAndWait();
