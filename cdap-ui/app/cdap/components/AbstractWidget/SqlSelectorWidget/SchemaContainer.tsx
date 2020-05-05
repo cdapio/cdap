@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the 'License'); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -32,6 +32,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
+import uuidV4 from 'uuid/v4';
 
 import FieldRow from 'components/AbstractWidget/SqlSelectorWidget/FieldRow';
 import If from 'components/If';
@@ -41,6 +42,8 @@ import { IParsedInputSchema } from 'components/AbstractWidget/SqlSelectorWidget'
 import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 const I18N_PREFIX_TABLE = 'features.AbstractWidget.SqlSelectorWidget.table';
+const DEFAULT_FIELD_WINDOW_SIZE = 50;
+
 const styles = (theme): StyleRules => {
   return {
     schemaContainer: {
@@ -103,13 +106,27 @@ interface ISchemaContainerProps extends WithStyles<typeof styles> {
 interface ISchemaContainerState {
   selectFields: string;
   menuAnchor: HTMLButtonElement;
+  fieldWindowSize: number;
 }
 
 class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaContainerState> {
   public state = {
     selectFields: 'All',
     menuAnchor: null,
+    fieldWindowSize: DEFAULT_FIELD_WINDOW_SIZE,
   };
+
+  public componentDidMount() {
+    document.querySelectorAll(`#${this.componentID} tbody tr`).forEach((entry) => {
+      this.io.observe(entry);
+    });
+  }
+
+  public componentDidUpdate() {
+    document.querySelectorAll(`#${this.componentID} tbody tr`).forEach((entry) => {
+      this.io.observe(entry);
+    });
+  }
 
   private tableSelectChange = (selectFields) => {
     this.setState({ selectFields }, () => {
@@ -171,6 +188,107 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
     return validationError;
   }
 
+  private componentID = `sql-fields-${uuidV4()}`;
+
+  private io = new IntersectionObserver(
+    (entries) => {
+      let lastVisibleElement = this.state.fieldWindowSize;
+      for (const entry of entries) {
+        let id = entry.target.getAttribute('id');
+        id = id.split('-').pop();
+        const idInt = parseInt(id, 10);
+        if (entry.isIntersecting) {
+          lastVisibleElement =
+            idInt + DEFAULT_FIELD_WINDOW_SIZE > this.state.fieldWindowSize
+              ? idInt + DEFAULT_FIELD_WINDOW_SIZE
+              : idInt;
+        }
+      }
+      if (lastVisibleElement > this.state.fieldWindowSize) {
+        this.setState({
+          fieldWindowSize: lastVisibleElement,
+        });
+      }
+    },
+    {
+      threshold: [0, 1],
+    }
+  );
+
+  public renderFields = () => {
+    const { classes } = this.props;
+    return (
+      <ExpansionPanelDetails>
+        <Table size="small" id={this.componentID}>
+          <TableHead>
+            <TableRow className={classes.tableRow}>
+              <TableCell>
+                <div className={classes.headerRow}>
+                  <div
+                    className={classnames(classes.schemaTableHeaderCell, classes.fieldNameHeader)}
+                  >
+                    <Typography variant="h6" display="inline">
+                      {T.translate(`${I18N_PREFIX_TABLE}.stageNameHeader`)}
+                    </Typography>
+                  </div>
+                  <div
+                    className={classnames(
+                      classes.schemaTableHeaderCell,
+                      classes.schemaSelectColumnHeader
+                    )}
+                  >
+                    <Button
+                      disabled={this.props.disabled}
+                      size="small"
+                      variant="outlined"
+                      onClick={this.handleMenuOpen}
+                    >
+                      <span>{T.translate(`${I18N_PREFIX_TABLE}.checkboxHeader`)}</span>
+                      <IconSVG name="icon-caret-down" className={classes.tableHeaderSelectIcon} />
+                    </Button>
+                    <Menu
+                      anchorEl={this.state.menuAnchor}
+                      open={Boolean(this.state.menuAnchor)}
+                      onClose={this.handleMenuClose}
+                    >
+                      <MenuItem onClick={() => this.handleMenuClose('All')}>
+                        {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.all`)}
+                      </MenuItem>
+                      <MenuItem onClick={() => this.handleMenuClose('None')}>
+                        {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.none`)}
+                      </MenuItem>
+                    </Menu>
+                  </div>
+                  <div className={classnames(classes.schemaTableHeaderCell, classes.aliasHeader)}>
+                    <Typography variant="h6" display="inline">
+                      {T.translate(`${I18N_PREFIX_TABLE}.aliasHeader`)}
+                    </Typography>
+                  </div>
+                </div>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {this.props.stage.schema.slice(0, this.state.fieldWindowSize).map((field, i) => {
+              const aliasError = this.props.aliases[field.alias] > 1;
+              return (
+                <FieldRow
+                  rowId={`rowid-${i}`}
+                  key={`${i}-${field.name}`}
+                  error={aliasError}
+                  field={field}
+                  onFieldChange={this.updateField}
+                  disabled={this.props.disabled}
+                  validationError={this.getValidationError(field)}
+                />
+              );
+            })}
+          </TableBody>
+        </Table>
+      </ExpansionPanelDetails>
+    );
+  };
+
   public render() {
     const { classes, errors } = this.props;
     return (
@@ -194,73 +312,7 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
             </span>
           </If>
         </ExpansionPanelSummary>
-        <ExpansionPanelDetails>
-          <Table size="small">
-            <TableHead>
-              <TableRow className={classes.tableRow}>
-                <TableCell>
-                  <div className={classes.headerRow}>
-                    <div
-                      className={classnames(classes.schemaTableHeaderCell, classes.fieldNameHeader)}
-                    >
-                      <Typography variant="h6" display="inline">
-                        {T.translate(`${I18N_PREFIX_TABLE}.stageNameHeader`)}
-                      </Typography>
-                    </div>
-                    <div
-                      className={classnames(
-                        classes.schemaTableHeaderCell,
-                        classes.schemaSelectColumnHeader
-                      )}
-                    >
-                      <Button
-                        disabled={this.props.disabled}
-                        size="small"
-                        variant="outlined"
-                        onClick={this.handleMenuOpen}
-                      >
-                        <span>{T.translate(`${I18N_PREFIX_TABLE}.checkboxHeader`)}</span>
-                        <IconSVG name="icon-caret-down" className={classes.tableHeaderSelectIcon} />
-                      </Button>
-                      <Menu
-                        anchorEl={this.state.menuAnchor}
-                        open={Boolean(this.state.menuAnchor)}
-                        onClose={this.handleMenuClose}
-                      >
-                        <MenuItem onClick={() => this.handleMenuClose('All')}>
-                          {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.all`)}
-                        </MenuItem>
-                        <MenuItem onClick={() => this.handleMenuClose('None')}>
-                          {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.none`)}
-                        </MenuItem>
-                      </Menu>
-                    </div>
-                    <div className={classnames(classes.schemaTableHeaderCell, classes.aliasHeader)}>
-                      <Typography variant="h6" display="inline">
-                        {T.translate(`${I18N_PREFIX_TABLE}.aliasHeader`)}
-                      </Typography>
-                    </div>
-                  </div>
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {this.props.stage.schema.map((field, i) => {
-                const aliasError = this.props.aliases[field.alias] > 1;
-                return (
-                  <FieldRow
-                    key={`${i}-${field.name}`}
-                    error={aliasError}
-                    field={field}
-                    onFieldChange={this.updateField}
-                    disabled={this.props.disabled}
-                    validationError={this.getValidationError(field)}
-                  />
-                );
-              })}
-            </TableBody>
-          </Table>
-        </ExpansionPanelDetails>
+        <If condition={this.props.stage.expanded}>{this.renderFields()}</If>
       </ExpansionPanel>
     );
   }
