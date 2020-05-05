@@ -31,6 +31,7 @@ const UploadFile = ({ url, fileContents, headers }) => {
       Object.keys(headers).forEach((header) => xhr.setRequestHeader(header, headers[header]));
     }
     xhr.setRequestHeader('Session-Token', SessionTokenStore.getState());
+    xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
     xhr.send(fileContents);
     xhr.onreadystatechange = function() {
       if (xhr.readyState === 4) {

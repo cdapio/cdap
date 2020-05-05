@@ -78,6 +78,11 @@ var plugins = [
       from: './styles/img',
       to: './img/',
     },
+    {
+      from: './**/*-web-worker.js',
+      to: './web-workers/',
+      flatten: true,
+    },
   ]),
   new StyleLintPlugin({
     syntax: 'scss',
