@@ -19,6 +19,8 @@ package io.cdap.cdap.etl.spark.batch;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
@@ -33,6 +35,7 @@ import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.RecordType;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedIterator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -44,19 +47,26 @@ import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
+import io.cdap.cdap.etl.spark.function.HardCode;
+import io.cdap.cdap.etl.spark.function.IntegerConvertFunction;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
 import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
+import io.cdap.cdap.etl.spark.function.SumFunction;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.annotation.Nullable;
 
 
@@ -129,20 +139,27 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                        StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(pluginFunctionContext);
-    PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
+    PairFlatMapFunc<StructuredRecord, Object, StructuredRecord> groupByFunction =
+      new AggregatorGroupByFunction<>(pluginFunctionContext);
+    PairFlatMapFunction<StructuredRecord, Object, StructuredRecord> sparkGroupByFunction =
+      Compat.convert(groupByFunction);
+    Function<T, StructuredRecord> f1 = new IntegerConvertFunction<>();
+    JavaRDD<StructuredRecord> map = rdd.map(f1);
 
-    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(sparkGroupByFunction);
+    JavaPairRDD<Object, StructuredRecord> keyedCollection = map.flatMapToPair(sparkGroupByFunction);
 
-    JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null ?
-      keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
+    Function2<StructuredRecord, StructuredRecord, StructuredRecord> func = new SumFunction();
+    JavaPairRDD<Object, StructuredRecord> groupedCollection = partitions == null ?
+      keyedCollection.reduceByKey(func) : keyedCollection.reduceByKey(func, partitions);
 
-    FlatMapFunc<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> aggregateFunction =
-      new AggregatorAggregateFunction<>(pluginFunctionContext);
-    FlatMapFunction<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> sparkAggregateFunction =
-      Compat.convert(aggregateFunction);
+//    FlatMapFunc<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> aggregateFunction =
+//      new AggregatorAggregateFunction<>(pluginFunctionContext);
+//    FlatMapFunction<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> sparkAggregateFunction =
+//      Compat.convert(aggregateFunction);
 
-    return wrap(groupedCollection.flatMap(sparkAggregateFunction));
+    FlatMapFunc<Tuple2<Object, StructuredRecord>, RecordInfo<Object>> f = new HardCode(pluginFunctionContext);
+    FlatMapFunction<Tuple2<Object, StructuredRecord>, RecordInfo<Object>> compact = Compat.convert(f);
+    return wrap(groupedCollection.flatMap(compact));
   }
 
   @Override
