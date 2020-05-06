@@ -78,6 +78,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type SPARK_STREAMING_CONTEXT_TYPE =
     Type.getObjectType("org/apache/spark/streaming/StreamingContext");
   private static final Type SPARK_CONF_TYPE = Type.getObjectType("org/apache/spark/SparkConf");
+  private static final Type SPARK_JAVA_MAIN_TYPE = Type.getObjectType("org/apache/spark/deploy/JavaMainApplication");
   // SparkSubmit is a companion object, hence the "$" at the end
   private static final Type SPARK_SUBMIT_TYPE = Type.getObjectType("org/apache/spark/deploy/SparkSubmit$");
   private static final Type SPARK_PYTHON_RUNNER_TYPE = Type.getObjectType("org/apache/spark/deploy/PythonRunner");
@@ -157,6 +158,9 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.startsWith(SPARK_SUBMIT_TYPE.getClassName())) {
       // Rewrite System.setProperty call to SparkRuntimeEnv.setProperty for SparkSubmit and all inner classes
       return rewriteSetProperties(input);
+    }
+    if (className.startsWith(SPARK_JAVA_MAIN_TYPE.getClassName())) {
+      return rewriteJavaMainType(input);
     }
     if (className.equals(SPARK_PYTHON_RUNNER_TYPE.getClassName())) {
       // Rewrite the PythonRunner.main call to initialize CDAP spark context and catch exception to avoid system.exit
@@ -576,6 +580,90 @@ public class SparkClassRewriter implements ClassRewriter {
     return cw.toByteArray();
   }
 
+  private byte[] rewriteJavaMainType(InputStream byteCodeStream) throws IOException {
+    final Type systemType = Type.getType(System.class);
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    // Intercept the public void start(java.lang.String[], org.apache.spark.SparkConf) method
+    final Method startMethod = new Method("start", Type.VOID_TYPE,
+                                          new Type[] { Type.getType(String[].class), SPARK_CONF_TYPE });
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+        if (!startMethod.equals(new Method(name, desc)) || !Modifier.isStatic(access)) {
+          return mv;
+        }
+
+        GeneratorAdapter generator = new GeneratorAdapter(Opcodes.ACC_PUBLIC, startMethod, mv);
+        generator.loadThis();
+        generator.getField(SPARK_JAVA_MAIN_TYPE, "klass", Type.getType("java/lang/Class"));
+        generator.push("main");
+        generator.push(1);
+        generator.newArray(Type.getType("java/lang/Class"));
+        generator.dup();
+        generator.push(0);
+        generator.push(0);
+        generator.newArray(Type.getType("java/lang/String"));
+        generator.invokeVirtual(Type.getType("java/lang/Object"), Methods.getMethod(Class.class, "getClass"));
+        generator.arrayStore(Type.getType("java/lang/String"));
+
+        // Method java/lang/Class.getMethod:(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;
+        generator.invokeVirtual(Type.getType("java/lang/Class"),
+                                Methods.getMethod(java.lang.reflect.Method.class, "getMethod",
+                                                  String.class, Type.getAr)); // TODO find array type
+
+
+        generator.storeLocal(3);
+        generator.loadLocal(3);
+        generator.invokeVirtual(Type.getType("java/lang/reflect/Method"),
+                                Methods.getMethod(int.class, "getModifiers"));
+        generator.invokeStatic(Type.getType("java/lang/reflect/Modifier"),
+                               Methods.getMethod(boolean.class, "isStatic", int.class));
+
+        Label elseLabel = new Label();
+        generator.ifZCmp(GeneratorAdapter.EQ, elseLabel);
+
+        // TBD 34: getstatic     #56                 // Field scala/Predef$.MODULE$:Lscala/Predef$;
+        generator.push(2);
+        // Method org/apache/spark/SparkConf.getAll:()[Lscala/Tuple2;
+        generator.invokeVirtual(Type.getType("org/apache/spark/SparkConf"), Methods.getMethod(Arraytype, "getAll"));
+        // class "[Ljava/lang/Object;"
+        generator.checkCast(arraytype);
+        generator.invokeVirtual(Type.getType("scala/Predef$"),
+                                Methods.getMethod(Type.getType("scala/collection/mutable/ArrayOps").getClass(),
+                                                  "refArrayOps", ArrayType));
+        generator.getStatic(Type.getType("scala/Predef$"), "MODULES$", Type.getType("scala/Predef$"));
+
+
+        generator.invokeVirtual(Type.getType("scala/Predef$"),
+                                Methods.getMethod(Type.getType("scala/Predef$$less$colon$less").getClass(),
+                                                  "$conforms"));
+        generator.invokeInterface(Type.getType("scala/collection/mutable/ArrayOps"),
+                                  Methods.getMethod(Type.getType("scala/collection/immutable/Map").getClass(),
+                                                    "toMap", Type.getType("scala/Predef$$less$colon$less").getClass()));
+        generator.storeLocal(4);
+        generator.loadLocal(4);
+
+        return new MethodVisitor(Opcodes.ASM5, mv) {
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+            // If we see a call to System.setProperty, change it to SparkRuntimeEnv.setProperty
+            if (opcode == Opcodes.INVOKESTATIC && name.equals("setProperty")
+              && owner.equals(systemType.getInternalName())) {
+              super.visitMethodInsn(opcode, SPARK_RUNTIME_ENV_TYPE.getInternalName(), name, desc, false);
+            } else {
+              super.visitMethodInsn(opcode, owner, name, desc, itf);
+            }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
+  }
   /**
    * Rewrites the PythonRunner.main() method to wrap it with call to SparkRuntimeUtils.initSparkMain() method on
    * enter and cancel on exit. Also, wrap the PythonRunner.main() call with a try block to catch the
