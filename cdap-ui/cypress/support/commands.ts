@@ -367,6 +367,27 @@ Cypress.Commands.add('select_from_to', (from: INodeIdentifier, to: INodeIdentifi
   });
 });
 
+Cypress.Commands.add('select_connection', (from: INodeIdentifier, to: INodeIdentifier) => {
+  let fromNodeElement;
+  let toNodeElement;
+  cy.get_node(from).then((sElement) => {
+    fromNodeElement = sElement;
+    cy.get_node(to).then((tElement) => {
+      toNodeElement = tElement;
+      const sourceName = fromNodeElement[0].getAttribute('id');
+      const targetName = toNodeElement[0].getAttribute('id');
+      const connectionSelector = `.jsplumb-connector.connection-id-${sourceName}-${targetName}`;
+      cy.get(connectionSelector).then((connElement) => {
+        (connElement[0] as any)._jsPlumb._jsPlumb.instance.fire(
+          'click',
+          (connElement[0] as any)._jsPlumb
+        );
+        return cy.wrap(connElement[0]);
+      });
+    });
+  });
+});
+
 Cypress.Commands.add(
   'connect_two_nodes',
   (

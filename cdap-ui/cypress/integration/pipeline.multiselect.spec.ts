@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as Helpers from '../helpers';
 let headers = {};
@@ -30,7 +30,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
     });
   });
 
-  it('Should select multiple nodes', () => {
+  it('Should select node(s)', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.create_simple_pipeline().then(({ sourceNodeId, transformNodeId, sinkNodeId }) => {
       cy.select_from_to(sourceNodeId, transformNodeId);
@@ -40,6 +40,23 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
       cy.get('.box.selected').should('have.length', 3);
       cy.get('#dag-container').click({ force: true });
       cy.get('.box.selected').should('have.length', 0);
+    });
+  });
+
+  it.only('Should select connection(s)', () => {
+    cy.visit('/pipelines/ns/default/studio');
+    cy.create_simple_pipeline().then(({ sourceNodeId, transformNodeId, sinkNodeId }) => {
+      cy.select_connection(sourceNodeId, transformNodeId).then((element) => {
+        expect(element[0].children[1].getAttribute('stroke')).to.eq('#58b7f6');
+      });
+      cy.select_connection(transformNodeId, sinkNodeId).then((element) => {
+        expect(element[0].children[1].getAttribute('stroke')).to.eq('#58b7f6');
+      });
+      cy.get('body').type('{del}');
+      cy.get_pipeline_json().then((pipelineConfig) => {
+        const connections = pipelineConfig.config.connections;
+        expect(connections.length).eq(0);
+      });
     });
   });
 
