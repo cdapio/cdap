@@ -17,28 +17,16 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
-import Button from '@material-ui/core/Button';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import If from 'components/If';
 import LoadingSVG from 'components/LoadingSVG';
-import capitalize from 'lodash/capitalize';
-import IconSVG from 'components/IconSVG';
-import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
 import { objectQuery } from 'services/helpers';
-
-function convertHexToRGB(color) {
-  function parseHex(hex) {
-    return parseInt(hex, 16);
-  }
-
-  const red = color.substring(1, 3);
-  const green = color.substring(3, 5);
-  const blue = color.substring(5, 7);
-
-  return `${parseHex(red)}, ${parseHex(green)}, ${parseHex(blue)}`;
-}
+import Supported, {
+  SUPPORT,
+} from 'components/Replicator/Create/Content/Assessment/TablesAssessment/Mappings/Supported';
+import sortBy from 'lodash/sortBy';
 
 const styles = (theme): StyleRules => {
   const headerHeight = '60px';
@@ -55,19 +43,40 @@ const styles = (theme): StyleRules => {
     },
     header: {
       display: 'grid',
-      gridTemplateColumns: '70% 30%',
+      gridTemplateColumns: '75px 1fr',
       height: headerHeight,
       backgroundColor: theme.palette.grey[700],
       borderBottom: `1px solid ${theme.palette.grey[400]}`,
       alignContent: 'center',
+      alignItems: 'center',
       '& > div': {
         padding: '0 15px',
       },
     },
-    actionButtons: {
-      textAlign: 'right',
+    headerPluginTypes: {
+      fontWeight: 500,
+      color: theme.palette.grey[100],
+
+      '& > span': {
+        marginRight: '5px',
+      },
+    },
+    backButton: {
+      color: theme.palette.blue[100],
+      cursor: 'pointer',
+      '& > span:first-child': {
+        marginRight: '5px',
+      },
+
+      '&:hover > span:last-child': {
+        textDecoration: 'underline',
+      },
+    },
+    separator: {
+      marginLeft: '15px',
     },
     mappings: {
+      padding: '10px 25px',
       height: `calc(100% - ${headerHeight})`,
 
       '& .grid-wrapper': {
@@ -76,62 +85,46 @@ const styles = (theme): StyleRules => {
         '& .grid.grid-container.grid-compact': {
           maxHeight: '100%',
 
-          '& .grid-row': {
-            gridTemplateColumns: '100px 2fr 1fr 4fr 2fr 1fr',
+          '& .section-heading': {
+            fontWeight: 'bold',
+            lineHeight: 1.2,
+          },
 
-            '& $target': {
-              // need to beat specificity
-              borderLeft: `1px solid ${theme.palette.grey[400]}`,
-            },
+          '& .grid-header': {
+            '& .grid-row': {
+              minHeight: 0,
 
-            '& > div:not(.section-heading)': {
-              minHeight: '100%',
+              '&:first-child': {
+                borderBottom: 0,
 
-              '&:nth-child(3)': {
-                borderRight: `1px solid ${theme.palette.grey[400]}`,
+                '& > div': {
+                  paddingTop: '5px',
+                },
               },
-              '&:nth-child(5)': {
-                borderLeft: `1px solid ${theme.palette.grey[400]}`,
+
+              '&:last-child > div': {
+                paddingBottom: '5px',
+              },
+
+              '& > div': {
+                paddingTop: 0,
+                paddingBottom: 0,
               },
             },
           },
 
-          '& .grid-body .grid-row > div': {
-            '&:first-child': {
-              borderLeft: `7px solid`,
+          '& .grid-row': {
+            gridTemplateColumns: '2fr 2fr 125px 25px 125px 3fr 200px',
+
+            '& > div:first-child:not($headerDataTypes)': {
+              paddingLeft: '25px',
             },
           },
         },
       },
     },
-    supportContainer: {
-      '& > span': {
-        marginLeft: '5px',
-      },
-    },
-    source: {
-      gridColumn: '1 / span 3',
-      borderRight: `1px solid ${theme.palette.grey[400]}`,
-    },
-    target: {
-      gridColumn: '5 / span 2',
-    },
-    green: {
-      color: theme.palette.green[50],
-    },
-    red: {
-      color: theme.palette.red[100],
-    },
-    // For some reason, losing specificity on the border color, that is why there is !important. Will need to
-    // investigate how to avoid this.
-    greenBox: {
-      borderLeftColor: `rgba(${convertHexToRGB(theme.palette.green[50])}, 0.6) !important`,
-    },
-    redBox: {
-      borderLeftColor: `rgba(${convertHexToRGB(theme.palette.red[100])}, 0.3) !important`,
-    },
-    supportIcon: {
-      marginTop: '-2px',
+    headerDataTypes: {
+      gridColumn: '3 / span 3',
     },
   };
 };
@@ -144,7 +137,22 @@ interface IMappingsProps extends ICreateContext, WithStyles<typeof styles> {
   onClose: () => void;
 }
 
-const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, draftId }) => {
+function getPluginDisplayName(pluginInfo, pluginWidget) {
+  const displayName = objectQuery(pluginWidget, 'display-name') || objectQuery(pluginInfo, 'name');
+  return displayName;
+}
+
+const MappingsView: React.FC<IMappingsProps> = ({
+  classes,
+  tableInfo,
+  onClose,
+  draftId,
+  name,
+  sourcePluginInfo,
+  sourcePluginWidget,
+  targetPluginInfo,
+  targetPluginWidget,
+}) => {
   const [columns, setColumns] = React.useState([]);
   const [error, setError] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -162,7 +170,20 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
 
     MyReplicatorApi.assessTable(params, body).subscribe(
       (res) => {
-        setColumns(res.columns);
+        const sortedColumns = sortBy(res.columns, [
+          (column) => {
+            switch (column.support) {
+              case SUPPORT.no:
+                return 0;
+              case SUPPORT.partial:
+                return 1;
+              default:
+                return 2;
+            }
+          },
+        ]);
+
+        setColumns(sortedColumns);
         setLoading(false);
       },
       (err) => {
@@ -172,16 +193,26 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
     );
   }, []);
 
+  const sourceType = getPluginDisplayName(sourcePluginInfo, sourcePluginWidget);
+  const targetType = getPluginDisplayName(targetPluginInfo, targetPluginWidget);
+
   return (
     <div className={classes.root}>
       <div className={classes.header}>
-        <div>
-          <Heading type={HeadingTypes.h4} label={tableInfo.table} />
+        <div className={classes.backButtonContainer}>
+          <span className={classes.backButton} onClick={onClose}>
+            <span>&laquo;</span>
+            <span>Back</span>
+          </span>
+          <span className={classes.separator}>|</span>
         </div>
-        <div className={classes.actionButtons}>
-          <Button color="primary" onClick={onClose}>
-            Close
-          </Button>
+        <div>
+          <div className={classes.headerPluginTypes}>
+            <span>Source: {sourceType}</span>
+            <span>&gt;</span>
+            <span>Target: {targetType}</span>
+          </div>
+          <Heading type={HeadingTypes.h4} label={name} />
         </div>
       </div>
 
@@ -201,52 +232,44 @@ const MappingsView: React.FC<IMappingsProps> = ({ classes, tableInfo, onClose, d
           <div className="grid-wrapper">
             <div className="grid grid-container grid-compact">
               <div className="grid-row section-heading">
-                <div className={classes.source}>
-                  <Heading type={HeadingTypes.h5} label="SOURCE" />
+                <div>
+                  <div>Source</div>
+                  <div>'{tableInfo.table}'</div>
                 </div>
-                <div className={classes.description} />
-                <div className={classes.target}>
-                  <Heading type={HeadingTypes.h5} label="TARGET" />
+                <div>
+                  <div>Target</div>
+                  <div>'{tableInfo.table}'</div>
                 </div>
               </div>
 
               <div className="grid-header">
                 <div className="grid-row">
+                  <div className={classes.headerDataTypes}>Data type</div>
+                </div>
+                <div className="grid-row">
+                  <div>Column name</div>
+                  <div>Column name</div>
+                  <div>Source</div>
+                  <div>&gt;</div>
+                  <div>Target</div>
+                  <div />
                   <div>Supported</div>
-                  <div>Name</div>
-                  <div>Data type</div>
-                  <div>Description</div>
-                  <div>Name</div>
-                  <div>Data type</div>
                 </div>
               </div>
 
               <div className="grid-body">
                 {columns.map((row, i) => {
-                  const description = objectQuery(row, 'suggestion', 'message');
-
                   return (
                     <div className="grid-row" key={row.sourceName}>
-                      <div
-                        className={classnames(classes.supportContainer, {
-                          [classes.greenBox]: row.support === 'YES',
-                          [classes.redBox]: row.support !== 'YES',
-                        })}
-                      >
-                        <IconSVG
-                          name={row.support === 'PARTIAL' ? 'icon-circle-o' : 'icon-circle'}
-                          className={classnames(classes.supportIcon, {
-                            [classes.green]: row.support === 'YES',
-                            [classes.red]: row.support !== 'YES',
-                          })}
-                        />
-                        <span>{capitalize(row.support)}</span>
-                      </div>
                       <div>{row.sourceName}</div>
-                      <div>{row.sourceType}</div>
-                      <div>{description}</div>
                       <div>{row.targetName}</div>
+                      <div className={classes.source}>{row.sourceType}</div>
+                      <div>&gt;</div>
                       <div>{row.targetType}</div>
+                      <div />
+                      <div>
+                        <Supported columnRow={row} />
+                      </div>
                     </div>
                   );
                 })}
