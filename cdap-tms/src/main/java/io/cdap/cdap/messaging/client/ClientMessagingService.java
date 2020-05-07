@@ -47,6 +47,7 @@ import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequestConfig;
 import io.cdap.common.http.HttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericDatumReader;
@@ -76,6 +77,8 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import java.util.zip.DeflaterInputStream;
+import java.util.zip.GZIPInputStream;
 import javax.annotation.Nullable;
 
 /**
@@ -399,6 +402,7 @@ public final class ClientMessagingService implements MessagingService {
       // in memory, hence we use the HttpURLConnection directly instead.
       HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, createTopicPath(topicId) + "/poll");
       urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
+      urlConn.setRequestProperty(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
 
       // Send the request
       Encoder encoder = EncoderFactory.get().directBinaryEncoder(urlConn.getOutputStream(), null);
@@ -412,7 +416,7 @@ public final class ClientMessagingService implements MessagingService {
 
       handleError(responseCode, () -> {
         // If there is any error, read the response body from the error stream
-        try (InputStream errorStream = urlConn.getErrorStream()) {
+        try (InputStream errorStream = decompressIfNeeded(urlConn, urlConn.getErrorStream())) {
           return errorStream == null
             ? ""
             : urlConn.getResponseMessage() + new String(ByteStreams.toByteArray(errorStream),
@@ -426,7 +430,7 @@ public final class ClientMessagingService implements MessagingService {
       verifyContentType(urlConn.getHeaderFields(), "avro/binary");
 
       // Decode the avro array manually instead of using DatumReader in order to support streaming decode.
-      final InputStream inputStream = urlConn.getInputStream();
+      final InputStream inputStream = decompressIfNeeded(urlConn, urlConn.getInputStream());
       final Decoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
       final long initialItemCount = decoder.readArrayStart();
       return new AbstractCloseableIterator<RawMessage>() {
@@ -469,5 +473,25 @@ public final class ClientMessagingService implements MessagingService {
         }
       };
     }
+  }
+
+  /**
+   * Based on the given {@link HttpURLConnection} content encoding,
+   * optionally wrap the given {@link InputStream} with either gzip or deflate decompression.
+   */
+  private InputStream decompressIfNeeded(HttpURLConnection urlConn, InputStream is) throws IOException {
+    String contentEncoding = urlConn.getHeaderField(HttpHeaderNames.CONTENT_ENCODING.toString());
+    if (contentEncoding == null) {
+      return is;
+    }
+
+    if ("gzip".equalsIgnoreCase(contentEncoding)) {
+      return new GZIPInputStream(is);
+    }
+    if ("deflate".equalsIgnoreCase(contentEncoding)) {
+      return new DeflaterInputStream(is);
+    }
+
+    throw new IllegalArgumentException("Unsupported content encoding " + contentEncoding);
   }
 }
