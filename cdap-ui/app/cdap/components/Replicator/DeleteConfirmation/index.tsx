@@ -30,8 +30,8 @@ const styles = (): StyleRules => {
 };
 
 export enum InstanceType {
-  app,
-  draft,
+  app = 'app',
+  draft = 'draft',
 }
 
 interface IDeleteConfirmationView extends WithStyles<typeof styles> {
@@ -97,7 +97,9 @@ const DeleteConfirmationView: React.FC<IDeleteConfirmationView> = ({
   return (
     <ConfirmationModal
       headerTitle={
-        type === InstanceType.app ? 'Delete Delta Replicator' : 'Delete Delta Replicator Draft'
+        type === InstanceType.app
+          ? 'Delete replication pipeline'
+          : 'Delete replication pipeline draft'
       }
       toggleModal={closeModal}
       confirmationElem={confirmElem}
@@ -105,7 +107,7 @@ const DeleteConfirmationView: React.FC<IDeleteConfirmationView> = ({
       confirmFn={handleDelete}
       cancelFn={closeModal}
       isOpen={show}
-      errorMessage={!error ? '' : 'Failed to delete Delta Replicator'}
+      errorMessage={!error ? '' : 'Failed to delete replication pipeline'}
       extendedMessage={error}
     />
   );

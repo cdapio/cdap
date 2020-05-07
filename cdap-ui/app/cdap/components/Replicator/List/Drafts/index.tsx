@@ -110,7 +110,7 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
               return (
                 <Link
-                  to={`/ns/${getCurrentNamespace()}/replicator/drafts/${draft.name}`}
+                  to={`/ns/${getCurrentNamespace()}/replication/drafts/${draft.name}`}
                   className={`grid-row ${classes.row}`}
                   key={draft.name}
                 >

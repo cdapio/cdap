@@ -125,7 +125,7 @@ const ActionButtonsView: React.FC<ICreateContext & WithStyles<typeof styles>> = 
   }
 
   if (redirect) {
-    let redirectLink = `/ns/${getCurrentNamespace()}/replicator`;
+    let redirectLink = `/ns/${getCurrentNamespace()}/replication`;
     if (redirect === REDIRECT_TARGET.detail) {
       redirectLink = `${redirectLink}/detail/${name}`;
     }

@@ -183,7 +183,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/pipelines" component={PipelineList} />
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
-          <Route path="/ns/:namespace/replicator" component={Replicator} />
+          <Route path="/ns/:namespace/replication" component={Replicator} />
           <Route path="/ns/:namespace/lab" component={Lab} />
           <Route
             exact
