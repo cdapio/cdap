@@ -86,13 +86,21 @@ export default class ConfirmationModal extends Component {
 
     if (this.props.disableAction) {
       actionBtn = (
-        <button className="btn btn-primary disabled-btn" disabled>
+        <button
+          className="btn btn-primary disabled-btn"
+          disabled
+          data-cy={this.props.confirmButtonText}
+        >
           {this.props.confirmButtonText}
         </button>
       );
     } else {
       actionBtn = (
-        <button className="btn btn-primary" onClick={this.props.confirmFn}>
+        <button
+          className="btn btn-primary"
+          onClick={this.props.confirmFn}
+          data-cy={this.props.confirmButtonText}
+        >
           {this.props.confirmButtonText}
         </button>
       );

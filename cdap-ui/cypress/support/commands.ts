@@ -367,6 +367,27 @@ Cypress.Commands.add('select_from_to', (from: INodeIdentifier, to: INodeIdentifi
   });
 });
 
+Cypress.Commands.add('select_connection', (from: INodeIdentifier, to: INodeIdentifier) => {
+  let fromNodeElement;
+  let toNodeElement;
+  cy.get_node(from).then((sElement) => {
+    fromNodeElement = sElement;
+    cy.get_node(to).then((tElement) => {
+      toNodeElement = tElement;
+      const sourceName = fromNodeElement[0].getAttribute('id');
+      const targetName = toNodeElement[0].getAttribute('id');
+      const connectionSelector = `.jsplumb-connector.connection-id-${sourceName}-${targetName}`;
+      cy.get(connectionSelector).then((connElement) => {
+        (connElement[0] as any)._jsPlumb._jsPlumb.instance.fire(
+          'click',
+          (connElement[0] as any)._jsPlumb
+        );
+        return cy.wrap(connElement[0]);
+      });
+    });
+  });
+});
+
 Cypress.Commands.add(
   'connect_two_nodes',
   (
@@ -523,6 +544,7 @@ Cypress.Commands.add('get_pipeline_stage_json', (stageName: string) => {
 Cypress.Commands.add('open_node_property', (element: INodeIdentifier) => {
   const { nodeName, nodeType, nodeId } = element;
   const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+  cy.get(`${elementId} .node .node-metadata .node-version`).invoke('hide');
   cy.get(`${elementId} .node .node-configure-btn`)
     .invoke('show')
     .click();

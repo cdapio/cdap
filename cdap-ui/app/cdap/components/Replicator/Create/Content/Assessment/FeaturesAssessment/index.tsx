@@ -16,22 +16,10 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { getGenericIssuesTableStyles } from 'components/Replicator/Create/Content/Assessment/tableStyles';
 
-const styles = (): StyleRules => {
-  return {
-    gridWrapper: {
-      height: '100%',
-
-      '& .grid.grid-container.grid-compact': {
-        maxHeight: '100%',
-
-        '& .grid-row': {
-          gridTemplateColumns: '1fr 2fr 1fr 1fr',
-          gridColumnGap: '50px',
-        },
-      },
-    },
-  };
+const styles = (theme): StyleRules => {
+  return getGenericIssuesTableStyles(theme);
 };
 
 interface IFeaturesAssessmentProps extends WithStyles<typeof styles> {
@@ -44,28 +32,31 @@ const FeaturesAssessmentView: React.FC<IFeaturesAssessmentProps> = ({ classes, f
   }
 
   return (
-    <div className={`grid-wrapper ${classes.gridWrapper}`}>
-      <div className="grid grid-container grid-compact">
-        <div className="grid-header">
-          <div className="grid-row">
-            <div>Issue name</div>
-            <div>Description</div>
-            <div>Suggestion</div>
-            <div>Impact</div>
+    <div className={classes.root}>
+      <div className={classes.text}>Address the following missing features</div>
+      <div className={`grid-wrapper ${classes.gridWrapper}`}>
+        <div className="grid grid-container grid-compact">
+          <div className="grid-header">
+            <div className="grid-row">
+              <div>Issue name</div>
+              <div>Description</div>
+              <div>Suggestion</div>
+              <div>Impact</div>
+            </div>
           </div>
-        </div>
 
-        <div className="grid-body">
-          {features.map((feature, i) => {
-            return (
-              <div key={`${feature.name}${i}`} className="grid-row">
-                <div>{feature.name}</div>
-                <div>{feature.description || '--'}</div>
-                <div>{feature.suggestion || '--'}</div>
-                <div>{feature.impact || '--'}</div>
-              </div>
-            );
-          })}
+          <div className="grid-body">
+            {features.map((feature, i) => {
+              return (
+                <div key={`${feature.name}${i}`} className="grid-row">
+                  <div>{feature.name}</div>
+                  <div>{feature.description || '--'}</div>
+                  <div>{feature.suggestion || '--'}</div>
+                  <div>{feature.impact || '--'}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

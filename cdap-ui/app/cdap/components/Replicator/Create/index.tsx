@@ -18,6 +18,7 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import LeftPanel from 'components/Replicator/Create/LeftPanel';
 import EntityTopPanel from 'components/EntityTopPanel';
+import TopPanel from 'components/Replicator/Create/TopPanel';
 import Content from 'components/Replicator/Create/Content';
 import { Redirect } from 'react-router-dom';
 import { objectQuery } from 'services/helpers';
@@ -326,6 +327,22 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         newState.sourcePluginInfo = sourcePluginInfo;
         newState.sourceConfig = objectQuery(source, 'plugin', 'properties') || {};
 
+        try {
+          const sourcePluginWidget = await fetchPluginWidget(
+            sourceArtifact.name,
+            sourceArtifact.version,
+            sourceArtifact.scope,
+            sourcePluginInfo.name,
+            sourcePluginInfo.type
+          ).toPromise();
+
+          newState.sourcePluginWidget = sourcePluginWidget;
+        } catch (e) {
+          // tslint:disable-next-line: no-console
+          console.log('Cannot fetch source plugin widget', e);
+          // no-op
+        }
+
         if (Object.keys(newState.sourceConfig).length > 0) {
           newState.activeStep = 2;
         }
@@ -384,6 +401,22 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
         newState.targetPluginInfo = targetPluginInfo;
         newState.targetConfig = objectQuery(target, 'plugin', 'properties') || {};
+
+        try {
+          const targetPluginWidget = await fetchPluginWidget(
+            targetArtifact.name,
+            targetArtifact.version,
+            targetArtifact.scope,
+            targetPluginInfo.name,
+            targetPluginInfo.type
+          ).toPromise();
+
+          newState.targetPluginWidget = targetPluginWidget;
+        } catch (e) {
+          // tslint:disable-next-line: no-console
+          console.log('Cannot fetch target plugin widget', e);
+          // no-op
+        }
 
         if (Object.keys(newState.targetConfig).length > 0) {
           newState.activeStep = 5;
@@ -457,7 +490,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     return (
       <CreateContext.Provider value={this.state}>
         <div className={this.props.classes.root}>
-          <EntityTopPanel title="Create new Replicator" closeBtnAnchorLink={() => history.back()} />
+          <TopPanel />
           <div className={this.props.classes.content}>
             <LeftPanel />
             <Content />

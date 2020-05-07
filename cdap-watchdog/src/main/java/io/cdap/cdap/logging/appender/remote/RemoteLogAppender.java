@@ -50,22 +50,31 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Remote log appender to push logs to log saver.
  */
 public class RemoteLogAppender extends LogAppender {
   private static final String APPENDER_NAME = "RemoteLogAppender";
-  private final RemoteLogPublisher publisher;
+
+  private final CConfiguration cConf;
+  private final DiscoveryServiceClient discoveryServiceClient;
+  private final AtomicReference<RemoteLogPublisher> publisher;
 
   @Inject
   public RemoteLogAppender(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
     setName(APPENDER_NAME);
-    this.publisher = new RemoteLogPublisher(cConf, discoveryServiceClient);
+    this.cConf = cConf;
+    this.discoveryServiceClient = discoveryServiceClient;
+    this.publisher = new AtomicReference<>();
   }
 
   @Override
   public void start() {
+    RemoteLogPublisher publisher = new RemoteLogPublisher(cConf, discoveryServiceClient);
+    Optional.ofNullable(this.publisher.getAndSet(publisher)).ifPresent(RemoteLogPublisher::stopAndWait);
     publisher.startAndWait();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
@@ -73,9 +82,9 @@ public class RemoteLogAppender extends LogAppender {
 
   @Override
   public void stop() {
-    publisher.stopAndWait();
-    addInfo("Successfully stopped " + APPENDER_NAME);
     super.stop();
+    Optional.ofNullable(this.publisher.getAndSet(null)).ifPresent(RemoteLogPublisher::stopAndWait);
+    addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
   @Override
@@ -84,7 +93,7 @@ public class RemoteLogAppender extends LogAppender {
     logMessage.getCallerData();
 
     try {
-      publisher.addMessage(logMessage);
+      publisher.get().addMessage(logMessage);
     } catch (InterruptedException e) {
       addInfo("Interrupted when adding log message to queue: " + logMessage.getFormattedMessage());
     }

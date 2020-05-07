@@ -16,22 +16,10 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { getGenericIssuesTableStyles } from 'components/Replicator/Create/Content/Assessment/tableStyles';
 
-const styles = (): StyleRules => {
-  return {
-    gridWrapper: {
-      height: '100%',
-
-      '& .grid.grid-container.grid-compact': {
-        maxHeight: '100%',
-
-        '& .grid-row': {
-          gridTemplateColumns: '1fr 2fr 1fr 1fr',
-          gridColumnGap: '50px',
-        },
-      },
-    },
-  };
+const styles = (theme): StyleRules => {
+  return getGenericIssuesTableStyles(theme);
 };
 
 interface IConnectivityAssessmentProps extends WithStyles<typeof styles> {
@@ -47,28 +35,31 @@ const ConnectivityAssessmentView: React.FC<IConnectivityAssessmentProps> = ({
   }
 
   return (
-    <div className={`grid-wrapper ${classes.gridWrapper}`}>
-      <div className="grid grid-container grid-compact">
-        <div className="grid-header">
-          <div className="grid-row">
-            <div>Issue name</div>
-            <div>Description</div>
-            <div>Suggestion</div>
-            <div>Impact</div>
+    <div className={classes.root}>
+      <div className={classes.text}>Address the following connectivity issues</div>
+      <div className={`grid-wrapper ${classes.gridWrapper}`}>
+        <div className="grid grid-container grid-compact">
+          <div className="grid-header">
+            <div className="grid-row">
+              <div>Issue name</div>
+              <div>Description</div>
+              <div>Suggestion</div>
+              <div>Impact</div>
+            </div>
           </div>
-        </div>
 
-        <div className="grid-body">
-          {connectivity.map((conn, i) => {
-            return (
-              <div key={`${conn.name}${i}`} className="grid-row">
-                <div>{conn.name}</div>
-                <div>{conn.description || '--'}</div>
-                <div>{conn.suggestion || '--'}</div>
-                <div>{conn.impact || '--'}</div>
-              </div>
-            );
-          })}
+          <div className="grid-body">
+            {connectivity.map((conn, i) => {
+              return (
+                <div key={`${conn.name}${i}`} className="grid-row">
+                  <div>{conn.name}</div>
+                  <div>{conn.description || '--'}</div>
+                  <div>{conn.suggestion || '--'}</div>
+                  <div>{conn.impact || '--'}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

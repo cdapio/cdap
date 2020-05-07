@@ -1,5 +1,5 @@
 <!--
-  Copyright © 2016-2017 Cask Data, Inc.
+  Copyright © 2016-2020 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -40,7 +40,8 @@
       <div uib-tooltip="{{ ComplexSchema.disabledTooltip }}"
             tooltip-placement="top"
             tooltip-enable="ComplexSchema.isInStudio && ComplexSchema.isDisabled && ComplexSchema.disabledTooltip"
-            tooltip-append-to-body="true">
+            tooltip-append-to-body="true"
+            id="schema-container-{{id}}">
         <div class="error"
              ng-if="ComplexSchema.error">
           {{ ComplexSchema.error }}
@@ -54,9 +55,10 @@
           </my-record-schema>
         </fieldset>
 
-        <div ng-repeat="field in ComplexSchema.parsedSchema track by $index"
+        <div ng-repeat="field in lazyLoadedParsedSchema track by field.id"
             class="field-row"
-            ng-class="{'nested-row': !field.nested}">
+            ng-class="{'nested-row': !field.nested}"
+            lazyload-id="{{$index}}">
           <div class="clearfix"
                ng-class="{'error-row': ComplexSchema.errors[field.name]}"
                data-cy="schema-row-{{$index}}">
@@ -77,7 +79,6 @@
                        data-cy="schema-row-field-name-input-{{$index}}">
               </div>
             </div>
-
             <div class="type-column">
               <div class="select-wrapper">
                 <select class="form-control"
@@ -114,13 +115,17 @@
           <span class="error" data-cy="schema-row-error-{{$index}}">
             {{ComplexSchema.errors[field.name] }}
           </span>
-
           <my-embedded-schema-selector
             type="field.type"
             display-type="field.displayType"
             parent-format-output="ComplexSchema.formatOutput()"
-            is-disabled="ComplexSchema.isDisabled">
+            is-disabled="ComplexSchema.isDisabled"
+            collapse="field.collapse">
           </my-embedded-schema-selector>
+        </div>
+        <div ng-if="ComplexSchema.lazyloading && ComplexSchema.parsedSchema.length > 100">
+          <div class="text-center fa fa-spin fa-spinner"></div>
+          Loading...
         </div>
       </div>
     </fieldset>

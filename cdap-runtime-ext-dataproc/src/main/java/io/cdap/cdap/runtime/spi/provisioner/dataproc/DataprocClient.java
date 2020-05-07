@@ -403,6 +403,8 @@ final class DataprocClient implements AutoCloseable {
                         Boolean.toString(conf.isStackdriverLoggingEnabled()));
       clusterProperties.put("dataproc:dataproc.monitoring.stackdriver.enable",
                         Boolean.toString(conf.isStackdriverMonitoringEnabled()));
+      // enable container logs by default for ephemeral clusters.
+      clusterProperties.put("yarn:yarn.nodemanager.delete.debug-delay-sec", "86400");
 
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
