@@ -62,20 +62,14 @@ export default class ApplicationUploadWizard extends Component {
     let appName = uploadResponse.slice(uploadResponse.indexOf('app') + 4);
     let namespace = NamespaceStore.getState().selectedNamespace;
     let message = T.translate('features.Wizard.ApplicationUpload.success', { appName });
-    let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     this.setState({
       successInfo: {
         message,
-        buttonLabel,
-        buttonUrl: window.getAbsUIUrl({
-          namespaceId: namespace,
-          appId: appName,
-        }),
         linkLabel,
-        linkUrl: window.getAbsUIUrl({
+        linkUrl: `${window.getAbsUIUrl({
           namespaceId: namespace,
-        }),
+        })}/control`,
       },
     });
   }

@@ -110,9 +110,9 @@ export default class MarketHydratorPluginUpload extends Component {
           },
         }),
         linkLabel,
-        linkUrl: window.getAbsUIUrl({
+        linkUrl: `${window.getAbsUIUrl({
           namespaceId: namespace,
-        }),
+        })}/control`,
       },
     });
   }

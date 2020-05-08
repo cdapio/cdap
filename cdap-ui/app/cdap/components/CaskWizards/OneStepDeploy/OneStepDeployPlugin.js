@@ -66,9 +66,9 @@ export default class OneStepDeployPlugin extends Component {
         },
       }),
       linkLabel,
-      linkUrl: window.getAbsUIUrl({
+      linkUrl: `${window.getAbsUIUrl({
         namespaceId: namespace,
-      }),
+      })}/control`,
     };
     return successInfo;
   }
