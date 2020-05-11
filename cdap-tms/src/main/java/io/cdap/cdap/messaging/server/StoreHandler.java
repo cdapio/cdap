@@ -18,7 +18,11 @@ package io.cdap.cdap.messaging.server;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.SpillableBodyConsumer;
 import io.cdap.cdap.common.io.ByteBuffers;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.RollbackDetail;
 import io.cdap.cdap.messaging.Schemas;
@@ -26,6 +30,7 @@ import io.cdap.cdap.messaging.StoreRequest;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.TopicId;
 import io.cdap.http.AbstractHttpHandler;
+import io.cdap.http.BodyConsumer;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
@@ -48,8 +53,11 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
 import java.util.Iterator;
 import java.util.List;
 import javax.ws.rs.POST;
@@ -62,56 +70,70 @@ import javax.ws.rs.PathParam;
 @Path("/v1/namespaces/{namespace}/topics/{topic}")
 public final class StoreHandler extends AbstractHttpHandler {
 
+  private final java.nio.file.Path tempDir;
+  private final int bufferSize;
   private final MessagingService messagingService;
 
   @Inject
-  StoreHandler(MessagingService messagingService) {
+  StoreHandler(CConfiguration cConf, MessagingService messagingService) {
+    this.tempDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR), cConf.get(Constants.AppFabric.TEMP_DIR)).toPath();
+    this.bufferSize = cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB) * 1024 * 1024;
     this.messagingService = messagingService;
+
+    DirUtils.mkdirs(tempDir.toFile());
   }
 
   @POST
   @Path("/publish")
-  public void publish(FullHttpRequest request, HttpResponder responder,
-                      @PathParam("namespace") String namespace,
-                      @PathParam("topic") String topic) throws Exception {
+  public BodyConsumer publish(HttpRequest request, HttpResponder responder,
+                              @PathParam("namespace") String namespace,
+                              @PathParam("topic") String topic) throws Exception {
 
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    StoreRequest storeRequest = createStoreRequest(topicId, request);
-
-    // Empty payload is only allowed for transactional publish
-    if (!storeRequest.isTransactional() && !storeRequest.hasPayload()) {
-      throw new BadRequestException("Empty payload is only allowed for publishing transactional message. Topic: "
-                                      + topicId);
-    }
-
-    // Publish the message and response with the rollback information
-    RollbackDetail rollbackInfo = messagingService.publish(storeRequest);
-    if (rollbackInfo == null) {
-      // Non-tx publish doesn't have rollback info.
-      responder.sendStatus(HttpResponseStatus.OK);
-      return;
-    }
-    ByteBuf response = encodeRollbackDetail(rollbackInfo);
-    responder.sendContent(HttpResponseStatus.OK, response,
-                          new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
+    return new SpillableBodyConsumer(Files.createTempFile(tempDir, "tms.publish", ".tmp"), bufferSize) {
+      @Override
+      protected void processInput(InputStream inputStream, HttpResponder responder) throws Exception {
+        StoreRequest storeRequest = createStoreRequest(topicId, request, inputStream);
+        // Empty payload is only allowed for transactional publish
+        if (!storeRequest.isTransactional() && !storeRequest.hasPayload()) {
+          throw new BadRequestException("Empty payload is only allowed for publishing transactional message. Topic: "
+                                          + topicId);
+        }
+        // Publish the message and response with the rollback information
+        RollbackDetail rollbackInfo = messagingService.publish(storeRequest);
+        if (rollbackInfo == null) {
+          // Non-tx publish doesn't have rollback info.
+          responder.sendStatus(HttpResponseStatus.OK);
+        } else {
+          ByteBuf response = encodeRollbackDetail(rollbackInfo);
+          responder.sendContent(HttpResponseStatus.OK, response,
+                                new DefaultHttpHeaders().set(HttpHeaderNames.CONTENT_TYPE, "avro/binary"));
+        }
+      }
+    };
   }
 
   @POST
   @Path("/store")
-  public void store(FullHttpRequest request, HttpResponder responder,
-                    @PathParam("namespace") String namespace,
-                    @PathParam("topic") String topic) throws Exception {
+  public BodyConsumer store(HttpRequest request, HttpResponder responder,
+                            @PathParam("namespace") String namespace,
+                            @PathParam("topic") String topic) throws Exception {
 
     TopicId topicId = new NamespaceId(namespace).topic(topic);
-    StoreRequest storeRequest = createStoreRequest(topicId, request);
+    return new SpillableBodyConsumer(Files.createTempFile(tempDir, "tms.store", ".tmp"), bufferSize) {
+      @Override
+      protected void processInput(InputStream inputStream, HttpResponder responder) throws Exception {
+        StoreRequest storeRequest = createStoreRequest(topicId, request, inputStream);
 
-    // It must be transactional with payload for store request
-    if (!storeRequest.isTransactional() || !storeRequest.hasPayload()) {
-      throw new BadRequestException("Store request must be transactional with payload. Topic: " + topicId);
-    }
+        // It must be transactional with payload for store request
+        if (!storeRequest.isTransactional() || !storeRequest.hasPayload()) {
+          throw new BadRequestException("Store request must be transactional with payload. Topic: " + topicId);
+        }
 
-    messagingService.storePayload(storeRequest);
-    responder.sendStatus(HttpResponseStatus.OK);
+        messagingService.storePayload(storeRequest);
+        responder.sendStatus(HttpResponseStatus.OK);
+      }
+    };
   }
 
   @POST
@@ -130,13 +152,14 @@ public final class StoreHandler extends AbstractHttpHandler {
   /**
    * Creates a {@link StoreRequest} instance based on the given {@link HttpRequest}.
    */
-  private StoreRequest createStoreRequest(TopicId topicId, FullHttpRequest request) throws Exception {
+  private StoreRequest createStoreRequest(TopicId topicId,
+                                          HttpRequest request, InputStream is) throws BadRequestException, IOException {
     // Currently only support avro
     if (!"avro/binary".equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
       throw new BadRequestException("Only avro/binary content type is supported.");
     }
 
-    Decoder decoder = DecoderFactory.get().directBinaryDecoder(new ByteBufInputStream(request.content()), null);
+    Decoder decoder = DecoderFactory.get().directBinaryDecoder(is, null);
     DatumReader<GenericRecord> datumReader = new GenericDatumReader<>(Schemas.V1.PublishRequest.SCHEMA);
     return new GenericRecordStoreRequest(topicId, datumReader.read(null, decoder));
   }
