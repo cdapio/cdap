@@ -35,7 +35,6 @@ import io.cdap.cdap.etl.api.StageLifecycle;
  * If the joiner is being used in spark, both the join key and input record must implement the
  * {@link java.io.Serializable} interface.
  *
- *
  * @param <JOIN_KEY> type of join key. Must be a supported type
  * @param <INPUT_RECORD> type of input record. Must be a supported type
  * @param <OUT> type of output object
