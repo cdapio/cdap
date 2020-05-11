@@ -16,11 +16,8 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { detailContextConnect, IDetailContext } from 'components/Replicator/Detail';
+import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import { generateTableKey } from 'components/Replicator/utilities';
-import { Map } from 'immutable';
-import { MyReplicatorApi } from 'api/replicator';
-import { getCurrentNamespace } from 'services/NamespaceStore';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
@@ -28,20 +25,6 @@ import debounce from 'lodash/debounce';
 
 const styles = (): StyleRules => {
   return {
-    root: {
-      '& > .grid-wrapper': {
-        height: '100%',
-
-        '& .grid.grid-container.grid-compact': {
-          maxHeight: '500px',
-
-          '& .grid-row': {
-            gridTemplateColumns: '150px 2fr 1fr',
-          },
-        },
-      },
-    },
-
     subtitle: {
       marginTop: '10px',
       marginBottom: '10px',
@@ -51,6 +34,11 @@ const styles = (): StyleRules => {
 
       '& > div:last-child': {
         textAlign: 'right',
+      },
+    },
+    gridWrapper: {
+      '& > .grid.grid-container': {
+        maxHeight: '500px',
       },
     },
     search: {
@@ -64,14 +52,11 @@ const styles = (): StyleRules => {
   };
 };
 
-const TablesListView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
+const TableListView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  name,
   tables,
   columns,
-  offsetBasePath,
 }) => {
-  const [statusMap, setStatusMap] = React.useState(Map());
   const [filteredTables, setFilteredTables] = React.useState(tables.toList());
   const [search, setSearch] = React.useState('');
 
@@ -85,53 +70,18 @@ const TablesListView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
       return;
     }
 
-    const filteredList = tables
-      .filter((row) => {
-        const normalizedTable = row.get('table').toLowerCase();
-        const normalizedSearch = search.toLowerCase();
+    const filteredList = tables.toList().filter((row) => {
+      const normalizedTable = row.get('table').toLowerCase();
+      const normalizedSearch = search.toLowerCase();
 
-        return normalizedTable.indexOf(normalizedSearch) !== -1;
-      })
-      .toList();
+      return normalizedTable.indexOf(normalizedSearch) !== -1;
+    });
 
     setFilteredTables(filteredList);
   }, 300);
 
   // handle search query change
-  React.useEffect(filterTableBySearch, [search, tables]);
-
-  React.useEffect(() => {
-    if (!offsetBasePath || offsetBasePath.length === 0) {
-      return;
-    }
-
-    const params = {
-      namespace: getCurrentNamespace(),
-    };
-
-    const body = {
-      name,
-      offsetBasePath,
-    };
-
-    // TODO: optimize polling
-    // Don't poll when status is not running
-    const statusPoll$ = MyReplicatorApi.pollTableStatus(params, body).subscribe((res) => {
-      const tableStatus = res.tables;
-
-      let status = Map();
-      tableStatus.forEach((tableInfo) => {
-        const tableKey = generateTableKey(tableInfo);
-        status = status.set(tableKey, tableInfo.state);
-      });
-
-      setStatusMap(status);
-    });
-
-    return () => {
-      statusPoll$.unsubscribe();
-    };
-  }, [offsetBasePath]);
+  React.useEffect(filterTableBySearch, [search]);
 
   return (
     <div className={classes.root}>
@@ -157,28 +107,28 @@ const TablesListView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
         </div>
       </div>
 
-      <div className="grid-wrapper">
+      <div className={`grid-wrapper ${classes.gridWrapper}`}>
         <div className="grid grid-container grid-compact">
           <div className="grid-header">
             <div className="grid-row">
-              <div>Status</div>
               <div>Table name</div>
-              <div>Selected columns</div>
+              <div>Number of columns</div>
             </div>
           </div>
 
           <div className="grid-body">
-            {filteredTables.toList().map((row) => {
+            {filteredTables.map((row) => {
               const tableKey = generateTableKey(row);
-
-              const tableColumns = columns.get(tableKey);
-              const numColumns = tableColumns ? tableColumns.size : 0;
+              const selectedColumns = columns.get(tableKey);
 
               return (
-                <div className="grid-row" key={tableKey.toString()}>
-                  <div>{statusMap.get(tableKey) || '--'}</div>
+                <div key={tableKey} className="grid-row">
                   <div>{row.get('table')}</div>
-                  <div>{numColumns === 0 ? 'All' : numColumns}</div>
+                  <div>
+                    {selectedColumns && selectedColumns.size > 0
+                      ? selectedColumns.size
+                      : 'All available'}
+                  </div>
                 </div>
               );
             })}
@@ -189,6 +139,6 @@ const TablesListView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
   );
 };
 
-const StyledTablesList = withStyles(styles)(TablesListView);
-const TablesList = detailContextConnect(StyledTablesList);
-export default TablesList;
+const StyledTableList = withStyles(styles)(TableListView);
+const TableList = createContextConnect(StyledTableList);
+export default TableList;

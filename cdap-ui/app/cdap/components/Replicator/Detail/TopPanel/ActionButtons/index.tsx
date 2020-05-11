@@ -48,9 +48,12 @@ const ActionButtonsView: React.FC<IDetailContext & WithStyles<typeof styles>> = 
   status,
 }) => {
   const startDisabled =
-    [PROGRAM_STATUSES.RUNNING, PROGRAM_STATUSES.STOPPING, PROGRAM_STATUSES.STARTING].indexOf(
-      status
-    ) !== -1;
+    [
+      PROGRAM_STATUSES.RUNNING,
+      PROGRAM_STATUSES.STOPPING,
+      PROGRAM_STATUSES.STARTING,
+      PROGRAM_STATUSES.PENDING,
+    ].indexOf(status) !== -1;
 
   return (
     <div className={classes.root}>
@@ -60,7 +63,7 @@ const ActionButtonsView: React.FC<IDetailContext & WithStyles<typeof styles>> = 
         icon={<IconSVG name="icon-stop" className={classes.stopBtn} />}
         text="Stop"
         onClick={stop}
-        disabled={status !== PROGRAM_STATUSES.RUNNING || status === PROGRAM_STATUSES.STOPPING}
+        disabled={status !== PROGRAM_STATUSES.RUNNING && status !== PROGRAM_STATUSES.PENDING}
       />
 
       <ActionButton

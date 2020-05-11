@@ -260,5 +260,9 @@ export function constructTablesSelection(tables, columns, dmlBlacklist) {
 }
 
 export function extractErrorMessage(errObj) {
+  if (typeof errObj === 'string') {
+    return errObj;
+  }
+
   return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
 }

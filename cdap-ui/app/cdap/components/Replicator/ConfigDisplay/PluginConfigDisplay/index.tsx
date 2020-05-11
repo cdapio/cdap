@@ -26,13 +26,20 @@ const styles = (theme): StyleRules => {
       display: 'grid',
       gridTemplateColumns: '30% 60%',
       borderTop: `1px solid ${theme.palette.grey[300]}`,
-      padding: `5px 10px`,
+      padding: `5px 0`,
       '&:last-child': {
         borderBottom: `1px solid ${theme.palette.grey[300]}`,
       },
       '& > div': {
         wordBreak: 'break-word',
       },
+    },
+    label: {
+      color: theme.palette.grey[100],
+      paddingRight: '5px',
+    },
+    heading: {
+      marginBottom: '15px',
     },
   };
 };
@@ -100,7 +107,7 @@ const PluginConfigDisplayView: React.FC<IPluginConfigProps> = ({
 
   return (
     <div>
-      <Heading type={HeadingTypes.h3} label={displayName} />
+      <Heading type={HeadingTypes.h4} label={displayName} className={classes.heading} />
 
       <div className={classes.configContainer}>
         {config.map((property) => {
@@ -110,7 +117,7 @@ const PluginConfigDisplayView: React.FC<IPluginConfigProps> = ({
 
           return (
             <div key={property.name} className={classes.configRow}>
-              <div>
+              <div className={classes.label}>
                 <strong>{property.label}</strong>
               </div>
               <div>{property.value}</div>
