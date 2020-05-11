@@ -50,11 +50,20 @@ import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -127,6 +136,8 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final String LOCALIZED_CONF_DIR = SparkPackageUtils.LOCALIZED_CONF_DIR;
   // File entry name of the SparkConf properties file inside the Spark conf zip
   private static final String SPARK_CONF_FILE = "__spark_conf__.properties";
+  private static final String UNMODIFIABLE_SERIALIZERS_TYPE_FORMAT =
+    "io/cdap/cdap/app/runtime/spark/serializer/Unmodifiable%sSerializer";
 
   private final Function<String, InputStream> resourceLookup;
   private final boolean rewriteYarnClient;
@@ -351,7 +362,7 @@ public class SparkClassRewriter implements ClassRewriter {
     // Map from getResource* methods to the method signature
     // (can be null, since only method that has generic has signature)
     final Map<Method, String> resourceMethods = new HashMap<>();
-    Method method = new Method("getResource", Type.getType(URL.class), new Type[]{Type.getType(String.class)});
+    Method method = new Method("getResource", Type.getType(URL.class), new Type[] { Type.getType(String.class) });
     resourceMethods.put(method, null);
 
     method = new Method("getResources", Type.getType(Enumeration.class), new Type[] { Type.getType(String.class) });
@@ -393,10 +404,10 @@ public class SparkClassRewriter implements ClassRewriter {
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
             // If there is a call to `super()`, skip that instruction and have the onMethodEnter generate the call
             if (opcode == Opcodes.INVOKESPECIAL
-                && Type.getObjectType(owner).equals(classloaderType)
-                && name.equals("<init>")
-                && Type.getArgumentTypes(desc).length == 0
-                && Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
+              && Type.getObjectType(owner).equals(classloaderType)
+              && name.equals("<init>")
+              && Type.getArgumentTypes(desc).length == 0
+              && Type.getReturnType(desc).equals(Type.VOID_TYPE)) {
               // Generate `super(null)`. The `this` is already in the stack, so no need to `loadThis()`
               push((Type) null);
               invokeConstructor(classloaderType, new Method("<init>", Type.VOID_TYPE, new Type[] { classloaderType }));
@@ -459,7 +470,7 @@ public class SparkClassRewriter implements ClassRewriter {
         generatorAdapter.push(SCHEMA_SERIALIZER_TYPE);
         generatorAdapter.invokeVirtual(KRYO_TYPE,
                                        new Method("addDefaultSerializer", Type.VOID_TYPE,
-                                                  new Type[] { Type.getType(Class.class), Type.getType(Class.class)}));
+                                                  new Type[] { Type.getType(Class.class), Type.getType(Class.class) }));
 
         // Register serializer for StructuredRecord
         // addDefaultSerializer(StructuredRecord.class, StructuredRecordSerializer.class);
@@ -468,7 +479,37 @@ public class SparkClassRewriter implements ClassRewriter {
         generatorAdapter.push(STRUCTURED_RECORD_SERIALIZER_TYPE);
         generatorAdapter.invokeVirtual(KRYO_TYPE,
                                        new Method("addDefaultSerializer", Type.VOID_TYPE,
-                                                  new Type[] { Type.getType(Class.class), Type.getType(Class.class)}));
+                                                  new Type[] { Type.getType(Class.class), Type.getType(Class.class) }));
+
+        // Register serializer for all Unmodifiable classes within Collections. Ex:
+        // addDefaultSerializer(Collections.unmodifiableMap(new HashMap<>()).getClass(),
+        //                      UnmodifiableMapSerializer.class);
+        List<UnmodifiableData> unmodifableTypesData = Arrays.asList(
+          new UnmodifiableData("Collection", Collection.class, LinkedList.class),
+          new UnmodifiableData("List", List.class, LinkedList.class),
+          new UnmodifiableData("Set", Set.class, LinkedHashSet.class),
+          new UnmodifiableData("SortedSet", SortedSet.class, TreeSet.class),
+          new UnmodifiableData("Map", Map.class, LinkedHashMap.class),
+          new UnmodifiableData("SortedMap", SortedMap.class, TreeMap.class)
+        );
+
+        for (UnmodifiableData unmodifableTypesDatum : unmodifableTypesData) {
+          generatorAdapter.loadThis();
+          generatorAdapter.newInstance(unmodifableTypesDatum.implementationType);
+          generatorAdapter.dup();
+          generatorAdapter
+            .invokeConstructor(unmodifableTypesDatum.implementationType, Methods.getMethod(void.class, "<init>"));
+          generatorAdapter.invokeStatic(Type.getType(Collections.class),
+                                        Methods.getMethod(unmodifableTypesDatum.unmodifiableClass,
+                                                          unmodifableTypesDatum.getCollectionsConstructorName(),
+                                                          unmodifableTypesDatum.unmodifiableClass));
+          generatorAdapter.invokeVirtual(Type.getType(Object.class), Methods.getMethod(Class.class, "getClass"));
+          generatorAdapter.push(unmodifableTypesDatum.serializerType);
+          generatorAdapter.invokeVirtual(KRYO_TYPE,
+                                         new Method("addDefaultSerializer", Type.VOID_TYPE,
+                                                    new Type[] { Type.getType(Class.class), Type.getType(
+                                                      Class.class) }));
+        }
       }
     });
   }
@@ -476,9 +517,9 @@ public class SparkClassRewriter implements ClassRewriter {
   /**
    * Rewrites the constructors who don't delegate to other constructor with the given {@link ConstructorRewriter}.
    *
-   * @param classType type of the class to be defined
+   * @param classType      type of the class to be defined
    * @param byteCodeStream {@link InputStream} for reading the original bytecode of the class
-   * @param rewriter a {@link ConstructorRewriter} for rewriting the constructor
+   * @param rewriter       a {@link ConstructorRewriter} for rewriting the constructor
    * @return the rewritten bytecode
    */
   private byte[] rewriteConstructor(final Type classType, InputStream byteCodeStream,
@@ -539,8 +580,6 @@ public class SparkClassRewriter implements ClassRewriter {
 
     return cw.toByteArray();
   }
-
-
 
   /**
    * Rewrites a class by rewriting all calls to {@link System#setProperty(String, String)} to
@@ -1080,7 +1119,7 @@ public class SparkClassRewriter implements ClassRewriter {
         // call SparkRuntimeUtils.createConfArchive, return a File and leave it in stack
         mg.invokeStatic(SPARK_RUNTIME_UTILS_TYPE,
                         new Method("createConfArchive", fileType,
-                                   new Type[] { SPARK_CONF_TYPE, stringType, stringType, fileType}));
+                                   new Type[] { SPARK_CONF_TYPE, stringType, stringType, fileType }));
         if (isReturnFile) {
           // Spark 1.5+ return type is File, hence just return the File from the stack
           mg.returnValue();
@@ -1182,7 +1221,7 @@ public class SparkClassRewriter implements ClassRewriter {
       adapter.invokeVirtual(runtimeContextType, new Method("getProgram", programType, EMPTY_ARGS));
       adapter.invokeInterface(programType, new Method("getMainClassName", STRING_TYPE, EMPTY_ARGS));
       adapter.invokeStatic(loggerFactoryType,
-                           new Method("getLogger", loggerType, new Type[]{STRING_TYPE}));
+                           new Method("getLogger", loggerType, new Type[] { STRING_TYPE }));
 
       // Only write back to stdout/stderr if in distributed mode, which is on separate file
       // In local mode, we don't want the same log appear two in the log file.
@@ -1196,4 +1235,27 @@ public class SparkClassRewriter implements ClassRewriter {
                                       new Type[] { loggerType, PRINT_STREAM_TYPE }));
     }
   }
+
+  /**
+   * Helper class to hold data for modifying Kryo Serializer constructor to add serializer for
+   * Collections.unmodifiable types
+   */
+  private static class UnmodifiableData {
+    final Class<?> unmodifiableClass;
+    final Type implementationType;
+    final Type serializerType;
+    final String name;
+
+    UnmodifiableData(String name, Class<?> ununmodifiableClass, Class<?> implementationClass) {
+      this.unmodifiableClass = ununmodifiableClass;
+      this.implementationType = Type.getType(implementationClass);
+      this.serializerType = Type.getObjectType(String.format(UNMODIFIABLE_SERIALIZERS_TYPE_FORMAT, name));
+      this.name = name;
+    }
+
+    String getCollectionsConstructorName() {
+      return "unmodifiable" + name;
+    }
+  }
+
 }
