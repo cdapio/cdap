@@ -23,7 +23,6 @@ import DisplaySwitch from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/D
 import DatasetList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/DatasetList';
 import TableList from 'components/DataPrep/DataPrepBrowser/BigQueryBrowser/TableList';
 import { Route, Switch } from 'react-router-dom';
-import Page404 from 'components/404';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 
@@ -72,7 +71,6 @@ export default class BiqQueryBrowser extends Component {
                 path="/ns/:namespace/connections/bigquery/:connectionId/datasets/:datasetId"
                 render={(routeProps) => <TableList {...routeProps} scope={this.props.scope} />}
               />
-              <Route render={Page404} />
             </Switch>
           ) : (
             <DisplaySwitch
