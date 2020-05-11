@@ -29,11 +29,153 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  * Unit tests for various Kryo serializers in CDAP.
  */
 public class KryoSerializerTest {
+
+  @Test
+  public void testUnmodifiableSortedSetSerializer() {
+    SortedSet<String> tempSortedSet = new TreeSet<>();
+    tempSortedSet.addAll(Arrays.asList("This is a test string in a list".split(" ")));
+    SortedSet unmodifableSortedSet = Collections.unmodifiableSortedSet(tempSortedSet);
+
+    Kryo kryo = new Kryo();
+    Class<?> sortedSetClass = Collections.unmodifiableSortedSet(new TreeSet<>()).getClass();
+    kryo.addDefaultSerializer(sortedSetClass, UnmodifiableSortedSetSerializer.class);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (Output output = new Output(bos)) {
+      kryo.writeObject(output, unmodifableSortedSet);
+    }
+
+    Input input = new Input(bos.toByteArray());
+    SortedSet newSortedSet = (SortedSet) kryo.readObject(input, sortedSetClass);
+
+    Assert.assertEquals(unmodifableSortedSet, newSortedSet);
+  }
+
+  @Test
+  public void testUnmodifiableCollectionSerializer() {
+    Collection unmodifableCollection = Collections
+      .unmodifiableCollection(Arrays.asList("This is a test string in a list".split(" ")));
+
+    Kryo kryo = new Kryo();
+    Class<?> collectionClass = Collections.unmodifiableCollection(new LinkedList<>()).getClass();
+    kryo.addDefaultSerializer(collectionClass, UnmodifiableCollectionSerializer.class);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (Output output = new Output(bos)) {
+      kryo.writeObject(output, unmodifableCollection);
+    }
+
+    Input input = new Input(bos.toByteArray());
+    Collection newCollection = (Collection) kryo.readObject(input, collectionClass);
+
+    Assert.assertEquals(unmodifableCollection.toArray(), newCollection.toArray());
+  }
+
+  @Test
+  public void testUnmodifiableSetSerializer() {
+    Set<String> tempSet = new HashSet<String>();
+    tempSet.addAll(Arrays.asList("This is a test string in a list".split(" ")));
+    Set unmodifableSet = Collections.unmodifiableSet(tempSet);
+
+    Kryo kryo = new Kryo();
+    Class<?> setClass = Collections.unmodifiableSet(new HashSet<>()).getClass();
+    kryo.addDefaultSerializer(setClass, UnmodifiableSetSerializer.class);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (Output output = new Output(bos)) {
+      kryo.writeObject(output, unmodifableSet);
+    }
+
+    Input input = new Input(bos.toByteArray());
+    Set newSet = (Set) kryo.readObject(input, setClass);
+
+    Assert.assertEquals(unmodifableSet, newSet);
+  }
+
+  @Test
+  public void testUnmodifiableListSerializer() {
+    List unmodifableList = Collections.unmodifiableList(Arrays.asList("This is a test string in a list".split(" ")));
+
+    Kryo kryo = new Kryo();
+    Class<?> listClass = Collections.unmodifiableList(new LinkedList<>()).getClass();
+    kryo.addDefaultSerializer(listClass, UnmodifiableListSerializer.class);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (Output output = new Output(bos)) {
+      kryo.writeObject(output, unmodifableList);
+    }
+
+    Input input = new Input(bos.toByteArray());
+    List newList = (List) kryo.readObject(input, listClass);
+
+    Assert.assertEquals(unmodifableList, newList);
+  }
+
+  @Test
+  public void testUnmodifiableMapSerializer() {
+    HashMap<Integer, Integer> squaresMap = new HashMap<>();
+    for (int i = 0; i < 10; i++) {
+      squaresMap.put(i, i * i);
+    }
+
+    Map<Integer, Integer> unmodifiableMap = Collections.unmodifiableMap(squaresMap);
+    Kryo kryo = new Kryo();
+    Class<?> mapClass = Collections.unmodifiableMap(new HashMap<>()).getClass();
+    kryo.addDefaultSerializer(mapClass, UnmodifiableMapSerializer.class);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (Output output = new Output(bos)) {
+      kryo.writeObject(output, unmodifiableMap);
+    }
+
+    Input input = new Input(bos.toByteArray());
+    Map newMap = (Map) kryo.readObject(input, mapClass);
+
+    Assert.assertEquals(unmodifiableMap, newMap);
+  }
+
+  @Test
+  public void testUnmodifiableSortedMapSerializer() {
+    SortedMap<Integer, Integer> squaresMap = new TreeMap<>();
+    for (int i = 0; i < 10; i++) {
+      squaresMap.put(i, i * i);
+    }
+
+    SortedMap<Integer, Integer> unmodifiableSortedMap = Collections.unmodifiableSortedMap(squaresMap);
+    Kryo kryo = new Kryo();
+    Class<?> sortedMapClass = Collections.unmodifiableSortedMap(new TreeMap<>()).getClass();
+    kryo.addDefaultSerializer(sortedMapClass, UnmodifiableSortedMapSerializer.class);
+
+    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+    try (Output output = new Output(bos)) {
+      kryo.writeObject(output, unmodifiableSortedMap);
+    }
+
+    Input input = new Input(bos.toByteArray());
+    SortedMap newSortedMap = (SortedMap) kryo.readObject(input, sortedMapClass);
+
+    Assert.assertEquals(unmodifiableSortedMap, newSortedMap);
+  }
 
   @Test
   public void testSchemaSerializer() {
@@ -96,19 +238,21 @@ public class KryoSerializerTest {
       "node", Schema.Field.of("children", Schema.nullableOf(Schema.arrayOf(Schema.recordOf("node")))));
 
     return Schema.recordOf("record",
-      Schema.Field.of("boolean", Schema.of(Schema.Type.BOOLEAN)),
-      Schema.Field.of("int", Schema.of(Schema.Type.INT)),
-      Schema.Field.of("long", Schema.of(Schema.Type.LONG)),
-      Schema.Field.of("float", Schema.of(Schema.Type.FLOAT)),
-      Schema.Field.of("double", Schema.of(Schema.Type.DOUBLE)),
-      Schema.Field.of("string", Schema.of(Schema.Type.STRING)),
-      Schema.Field.of("bytes", Schema.of(Schema.Type.BYTES)),
-      Schema.Field.of("ts", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
-      Schema.Field.of("enum", Schema.enumWith("a", "b", "c")),
-      Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.INT))),
-      Schema.Field.of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
-      Schema.Field.of("union", Schema.unionOf(Schema.of(Schema.Type.NULL), Schema.of(Schema.Type.STRING))),
-      Schema.Field.of("node", nodeSchema)
+                           Schema.Field.of("boolean", Schema.of(Schema.Type.BOOLEAN)),
+                           Schema.Field.of("int", Schema.of(Schema.Type.INT)),
+                           Schema.Field.of("long", Schema.of(Schema.Type.LONG)),
+                           Schema.Field.of("float", Schema.of(Schema.Type.FLOAT)),
+                           Schema.Field.of("double", Schema.of(Schema.Type.DOUBLE)),
+                           Schema.Field.of("string", Schema.of(Schema.Type.STRING)),
+                           Schema.Field.of("bytes", Schema.of(Schema.Type.BYTES)),
+                           Schema.Field.of("ts", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
+                           Schema.Field.of("enum", Schema.enumWith("a", "b", "c")),
+                           Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.INT))),
+                           Schema.Field
+                             .of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
+                           Schema.Field
+                             .of("union", Schema.unionOf(Schema.of(Schema.Type.NULL), Schema.of(Schema.Type.STRING))),
+                           Schema.Field.of("node", nodeSchema)
     );
   }
 }
