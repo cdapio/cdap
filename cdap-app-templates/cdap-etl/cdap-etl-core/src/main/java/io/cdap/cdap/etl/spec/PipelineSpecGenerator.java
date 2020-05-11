@@ -43,11 +43,15 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.join.AutoJoiner;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.ArtifactSelectorProvider;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
 import io.cdap.cdap.etl.planner.Dag;
@@ -277,10 +281,21 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     Object plugin = getPlugin(stageName, etlPlugin, pluginSelector, type, pluginName, collector);
+    JoinDefinition joinDefinition = null;
     try {
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
         multiPlugin.configurePipeline(pipelineConfigurer);
+        // A 'batchJoiner' plugin can be either a BatchJoiner or a BatchAutoJoiner.
+        // This is because we want to allow a Joiner plugin to switch from using the BatchJoiner interface
+        // to the BatchAutoJoiner while preserving backwards compatibility in the pipeline config.
+        if (plugin instanceof AutoJoiner) {
+          AutoJoinerContext autoContext = new DefaultAutoJoinerContext(stageConfigurer.getInputSchemas());
+          joinDefinition = ((AutoJoiner) plugin).define(autoContext);
+          if (joinDefinition != null) {
+            stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
+          }
+        }
       } else if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
         MultiOutputPipelineConfigurable multiOutputPlugin = (MultiOutputPipelineConfigurable) plugin;
         multiOutputPlugin.configurePipeline(pipelineConfigurer);
