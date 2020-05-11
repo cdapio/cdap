@@ -25,7 +25,6 @@ import {
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import BucketDataView from 'components/DataPrep/DataPrepBrowser/S3Browser/BucketData';
 import { Route, Switch } from 'react-router-dom';
-import Page404 from 'components/404';
 import { Provider } from 'react-redux';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
@@ -107,7 +106,6 @@ export default class S3Browser extends Component {
               return <BucketDataView {...this.props} onWorkspaceCreate={this.onWorkspaceCreate} />;
             }}
           />
-          <Route render={Page404} />
         </Switch>
       );
     }

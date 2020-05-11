@@ -23,7 +23,6 @@ import SpannerInstanceList from 'components/DataPrep/DataPrepBrowser/SpannerBrow
 import SpannerDatabaseList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/DatabaseList';
 import SpannerTableList from 'components/DataPrep/DataPrepBrowser/SpannerBrowser/TableList';
 import { Route, Switch } from 'react-router-dom';
-import Page404 from 'components/404';
 import DataPrepBrowserPageTitle from 'components/DataPrep/DataPrepBrowser/PageTitle';
 import DataprepBrowserTopPanel from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserTopPanel';
 
@@ -75,7 +74,6 @@ export default class SpannerBrowser extends React.PureComponent<ISpannerBrowserP
                   <SpannerTableList {...routeParams} scope={this.props.scope} />
                 )}
               />
-              <Route render={Page404} />
             </Switch>
           ) : (
             <SpannerDisplaySwitch

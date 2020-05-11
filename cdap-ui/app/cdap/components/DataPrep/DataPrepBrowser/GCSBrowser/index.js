@@ -23,7 +23,6 @@ import {
   setError,
 } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
 import { Route, Switch } from 'react-router-dom';
-import Page404 from 'components/404';
 import { Provider } from 'react-redux';
 import MyDataPrepApi from 'api/dataprep';
 import NamespaceStore from 'services/NamespaceStore';
@@ -102,7 +101,6 @@ export default class GCSBrowser extends Component {
               return <BrowserData {...this.props} onWorkspaceCreate={this.onWorkspaceCreate} />;
             }}
           />
-          <Route render={Page404} />
         </Switch>
       );
     }
