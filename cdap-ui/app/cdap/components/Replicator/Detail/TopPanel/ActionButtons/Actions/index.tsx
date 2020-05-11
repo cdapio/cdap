@@ -18,7 +18,7 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { detailContextConnect, IDetailContext } from 'components/Replicator/Detail';
 import ActionsPopover, { IAction } from 'components/ActionsPopover';
-import DeleteConfirmation from 'components/Replicator/DeleteConfirmation';
+import DeleteConfirmation, { InstanceType } from 'components/Replicator/DeleteConfirmation';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Redirect } from 'react-router-dom';
 import IconSVG from 'components/IconSVG';
@@ -65,7 +65,7 @@ const ActionsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({ cla
   const [redirect, setRedirect] = React.useState(false);
 
   if (redirect) {
-    return <Redirect to={`/ns/${getCurrentNamespace()}/replicator`} />;
+    return <Redirect to={`/ns/${getCurrentNamespace()}/replication`} />;
   }
 
   const actions: IAction[] = [
@@ -95,6 +95,7 @@ const ActionsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({ cla
         show={showDeleteConfirmation}
         onDelete={() => setRedirect(true)}
         closeModal={() => setShowDeleteConfirmation(false)}
+        type={InstanceType.app}
       />
     </div>
   );

@@ -58,9 +58,9 @@ const TopPanelView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
   return (
     <div className={classes.root}>
       <div className={classes.heading}>
-        <Link to={`/ns/${getCurrentNamespace()}/replicator`}>
+        <Link to={`/ns/${getCurrentNamespace()}/replication`}>
           <span className={classes.caret}>&laquo;</span>
-          <span>All replicators</span>
+          <span>All pipelines</span>
         </Link>
         <span className={classes.divider}>|</span>
         <span className={classes.name}>{name}</span>

@@ -23,10 +23,10 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import Detail from 'components/Replicator/Detail';
 import { Theme } from 'services/ThemeHelper';
 
-export const basepath = '/ns/:namespace/replicator';
+export const basepath = '/ns/:namespace/replication';
 
 const Replicator: React.FC = () => {
-  const pageTitle = `${Theme.productName} | Delta Replicator`;
+  const pageTitle = `${Theme.productName} | Replication`;
 
   return (
     <React.Fragment>
@@ -42,7 +42,7 @@ const Replicator: React.FC = () => {
         <Route path={basepath} component={List} />
         <Route
           render={() => {
-            return <Redirect to={`/ns/${getCurrentNamespace()}/replicator`} />;
+            return <Redirect to={`/ns/${getCurrentNamespace()}/replication`} />;
           }}
         />
       </Switch>

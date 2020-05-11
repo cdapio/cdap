@@ -333,7 +333,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
   };
 
   private redirect = () => {
-    const listViewLink = `/ns/${getCurrentNamespace()}/replicator`;
+    const listViewLink = `/ns/${getCurrentNamespace()}/replication`;
     return <Redirect to={listViewLink} />;
   };
 

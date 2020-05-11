@@ -65,15 +65,15 @@ const ListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
       <div className={classes.linkContainer}>
         <NavLink
           exact
-          to={`/ns/${getCurrentNamespace()}/replicator`}
+          to={`/ns/${getCurrentNamespace()}/replication`}
           activeClassName={classes.activeLink}
           className={classes.link}
         >
-          Replicators
+          Replication Pipeline
         </NavLink>
         <NavLink
           exact
-          to={`/ns/${getCurrentNamespace()}/replicator/drafts`}
+          to={`/ns/${getCurrentNamespace()}/replication/drafts`}
           activeClassName={classes.activeLink}
           className={classes.link}
         >

@@ -1712,9 +1712,9 @@ features:
       listLabel: List
       studioLabel: Studio
       title: Integrate
-    Replicator:
+    Replication:
       description: 'Replicate data changes in real-time from operational databases into analytical databases.'
-      linkLabel: 'Delta replicator'
+      linkLabel: 'Replication'
       title: Replicate
     Wrangler:
       description: Explore, transform, cleanse, and enrich data using a code-free environment.

@@ -40,7 +40,7 @@ const Name = ({ setName, value }) => {
     name: 'name',
     'widget-type': 'textbox',
     'widget-attributes': {
-      placeholder: 'Select a name for the replicator',
+      placeholder: 'Select a name for the replication pipeline',
     },
   };
 
@@ -102,7 +102,7 @@ const NameDescriptionView: React.FC<INameDescriptionProps> = ({
   return (
     <div className={classes.root}>
       <div className={classes.content}>
-        <Heading type={HeadingTypes.h3} label="Name Replicator" />
+        <Heading type={HeadingTypes.h3} label="Name replication pipeline" />
         <br />
         <Name value={localName} setName={setLocalName} />
         <br />

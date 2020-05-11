@@ -189,13 +189,13 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             }
           />
           <DrawerFeatureLink
-            featureName="Delta Replicator"
+            featureName="Replication"
             featureFlag={Theme.showCDC}
             featureSVGIconName="icon-CDC"
-            featureUrl={`/${nsurl}/replicator`}
+            featureUrl={`/${nsurl}/replication`}
             componentDidNavigate={componentDidNavigate}
-            data-cy="navbar-replicator-link"
-            id="navbar-replicator"
+            data-cy="navbar-replication-link"
+            id="navbar-replication"
           />
           <DrawerFeatureLink
             featureUrl={`/${nsurl}/experiments`}
