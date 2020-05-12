@@ -91,6 +91,7 @@ export default class OneStepDeployApp extends Component {
       'Content-Type': 'application/octet-stream',
       'X-Archive-Name': jarName,
       'Session-Token': SessionStore.getState(),
+      'X-Requested-With': 'XMLHttpRequest',
     };
 
     if (window.CDAP_CONFIG.securityEnabled) {
