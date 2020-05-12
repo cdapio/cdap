@@ -75,6 +75,7 @@ public class FilesetMoveAction extends Action {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    // add valdiation using FailureCollector
     Pattern.compile(config.filterRegex);
   }
 

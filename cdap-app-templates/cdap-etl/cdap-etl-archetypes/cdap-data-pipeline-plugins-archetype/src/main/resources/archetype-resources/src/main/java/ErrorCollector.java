@@ -25,7 +25,9 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.ErrorRecord;
 import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
+import io.cdap.cdap.etl.api.StageConfigurer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,24 +46,30 @@ public class ErrorCollector extends ErrorTransform<StructuredRecord, StructuredR
   }
 
   @Override
-  public void configurePipeline(PipelineConfigurer pipelineConfigurer) throws IllegalArgumentException {
-    Schema inputSchema = pipelineConfigurer.getStageConfigurer().getInputSchema();
+  public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    Schema inputSchema = stageConfigurer.getInputSchema();
+    FailureCollector failureCollector = stageConfigurer.getFailureCollector();
+
     if (inputSchema != null) {
       if (inputSchema.getField(config.messageField) != null) {
-        throw new IllegalArgumentException(String.format(
-          "Input schema already contains message field %s. Please set messageField to a different value.",
-          config.messageField));
+        failureCollector.addFailure(String.format(
+          "Input schema already contains message field %s.", config.messageField),
+                                    "Please set messageField to a different value.");
       }
       if (inputSchema.getField(config.codeField) != null) {
-        throw new IllegalArgumentException(String.format(
-          "Input schema already contains code field %s. Please set codeField to a different value.",
-          config.codeField));
+        failureCollector.addFailure(String.format(
+          "Input schema already contains code field %s.", config.codeField),
+                                    "Please set codeField to a different value.");
       }
       if (inputSchema.getField(config.stageField) != null) {
-        throw new IllegalArgumentException(String.format(
-          "Input schema already contains stage field %s. Please set stageField to a different value.",
-          config.stageField));
+        failureCollector.addFailure(String.format(
+          "Input schema already contains stage field %s.", config.stageField),
+                                    "Please set stageField to a different value.");
       }
+      // Throw exception before setting output schema
+      failureCollector.getOrThrowException();
+
       Schema outputSchema = getOutputSchema(config, inputSchema);
       pipelineConfigurer.getStageConfigurer().setOutputSchema(outputSchema);
     }

@@ -23,6 +23,7 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.etl.api.Emitter;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.Transform;
@@ -92,6 +93,8 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
+    // Failure collector is api used to collect all the validation errors
+    FailureCollector failureCollector = stageConfigurer.getFailureCollector();
     // the output schema is always the same as the input schema
     Schema inputSchema = stageConfigurer.getInputSchema();
 
@@ -99,12 +102,14 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
     if (inputSchema != null) {
       // if the input schema is constant and known at configure time, check that all configured fields are strings
       for (String fieldName : config.getUpperFields()) {
-        validateFieldIsString(inputSchema, fieldName);
+        validateFieldIsString(inputSchema, failureCollector, fieldName);
       }
       for (String fieldName : config.getLowerFields()) {
-        validateFieldIsString(inputSchema, fieldName);
+        validateFieldIsString(inputSchema, failureCollector, fieldName);
       }
     }
+    // Throw an exception before setting output schema
+    failureCollector.getOrThrowException();
 
     stageConfigurer.setOutputSchema(inputSchema);
   }
@@ -133,18 +138,18 @@ public class StringCaseTransform extends Transform<StructuredRecord, StructuredR
     emitter.emit(builder.build());
   }
 
-  private void validateFieldIsString(Schema schema, String fieldName) {
+  private void validateFieldIsString(Schema schema, FailureCollector failureCollector, String fieldName) {
     Schema.Field inputField = schema.getField(fieldName);
     if (inputField == null) {
-      throw new IllegalArgumentException(
-        String.format("Field '%s' does not exist in input schema %s.", fieldName, schema));
+      failureCollector.addFailure(String.format("Field '%s' must be present in input schema.", fieldName),
+                                  null);
+      return;
     }
     Schema fieldSchema = inputField.getSchema();
     Schema.Type fieldType = fieldSchema.isNullable() ? fieldSchema.getNonNullable().getType() : fieldSchema.getType();
     if (fieldType != Schema.Type.STRING) {
-      throw new IllegalArgumentException(
-        String.format("Field '%s' is of illegal type %s. Must be of type %s.",
-                      fieldName, fieldType, Schema.Type.STRING));
+      failureCollector.addFailure(String.format("Field '%s' is of invalid type %s.", fieldName, fieldType),
+                                  "It must be of type string.");
     }
   }
 }

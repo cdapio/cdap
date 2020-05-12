@@ -69,6 +69,7 @@ public class FilesetDeletePostAction extends PostAction {
 
   @Override
   public void configurePipeline(PipelineConfigurer pipelineConfigurer) {
+    // add valdiation using FailureCollector
     Pattern.compile(config.deleteRegex);
   }
 
