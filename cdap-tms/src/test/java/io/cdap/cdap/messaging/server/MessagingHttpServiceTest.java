@@ -56,6 +56,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -81,6 +82,8 @@ public class MessagingHttpServiceTest {
     cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_CONSUME_CHUNK_SIZE, 128);
     // Set max life time to a high value so that dummy tx ids that we create in the tests still work
     cConf.setLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME, 10000000000L);
+    // Reduce the buffer size for the http request buffer to test "large" message request
+    cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB, 1);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -592,6 +595,30 @@ public class MessagingHttpServiceTest {
     Assert.assertEquals(4, messages.size());
     List<String> expected = Arrays.asList("m1", "m2", "m1", "m2");
     Assert.assertEquals(expected,
+                        messages.stream()
+                          .map(RawMessage::getPayload)
+                          .map(Bytes::toString).collect(Collectors.toList()));
+  }
+
+  @Test
+  public void testLargePublish() throws IOException, TopicAlreadyExistsException, TopicNotFoundException {
+    // A 5MB message, which is larger than the 1MB buffer.
+    String message = Strings.repeat("01234", 1024 * 1024);
+
+    TopicId topicId = new NamespaceId("ns1").topic("testLargePublish");
+    client.createTopic(new TopicMetadata(topicId));
+
+    StoreRequest request = StoreRequestBuilder.of(topicId).addPayload(message).build();
+    client.publish(request);
+
+    // Read it back
+    List<RawMessage> messages = new ArrayList<>();
+    try (CloseableIterator<RawMessage> iterator = client.prepareFetch(topicId).setLimit(10).fetch()) {
+      Iterators.addAll(messages, iterator);
+    }
+
+    Assert.assertEquals(1, messages.size());
+    Assert.assertEquals(Collections.singletonList(message),
                         messages.stream()
                           .map(RawMessage::getPayload)
                           .map(Bytes::toString).collect(Collectors.toList()));
