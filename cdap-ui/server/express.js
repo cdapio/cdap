@@ -18,12 +18,7 @@
 import { ping } from 'server/config/router-check';
 import { extractUISettings } from 'server/config/parser';
 import q from 'q';
-import {
-  constructUrl,
-  isVerifiedMarketHost,
-  getMarketUrls,
-  REQUEST_ORIGIN_MARKET,
-} from 'server/url-helper';
+import { constructUrl, isVerifiedMarketHost, getMarketUrls, REQUEST_ORIGIN_MARKET } from 'server/url-helper';
 import url from 'url';
 import csp from 'helmet-csp';
 import proxy from 'express-http-proxy';
@@ -121,16 +116,10 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   app.use(frameguard({ action: 'sameorigin' }));
 
   if (!isModeDevelopment()) {
-    const proxyBaseUrl = cdapConfig['dashboard.proxy.base.url'];
-    let cspWhiteListUrls = [];
-    if (proxyBaseUrl) {
-      cspWhiteListUrls.push(proxyBaseUrl);
-    }
-    cspWhiteListUrls = cspWhiteListUrls
-      .concat(getMarketUrls(cdapConfig))
-      .map((urlString) => url.parse(urlString))
-      .map((marketUrl) => `${marketUrl.protocol}//${marketUrl.host}`)
-      .join(' ');
+    const imgSrcs = getMarketUrls(cdapConfig)
+        .map(urlString => url.parse(urlString))
+        .map(marketUrl => `${marketUrl.protocol}//${marketUrl.host}`)
+        .join(' ');
 
     /**
      * Adding nonce to every response pipe.
@@ -142,7 +131,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     app.use(
       csp({
         directives: {
-          imgSrc: [`'self' data: ${cspWhiteListUrls}`],
+          imgSrc: [`'self' data: ${imgSrcs}`],
           scriptSrc: [
             (req, res) => `'nonce-${res.locals.nonce}'`,
             `'unsafe-inline'`,
@@ -178,7 +167,6 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
           uiSettings['standalone.website.sdk.download'] === 'true' || false,
         uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
         mode: process.env.NODE_ENV,
-        proxyBaseUrl: cdapConfig['dashboard.proxy.base.url'],
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true',

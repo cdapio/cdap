@@ -54,13 +54,7 @@ const getWebpackDllPlugins = (mode) => {
   return [
     new webpack.DllReferencePlugin({
       context: path.resolve(__dirname, 'packaged', 'public', 'dll'),
-      manifest: require(path.join(
-        __dirname,
-        'packaged',
-        'public',
-        'dll',
-        sharedDllManifestFileName
-      )),
+      manifest: require(path.join(__dirname, 'packaged', 'public', 'dll', sharedDllManifestFileName)),
     }),
     new webpack.DllReferencePlugin({
       context: path.resolve(__dirname, 'packaged', 'public', 'dll'),
@@ -77,30 +71,22 @@ var plugins = [
     collections: true,
     caching: true,
   }),
-  new CopyWebpackPlugin(
-    [
-      {
-        from: './styles/fonts',
-        to: './fonts/',
-      },
-      {
-        from: path.resolve(__dirname, 'node_modules', 'font-awesome', 'fonts'),
-        to: './fonts/',
-      },
-      {
-        from: './styles/img',
-        to: './img/',
-      },
-      {
-        from: './**/*-web-worker.js',
-        to: './web-workers/',
-        flatten: true,
-      },
-    ],
+  new CopyWebpackPlugin([
     {
-      copyUnmodified: true,
-    }
-  ),
+      from: './styles/fonts',
+      to: './fonts/',
+    },
+    {
+      from: path.resolve(__dirname, 'node_modules', 'font-awesome', 'fonts'),
+      to: './fonts/',
+    },
+    {
+      from: './styles/img',
+      to: './img/',
+    },
+  ], {
+    copyUnmodified: true,
+  }),
   new StyleLintPlugin({
     syntax: 'scss',
     files: ['**/*.scss'],
@@ -208,8 +194,7 @@ if (mode === 'development') {
       port: 35728,
       appendScriptTag: true,
       delay: 500,
-      ignore:
-        '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
+      ignore: '/node_modules/|/bower_components/|/packaged\/public\/dist/|/packaged\/public\/cdap_dist/|/packaged\/public\/common_dist/|/lib/',
     })
   );
 }

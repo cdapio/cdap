@@ -41,9 +41,7 @@ const store = createStore(reducer, DEFAULT_STATE, composeEnhancers('SessionToken
 
 export async function fetchSessionToken() {
   try {
-    const headers: HeadersInit = {
-      'X-Requested-With': 'XMLHttpRequest',
-    };
+    const headers: HeadersInit = {};
     if (window.CDAP_CONFIG.securityEnabled && cookie.get('CDAP_Auth_Token')) {
       headers.authorization = `Bearer ${cookie.get('CDAP_Auth_Token')}`;
     }

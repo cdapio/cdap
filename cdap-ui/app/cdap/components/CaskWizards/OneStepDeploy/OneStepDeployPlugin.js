@@ -123,7 +123,6 @@ export default class OneStepDeployPlugin extends Component {
           'Artifact-Extends': artifactExtends,
           'Artifact-Plugins': artifactPlugins,
           'Session-Token': SessionStore.getState(),
-          'X-Requested-With': 'XMLHttpRequest',
         };
 
         if (window.CDAP_CONFIG.securityEnabled) {
