@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { MySearchApi } from 'api/search';
 import NamespaceStore from 'services/NamespaceStore';
-import { parseMetadata } from 'services/metadata-parser';
+import { parseMetadata, getType } from 'services/metadata-parser';
 import { convertEntityTypeToApi } from 'services/entity-type-api-converter';
 import NavLinkWrapper from 'components/NavLinkWrapper';
 import Mousetrap from 'mousetrap';
@@ -28,6 +28,7 @@ import uuidV4 from 'uuid/v4';
 import Pagination from 'components/Pagination';
 import SpotlightModalHeader from 'components/SpotlightSearch/SpotlightModal/SpotlightModalHeader';
 import T from 'i18n-react';
+import { GLOBALS } from 'services/global-constants';
 
 import { Col, Modal, ModalBody, Badge } from 'reactstrap';
 import { objectQuery } from 'services/helpers';
@@ -148,6 +149,17 @@ export default class SpotlightModal extends Component {
         let entityTypeLabel = convertEntityTypeToApi(entity.type);
         let entityUrl = `/ns/${currentNamespace}/${entityTypeLabel}/${entity.id}`;
 
+        if (entityTypeLabel === 'apps') {
+          entityUrl = `/pipelines/ns/${currentNamespace}/view/${entity.id}`;
+        }
+        if (this.props.isNativeLink && entityTypeLabel !== 'apps') {
+          entityUrl = `/cdap${entityUrl}`;
+        }
+        // (CDAP-16788) We have removed app detailed view. So if it is not a pipeline don't
+        // navigate anywhere.
+        if ([GLOBALS.etlDataPipeline, GLOBALS.etlDataStreams].indexOf(getType(entity)) === -1) {
+          entityUrl = '';
+        }
         let description = entity.metadata.metadata.properties.find(
           (property) => property.name === 'description'
         );
@@ -158,7 +170,7 @@ export default class SpotlightModal extends Component {
         return (
           <NavLinkWrapper
             key={entity.id}
-            to={this.props.isNativeLink ? `/cdap${entityUrl}` : entityUrl}
+            to={entityUrl}
             isNativeLink={this.props.isNativeLink}
             className="search-results-item-link"
           >
