@@ -14,9 +14,27 @@
  * the License.
  */
 
-.confirm-step-content {
-  max-height: ~"calc(75vh - 100px)";
-  margin-bottom: 10px;
-  overflow: auto;
-  overflow-x: hidden;
+.theme-cdap {
+  .modal.hydrator-modal {
+    .confirm-step-content {
+      max-height: ~"calc(75vh - 100px)";
+      overflow: auto;
+      overflow-x: hidden;
+    }
+    .confirm-step-wizard-footer {
+      border-top: 1px solid #cccccc;
+      padding-top: 10px;
+      margin-left: -10px;
+      margin-right: -10px;
+      padding-right: 10px;
+
+      .confirm-step-next-btn {
+        width: 52px;
+        &[disabled="disabled"] {
+          background-color: #056bc0;
+          color: white;
+        }
+      }
+    }
+  }
 }
