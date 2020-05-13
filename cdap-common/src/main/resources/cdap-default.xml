@@ -2032,6 +2032,14 @@
   </property>
 
   <property>
+    <name>messaging.http.compress.payload</name>
+    <value>true</value>
+    <description>
+      Compress payload for HTTP calls in the messaging system
+    </description>
+  </property>
+
+  <property>
     <name>messaging.http.server.bind.address</name>
     <value>0.0.0.0</value>
     <description>

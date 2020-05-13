@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.common.io;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -23,13 +26,17 @@ import java.nio.channels.FileChannel;
 /**
  * Implements {@link SeekableInputStream} with a {@link FileInputStream}.
  */
-final class FileSeekableInputStream extends SeekableInputStream {
+public final class FileSeekableInputStream extends SeekableInputStream {
+
+  private static final Logger LOG = LoggerFactory.getLogger(FileSeekableInputStream.class);
 
   private final FileChannel fileChannel;
+  private long markPos;
 
-  FileSeekableInputStream(FileInputStream in) {
+  public FileSeekableInputStream(FileInputStream in) {
     super(in);
     this.fileChannel = in.getChannel();
+    this.markPos = -1L;
   }
 
   @Override
@@ -43,12 +50,35 @@ final class FileSeekableInputStream extends SeekableInputStream {
   }
 
   @Override
-  public boolean seekToNewSource(long targetPos) throws IOException {
+  public boolean seekToNewSource(long targetPos) {
     return false;
   }
 
   @Override
   public long size() throws IOException {
     return fileChannel.size();
+  }
+
+  @Override
+  public synchronized void mark(int readlimit) {
+    try {
+      markPos = getPos();
+    } catch (IOException e) {
+      LOG.warn("Failed to get position from file input", e);
+      markPos = -1L;
+    }
+  }
+
+  @Override
+  public synchronized void reset() throws IOException {
+    if (markPos < 0) {
+      throw new IOException("Resetting to invalid mark");
+    }
+    seek(markPos);
+  }
+
+  @Override
+  public boolean markSupported() {
+    return true;
   }
 }

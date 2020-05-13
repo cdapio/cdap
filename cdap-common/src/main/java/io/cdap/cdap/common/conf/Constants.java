@@ -1338,6 +1338,7 @@ public final class Constants {
     public static final String HTTP_SERVER_EXECUTOR_THREADS = "messaging.http.server.executor.threads";
     public static final String HTTP_SERVER_MAX_REQUEST_SIZE_MB = "messaging.http.server.max.request.size.mb";
     public static final String HTTP_SERVER_CONSUME_CHUNK_SIZE = "messaging.http.server.consume.chunk.size";
+    public static final String HTTP_COMPRESS_PAYLOAD = "messaging.http.compress.payload";
 
     // Distributed mode related configurations
     public static final String HA_FENCING_DELAY_SECONDS = "messaging.ha.fencing.delay.seconds";
