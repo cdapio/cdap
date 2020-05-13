@@ -31,6 +31,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.TopicAlreadyExistsException;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -66,6 +67,7 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -74,6 +76,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -81,6 +84,7 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 import javax.annotation.Nullable;
 import javax.net.ssl.HttpsURLConnection;
 
@@ -100,12 +104,18 @@ public final class ClientMessagingService implements MessagingService {
   private static final Type TOPIC_LIST_TYPE = new TypeToken<List<String>>() { }.getType();
 
   private final RemoteClient remoteClient;
+  private final boolean compressPayload;
+
+  @Inject
+  ClientMessagingService(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient) {
+    this(discoveryServiceClient, cConf.getBoolean(Constants.MessagingSystem.HTTP_COMPRESS_PAYLOAD));
+  }
 
   @VisibleForTesting
-  @Inject
-  public ClientMessagingService(DiscoveryServiceClient discoveryServiceClient) {
+  public ClientMessagingService(DiscoveryServiceClient discoveryServiceClient, boolean compressPayload) {
     this.remoteClient = new RemoteClient(discoveryServiceClient, Constants.Service.MESSAGING_SERVICE,
                                          HTTP_REQUEST_CONFIG, "/v1/namespaces/");
+    this.compressPayload = compressPayload;
   }
 
   @Override
@@ -242,16 +252,25 @@ public final class ClientMessagingService implements MessagingService {
 
     // Encode the request as avro
     ExposedByteArrayOutputStream os = new ExposedByteArrayOutputStream();
-    Encoder encoder = EncoderFactory.get().directBinaryEncoder(os, null);
+    try (OutputStream encoderOutput = compressOutputStream(os)) {
+      Encoder encoder = EncoderFactory.get().directBinaryEncoder(encoderOutput, null);
 
-    DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(Schemas.V1.PublishRequest.SCHEMA);
-    datumWriter.write(record, encoder);
+      DatumWriter<GenericRecord> datumWriter = new GenericDatumWriter<>(Schemas.V1.PublishRequest.SCHEMA);
+      datumWriter.write(record, encoder);
+      encoder.flush();
+    }
 
     // Make the publish request
     String writeType = publish ? "publish" : "store";
     TopicId topicId = request.getTopicId();
+    Map<String, String> headers = new HashMap<>();
+    headers.put(HttpHeaders.CONTENT_TYPE, "avro/binary");
+    if (compressPayload) {
+      headers.put(HttpHeaders.CONTENT_ENCODING, "gzip");
+    }
+
     HttpRequest httpRequest = remoteClient.requestBuilder(HttpMethod.POST, createTopicPath(topicId) + "/" + writeType)
-      .addHeader(HttpHeaders.CONTENT_TYPE, "avro/binary")
+      .addHeaders(headers)
       .withBody(os.toByteBuffer())
       .build();
 
@@ -262,6 +281,13 @@ public final class ClientMessagingService implements MessagingService {
     }
     handleError(response, "Failed to " + writeType + " message to topic " + topicId);
     return response;
+  }
+
+  /**
+   * Wraps the given output stream with {@link GZIPOutputStream} if payload compression is enabled.
+   */
+  private OutputStream compressOutputStream(OutputStream outputStream) throws IOException {
+    return compressPayload ? new GZIPOutputStream(outputStream) : outputStream;
   }
 
   /**
@@ -413,7 +439,9 @@ public final class ClientMessagingService implements MessagingService {
       urlConn.setReadTimeout(HTTP_REQUEST_CONFIG.getReadTimeout());
       urlConn.setRequestMethod("POST");
       urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
-      urlConn.setRequestProperty(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
+      if (compressPayload) {
+        urlConn.setRequestProperty(HttpHeaders.ACCEPT_ENCODING, "gzip, deflate");
+      }
       urlConn.setDoInput(true);
       urlConn.setDoOutput(true);
 
@@ -486,25 +514,25 @@ public final class ClientMessagingService implements MessagingService {
         }
       };
     }
-  }
 
-  /**
-   * Based on the given {@link HttpURLConnection} content encoding,
-   * optionally wrap the given {@link InputStream} with either gzip or deflate decompression.
-   */
-  private InputStream decompressIfNeeded(HttpURLConnection urlConn, InputStream is) throws IOException {
-    String contentEncoding = urlConn.getHeaderField(HttpHeaderNames.CONTENT_ENCODING.toString());
-    if (contentEncoding == null) {
-      return is;
-    }
+    /**
+     * Based on the given {@link HttpURLConnection} content encoding,
+     * optionally wrap the given {@link InputStream} with either gzip or deflate decompression.
+     */
+    private InputStream decompressIfNeeded(HttpURLConnection urlConn, InputStream is) throws IOException {
+      String contentEncoding = urlConn.getHeaderField(HttpHeaderNames.CONTENT_ENCODING.toString());
+      if (contentEncoding == null) {
+        return is;
+      }
 
-    if ("gzip".equalsIgnoreCase(contentEncoding)) {
-      return new GZIPInputStream(is);
-    }
-    if ("deflate".equalsIgnoreCase(contentEncoding)) {
-      return new DeflaterInputStream(is);
-    }
+      if ("gzip".equalsIgnoreCase(contentEncoding)) {
+        return new GZIPInputStream(is);
+      }
+      if ("deflate".equalsIgnoreCase(contentEncoding)) {
+        return new DeflaterInputStream(is);
+      }
 
-    throw new IllegalArgumentException("Unsupported content encoding " + contentEncoding);
+      throw new IllegalArgumentException("Unsupported content encoding " + contentEncoding);
+    }
   }
 }

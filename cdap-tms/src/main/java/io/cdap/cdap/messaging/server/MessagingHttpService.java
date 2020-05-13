@@ -32,9 +32,12 @@ import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
+import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.common.Cancellable;
@@ -69,6 +72,12 @@ public class MessagingHttpService extends AbstractIdleService {
       .setWorkerThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_WORKER_THREADS))
       .setExecThreadPoolSize(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_EXECUTOR_THREADS))
       .setHttpChunkLimit(cConf.getInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB) * 1024 * 1024)
+      .setChannelPipelineModifier(new ChannelPipelineModifier() {
+        @Override
+        public void modify(ChannelPipeline pipeline) {
+          pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+        }
+      })
       .setExceptionHandler(new HttpExceptionHandler() {
         @Override
         public void handle(Throwable t, HttpRequest request, HttpResponder responder) {

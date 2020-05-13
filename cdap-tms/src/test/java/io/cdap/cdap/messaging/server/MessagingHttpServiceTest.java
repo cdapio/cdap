@@ -45,17 +45,20 @@ import io.cdap.cdap.proto.id.TopicId;
 import org.apache.tephra.Transaction;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -65,17 +68,31 @@ import java.util.stream.Collectors;
 /**
  * Tests for {@link MessagingHttpService}.
  */
+@RunWith(Parameterized.class)
 public class MessagingHttpServiceTest {
+
+  @Parameterized.Parameters(name = "{index}: compressPayload = {0}")
+  public static Collection<Object[]> parameters() {
+    return Arrays.asList(new Object[][]{
+      {false},
+      {true},
+    });
+  }
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
-  private static CConfiguration cConf;
-  private static MessagingHttpService httpService;
-  private static MessagingService client;
+  private final boolean compressPayload;
+  private CConfiguration cConf;
+  private MessagingHttpService httpService;
+  private MessagingService client;
 
-  @BeforeClass
-  public static void init() throws IOException {
+  public MessagingHttpServiceTest(boolean compressPayload) {
+    this.compressPayload = compressPayload;
+  }
+
+  @Before
+  public void beforeTest() throws IOException {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.set(Constants.MessagingSystem.HTTP_SERVER_BIND_ADDRESS, InetAddress.getLocalHost().getHostName());
@@ -84,6 +101,7 @@ public class MessagingHttpServiceTest {
     cConf.setLong(TxConstants.Manager.CFG_TX_MAX_LIFETIME, 10000000000L);
     // Reduce the buffer size for the http request buffer to test "large" message request
     cConf.setInt(Constants.MessagingSystem.HTTP_SERVER_MAX_REQUEST_SIZE_MB, 1);
+    cConf.setBoolean(Constants.MessagingSystem.HTTP_COMPRESS_PAYLOAD, compressPayload);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -99,12 +117,11 @@ public class MessagingHttpServiceTest {
 
     httpService = injector.getInstance(MessagingHttpService.class);
     httpService.startAndWait();
-
-    client = new ClientMessagingService(injector.getInstance(DiscoveryServiceClient.class));
+    client = new ClientMessagingService(injector.getInstance(DiscoveryServiceClient.class), compressPayload);
   }
 
-  @AfterClass
-  public static void finish() {
+  @After
+  public void afterTest() {
     httpService.stopAndWait();
   }
 
