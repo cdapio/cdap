@@ -66,6 +66,7 @@ public class LimitingInputFormatTest {
   @Parameterized.Parameters(name = "{index} : numOfFiles = {0} maxRecords = {1}")
   public static Collection<Object[]> data() {
     return Arrays.asList(
+      new Object[] { 0, 5 },
       new Object[] { 1, 5 },
       new Object[] { 1, 25 },
       new Object[] { 1, 151 },
@@ -150,8 +151,8 @@ public class LimitingInputFormatTest {
       }
     }
 
-    int recordsPerFile = (maxRecords + numOfFiles - 1) / numOfFiles;
-    int filesToRead = (maxRecords + recordsPerFile - 1) / recordsPerFile;
+    int recordsPerFile = numOfFiles == 0 ? 0 : (maxRecords + numOfFiles - 1) / numOfFiles;
+    int filesToRead = recordsPerFile == 0 ? 0 : (maxRecords + recordsPerFile - 1) / recordsPerFile;
     Assert.assertEquals(filesToRead, recordsPerFiles.size());
   }
 }
