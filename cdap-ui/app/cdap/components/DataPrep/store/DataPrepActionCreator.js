@@ -301,8 +301,18 @@ export function setVisualizationState(state) {
 
 export function setError(error, prefix) {
   const status = error.statusCode;
-  const detail = error.message || error.response.message || 'Unknown error';
+  let detail = 'Unknown error';
+  if (typeof error.message === 'string') {
+    detail = error.message;
+  } else if (error.response) {
+    if (typeof error.response === 'string') {
+      detail = error.response;
+    } else if (typeof error.response.message === 'string') {
+      detail = error.response.message;
+    }
+  }
   const message = `${prefix || 'Error'}: ${status ? `${status}: ${detail}` : detail}`;
+
   DataPrepStore.dispatch({
     type: DataPrepActions.setError,
     payload: {
@@ -432,56 +442,59 @@ export async function fetchModelList(dataModel) {
     dataModelRevision: dataModel.revision,
   };
 
-  // Response message example:
-  // {
-  //   "type": "record",
-  //   "name": "OMOP_6_0_0",
-  //   "namespace": "google.com.datamodels.omop",
-  //   "doc": "See https://github.com/OHDSI/CommonDataModel/blob/v6.0.0/OMOP_CDM_v6_0.pdf for information about the OMOP Schemas",
-  //   "fields": [
-  //     {
-  //       "name": "CARE_SITE",
-  //       "type": [
-  //         "null",
-  //         {
-  //           "type": "record",
-  //           "name": "CARE_SITE",
-  //           "namespace": "google.com.datamodels.omop.Models",
-  //           "doc": "The CARE_SITE table contains a list of uniquely identified institutional units...",
-  //           "fields": [
-  //             {
-  //               "name": "care_site_id",
-  //               "type": ["int"],
-  //               "doc": "A unique identifier for each Care Site."
-  //             },
-  //             {
-  //               "name": "care_site_name",
-  //               "type": ["null", "string"],
-  //               "doc": "The verbatim description or name of the Care Site as in data source"
-  //             },
-  //             ...
-  //           ]
-  //         }
-  //       ]
-  //     },
-  //     {
-  //       "name": "CDM_SOURCE",
-  //       "type": [
-  //         "null",
-  //         {
-  //           "type": "record",
-  //           "name": "CDM_SOURCE",
-  //           "namespace": "google.com.datamodels.omop.Models",
-  //           "doc": "The CDM_SOURCE table contains detail about the source database and the process...",
-  //           "fields": [
-  //             ...
-  //           ]
-  //         }
-  //       }
-  //     },
-  //     ...
-  //   ]
-  // }
+  /**
+   * Response message example:
+   * {
+   *   "type": "record",
+   *   "name": "OMOP_6_0_0",
+   *   "namespace": "google.com.datamodels.omop",
+   *   "doc": "See https://github.com/OHDSI/CommonDataModel/blob/v6.0.0/OMOP_CDM_v6_0.pdf for information about the OMOP Schemas",
+   *   "fields": [
+   *     {
+   *       "name": "CARE_SITE",
+   *       "type": [
+   *         "null",
+   *         {
+   *           "type": "record",
+   *           "name": "CARE_SITE",
+   *           "namespace": "google.com.datamodels.omop.Models",
+   *           "doc": "The CARE_SITE table contains a list of uniquely identified institutional units...",
+   *           "fields": [
+   *             {
+   *               "name": "care_site_id",
+   *               "type": ["int"],
+   *               "doc": "A unique identifier for each Care Site."
+   *             },
+   *             {
+   *               "name": "care_site_name",
+   *               "type": ["null", "string"],
+   *               "doc": "The verbatim description or name of the Care Site as in data source"
+   *             },
+   *             ...
+   *           ]
+   *         }
+   *       ]
+   *     },
+   *     {
+   *       "name": "CDM_SOURCE",
+   *       "type": [
+   *         "null",
+   *         {
+   *           "type": "record",
+   *           "name": "CDM_SOURCE",
+   *           "namespace": "google.com.datamodels.omop.Models",
+   *           "doc": "The CDM_SOURCE table contains detail about the source database and the process...",
+   *           "fields": [
+   *             ...
+   *           ]
+   *         }
+   *       }
+   *     },
+   *     ...
+   *   ]
+   * }
+   */
+
   const response = await MyDataPrepApi.getDataModel(params).toPromise();
 
   try {
