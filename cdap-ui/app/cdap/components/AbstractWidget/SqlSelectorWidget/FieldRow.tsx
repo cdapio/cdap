@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the 'License'); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -76,6 +76,7 @@ interface IFieldRowProps extends WithStyles<typeof styles> {
   error: boolean;
   disabled: boolean;
   validationError: string;
+  rowId: string;
 }
 
 const FieldRow: React.FC<IFieldRowProps> = ({
@@ -85,6 +86,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
   classes,
   disabled,
   validationError,
+  rowId,
 }: IFieldRowProps) => {
   const aliasChange = (event) => {
     onFieldChange({ ...field, alias: event.target.value });
@@ -99,6 +101,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
         [classes.tableRow]: true,
         [classes.errorRow]: error || validationError,
       })}
+      id={rowId}
     >
       <TableCell>
         <div className={classes.innerRowContainer}>

@@ -173,12 +173,12 @@ public class DefaultStore implements Store {
     Preconditions.checkArgument(runStatus != null, "Run state of program run should be defined");
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore metaStore = getAppMetadataStore(context);
-      WorkflowTable workflowTable = getWorkflowTable(context);
       metaStore.recordProgramStop(id, endTime, runStatus, failureCause, sourceId);
 
       // This block has been added so that completed workflow runs can be logged to the workflow dataset
       WorkflowId workflowId = new WorkflowId(id.getParent().getParent(), id.getProgram());
       if (id.getType() == ProgramType.WORKFLOW && runStatus == ProgramRunStatus.COMPLETED) {
+        WorkflowTable workflowTable = getWorkflowTable(context);
         recordCompletedWorkflow(metaStore, workflowTable, workflowId, id.getRun());
       }
       // todo: delete old history data
@@ -513,11 +513,7 @@ public class DefaultStore implements Store {
     return TransactionRunners.run(transactionRunner, context -> {
       RunRecordDetail runRecord = getAppMetadataStore(context).getRun(programRunId);
       if (runRecord != null) {
-        Map<String, String> properties = runRecord.getProperties();
-        Map<String, String> runtimeArgs = GSON.fromJson(properties.get("runtimeArgs"), STRING_MAP_TYPE);
-        if (runtimeArgs != null) {
-          return runtimeArgs;
-        }
+        return runRecord.getUserArgs();
       }
       LOG.debug("Runtime arguments for program {}, run {} not found. Returning empty.",
                 programRunId.getProgram(), programRunId.getRun());

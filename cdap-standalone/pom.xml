@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.2.0-SNAPSHOT</version>
+    <version>6.3.0-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-standalone</artifactId>
@@ -612,6 +612,14 @@
                       <targetPath>bootstrap</targetPath>
                       <includes>
                         <include>sandbox.json</include>
+                      </includes>
+                    </resource>
+                    <!-- copy system app configs -->
+                    <resource>
+                      <directory>${project.parent.basedir}/cdap-common/src/main/resources/system-apps</directory>
+                      <targetPath>system-app-config</targetPath>
+                      <includes>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                     <!-- copy runtime provider extensions -->

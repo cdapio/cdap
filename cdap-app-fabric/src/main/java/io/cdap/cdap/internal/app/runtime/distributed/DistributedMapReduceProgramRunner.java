@@ -40,7 +40,6 @@ import org.apache.twill.api.TwillRunner;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -80,7 +79,6 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
   @Override
   protected void setupLaunchConfig(ProgramLaunchConfig launchConfig, Program program, ProgramOptions options,
                                    CConfiguration cConf, Configuration hConf, File tempDir) {
-
     ApplicationSpecification appSpec = program.getApplicationSpecification();
     MapReduceSpecification spec = appSpec.getMapReduce().get(program.getName());
 
@@ -92,15 +90,12 @@ public final class DistributedMapReduceProgramRunner extends DistributedProgramR
       .addRunnable(spec.getName(), new MapReduceTwillRunnable(spec.getName()),
                    1, clientArgs, spec.getDriverResources(), 0);
 
-    if (clusterMode == ClusterMode.ON_PREMISE) {
+    if (clusterMode == ClusterMode.ON_PREMISE || cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
       // Add extra resources, classpath and dependencies
       launchConfig
         .addExtraResources(MapReduceContainerHelper.localizeFramework(hConf, new HashMap<>()))
         .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<>()))
         .addExtraDependencies(YarnClientProtocolProvider.class);
-    } else if (clusterMode == ClusterMode.ISOLATED) {
-      // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
-      launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
     }
   }
 }

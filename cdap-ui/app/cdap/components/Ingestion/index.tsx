@@ -62,7 +62,7 @@ const styles = (theme): StyleRules => {
       display: 'flex',
       flexDirection: 'column',
       maxWidth: '500px',
-      marginBottom: '20px',
+      marginBottom: '10px',
     },
     filterInput: {
       marginBottom: '10px',
@@ -79,6 +79,7 @@ const styles = (theme): StyleRules => {
       display: 'flex',
       justifyContent: 'space-between',
       marginBottom: '10px',
+      fontSize: '1rem',
     },
     toggleView: {
       color: theme.palette.blue[100],
@@ -415,7 +416,7 @@ class IngestionView extends React.Component<IIngestionProps> {
                 <TextField
                   className={classes.filterInput}
                   variant="outlined"
-                  label="Filter"
+                  label="Search by source name"
                   margin="dense"
                   value={this.state.filterStr}
                   onChange={this.onFilter}

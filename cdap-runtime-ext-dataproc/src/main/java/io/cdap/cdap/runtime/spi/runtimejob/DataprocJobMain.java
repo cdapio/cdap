@@ -91,11 +91,22 @@ public class DataprocJobMain {
 
         // call run() method on runtimeJobClass
         Class<?> runEnvCls = newCL.loadClass(RuntimeJobEnvironment.class.getName());
-        Class<?> runner = newCL.loadClass(runtimeJobClassName);
-        Method method = runner.getMethod("run", runEnvCls);
-        LOG.info("Invoking run() on {}", runtimeJobClassName);
-        method.invoke(runner.newInstance(), newDataprocEnvInstance);
+        Class<?> runnerCls = newCL.loadClass(runtimeJobClassName);
+        Method runMethod = runnerCls.getMethod("run", runEnvCls);
+        Method stopMethod = runnerCls.getMethod("requestStop");
 
+        Object runner = runnerCls.newInstance();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+          try {
+            stopMethod.invoke(runner);
+          } catch (Exception e) {
+            LOG.error("Exception raised when calling {}.stop()", runtimeJobClassName, e);
+          }
+        }));
+
+        LOG.info("Invoking run() on {}", runtimeJobClassName);
+        runMethod.invoke(runner, newDataprocEnvInstance);
       } finally {
         // call destroy() method on envProviderClass
         Method closeMethod = dataprocEnvClass.getMethod("destroy");

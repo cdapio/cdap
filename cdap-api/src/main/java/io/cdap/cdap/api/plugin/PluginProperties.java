@@ -52,7 +52,7 @@ public class PluginProperties implements Serializable {
   }
 
   public Map<String, String> getProperties() {
-    return properties;
+    return Collections.unmodifiableMap(properties);
   }
 
   public Macros getMacros() {

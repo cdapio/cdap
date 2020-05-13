@@ -73,15 +73,8 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   const [error, setError] = React.useState(null);
   const [redirect, setRedirect] = React.useState(false);
 
-  // TODO: Fetch artifacts version from Backend service
   function constructJson() {
-    const config = {
-      ...getReplicatorConfig(),
-    };
-
-    if (window.CDAP_CONFIG.delta.defaultCheckpointDir) {
-      config.offsetBasePath = window.CDAP_CONFIG.delta.defaultCheckpointDir;
-    }
+    const config = getReplicatorConfig();
 
     return {
       name,

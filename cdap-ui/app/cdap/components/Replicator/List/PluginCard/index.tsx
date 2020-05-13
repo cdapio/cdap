@@ -18,22 +18,22 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import IconSVG from 'components/IconSVG';
 
-export const PluginCardWidth = 175;
+export const PluginCardWidth = 153;
+export const PluginCardHeight = 135;
 
 const styles = (theme): StyleRules => {
   return {
     root: {
-      border: `2px solid ${theme.palette.grey[300]}`,
+      border: `1px solid ${theme.palette.grey[200]}`,
       borderRadius: '4px',
-      padding: '10px',
+      padding: '20px 15px',
       textAlign: 'center',
-      color: theme.palette.grey[100],
+      color: theme.palette.grey[50],
       width: `${PluginCardWidth}px`,
-      height: '100px',
+      height: `${PluginCardHeight}px`,
 
       '&:hover': {
         backgroundColor: theme.palette.grey[700],
-        borderColor: theme.palette.blue[100],
 
         '& *': {
           textDecoration: 'none',
@@ -42,14 +42,15 @@ const styles = (theme): StyleRules => {
       },
     },
     img: {
-      height: '50px',
-      width: '50px',
-      color: theme.palette.grey[100],
+      height: '40px',
+      width: '40px',
     },
     name: {
-      marginTop: '7px',
+      marginTop: '22px',
       fontWeight: 600,
-      color: theme.palette.grey[100],
+      color: theme.palette.grey[50],
+      whiteSpace: 'pre-line',
+      lineHeight: 1.2,
     },
   };
 };
@@ -64,7 +65,9 @@ const PluginCardView: React.FC<IPluginCardProps> = ({ classes, name, icon }) => 
 
   return (
     <div className={classes.root}>
-      <div className={classes.imgContainer}>{icon ? <img src={icon} /> : defaultIcon}</div>
+      <div className={classes.imgContainer}>
+        {icon ? <img src={icon} className={classes.img} /> : defaultIcon}
+      </div>
       <div className={classes.name}>{name}</div>
     </div>
   );

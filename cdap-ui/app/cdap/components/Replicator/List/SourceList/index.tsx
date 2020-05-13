@@ -18,7 +18,10 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Link } from 'react-router-dom';
-import PluginCard, { PluginCardWidth } from 'components/Replicator/List/PluginCard';
+import PluginCard, {
+  PluginCardWidth,
+  PluginCardHeight,
+} from 'components/Replicator/List/PluginCard';
 import HorizontalCarousel from 'components/HorizontalCarousel';
 import { fetchPluginsAndWidgets } from 'components/Replicator/utilities';
 import { PluginType } from 'components/Replicator/constants';
@@ -51,10 +54,15 @@ const styles = (): StyleRules => {
     search: {
       width: '200px',
       marginLeft: '20px',
+
+      '& input': {
+        paddingTop: '10px',
+        paddingBottom: '10px',
+      },
     },
     listContainer: {
       marginTop: '15px',
-      height: '100px',
+      height: `${PluginCardHeight}px`,
     },
     loadingContainer: {
       width: '100%',
@@ -62,6 +70,9 @@ const styles = (): StyleRules => {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    arrow: {
+      top: `${Math.floor(PluginCardHeight / 2)}px`,
     },
   };
 };
@@ -118,7 +129,6 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             className={classes.search}
             value={search}
             onChange={handleSearch}
-            size="small"
             variant="outlined"
             placeholder="Search sources by name"
             InputProps={{
@@ -139,7 +149,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
           </div>
         </If>
         <If condition={!loading}>
-          <HorizontalCarousel scrollAmount={PluginCardWidth}>
+          <HorizontalCarousel scrollAmount={PluginCardWidth} classes={{ arrow: classes.arrow }}>
             {filteredSources.map((source) => {
               const { name: artifactName, version, scope } = source.artifact;
               const pluginKey = `${source.name}-${source.type}`;

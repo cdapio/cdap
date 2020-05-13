@@ -17,11 +17,15 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.io.Closeables;
+import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.messaging.TopicNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -49,6 +53,7 @@ import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import javax.ws.rs.POST;
@@ -64,10 +69,16 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
   private final MessagingContext messagingContext;
   private final RuntimeRequestValidator requestValidator;
+  private final RemoteExecutionLogProcessor logProcessor;
+  private final String logsTopicPrefix;
 
-  RuntimeHandler(MessagingContext messagingContext, RuntimeRequestValidator requestValidator) {
+  @Inject
+  RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
+                 RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator) {
     this.requestValidator = requestValidator;
-    this.messagingContext = messagingContext;
+    this.logProcessor = logProcessor;
+    this.messagingContext = new MultiThreadMessagingContext(messagingService);
+    this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
   }
 
   @Override
@@ -108,7 +119,20 @@ public class RuntimeHandler extends AbstractHttpHandler {
                                                  ProgramType.valueOfCategoryName(programType, BadRequestException::new),
                                                  program, run);
     requestValidator.validate(programRunId, request);
-    return new MessageBodyConsumer(messagingContext, NamespaceId.SYSTEM.topic(topic));
+
+    TopicId topicId = NamespaceId.SYSTEM.topic(topic);
+    if (topic.startsWith(logsTopicPrefix)) {
+      return new MessageBodyConsumer(topicId, logProcessor::process);
+    }
+
+    return new MessageBodyConsumer(topicId, payloads -> {
+      try {
+        messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
+                                                             topicId.getTopic(), payloads);
+      } catch (TopicNotFoundException e) {
+        throw new BadRequestException(e);
+      }
+    });
   }
 
   /**
@@ -119,8 +143,8 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
     private static final Logger LOG = LoggerFactory.getLogger(MessageBodyConsumer.class);
 
-    private final MessagingContext messagingContext;
     private final TopicId topicId;
+    private final PayloadProcessor payloadProcessor;
     private final CompositeByteBuf buffer;
     private final DelegatingInputStream inputStream;
     private final Decoder decoder;
@@ -128,9 +152,9 @@ public class RuntimeHandler extends AbstractHttpHandler {
     private ByteBuffer payload;
     private long items;
 
-    MessageBodyConsumer(MessagingContext messagingContext, TopicId topicId) {
-      this.messagingContext = messagingContext;
+    MessageBodyConsumer(TopicId topicId, PayloadProcessor payloadProcessor) {
       this.topicId = topicId;
+      this.payloadProcessor = payloadProcessor;
       this.buffer = Unpooled.compositeBuffer();
       this.inputStream = new DelegatingInputStream(new ByteBufInputStream(buffer));
       this.decoder = DecoderFactory.get().directBinaryDecoder(inputStream, null);
@@ -161,12 +185,11 @@ public class RuntimeHandler extends AbstractHttpHandler {
 
           if (!payloads.isEmpty()) {
             try {
-              messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
-                                                                   topicId.getTopic(), payloads.iterator());
+              payloadProcessor.process(payloads.iterator());
               payloads.clear();
             } catch (IOException e) {
-              // If we cannot publish, just continue to keep buffering messages and retry at the next/finished called.
-              LOG.debug("Failed to publish message to {}. Will be retried", topicId, e);
+              // If we cannot process, just continue to keep buffering messages and retry at the next/finished called.
+              LOG.debug("Failed to process payload for topic {}. Will be retried", topicId, e);
             }
           }
 
@@ -176,7 +199,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
         } catch (EOFException e) {
           inputStream.reset();
         }
-      } catch (TopicNotFoundException | IOException e) {
+      } catch (IOException | BadRequestException e) {
         responder.sendString(HttpResponseStatus.BAD_REQUEST,
                              "Failed to process request due to exception " + e.getMessage());
         throw new RuntimeException(e);
@@ -191,17 +214,17 @@ public class RuntimeHandler extends AbstractHttpHandler {
           return;
         }
         try {
-          messagingContext.getDirectMessagePublisher().publish(topicId.getNamespace(),
-                                                               topicId.getTopic(), payloads.iterator());
+          payloadProcessor.process(payloads.iterator());
           responder.sendStatus(HttpResponseStatus.OK);
-        } catch (TopicNotFoundException e) {
-          responder.sendString(HttpResponseStatus.BAD_REQUEST, "Topic not found " + topicId);
+        } catch (BadRequestException e) {
+          responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
         } catch (IOException e) {
           responder.sendString(HttpResponseStatus.SERVICE_UNAVAILABLE,
-                               "Failed to publish all messages due to " + e.getMessage());
+                               "Failed to process all messages due to " + e.getMessage());
         }
       } finally {
         Closeables.closeQuietly(inputStream);
+        buffer.release();
       }
     }
 
@@ -224,5 +247,21 @@ public class RuntimeHandler extends AbstractHttpHandler {
       Closeables.closeQuietly(in);
       in = delegate;
     }
+  }
+
+  /**
+   * An internal interface for processing payloads received from the
+   * {@link #writeMessages(HttpRequest, HttpResponder, String, String, String, String, String, String, String)}
+   * call.
+   */
+  private interface PayloadProcessor {
+
+    /**
+     * Process the given payload.
+     *
+     * @throws IOException if there is error when processing the payload
+     * @throws BadRequestException if the request is invalid
+     */
+    void process(Iterator<byte[]> payloads) throws IOException, BadRequestException;
   }
 }

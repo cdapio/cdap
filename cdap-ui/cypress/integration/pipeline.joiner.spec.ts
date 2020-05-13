@@ -17,6 +17,7 @@
 import { loginIfRequired, getGenericEndpoint, getArtifactsPoll } from '../helpers';
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
 import { INodeInfo, INodeIdentifier } from '../typings';
+import { dataCy } from '../helpers';
 
 let headers = {};
 
@@ -27,6 +28,8 @@ const TABLE2 = 'test2';
 const TABLE1_FIELDS = ['field1', 'field2', 'field3'];
 const TABLE2_FIELDS = ['field1', 'field4'];
 const ALL_FIELDS_ALIASED = ['field', 'field2', 'field3', 'field1', 'field4'];
+const joinerNode: INodeInfo = { nodeName: 'Joiner', nodeType: 'batchjoiner' };
+const joinerNodeId: INodeIdentifier = { ...joinerNode, nodeId: '2' };
 
 describe('Creating pipeline with joiner in pipeline studio', () => {
   before(() => {
@@ -74,9 +77,6 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
       table: TABLE2,
       serviceFilePath: DEFAULT_GCP_SERVICEACCOUNT_PATH,
     };
-
-    const joinerNode: INodeInfo = { nodeName: 'Joiner', nodeType: 'batchjoiner' };
-    const joinerNodeId: INodeIdentifier = { ...joinerNode, nodeId: '2' };
 
     const sinkNode: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsink' };
     const sinkNodeId: INodeIdentifier = { ...sinkNode, nodeId: '3' };
@@ -212,5 +212,19 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
     });
 
     cy.get(closeButton).click();
+  });
+
+  it('Should render Get Schema button', () => {
+    cy.open_node_property(joinerNodeId);
+    cy.get(`${dataCy('get-schema-btn')}`).should('exist');
+  });
+
+  it('Should still render Get Schema button when numPartitions is a macro', () => {
+    cy.get(`input${dataCy('numPartitions')}`).type('${testing.macro}', {
+      parseSpecialCharSequences: false,
+    });
+    cy.close_node_property();
+    cy.open_node_property(joinerNodeId);
+    cy.get(`${dataCy('get-schema-btn')}`).should('exist');
   });
 });

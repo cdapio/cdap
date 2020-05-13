@@ -155,8 +155,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
                                                          Threads.SAME_THREAD_EXECUTOR);
 
-      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId),
-                                                                         spec.getName() + "-" + instanceId);
+      ProgramController controller = new ServiceProgramControllerAdapter(component, program.getId().run(runId));
       component.start();
       return controller;
     } catch (Throwable t) {
@@ -168,8 +167,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private static final class ServiceProgramControllerAdapter extends ProgramControllerServiceAdapter {
     private final ServiceHttpServer service;
 
-    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramRunId programRunId, String componentName) {
-      super(service, programRunId, componentName);
+    ServiceProgramControllerAdapter(ServiceHttpServer service, ProgramRunId programRunId) {
+      super(service, programRunId);
       this.service = service;
     }
 

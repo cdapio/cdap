@@ -38,4 +38,11 @@ public interface StreamingSourceContext extends BatchContext {
    */
   void registerLineage(String referenceName,
                        @Nullable Schema schema) throws DatasetManagementException, TransactionFailureException;
+
+  /**
+   * Indicates whether the pipeline is running in preview.
+   *
+   * @return a boolean value which indicates the pipeline is running in preview mode.
+   */
+  boolean isPreviewEnabled();
 }

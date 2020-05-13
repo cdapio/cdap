@@ -74,6 +74,10 @@ export default class TextboxOnValium extends Component {
     if (this.state.isWarning) {
       return;
     }
+    if (this.state.textValue.length === 0) {
+      this.props.onChange(this.state.originalValue, true);
+      return;
+    }
     this.props.onChange(this.state.textValue, this.state.originalValue === this.state.textValue);
   }
   handleKeyPress(e) {

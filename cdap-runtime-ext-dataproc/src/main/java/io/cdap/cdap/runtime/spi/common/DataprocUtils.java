@@ -23,12 +23,21 @@ import com.google.cloud.storage.StorageBatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import javax.annotation.Nullable;
+
 /**
  * This class contains common methods that are needed by DataprocProvisioner and DataprocRuntimeJobManager.
  */
 public final class DataprocUtils {
-  private static final Logger LOG = LoggerFactory.getLogger(DataprocUtils.class);
+
   public static final String CDAP_GCS_ROOT = "cdap-job";
+
+  private static final Logger LOG = LoggerFactory.getLogger(DataprocUtils.class);
+  private static final String GS_PREFIX = "gs://";
 
   /**
    * Deletes provided directory path on GCS.
@@ -39,8 +48,9 @@ public final class DataprocUtils {
    */
   public static void deleteGCSPath(Storage storageClient, String bucket, String path) {
     try {
+      String bucketName = getBucketName(bucket);
       StorageBatch batch = storageClient.batch();
-      Page<Blob> blobs = storageClient.list(bucket, Storage.BlobListOption.currentDirectory(),
+      Page<Blob> blobs = storageClient.list(bucketName, Storage.BlobListOption.currentDirectory(),
                                             Storage.BlobListOption.prefix(path + "/"));
       boolean addedToDelete = false;
       for (Blob blob : blobs.iterateAll()) {
@@ -58,7 +68,54 @@ public final class DataprocUtils {
     }
   }
 
+  /**
+   * Removes prefix gs:// and returns bucket name
+   */
+  public static String getBucketName(String bucket) {
+    if (bucket.startsWith(GS_PREFIX)) {
+      return bucket.substring(GS_PREFIX.length());
+    }
+    return bucket;
+  }
+
+  /**
+   * Utilty class to parse the keyvalue string from UI Widget and return back HashMap.
+   * String is of format  <key><keyValueDelimiter><value><delimiter><key><keyValueDelimiter><value>
+   * eg:  networktag1=out2internet;networktag2=priority
+   * The return from the method is a map with key value pairs of (networktag1 out2internet) and (networktag2 priority)
+   *
+   * @param configValue String to be parsed into key values format
+   * @param delimiter Delimiter used for keyvalue pairs
+   * @param keyValueDelimiter Delimiter between key and value.
+   * @return Map of Key value pairs parsed from input configValue using the delimiters.
+   */
+  public static Map<String, String> parseKeyValueConfig(@Nullable String configValue, String delimiter,
+                                                        String keyValueDelimiter) throws IllegalArgumentException {
+    Map<String, String> map = new HashMap<>();
+    if (configValue == null) {
+      return map;
+    }
+    for (String property : configValue.split(delimiter)) {
+      String[] parts = property.split(keyValueDelimiter, 2);
+      if (parts.length != 2) {
+        throw new IllegalArgumentException("Invalid KeyValue " + property);
+      }
+      String key = parts[0];
+      String value = parts[1];
+      map.put(key, value);
+    }
+    return map;
+  }
+
+  /**
+   * Parses the given list of IP CIDR blocks into list of {@link IPRange}.
+   */
+  public static List<IPRange> parseIPRanges(List<String> ranges) {
+    return ranges.stream().map(IPRange::new).collect(Collectors.toList());
+  }
+
   private DataprocUtils() {
     // no-op
   }
+
 }

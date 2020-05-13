@@ -18,6 +18,8 @@ package io.cdap.cdap.common.service;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import io.cdap.cdap.api.retry.RetriesExhaustedException;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
@@ -33,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractRetryableScheduledService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryableScheduledService.class);
+  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
   private final RetryStrategy retryStrategy;
 
@@ -91,7 +94,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * @throws Exception if startup of this service failed
    */
   protected void doStartUp() throws Exception {
-    // No-op
+    LOG.debug("Starting scheduled service {}", getServiceName());
   }
 
   /**
@@ -101,7 +104,7 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * @throws Exception if shutdown of this service failed
    */
   protected void doShutdown() throws Exception {
-    // No-op
+    LOG.debug("Stopping scheduled service {}", getServiceName());
   }
 
   /**
@@ -149,28 +152,39 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
   @Override
   protected final void runOneIteration() throws Exception {
     try {
-      if (nonFailureStartTime == 0L) {
-        nonFailureStartTime = System.currentTimeMillis();
-      }
+      try {
+        if (nonFailureStartTime == 0L) {
+          nonFailureStartTime = System.currentTimeMillis();
+        }
 
-      delayMillis = runTask();
-      nonFailureStartTime = 0L;
-      failureCount = 0;
-    } catch (Exception e) {
-      if (!shouldRetry(e)) {
-        throw e;
-      }
-
-      long delayMillis = retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
-      if (delayMillis < 0) {
-        e.addSuppressed(new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
-                                                                    failureCount,
-                                                                    System.currentTimeMillis() - nonFailureStartTime)));
-        delayMillis = Math.max(0L, handleRetriesExhausted(e));
+        delayMillis = runTask();
         nonFailureStartTime = 0L;
         failureCount = 0;
+      } catch (Throwable t) {
+        logTaskFailure(t);
+        if (!(t instanceof Exception)) {
+          throw t;
+        }
+        Exception e = (Exception) t;
+        if (!shouldRetry(e)) {
+          throw t;
+        }
+
+        long delayMillis = retryStrategy.nextRetry(++failureCount, nonFailureStartTime);
+        if (delayMillis < 0) {
+          t.addSuppressed(
+            new RetriesExhaustedException(String.format("Retries exhausted after %d failures and %d ms.",
+                                                        failureCount,
+                                                        System.currentTimeMillis() - nonFailureStartTime)));
+          delayMillis = Math.max(0L, handleRetriesExhausted(e));
+          nonFailureStartTime = 0L;
+          failureCount = 0;
+        }
+        this.delayMillis = delayMillis;
       }
-      this.delayMillis = delayMillis;
+    } catch (Throwable t) {
+      LOG.error("Aborting service {} due to non-retryable error", getServiceName(), t);
+      throw t;
     }
   }
 
@@ -182,5 +196,12 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
         return new Schedule(delayMillis, TimeUnit.MILLISECONDS);
       }
     };
+  }
+
+  /**
+   * Logs an exception raised by {@link #runTask()}.
+   */
+  protected void logTaskFailure(Throwable t) {
+    OUTAGE_LOG.warn("Failed to execute task for scheduled service {}", getServiceName(), t);
   }
 }

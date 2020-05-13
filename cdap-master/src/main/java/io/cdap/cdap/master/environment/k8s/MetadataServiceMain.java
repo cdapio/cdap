@@ -33,10 +33,8 @@ import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.audit.AuditModule;
-import io.cdap.cdap.data2.dataset2.lib.table.MetadataStoreDataset;
 import io.cdap.cdap.data2.metadata.writer.MessagingMetadataPublisher;
 import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
-import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
@@ -47,7 +45,6 @@ import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
-import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -82,11 +79,9 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
       // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
-      new ExploreClientModule(),
       new MetadataServiceModule(),
       new AuditModule(),
       new EntityVerifierModule(),
-      new SecureStoreClientModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),
       new AuthenticationContextModules().getMasterModule(),
       new DFSLocationModule(),

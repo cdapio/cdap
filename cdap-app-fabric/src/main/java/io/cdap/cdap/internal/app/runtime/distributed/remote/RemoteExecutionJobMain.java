@@ -84,6 +84,9 @@ public class RemoteExecutionJobMain {
       throw new IllegalArgumentException("Missing runId from the first argument");
     }
 
+    // Stop the job when this process get terminated
+    Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::requestStop));
+
     System.setProperty(Constants.Zookeeper.TWILL_ZK_SERVER_LOCALHOST, "false");
     RunId runId = RunIds.fromString(args[0]);
     CConfiguration cConf = CConfiguration.create();
@@ -141,9 +144,6 @@ public class RemoteExecutionJobMain {
 
     Map<String, String> properties = new HashMap<>();
     properties.put(Constants.Zookeeper.QUORUM, zkConnectStr);
-    properties.put(Constants.RuntimeMonitor.ACTIVE_MONITORING, Boolean.TRUE.toString());
-    properties.put(Constants.RuntimeMonitor.SERVER_KEYSTORE_PATH, Constants.RuntimeMonitor.SERVER_KEYSTORE);
-    properties.put(Constants.RuntimeMonitor.CLIENT_KEYSTORE_PATH, Constants.RuntimeMonitor.CLIENT_KEYSTORE);
 
     locationFactory = injector.getInstance(LocationFactory.class);
     locationFactory.create("/").mkdirs();

@@ -27,6 +27,12 @@ import Checkbox from '@material-ui/core/Checkbox';
 import { generateTableKey } from 'components/Replicator/utilities';
 import LoadingSVG from 'components/LoadingSVG';
 import Heading, { HeadingTypes } from 'components/Heading';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Radio from '@material-ui/core/Radio';
+import RadioGroup from '@material-ui/core/RadioGroup';
+import If from 'components/If';
+import SearchBox from 'components/Replicator/Create/Content/SearchBox';
+import debounce from 'lodash/debounce';
 
 const styles = (theme): StyleRules => {
   return {
@@ -61,7 +67,8 @@ const styles = (theme): StyleRules => {
       },
     },
     gridWrapper: {
-      height: 'calc(100% - 75px - 30px)',
+      // 100% - heading section - subtitle/search box
+      height: 'calc(100% - 100px - 40px)',
       '& .grid.grid-container.grid-compact': {
         maxHeight: '100%',
 
@@ -70,7 +77,7 @@ const styles = (theme): StyleRules => {
         },
 
         '& .grid-row': {
-          gridTemplateColumns: '55px 40px 1fr 200px 55px 100px',
+          gridTemplateColumns: '40px 40px 1fr 200px 55px 100px',
           alignItems: 'center',
         },
 
@@ -80,12 +87,39 @@ const styles = (theme): StyleRules => {
         },
       },
     },
-    nullableCheckbox: {
-      paddingLeft: 0,
-    },
     loadingContainer: {
       textAlign: 'center',
       marginTop: '100px',
+    },
+    replicateSelectionRadio: {
+      marginRight: '10px',
+    },
+    radioContainer: {
+      paddingLeft: '10px',
+      marginTop: '15px',
+      marginBottom: '5px',
+    },
+    radio: {
+      padding: 0,
+    },
+    subtitleContainer: {
+      display: 'flex',
+      alignItems: 'center',
+      marginBottom: '10px',
+
+      '& > div': {
+        marginRight: '25px',
+      },
+    },
+    overlay: {
+      backgroundColor: theme.palette.white[50],
+      opacity: 0.7,
+      top: '100px',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      position: 'absolute',
+      zIndex: 6, // to beat grid-header z-index
     },
   };
 };
@@ -106,27 +140,83 @@ interface IColumn {
   type: string;
   nullable: boolean;
 }
+enum ReplicateSelect {
+  all = 'ALL',
+  individual = 'INDIVIDUAL',
+}
 
 interface ISelectColumnsState {
   columns: IColumn[];
+  filteredColumns: IColumn[];
   primaryKeys: string[];
+  selectedReplication: ReplicateSelect;
   selectedColumns: Map<string, Map<string, string>>;
   loading: boolean;
   error: any;
+  search: string;
 }
 
 class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelectColumnsState> {
   public state = {
     columns: [],
+    filteredColumns: [],
     primaryKeys: [],
+    selectedReplication: ReplicateSelect.all,
     selectedColumns: Map<string, Map<string, string>>(),
     loading: true,
     error: null,
+    search: '',
   };
 
   public componentDidMount() {
     this.fetchColumns();
   }
+
+  private getInitialSelectedColumns = (columns): Map<string, Map<string, string>> => {
+    const existingColumns = {};
+    columns.forEach((column) => {
+      existingColumns[column.name] = true;
+    });
+
+    let hasChange = false;
+
+    const selectedColumns = {};
+    if (this.props.initialSelected && this.props.initialSelected.size > 0) {
+      this.props.initialSelected.forEach((row) => {
+        if (existingColumns[row.get('name')]) {
+          selectedColumns[row.get('name')] = row;
+        } else {
+          hasChange = true;
+        }
+      });
+    }
+
+    const response: Map<string, Map<string, string>> = Map(selectedColumns);
+
+    if (hasChange) {
+      const tableKey = generateTableKey(this.props.tableInfo);
+      this.props.onSave(tableKey, response.toList());
+    }
+
+    return response;
+  };
+
+  private setFilteredColumns = debounce(
+    (search = this.state.search, columns = this.state.columns) => {
+      let filteredColumns = columns;
+      if (search && search.length > 0) {
+        filteredColumns = filteredColumns.filter((row) => {
+          const normalizedColumn = row.name.toLowerCase();
+          const normalizedSearch = search.toLowerCase();
+
+          return normalizedColumn.indexOf(normalizedSearch) !== -1;
+        });
+      }
+
+      this.setState({ filteredColumns });
+    },
+    300
+  );
 
   private fetchColumns = () => {
     this.setState({
@@ -145,18 +235,24 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
 
     MyReplicatorApi.getTableInfo(params, body).subscribe(
       (res) => {
-        const selectedColumns = {};
-        if (this.props.initialSelected && this.props.initialSelected.size > 0) {
-          this.props.initialSelected.forEach((row) => {
-            selectedColumns[row.get('name')] = row;
-          });
-        }
+        const selectedColumns = this.getInitialSelectedColumns(res.columns);
 
-        this.setState({
-          columns: res.columns,
-          primaryKeys: res.primaryKey,
-          selectedColumns: Map(selectedColumns),
-        });
+        this.setState(
+          {
+            columns: res.columns,
+            primaryKeys: res.primaryKey,
+            selectedColumns,
+            selectedReplication:
+              selectedColumns.size === 0 ? ReplicateSelect.all : ReplicateSelect.individual,
+          },
+          () => {
+            if (selectedColumns.size === 0) {
+              this.toggleSelectAll();
+            }
+
+            this.setFilteredColumns();
+          }
+        );
       },
       (err) => {
         this.setState({ error: err });
@@ -169,9 +265,17 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     );
   };
 
+  private handleSearch = (search) => {
+    this.setState({ search });
+    this.setFilteredColumns(search);
+  };
+
   private handleSave = () => {
-    const selectedList = this.state.selectedColumns.toList();
     const tableKey = generateTableKey(this.props.tableInfo);
+    const selectedList =
+      this.state.selectedReplication === ReplicateSelect.all
+        ? null
+        : this.state.selectedColumns.toList();
 
     this.props.onSave(tableKey, selectedList);
     this.props.toggle();
@@ -209,61 +313,83 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     });
   };
 
+  private handleReplicationSelection = (e) => {
+    this.setState({
+      selectedReplication: e.target.value,
+    });
+  };
+
   private renderContent = () => {
     const { classes } = this.props;
 
     return (
-      <div className={`grid-wrapper ${classes.gridWrapper}`}>
-        <div className="grid grid-container grid-compact">
-          <div className="grid-header">
-            <div className="grid-row">
-              <div>
-                <Checkbox
-                  color="primary"
-                  checked={this.state.selectedColumns.size === this.state.columns.length}
-                  indeterminate={
-                    this.state.selectedColumns.size < this.state.columns.length &&
-                    this.state.selectedColumns.size > 0
-                  }
-                  onChange={this.toggleSelectAll}
-                />
-              </div>
-              <div>#</div>
-              <div>Column name</div>
-              <div>Type</div>
-              <div>Null</div>
-              <div>Key</div>
-            </div>
+      <React.Fragment>
+        <If condition={this.state.selectedReplication === ReplicateSelect.all}>
+          <div className={classes.overlay} />
+        </If>
+        <div className={classes.subtitleContainer}>
+          <div>
+            {`Columns - ${this.state.selectedColumns.size} of ${this.state.columns.length} selected`}
           </div>
 
-          <div className="grid-body">
-            {this.state.columns.map((row, i) => {
-              return (
-                <div key={row.name} className="grid-row">
-                  <div>
-                    <Checkbox
-                      color="primary"
-                      checked={!!this.state.selectedColumns.get(row.name)}
-                      onChange={this.toggleSelected.bind(this, row)}
-                    />
-                  </div>
-                  <div>{i + 1}</div>
-                  <div>{row.name}</div>
-                  <div>{row.type}</div>
-                  <div>
-                    <Checkbox
-                      checked={row.nullable}
-                      disabled={true}
-                      className={classes.nullableCheckbox}
-                    />
-                  </div>
-                  <div>{this.state.primaryKeys.indexOf(row.name) !== -1 ? 'Primary' : '--'}</div>
-                </div>
-              );
-            })}
+          <div>
+            <SearchBox
+              value={this.state.search}
+              onChange={this.handleSearch}
+              placeholder="Search by column name"
+            />
           </div>
         </div>
-      </div>
+        <div className={`grid-wrapper ${classes.gridWrapper}`}>
+          <div className="grid grid-container grid-compact">
+            <div className="grid-header">
+              <div className="grid-row">
+                <div>
+                  <Checkbox
+                    color="primary"
+                    className={classes.radio}
+                    checked={this.state.selectedColumns.size === this.state.columns.length}
+                    indeterminate={
+                      this.state.selectedColumns.size < this.state.columns.length &&
+                      this.state.selectedColumns.size > 0
+                    }
+                    onChange={this.toggleSelectAll}
+                  />
+                </div>
+                <div>#</div>
+                <div>Column name</div>
+                <div>Type</div>
+                <div>Null</div>
+                <div>Key</div>
+              </div>
+            </div>
+
+            <div className="grid-body">
+              {this.state.filteredColumns.map((row, i) => {
+                return (
+                  <div key={row.name} className="grid-row">
+                    <div>
+                      <Checkbox
+                        color="primary"
+                        className={classes.radio}
+                        checked={!!this.state.selectedColumns.get(row.name)}
+                        onChange={this.toggleSelected.bind(this, row)}
+                      />
+                    </div>
+                    <div>{i + 1}</div>
+                    <div>{row.name}</div>
+                    <div>{row.type}</div>
+                    <div>
+                      <Checkbox className={classes.radio} checked={row.nullable} disabled={true} />
+                    </div>
+                    <div>{this.state.primaryKeys.indexOf(row.name) !== -1 ? 'Primary' : '--'}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </React.Fragment>
     );
   };
 
@@ -288,10 +414,36 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
           <div className={classes.header}>
             <div>
               <Heading type={HeadingTypes.h3} label={this.props.tableInfo.table} />
-              <div>Select the columns to be replicated</div>
-              <div>
-                Columns - {this.state.selectedColumns.size} of {this.state.columns.length} selected
-              </div>
+              <If condition={!this.state.loading}>
+                <div className={classes.radioContainer}>
+                  <RadioGroup
+                    value={this.state.selectedReplication}
+                    onChange={this.handleReplicationSelection}
+                    className={classes.radioGroup}
+                  >
+                    <FormControlLabel
+                      value={ReplicateSelect.all}
+                      control={
+                        <Radio
+                          color="primary"
+                          className={`${classes.radio} ${classes.replicateSelectionRadio}`}
+                        />
+                      }
+                      label="Replicate all columns available"
+                    />
+                    <FormControlLabel
+                      value={ReplicateSelect.individual}
+                      control={
+                        <Radio
+                          color="primary"
+                          className={`${classes.radio} ${classes.replicateSelectionRadio}`}
+                        />
+                      }
+                      label="Select the columns to be replicated"
+                    />
+                  </RadioGroup>
+                </div>
+              </If>
             </div>
 
             <div className={classes.actionButtons}>

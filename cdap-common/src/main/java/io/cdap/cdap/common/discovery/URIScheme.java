@@ -21,6 +21,7 @@ import org.apache.twill.discovery.Discoverable;
 
 import java.net.InetSocketAddress;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 
@@ -29,11 +30,12 @@ import java.util.Arrays;
  */
 public enum URIScheme {
 
-  HTTP("http", new byte[0]),
-  HTTPS("https", "https://".getBytes(StandardCharsets.UTF_8));
+  HTTP("http", new byte[0], 80),
+  HTTPS("https", "https://".getBytes(StandardCharsets.UTF_8), 443);
 
   private final String scheme;
   private final byte[] discoverablePayload;
+  private final int defaultPort;
 
   /**
    * Returns the {@link URIScheme} based on the given {@link Discoverable} payload.
@@ -46,6 +48,21 @@ public enum URIScheme {
     }
     // Default to HTTP
     return HTTP;
+  }
+
+  /**
+   * Creates a {@link Discoverable} from the given service name and URL.
+   */
+  public static Discoverable createDiscoverable(String serviceName, URL url) {
+    String protocol = url.getProtocol();
+    for (URIScheme scheme : values()) {
+      if (scheme.scheme.equalsIgnoreCase(protocol)) {
+        int port = url.getPort();
+        return scheme.createDiscoverable(serviceName,
+                                         new InetSocketAddress(url.getHost(), port == -1 ? scheme.defaultPort : port));
+      }
+    }
+    throw new IllegalArgumentException("Unsupported protocol from URL " + url);
   }
 
   /**
@@ -70,9 +87,10 @@ public enum URIScheme {
   }
 
 
-  URIScheme(String scheme, byte[] discoverablePayload) {
+  URIScheme(String scheme, byte[] discoverablePayload, int defaultPort) {
     this.scheme = scheme;
     this.discoverablePayload = discoverablePayload;
+    this.defaultPort = defaultPort;
   }
 
   /**
@@ -87,5 +105,12 @@ public enum URIScheme {
    */
   public Discoverable createDiscoverable(String name, InetSocketAddress address) {
     return new Discoverable(name, address, discoverablePayload);
+  }
+
+  /**
+   * Returns the scheme.
+   */
+  public String getScheme() {
+    return scheme;
   }
 }

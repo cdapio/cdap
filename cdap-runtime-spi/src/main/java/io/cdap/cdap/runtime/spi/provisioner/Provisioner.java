@@ -123,8 +123,25 @@ public interface Provisioner {
    * @param cluster the cluster to delete
    * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
    * @throws Exception if the operation failed in a non-retryable fashion
+   * @deprecated Since 6.2.0. Implements the {@link #deleteClusterWithStatus(ProvisionerContext, Cluster)} as well.
    */
+  @Deprecated
   void deleteCluster(ProvisionerContext context, Cluster cluster) throws Exception;
+
+  /**
+   * Request to delete a cluster. The cluster does not have to be deleted before the method returns, but it must
+   * at least be in the process of being deleted. Must be implemented in an idempotent way.
+   *
+   * @param context provisioner context
+   * @param cluster the cluster to delete
+   * @return the {@link ClusterStatus} after the delete cluster operation
+   * @throws RetryableProvisionException if the operation failed, but may succeed on a retry
+   * @throws Exception if the operation failed in a non-retryable fashion
+   */
+  default ClusterStatus deleteClusterWithStatus(ProvisionerContext context, Cluster cluster) throws Exception {
+    deleteCluster(context, cluster);
+    return ClusterStatus.DELETING;
+  }
 
   /**
    * Get the {@link PollingStrategy} to use when polling for cluster creation or deletion. The cluster status is

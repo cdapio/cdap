@@ -160,7 +160,7 @@ const getCustomConfigForDisplay = (properties, engine, pipelineType) => {
 const getEngineDisplayLabel = (engine, pipelineType) => {
   return engine === ENGINE_OPTIONS.MAPREDUCE && GLOBALS.etlBatchPipelines.includes(pipelineType)
     ? 'MapReduce'
-    : 'Apache Spark Streaming';
+    : 'Apache Spark';
 };
 
 const checkForReset = (runtimeArgs, resolvedMacros) => {

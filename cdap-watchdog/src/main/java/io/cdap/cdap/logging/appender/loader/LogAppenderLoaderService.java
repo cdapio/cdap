@@ -66,6 +66,11 @@ public class LogAppenderLoaderService extends AbstractIdleService {
   @Override
   protected void shutDown() throws Exception {
     if (logAppender != null) {
+      ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+      LoggerContext loggerContext = (LoggerContext) loggerFactory;
+      if (loggerContext != null) {
+        loggerContext.getLogger(Logger.ROOT_LOGGER_NAME).detachAppender(logAppender);
+      }
       logAppender.stop();
     }
   }

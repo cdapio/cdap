@@ -77,6 +77,7 @@ import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
+import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisionerModule;
@@ -180,7 +181,6 @@ public class TestBase {
   private static int nestedStartCount;
   private static boolean firstInit = true;
   private static MetricsCollectionService metricsCollectionService;
-  private static ProgramNotificationSubscriberService programNotificationSubscriberService;
   private static Scheduler scheduler;
   private static ExploreExecutorService exploreExecutorService;
   private static ExploreClient exploreClient;
@@ -197,13 +197,13 @@ public class TestBase {
   private static Scheduler programScheduler;
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
-  private static ProvisioningService provisioningService;
   private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static MetadataStorage metadataStorage;
   private static MetadataAdmin metadataAdmin;
   private static FieldLineageAdmin fieldLineageAdmin;
   private static LineageAdmin lineageAdmin;
+  private static AppFabricServer appFabricServer;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -309,15 +309,6 @@ public class TestBase {
     datasetService.startAndWait();
     metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.startAndWait();
-    programNotificationSubscriberService = injector.getInstance(ProgramNotificationSubscriberService.class);
-    programNotificationSubscriberService.startAndWait();
-    scheduler = injector.getInstance(Scheduler.class);
-    if (scheduler instanceof Service) {
-      ((Service) scheduler).startAndWait();
-    }
-    if (scheduler instanceof CoreSchedulerService) {
-      ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
-    }
     if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
       exploreExecutorService = injector.getInstance(ExploreExecutorService.class);
       exploreExecutorService.startAndWait();
@@ -366,11 +357,19 @@ public class TestBase {
     previewManager = injector.getInstance(PreviewManager.class);
     fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
     lineageAdmin = injector.getInstance(LineageAdmin.class);
-    provisioningService = injector.getInstance(ProvisioningService.class);
-    provisioningService.startAndWait();
     metadataSubscriberService.startAndWait();
     if (previewManager instanceof Service) {
       ((Service) previewManager).startAndWait();
+    }
+    appFabricServer = injector.getInstance(AppFabricServer.class);
+    appFabricServer.startAndWait();
+
+    scheduler = injector.getInstance(Scheduler.class);
+    if (scheduler instanceof Service) {
+      ((Service) scheduler).startAndWait();
+    }
+    if (scheduler instanceof CoreSchedulerService) {
+      ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
   }
 
@@ -504,6 +503,7 @@ public class TestBase {
       authorizerInstantiator.get().grant(Authorizable.fromEntityId(NamespaceId.DEFAULT),
                                          principal, ImmutableSet.of(Action.ADMIN));
     }
+    
     namespaceAdmin.delete(NamespaceId.DEFAULT);
     authorizerInstantiator.close();
 
@@ -511,7 +511,6 @@ public class TestBase {
       ((Service) programScheduler).stopAndWait();
     }
     metricsCollectionService.stopAndWait();
-    programNotificationSubscriberService.stopAndWait();
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }
@@ -525,11 +524,10 @@ public class TestBase {
     metadataSubscriberService.stopAndWait();
     Closeables.closeQuietly(metadataStorage);
     txService.stopAndWait();
-
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
     }
-    provisioningService.stopAndWait();
+    appFabricServer.stopAndWait();
   }
 
   protected MetricsManager getMetricsManager() {

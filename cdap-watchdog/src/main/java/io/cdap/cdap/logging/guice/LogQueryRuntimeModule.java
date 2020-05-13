@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.logging.guice;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
@@ -36,7 +36,8 @@ import io.cdap.http.HttpHandler;
  * A Guice module to provide bindings for the HTTP service for querying logs.
  */
 public class LogQueryRuntimeModule extends RuntimeModule {
-  public static void bindHandlers(Binder binder) {
+
+  private static void bindHandlers(Binder binder) {
     Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(binder, HttpHandler.class,
                                                                       Names.named(Constants.Service.LOG_QUERY));
     handlerBinder.addBinding().to(LogHttpHandler.class);
@@ -44,23 +45,25 @@ public class LogQueryRuntimeModule extends RuntimeModule {
   }
 
   private Module getLocalModule() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
         bindHandlers(binder());
-        bind(LogQueryService.class).in(Scopes.SINGLETON);
         bind(ProgramRunRecordFetcher.class).to(LocalProgramRunRecordFetcher.class);
+        bind(LogQueryService.class).in(Scopes.SINGLETON);
+        expose(LogQueryService.class);
       }
     };
   }
 
   private Module getRemoteModule() {
-    return new AbstractModule() {
+    return new PrivateModule() {
       @Override
       protected void configure() {
         bindHandlers(binder());
-        bind(LogQueryService.class).in(Scopes.SINGLETON);
         bind(ProgramRunRecordFetcher.class).to(RemoteProgramRunRecordFetcher.class);
+        bind(LogQueryService.class).in(Scopes.SINGLETON);
+        expose(LogQueryService.class);
       }
     };
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,74 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
   let timeout;
   let addFieldTimeout;
   vm.emptySchema = false;
+  // lazy loading parameters
+  $scope.id = uuid.v4();
+  $scope.lazyLoadedParsedSchema = [];
+  vm.windowSize = 50;
+  vm.DEFAULT_WINDOW_SIZE = 50;
+  vm.lazyloading = false;
+
+  $scope.$watch('domLoaded', () => {
+    /*
+      Wait for the dom to be loaded
+      Equivalent of componentDidMount :sigh:
+    */
+    if (!$scope.domLoaded) {
+      return;
+    }
+    /*
+      For some reason if the dom is loaded but none of the fields are
+      rendered we don't need to do anything.
+    */
+    const fields = document.querySelectorAll(`#schema-container-${$scope.id} .field-row`);
+    if (!fields.length) {
+      return;
+    }
+    vm.io = new IntersectionObserver(
+      (entries) => {
+        let lastVisibleElement = vm.windowSize;
+        for (const entry of entries) {
+          const id = entry.target.getAttribute('lazyload-id');
+          const numID = parseInt(id, 10);
+          if (entry.isIntersecting) {
+            lastVisibleElement = numID + vm.DEFAULT_WINDOW_SIZE > vm.windowSize ? numID + vm.DEFAULT_WINDOW_SIZE : numID;
+          }
+        }
+        if (lastVisibleElement > vm.windowSize) {
+          vm.windowSize = lastVisibleElement;
+          vm.lazyloading = true;
+          /*
+            The timeout is to sort-of give a smooth transition
+            scroll => loading ... => then after a second show the fields
+            This is the best effort to avoid jankiness while scrolling
+          */
+          $timeout(() => {
+            // This is to trigger a re-render for angular.
+            $scope.$apply(function() {
+              $scope.lazyLoadedParsedSchema = $scope.lazyLoadedParsedSchema.concat(
+                vm.parsedSchema.slice($scope.lazyLoadedParsedSchema.length, lastVisibleElement)
+              );
+              vm.lazyloading = false;
+            });
+          }, 1000);
+        }
+      },
+      {
+        // We don't have a root. Browser fallsback to document
+        threshold: [0, 1],
+      }
+    );
+    $scope.observeFields();
+  });
+
+  $scope.observeFields = () => {
+    if (!vm.io) {
+      return;
+    }
+    document.querySelectorAll(`#schema-container-${$scope.id} .field-row`).forEach((entry) => {
+      vm.io.observe(entry);
+    });
+  };
 
   vm.addField = (index) => {
     let placement = index === undefined ? 0 : index + 1;
@@ -34,10 +102,12 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       displayType: 'string',
       nullable: false,
       id: uuid.v4(),
-      nested: false
+      nested: false,
+      collapse: false,
     };
 
     vm.parsedSchema.splice(placement, 0, newField);
+    $scope.lazyLoadedParsedSchema.splice(placement, 0, newField);
 
     vm.formatOutput();
 
@@ -55,7 +125,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     if (vm.parsedSchema.length === 0) {
       vm.addField();
     }
-
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
     vm.formatOutput();
   };
 
@@ -64,6 +134,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       field.type = field.displayType;
       vm.formatOutput();
     } else {
+      field.collapse = false;
       field.type = null;
     }
 
@@ -96,6 +167,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     }
 
     vm.parsedSchema = vm.parsedSchema.concat(data);
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
     vm.formatOutput();
   };
 
@@ -142,7 +214,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
 
       return Object.assign({}, partialObj, {
         id: uuid.v4(),
-        name: field.getName()
+        name: field.getName(),
+        collapse: true,
       });
 
     });
@@ -151,6 +224,8 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
       vm.addField();
       return;
     }
+
+    $scope.lazyLoadedParsedSchema = vm.parsedSchema.slice(0, vm.windowSize);
 
     vm.formatOutput(true);
   }
@@ -238,6 +313,32 @@ angular.module(PKG.name+'.commons')
       isInputSchema: '=',
       isInStudio: '=',
       errors: '=',
+    },
+    link: (scope, element) => {
+      scope.domLoaded = false;
+      /*
+        This watch is here because when we update the lazyLoadedParsedSchema we need to
+        observe the newly added fields. There is no way to check if new fields are
+        added to the DOM unless we watch it.
+        This cannot be done as soon as we update lazyLoadedParsedSchema in the controller
+        because angular doesn't guarantee that the DOM node will be available immediately
+        after we add new fields to the array.
+      */
+      scope.$watch(
+        function() {
+          return document.querySelectorAll(`#schema-container-${scope.id} .field-row`).length;
+        },
+        function(newValue, oldValue) {
+          if (newValue !== oldValue) {
+            scope.observeFields();
+          }
+        }
+      );
+      element.ready(() => {
+        scope.$apply(() => {
+          scope.domLoaded = true;
+        });
+      });
     }
   };
 })
@@ -251,7 +352,7 @@ angular.module(PKG.name+'.commons')
       typeIndex: '=',
       parentFormatOutput: '&',
       isDisabled: '=',
-      schemaPrefix: '='
+      schemaPrefix: '=',
     },
     link: (scope, element) => {
       let elemString = `<my-complex-schema
@@ -261,7 +362,7 @@ angular.module(PKG.name+'.commons')
                           is-record-schema="true"
                           parent-format-output="parentFormatOutput()"
                           is-disabled="isDisabled"
-                          schema-prefix="schemaPrefix"
+                          schema-prefix="schemaPrefix">
                         </my-complex-schema>`;
 
       $compile(elemString)(scope, (cloned) => {

@@ -24,8 +24,10 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.twill.common.Threads;
 
 import java.util.Map;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -38,21 +40,20 @@ public class ProfileMetricService extends AbstractScheduledService {
   private final MetricsContext metricsContext;
   private final long intervalMinutes;
   private final int numNodes;
-  private final ScheduledExecutorService executor;
+  private ScheduledExecutorService executor;
   private long startUpTime;
 
   public ProfileMetricService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
-                              ProfileId profileId, int numNodes, ScheduledExecutorService executor) {
-    this(metricsCollectionService, programRunId, profileId, numNodes, DEFAULT_INTERVAL_MINUTES, executor);
+                              ProfileId profileId, int numNodes) {
+    this(metricsCollectionService, programRunId, profileId, numNodes, DEFAULT_INTERVAL_MINUTES);
   }
 
-  public ProfileMetricService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
-                              ProfileId profileId, int numNodes, long intervalMinutes,
-                              ScheduledExecutorService executor) {
+  @VisibleForTesting
+  ProfileMetricService(MetricsCollectionService metricsCollectionService, ProgramRunId programRunId,
+                       ProfileId profileId, int numNodes, long intervalMinutes) {
     this.metricsContext = getMetricsContextForProfile(metricsCollectionService, programRunId, profileId);
     this.numNodes = numNodes;
     this.intervalMinutes = intervalMinutes;
-    this.executor = executor;
   }
 
   @Override
@@ -70,6 +71,9 @@ public class ProfileMetricService extends AbstractScheduledService {
     } else if (duration % 60 >= intervalMinutes * 60 / 2) {
       emitMetric();
     }
+    if (executor != null) {
+      executor.shutdownNow();
+    }
   }
 
   @Override
@@ -84,6 +88,10 @@ public class ProfileMetricService extends AbstractScheduledService {
 
   @Override
   protected final ScheduledExecutorService executor() {
+    if (executor != null) {
+      return executor;
+    }
+    executor = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("profile-metrics"));
     return executor;
   }
 

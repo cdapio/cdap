@@ -40,6 +40,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Log appender that publishes log messages to TMS.
@@ -48,27 +50,32 @@ public final class TMSLogAppender extends LogAppender {
 
   private static final String APPENDER_NAME = "TMSLogAppender";
 
-  private final TMSLogPublisher tmsLogPublisher;
+  private final CConfiguration cConf;
+  private final MessagingService messagingService;
+  private final AtomicReference<TMSLogPublisher> tmsLogPublisher;
 
   @Inject
   TMSLogAppender(CConfiguration cConf, MessagingService messagingService) {
     setName(APPENDER_NAME);
-    int queueSize = cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE);
-    this.tmsLogPublisher = new TMSLogPublisher(cConf, messagingService, queueSize);
+    this.cConf = cConf;
+    this.messagingService = messagingService;
+    this.tmsLogPublisher = new AtomicReference<>();
   }
 
   @Override
   public void start() {
-    tmsLogPublisher.startAndWait();
+    TMSLogPublisher publisher = new TMSLogPublisher(cConf, messagingService);
+    Optional.ofNullable(tmsLogPublisher.getAndSet(publisher)).ifPresent(TMSLogPublisher::stopAndWait);
+    publisher.startAndWait();
     addInfo("Successfully started " + APPENDER_NAME);
     super.start();
   }
 
   @Override
   public void stop() {
-    tmsLogPublisher.stopAndWait();
-    addInfo("Successfully stopped " + APPENDER_NAME);
     super.stop();
+    Optional.ofNullable(tmsLogPublisher.getAndSet(null)).ifPresent(TMSLogPublisher::stopAndWait);
+    addInfo("Successfully stopped " + APPENDER_NAME);
   }
 
   @Override
@@ -77,7 +84,7 @@ public final class TMSLogAppender extends LogAppender {
     logMessage.getCallerData();
 
     try {
-      tmsLogPublisher.addMessage(logMessage);
+      tmsLogPublisher.get().addMessage(logMessage);
     } catch (InterruptedException e) {
       addInfo("Interrupted when adding log message to queue: " + logMessage.getFormattedMessage());
     }
@@ -101,8 +108,9 @@ public final class TMSLogAppender extends LogAppender {
     private final MessagingContext messagingContext;
     private final LogPartitionType logPartitionType;
 
-    private TMSLogPublisher(CConfiguration cConf, MessagingService messagingService, int queueSize) {
-      super(queueSize, RetryStrategies.fromConfiguration(cConf, "system.log.process."));
+    private TMSLogPublisher(CConfiguration cConf, MessagingService messagingService) {
+      super(cConf.getInt(Constants.Logging.APPENDER_QUEUE_SIZE, 512),
+            RetryStrategies.fromConfiguration(cConf, "system.log.process."));
       this.topicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
       this.numPartitions = cConf.getInt(Constants.Logging.NUM_PARTITIONS);
       this.loggingEventSerializer = new LoggingEventSerializer();
@@ -131,7 +139,7 @@ public final class TMSLogAppender extends LogAppender {
 
       for (Map.Entry<Integer, List<byte[]>> partition : partitionedMessages.entrySet()) {
         directMessagePublisher.publish(NamespaceId.SYSTEM.getNamespace(),
-                topicPrefix + partition.getKey(), partition.getValue().iterator());
+                                       topicPrefix + partition.getKey(), partition.getValue().iterator());
       }
     }
 

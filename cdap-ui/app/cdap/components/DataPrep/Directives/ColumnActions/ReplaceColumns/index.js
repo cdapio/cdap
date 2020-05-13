@@ -51,9 +51,6 @@ export default class ReplaceColumns extends Component {
   }
 
   componentDidMount() {
-    if (this.patternInputRef) {
-      this.patternInputRef.focus();
-    }
     MouseTrap.bind('enter', this.applyDirective);
   }
 
@@ -150,8 +147,7 @@ export default class ReplaceColumns extends Component {
             value={this.state.sourcePattern}
             onChange={this.handleChange.bind(this, 'sourcePattern')}
             placeholder={placeholder}
-            autoFocus={true}
-            ref={(ref) => (this.patternInputRef = ref)}
+            autoFocus
           />
         </div>
       </div>
@@ -188,6 +184,7 @@ export default class ReplaceColumns extends Component {
         backdrop="static"
         zIndex="1061"
         className="changecolumns-columnactions-modal cdap-modal"
+        autoFocus={false}
       >
         <ModalHeader>
           <span>{T.translate(`${PREFIX}.modalTitle`)}</span>

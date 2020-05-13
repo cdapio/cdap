@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.batch.distributed;
 
+import com.google.common.io.Closeables;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -31,6 +32,7 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceClassLoader;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceContextConfig;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceTaskContextProvider;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.kafka.client.KafkaClientService;
@@ -78,19 +80,19 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   @Override
   protected void startUp() throws Exception {
     super.startUp();
+    ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
     try {
+      logAppenderInitializer.initialize();
+      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
+
       oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(getInjector().getInstance(ProxySelector.class));
-        Authenticator.setDefault(getInjector().getInstance(Authenticator.class));
+        RuntimeMonitors.setupMonitoring(getInjector(), programOptions);
       }
 
       for (Service service : coreServices) {
         service.startAndWait();
       }
-      logAppenderInitializer.initialize();
-      ProgramOptions programOptions = mapReduceContextConfig.getProgramOptions();
-      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
     } catch (Exception e) {
       // Try our best to stop services. Chain stop guarantees it will stop everything, even some of them failed.
       try {
@@ -105,12 +107,9 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
   @Override
   protected void shutDown() throws Exception {
     super.shutDown();
+    Closeables.closeQuietly(logAppenderInitializer);
+
     Exception failure = null;
-    try {
-      logAppenderInitializer.close();
-    } catch (Exception e) {
-      failure = e;
-    }
     for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
       try {
         service.stopAndWait();
@@ -138,7 +137,8 @@ public final class DistributedMapReduceTaskContextProvider extends MapReduceTask
     Arguments systemArgs = programOptions.getArguments();
     String runId = systemArgs.getOption(ProgramOptionConstants.RUN_ID);
     return Guice.createInjector(
-      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId), systemArgs)
+      new DistributedProgramContainerModule(cConf, hConf, mapReduceContextConfig.getProgramId().run(runId),
+                                            programOptions)
     );
   }
 }

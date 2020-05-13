@@ -38,7 +38,6 @@ export default class SingleFieldModal extends Component {
 
   componentDidMount() {
     MouseTrap.bind('enter', this.apply);
-    this.inputRef.focus();
   }
 
   componentWillUnmount() {
@@ -104,6 +103,7 @@ export default class SingleFieldModal extends Component {
         backdrop="static"
         zIndex="1061"
         className="dataprep-parse-modal cdap-modal"
+        autoFocus={false}
       >
         <ModalHeader>
           <span>{T.translate(`${SUFFIX}.modalTitle`, { parser: parserTitle })}</span>
@@ -122,8 +122,8 @@ export default class SingleFieldModal extends Component {
               className="form-control mousetrap"
               placeholder={T.translate(`${SUFFIX}.Parsers.${parser}.placeholder`)}
               value={this.state.text}
-              ref={(ref) => (this.inputRef = ref)}
               onChange={this.onTextChange}
+              autoFocus
             />
           </div>
 

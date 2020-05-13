@@ -18,6 +18,7 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import LeftPanel from 'components/Replicator/Create/LeftPanel';
 import EntityTopPanel from 'components/EntityTopPanel';
+import TopPanel from 'components/Replicator/Create/TopPanel';
 import Content from 'components/Replicator/Create/Content';
 import { Redirect } from 'react-router-dom';
 import { objectQuery } from 'services/helpers';
@@ -90,6 +91,8 @@ interface ICreateState {
   tables: any;
   columns: any;
   dmlBlacklist: Map<string, Set<DML>>;
+  offsetBasePath: string;
+  numInstances: number;
   parentArtifact: {
     name: string;
     version: string;
@@ -107,6 +110,7 @@ interface ICreateState {
   setTargetPluginWidget: (targetPluginWidget) => void;
   setTargetConfig: (targetConfig: IPluginConfig) => void;
   setTables: (tables, columns, dmlBlacklist) => void;
+  setAdvanced: (offsetBasePath, numInstances) => void;
   getReplicatorConfig: () => any;
 }
 
@@ -159,6 +163,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     this.setState({ tables, columns, dmlBlacklist });
   };
 
+  public setAdvanced = (offsetBasePath, numInstances) => {
+    this.setState({ offsetBasePath, numInstances });
+  };
+
   // TODO: Refactor
   private getReplicatorConfig = () => {
     const source = this.constructStageSpec('source');
@@ -191,6 +199,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         this.state.columns,
         this.state.dmlBlacklist
       ),
+      offsetBasePath: this.state.offsetBasePath,
+      parallelism: {
+        numInstances: this.state.numInstances,
+      },
     };
 
     return config;
@@ -208,6 +220,8 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     tables: Map<string, Map<string, string>>(),
     columns: Map<string, List<IColumn>>(),
     dmlBlacklist: Map<string, Set<DML>>(),
+    offsetBasePath: window.CDAP_CONFIG.delta.defaultCheckpointDir || '',
+    numInstances: 1,
 
     parentArtifact: null,
     draftId: null,
@@ -224,6 +238,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setTargetPluginWidget: this.setTargetPluginWidget,
     setTargetConfig: this.setTargetConfig,
     setTables: this.setTables,
+    setAdvanced: this.setAdvanced,
     getReplicatorConfig: this.getReplicatorConfig,
   };
 
@@ -286,6 +301,8 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         name: res.label,
         description: objectQuery(res, 'config', 'description') || '',
         activeStep: 1,
+        offsetBasePath: objectQuery(res, 'config', 'offsetBasePath') || '',
+        numInstances: objectQuery(res, 'config', 'parallelism', 'numInstances') || 1,
       };
 
       const stages = objectQuery(res, 'config', 'stages') || [];
@@ -309,7 +326,26 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
         newState.sourcePluginInfo = sourcePluginInfo;
         newState.sourceConfig = objectQuery(source, 'plugin', 'properties') || {};
-        newState.activeStep = 2;
+
+        try {
+          const sourcePluginWidget = await fetchPluginWidget(
+            sourceArtifact.name,
+            sourceArtifact.version,
+            sourceArtifact.scope,
+            sourcePluginInfo.name,
+            sourcePluginInfo.type
+          ).toPromise();
+
+          newState.sourcePluginWidget = sourcePluginWidget;
+        } catch (e) {
+          // tslint:disable-next-line: no-console
+          console.log('Cannot fetch source plugin widget', e);
+          // no-op
+        }
+
+        if (Object.keys(newState.sourceConfig).length > 0) {
+          newState.activeStep = 2;
+        }
       }
 
       // TABLES & COLUMNS
@@ -343,7 +379,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
         newState.columns = columns;
         newState.dmlBlacklist = dmlBlacklist;
 
-        // newState.activeStep = 3;
+        newState.activeStep = 3;
       }
 
       // TARGET
@@ -365,7 +401,26 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
         newState.targetPluginInfo = targetPluginInfo;
         newState.targetConfig = objectQuery(target, 'plugin', 'properties') || {};
-        newState.activeStep = 4;
+
+        try {
+          const targetPluginWidget = await fetchPluginWidget(
+            targetArtifact.name,
+            targetArtifact.version,
+            targetArtifact.scope,
+            targetPluginInfo.name,
+            targetPluginInfo.type
+          ).toPromise();
+
+          newState.targetPluginWidget = targetPluginWidget;
+        } catch (e) {
+          // tslint:disable-next-line: no-console
+          console.log('Cannot fetch target plugin widget', e);
+          // no-op
+        }
+
+        if (Object.keys(newState.targetConfig).length > 0) {
+          newState.activeStep = 5;
+        }
       }
 
       this.setState(newState);
@@ -423,22 +478,6 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     return <Redirect to={`/ns/${getCurrentNamespace()}/replicator`} />;
   };
 
-  private renderState = () => {
-    if (true) {
-      return null;
-    }
-
-    const state = { ...this.state };
-
-    Object.keys(state).forEach((stateKey) => {
-      if (typeof state[stateKey] === 'function') {
-        delete state[stateKey];
-      }
-    });
-
-    return <pre>{JSON.stringify(state, null, 2)}</pre>;
-  };
-
   public render() {
     if (this.state.isInvalidSource) {
       return this.redirectToListView();
@@ -451,13 +490,12 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     return (
       <CreateContext.Provider value={this.state}>
         <div className={this.props.classes.root}>
-          <EntityTopPanel title="Create new Replicator" closeBtnAnchorLink={() => history.back()} />
+          <TopPanel />
           <div className={this.props.classes.content}>
             <LeftPanel />
             <Content />
           </div>
         </div>
-        {this.renderState()}
       </CreateContext.Provider>
     );
   }

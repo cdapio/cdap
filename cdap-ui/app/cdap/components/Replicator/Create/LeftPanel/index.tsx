@@ -20,6 +20,7 @@ import { createContextConnect } from 'components/Replicator/Create';
 import Chip from '@material-ui/core/Chip';
 import { STEPS } from 'components/Replicator/Create/steps';
 import classnames from 'classnames';
+import Check from '@material-ui/icons/Check';
 
 const styles = (theme): StyleRules => {
   return {
@@ -28,23 +29,36 @@ const styles = (theme): StyleRules => {
     },
     row: {
       padding: '15px',
-      cursor: 'pointer',
       lineHeight: '24px',
+    },
+    finishedRow: {
+      cursor: 'pointer',
+
       '&:hover': {
         backgroundColor: theme.palette.grey[700],
+      },
+
+      '& $chip': {
+        backgroundColor: theme.palette.blue[100],
       },
     },
     active: {
       backgroundColor: theme.palette.grey[700],
-      '& $chip': {
-        backgroundColor: theme.palette.blue[100],
-      },
     },
     chip: {
       marginRight: '10px',
       color: theme.palette.white[50],
       backgroundColor: theme.palette.grey[200],
       minWidth: '24px', // weird thing with material-ui Chip component
+      height: '24px',
+
+      '& span': {
+        paddingLeft: '5px',
+        paddingRight: '5px',
+      },
+    },
+    checkIcon: {
+      fontSize: '14px',
     },
   };
 };
@@ -55,16 +69,29 @@ interface ILeftPanelProps extends WithStyles<typeof styles> {
 }
 
 const LeftPanelView: React.FC<ILeftPanelProps> = ({ classes, setActiveStep, activeStep }) => {
+  function handleStepClick(step) {
+    if (step >= activeStep) {
+      return;
+    }
+
+    setActiveStep(step);
+  }
+
   return (
     <div className={classes.root}>
       {STEPS.map((step, i) => {
+        const chipContent = i < activeStep ? <Check className={classes.checkIcon} /> : i + 1;
+
         return (
           <div
             key={step.label}
-            className={classnames(classes.row, { [classes.active]: activeStep === i })}
-            onClick={setActiveStep.bind(null, i)}
+            className={classnames(classes.row, {
+              [classes.finishedRow]: i <= activeStep,
+              [classes.active]: i === activeStep,
+            })}
+            onClick={handleStepClick.bind(null, i)}
           >
-            <Chip size="small" label={i + 1} className={classes.chip} />
+            <Chip label={chipContent} className={classes.chip} />
             <span>{step.label}</span>
           </div>
         );

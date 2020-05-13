@@ -23,6 +23,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.AuthorizationException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -93,16 +94,14 @@ public class RuntimeServiceRoutingTest {
   public void beforeTest() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(Constants.RuntimeMonitor.BIND_PORT, 0);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
-      new AbstractModule() {
+      new RuntimeServerModule() {
         @Override
-        protected void configure() {
-          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
+        protected void bindRequestValidator() {
           bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
             String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
             String expected = "test " + Base64.getEncoder().encodeToString(
@@ -111,6 +110,17 @@ public class RuntimeServiceRoutingTest {
               throw new AuthorizationException("Program run " + programRunId + " is not authorized");
             }
           });
+        }
+
+        @Override
+        protected void bindLogProcessor() {
+          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> { });
+        }
+      },
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
         }
       }
     );

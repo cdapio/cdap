@@ -49,6 +49,7 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
   private final JavaSparkExecutionContext sec;
   private final JavaStreamingContext jsc;
   private final Admin admin;
+  private final boolean isPreviewEnabled;
 
   public DefaultStreamingContext(StageSpec stageSpec, JavaSparkExecutionContext sec, JavaStreamingContext jsc) {
     super(new PipelineRuntime(sec.getNamespace(), sec.getApplicationSpecification().getName(),
@@ -57,6 +58,12 @@ public class DefaultStreamingContext extends AbstractStageContext implements Str
     this.sec = sec;
     this.jsc = jsc;
     this.admin = sec.getAdmin();
+    this.isPreviewEnabled = sec.getDataTracer(stageSpec.getName()).isEnabled();
+  }
+
+  @Override
+  public boolean isPreviewEnabled() {
+    return isPreviewEnabled;
   }
 
   @Override

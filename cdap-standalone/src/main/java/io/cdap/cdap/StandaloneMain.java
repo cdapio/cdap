@@ -31,6 +31,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.store.ServiceStore;
@@ -64,6 +65,7 @@ import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -144,6 +146,7 @@ public class StandaloneMain {
   private final SecureStoreService secureStoreService;
   private final PreviewHttpServer previewHttpServer;
   private final MetadataStorage metadataStorage;
+  private final RuntimeServer runtimeServer;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
   private ExploreExecutorService exploreExecutorService;
@@ -173,6 +176,7 @@ public class StandaloneMain {
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
+    runtimeServer = injector.getInstance(RuntimeServer.class);
 
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
       txService = injector.getInstance(InMemoryTransactionService.class);
@@ -265,6 +269,7 @@ public class StandaloneMain {
     // since log appender instantiates a dataset.
     logAppenderInitializer.initialize();
 
+    runtimeServer.startAndWait();
     Service.State state = appFabricServer.startAndWait();
     if (state != Service.State.RUNNING) {
       throw new Exception("Failed to start Application Fabric");
@@ -330,6 +335,7 @@ public class StandaloneMain {
       previewHttpServer.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
+      runtimeServer.stopAndWait();
       // all programs are stopped: dataset service, metrics, transactions can stop now
       datasetService.stopAndWait();
       datasetOpExecutorService.stopAndWait();
@@ -521,6 +527,7 @@ public class StandaloneMain {
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),
+      new RuntimeServerModule(),
       new OperationalStatsModule(),
       new AbstractModule()  {
         @Override

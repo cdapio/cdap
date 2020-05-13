@@ -34,6 +34,7 @@ import io.cdap.cdap.internal.app.program.ProgramStateWriterWithHeartBeat;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.EventHandler;
 import org.apache.twill.api.EventHandlerContext;
@@ -61,6 +62,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
   private RunId twillRunId;
   private ClusterMode clusterMode;
   private ProgramRunId programRunId;
+  private RuntimeMonitorType runtimeMonitorType;
   private ProgramStateWriterWithHeartBeat programStateWriterWithHeartBeat;
   private ZKClientService zkClientService;
   private AtomicBoolean runningPublished;
@@ -76,10 +78,11 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
    * @param programRunId the program run id that this event handler is handling
    */
   public TwillAppLifecycleEventHandler(long abortTime, boolean abortIfNotFull, ProgramRunId programRunId,
-                                       ClusterMode clusterMode) {
+                                       ClusterMode clusterMode, RuntimeMonitorType runtimeMonitorType) {
     super(abortTime, abortIfNotFull);
     this.programRunId = programRunId;
     this.clusterMode = clusterMode;
+    this.runtimeMonitorType = runtimeMonitorType;
   }
 
   @Override
@@ -87,6 +90,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     Map<String, String> configs = new HashMap<>(super.getConfigs());
     configs.put("programRunId", GSON.toJson(programRunId));
     configs.put("clusterMode", clusterMode.name());
+    configs.put("monitorType", runtimeMonitorType.name());
     return configs;
   }
 
@@ -100,6 +104,7 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
     Map<String, String> configs = context.getSpecification().getConfigs();
     this.programRunId = GSON.fromJson(configs.get("programRunId"), ProgramRunId.class);
     this.clusterMode = ClusterMode.valueOf(configs.get("clusterMode"));
+    this.runtimeMonitorType = RuntimeMonitorType.valueOf(configs.get("monitorType"));
 
     // Fetch cConf and hConf from resources jar
     File cConfFile = new File("resources.jar/resources/" + CDAP_CONF_FILE_NAME);
@@ -142,6 +147,12 @@ public class TwillAppLifecycleEventHandler extends AbortOnTimeoutEventHandler {
           break;
         case ISOLATED:
           modules.add(new RemoteExecutionDiscoveryModule());
+          modules.add(new AbstractModule() {
+            @Override
+            protected void configure() {
+              bind(RuntimeMonitorType.class).toInstance(runtimeMonitorType);
+            }
+          });
           break;
       }
 

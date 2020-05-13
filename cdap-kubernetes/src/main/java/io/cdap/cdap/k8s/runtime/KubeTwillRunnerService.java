@@ -93,6 +93,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   private final String kubeNamespace;
   private final String resourcePrefix;
+  private final Map<String, String> cConf;
   private final PodInfo podInfo;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, String> extraLabels;
@@ -103,10 +104,12 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private ApiClient apiClient;
 
   public KubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels) {
+                                PodInfo podInfo, String resourcePrefix, Map<String, String> cConf,
+                                Map<String, String> extraLabels) {
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.resourcePrefix = resourcePrefix;
+    this.cConf = cConf;
     this.discoveryServiceClient = discoveryServiceClient;
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
     // Selects all runs start by the k8s twill runner that has the run id label
@@ -143,7 +146,7 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     // so use annotations to store the app name.
     resourceMeta.setAnnotations(Collections.singletonMap(APP_ANNOTATION, spec.getName()));
     return new KubeTwillPreparer(apiClient, kubeNamespace, podInfo,
-                                 spec, runId, resourceMeta, (timeout, timeoutUnit) -> {
+                                 spec, runId, resourceMeta, cConf, (timeout, timeoutUnit) -> {
       // Adds the controller to the LiveInfo.
       liveInfoLock.lock();
       try {

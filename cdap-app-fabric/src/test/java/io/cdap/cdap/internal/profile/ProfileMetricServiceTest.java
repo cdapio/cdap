@@ -62,7 +62,7 @@ public class ProfileMetricServiceTest {
     MetricStore metricStore = injector.getInstance(MetricStore.class);
 
     // There are 5 nodes, we emit the metrics each 2 mins, so each time the node minute should go up by 10 min
-    ProfileMetricService scheduledService = new ProfileMetricService(collectionService, runId, profileId, 5, 2, null);
+    ProfileMetricService scheduledService = new ProfileMetricService(collectionService, runId, profileId, 5, 2);
 
     // emit and verify the results
     scheduledService.emitMetric();
@@ -86,7 +86,7 @@ public class ProfileMetricServiceTest {
     MetricsCollectionService collectionService = injector.getInstance(MetricsCollectionService.class);
     MetricStore metricStore = injector.getInstance(MetricStore.class);
 
-    ProfileMetricService scheduledService = new ProfileMetricService(collectionService, runId, profileId, 1, 1, null);
+    ProfileMetricService scheduledService = new ProfileMetricService(collectionService, runId, profileId, 1, 1);
 
     // start and stop the service, the metric should still go up by 1
     scheduledService.startUp();

@@ -20,6 +20,8 @@ import com.google.common.io.ByteStreams;
 import com.google.common.net.HttpHeaders;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -74,8 +76,11 @@ public class RuntimeClient {
    * @param topicId the topic to write to. The namespace must be {@link NamespaceId#SYSTEM}
    * @param messages the list of messages to send
    * @throws IOException if failed to send all the given messages
+   * @throws BadRequestException if the server denial the request due to bad request
+   * @throws ServiceUnavailableException if the server is not available
    */
-  public void sendMessages(ProgramRunId programRunId, TopicId topicId, Iterator<Message> messages) throws IOException {
+  public void sendMessages(ProgramRunId programRunId,
+                           TopicId topicId, Iterator<Message> messages) throws IOException, BadRequestException {
     if (!NamespaceId.SYSTEM.equals(topicId.getNamespaceId())) {
       throw new IllegalArgumentException("Only topic in the system namespace is supported");
     }
@@ -115,7 +120,8 @@ public class RuntimeClient {
   /**
    * Validates the responds from the given {@link HttpURLConnection} to be 200, or throws exception if it is not 200.
    */
-  private void throwIfError(ProgramRunId programRunId, TopicId topicId, HttpURLConnection urlConn) throws IOException {
+  private void throwIfError(ProgramRunId programRunId,
+                            TopicId topicId, HttpURLConnection urlConn) throws IOException, BadRequestException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -125,6 +131,13 @@ public class RuntimeClient {
       if (errorStream != null) {
         errorMsg = new String(ByteStreams.toByteArray(errorStream), StandardCharsets.UTF_8);
       }
+      switch (responseCode) {
+        case HttpURLConnection.HTTP_BAD_REQUEST:
+          throw new BadRequestException(errorMsg);
+        case HttpURLConnection.HTTP_UNAVAILABLE:
+          throw new ServiceUnavailableException(Constants.Service.RUNTIME, errorMsg);
+      }
+
       throw new IOException("Failed to send message for program run " + programRunId + " to topic " + topicId
                               + ". Respond code: " + responseCode + ". Error: " + errorMsg);
     }

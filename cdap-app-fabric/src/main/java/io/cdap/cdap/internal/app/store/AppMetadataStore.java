@@ -68,6 +68,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -80,6 +81,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -731,11 +733,15 @@ public class AppMetadataStore {
       return null;
     }
 
+    Map<String, String> newSystemArgs = new HashMap<>(existing.getSystemArgs());
+    newSystemArgs.putAll(systemArgs);
+
     // Delete the old run record
     delete(existing);
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     meta = RunRecordDetail.builder(existing)
       .setStatus(ProgramRunStatus.STARTING)
+      .setSystemArgs(newSystemArgs)
       .setTwillRunId(twillRunId)
       .setSourceId(sourceId)
       .build();
@@ -757,7 +763,8 @@ public class AppMetadataStore {
    * @return {@link RunRecordDetail} that was persisted, or {@code null} if the update was ignored.
    */
   @Nullable
-  public RunRecordDetail recordProgramRunning(ProgramRunId programRunId, long stateChangeTime, String twillRunId,
+  public RunRecordDetail recordProgramRunning(ProgramRunId programRunId, long stateChangeTime,
+                                              @Nullable String twillRunId,
                                               byte[] sourceId) throws IOException {
     RunRecordDetail existing = getRun(programRunId);
     if (existing == null) {
@@ -1016,6 +1023,44 @@ public class AppMetadataStore {
   }
 
   /**
+   * Represents a position for scanning.
+   */
+  public static final class Cursor {
+
+    private final Collection<Field<?>> fields;
+    private final Range.Bound bound;
+
+    Cursor(Collection<Field<?>> fields, Range.Bound bound) {
+      this.fields = fields;
+      this.bound = bound;
+    }
+  }
+
+  /**
+   * Scans active runs, starting from the given cursor.
+   *
+   * @param cursor the cursor to start the scan, or {@code null} for the first scan. A cursor can be obtained
+   *               from the call to the given {@link BiConsumer} for some previous scan.
+   * @param limit maximum number of records to scan
+   * @param consumer a {@link BiConsumer} to consume the scan result
+   * @throws IOException if failed to query the storage
+   */
+  public void scanActiveRuns(@Nullable Cursor cursor, int limit,
+                             BiConsumer<Cursor, RunRecordDetail> consumer) throws IOException {
+    Collection<Field<?>> begin = cursor == null ? getRunRecordStatusPrefix(TYPE_RUN_RECORD_ACTIVE) : cursor.fields;
+    Range range = Range.create(begin, cursor == null ? Range.Bound.INCLUSIVE : cursor.bound,
+                               getRunRecordStatusPrefix(TYPE_RUN_RECORD_ACTIVE), Range.Bound.INCLUSIVE);
+
+    StructuredTable table = getRunRecordsTable();
+    try (CloseableIterator<StructuredRow> iterator = table.scan(range, limit)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        consumer.accept(new Cursor(row.getPrimaryKeys(), Range.Bound.EXCLUSIVE), deserializeRunRecordMeta(row));
+      }
+    }
+  }
+
+  /**
    * Get active runs in all namespaces with a filter, active runs means program run with status STARTING, PENDING,
    * RUNNING or SUSPENDED.
    *
@@ -1114,7 +1159,7 @@ public class AppMetadataStore {
                                                                        limit, filter, TYPE_RUN_RECORD_ACTIVE);
         if (runRecords.size() < limit) {
           runRecords.putAll(getProgramRuns(programId, status, startTime, endTime,
-                                           limit, filter, TYPE_RUN_RECORD_COMPLETED));
+                                           limit - runRecords.size(), filter, TYPE_RUN_RECORD_COMPLETED));
         }
         return runRecords;
       case PENDING:
@@ -1171,6 +1216,31 @@ public class AppMetadataStore {
     }
     // If program is not running, query completed run records
     return getCompletedRuns(Collections.singleton(programRun)).get(programRun);
+  }
+
+  /**
+   * Deletes the run record for the given program run if the program state is in one of the terminated state.
+   *
+   * @param programRunId the program run id to lookup for run to be deleted
+   * @param sourceId the source id that the program run recorded with.
+   *                 It has to match with the run record for the deletion to proceed
+   * @return the deleted {@link RunRecordDetail} or {@code null} if no record has been deleted
+   * @throws IOException if failed to find or delete the record
+   */
+  @Nullable
+  public RunRecordDetail deleteRunIfTerminated(ProgramRunId programRunId, byte[] sourceId) throws IOException {
+    RunRecordDetail detail = getRun(programRunId);
+    if (detail == null || !detail.getStatus().isEndState()) {
+      return null;
+    }
+    if (detail.getSourceId() == null || sourceId == null) {
+      return null;
+    }
+    if (!Arrays.equals(detail.getSourceId(), sourceId)) {
+      return null;
+    }
+    delete(detail);
+    return detail;
   }
 
   private void delete(RunRecordDetail record) throws IOException {

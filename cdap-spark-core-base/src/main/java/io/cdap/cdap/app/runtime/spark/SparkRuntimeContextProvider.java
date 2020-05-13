@@ -20,7 +20,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
-import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -59,6 +58,7 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeMonitors;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.workflow.NameMappedDatasetFramework;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramInfo;
@@ -84,6 +84,7 @@ import org.apache.twill.zookeeper.ZKClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
@@ -98,6 +99,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -183,20 +185,23 @@ public final class SparkRuntimeContextProvider {
 
       // Create the program
       Program program = createProgram(cConf, contextConfig);
+      ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
 
       Injector injector = createInjector(cConf, hConf, contextConfig.getProgramId(), programOptions);
 
+      LogAppenderInitializer logAppenderInitializer = injector.getInstance(LogAppenderInitializer.class);
+      logAppenderInitializer.initialize();
+      SystemArguments.setLogLevel(programOptions.getUserArguments(), logAppenderInitializer);
+
       ProxySelector oldProxySelector = ProxySelector.getDefault();
       if (clusterMode == ClusterMode.ISOLATED) {
-        ProxySelector.setDefault(injector.getInstance(ProxySelector.class));
-        Authenticator.setDefault(injector.getInstance(Authenticator.class));
+        RuntimeMonitors.setupMonitoring(injector, programOptions);
       }
 
       MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
       SparkServiceAnnouncer serviceAnnouncer = injector.getInstance(SparkServiceAnnouncer.class);
 
       Deque<Service> coreServices = new LinkedList<>();
-      coreServices.add(new LogAppenderService(injector.getInstance(LogAppenderInitializer.class), programOptions));
 
       if (clusterMode == ClusterMode.ON_PREMISE) {
         // Add ZK for discovery and Kafka
@@ -208,32 +213,30 @@ public final class SparkRuntimeContextProvider {
       coreServices.add(metricsCollectionService);
       coreServices.add(serviceAnnouncer);
 
-      // Use the shutdown hook to shutdown services, since this class should only be loaded from System classloader
-      // of the spark executor, hence there should be exactly one instance only.
-      // The problem with not shutting down nicely is that some logs/metrics might be lost
       for (Service coreService : coreServices) {
         coreService.startAndWait();
       }
 
-      Runtime.getRuntime().addShutdownHook(new Thread() {
-        @Override
-        public void run() {
-          // The logger may already been shutdown. Use System.out/err instead
-          System.out.println("Shutting down Spark runtime services");
-
-          // Stop all services. Reverse the order.
-          for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
-            try {
-              service.stopAndWait();
-            } catch (Exception e) {
-              LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
-            }
-          }
-          Authenticator.setDefault(null);
-          ProxySelector.setDefault(oldProxySelector);
-          System.out.println("Spark runtime services shutdown completed");
+      AtomicBoolean closed = new AtomicBoolean();
+      Closeable closeable = () -> {
+        if (!closed.compareAndSet(false, true)) {
+          return;
         }
-      });
+        // Close to flush out all important logs
+        logAppenderInitializer.close();
+
+        // Stop all services. Reverse the order.
+        for (Service service : (Iterable<Service>) coreServices::descendingIterator) {
+          try {
+            service.stopAndWait();
+          } catch (Exception e) {
+            LOG.warn("Exception raised when stopping service {} during program termination.", service, e);
+          }
+        }
+        Authenticator.setDefault(null);
+        ProxySelector.setDefault(oldProxySelector);
+        LOG.debug("Spark runtime services shutdown completed");
+      };
 
       // Constructor the DatasetFramework
       DatasetFramework datasetFramework = injector.getInstance(DatasetFramework.class);
@@ -244,7 +247,6 @@ public final class SparkRuntimeContextProvider {
                                                                  contextConfig.getApplicationSpecification());
       // Setup dataset framework context, if required
       if (programDatasetFramework instanceof ProgramContextAware) {
-        ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
         ((ProgramContextAware) programDatasetFramework).setContext(new BasicProgramContext(programRunId));
       }
 
@@ -273,7 +275,8 @@ public final class SparkRuntimeContextProvider {
         injector.getInstance(MetadataReader.class),
         injector.getInstance(MetadataPublisher.class),
         injector.getInstance(NamespaceQueryAdmin.class),
-        injector.getInstance(FieldLineageWriter.class)
+        injector.getInstance(FieldLineageWriter.class),
+        closeable
       );
       LoggingContextAccessor.setLoggingContext(sparkRuntimeContext.getLoggingContext());
       return sparkRuntimeContext;
@@ -340,8 +343,7 @@ public final class SparkRuntimeContextProvider {
     String runId = programOptions.getArguments().getOption(ProgramOptionConstants.RUN_ID);
 
     List<Module> modules = new ArrayList<>();
-    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId),
-                                                      programOptions.getArguments()));
+    modules.add(new DistributedProgramContainerModule(cConf, hConf, programId.run(runId), programOptions));
 
     ClusterMode clusterMode = ProgramRunners.getClusterMode(programOptions);
     modules.add(clusterMode == ClusterMode.ON_PREMISE ? new DistributedArtifactManagerModule() : new AbstractModule() {
@@ -351,41 +353,6 @@ public final class SparkRuntimeContextProvider {
       }
     });
     return Guice.createInjector(modules);
-  }
-
-  /**
-   * A guava {@link Service} implementation for starting and stopping {@link LogAppenderInitializer}.
-   */
-  private static final class LogAppenderService extends AbstractService {
-
-    private final ProgramOptions programOptions;
-    private final LogAppenderInitializer initializer;
-
-    private LogAppenderService(LogAppenderInitializer initializer, ProgramOptions programOptions) {
-      this.initializer = initializer;
-      this.programOptions = programOptions;
-    }
-
-    @Override
-    protected void doStart() {
-      try {
-        initializer.initialize();
-        SystemArguments.setLogLevel(programOptions.getUserArguments(), initializer);
-        notifyStarted();
-      } catch (Throwable t) {
-        notifyFailed(t);
-      }
-    }
-
-    @Override
-    protected void doStop() {
-      try {
-        initializer.close();
-        notifyStopped();
-      } catch (Throwable t) {
-        notifyFailed(t);
-      }
-    }
   }
 
   /**

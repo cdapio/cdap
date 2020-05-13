@@ -25,6 +25,7 @@ import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Unit test for {@link RuntimeServer} and {@link RuntimeClient}.
@@ -59,27 +61,39 @@ public class RuntimeClientServerTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  private final List<String> logEntries = new ArrayList<>();
+  private CConfiguration cConf;
   private MessagingService messagingService;
   private RuntimeServer runtimeServer;
   private RuntimeClient runtimeClient;
 
   @Before
   public void beforeTest() throws Exception {
-    CConfiguration cConf = CConfiguration.create();
+    cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(Constants.RuntimeMonitor.BIND_PORT, 0);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
       new InMemoryDiscoveryModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new RuntimeServerModule() {
+        @Override
+        protected void bindRequestValidator() {
+          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> { });
+        }
+
+        @Override
+        protected void bindLogProcessor() {
+          bind(RemoteExecutionLogProcessor.class).toInstance(payloads -> {
+            // For testing purpose, we just store logs to a list
+            payloads.forEachRemaining(bytes -> logEntries.add(new String(bytes, StandardCharsets.UTF_8)));
+          });
+        }
+      },
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(MetricsCollectionService.class).to(NoOpMetricsCollectionService.class);
-          bind(RuntimeRequestValidator.class).toInstance((programRunId, request) -> {
-            // no-op
-          });
         }
       }
     );
@@ -98,6 +112,7 @@ public class RuntimeClientServerTest {
 
   @After
   public void afterTest() {
+    logEntries.clear();
     runtimeServer.stopAndWait();
     if (messagingService instanceof Service) {
       ((Service) messagingService).stopAndWait();
@@ -145,6 +160,18 @@ public class RuntimeClientServerTest {
 
     runtimeClient.sendMessages(programRunId, topicId, messages.iterator());
     assertMessages(topicId, messages);
+  }
+
+  @Test
+  public void testLogMessage() throws Exception {
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").workflow("workflow").run(RunIds.generate());
+    TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.Logging.TMS_TOPIC_PREFIX) + "-1");
+
+    List<Message> messages = IntStream.range(0, 100).mapToObj(this::createMessage).collect(Collectors.toList());
+    runtimeClient.sendMessages(programRunId, topicId, messages.iterator());
+
+    List<String> expected = messages.stream().map(Message::getPayloadAsString).collect(Collectors.toList());
+    Assert.assertEquals(expected, logEntries);
   }
 
   private void assertMessages(TopicId topicId, Collection<Message> messages) throws Exception {

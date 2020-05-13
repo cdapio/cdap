@@ -84,17 +84,32 @@ export default class ProfileDetailViewDetailsInfo extends Component {
     );
   }
 
+  convertValueBasedOnWidget = (widgetType, value) => {
+    // Since memory-textbox is specifically used for RAM this conversion is safe.
+    if (widgetType == 'memory-textbox') {
+      let numberValue = parseInt(value, 10);
+      if (isNaN(numberValue)) {
+        return value;
+      }
+      return Math.floor(numberValue / 1024);
+    }
+    return value;
+  };
+
   renderDetailsTable(profile) {
     if (!profile.provisioner.properties.length) {
       return <span>{T.translate(`${PREFIX}.noProperties`)}</span>;
     }
 
-    const propertyToLabelMap = {};
+    const propertyToLabelWidgetMap = {};
     this.props.provisioners.forEach((provisioner) => {
       if (provisioner.name === this.props.profile.provisioner.name) {
         provisioner['configuration-groups'].forEach((provisionerGroup) => {
           provisionerGroup.properties.forEach((prop) => {
-            propertyToLabelMap[prop.name] = prop.label;
+            propertyToLabelWidgetMap[prop.name] = {
+              label: prop.label,
+              widget: prop['widget-type'],
+            };
           });
         });
       }
@@ -103,8 +118,9 @@ export default class ProfileDetailViewDetailsInfo extends Component {
     return (
       <div className="details-table">
         {profile.provisioner.properties.map((property) => {
-          let propertyLabel = propertyToLabelMap[property.name] || property.name;
-          let value = property.value;
+          let propertyLabel = propertyToLabelWidgetMap[property.name].label || property.name;
+          const widgetType = propertyToLabelWidgetMap[property.name].widget;
+          let value = this.convertValueBasedOnWidget(widgetType, property.value);
 
           if (property.name === 'accountKey') {
             value = this.getSecureKeyValue(value);

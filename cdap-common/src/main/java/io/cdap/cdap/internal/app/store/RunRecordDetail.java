@@ -16,7 +16,9 @@
 package io.cdap.cdap.internal.app.store;
 
 import com.google.common.base.Objects;
+import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.proto.ProgramRunCluster;
@@ -28,6 +30,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
 
@@ -60,6 +63,9 @@ public final class RunRecordDetail extends RunRecord {
   @Nullable
   private final String principal;
 
+  // carries the user arguments decoded from properties. No need to serialize since it is from the properties.
+  private transient volatile Map<String, String> userArgs;
+
   private RunRecordDetail(ProgramRunId programRunId, long startTs, @Nullable Long runTs, @Nullable Long stopTs,
                           @Nullable Long suspendTs, @Nullable Long resumeTs,
                           ProgramRunStatus status, @Nullable Map<String, String> properties,
@@ -82,6 +88,25 @@ public final class RunRecordDetail extends RunRecord {
 
   public Map<String, String> getSystemArgs() {
     return systemArgs == null ? Collections.emptyMap() : systemArgs;
+  }
+
+  public Map<String, String> getUserArgs() {
+    Map<String, String> userArgs = this.userArgs;
+    if (userArgs != null) {
+      return userArgs;
+    }
+    Map<String, String> properties = getProperties();
+    if (properties != null) {
+      String runtimeArgs = properties.get("runtimeArgs");
+      if (runtimeArgs != null) {
+        userArgs = new LinkedHashMap<>(new Gson().fromJson(runtimeArgs,
+                                                           new TypeToken<Map<String, String>>() { }.getType()));
+      }
+    } else {
+      userArgs = Collections.emptyMap();
+    }
+    this.userArgs = userArgs;
+    return userArgs;
   }
 
   @Nullable
@@ -149,7 +174,10 @@ public final class RunRecordDetail extends RunRecord {
       .add("resumeTs", getResumeTs())
       .add("status", getStatus())
       .add("twillrunid", getTwillRunId())
+      .add("systemArgs", getSystemArgs())
       .add("properties", getProperties())
+      .add("cluster", getCluster())
+      .add("profile", getProfileId())
       .add("sourceId", getSourceId() == null ? null : Bytes.toHexString(getSourceId()))
       .add("artifactId", getArtifactId())
       .add("principal", getPrincipal())
@@ -201,7 +229,7 @@ public final class RunRecordDetail extends RunRecord {
       return this;
     }
 
-    public Builder setTwillRunId(String twillRunId) {
+    public Builder setTwillRunId(@Nullable String twillRunId) {
       this.twillRunId = twillRunId;
       return this;
     }

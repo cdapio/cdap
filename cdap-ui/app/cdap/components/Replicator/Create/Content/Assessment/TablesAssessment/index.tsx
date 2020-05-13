@@ -16,80 +16,60 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import If from 'components/If';
 import Mappings from './Mappings';
+import WithIssuesTables from 'components/Replicator/Create/Content/Assessment/TablesAssessment/WithIssuesTables';
+import NoIssuesTables from 'components/Replicator/Create/Content/Assessment/TablesAssessment/NoIssuesTables';
 
-const styles = (theme): StyleRules => {
+const styles = (): StyleRules => {
   return {
-    gridWrapper: {
-      height: '100%',
-      '& .grid.grid-container.grid-compact': {
-        maxHeight: '100%',
-
-        '& .grid-row': {
-          gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
-        },
-      },
-    },
-    mappingButton: {
-      color: theme.palette.grey[200],
-      cursor: 'pointer',
-      '&:hover': {
-        textDecoration: 'underline',
-        color: theme.palette.blue[200],
-      },
+    tableContainer: {
+      marginBottom: '50px',
     },
   };
 };
 
-interface ITablesAssessmentProps extends ICreateContext, WithStyles<typeof styles> {
-  tables: any;
+export interface ITable {
+  database: string;
+  table: string;
+  numColumns: number;
+  numColumnsPartiallySupported: number;
+  numColumnsNotSupported: number;
+}
+
+interface ITablesAssessmentProps extends WithStyles<typeof styles> {
+  tables: ITable[];
 }
 
 const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({ classes, tables }) => {
   const [openTable, setOpenTable] = React.useState(null);
+  const [tablesWithIssues, setTablesWithIssues] = React.useState([]);
+  const [tablesNoIssues, setTablesNoIssues] = React.useState([]);
 
-  if (tables.length === 0) {
-    return (
-      <div>
-        <h5>No tables</h5>
-      </div>
-    );
-  }
+  React.useEffect(() => {
+    const updatedTablesWithIssues = [];
+    const updatedTablesNoIssues = [];
+
+    tables.forEach((table) => {
+      if (table.numColumnsPartiallySupported === 0 && table.numColumnsNotSupported === 0) {
+        updatedTablesNoIssues.push(table);
+      } else {
+        updatedTablesWithIssues.push(table);
+      }
+    });
+
+    setTablesWithIssues(updatedTablesWithIssues);
+    setTablesNoIssues(updatedTablesNoIssues);
+  }, [tables]);
 
   return (
     <React.Fragment>
-      <div className={`grid-wrapper ${classes.gridWrapper}`}>
-        <div className="grid grid-container grid-compact">
-          <div className="grid-header">
-            <div className="grid-row">
-              <div>Name</div>
-              <div>Number of columns</div>
-              <div>Partially supported</div>
-              <div>Not supported</div>
-              <div />
-            </div>
-          </div>
+      <div className={classes.tableContainer}>
+        <WithIssuesTables tables={tablesWithIssues} setOpenTable={setOpenTable} />
+      </div>
 
-          <div className="grid-body">
-            {tables.map((row) => {
-              return (
-                <div key={`${row.database}-${row.table}`} className="grid-row">
-                  <div>{row.table}</div>
-                  <div>{row.numColumns}</div>
-                  <div>{row.numColumnsPartiallySupported}</div>
-                  <div>{row.numColumnsNotSupported}</div>
-                  <div>
-                    <span className={classes.mappingButton} onClick={() => setOpenTable(row)}>
-                      View mappings
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+      <div className={classes.tableContainer}>
+        <NoIssuesTables tables={tablesNoIssues} setOpenTable={setOpenTable} />
       </div>
 
       <If condition={openTable}>
@@ -99,6 +79,5 @@ const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({ classes, table
   );
 };
 
-const StyledTablesAssessment = withStyles(styles)(TablesAssessmentView);
-const TablesAssessment = createContextConnect(StyledTablesAssessment);
+const TablesAssessment = withStyles(styles)(TablesAssessmentView);
 export default TablesAssessment;

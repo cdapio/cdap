@@ -48,18 +48,20 @@ import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReaderProvider;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
 import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
-import io.cdap.cdap.internal.app.runtime.artifact.LocalArtifactRepositoryReader;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
-import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.PreferencesFetcherProvider;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.NoOpScheduler;
 import io.cdap.cdap.scheduler.Scheduler;
@@ -79,7 +81,6 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
 
-  private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -87,16 +88,21 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
   private final PreviewRequest previewRequest;
+  private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
+  private final PluginFinderProvider pluginFinderProvider;
+  private final PreferencesFetcherProvider preferencesFetcherProvider;
 
   @VisibleForTesting
   @Inject
-  public DefaultPreviewRunnerModule(ArtifactRepository artifactRepository, ArtifactStore artifactStore,
+  public DefaultPreviewRunnerModule(ArtifactRepositoryReaderProvider readerProvider, ArtifactStore artifactStore,
                                     AuthorizerInstantiator authorizerInstantiator,
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
+                                    PluginFinderProvider pluginFinderProvider,
+                                    PreferencesFetcherProvider preferencesFetcherProvider,
                                     @Assisted PreviewRequest previewRequest) {
-    this.artifactRepository = artifactRepository;
+    this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
     this.authorizationEnforcer = authorizationEnforcer;
@@ -104,16 +110,17 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.previewRequest = previewRequest;
+    this.pluginFinderProvider = pluginFinderProvider;
+    this.preferencesFetcherProvider = preferencesFetcherProvider;
   }
 
   @Override
   protected void configure() {
-    bind(ArtifactRepository.class).toInstance(artifactRepository);
+    bind(ArtifactRepositoryReader.class).toProvider(artifactRepositoryReaderProvider);
+
+    bind(ArtifactRepository.class).to(DefaultArtifactRepository.class);
     expose(ArtifactRepository.class);
 
-    // ArtifactRepositoryReader is required by DefaultArtifactRepository.
-    // Keep ArtifactRepositoryReader private to minimize the scope of the binding visibility.
-    bind(ArtifactRepositoryReader.class).to(LocalArtifactRepositoryReader.class).in(Scopes.SINGLETON);
     bind(ArtifactRepository.class)
       .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
       .to(DefaultArtifactRepository.class)
@@ -182,7 +189,11 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(PreviewRequest.class).toInstance(previewRequest);
 
-    bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+    bind(PluginFinder.class).toProvider(pluginFinderProvider);
+    expose(PluginFinder.class);
+
+    bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
+    expose(PreferencesFetcher.class);
   }
 
   /**

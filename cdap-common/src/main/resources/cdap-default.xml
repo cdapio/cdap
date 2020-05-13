@@ -1589,7 +1589,7 @@
 
   <property>
     <name>log.queue.size</name>
-    <value>512</value>
+    <value>2048</value>
     <description>
       The buffer size used in Log Appender
     </description>
@@ -2640,6 +2640,15 @@
     </description>
   </property>
 
+  <!-- Provisioner Configuration -->
+  <property>
+    <name>provisioner.executor.threads</name>
+    <value>10</value>
+    <description>
+      Thread pool size for the executor in the provisioning service
+    </description>
+  </property>
+
 
   <!-- Runtime Monitor Configuration -->
 
@@ -2670,9 +2679,10 @@
 
   <property>
     <name>app.program.runtime.monitor.graceful.shutdown.ms</name>
-    <value>5000</value>
+    <value>30000</value>
     <description>
       Number of milliseconds to wait for the runtime to shutdown after a program execution completed in that runtime.
+      This value should be larger than the value of the "app.program.runtime.monitor.polltime.ms" property
     </description>
   </property>
 
@@ -2681,6 +2691,15 @@
     <value>100</value>
     <description>
       Number of runtime states to fetch from dataset in each batch during runtime monitor initialization.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.run.record.fetch.class</name>
+    <value>io.cdap.cdap.internal.app.store.StoreProgramRunRecordFetcher</value>
+    <description>
+      Class name of the ProgramRunRecordFetcher used by the runtime monitoring system.
+      This value controls the run record fetching mechanism depending on the CDAP setup.
     </description>
   </property>
 
@@ -2694,9 +2713,18 @@
 
   <property>
     <name>app.program.runtime.monitor.server.bind.port</name>
-    <value>11016</value>
+    <value>0</value>
     <description>
       The port the runtime monitor server to bind to.
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.runtime.monitor.server.ssl.enabled</name>
+    <value>${ssl.internal.enabled}</value>
+    <description>
+      Enable usage of SSL for the runtime monitor server. By default is disabled.
+      This is because traffic is already encrypted through the SSH tunnel.
     </description>
   </property>
 

@@ -118,6 +118,8 @@ features:
       apply: Apply
       on: on
       within: within
+    PluginListWidget:
+      emptyLabel: "No {pluginType} plugins"
     SecureKeyTextarea:
       customEntryHelper: Specify a different secure key
       customEntryPlaceholder: Type the name of secure key
@@ -600,7 +602,7 @@ features:
           description: Enter column names in order starting from the first column
           modalTitle: Bulk set column names
           setBtnLabel: Set Columns
-          textareaplaceholder: "Enter column names seperated by comma. Special characters (eg., @ - #) are not allowed"
+          textareaplaceholder: "Enter column names separated by commas. Special characters (eg., @ - #) are not allowed"
         ReplaceColumns:
           applyButton: Replace
           ignoreCase: Ignore case
@@ -1551,7 +1553,7 @@ features:
         InputHeader: "Input datasets to {target}"
         NoRelatedSubheader: "0 datasets"
         OutputHeader: "Output datasets from {target}"
-        RelatedSubheader: 
+        RelatedSubheader:
           1: "Viewing {first} of {total} dataset"
           _: "Viewing {first} to {last} of {total} datasets"
         TargetHeader: 'Select a field to view lineage and transformations'
@@ -1714,9 +1716,9 @@ features:
       systemLabel: System
       title: Manage
     Ingestion:
-      description: Set one time transfer of your data
-      linkLabel: Transfer
-      title: Ingest Data
+      description: Create and manage simple ingestion from predefined sources.
+      linkLabel: Ingest
+      title: Ingest
     Metadata:
       description: Discover data using metadata. Perform root cause and impact analysis using lineage.
       linkLabel: Metadata
@@ -1730,6 +1732,10 @@ features:
       listLabel: List
       studioLabel: Studio
       title: Integrate
+    Replicator:
+      description: 'Replicate data changes in real-time from operational databases into analytical databases.'
+      linkLabel: 'Delta replicator'
+      title: Replicate
     Wrangler:
       description: Explore, transform, cleanse, and enrich data using a code-free environment.
       linkLabel: Wrangler

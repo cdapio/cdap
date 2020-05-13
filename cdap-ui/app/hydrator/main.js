@@ -39,6 +39,9 @@ angular
       ]).name,
       'mgcrea.ngStrap.datepicker',
       'mgcrea.ngStrap.timepicker',
+      
+      'mgcrea.ngStrap.core', 
+      'mgcrea.ngStrap.helpers.dimensions',
 
       'mgcrea.ngStrap.alert',
 

@@ -16,11 +16,16 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+
 import java.util.Objects;
 
 /**
  * A program run.
+ *
+ * @deprecated Since 6.2.0. Use {@link ProgramRunInfo} instead.
  */
+@Deprecated
 public class ProgramRun {
   private final String namespace;
   private final String application;

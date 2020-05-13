@@ -23,6 +23,8 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
+import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
+import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
@@ -53,7 +55,8 @@ public class MasterServiceMainTestBase {
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static InMemoryZKServer zkServer;
-  private static Map<Class<?>, ServiceMainManager<?>> serviceManagers = new LinkedHashMap<>();
+  private static final Map<Class<? extends AbstractServiceMain>, ServiceMainManager<?>> SERVICE_MANAGERS =
+    new LinkedHashMap<>();
   protected static String[] initArgs;
 
   protected static CConfiguration cConf;
@@ -99,6 +102,10 @@ public class MasterServiceMainTestBase {
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
     cConf.setInt(Constants.Router.ROUTER_SSL_PORT, 0);
 
+    // Use remote fetcher for runtime server
+    cConf.setClass(Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS,
+                   RemoteProgramRunRecordFetcher.class, ProgramRunRecordFetcher.class);
+
     // Starting all master service mains
     List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses =
       Arrays.asList(RouterServiceMain.class,
@@ -106,6 +113,7 @@ public class MasterServiceMainTestBase {
                     MetricsServiceMain.class,
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
+                    RuntimeServiceMain.class,
                     AppFabricServiceMain.class);
     for (Class<? extends AbstractServiceMain> serviceMainClass : serviceMainClasses) {
       startService(serviceMainClass);
@@ -115,10 +123,7 @@ public class MasterServiceMainTestBase {
   @AfterClass
   public static void finish() {
     // Reverse stop services
-    Lists.reverse(new ArrayList<>(serviceManagers.keySet())).forEach(
-      (serviceMainClass) -> {
-        stopService((Class<? extends AbstractServiceMain>) serviceMainClass);
-      });
+    Lists.reverse(new ArrayList<>(SERVICE_MANAGERS.keySet())).forEach(MasterServiceMainTestBase::stopService);
     zkServer.stopAndWait();
   }
 
@@ -131,7 +136,7 @@ public class MasterServiceMainTestBase {
    * @throws Exception if failed to start service main
    */
   protected static <T extends AbstractServiceMain> void startService(Class<T> serviceMainClass) throws Exception {
-    serviceManagers.put(serviceMainClass, runMain(cConf, sConf, serviceMainClass));
+    SERVICE_MANAGERS.put(serviceMainClass, runMain(cConf, sConf, serviceMainClass));
   }
 
   /**
@@ -142,7 +147,7 @@ public class MasterServiceMainTestBase {
    * @param <T> the type of service main class (e.g. {@link AppFabricServiceMain})
    */
   protected static <T extends AbstractServiceMain> void stopService(Class<T> serviceMainClass) {
-    final ServiceMainManager<?> serviceMainManager = serviceManagers.remove(serviceMainClass);
+    final ServiceMainManager<?> serviceMainManager = SERVICE_MANAGERS.remove(serviceMainClass);
     serviceMainManager.cancel();
   }
 
@@ -159,7 +164,7 @@ public class MasterServiceMainTestBase {
    * Gets the instance of master main service of the given class.
    */
   static <T extends AbstractServiceMain> T getServiceMainInstance(Class<T> serviceMainClass) {
-    ServiceMainManager<?> manager = serviceManagers.get(serviceMainClass);
+    ServiceMainManager<?> manager = SERVICE_MANAGERS.get(serviceMainClass);
     AbstractServiceMain instance = manager.getInstance();
     if (!serviceMainClass.isInstance(instance)) {
       throw new IllegalArgumentException("Mismatch manager class." + serviceMainClass + " != " + instance);

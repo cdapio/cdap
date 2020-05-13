@@ -52,4 +52,11 @@ public interface StreamingContext extends StageContext, Transactional {
    */
   @Deprecated
   void registerLineage(String referenceName) throws DatasetManagementException, TransactionFailureException;
+
+  /**
+   * Indicates whether the pipeline is running in preview.
+   *
+   * @return a boolean value which indicates the pipeline is running in preview mode.
+   */
+  boolean isPreviewEnabled();
 }

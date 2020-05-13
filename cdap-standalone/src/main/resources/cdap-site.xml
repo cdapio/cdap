@@ -275,4 +275,22 @@
     </description>
   </property>
 
+  <!-- Delta Replicator Settings -->
+
+  <property>
+    <name>ui.feature.cdc</name>
+    <value>true</value>
+    <description>
+      Enables the experimental Delta Replicator UI
+    </description>
+  </property>
+
+  <property>
+    <name>delta.default.checkpoint.directory</name>
+    <value>checkpoints/delta</value>
+    <description>
+      Default path to store replicator state and offsets
+    </description>
+  </property>
+
 </configuration>

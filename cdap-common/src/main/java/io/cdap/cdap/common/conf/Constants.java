@@ -216,6 +216,10 @@ public final class Constants {
     public static final String PROGRAM_TRANSACTION_CONTROL = "app.program.transaction.control";
     public static final String MAX_CONCURRENT_RUNS = "app.max.concurrent.runs";
 
+    // A boolean value cConf entry to tell whether a ProgramRunner is running remotely (i.e. not inside app-fabric)
+    // This config is not present in the cdap-default.xml as it is only set internally by CDAP.
+    public static final String PROGRAM_REMOTE_RUNNER = "app.program.remote.runner";
+
     /**
      * Guice named bindings.
      */
@@ -865,22 +869,18 @@ public final class Constants {
     public static final String GRACEFUL_SHUTDOWN_MS = "app.program.runtime.monitor.graceful.shutdown.ms";
     public static final String THREADS = "app.program.runtime.monitor.threads";
     public static final String INIT_BATCH_SIZE = "app.program.runtime.monitor.initialize.batch.size";
-
-    /**
-     * Configuration to tell if the runtime monitoring is active
-     * An active monitoring is the app-fabric polling the remote runtime for status
-     * This is temporary until we move the SSH approach to use the RuntimeClient for monitoring.
-     */
-    public static final String ACTIVE_MONITORING = "app.program.runtime.monitor.active.monitoring";
-    public static final String SERVER_KEYSTORE_PATH = "app.program.runtime.monitor.server.keystore.path";
-    public static final String CLIENT_KEYSTORE_PATH = "app.program.runtime.monitor.client.keystore.path";
+    public static final String RUN_RECORD_FETCHER_CLASS = "app.program.runtime.monitor.run.record.fetch.class";
 
     public static final String BIND_ADDRESS = "app.program.runtime.monitor.server.bind.address";
     public static final String BIND_PORT = "app.program.runtime.monitor.server.bind.port";
+    public static final String SSL_ENABLED = "app.program.runtime.monitor.server.ssl.enabled";
 
-    // Configuration keys for the runtime monitor server
-    public static final String SERVER_CONSUME_CHUNK_SIZE = "app.program.runtime.monitor.server.consume.chunk.size";
-    public static final String SERVER_INFO_FILE = "app.program.runtime.monitor.server.info.file";
+    // Configuration key for specifying the base URL for sending monitoring messages.
+    // If it is missing from the configuration, SSH tunnel will be used.
+    public static final String MONITOR_URL = "app.program.runtime.monitor.url";
+    public static final String MONITOR_TYPE_PREFIX = "app.program.runtime.monitor.type.";
+    public static final String MONITOR_URL_AUTHENTICATOR_CLASS_PREFIX =
+      "app.program.runtime.monitor.url.authenticator.class.";
 
     // Prefix for that configuration key for storing discovery endpoint in the format of "host:port"
     public static final String DISCOVERY_SERVICE_PREFIX = "app.program.runtime.discovery.service.";
@@ -889,17 +889,16 @@ public final class Constants {
     public static final String SSH_USER = "ssh.user";
     public static final String PUBLIC_KEY = "id_rsa.pub";
     public static final String PRIVATE_KEY = "id_rsa";
-    public static final String SERVER_KEYSTORE = "server.jks";
-    public static final String CLIENT_KEYSTORE = "client.jks";
 
     // Configurations related to the Service Proxy that runs in the remote runtime for proxying traffic from
     // remote cluster back into calling CDAP services.
     // File name that stores the service proxy information
-    public static final String SERVICE_PROXY_FILE = "service.proxy.json";
+    public static final String SERVICE_PROXY_FILE = "cdap.service.proxy.json";
     // Configuration key for the service proxy in the format of "host:port"
     public static final String SERVICE_PROXY_ADDRESS = "app.program.runtime.service.proxy.address";
     // Configuration key for the service proxy password. It is only used within a runtime cluster.
     public static final String SERVICE_PROXY_PASSWORD = "app.program.runtime.service.proxy.password";
+    public static final String SERVICE_PROXY_PASSWORD_FILE = "cdap.service.proxy.secret";
   }
 
   /**
@@ -1407,6 +1406,7 @@ public final class Constants {
   public static final class Provisioner {
     public static final String EXTENSIONS_DIR = "runtime.extensions.dir";
     public static final String SYSTEM_PROPERTY_PREFIX = "provisioner.system.properties.";
+    public static final String EXECUTOR_THREADS = "provisioner.executor.threads";
   }
 
   /**

@@ -25,6 +25,7 @@ import io.cdap.cdap.api.spark.Spark;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.Program;
+import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -36,7 +37,8 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextConfig;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.FilterClassLoader;
-import io.cdap.cdap.common.twill.HadoopClassExcluder;
+import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.batch.distributed.MapReduceContainerHelper;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
@@ -62,7 +64,6 @@ import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -146,19 +147,29 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     Map<String, String> extraEnv = new HashMap<>();
     extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
-
+    extraEnv.put(SparkPackageUtils.SPARK_YARN_MODE, "true");
     extraEnv.putAll(SparkPackageUtils.getSparkClientEnv());
 
+    if (sparkCompat.getCompat().equals(SparkCompat.SPARK2_2_11.getCompat())) {
+      // No need to rewrite YARN client
+      cConf.setBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE, false);
+    }
+
+    // In isolated mode, we don't need to localize spark/mr framework from app-fabric.
+    // We only need to setup localization to (yarn) container when this program runner
+    // is running in the remote runtime process
     // Add extra resources, classpath, dependencies, env and setup ClassAcceptor
-    Map<String, LocalizeResource> localizeResources = new HashMap<>();
-    SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
+    if (clusterMode == ClusterMode.ON_PREMISE || cConf.getBoolean(Constants.AppFabric.PROGRAM_REMOTE_RUNNER, false)) {
+      Map<String, LocalizeResource> localizeResources = new HashMap<>();
+      SparkPackageUtils.prepareSparkResources(sparkCompat, locationFactory, tempDir, localizeResources, extraEnv);
 
-    // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
-    MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
+      // Add the mapreduce resources and path as well for the InputFormat/OutputFormat classes
+      MapReduceContainerHelper.localizeFramework(hConf, localizeResources);
 
-    launchConfig
-      .addExtraResources(localizeResources)
-      .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()));
+      launchConfig
+        .addExtraResources(localizeResources)
+        .addExtraClasspath(MapReduceContainerHelper.addMapReduceClassPath(hConf, new ArrayList<String>()));
+    }
 
     launchConfig
       .addExtraEnv(extraEnv)
@@ -173,7 +184,7 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
       urls.add(file.toURI().toURL());
     }
 
-    return new HadoopClassExcluder() {
+    return new ProgramRuntimeClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {
         // Exclude both hadoop and spark classes.

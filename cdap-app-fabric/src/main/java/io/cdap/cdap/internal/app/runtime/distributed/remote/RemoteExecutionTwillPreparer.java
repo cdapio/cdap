@@ -21,11 +21,8 @@ import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
-import io.cdap.cdap.internal.app.runtime.distributed.AbstractRuntimeTwillPreparer;
-import io.cdap.cdap.internal.app.runtime.distributed.runtime.TwillControllerFactory;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import joptsimple.OptionSpec;
@@ -54,7 +51,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,12 +61,12 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import javax.annotation.Nullable;
 
 /**
  * A {@link TwillPreparer} implementation that uses ssh to launch a single {@link TwillRunnable}.
@@ -83,18 +79,16 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private static final String SPARK_ENV_SH = "sparkEnv.sh";
 
   private final SSHConfig sshConfig;
-  private final KeyStore serverKeyStore;
-  private final KeyStore clientKeyStore;
+  private final Location serviceProxySecretLocation;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               SSHConfig sshConfig, KeyStore serverKeyStore, KeyStore clientKeyStore,
+                               SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
                                TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
                                TwillControllerFactory controllerFactory) {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
     this.sshConfig = sshConfig;
-    this.serverKeyStore = serverKeyStore;
-    this.clientKeyStore = clientKeyStore;
+    this.serviceProxySecretLocation = serviceProxySecretLocation;
   }
 
   @Override
@@ -119,8 +113,8 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       // Upload files
       localizeFiles(session, localFiles, targetPath, runtimeSpec);
 
-      // Upload key stores
-      localizeKeyStores(session, targetPath);
+      // Upload service socks proxy secret
+      localizeServiceProxySecret(session, targetPath);
 
       // Currently we only support one TwillRunnable
       String runnableName = runtimeSpec.getName();
@@ -343,25 +337,14 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   /**
    * Localize key store files to the remote host.
    */
-  private void localizeKeyStores(SSHSession session, String targetPath) throws Exception {
-    // Copy the server keystore for the runtime monitor server
-    ByteArrayOutputStream bos = new ByteArrayOutputStream();
-    serverKeyStore.store(bos, "".toCharArray());
-
-    //noinspection OctalInteger
-    session.copy(new ByteArrayInputStream(bos.toByteArray()), targetPath,
-                 io.cdap.cdap.common.conf.Constants.RuntimeMonitor.SERVER_KEYSTORE,
-                 bos.size(), 0600, null, null);
-
-    // Creates a trust store from the client keystore
-    KeyStore trustStore = KeyStores.createTrustStore(clientKeyStore);
-
-    // Copy the trust store for the runtime monitor server to use for verifying client connections
-    bos.reset();
-    trustStore.store(bos, "".toCharArray());
-    //noinspection OctalInteger
-    session.copy(new ByteArrayInputStream(bos.toByteArray()), targetPath,
-                 io.cdap.cdap.common.conf.Constants.RuntimeMonitor.CLIENT_KEYSTORE,
-                 bos.size(), 0600, null, null);
+  private void localizeServiceProxySecret(SSHSession session, String targetPath) throws Exception {
+    if (serviceProxySecretLocation == null) {
+      return;
+    }
+    try (InputStream is = serviceProxySecretLocation.getInputStream()) {
+      //noinspection OctalInteger
+      session.copy(is, targetPath, io.cdap.cdap.common.conf.Constants.RuntimeMonitor.SERVICE_PROXY_PASSWORD_FILE,
+                   serviceProxySecretLocation.length(), 0600, null, null);
+    }
   }
 }

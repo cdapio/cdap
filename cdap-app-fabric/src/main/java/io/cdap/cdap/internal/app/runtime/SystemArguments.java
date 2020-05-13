@@ -20,6 +20,7 @@ import ch.qos.logback.classic.Level;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.app.runtime.Arguments;
+import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -31,6 +32,7 @@ import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.http.NettyHttpService;
 import org.apache.tephra.TxConstants;
 import org.apache.twill.api.Configs;
@@ -91,6 +93,9 @@ public final class SystemArguments {
    */
   public static final String RUNTIME_KEYTAB_PATH = "system.runtime.keytab.path";
   public static final String RUNTIME_PRINCIPAL_NAME = "system.runtime.principal.name";
+
+  // Runtime arguments for remote execution monitor type. Can be "ssh" or "url".
+  public static final String RUNTIME_MONITOR_TYPE = "system.runtime.monitor.type";
 
   /**
    * Extracts log level settings from the given arguments. It extracts arguments prefixed with key
@@ -424,6 +429,32 @@ public final class SystemArguments {
    */
   public static String getProfileProvisioner(Map<String, String> args) {
     return args.get(PROFILE_PROVISIONER);
+  }
+
+  /**
+   * Gets the {@link RuntimeMonitorType} from the given arguments.
+   */
+  public static RuntimeMonitorType getRuntimeMonitorType(CConfiguration cConf, ProgramOptions programOptions) {
+    if (cConf.get(Constants.RuntimeMonitor.MONITOR_URL) == null) {
+      return RuntimeMonitorType.SSH;
+    }
+
+    String type = programOptions.getUserArguments().getOption(RUNTIME_MONITOR_TYPE);
+    if (type == null) {
+      // If not in the arguments, read it from cConf based on the provisioner name
+      String provisioner = getProfileProvisioner(programOptions.getArguments().asMap());
+      type = cConf.get(String.format("%s%s", Constants.RuntimeMonitor.MONITOR_TYPE_PREFIX, provisioner));
+    }
+    if (type == null) {
+      return RuntimeMonitorType.SSH;
+    }
+
+    try {
+      return RuntimeMonitorType.valueOf(type.toUpperCase());
+    } catch (Exception e) {
+      LOG.warn("Unsupported runtime monitor type {}. Default to SSH", type, e);
+      return RuntimeMonitorType.SSH;
+    }
   }
 
   /**

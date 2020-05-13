@@ -24,7 +24,6 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AppForUnrecoverableResetTest;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.AppWithServices;
-import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;

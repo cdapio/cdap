@@ -47,7 +47,7 @@ import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.namespace.NamespacePathLocator;
-import io.cdap.cdap.common.twill.HadoopClassExcluder;
+import io.cdap.cdap.common.twill.ProgramRuntimeClassAcceptor;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.data2.metadata.lineage.field.FieldLineageInfo;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
@@ -775,7 +775,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     // Excludes libraries that are for sure not needed.
     // Hadoop - Available from the cluster
     // Spark - MR never uses Spark
-    final HadoopClassExcluder hadoopClassExcluder = new HadoopClassExcluder();
+    ClassAcceptor hadoopClassExcluder = new ProgramRuntimeClassAcceptor();
     ApplicationBundler appBundler = new ApplicationBundler(new ClassAcceptor() {
       @Override
       public boolean accept(String className, URL classUrl, URL classPathUrl) {

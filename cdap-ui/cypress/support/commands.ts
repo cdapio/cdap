@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
 import {
@@ -20,14 +20,14 @@ import {
   DEFAULT_GCP_SERVICEACCOUNT_PATH,
   RUNTIME_ARGS_DEPLOYED_SELECTOR,
   RUNTIME_ARGS_KEY_SELECTOR,
-  RUNTIME_ARGS_VALUE_SELECTOR
-} from "../support/constants";
+  RUNTIME_ARGS_VALUE_SELECTOR,
+} from '../support/constants';
 import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
 import {
   getGenericEndpoint,
   getConditionNodeEndpoint,
   getNodeSelectorFromNodeIndentifier,
-  dataCy
+  dataCy,
 } from '../helpers';
 /**
  * Uploads a pipeline json from fixtures to input file element.
@@ -367,6 +367,27 @@ Cypress.Commands.add('select_from_to', (from: INodeIdentifier, to: INodeIdentifi
   });
 });
 
+Cypress.Commands.add('select_connection', (from: INodeIdentifier, to: INodeIdentifier) => {
+  let fromNodeElement;
+  let toNodeElement;
+  cy.get_node(from).then((sElement) => {
+    fromNodeElement = sElement;
+    cy.get_node(to).then((tElement) => {
+      toNodeElement = tElement;
+      const sourceName = fromNodeElement[0].getAttribute('id');
+      const targetName = toNodeElement[0].getAttribute('id');
+      const connectionSelector = `.jsplumb-connector.connection-id-${sourceName}-${targetName}`;
+      cy.get(connectionSelector).then((connElement) => {
+        (connElement[0] as any)._jsPlumb._jsPlumb.instance.fire(
+          'click',
+          (connElement[0] as any)._jsPlumb
+        );
+        return cy.wrap(connElement[0]);
+      });
+    });
+  });
+});
+
 Cypress.Commands.add(
   'connect_two_nodes',
   (
@@ -377,8 +398,8 @@ Cypress.Commands.add(
   ) => {
     cy.get_node(sourceNode).then((sourceEl) => {
       cy.get_node(targetNode).then((targetEl) => {
-        let sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
-        let targetCoOrdinates = targetEl[0].getBoundingClientRect();
+        const sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
+        const targetCoOrdinates = targetEl[0].getBoundingClientRect();
         // connect from source endpoint to midway between the target node
         cy.move_node(
           sourceEndpoint(options, sourceEl[0].id),
@@ -391,7 +412,7 @@ Cypress.Commands.add(
 );
 
 Cypress.Commands.add('get_node', (element: INodeIdentifier) => {
-  let elementId = getNodeSelectorFromNodeIndentifier(element);
+  const elementId = getNodeSelectorFromNodeIndentifier(element);
   return cy.get(elementId).then((e) => cy.wrap(e));
 });
 
@@ -523,6 +544,7 @@ Cypress.Commands.add('get_pipeline_stage_json', (stageName: string) => {
 Cypress.Commands.add('open_node_property', (element: INodeIdentifier) => {
   const { nodeName, nodeType, nodeId } = element;
   const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
+  cy.get(`${elementId} .node .node-metadata .node-version`).invoke('hide');
   cy.get(`${elementId} .node .node-configure-btn`)
     .invoke('show')
     .click();
@@ -535,65 +557,104 @@ Cypress.Commands.add('close_node_property', () => {
 /**
  * row - row index for the runtime argument key value pair.
  */
-Cypress.Commands.add('add_runtime_args_row_with_value', (row: number, key: string, value: string) => {
-  // clicking add on previous row.
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row - 1)} ${
-    dataCy('add-row')}`)
-    .click();
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
-    .should('exist');
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`)
-    .type(key);
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`)
-    .type(value);
-});
-
+Cypress.Commands.add(
+  'add_runtime_args_row_with_value',
+  (row: number, key: string, value: string) => {
+    // clicking add on previous row.
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row - 1)} ${dataCy('add-row')}`
+    ).click();
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_KEY_SELECTOR
+      )}`
+    ).should('exist');
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_KEY_SELECTOR
+      )} input`
+    ).type(key);
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_VALUE_SELECTOR
+      )} input`
+    ).type(value);
+  }
+);
 
 /**
  * row - row index for the runtime argument key value pair.
  */
-Cypress.Commands.add('update_runtime_args_row', (row: number, key: string, value: string, macro: boolean = false) => {
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
-    .should('exist');
-  if (!macro) {
-    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-      dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`).clear();
-    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-      dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
-      .type(key);
+Cypress.Commands.add(
+  'update_runtime_args_row',
+  (row: number, key: string, value: string, macro: boolean = false) => {
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_KEY_SELECTOR
+      )}`
+    ).should('exist');
+    if (!macro) {
+      cy.get(
+        `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+          RUNTIME_ARGS_KEY_SELECTOR
+        )} input`
+      ).clear();
+      cy.get(
+        `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+          RUNTIME_ARGS_KEY_SELECTOR
+        )}`
+      ).type(key);
+    }
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_VALUE_SELECTOR
+      )} input`
+    ).should('exist');
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_VALUE_SELECTOR
+      )} input`
+    ).clear();
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_VALUE_SELECTOR
+      )}`
+    ).type(value);
   }
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`).should('exist');
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`).clear();
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)}`)
-    .type(value);
-});
+);
 
 /**
  * row - row index for the runtime argument key value pair.
  */
-Cypress.Commands.add('assert_runtime_args_row', (row: number, key: string, value: string, macro: boolean = false) => {
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`)
-    .should('exist');
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`)
-    .should('have.value', key);
-  if (macro) {
-    cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-      dataCy(RUNTIME_ARGS_KEY_SELECTOR)} input`)
-      .should('be.disabled');
+Cypress.Commands.add(
+  'assert_runtime_args_row',
+  (row: number, key: string, value: string, macro: boolean = false) => {
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_KEY_SELECTOR
+      )}`
+    ).should('exist');
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_KEY_SELECTOR
+      )} input`
+    ).should('have.value', key);
+    if (macro) {
+      cy.get(
+        `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+          RUNTIME_ARGS_KEY_SELECTOR
+        )} input`
+      ).should('be.disabled');
+    }
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_VALUE_SELECTOR
+      )}`
+    ).should('exist');
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${dataCy(
+        RUNTIME_ARGS_VALUE_SELECTOR
+      )} input`
+    ).should('have.value', value);
   }
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)}`)
-    .should('exist');
-  cy.get(`${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(row)} ${
-    dataCy(RUNTIME_ARGS_VALUE_SELECTOR)} input`)
-    .should('have.value', value);
-});
+);

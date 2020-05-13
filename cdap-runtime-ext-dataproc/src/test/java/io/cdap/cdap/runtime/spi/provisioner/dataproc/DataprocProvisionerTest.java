@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,12 +32,27 @@ public class DataprocProvisionerTest {
   @Test
   public void testClusterName() {
     // test basic
-    ProgramRun programRun = new ProgramRun("ns", "app", "program", UUID.randomUUID().toString());
-    Assert.assertEquals("cdap-app-" + programRun.getRun(), DataprocProvisioner.getClusterName(programRun));
+    ProgramRunInfo programRunInfo = new ProgramRunInfo.Builder()
+      .setNamespace("ns")
+      .setApplication("app")
+      .setVersion("1.0")
+      .setProgramType("workflow")
+      .setProgram("program")
+      .setRun(UUID.randomUUID().toString())
+      .build();
+    Assert.assertEquals("cdap-app-" + programRunInfo.getRun(), DataprocProvisioner.getClusterName(programRunInfo));
 
     // test lowercasing, stripping of invalid characters, and truncation
-    programRun = new ProgramRun("ns", "My@Appl!cation", "program", UUID.randomUUID().toString());
-    Assert.assertEquals("cdap-myapplcat-" + programRun.getRun(), DataprocProvisioner.getClusterName(programRun));
+    programRunInfo = new ProgramRunInfo.Builder()
+      .setNamespace("ns")
+      .setApplication("My@Appl!cation")
+      .setVersion("1.0")
+      .setProgramType("workflow")
+      .setProgram("program")
+      .setRun(UUID.randomUUID().toString())
+      .build();
+    Assert.assertEquals("cdap-myapplcat-" + programRunInfo.getRun(),
+                        DataprocProvisioner.getClusterName(programRunInfo));
   }
 
   @Test
@@ -115,7 +130,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals(conf.getRegion(), "region1");
     Assert.assertEquals(conf.getZone(), "region1-a");
 
-    Map<String, String> dataprocProps = conf.getDataprocProperties();
+    Map<String, String> dataprocProps = conf.getClusterProperties();
     Assert.assertEquals(3, dataprocProps.size());
 
     Assert.assertEquals("100", dataprocProps.get("spark:spark.reducer.maxSizeInFlight"));
@@ -146,5 +161,25 @@ public class DataprocProvisionerTest {
     props.put("network", "network");
 
     DataprocConf.fromProperties(props);
+  }
+
+  @Test
+  public void testCreateContextProperties() {
+    MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
+    String resourceMaxPercentKey = "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
+    String resourceMaxPercentVal = "0.5";
+    provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
+
+    DataprocProvisioner provisioner = new DataprocProvisioner();
+    provisioner.initialize(provisionerSystemContext);
+
+    MockProvisionerContext provisionerContext = new MockProvisionerContext();
+    final String network = "test-network";
+    provisionerContext.addProperty(DataprocConf.NETWORK, network);
+
+    Map<String, String> properties = provisioner.createContextProperties(provisionerContext);
+
+    Assert.assertTrue(properties.get(DataprocConf.NETWORK).equals(network));
+    Assert.assertTrue(properties.get(resourceMaxPercentKey).equals(resourceMaxPercentVal));
   }
 }

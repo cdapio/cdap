@@ -63,7 +63,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -159,12 +158,6 @@ public final class DistributedWorkflowProgramRunner extends DistributedProgramRu
           Closeables.closeQuietly((Closeable) runner);
         }
       }
-    }
-
-    if (clusterMode == ClusterMode.ISOLATED) {
-      // For isolated mode, the hadoop classes comes from the hadoop classpath in the target cluster directly
-      // Without this, the remote process will fail to start due to missing zookeeper classes (see CDAP-14724)
-      launchConfig.addExtraClasspath(Collections.singletonList("$HADOOP_CLASSPATH"));
     }
 
     // Set the class acceptor

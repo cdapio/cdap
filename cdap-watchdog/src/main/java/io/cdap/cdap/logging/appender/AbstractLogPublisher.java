@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.logging.appender;
 
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.RetryStrategy;
 import org.slf4j.Logger;
@@ -34,6 +36,8 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableScheduledService {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractLogPublisher.class);
+  private static final Logger OUTAGE_LOG = Loggers.sampling(
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(5), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
 
   private final int queueSize;
   private final BlockingQueue<LogMessage> messageQueue;
@@ -70,7 +74,31 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
    * @param logMessage the log message to add for publishing
    */
   public final void addMessage(LogMessage logMessage) throws InterruptedException {
-    messageQueue.put(logMessage);
+    // Try to insert new logs, but don't block for longer then a second
+    // If it takes too long, start dropping old logs
+    while (!offerUninterruptibly(messageQueue, logMessage, 1, TimeUnit.SECONDS)) {
+      messageQueue.poll();
+    }
+  }
+
+  /**
+   * Offers an element to the given queue uninterruptibly.
+   */
+  private <E> boolean offerUninterruptibly(BlockingQueue<E> queue, E element, long timeout, TimeUnit timeUnit) {
+    boolean interrupted = false;
+    try {
+      while (true) {
+        try {
+          return queue.offer(element, timeout, timeUnit);
+        } catch (InterruptedException e) {
+          interrupted = true;
+        }
+      }
+    } finally {
+      if (interrupted) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 
   @Override
@@ -81,6 +109,11 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
     buffer.clear();
     failed = false;
     return 0;
+  }
+
+  @Override
+  protected void logTaskFailure(Throwable t) {
+    OUTAGE_LOG.error("Publish log message failed for {}. Will be retried.", getServiceName(), t);
   }
 
   @Override
@@ -135,8 +168,7 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
    * @param blockForMessage whether to block for message
    * @throws InterruptedException if the thread is interrupted
    */
-  private void publishMessages(List<MESSAGE> buffer,
-                               boolean blockForMessage) throws Exception {
+  private void publishMessages(List<MESSAGE> buffer, boolean blockForMessage) throws Exception {
     int maxBufferSize = queueSize;
 
     if (blockForMessage) {
@@ -157,13 +189,14 @@ public abstract class AbstractLogPublisher<MESSAGE> extends AbstractRetryableSch
       }
     }
 
-    while (buffer.size() < maxBufferSize) {
+    while (maxBufferSize > 0) {
       // Poll for more messages
       LogMessage message = messageQueue.poll();
       if (message == null) {
         break;
       }
       buffer.add(createMessage(message));
+      maxBufferSize--;
     }
 
     // Publish all messages

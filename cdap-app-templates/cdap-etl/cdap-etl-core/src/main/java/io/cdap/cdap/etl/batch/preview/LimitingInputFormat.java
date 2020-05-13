@@ -25,6 +25,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,32 +35,34 @@ import java.util.List;
  * @param <V> type of value to read
  */
 public class LimitingInputFormat<K, V> extends InputFormat<K, V> implements Configurable {
-  public static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.preview.input.classname";
-  public static final String MAX_RECORDS = "io.cdap.pipeline.preview.max.records";
 
-  private InputFormat<K, V> delegateFormat;
+  static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.preview.input.classname";
+  static final String MAX_RECORDS = "io.cdap.pipeline.preview.max.records";
+
   private Configuration conf;
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
-    Configuration conf = context.getConfiguration();
-    return createDelegate(conf).getSplits(context);
+    int maxRecords = conf.getInt(MAX_RECORDS, 100);
+    List<InputSplit> splits = getDelegate().getSplits(context);
+    return Collections.singletonList(new LimitingInputSplit(getConf(), splits, maxRecords));
   }
 
   @Override
-  public RecordReader<K, V> createRecordReader(InputSplit split, TaskAttemptContext context)
-    throws IOException, InterruptedException {
-    Configuration conf = context.getConfiguration();
-    int maxRecords = conf.getInt(MAX_RECORDS, 100);
-    RecordReader<K, V> delegate = delegateFormat.createRecordReader(split, context);
-    return new LimitingRecordReader<>(delegate, maxRecords);
+  public RecordReader<K, V> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException {
+    return new LimitingRecordReader<>(getDelegate());
   }
 
-  private InputFormat<K, V> createDelegate(Configuration conf) throws IOException {
+  private InputFormat<K, V> getDelegate() throws IOException {
     String delegateClassName = conf.get(DELEGATE_CLASS_NAME);
     try {
       //noinspection unchecked
-      return (InputFormat<K, V>) conf.getClassLoader().loadClass(delegateClassName).newInstance();
+      InputFormat<K, V> kvInputFormat = (InputFormat<K, V>) conf.getClassLoader().loadClass(delegateClassName)
+        .newInstance();
+      if (kvInputFormat instanceof Configurable) {
+        ((Configurable) kvInputFormat).setConf(conf);
+      }
+      return kvInputFormat;
     } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
       throw new IOException("Unable to instantiate delegate input format " + delegateClassName, e);
     }
@@ -67,15 +70,7 @@ public class LimitingInputFormat<K, V> extends InputFormat<K, V> implements Conf
 
   @Override
   public void setConf(Configuration conf) {
-    try {
-      delegateFormat = createDelegate(conf);
-      if (delegateFormat instanceof Configurable) {
-        ((Configurable) delegateFormat).setConf(conf);
-      }
-      this.conf = conf;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    this.conf = conf;
   }
 
   @Override

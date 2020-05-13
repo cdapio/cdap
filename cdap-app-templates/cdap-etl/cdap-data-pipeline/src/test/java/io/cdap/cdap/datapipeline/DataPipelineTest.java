@@ -3410,7 +3410,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Schema infoSchema = Schema.recordOf("userInfo",
                                         Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
                                         Schema.Field.of("fname", Schema.of(Schema.Type.STRING)));
-    Schema joinedSchema = Schema.recordOf("userInfo",
+    Schema joinedSchema = Schema.recordOf("join.output",
                                           Schema.Field.of("id", Schema.of(Schema.Type.LONG)),
                                           Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
                                           Schema.Field.of("fname", Schema.of(Schema.Type.STRING)));

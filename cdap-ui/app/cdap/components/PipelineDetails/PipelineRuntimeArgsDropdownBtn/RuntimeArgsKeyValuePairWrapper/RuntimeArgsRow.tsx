@@ -30,11 +30,31 @@ const styles = (theme): StyleRules => {
       display: 'grid',
       gridTemplateColumns: '50% 50%',
       gridGap: '10px',
+      // TODO: when material-ui is upgraded to 4.8.2+ we would no longer need this
+      '& legend': {
+        border: 0,
+      },
     },
     disabled: {
       '& .Mui-disabled': {
         cursor: 'not-allowed',
         color: `${theme.palette.grey['50']}`,
+      },
+      '& .MuiInputBase-inputMarginDense': {
+        padding: '10.5px 14px 10.5px 14px',
+      },
+    },
+    label: {
+      '& .MuiInputLabel-marginDense': {
+        transform: 'translate(14px, 12px) scale(1)',
+      },
+      '& .MuiInputLabel-outlined.MuiInputLabel-shrink': {
+        transform: 'translate(14px, -6px) scale(0.75)',
+      },
+    },
+    input: {
+      '& .MuiInputBase-inputMarginDense': {
+        padding: '10.5px 14px 10.5px 14px',
       },
     },
   };
@@ -108,7 +128,12 @@ class RuntimeArgsRowView extends AbstractRow<IRuntimeArgsRowProps, IKeyValueStat
           inputRef={this.props.forwardedRef}
           variant="outlined"
           margin="dense"
-          className={classnames({ [this.props.classes.disabled]: keyDisabled })}
+          className={classnames({
+            [this.props.classes.disabled]: keyDisabled,
+            [this.props.classes.input]: true,
+            [this.props.classes.label]: true,
+            [this.props.classes.fieldset]: true,
+          })}
         />
 
         <TextField
@@ -121,7 +146,14 @@ class RuntimeArgsRowView extends AbstractRow<IRuntimeArgsRowProps, IKeyValueStat
           disabled={this.props.disabled}
           variant="outlined"
           margin="dense"
-          className={classnames({ [this.props.classes.disabled]: this.props.disabled })}
+          className={classnames(
+            {
+              [this.props.classes.disabled]: this.props.disabled,
+            },
+            this.props.classes.input,
+            this.props.classes.label,
+            this.props.classes.fieldset
+          )}
         />
       </div>
     );

@@ -56,7 +56,6 @@ import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProfileId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.reporting.ProgramHeartbeatTable;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
@@ -79,6 +78,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
@@ -111,6 +111,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
   private final ProgramStateWriter programStateWriter;
   private final Queue<Runnable> tasks;
   private final MetricsCollectionService metricsCollectionService;
+  private Set<ProgramCompletionNotifier> programCompletionNotifiers;
 
   @Inject
   ProgramNotificationSubscriberService(MessagingService messagingService, CConfiguration cConf,
@@ -130,6 +131,12 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     this.programStateWriter = programStateWriter;
     this.tasks = new LinkedList<>();
     this.metricsCollectionService = metricsCollectionService;
+    this.programCompletionNotifiers = Collections.emptySet();
+  }
+
+  @Inject(optional = true)
+  void setProgramCompletionNotifiers(Set<ProgramCompletionNotifier> notifiers) {
+    this.programCompletionNotifiers = notifiers;
   }
 
   @Nullable
@@ -262,7 +269,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // if this is a preview run or a program within a workflow, we don't actually need to provision a cluster
         // instead, we skip forward past the provisioning and provisioned states and go straight to starting.
         if (isInWorkflow || skipProvisioning) {
-          ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+          ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
           ProgramDescriptor programDescriptor =
             GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
           appMetadataStore.recordProgramProvisioning(programRunId, programOptions.getUserArguments().asMap(),
@@ -312,7 +319,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
                                                     messageIdBytes, runnables);
         break;
       case REJECTED:
-        ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+        ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
         ProgramDescriptor programDescriptor =
           GSON.fromJson(properties.get(ProgramOptionConstants.PROGRAM_DESCRIPTOR), ProgramDescriptor.class);
         recordedRunRecord = appMetadataStore.recordProgramRejected(
@@ -397,10 +404,16 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
     RunRecordDetail recordedRunRecord = appMetadataStore.recordProgramStop(programRunId, endTimeSecs, programRunStatus,
                                                                            failureCause, sourceId);
-    writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
+    if (recordedRunRecord != null) {
+      writeToHeartBeatTable(recordedRunRecord, endTimeSecs, programHeartbeatTable);
 
-    getEmitMetricsRunnable(programRunId, recordedRunRecord,
-                           STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+      getEmitMetricsRunnable(programRunId, recordedRunRecord,
+                             STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+      runnables.add(() -> {
+        programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
+                                                                                   recordedRunRecord.getStatus()));
+      });
+    }
     return recordedRunRecord;
   }
 
@@ -472,15 +485,26 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     }
   }
 
-
-
+  /**
+   * Handles a notification related to cluster operations.
+   *
+   * @param programRunId program run id from the event
+   * @param clusterStatus cluster status from the event
+   * @param notification the notification to process
+   * @param messageIdBytes the unique ID for the notification message
+   * @param appMetadataStore the data table to use
+   * @param context the table context for performing table operations
+   * @return an {@link Optional} of {@link Runnable} to carry a task to execute after handling of this event completed.
+   *         See {@link #postProcess()} for details.
+   * @throws IOException if failed to read/write to the app metadata store.
+   */
   private Optional<Runnable> handleClusterEvent(ProgramRunId programRunId, ProgramRunClusterStatus clusterStatus,
                                                 Notification notification, byte[] messageIdBytes,
                                                 AppMetadataStore appMetadataStore,
                                                 StructuredTableContext context) throws IOException {
     Map<String, String> properties = notification.getProperties();
 
-    ProgramOptions programOptions = createProgramOptions(programRunId.getParent(), properties);
+    ProgramOptions programOptions = ProgramOptions.fromNotification(notification, GSON);
     String userId = properties.get(ProgramOptionConstants.USER_ID);
 
     long endTs = getTimeSeconds(properties, ProgramOptionConstants.CLUSTER_END_TIME);
@@ -520,6 +544,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
             try {
               programLifecycleService.startInternal(programDescriptor, newProgramOptions, programRunId);
             } catch (Exception e) {
+              LOG.error("Failed to start program {}", programRunId, e);
               programStateWriter.error(programRunId, e);
             }
           } finally {
@@ -556,22 +581,6 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     return profile.map(profileId -> () -> emitProfileMetrics(programRunId, profileId, metricName));
   }
 
-  private ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> properties) {
-    String userArgumentsString = properties.get(ProgramOptionConstants.USER_OVERRIDES);
-    String systemArgumentsString = properties.get(ProgramOptionConstants.SYSTEM_OVERRIDES);
-    String debugString = properties.get(ProgramOptionConstants.DEBUG_ENABLED);
-
-    boolean debug = Boolean.parseBoolean(debugString);
-    Map<String, String> userArguments = userArgumentsString == null ?
-      Collections.emptyMap() : GSON.fromJson(userArgumentsString, STRING_STRING_MAP);
-    Map<String, String> systemArguments = systemArgumentsString == null ?
-      Collections.emptyMap() : GSON.fromJson(systemArgumentsString, STRING_STRING_MAP);
-
-    return new SimpleProgramOptions(programId, new BasicArguments(systemArguments),
-                                    new BasicArguments(userArguments), debug);
-  }
-
-
   private void publishRecordedStatus(Notification notification,
                                      ProgramRunId programRunId, ProgramRunStatus status) throws Exception {
     Map<String, String> notificationProperties = new HashMap<>(notification.getProperties());
@@ -594,7 +603,7 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
    */
   private long getTimeSeconds(Map<String, String> properties, String option) {
     String timeString = properties.get(option);
-    return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.valueOf(timeString));
+    return (timeString == null) ? -1 : TimeUnit.MILLISECONDS.toSeconds(Long.parseLong(timeString));
   }
 
   /**

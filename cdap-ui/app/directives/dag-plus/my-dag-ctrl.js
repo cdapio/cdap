@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $popover, uuid, DAGPlusPlusNodesDispatcher, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusPreviewActions, HydratorPlusPlusPreviewStore) {
+  .controller('DAGPlusPlusCtrl', function MyDAGController(jsPlumb, $scope, $timeout, DAGPlusPlusFactory, GLOBALS, DAGPlusPlusNodesActionsFactory, $window, DAGPlusPlusNodesStore, $rootScope, $modifiedPopover, uuid, DAGPlusPlusNodesDispatcher, NonStorePipelineErrorFactory, AvailablePluginsStore, myHelpers, HydratorPlusPlusCanvasFactory, HydratorPlusPlusConfigStore, HydratorPlusPlusPreviewActions, HydratorPlusPlusPreviewStore) {
 
     var vm = this;
 
@@ -447,10 +447,10 @@ angular.module(PKG.name + '.commons')
       });
 
       // Select multiple nodes by manually selecting nodes.
-      Mousetrap.bind('command', () => {
+      Mousetrap.bind('shift', () => {
         vm.selectionBox.isMultiSelectEnabled = true;
       }, 'keydown');
-      Mousetrap.bind('command', () => {
+      Mousetrap.bind('shift', () => {
         vm.selectionBox.isMultiSelectEnabled = false;
       }, 'keyup');
     }
@@ -460,7 +460,7 @@ angular.module(PKG.name + '.commons')
       Mousetrap.unbind(['command+shift+z', 'ctrl+shift+z']);
       Mousetrap.unbind(['command+c', 'ctrl+c']);
       Mousetrap.unbind(['del', 'backspace']);
-      Mousetrap.unbind('command');
+      Mousetrap.unbind('shift');
       Mousetrap.unbind('space');
       Mousetrap.unbind('command+a');
     }
@@ -495,7 +495,7 @@ angular.module(PKG.name + '.commons')
       }
 
       if (nodeInfo.element && nodeInfo.scope) {
-        nodeInfo.popover = $popover(nodeInfo.element, {
+        nodeInfo.popover = $modifiedPopover(nodeInfo.element, {
           trigger: 'manual',
           placement: 'auto right',
           target: angular.element(nodeInfo.element[0]),
@@ -706,6 +706,7 @@ angular.module(PKG.name + '.commons')
         }
 
         if (connObj.source && connObj.target) {
+          connObj.cssClass = `connection-id-${conn.from}-${conn.to}`;
           let newConn = vm.instance.connect(connObj);
           if (
             targetNode.type === 'condition' ||
@@ -749,6 +750,7 @@ angular.module(PKG.name + '.commons')
       let defaultConnectorSettings = vm.defaultDagSettings.Connector;
       connObj.connector = [defaultConnectorSettings[0], Object.assign({}, defaultConnectorSettings[1], { midpoint: 0 })];
 
+      connObj.cssClass = `connection-id-${conn.from}-${conn.to}`;
       vm.instance.connect(connObj);
     };
 
@@ -816,6 +818,7 @@ angular.module(PKG.name + '.commons')
       const source = newConnObj.source.getAttribute('data-nodetype');
       const fromNodeId = newConnObj.source.getAttribute('data-nodeid');
       connection.from = fromNodeId;
+      newConnObj.connection.connector.canvas.classList.add(`connection-id-${connection.from}-${connection.to}`);
 
       if (source === 'splitter') {
         connection.port = newConnObj.source.getAttribute('data-portname');
@@ -877,6 +880,11 @@ angular.module(PKG.name + '.commons')
       if (vm.isDisabled) { return; }
 
       vm.clearSelectedNodes();
+      if (event) {
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        event.preventDefault();
+      }
 
       // is connection
       if (selectedObj.sourceId && selectedObj.targetId) {
@@ -915,11 +923,6 @@ angular.module(PKG.name + '.commons')
           connection.removeClass('selected-connector');
           connection.removeType('selected');
         });
-      }
-      if (event) {
-        event.stopPropagation();
-        event.stopImmediatePropagation();
-        event.preventDefault();
       }
     }
 

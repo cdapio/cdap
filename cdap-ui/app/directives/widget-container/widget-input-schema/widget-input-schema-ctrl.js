@@ -14,7 +14,7 @@
  * the License.
 */
 angular.module(PKG.name + '.commons')
-  .controller('MyInputSchemaCtrl', function($scope) {
+  .controller('MyInputSchemaCtrl', function($scope, HydratorPlusPlusHydratorService) {
     this.multipleInputs = ($scope.multipleInputs === 'true' ? true : false);
     try {
       this.inputSchemas = JSON.parse($scope.inputSchema);
@@ -23,6 +23,16 @@ angular.module(PKG.name + '.commons')
     }
     this.inputSchemas = this.inputSchemas
       .map( function(node) {
+        if (
+          typeof node.schema === 'string' &&
+          HydratorPlusPlusHydratorService.containsMacro(node.schema)
+        ) {
+          return {
+            name: node.name,
+            schema: node.schema,
+            isMacro: true,
+          };
+        }
         var schema;
         try {
           schema = JSON.parse(node.schema);
@@ -35,7 +45,8 @@ angular.module(PKG.name + '.commons')
         }
         return {
           name: node.name,
-          schema: schema
+          schema: schema,
+          isMacro: false,
         };
       });
     this.currentIndex = 0;

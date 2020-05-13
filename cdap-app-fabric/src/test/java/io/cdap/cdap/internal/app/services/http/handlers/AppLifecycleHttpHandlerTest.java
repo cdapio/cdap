@@ -116,6 +116,43 @@ public class AppLifecycleHttpHandlerTest extends AppFabricTestBase {
   }
 
   @Test
+  public void testAppWithConfigurationString() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass configuration = new ConfigTestApp.ConfigClass("abc", "def");
+    String configurationString = GSON.toJson(configuration);
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null,
+                                              configurationString));
+    Assert.assertEquals(200, response.getResponseCode());
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
+    Assert.assertEquals(GSON.toJson(configuration), appDetails.get("configuration").getAsString());
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
+  public void testAppWithConfiguration() throws Exception {
+    Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "ConfigApp");
+    Id.Artifact artifactId = Id.Artifact.from(Id.Namespace.DEFAULT, "appWithConfig", "1.0.0-SNAPSHOT");
+    HttpResponse response = addAppArtifact(artifactId, ConfigTestApp.class);
+    Assert.assertEquals(200, response.getResponseCode());
+
+    ConfigTestApp.ConfigClass configuration = new ConfigTestApp.ConfigClass("abc", "def");
+    response = deploy(appId, new AppRequest<>(ArtifactSummary.from(artifactId.toArtifactId()), null, null, null, null,
+                                              configuration));
+    Assert.assertEquals(200, response.getResponseCode());
+    JsonObject appDetails = getAppDetails(Id.Namespace.DEFAULT.getId(), "ConfigApp");
+    Assert.assertEquals(GSON.toJson(configuration), appDetails.get("configuration").getAsString());
+
+    deleteApp(appId, 200);
+    deleteArtifact(artifactId, 200);
+  }
+
+  @Test
   public void testDeployUsingNonexistantArtifact404() throws Exception {
     Id.Application appId = Id.Application.from(Id.Namespace.DEFAULT, "badapp");
     AppRequest<Config> appRequest =

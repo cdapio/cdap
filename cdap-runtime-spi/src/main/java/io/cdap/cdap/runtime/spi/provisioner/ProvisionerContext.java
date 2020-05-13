@@ -16,8 +16,11 @@
 
 package io.cdap.cdap.runtime.spi.provisioner;
 
+import io.cdap.cdap.runtime.spi.ProgramRunInfo;
+import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -29,15 +32,22 @@ public interface ProvisionerContext {
 
   /**
    * @return the program run
+   * @deprecated Use {@link #getProgramRunInfo()} instead
    */
+  @Deprecated
   ProgramRun getProgramRun();
+
+  /**
+   * @return the program run information
+   */
+  ProgramRunInfo getProgramRunInfo();
 
   /**
    * Get the provisioner properties for this program run. These properties will start off as the provisioner properties
    * associated with the profile of the program run. The properties will then be overridden by any program preferences
-   * that are prefixed with 'system.provisioner.', with the prefixed stripped. Those properties will then be
-   * overridden by any runtime arguments or schedule properties that are prefixed with 'system.provisioner.', with
-   * the prefixed stripped.
+   * that are prefixed with 'system.profile.properties.', with the prefixed stripped. Those properties will then be
+   * overridden by any runtime arguments or schedule properties that are prefixed with 'system.profile.properties.',
+   * with the prefixed stripped.
    *
    * @return the provisioner properties for the program run
    */
@@ -59,4 +69,14 @@ public interface ProvisionerContext {
    * @return the CDAP version
    */
   String getCDAPVersion();
+
+  /**
+   * Returns the {@link LocationFactory} used by the CDAP system.
+   */
+  LocationFactory getLocationFactory();
+
+  /**
+   * Returns the runtime monitor type for this provisioner.
+   */
+  RuntimeMonitorType getRuntimeMonitorType();
 }

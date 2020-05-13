@@ -74,6 +74,10 @@ declare global {
       select_from_to: (from: INodeIdentifier, to: INodeIdentifier) => Chainable<any>;
 
       /**
+       * Select a specific connection give source and target node
+       */
+      select_connection: (from: INodeIdentifier, to: INodeIdentifier) => Chainable<JQuery<any>>;
+      /**
        * Creates a simple BQ source -> Wrangler Transform -> BQ Sink pipeline.
        *
        * This is a dumb command to be reused whenever we want to create a basic pipeline
@@ -183,6 +187,21 @@ declare global {
        * Creates a SPANNER connection
        */
       create_SPANNER_connection: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
+
+      /**
+       * Utility to add runtime arguments at specific key
+       */
+      add_runtime_args_row_with_value: (row: number, key: string, value: string) => void;
+
+      /**
+       * Utility to add runtime arguments for existing key-value in runtime arguments
+       */
+      update_runtime_args_row: (row: number, key: string, value: string, macro?: boolean) => void;
+
+      /**
+       * Assertion to validate a runtime argument row
+       */
+      assert_runtime_args_row: (row: number, key: string, value: string, macro?: boolean) => void;
       compareSnapshot: (s: string) => any;
     }
     // tslint:disable-next-line: interface-name
@@ -191,6 +210,7 @@ declare global {
       DataTransfer: any;
       sessionStorage: any;
       onbeforeunload: any;
+      CDAP_CONFIG: any;
     }
   }
 }
