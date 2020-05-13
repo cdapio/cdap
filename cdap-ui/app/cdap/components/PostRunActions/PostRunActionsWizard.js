@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyArtifactApi } from 'api/artifact';
-import { Modal, ModalBody } from 'reactstrap';
+import { Modal, ModalBody, ModalFooter } from 'reactstrap';
 import { preventPropagation } from 'services/helpers';
 import { MyPipelineApi } from 'api/pipeline';
 import ConfigurationGroup from 'components/ConfigurationGroup';
@@ -124,14 +124,16 @@ export default class PostRunActionsWizard extends Component {
           </div>
         </div>
         <ModalBody>
-          {this.renderBody()}
+          <div className="postrun-configuration-content">{this.renderBody()}</div>
+        </ModalBody>
+        <ModalFooter>
           <div
             className="btn btn-blue float-right close-button"
             onClick={this.toggleAndPreventPropagation}
           >
             Close
           </div>
-        </ModalBody>
+        </ModalFooter>
       </Modal>
     );
   }
