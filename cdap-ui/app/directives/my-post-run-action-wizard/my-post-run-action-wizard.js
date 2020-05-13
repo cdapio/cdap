@@ -23,6 +23,7 @@ angular.module(PKG.name + '.commons')
         store: '=',
         action: '=?',
         errors: '=',
+        validate: '&',
       },
       templateUrl: 'my-post-run-action-wizard/my-post-run-action-wizard.html',
       bindToController: true,
@@ -56,16 +57,28 @@ angular.module(PKG.name + '.commons')
               return $scope.mode !== 'view' && Object.keys($scope.action).length > 0;
             }
           };
-          $scope.validatePluginProperties = function(){
-            $scope.validating = true;
-            const action = angular.copy($scope.action);
+          $scope.validatePluginProperties = function(action, errorCallback, silent = false){
+            if ($scope.validating) {
+              return;
+            }
+            if (!silent) {
+              $scope.validating = true;
+            }
+            action = action || angular.copy($scope.action);
             const errorCb = ({ errorCount, propertyErrors }) => {
-              $scope.validating = false;
-              $scope.errorCount = errorCount;
+              if (!silent) {
+                $scope.validating = false;
+                $scope.errorCount = errorCount;
+              } else {
+                $scope.errorCount = null;
+              }
               if ( errorCount > 0 || !errorCount) {
                 $scope.propertyErrors = propertyErrors;
               } else {
                 $scope.propertyErrors = {};
+              }
+              if (errorCallback && typeof errorCallback === 'function') {
+                errorCallback($scope.propertyErrors);
               }
             };
             $scope.store.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(action, null, errorCb);

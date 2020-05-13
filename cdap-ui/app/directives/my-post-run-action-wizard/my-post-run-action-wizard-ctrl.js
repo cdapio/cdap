@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.commons')
-  .controller('MyPostRunActionWizardCtrl', function($scope, uuid, myAlertOnValium) {
+  .controller('MyPostRunActionWizardCtrl', function($scope, uuid) {
     'ngInject';
     var vm = this;
     vm.action = vm.action || {};
@@ -49,10 +49,22 @@ angular.module(PKG.name + '.commons')
       $scope.$parent.action = vm.selectedAction;
       vm.currentStage = 2;
     };
-    vm.onActionConfigure = function(action) {
-      vm.configuredAction = action;
-      $scope.$parent.action = vm.configuredAction;
-      vm.currentStage += 1;
+    vm.onActionConfigure = function(action, actionCallback) {
+      var fn = vm.validate();
+      const callback = (errors) => {
+        if (typeof actionCallback === 'function') {
+          actionCallback();
+        }
+        if (errors && Object.keys(errors).length) {
+          return;
+        }
+        vm.configuredAction = action;
+        $scope.$parent.action = vm.configuredAction;
+        vm.currentStage += 1;
+      };
+      if ('undefined' !== typeof fn) {
+        fn.call(null, action, callback, true);
+      }
     };
     vm.onActionConfirm = function(action) {
       if (!action) {
@@ -76,10 +88,6 @@ angular.module(PKG.name + '.commons')
         } else {
           vm.actionCreator.addPostAction(vm.confirmedAction);
         }
-        myAlertOnValium.show({
-          type: 'success',
-          content: vm.confirmedAction.plugin.name + ' post action saved.'
-        });
       } catch(e) {
         console.log('ERROR', e);
         //FIXME: We should be able to handle errors more efficiently
