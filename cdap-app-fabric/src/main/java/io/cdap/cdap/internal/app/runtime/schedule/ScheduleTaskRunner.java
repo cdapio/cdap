@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,16 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
-import com.google.common.collect.Maps;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.schedule.TriggerInfo;
 import io.cdap.cdap.api.schedule.TriggeringScheduleInfo;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.UserErrors;
 import io.cdap.cdap.internal.UserMessages;
@@ -42,6 +42,8 @@ import org.apache.hadoop.security.authentication.util.KerberosName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -74,12 +76,9 @@ public final class ScheduleTaskRunner {
     ProgramSchedule schedule = job.getSchedule();
     ProgramId programId = schedule.getProgramId();
 
-    Map<String, String> userArgs = Maps.newHashMap();
-    userArgs.putAll(schedule.getProperties());
-    userArgs.putAll(propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId)));
+    Map<String, String> userArgs = getUserArgs(schedule, propertiesResolver);
 
-    Map<String, String> systemArgs = Maps.newHashMap();
-    systemArgs.putAll(propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId)));
+    Map<String, String> systemArgs = new HashMap<>(propertiesResolver.getSystemProperties(programId));
 
     // Let the triggers update the arguments first before setting the triggering schedule info
     ((SatisfiableTrigger) job.getSchedule().getTrigger()).updateLaunchArguments(job.getSchedule(),
@@ -91,6 +90,15 @@ public final class ScheduleTaskRunner {
 
     execute(programId, systemArgs, userArgs);
     LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+  }
+
+  @VisibleForTesting
+  static Map<String, String> getUserArgs(ProgramSchedule schedule,
+                                         PropertiesResolver propertiesResolver) throws IOException, NotFoundException {
+    Map<String, String> userArgs = new HashMap<>();
+    userArgs.putAll(propertiesResolver.getUserProperties(schedule.getProgramId()));
+    userArgs.putAll(schedule.getProperties());
+    return userArgs;
   }
 
   private TriggeringScheduleInfo getTriggeringScheduleInfo(Job job) {
@@ -106,7 +114,7 @@ public final class ScheduleTaskRunner {
   /**
    * Executes a program without blocking until its completion.
    */
-  public void execute(final ProgramId id, Map<String, String> sysArgs, Map<String, String> userArgs) throws Exception {
+  public void execute(ProgramId id, Map<String, String> sysArgs, Map<String, String> userArgs) throws Exception {
     String originalUserId = SecurityRequestContext.getUserId();
     try {
       // if the program has a namespace user configured then set that user in the security request context.
