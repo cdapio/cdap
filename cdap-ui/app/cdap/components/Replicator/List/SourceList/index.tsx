@@ -118,7 +118,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     <div>
       <div className={classes.header}>
         <div>
-          <h4>Create new delta replicator</h4>
+          <h4>Create new replication pipeline</h4>
           <div>Start by selecting the source from where you want to replicate your data</div>
         </div>
         <div className={classes.searchSection}>
@@ -162,7 +162,7 @@ const SourceListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                 <Link
                   key={source.name}
                   className={classes.link}
-                  to={`/ns/${getCurrentNamespace()}/replicator/create/${artifactName}/${version}/${scope}/${
+                  to={`/ns/${getCurrentNamespace()}/replication/create/${artifactName}/${version}/${scope}/${
                     source.name
                   }`}
                 >

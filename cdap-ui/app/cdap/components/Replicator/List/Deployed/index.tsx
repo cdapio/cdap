@@ -23,7 +23,7 @@ import { objectQuery } from 'services/helpers';
 import Status from 'components/Status';
 import { Link } from 'react-router-dom';
 import ActionsPopover, { IAction } from 'components/ActionsPopover';
-import DeleteConfirmation from 'components/Replicator/DeleteConfirmation';
+import DeleteConfirmation, { InstanceType } from 'components/Replicator/DeleteConfirmation';
 
 const styles = (theme): StyleRules => {
   return {
@@ -109,7 +109,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             config = JSON.parse(replicator.configuration);
           } catch (e) {
             // tslint:disable-next-line: no-console
-            console.log('Failed to parse replicator configuration', e);
+            console.log('Failed to parse replication pipeline configuration', e);
             return;
           }
 
@@ -131,7 +131,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.root}>
       <div className={classes.headerText}>
-        {replicators.length} Delta {replicators.length === 1 ? 'replicator' : 'replicators'} -
+        {replicators.length} replication {replicators.length === 1 ? 'pipeline' : 'pipelines'} -
         Select a row to view details
       </div>
 
@@ -139,7 +139,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
         <div className="grid grid-container grid-compact">
           <div className="grid-header">
             <div className="grid-row">
-              <div>Replicator name</div>
+              <div>Replication pipeline name</div>
               <div>From / To</div>
               <div>Status</div>
               <div />
@@ -161,7 +161,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
               return (
                 <Link
-                  to={`/ns/${getCurrentNamespace()}/replicator/detail/${replicator.name}`}
+                  to={`/ns/${getCurrentNamespace()}/replication/detail/${replicator.name}`}
                   className={`grid-row ${classes.row}`}
                   key={replicator.name}
                 >
@@ -187,6 +187,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
         show={replicatorNameDelete && replicatorNameDelete.length > 0}
         onDelete={fetchList}
         closeModal={() => setReplicatorNameDelete(null)}
+        type={InstanceType.app}
       />
     </div>
   );

@@ -38,6 +38,7 @@ angular.module(PKG.name + '.services')
         xhr.open('POST', path, true);
         if (angular.isObject(header) && Object.keys(header).length > 0) {
           xhr.setRequestHeader('Content-type', header['Content-type']);
+          xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
           if (angular.isObject(header.customHeader) && Object.keys(header.customHeader).length > 0) {
             customHeaderNames = Object.keys(header.customHeader);
             customHeaderNames.forEach( function(headerName) {

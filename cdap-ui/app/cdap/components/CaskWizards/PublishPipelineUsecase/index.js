@@ -45,9 +45,9 @@ export default class PublishPipelineUsecaseWizard extends Component {
           },
         }),
         linkLabel,
-        linkUrl: window.getAbsUIUrl({
+        linkUrl: `${window.getAbsUIUrl({
           namespaceId: namespace,
-        }),
+        })}/control`,
       };
     }
     return successInfo;

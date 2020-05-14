@@ -73,12 +73,12 @@ export const ActionConfig: IAction[] = [
   },
   {
     img: '/cdap_assets/img/replicator.svg',
-    title: T.translate(`${PREFIX}.Replicator.title`).toString(),
-    description: T.translate(`${PREFIX}.Replicator.description`).toString(),
+    title: T.translate(`${PREFIX}.Replication.title`).toString(),
+    description: T.translate(`${PREFIX}.Replication.description`).toString(),
     links: [
       {
-        label: T.translate(`${PREFIX}.Replicator.linkLabel`).toString(),
-        url: '/cdap/ns/:namespace/replicator',
+        label: T.translate(`${PREFIX}.Replication.linkLabel`).toString(),
+        url: '/cdap/ns/:namespace/replication',
       },
     ],
     featureFlag: Theme.showCDC,

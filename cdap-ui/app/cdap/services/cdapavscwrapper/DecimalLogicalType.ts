@@ -17,6 +17,7 @@
 import AbstractLogicalType, { IJsonResponse } from 'services/cdapavscwrapper/AbstractLogicalType';
 import { LogicalTypes } from 'services/cdapavscwrapper/LogicalTypes';
 import cdapavsc from 'cdap-avsc';
+import isNil from 'lodash/isNil';
 
 const UNDERLYING_TYPE = 'bytes';
 interface IDecimalJsonResponse extends IJsonResponse {
@@ -30,10 +31,10 @@ const JSON_FORMAT: IDecimalJsonResponse = {
 
 export default class DecimalLogicalType extends AbstractLogicalType {
   constructor(attrs, opts) {
-    if (attrs.precision) {
+    if (!isNil(attrs.precision)) {
       JSON_FORMAT.precision = attrs.precision;
     }
-    if (attrs.scale) {
+    if (!isNil(attrs.scale)) {
       JSON_FORMAT.scale = attrs.scale;
     }
     super(attrs, opts, [cdapavsc.types.LongType], JSON_FORMAT);

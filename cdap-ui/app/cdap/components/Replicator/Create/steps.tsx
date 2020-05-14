@@ -24,7 +24,7 @@ import Summary from 'components/Replicator/Create/Content/Summary';
 
 export const STEPS = [
   {
-    label: 'Name replicator',
+    label: 'Name replication pipeline',
     component: NameDescription,
   },
   {

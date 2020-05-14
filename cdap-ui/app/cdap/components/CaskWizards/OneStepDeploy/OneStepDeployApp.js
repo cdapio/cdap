@@ -52,19 +52,13 @@ export default class OneStepDeployApp extends Component {
     let appName = fetchResponse.slice(fetchResponse.indexOf('app') + 4);
     let namespace = NamespaceStore.getState().selectedNamespace;
     let message = T.translate('features.Wizard.ApplicationUpload.success', { appName });
-    let buttonLabel = T.translate('features.Wizard.ApplicationUpload.callToAction');
     let linkLabel = T.translate('features.Wizard.GoToHomePage');
     let successInfo = {
       message,
-      buttonLabel,
-      buttonUrl: window.getAbsUIUrl({
-        namespaceId: namespace,
-        appId: appName,
-      }),
       linkLabel,
-      linkUrl: window.getAbsUIUrl({
+      linkUrl: `${window.getAbsUIUrl({
         namespaceId: namespace,
-      }),
+      })}/control`,
     };
     return successInfo;
   }
@@ -97,6 +91,7 @@ export default class OneStepDeployApp extends Component {
       'Content-Type': 'application/octet-stream',
       'X-Archive-Name': jarName,
       'Session-Token': SessionStore.getState(),
+      'X-Requested-With': 'XMLHttpRequest',
     };
 
     if (window.CDAP_CONFIG.securityEnabled) {

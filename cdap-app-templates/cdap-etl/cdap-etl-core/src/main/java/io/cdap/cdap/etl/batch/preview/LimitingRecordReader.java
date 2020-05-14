@@ -56,7 +56,7 @@ public class LimitingRecordReader<K, V> extends RecordReader<K, V> {
 
     // Round up the per split limit so that each reader at most is opened once
     int numberOfSplits = inputSplit.getInputSplits().size();
-    int perSplitLimit = (inputSplit.getRecordLimit() + numberOfSplits - 1) / numberOfSplits;
+    int perSplitLimit = numberOfSplits == 0 ? 0 : (inputSplit.getRecordLimit() + numberOfSplits - 1) / numberOfSplits;
     this.perSplitLimit = Math.max(1, perSplitLimit);
   }
 
