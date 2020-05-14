@@ -16,17 +16,16 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.PreferencesDetail;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.ImpersonationInfo;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
@@ -54,23 +53,22 @@ public class PropertiesResolver {
     this.queueResolver = schedulerQueueResolver;
   }
 
-  public Map<String, String> getUserProperties(Id.Program id) throws IOException, NotFoundException {
-    PreferencesDetail preferencesDetail = null;
-    preferencesDetail = preferencesFetcher.get(id.toEntityId(), true);
-    Map<String, String> userArgs = new HashMap<String, String>(preferencesDetail.getProperties());
+  public Map<String, String> getUserProperties(ProgramId id) throws IOException, NotFoundException {
+    PreferencesDetail preferencesDetail = preferencesFetcher.get(id, true);
+    Map<String, String> userArgs = new HashMap<>(preferencesDetail.getProperties());
     userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
     return userArgs;
   }
 
-  public Map<String, String> getSystemProperties(Id.Program id) throws IOException, NamespaceNotFoundException {
-    Map<String, String> systemArgs = Maps.newHashMap();
+  public Map<String, String> getSystemProperties(ProgramId id) throws IOException, NamespaceNotFoundException {
+    Map<String, String> systemArgs = new HashMap<>();
     systemArgs.put(Constants.CLUSTER_NAME, cConf.get(Constants.CLUSTER_NAME, ""));
-    systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
+    systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespaceId()));
     if (SecurityUtil.isKerberosEnabled(cConf)) {
-      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id.toEntityId());
+      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.APP_PRINCIPAL_EXISTS,
-                     String.valueOf(ownerAdmin.exists(id.toEntityId().getParent())));
+                     String.valueOf(ownerAdmin.exists(id.getParent())));
     }
     return systemArgs;
   }

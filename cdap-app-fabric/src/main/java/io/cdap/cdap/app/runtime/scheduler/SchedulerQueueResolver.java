@@ -21,10 +21,10 @@ import com.google.inject.Inject;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.proto.NamespaceConfig;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.id.NamespaceId;
 
 import java.io.IOException;
 import javax.annotation.Nullable;
@@ -62,13 +62,13 @@ public class SchedulerQueueResolver {
    * @return schedule queue at namespace level or default queue.
    */
   @Nullable
-  public String getQueue(Id.Namespace namespaceId) throws IOException, NamespaceNotFoundException {
-    if (namespaceId.equals(Id.Namespace.SYSTEM)) {
+  public String getQueue(NamespaceId namespaceId) throws IOException, NamespaceNotFoundException {
+    if (namespaceId.equals(NamespaceId.SYSTEM)) {
       return systemQueue;
     }
     NamespaceMeta meta;
     try {
-      meta = namespaceQueryAdmin.get(namespaceId.toEntityId());
+      meta = namespaceQueryAdmin.get(namespaceId);
     } catch (NamespaceNotFoundException e) {
       throw e;
     } catch (Exception e) {
