@@ -86,7 +86,7 @@ const MapToTarget = (props: IMapToTargetProps) => {
       try {
         await loadTargetDataModelStates();
       } catch (error) {
-        setError(error);
+        setError(error, 'Map to Target directive initialization failed');
       } finally {
         if (pending) {
           setLoadingText('');

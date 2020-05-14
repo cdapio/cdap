@@ -55,6 +55,7 @@ export interface IModelField {
   description?: string;
 }
 
+// TODO Replace 'any' types with concrete ones
 export interface IDataPrepState {
   initialized?: boolean;
   workspaceId?: string;
