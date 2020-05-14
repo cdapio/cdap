@@ -45,7 +45,7 @@ const styles = (theme): StyleRules => {
     },
     inputContainer: {
       display: 'grid',
-      gridTemplateColumns: '1fr 100px 100px 100px',
+      gridTemplateColumns: '1fr 1fr 100px 100px 100px',
     },
     inputBox: {
       marginRight: '15px',
@@ -77,6 +77,7 @@ const styles = (theme): StyleRules => {
 interface ITableRowProps extends IAbstractRowProps<typeof styles> {
   value: {
     table: string;
+    schema?: string;
     dmlBlacklist: Set<DML>;
     columns: string[];
   };
@@ -89,6 +90,7 @@ enum ColumnsSelect {
 
 interface ITableRowState {
   table: string;
+  schema?: string;
   dmlBlacklist: Set<DML>;
   columns: string[];
   selectColumn: ColumnsSelect;
@@ -97,6 +99,7 @@ interface ITableRowState {
 class TableRowView extends AbstractRow<ITableRowProps, ITableRowState> {
   public state = {
     table: objectQuery(this.props, 'value', 'table') || '',
+    schema: objectQuery(this.props, 'value', 'schema') || '',
     dmlBlacklist: objectQuery(this.props, 'value', 'dmlBlacklist') || Set<DML>(),
     columns: objectQuery(this.props, 'value', 'columns') || [],
     selectColumn:
@@ -108,6 +111,7 @@ class TableRowView extends AbstractRow<ITableRowProps, ITableRowState> {
   public componentDidMount() {
     this.setState({
       table: objectQuery(this.props, 'value', 'table') || '',
+      schema: objectQuery(this.props, 'value', 'schema') || '',
       dmlBlacklist: objectQuery(this.props, 'value', 'dmlBlacklist') || Set<DML>(),
       columns: objectQuery(this.props, 'value', 'columns') || [],
       selectColumn:
@@ -122,6 +126,7 @@ class TableRowView extends AbstractRow<ITableRowProps, ITableRowState> {
 
     this.onChange({
       table: this.state.table,
+      schema: this.state.schema,
       dmlBlacklist: this.state.dmlBlacklist,
       columns,
     });
@@ -133,6 +138,17 @@ class TableRowView extends AbstractRow<ITableRowProps, ITableRowState> {
     this.setState(
       {
         table,
+      },
+      this.constructValue
+    );
+  };
+
+  private handleSchemaChange = (e) => {
+    const schema = e.target.value;
+
+    this.setState(
+      {
+        schema,
       },
       this.constructValue
     );
@@ -189,6 +205,15 @@ class TableRowView extends AbstractRow<ITableRowProps, ITableRowState> {
             onKeyPress={this.handleKeyPress}
             onKeyDown={this.handleKeyDown}
             inputRef={this.props.forwardedRef}
+            className={classes.inputBox}
+          />
+
+          <Input
+            placeholder="Schema name"
+            onChange={this.handleSchemaChange}
+            value={this.state.schema}
+            onKeyPress={this.handleKeyPress}
+            onKeyDown={this.handleKeyDown}
             className={classes.inputBox}
           />
 
