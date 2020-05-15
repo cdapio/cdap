@@ -51,15 +51,16 @@ const DraftTableView: React.SFC<IProps> = ({ drafts, currentPage, pageLimit }) =
   return (
     <div className="draft-table grid-wrapper">
       <div className="grid grid-container">
-        <div className="grid-header">
-          <div className="grid-row">
-            <SortableHeader columnName="name" />
-            <SortableHeader columnName="type" />
-            <SortableHeader columnName="lastSaved" />
-            <strong />
+        {drafts && drafts.length > 0 && (
+          <div className="grid-header">
+            <div className="grid-row">
+              <SortableHeader columnName="name" />
+              <SortableHeader columnName="type" />
+              <SortableHeader columnName="lastSaved" />
+              <strong />
+            </div>
           </div>
-        </div>
-
+        )}
         {renderBody()}
       </div>
     </div>
