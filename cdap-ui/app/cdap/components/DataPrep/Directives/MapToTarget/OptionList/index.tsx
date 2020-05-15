@@ -28,10 +28,23 @@ const useStyles = makeStyles((theme: Theme) => ({
     overflowY: 'auto',
     maxHeight: '400px',
   },
+  optionItemDense: {
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
+  optionItemGutters: {
+    paddingLeft: theme.spacing(1.25),
+    paddingRight: theme.spacing(1.25),
+  },
+  optionItemText: {
+    marginTop: '1px',
+    marginBottom: '2px',
+  },
   optionText: {
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+    fontSize: '13px',
   },
   highlightedText: {
     color: theme.palette.primary.contrastText,
@@ -123,12 +136,23 @@ export const OptionList = (props: IOptionListProps) => {
     <List dense={true} disablePadding={true} className={classes.optionList}>
       {applyFilter().map((option) => (
         <ListItem
+          classes={{
+            dense: classes.optionItemDense,
+            gutters: classes.optionItemGutters,
+          }}
           button={true}
           key={option.id}
           id={`map-to-target-option-${option.uuid}`}
           onClick={() => onOptionClick(option)}
         >
-          <ListItemText className={classes.optionText} primary={highlightText(option.name)} />
+          <ListItemText
+            classes={{
+              root: classes.optionItemText,
+            }}
+            disableTypography={true}
+            className={classes.optionText}
+            primary={highlightText(option.name)}
+          />
           <UncontrolledTooltip
             target={`map-to-target-option-${option.uuid}`}
             modifiers={{

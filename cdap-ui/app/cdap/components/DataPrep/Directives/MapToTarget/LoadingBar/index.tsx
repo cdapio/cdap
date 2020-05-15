@@ -16,13 +16,22 @@
 
 import React from 'react';
 import T from 'i18n-react';
+import { makeStyles, Theme } from '@material-ui/core';
 import LoadingSVG from 'components/LoadingSVG';
+
+const useStyles = makeStyles((theme: Theme) => ({
+  container: {
+    paddingLeft: theme.spacing(0.5),
+    paddingRight: theme.spacing(0.5),
+  },
+}));
 
 interface ILoadingBarProps {
   loadingText: string;
 }
 
 export const LoadingBar = (props: ILoadingBarProps) => {
+  const classes = useStyles(undefined);
   const { loadingText } = props;
 
   if (!loadingText) {
@@ -30,7 +39,7 @@ export const LoadingBar = (props: ILoadingBarProps) => {
   }
 
   return (
-    <div>
+    <div className={classes.container}>
       <LoadingSVG />
       <span>{T.translate(loadingText)}</span>
     </div>

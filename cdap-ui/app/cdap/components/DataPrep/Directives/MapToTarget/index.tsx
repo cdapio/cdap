@@ -161,7 +161,7 @@ const MapToTarget = (props: IMapToTargetProps) => {
     }
 
     return (
-      <div className="second-level-popover" onClick={preventPropagation}>
+      <div className="second-level-popover" style={{ padding: 0 }} onClick={preventPropagation}>
         <CurrentSelection
           loading={!!loadingText}
           dataModel={targetDataModel}
