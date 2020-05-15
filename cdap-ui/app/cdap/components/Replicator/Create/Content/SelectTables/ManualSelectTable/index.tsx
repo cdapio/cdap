@@ -32,6 +32,11 @@ const styles = (): StyleRules => {
     tablesInputContainer: {
       marginTop: '25px',
     },
+    tableHeader: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr 390px',
+      fontWeight: 'bold',
+    },
   };
 };
 
@@ -83,6 +88,7 @@ const ManualSelectTableView: React.FC<IManualSelectTableProps> = ({
 
       formattedValues.push({
         table: tableInfo.get('table'),
+        schema: tableInfo.get('schema'),
         dmlBlacklist: dmlBlacklist.get(key),
         columns: selectedColumns.map((columnInfo) => columnInfo.get('name')),
       });
@@ -111,6 +117,7 @@ const ManualSelectTableView: React.FC<IManualSelectTableProps> = ({
       const tableInfo = Map({
         database,
         table: row.table,
+        schema: row.schema,
       });
       const key = generateTableKey(tableInfo);
 
@@ -155,6 +162,12 @@ const ManualSelectTableView: React.FC<IManualSelectTableProps> = ({
 
         <div className={classes.tablesInputContainer}>
           <Heading type={HeadingTypes.h4} label="Tables" />
+
+          <div className={classes.tableHeader}>
+            <div>Table name*</div>
+            <div>Schema name</div>
+            <div />
+          </div>
           <TableMultiRow value={values} onChange={setValues} />
         </div>
       </div>
