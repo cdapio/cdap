@@ -84,7 +84,8 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
         }
       },
       (err) => {
-        this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, err);
+        // tslint:disable-next-line: no-console
+        console.log('Error retrieving list of namespaces', err);
       }
     );
     this.nsSubscription = NamespaceStore.subscribe(() => {
