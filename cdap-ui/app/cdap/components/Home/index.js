@@ -24,6 +24,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
+import VirtualScrollDemo from 'components/VirtualScroll/demo';
 
 require('./Home.scss');
 
@@ -163,6 +164,19 @@ export default class Home extends Component {
                 loading: LoadingSVGCentered,
               });
               return <LabExperimentTestComp {...props} />;
+            }}
+          />
+          <Route
+            exact
+            path="/ns/:namespace/vs"
+            render={(props) => {
+              return (
+                <ToggleExperiment
+                  name="Virtual Scrolling"
+                  defaultComponent={<Page404 {...props} />}
+                  experimentalComponent={<VirtualScrollDemo />}
+                />
+              );
             }}
           />
           <Route component={Page404} />
