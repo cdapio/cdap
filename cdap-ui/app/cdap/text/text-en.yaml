@@ -1732,14 +1732,14 @@ features:
     viewTracker: View in Tracker
 
   LoadingIndicator:
-    contactadmin: Contact system administrator
+    contactadmin: It could take a few minutes for the system to self-heal.
     defaultMessage: 'Loading...'
-    nodeserverDown: 'User interface service is down'
-    restartCDAP: Refresh the page and if the problem persists, restart {productName}
+    nodeserverDown:  UI is experiencing slowness or is unable to communicate with server.
+    restartCDAP: Attempting to reconnect, if problem persists refresh the page.
     restartUI: Restart the UI
-    servicesDown: A few system services are down
+    servicesDown: Necessary services are experiencing intermittent problems
     serviceDown: The system service {serviceName} is down
-    systemDashboard: View system services dashboard
+    systemDashboard: system services
     tryMessage: 'You can try to: '
 
   licenseText: Licensed under the Apache License, Version 2.0

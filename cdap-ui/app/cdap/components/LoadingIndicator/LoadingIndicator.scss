@@ -27,7 +27,8 @@
       .icon-loading-bars {
         background-color: rgba(255, 255, 255, 0.7);
         color: #666666;
-        font-size: 84px;
+        margin-top: 40px;
+        margin-bottom: -10px;
 
         > .loading-bar {
           transform: translateY(-75%) scale(2);

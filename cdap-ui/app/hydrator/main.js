@@ -239,6 +239,10 @@ angular
     });
   }])
 
+  .run(function() {
+    window.CaskCommon.StatusFactory.startPollingForBackendStatus();
+  })
+
   .run(function (MYSOCKET_EVENT, myAlert, EventPipe) {
 
     EventPipe.on(MYSOCKET_EVENT.message, function (data) {

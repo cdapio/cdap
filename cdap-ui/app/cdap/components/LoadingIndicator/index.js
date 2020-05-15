@@ -76,34 +76,27 @@ export default class LoadingIndicator extends Component {
 
   renderCallsToAction() {
     if (this.state.status === BACKENDSTATUS.NODESERVERDOWN) {
-      if (window.CDAP_CONFIG.isEnterprise) {
-        return (
+      return (
+        <div>
           <div>
-            <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
-            <div>{T.translate(`${PREFIX}.restartUI`)}</div>
+            {T.translate(`${PREFIX}.restartCDAP`, {
+              productName: Theme.productName,
+            })}
           </div>
-        );
-      } else {
-        return (
-          <div>
-            <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
-            <div>
-              {T.translate(`${PREFIX}.restartCDAP`, {
-                productName: Theme.productName,
-              })}
-            </div>
-          </div>
-        );
-      }
+        </div>
+      );
     }
 
     return (
       <div className="subtitle">
-        <strong> {T.translate(`${PREFIX}.tryMessage`)}</strong>
-        {this.state.status === BACKENDSTATUS.NODESERVERDOWN ? null : (
-          <a href="/cdap/administration"> {T.translate(`${PREFIX}.systemDashboard`)}</a>
-        )}
         <span> {T.translate(`${PREFIX}.contactadmin`)} </span>
+        <span>
+          View
+          {this.state.status === BACKENDSTATUS.NODESERVERDOWN ? null : (
+            <a href="/cdap/administration"> {T.translate(`${PREFIX}.systemDashboard`)}</a>
+          )}
+          &nbsp;dashboard
+        </span>
       </div>
     );
   }
@@ -125,7 +118,7 @@ export default class LoadingIndicator extends Component {
 
     return (
       <div>
-        <h2> {message} </h2>
+        <h4> {message} </h4>
         {this.renderCallsToAction()}
       </div>
     );
