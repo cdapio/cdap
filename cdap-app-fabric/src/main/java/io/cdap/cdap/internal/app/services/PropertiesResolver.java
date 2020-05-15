@@ -16,20 +16,20 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.scheduler.SchedulerQueueResolver;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.ImpersonationInfo;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -52,21 +52,21 @@ public class PropertiesResolver {
     this.queueResolver = schedulerQueueResolver;
   }
 
-  public Map<String, String> getUserProperties(Id.Program id) {
-    Map<String, String> userArgs = prefStore.getResolvedProperties(id.toEntityId());
+  public Map<String, String> getUserProperties(ProgramId id) {
+    Map<String, String> userArgs = prefStore.getResolvedProperties(id);
     userArgs.put(ProgramOptionConstants.LOGICAL_START_TIME, Long.toString(System.currentTimeMillis()));
     return userArgs;
   }
 
-  public Map<String, String> getSystemProperties(Id.Program id) throws IOException, NamespaceNotFoundException {
-    Map<String, String> systemArgs = Maps.newHashMap();
+  public Map<String, String> getSystemProperties(ProgramId id) throws IOException, NamespaceNotFoundException {
+    Map<String, String> systemArgs = new HashMap<>();
     systemArgs.put(Constants.CLUSTER_NAME, cConf.get(Constants.CLUSTER_NAME, ""));
-    systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespace()));
+    systemArgs.put(Constants.AppFabric.APP_SCHEDULER_QUEUE, queueResolver.getQueue(id.getNamespaceId()));
     if (SecurityUtil.isKerberosEnabled(cConf)) {
-      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id.toEntityId());
+      ImpersonationInfo impersonationInfo = SecurityUtil.createImpersonationInfo(ownerAdmin, cConf, id);
       systemArgs.put(ProgramOptionConstants.PRINCIPAL, impersonationInfo.getPrincipal());
       systemArgs.put(ProgramOptionConstants.APP_PRINCIPAL_EXISTS,
-                     String.valueOf(ownerAdmin.exists(id.toEntityId().getParent())));
+                     String.valueOf(ownerAdmin.exists(id.getParent())));
     }
     return systemArgs;
   }
