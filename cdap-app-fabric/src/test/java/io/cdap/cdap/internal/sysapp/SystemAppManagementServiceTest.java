@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import com.google.inject.Injector;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.cli.CLIConfig.UserAccessToken;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -33,6 +34,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.security.authentication.client.AccessToken;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -90,9 +92,12 @@ public class SystemAppManagementServiceTest extends AppFabricTestBase {
     steps.add(
       new SystemAppStep("step for " + artifactId.getName(), SystemAppStep.Type.ENABLE_SYSTEM_APP, step1Argument));
     SystemAppConfig config = new SystemAppConfig(steps);
+    AccessToken token = new AccessToken("token", 1000000L, "Bearer");
+    UserAccessToken utoken = new UserAccessToken(token, "jaypandya");
     File tmpFile = new File(systemConfigDir, filename);
+    System.out.println(GSON.toJson(utoken));
     try (BufferedWriter bw = new BufferedWriter(new FileWriter(tmpFile))) {
-      bw.write(GSON.toJson(config));
+      bw.write(GSON.toJson(utoken));
     }
   }
 

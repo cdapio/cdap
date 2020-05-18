@@ -82,7 +82,7 @@ public class ConnectionConfig {
   }
 
   public URI resolveNamespacedURI(NamespaceId namespace, String apiVersion, String path) {
-    return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getNamespace(), path));
+    return getURI().resolve(String.format("/api/%s/namespaces/%s/%s", apiVersion, namespace.getNamespace(), path));
   }
 
   public String getHostname() {

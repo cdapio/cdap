@@ -230,6 +230,12 @@
       <groupId>org.apache.directory.jdbm</groupId>
       <artifactId>apacheds-jdbm1</artifactId>
     </dependency>
+    <dependency>
+      <groupId>io.cdap.cdap</groupId>
+      <artifactId>cdap-cli</artifactId>
+      <version>6.3.0-SNAPSHOT</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

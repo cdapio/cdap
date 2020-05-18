@@ -52,12 +52,15 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Properties;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Configuration for the CDAP CLI.
  */
 public class CLIConfig implements TableRendererConfig {
 
+  private static final Logger LOG = LoggerFactory.getLogger(CLIConfig.class);
   public static final String ENV_ACCESSTOKEN = "ACCESS_TOKEN";
 
   private static final int DEFAULT_LINE_WIDTH = 80;
@@ -86,11 +89,11 @@ public class CLIConfig implements TableRendererConfig {
   /*
    * Wrapper class for reading/writing of username + accessToken
    */
-  private class UserAccessToken {
+  public static class UserAccessToken {
     private final AccessToken accessToken;
     private final String username;
 
-    UserAccessToken(AccessToken accessToken, String username) {
+    public UserAccessToken(AccessToken accessToken, String username) {
       this.accessToken = accessToken;
       this.username = username;
     }
@@ -148,15 +151,21 @@ public class CLIConfig implements TableRendererConfig {
   public void tryConnect(CLIConnectionConfig connectionConfig, boolean verifySSLCert,
                          PrintStream output, boolean debug) throws Exception {
     try {
+      LOG.info("Jay Pandya is here 1");
       clientConfig.setVerifySSLCert(verifySSLCert);
+      LOG.info("Jay Pandya is here 2");
       UserAccessToken userToken = acquireAccessToken(clientConfig, connectionConfig, output, debug);
+      LOG.info("Jay Pandya is here 3");
       AccessToken accessToken = null;
       if (userToken != null) {
+        LOG.info("Jay Pandya is here 4");
         accessToken = userToken.getAccessToken();
+        LOG.info("Jay Pandya is here 5");
         connectionConfig = new CLIConnectionConfig(connectionConfig, connectionConfig.getNamespace(),
                                                    userToken.getUsername());
+        LOG.info("Jay Pandya is here 6");
       }
-      checkConnection(clientConfig, connectionConfig, accessToken);
+      //checkConnection(clientConfig, connectionConfig, accessToken);
       setConnectionConfig(connectionConfig);
       clientConfig.setAccessToken(accessToken);
       output.printf("Successfully connected to CDAP instance at %s", connectionConfig.getURI().toString());
@@ -196,16 +205,16 @@ public class CLIConfig implements TableRendererConfig {
     ClientConfig clientConfig, ConnectionConfig connectionInfo, PrintStream output,
     boolean debug) throws IOException, UnauthorizedException {
 
-    if (!isAuthenticationEnabled(connectionInfo)) {
+    /*if (!isAuthenticationEnabled(connectionInfo)) {
       return null;
-    }
+    }*/
 
     try {
       UserAccessToken savedToken = getSavedAccessToken(connectionInfo.getHostname());
       if (savedToken == null) {
         throw new UnauthenticatedException();
       }
-      checkConnection(clientConfig, connectionInfo, savedToken.getAccessToken());
+      //checkConnection(clientConfig, connectionInfo, savedToken.getAccessToken());
       return savedToken;
     } catch (UnauthenticatedException ignored) {
       // access token invalid - fall through to try acquiring token manually
@@ -266,6 +275,7 @@ public class CLIConfig implements TableRendererConfig {
     try (BufferedReader reader = Files.newReader(file, Charsets.UTF_8)) {
       return GSON.fromJson(reader, UserAccessToken.class);
     } catch (IOException | JsonSyntaxException ignored) {
+      LOG.info("Jay Pandya in get Saved access token excpetion");
       // Fall through
     }
 

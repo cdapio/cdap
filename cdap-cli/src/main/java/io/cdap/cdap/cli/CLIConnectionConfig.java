@@ -58,8 +58,8 @@ public class CLIConnectionConfig extends ConnectionConfig {
 
   @Override
   public URI getURI() {
-    return URI.create(String.format("%s://%s%s:%d/%s", super.isSSLEnabled() ? "https" : "http",
-                                    username == null ? "" : username + "@",
-                                    super.getHostname(), super.getPort(), namespace.getNamespace()));
+    return URI.create(String.format("%s://%s%s/api", super.isSSLEnabled() ? "https" : "http",
+                                    username == null ? "" : username,
+                                    super.getHostname()));
   }
 }

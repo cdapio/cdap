@@ -34,6 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import javax.inject.Inject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides ways to interact with CDAP.
@@ -43,6 +45,7 @@ public class MetaClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
+  private static final Logger LOG = LoggerFactory.getLogger(MetaClient.class);
 
   @Inject
   public MetaClient(ClientConfig config, RESTClient restClient) {
@@ -58,6 +61,7 @@ public class MetaClient {
     HttpResponse response = restClient.execute(
       HttpMethod.GET, config.resolveURLNoVersion("ping"), config.getAccessToken());
     if (!Objects.equals(response.getResponseBodyAsString(), "OK.\n")) {
+      LOG.info("Jay Pandya ping response " + response.getResponseBodyAsString());
       throw new IOException("Unexpected response body");
     }
   }

@@ -66,6 +66,8 @@ import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Provides ways to interact with CDAP applications.
@@ -77,6 +79,8 @@ public class ApplicationClient {
 
   private final RESTClient restClient;
   private final ClientConfig config;
+  private static final Logger LOG = LoggerFactory.getLogger(ApplicationClient.class);
+
 
   @Inject
   public ApplicationClient(ClientConfig config, RESTClient restClient) {
@@ -101,6 +105,7 @@ public class ApplicationClient {
     HttpResponse response = restClient.execute(HttpMethod.GET,
                                                config.resolveNamespacedURLV3(namespace, "apps"),
                                                config.getAccessToken());
+    LOG.info("URL is " + config.resolveNamespacedURLV3(namespace, "apps").toString() + " Jay Pandya in rest client " + response.getResponseBodyAsString());
     return ObjectResponse.fromJsonBody(response, new TypeToken<List<ApplicationRecord>>() { }).getResponseObject();
   }
 
