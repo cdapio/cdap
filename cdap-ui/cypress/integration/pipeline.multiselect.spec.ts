@@ -28,6 +28,18 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
         };
       });
     });
+    cy.visit('/cdap', {
+      onBeforeLoad: (win) => {
+        win.sessionStorage.clear();
+        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
+      },
+    });
+  });
+
+  after(() => {
+    cy.window().then((win) => {
+      win.sessionStorage.removeItem('pipelineConfigTesting');
+    });
   });
 
   it('Should select node(s)', () => {

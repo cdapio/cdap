@@ -27,7 +27,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyScheduleApi } from 'api/schedule';
 import { GLOBALS } from 'services/global-constants';
 import T from 'i18n-react';
-
+import downloadFile from 'services/download-file';
 const PREFIX = 'features.PipelineList.DeleteConfirmation';
 
 interface IProps {
@@ -45,6 +45,7 @@ interface IState {
   showExport: boolean;
   showDeleteConfirmation: boolean;
   triggeredPipelines: ITriggeredPipeline[];
+  showPopover?: boolean;
 }
 
 class DeployedActionsView extends React.PureComponent<IProps, IState> {
@@ -52,17 +53,41 @@ class DeployedActionsView extends React.PureComponent<IProps, IState> {
     showExport: false,
     showDeleteConfirmation: false,
     triggeredPipelines: [],
+    showPopover: false,
   };
 
   private pipelineConfig = {};
 
-  private showExportModal = () => {
+  private handleClick = (e) => {
+    e.preventDefault();
+  };
+
+  private togglePopover = () => {
+    this.setState({ showPopover: !this.state.showPopover });
+  };
+
+  private handlePipelineExport = () => {
     getPipelineConfig(this.props.pipeline.name).subscribe((pipelineConfig) => {
       this.pipelineConfig = pipelineConfig;
 
-      this.setState({
-        showExport: true,
-      });
+      if (window.Cypress) {
+        this.showExportModal();
+        return;
+      }
+
+      const postExportCb = () => {
+        this.pipelineConfig = {};
+        this.setState({ showPopover: false });
+      };
+      // Unless we are running an e2e test, just export the pipeline JSON
+      downloadFile(pipelineConfig, postExportCb);
+    });
+  };
+
+  private showExportModal = () => {
+    this.setState({
+      showExport: true,
+      showPopover: false,
     });
   };
 
@@ -144,6 +169,7 @@ class DeployedActionsView extends React.PureComponent<IProps, IState> {
       this.setState({
         showDeleteConfirmation: true,
         triggeredPipelines: [],
+        showPopover: false,
       });
       return;
     }
@@ -162,6 +188,7 @@ class DeployedActionsView extends React.PureComponent<IProps, IState> {
       this.setState({
         showDeleteConfirmation: true,
         triggeredPipelines: res,
+        showPopover: false,
       });
     });
   };
@@ -184,7 +211,7 @@ class DeployedActionsView extends React.PureComponent<IProps, IState> {
     },
     {
       label: T.translate('commons.export'),
-      actionFn: this.showExportModal,
+      actionFn: this.handlePipelineExport,
     },
     {
       label: 'separator',
@@ -199,14 +226,19 @@ class DeployedActionsView extends React.PureComponent<IProps, IState> {
   public render() {
     return (
       <div className="action">
-        <span onClick={(e) => e.preventDefault()}>
-          <ActionsPopover actions={this.actions} />
+        <span onClick={this.handleClick}>
+          <ActionsPopover
+            actions={this.actions}
+            showPopover={this.state.showPopover}
+            togglePopover={this.togglePopover}
+          />
         </span>
 
         <PipelineExportModal
           isOpen={this.state.showExport}
           onClose={this.closeExportModal}
           pipelineConfig={this.pipelineConfig}
+          onExport={this.handlePipelineExport}
         />
 
         {this.renderDeleteConfirmation()}

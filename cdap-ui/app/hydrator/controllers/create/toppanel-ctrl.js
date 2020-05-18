@@ -244,7 +244,12 @@ class HydratorPlusPlusTopPanelCtrl {
     let config = angular.copy(this.HydratorPlusPlusConfigStore.getDisplayConfig());
     let exportConfig = this.HydratorPlusPlusConfigStore.getConfigForExport();
     delete exportConfig.__ui__;
-    this.myPipelineExportModalService.show(config, exportConfig);
+    // Only show export modal with pipeline JSON when running e2e tests
+    if (window.Cypress) {
+      this.myPipelineExportModalService.show(config, exportConfig);
+    } else {
+      window.CaskCommon.DownloadFile(exportConfig);
+    }
   }
   onSaveDraft() {
     this.HydratorPlusPlusConfigActions.saveAsDraft();

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import { loginIfRequired, getArtifactsPoll, dataCy } from '../helpers';
 import { INodeInfo, INodeIdentifier } from '../typings';
@@ -39,11 +39,23 @@ describe('KeyValueDropdown Widgets', () => {
           Authorization: 'Bearer ' + cookie.value,
         };
       });
+      cy.visit('/cdap', {
+        onBeforeLoad: (win) => {
+          win.sessionStorage.clear();
+          win.sessionStorage.setItem('pipelineConfigTesting', 'true');
+        },
+      });
     });
   });
 
   beforeEach(() => {
     getArtifactsPoll(headers);
+  });
+
+  after(() => {
+    cy.window().then((win) => {
+      win.sessionStorage.removeItem('pipelineConfigTesting');
+    });
   });
 
   it('Should render KeyValueDropdown row', () => {

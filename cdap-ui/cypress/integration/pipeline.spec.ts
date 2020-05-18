@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as Helpers from '../helpers';
 
@@ -35,6 +35,12 @@ describe('Creating a pipeline', () => {
           Authorization: 'Bearer ' + cookie.value,
         };
       });
+      cy.visit('/cdap', {
+        onBeforeLoad: (win) => {
+          win.sessionStorage.clear();
+          win.sessionStorage.setItem('pipelineConfigTesting', 'true');
+        },
+      });
     });
   });
 
@@ -45,6 +51,12 @@ describe('Creating a pipeline', () => {
   afterEach(() => {
     // Delete the pipeline to clean up
     cy.cleanup_pipelines(headers, TEST_PIPELINE_NAME);
+  });
+
+  after(() => {
+    cy.window().then((win) => {
+      win.sessionStorage.removeItem('pipelineConfigTesting');
+    });
   });
 
   it('is configured correctly', () => {

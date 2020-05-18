@@ -27,6 +27,7 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 import { duplicatePipeline } from 'services/PipelineUtils';
 import cloneDeep from 'lodash/cloneDeep';
+import downloadFile from 'services/download-file';
 require('./PipelineDetailsActionsButton.scss');
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
@@ -129,6 +130,18 @@ export default class PipelineDetailsActionsButton extends Component {
     );
   };
 
+  handlePipelineExport = () => {
+    if (window.Cypress) {
+      this.showExportModal();
+      return;
+    }
+    // Unless we are running an e2e test, just export the pipeline JSON
+    const closePopoverCb = () => {
+      this.setState({ showPopover: false });
+    };
+    downloadFile(this.pipelineConfig, closePopoverCb);
+  };
+
   toggleExportModal = () => {
     this.setState({ showExportModal: !this.state.showExportModal });
   };
@@ -151,6 +164,7 @@ export default class PipelineDetailsActionsButton extends Component {
         isOpen={this.state.showExportModal}
         onClose={this.toggleExportModal}
         pipelineConfig={sanitizeConfig(this.pipelineConfig)}
+        onExport={this.handlePipelineExport}
       />
     );
   }
@@ -242,7 +256,7 @@ export default class PipelineDetailsActionsButton extends Component {
         >
           <ul>
             <li onClick={this.duplicateConfigAndNavigate}>{T.translate(`${PREFIX}.duplicate`)}</li>
-            <li onClick={this.toggleExportModal}>{T.translate(`${PREFIX}.export`)}</li>
+            <li onClick={this.handlePipelineExport}>{T.translate(`${PREFIX}.export`)}</li>
             <hr />
             <li
               onClick={this.toggleDeleteConfirmationModal}
