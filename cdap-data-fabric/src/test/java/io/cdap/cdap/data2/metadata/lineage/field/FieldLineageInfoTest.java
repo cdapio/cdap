@@ -53,6 +53,17 @@ public class FieldLineageInfoTest {
     .create();
 
   @Test
+  public void test() {
+    List<Operation> operations = new ArrayList<>();
+    for (int i = 0; i < 1000; i++) {
+      operations.add(new ReadOperation("read" + i, "some readffjdkjfldasjfldsjfldajfldsafl", EndPoint.of("default", "endpoint1"), "field" + i));
+      operations.add(new WriteOperation("write" + i, "lajfldjflajlfjdslfjldasjfldfjklsa", EndPoint.of("default", "endpoint2"), InputField.of("read" + i, "field" + i)));
+    }
+    FieldLineageInfo info = new FieldLineageInfo(operations);
+    String json = new Gson().toJson(info);
+  }
+
+  @Test
   public void testWriteToSameEndpoint() {
     List<Operation> operations = new ArrayList<>();
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns1", "endpoint1"), "offset", "body");

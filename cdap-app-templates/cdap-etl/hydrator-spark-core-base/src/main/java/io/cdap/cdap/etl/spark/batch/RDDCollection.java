@@ -150,7 +150,14 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
     Function2<StructuredRecord, StructuredRecord, StructuredRecord> func = new SumFunction();
     JavaPairRDD<Object, StructuredRecord> groupedCollection = partitions == null ?
-      keyedCollection.reduceByKey(func) : keyedCollection.reduceByKey(func, partitions);
+      keyedCollection.reduceByKey(
+        new Function2<StructuredRecord, StructuredRecord, StructuredRecord>() {
+          @Override
+          public StructuredRecord call(StructuredRecord v1, StructuredRecord v2) throws Exception {
+            return null;
+          }
+        }
+      ) : keyedCollection.reduceByKey(func, partitions);
 
 //    FlatMapFunc<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> aggregateFunction =
 //      new AggregatorAggregateFunction<>(pluginFunctionContext);
