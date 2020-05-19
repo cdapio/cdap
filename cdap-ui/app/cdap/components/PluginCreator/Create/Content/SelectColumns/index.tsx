@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { createContextConnect } from 'components/Replicator/Create';
+import { createContextConnect } from 'components/PluginCreator/Create';
 import { List, Map } from 'immutable';
 import Button from '@material-ui/core/Button';
 import CloseIcon from '@material-ui/icons/Close';
@@ -24,14 +24,14 @@ import IconButton from '@material-ui/core/IconButton';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
 import Checkbox from '@material-ui/core/Checkbox';
-import { generateTableKey } from 'components/Replicator/utilities';
+import { generateTableKey } from 'components/PluginCreator/utilities';
 import LoadingSVG from 'components/LoadingSVG';
 import Heading, { HeadingTypes } from 'components/Heading';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import If from 'components/If';
-import SearchBox from 'components/Replicator/Create/Content/SearchBox';
+import SearchBox from 'components/PluginCreator/Create/Content/SearchBox';
 import debounce from 'lodash/debounce';
 
 const styles = (theme): StyleRules => {

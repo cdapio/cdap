@@ -16,24 +16,25 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import LeftPanel from 'components/Replicator/Create/LeftPanel';
-// import TopPanel from 'components/Replicator/Create/TopPanel';
-import Content from 'components/Replicator/Create/Content';
+import LeftPanel from 'components/PluginCreator/Create/LeftPanel';
+// import TopPanel from 'components/PluginCreator/Create/TopPanel';
+import Content from 'components/PluginCreator/Create/Content';
 import { Redirect } from 'react-router-dom';
 import { objectQuery } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import {
+/*import {
   fetchPluginInfo,
   fetchPluginWidget,
   constructTablesSelection,
-} from 'components/Replicator/utilities';
-import { PluginType } from 'components/Replicator/constants';
+} from 'components/PluginCreator/utilities';*/
+import { PluginType } from 'components/PluginCreator/constants';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import uuidV4 from 'uuid/v4';
-import { MyReplicatorApi } from 'api/replicator';
-import { generateTableKey } from 'components/Replicator/utilities';
+// import { MyPluginCreatorApi } from 'api/replicator';
+// import { generateTableKey } from 'components/PluginCreator/utilities';
 import { List, Map, Set, fromJS } from 'immutable';
 import { Observable } from 'rxjs/Observable';
+import { string } from 'prop-types';
 
 export const CreateContext = React.createContext({});
 export const LEFT_PANEL_WIDTH = 250;
@@ -80,6 +81,18 @@ interface IColumn {
   type: string;
 }
 
+export interface IWidgetData {
+  widgetType: string;
+  widgetLabel: string;
+  widgetName: string;
+  widgetCategory: string;
+  widgetAttributes: IWidgetAttributes;
+}
+
+export interface IWidgetAttributes {
+  placeholder: string;
+}
+
 interface ICreateState {
   name: string;
   description: string;
@@ -103,6 +116,8 @@ interface ICreateState {
   isInvalidSource: boolean;
   loading: boolean;
   activeStep: number;
+  configurationGroups: string[];
+  groupsToWidgets: Map<string, Map<string, IWidgetData>>;
   setActiveStep: (step: number) => void;
   setNameDescription: (name: string, description?: string) => void;
   setSourcePluginWidget: (sourcePluginWidget) => void;
@@ -112,8 +127,10 @@ interface ICreateState {
   setTargetConfig: (targetConfig: IPluginConfig) => void;
   setTables: (tables, columns, dmlBlacklist) => void;
   setAdvanced: (offsetBasePath, numInstances) => void;
-  getReplicatorConfig: () => any;
-  saveDraft: () => Observable<any>;
+  getPluginCreatorConfig: () => any;
+  addConfigurationGroup: (group: string) => void;
+  setConfigurationGroups: (groups: string[]) => void;
+  setGroupsToWidgets: (groupsToWidgets) => void;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -169,62 +186,18 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     this.setState({ offsetBasePath, numInstances });
   };
 
-  private saveDraft = () => {
-    if (!this.state.name) {
-      return;
-    }
-
-    const params = {
-      namespace: getCurrentNamespace(),
-      draftId: this.state.draftId,
-    };
-
-    const body = {
-      label: this.state.name,
-      config: this.getReplicatorConfig(),
-    };
-    // return MyReplicatorApi.putDraft(params, body);
+  public addConfigurationGroup = (group) => {
+    const newGroups = this.state.configurationGroups;
+    newGroups.push(group);
+    this.setState({ configurationGroups: newGroups });
   };
 
-  // TODO: Refactor
-  private getReplicatorConfig = () => {
-    const source = this.constructStageSpec('source');
-    const target = this.constructStageSpec('target');
+  public setConfigurationGroups = (configurationGroups) => {
+    this.setState({ configurationGroups });
+  };
 
-    const stages = [];
-    if (source) {
-      stages.push(source);
-    }
-
-    if (target) {
-      stages.push(target);
-    }
-
-    const connections = [];
-
-    if (source && target) {
-      connections.push({
-        from: source.name,
-        to: target.name,
-      });
-    }
-
-    const config = {
-      description: this.state.description,
-      connections,
-      stages,
-      tables: constructTablesSelection(
-        this.state.tables,
-        this.state.columns,
-        this.state.dmlBlacklist
-      ),
-      offsetBasePath: this.state.offsetBasePath,
-      parallelism: {
-        numInstances: this.state.numInstances,
-      },
-    };
-
-    return config;
+  public setGroupsToWidgets = (groupsToWidgets) => {
+    this.setState({ groupsToWidgets });
   };
 
   public state = {
@@ -245,9 +218,12 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     parentArtifact: null,
     draftId: null,
     isInvalidSource: false,
-    loading: true,
+    loading: false,
 
     activeStep: 0,
+
+    configurationGroups: ['Basic', 'Credentials', 'Advanced'],
+    groupsToWidgets: Map<string, Map<string, IWidgetData>>(),
 
     // setActiveStep: this.setActiveStep,
     setNameDescription: this.setNameDescription,
@@ -258,195 +234,40 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setTargetConfig: this.setTargetConfig,
     setTables: this.setTables,
     setAdvanced: this.setAdvanced,
-    getReplicatorConfig: this.getReplicatorConfig,
-    saveDraft: this.saveDraft,
+    addConfigurationGroup: this.addConfigurationGroup,
+    setConfigurationGroups: this.setConfigurationGroups,
+    setGroupsToWidgets: this.setGroupsToWidgets,
+    // getPluginCreatorConfig: this.getPluginCreatorConfig,
   };
 
   public componentDidMount() {
-    MyReplicatorApi.getDeltaApp().subscribe((appInfo) => {
-      this.setState({
-        parentArtifact: appInfo.artifact,
-      });
-
-      const draftId = objectQuery(this.props, 'match', 'params', 'draftId');
-      if (!draftId) {
-        return;
-      }
-
-      this.initDraft(draftId);
-    });
-  }
-
-  private initDraft = (draftId) => {
-    const params = {
-      namespace: getCurrentNamespace(),
-      draftId,
-    };
-
-    /*MyReplicatorApi.getDraft(params).subscribe(async (res) => {
-      const newState: Partial<ICreateState> = {
-        draftId,
-        loading: false,
-        name: res.label,
-        description: objectQuery(res, 'config', 'description') || '',
-        activeStep: 1,
-        offsetBasePath: objectQuery(res, 'config', 'offsetBasePath') || '',
-        numInstances: objectQuery(res, 'config', 'parallelism', 'numInstances') || 1,
-      };
-
-      const stages = objectQuery(res, 'config', 'stages') || [];
-
-      // SOURCE
-      const source = stages.find((stage) => {
-        const stageType = objectQuery(stage, 'plugin', 'type');
-        return stageType === PluginType.source;
-      });
-
-      if (source) {
-        const sourceArtifact = objectQuery(source, 'plugin', 'artifact') || {};
-
-        const sourcePluginInfo = await fetchPluginInfo(
-          this.state.parentArtifact,
-          sourceArtifact.name,
-          sourceArtifact.scope,
-          source.plugin.name,
-          source.plugin.type
-        ).toPromise();
-
-        newState.sourcePluginInfo = sourcePluginInfo;
-        newState.sourceConfig = objectQuery(source, 'plugin', 'properties') || {};
-
-        try {
-          const sourcePluginWidget = await fetchPluginWidget(
-            sourceArtifact.name,
-            sourceArtifact.version,
-            sourceArtifact.scope,
-            sourcePluginInfo.name,
-            sourcePluginInfo.type
-          ).toPromise();
-
-          newState.sourcePluginWidget = sourcePluginWidget;
-        } catch (e) {
-          // tslint:disable-next-line: no-console
-          console.log('Cannot fetch source plugin widget', e);
-          // no-op
-        }
-
-        if (Object.keys(newState.sourceConfig).length > 0) {
-          newState.activeStep = 2;
-        }
-      }
-
-      // TABLES & COLUMNS
-      const tables = objectQuery(res, 'config', 'tables');
-      if (tables) {
-        let selectedTables = Map<string, Map<string, string>>();
-
-        let columns = Map<string, List<IColumn>>();
-        let dmlBlacklist = Map<string, Set<DML>>();
-        tables.forEach((table) => {
-          const tableKey = generateTableKey(table);
-
-          selectedTables = selectedTables.set(
-            tableKey,
-            fromJS({
-              database: table.database,
-              table: table.table,
-            })
-          );
-
-          const tableColumns = objectQuery(table, 'columns') || [];
-          const columnList = fromJS(tableColumns);
-
-          columns = columns.set(tableKey, columnList);
-
-          const tableDML = objectQuery(table, 'dmlBlacklist') || [];
-          dmlBlacklist = dmlBlacklist.set(tableKey, Set<DML>(tableDML));
-        });
-
-        newState.tables = selectedTables;
-        newState.columns = columns;
-        newState.dmlBlacklist = dmlBlacklist;
-
-        if (selectedTables.size > 0) {
-          newState.activeStep = 3;
-        }
-      }
-
-      // TARGET
-      const target = stages.find((stage) => {
-        const stageType = objectQuery(stage, 'plugin', 'type');
-        return stageType === PluginType.target;
-      });
-
-      if (target) {
-        const targetArtifact = objectQuery(target, 'plugin', 'artifact') || {};
-
-        const targetPluginInfo = await fetchPluginInfo(
-          this.state.parentArtifact,
-          targetArtifact.name,
-          targetArtifact.scope,
-          target.plugin.name,
-          target.plugin.type
-        ).toPromise();
-
-        newState.targetPluginInfo = targetPluginInfo;
-        newState.targetConfig = objectQuery(target, 'plugin', 'properties') || {};
-
-        try {
-          const targetPluginWidget = await fetchPluginWidget(
-            targetArtifact.name,
-            targetArtifact.version,
-            targetArtifact.scope,
-            targetPluginInfo.name,
-            targetPluginInfo.type
-          ).toPromise();
-
-          newState.targetPluginWidget = targetPluginWidget;
-        } catch (e) {
-          // tslint:disable-next-line: no-console
-          console.log('Cannot fetch target plugin widget', e);
-          // no-op
-        }
-
-        if (Object.keys(newState.targetConfig).length > 0) {
-          newState.activeStep = 5;
-        }
-      }
-
-      this.setState(newState);
-    });*/
-  };
-
-  private constructStageSpec = (type) => {
-    const pluginKey = `${type}PluginInfo`;
-    const configKey = `${type}Config`;
-
-    if (!this.state[pluginKey]) {
-      return null;
-    }
-
-    const plugin = this.state[pluginKey];
-
-    const stage = {
-      name: plugin.name,
-      plugin: {
-        name: plugin.name,
-        type: plugin.type,
-        artifact: {
-          ...plugin.artifact,
+    this.setGroupsToWidgets(
+      Map({
+        Basic: {
+          '1': {
+            widgetType: 'textbox',
+            widgetLabel: 'string1',
+            widgetName: 'string2',
+            widgetCategory: 'string3',
+            widgetAttributes: {
+              placeholder: 'hi',
+            },
+          },
         },
-        properties: {},
-      },
-    };
-
-    const pluginProperties = this.state[configKey];
-    if (pluginProperties) {
-      stage.plugin.properties = { ...pluginProperties };
-    }
-
-    return stage;
-  };
+        Advanced: {
+          '2': {
+            widgetType: 'textbox',
+            widgetLabel: 'string1',
+            widgetName: 'string2',
+            widgetCategory: 'string3',
+            widgetAttributes: {
+              placeholder: 'hi',
+            },
+          },
+        },
+      })
+    );
+  }
 
   private redirectToListView = () => {
     return <Redirect to={`/ns/${getCurrentNamespace()}/plugincreation`} />;

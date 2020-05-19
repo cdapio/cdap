@@ -14,13 +14,13 @@
  * the License.
  */
 
-import NameDescription from 'components/Replicator/Create/Content/NameDescription';
-import SourceConfig from 'components/Replicator/Create/Content/SourceConfig';
-import SelectTables from 'components/Replicator/Create/Content/SelectTables';
-import TargetConfig from 'components/Replicator/Create/Content/TargetConfig';
-import Assessment from 'components/Replicator/Create/Content/Assessment';
-import Advanced from 'components/Replicator/Create/Content/Advanced';
-import Summary from 'components/Replicator/Create/Content/Summary';
+import NameDescription from 'components/PluginCreator/Create/Content/NameDescription';
+import SourceConfig from 'components/PluginCreator/Create/Content/SourceConfig';
+import SelectTables from 'components/PluginCreator/Create/Content/SelectTables';
+import TargetConfig from 'components/PluginCreator/Create/Content/TargetConfig';
+import Assessment from 'components/PluginCreator/Create/Content/Assessment';
+import Advanced from 'components/PluginCreator/Create/Content/Advanced';
+import Summary from 'components/PluginCreator/Create/Content/Summary';
 
 export const STEPS = [
   /*{

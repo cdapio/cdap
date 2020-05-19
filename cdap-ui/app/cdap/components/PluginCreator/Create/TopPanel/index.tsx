@@ -20,14 +20,14 @@ import {
   createContextConnect,
   ICreateContext,
   LEFT_PANEL_WIDTH,
-} from 'components/Replicator/Create';
+} from 'components/PluginCreator/Create';
 import Heading, { HeadingTypes } from 'components/Heading';
 import IconButton from '@material-ui/core/IconButton';
 import Close from '@material-ui/icons/Close';
 import ChevronRight from '@material-ui/icons/ChevronRight';
-import PluginInfo from 'components/Replicator/Create/TopPanel/PluginInfo';
+import PluginInfo from 'components/PluginCreator/Create/TopPanel/PluginInfo';
 import If from 'components/If';
-import { STEPS } from 'components/Replicator/Create/steps';
+import { STEPS } from 'components/PluginCreator/Create/steps';
 
 const styles = (theme): StyleRules => {
   return {

@@ -16,14 +16,19 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
-import Documentation from 'components/Replicator/Create/Content/Documentation';
+import {
+  createContextConnect,
+  ICreateContext,
+  IWidgetData,
+  IWidgetAttributes,
+} from 'components/PluginCreator/Create';
 import classnames from 'classnames';
 import ConfigurationGroup from 'components/ConfigurationGroup';
 import { objectQuery } from 'services/helpers';
 import If from 'components/If';
-import StepButtons from 'components/Replicator/Create/Content/StepButtons';
-import { fetchPluginWidget } from 'components/Replicator/utilities';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+// import { fetchPluginWidget } from 'components/PluginCreator/utilities';
+import Button from '@material-ui/core/Button';
 
 const styles = (theme): StyleRules => {
   return {
@@ -49,11 +54,6 @@ const styles = (theme): StyleRules => {
   };
 };
 
-enum VIEW {
-  configuration = 'CONFIGURATION',
-  documentation = 'DOCUMENTATION',
-}
-
 const SourceConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
   sourcePluginInfo,
@@ -61,64 +61,80 @@ const SourceConfigView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   setSourcePluginWidget,
   sourceConfig,
   setSourceConfig,
+  configurationGroups,
+  setConfigurationGroups,
+  addConfigurationGroup,
+  groupsToWidgets,
+  setGroupsToWidgets,
 }) => {
-  const [view, setView] = React.useState(VIEW.configuration);
+  const [selectedGroup, setselectedGroup] = React.useState(configurationGroups[0]);
   const [values, setValues] = React.useState(sourceConfig);
 
-  const pluginProperties = objectQuery(sourcePluginInfo, 'properties');
+  // const pluginProperties = objectQuery(sourcePluginInfo, 'properties');
 
-  /*React.useEffect(() => {
-    if (sourcePluginWidget) {
-      return;
-    }
-
-    const artifact = sourcePluginInfo.artifact;
-
-    fetchPluginWidget(
-      artifact.name,
-      artifact.version,
-      artifact.scope,
-      sourcePluginInfo.name,
-      sourcePluginInfo.type
-    ).subscribe((res) => {
-      setSourcePluginWidget(res);
-    });
-  }, []);*/
-
-  function handleNext() {
-    setSourceConfig(values);
-  }
-
-  function isNextDisabled() {
-    const requiredProperties = Object.keys(pluginProperties).filter((property) => {
-      return pluginProperties[property].required;
-    });
-
-    const isPropertyFilled = requiredProperties.map((property) => {
-      return values && values[property] && values[property].length > 0;
-    });
-
-    return isPropertyFilled.filter((propertyValue) => !propertyValue).length > 0;
-  }
+  const mapping: Record<string, IWidgetData[]> = {
+    Basic: [
+      {
+        widgetType: 'string',
+        widgetLabel: 'string',
+        widgetName: 'string',
+        widgetCategory: 'string',
+        widgetAttributes: {
+          placeholder: 'string',
+        } as IWidgetAttributes,
+      } as IWidgetData,
+      {
+        widgetType: 'string',
+        widgetLabel: 'string',
+        widgetName: 'string',
+        widgetCategory: 'string',
+        widgetAttributes: {
+          placeholder: 'string',
+        } as IWidgetAttributes,
+      } as IWidgetData,
+    ] as IWidgetData[],
+    Advanced: [],
+  };
 
   return (
     <div className={classes.root}>
       <div className={classes.header}>
-        <span
-          className={classnames(classes.option, { [classes.active]: view === VIEW.configuration })}
-          onClick={() => setView(VIEW.configuration)}
-        >
-          Configure Source
-        </span>
+        {Object.keys(mapping).map((group: string) => {
+          return (
+            <span
+              className={classnames(classes.option, { [classes.active]: group === selectedGroup })}
+              onClick={() => setselectedGroup(group)}
+            >
+              {group}
+            </span>
+          );
+        })}
+
+        <Button variant="contained" color="primary" onClick={() => addConfigurationGroup('new')}>
+          + NEW CONFIGURATION
+        </Button>
       </div>
 
-      <div className={classes.content}>
-        <If condition={view === VIEW.configuration}>
-          Hello
-        </If>
-      </div>
-
-      <StepButtons onNext={handleNext} nextDisabled={isNextDisabled()} />
+      {mapping[selectedGroup].map(({ widgetData: IWidgetData }) => {
+        return (
+          <div className={classes.content}>
+            <WidgetWrapper
+              pluginProperty={{
+                required: true,
+              }}
+              widgetProperty={{
+                'widget-type': widgetData.widgetType,
+                label: widgetData.widgetLabel,
+                name: widgetData.widgetName,
+                'widget-attributes': {
+                  placeholder: widgetData.widgetAttributes.placeholder,
+                },
+              }}
+              value={'connectionArguments'}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 };

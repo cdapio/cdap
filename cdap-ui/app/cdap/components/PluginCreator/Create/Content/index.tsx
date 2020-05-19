@@ -15,21 +15,40 @@
  */
 
 import * as React from 'react';
-import { STEPS } from 'components/Replicator/Create/steps';
-import { createContextConnect } from 'components/Replicator/Create';
+import { STEPS } from 'components/PluginCreator/Create/steps';
+import { createContextConnect } from 'components/PluginCreator/Create';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+
+const styles = (): StyleRules => {
+  return {
+    comp: {
+      borderRight: '1px solid #e0e0e0',
+      width: '60%',
+      color: '#e0e0e0',
+    },
+  };
+};
 
 interface IContentProps {
   activeStep: number;
 }
 
-const ContentView: React.FC<IContentProps> = ({ activeStep }) => {
+const ContentView: React.FC<IContentProps & WithStyles<typeof styles>> = ({
+  classes,
+  activeStep,
+}) => {
   if (!STEPS[activeStep] || !STEPS[activeStep].component) {
     return null;
   }
 
   const Comp = STEPS[activeStep].component;
-  return <Comp />;
+  return (
+    <div>
+      <Comp className={classes.comp} />
+    </div>
+  );
 };
 
-const Content = createContextConnect(ContentView);
+const StyledContentView = withStyles(styles)(ContentView);
+const Content = createContextConnect(StyledContentView);
 export default Content;

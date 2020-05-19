@@ -16,9 +16,9 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { createContextConnect } from 'components/Replicator/Create';
+import { createContextConnect } from 'components/PluginCreator/Create';
 import Chip from '@material-ui/core/Chip';
-import { STEPS } from 'components/Replicator/Create/steps';
+import { STEPS } from 'components/PluginCreator/Create/steps';
 import classnames from 'classnames';
 import Check from '@material-ui/icons/Check';
 
