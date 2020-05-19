@@ -1,0 +1,196 @@
+/*
+ * Copyright © 2020 Cask Data, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
+ */
+
+import * as React from 'react';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import {
+  createContextConnect,
+  ICreateContext,
+  IBasicPluginInfo,
+} from 'components/PluginJSONCreator/Create';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import StepButtons from 'components/Replicator/Create/Content/StepButtons';
+import Heading, { HeadingTypes } from 'components/Heading';
+import { PluginTypes } from 'components/PluginJSONCreator/constants';
+import { GLOBALS } from 'services/global-constants';
+import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
+
+const styles = (): StyleRules => {
+  return {
+    root: {
+      padding: '30px 40px',
+    },
+    content: {
+      width: '50%',
+      maxWidth: '1000px',
+      minWidth: '600px',
+    },
+  };
+};
+
+const PluginTextInput = ({ setValue, value, label }) => {
+  const widget = {
+    label,
+    name: label,
+    'widget-type': 'textbox',
+    'widget-attributes': {
+      placeholder: 'Select a ' + label,
+    },
+  };
+
+  const property = {
+    required: true,
+    name: label,
+  };
+
+  return (
+    <WidgetWrapper
+      widgetProperty={widget}
+      pluginProperty={property}
+      value={value}
+      onChange={setValue}
+    />
+  );
+};
+
+const PluginSelect = ({ setValue, value, label, options }) => {
+  const widget = {
+    label,
+    name: label,
+    'widget-type': 'select',
+    'widget-attributes': {
+      options,
+      default: value,
+    },
+  };
+
+  const property = {
+    required: true,
+    name: label,
+  };
+
+  return (
+    <WidgetWrapper
+      widgetProperty={widget}
+      pluginProperty={property}
+      value={value}
+      onChange={setValue}
+    />
+  );
+};
+
+const PluginToggle = ({ setValue, value, label }) => {
+  const widget = {
+    label,
+    name: label,
+    'widget-type': 'toggle',
+    'widget-attributes': {
+      default: `${value}`,
+      on: {
+        value: 'true',
+        label: 'True',
+      },
+      off: {
+        value: 'false',
+        label: 'False',
+      },
+    },
+  };
+
+  return <ToggleSwitchWidget widgetProps={widget} value={value} onChange={setValue} />;
+};
+
+const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
+  classes,
+  pluginName,
+  pluginType,
+  displayName,
+  emitAlerts,
+  emitErrors,
+  setBasicPluginInfo,
+}) => {
+  const [localPluginName, setLocalPluginName] = React.useState(pluginName);
+  const [localPluginType, setLocalPluginType] = React.useState(pluginType);
+  const [localDisplayName, setLocalDisplayName] = React.useState(displayName);
+  const [localEmitAlerts, setLocalEmitAlerts] = React.useState(emitAlerts);
+  const [localEmitErrors, setLocalEmitErrors] = React.useState(emitErrors);
+
+  function handleNext() {
+    setBasicPluginInfo({
+      pluginName: localPluginName,
+      pluginType: localPluginType,
+      displayName: localDisplayName,
+      emitAlerts: localEmitAlerts,
+      emitErrors: localEmitErrors,
+    } as IBasicPluginInfo);
+  }
+
+  return (
+    <div className={classes.root}>
+      <div className={classes.content}>
+        <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
+        <br />
+        <PluginTextInput
+          label={'Plugin Name'}
+          value={localPluginName}
+          setValue={setLocalPluginName}
+        />
+        <br />
+        <br />
+        <PluginSelect
+          label={'Plugin Type'}
+          options={PluginTypes}
+          value={localPluginType}
+          setValue={setLocalPluginType}
+        />
+        <br />
+        <br />
+        <PluginTextInput
+          label={'Display Name'}
+          value={localDisplayName}
+          setValue={setLocalDisplayName}
+        />
+        <br />
+        <Heading type={HeadingTypes.h5} label="Emit Alerts?" />
+        <PluginToggle
+          label={'Emit Alerts?'}
+          value={localEmitAlerts}
+          setValue={setLocalEmitAlerts}
+        />
+        <br />
+        <Heading type={HeadingTypes.h5} label="Emit Errors?" />
+        <PluginToggle
+          label={'Emit Errors?'}
+          value={localEmitErrors}
+          setValue={setLocalEmitErrors}
+        />
+      </div>
+      <StepButtons nextDisabled={false} onNext={handleNext} />
+      {JSON.stringify(
+        [].concat(...Object.values(GLOBALS.pluginTypes).map((o) => Object.values(o)))
+      )}
+      {'pluginName'} {pluginName}
+      {'pluginType'} {pluginType}
+      {'displayName'} {displayName}
+      {'emitAlerts'} {emitAlerts}
+      {'emitErrors'} {emitErrors}
+    </div>
+  );
+};
+
+const StyledBasicPluginInfoView = withStyles(styles)(BasicPluginInfoView);
+const BasicPluginInfo = createContextConnect(StyledBasicPluginInfoView);
+export default BasicPluginInfo;
