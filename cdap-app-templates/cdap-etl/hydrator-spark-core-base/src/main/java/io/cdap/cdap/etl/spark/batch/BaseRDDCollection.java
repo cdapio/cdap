@@ -54,6 +54,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
@@ -65,18 +66,20 @@ import javax.annotation.Nullable;
  *
  * @param <T> type of object in the collection
  */
-public class RDDCollection<T> implements SparkCollection<T> {
+public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   private static final Gson GSON = new Gson();
-  private final JavaSparkExecutionContext sec;
-  private final JavaSparkContext jsc;
-  private final DatasetContext datasetContext;
-  private final SparkBatchSinkFactory sinkFactory;
-  private final JavaRDD<T> rdd;
+  protected final JavaSparkExecutionContext sec;
+  protected final JavaSparkContext jsc;
+  protected final SQLContext sqlContext;
+  protected final DatasetContext datasetContext;
+  protected final SparkBatchSinkFactory sinkFactory;
+  protected final JavaRDD<T> rdd;
 
-  public RDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc,
-                       DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
+  protected BaseRDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
+                              DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
     this.sec = sec;
     this.jsc = jsc;
+    this.sqlContext = sqlContext;
     this.datasetContext = datasetContext;
     this.sinkFactory = sinkFactory;
     this.rdd = rdd;
@@ -147,7 +150,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
 
   @Override
   public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function) {
-    return new PairRDDCollection<>(sec, jsc, datasetContext, sinkFactory, rdd.flatMapToPair(function));
+    return new PairRDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd.flatMapToPair(function));
   }
 
   @Override
@@ -227,8 +230,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
     throw new UnsupportedOperationException("Windowing is not supported on RDDs.");
   }
 
-  private <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
-    return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory, rdd);
+  protected <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
+    return new RDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd);
   }
-
 }

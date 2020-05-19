@@ -46,6 +46,7 @@ import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
 import io.cdap.cdap.etl.api.validation.InvalidStageException;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -65,6 +66,7 @@ import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -290,7 +292,12 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         // This is because we want to allow a Joiner plugin to switch from using the BatchJoiner interface
         // to the BatchAutoJoiner while preserving backwards compatibility in the pipeline config.
         if (plugin instanceof AutoJoiner) {
-          AutoJoinerContext autoContext = new DefaultAutoJoinerContext(stageConfigurer.getInputSchemas());
+          Map<String, JoinStage> stageMap = new HashMap<>();
+          for (Map.Entry<String, Schema> e : stageConfigurer.getInputSchemas().entrySet()) {
+            stageMap.put(e.getKey(), JoinStage.builder(e.getKey(), e.getValue()).build());
+          }
+
+          AutoJoinerContext autoContext = new DefaultAutoJoinerContext(stageMap);
           joinDefinition = ((AutoJoiner) plugin).define(autoContext);
           if (joinDefinition != null) {
             stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
