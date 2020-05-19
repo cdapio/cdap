@@ -40,6 +40,8 @@ import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinField;
+import io.cdap.cdap.etl.api.join.JoinCondition;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.BasicArguments;
