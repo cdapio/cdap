@@ -46,6 +46,7 @@ const styles = (): StyleRules => {
     },
     link: {
       marginRight: '25px',
+      marginTop: '25px',
 
       '&:hover': {
         textDecoration: 'none',
