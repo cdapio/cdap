@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -105,8 +106,17 @@ public abstract class PipelinePhasePreparer {
         BatchAggregator<?, ?, ?> aggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createAggregator(aggregator, stageSpec);
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
-        BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
-        submitterPlugin = createJoiner(batchJoiner, stageSpec);
+        Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+        if (plugin instanceof BatchJoiner) {
+          BatchJoiner<?, ?, ?> batchJoiner = (BatchJoiner<?, ?, ?>) plugin;
+          submitterPlugin = createJoiner(batchJoiner, stageSpec);
+        } else if (plugin instanceof BatchAutoJoiner) {
+          BatchAutoJoiner batchJoiner = (BatchAutoJoiner) plugin;
+          submitterPlugin = createAutoJoiner(batchJoiner, stageSpec);
+        } else {
+          throw new IllegalStateException(String.format("Join stage '%s' is of an unsupported class '%s'.",
+                                                        stageSpec.getName(), plugin.getClass().getName()));
+        }
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
         SplitterTransform<?, ?> splitterTransform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createSplitterTransform(splitterTransform, stageSpec);
@@ -143,5 +153,7 @@ public abstract class PipelinePhasePreparer {
   protected abstract SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator, StageSpec stageSpec);
 
   protected abstract SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner, StageSpec stageSpec);
+
+  protected abstract SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner, StageSpec stageSpec);
 
 }

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.common;
 
-import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinStage;
 
@@ -30,12 +29,8 @@ import java.util.Map;
 public class DefaultAutoJoinerContext implements AutoJoinerContext {
   private final Map<String, JoinStage> inputStages;
 
-  public DefaultAutoJoinerContext(Map<String, Schema> inputStages) {
-    Map<String, JoinStage> stageMap = new HashMap<>();
-    for (Map.Entry<String, Schema> e : inputStages.entrySet()) {
-      stageMap.put(e.getKey(), JoinStage.builder(e.getKey(), e.getValue()).build());
-    }
-    this.inputStages = Collections.unmodifiableMap(stageMap);
+  public DefaultAutoJoinerContext(Map<String, JoinStage> inputStages) {
+    this.inputStages = Collections.unmodifiableMap(new HashMap<>(inputStages));
   }
 
   @Override
