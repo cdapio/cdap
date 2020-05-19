@@ -25,6 +25,7 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
@@ -148,6 +149,17 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
 
   @Override
   protected SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner, StageSpec stageSpec) {
+    String stageName = stageSpec.getName();
+    ContextProvider<DefaultJoinerContext> contextProvider =
+      new JoinerContextProvider(pipelineRuntime, stageSpec, admin);
+    return new SubmitterPlugin<>(stageName, transactional, batchJoiner, contextProvider, sparkJoinerContext -> {
+      stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
+      stageOperations.put(stageName, sparkJoinerContext.getFieldOperations());
+    });
+  }
+
+  @Override
+  protected SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner, StageSpec stageSpec) {
     String stageName = stageSpec.getName();
     ContextProvider<DefaultJoinerContext> contextProvider =
       new JoinerContextProvider(pipelineRuntime, stageSpec, admin);

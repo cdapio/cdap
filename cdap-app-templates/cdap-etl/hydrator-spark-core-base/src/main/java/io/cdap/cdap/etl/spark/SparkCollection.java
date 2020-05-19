@@ -16,15 +16,19 @@
 
 package io.cdap.cdap.etl.spark;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 /**
@@ -65,4 +69,6 @@ public interface SparkCollection<T> {
   void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception;
 
   SparkCollection<T> window(StageSpec stageSpec, Windower windower);
+
+  SparkCollection<T> join(JoinRequest joinRequest);
 }

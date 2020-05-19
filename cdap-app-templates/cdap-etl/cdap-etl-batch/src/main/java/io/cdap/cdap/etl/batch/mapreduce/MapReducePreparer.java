@@ -25,6 +25,7 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
@@ -213,6 +214,12 @@ public class MapReducePreparer extends PipelinePhasePreparer {
       job.setMapOutputValueClass(TaggedWritable.class);
       stageOperations.put(stageName, joinerContext.getFieldOperations());
     });
+  }
+
+  @Override
+  protected SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner, StageSpec stageSpec) {
+    // TODO: (CDAP-16709) implement auto-join for mapreduce
+    throw new UnsupportedOperationException("");
   }
 
   private Class<?> getOutputKeyClass(String reducerName, Class<?> outputKeyClass) {
