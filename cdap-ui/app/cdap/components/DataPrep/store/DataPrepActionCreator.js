@@ -22,7 +22,9 @@ import { Observable } from 'rxjs/Observable';
 import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
 import { objectQuery } from 'services/helpers';
 import ee from 'event-emitter';
+import uuidV4 from 'uuid/v4';
 import { orderBy, find } from 'lodash';
+import { Theme } from 'services/ThemeHelper';
 
 let workspaceRetries;
 
@@ -293,6 +295,287 @@ export function setVisualizationState(state) {
       properties: {
         visualization: state,
       },
+    },
+  });
+}
+
+export function setError(error, prefix) {
+  const status = error.statusCode;
+  let detail = 'Unknown error';
+  if (typeof error.message === 'string') {
+    detail = error.message;
+  } else if (error.response) {
+    if (typeof error.response === 'string') {
+      detail = error.response;
+    } else if (typeof error.response.message === 'string') {
+      detail = error.response.message;
+    }
+  }
+  const message = `${prefix || 'Error'}: ${status ? `${status}: ${detail}` : detail}`;
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setError,
+    payload: {
+      message,
+    },
+  });
+}
+
+export async function loadTargetDataModelStates() {
+  // These properties were populated by MyDataPrepApi.getWorkspace API
+  const {
+    dataModel,
+    dataModelRevision,
+    dataModelModel,
+  } = DataPrepStore.getState().dataprep.properties;
+
+  let { dataModelList } = DataPrepStore.getState().dataprep;
+  if (!Array.isArray(dataModelList)) {
+    dataModelList = await fetchDataModelList(Theme.wranglerDataModelUrl);
+  }
+
+  const rev = Number(dataModelRevision);
+  const targetDataModel = dataModelList.find((dm) => dm.id === dataModel && dm.revision === rev);
+  await setTargetDataModel(targetDataModel);
+  if (targetDataModel) {
+    await setTargetModel(targetDataModel.models.find((m) => m.id === dataModelModel));
+  } else {
+    await setTargetModel(null);
+  }
+}
+
+export async function saveTargetDataModelStates() {
+  const params = {
+    context: NamespaceStore.getState().selectedNamespace,
+    workspaceId: DataPrepStore.getState().dataprep.workspaceId,
+  };
+
+  const { targetDataModel, targetModel } = DataPrepStore.getState().dataprep;
+  const newDataModelId = targetDataModel ? targetDataModel.id : null;
+  const newDataModelRevision = targetDataModel ? targetDataModel.revision : null;
+  const newModelId = targetModel ? targetModel.id : null;
+
+  // These properties were populated by MyDataPrepApi.getWorkspace API
+  const {
+    dataModel,
+    dataModelRevision,
+    dataModelModel,
+  } = DataPrepStore.getState().dataprep.properties;
+  const oldDataModelId = dataModel || null;
+  const oldDataModelRevision = isFinite(dataModelRevision) ? Number(dataModelRevision) : null;
+  const oldModelId = dataModelModel || null;
+
+  if (oldDataModelId !== newDataModelId || oldDataModelRevision !== newDataModelRevision) {
+    if (oldDataModelId !== null) {
+      await MyDataPrepApi.detachDataModel(params).toPromise();
+    }
+    if (newDataModelId !== null) {
+      await MyDataPrepApi.attachDataModel(params, {
+        id: newDataModelId,
+        revision: newDataModelRevision,
+      }).toPromise();
+    }
+  }
+
+  if (oldModelId !== newModelId) {
+    if (oldModelId !== null) {
+      await MyDataPrepApi.detachModel(
+        Object.assign(
+          {
+            modelId: oldModelId,
+          },
+          params
+        )
+      ).toPromise();
+    }
+    if (newModelId !== null) {
+      await MyDataPrepApi.attachModel(params, {
+        id: newModelId,
+      }).toPromise();
+    }
+  }
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setProperties,
+    payload: {
+      properties: {
+        dataModel: newDataModelId,
+        dataModelRevision: newDataModelRevision,
+        dataModelModel: newModelId,
+      },
+    },
+  });
+}
+
+export async function fetchDataModelList(url) {
+  const namespace = NamespaceStore.getState().selectedNamespace;
+  const params = {
+    context: namespace,
+  };
+
+  await MyDataPrepApi.addDataModels(params, { url }).toPromise();
+  const response = await MyDataPrepApi.getDataModels(params).toPromise();
+  const dataModelList = response.values.map((dataModel) => ({
+    uuid: uuidV4(),
+    id: dataModel['namespacedId'].id,
+    revision: dataModel.revision,
+    name: dataModel.displayName,
+    description: dataModel.description,
+    url,
+  }));
+  dataModelList.sort((a, b) => a.name.localeCompare(b.name));
+
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setDataModelList,
+    payload: {
+      dataModelList,
+    },
+  });
+
+  return dataModelList;
+}
+
+export async function fetchModelList(dataModel) {
+  const params = {
+    context: NamespaceStore.getState().selectedNamespace,
+    dataModelId: dataModel.id,
+    dataModelRevision: dataModel.revision,
+  };
+
+  /**
+   * Response message example:
+   * {
+   *   "type": "record",
+   *   "name": "OMOP_6_0_0",
+   *   "namespace": "google.com.datamodels.omop",
+   *   "doc": "See https://github.com/OHDSI/CommonDataModel/blob/v6.0.0/OMOP_CDM_v6_0.pdf for information about the OMOP Schemas",
+   *   "fields": [
+   *     {
+   *       "name": "CARE_SITE",
+   *       "type": [
+   *         "null",
+   *         {
+   *           "type": "record",
+   *           "name": "CARE_SITE",
+   *           "namespace": "google.com.datamodels.omop.Models",
+   *           "doc": "The CARE_SITE table contains a list of uniquely identified institutional units...",
+   *           "fields": [
+   *             {
+   *               "name": "care_site_id",
+   *               "type": ["int"],
+   *               "doc": "A unique identifier for each Care Site."
+   *             },
+   *             {
+   *               "name": "care_site_name",
+   *               "type": ["null", "string"],
+   *               "doc": "The verbatim description or name of the Care Site as in data source"
+   *             },
+   *             ...
+   *           ]
+   *         }
+   *       ]
+   *     },
+   *     {
+   *       "name": "CDM_SOURCE",
+   *       "type": [
+   *         "null",
+   *         {
+   *           "type": "record",
+   *           "name": "CDM_SOURCE",
+   *           "namespace": "google.com.datamodels.omop.Models",
+   *           "doc": "The CDM_SOURCE table contains detail about the source database and the process...",
+   *           "fields": [
+   *             ...
+   *           ]
+   *         }
+   *       }
+   *     },
+   *     ...
+   *   ]
+   * }
+   */
+
+  const response = await MyDataPrepApi.getDataModel(params).toPromise();
+
+  try {
+    const data = JSON.parse(response.message || null);
+    if (data && Array.isArray(data.fields)) {
+      dataModel.models = [];
+      data.fields.forEach((entry) => {
+        if (!Array.isArray(entry.type)) {
+          return;
+        }
+        const model = entry.type.find((record) => typeof record === 'object');
+        if (!model || typeof model.name !== 'string') {
+          return;
+        }
+        if ((model.name = model.name.trim()).length === 0) {
+          return;
+        }
+        const fields = [];
+        if (Array.isArray(model.fields)) {
+          model.fields.forEach((field) => {
+            if (!field || typeof field.name !== 'string') {
+              return;
+            }
+            if ((field.name = field.name.trim()).length === 0) {
+              return;
+            }
+            fields.push({
+              uuid: uuidV4(),
+              id: field.name,
+              name: field.name,
+              description: field.doc,
+            });
+          });
+          fields.sort((a, b) => a.name.localeCompare(b.name));
+        }
+        dataModel.models.push({
+          uuid: uuidV4(),
+          id: model.name,
+          name: model.name,
+          description: model.doc,
+          fields,
+        });
+      });
+      dataModel.models.sort((a, b) => a.name.localeCompare(b.name));
+    }
+  } catch (error) {
+    throw new Error(
+      `Malformed definition received for "${dataModel.id}" data model of ${dataModel.revision} revision: ${error}`
+    );
+  }
+}
+
+export async function setTargetDataModel(dataModel) {
+  // Clear current target data model first to hide it on UI
+  // This is necessary in case when loading bar is appeared but current data model is still visible to user
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setTargetDataModel,
+    payload: {
+      targetDataModel: null,
+    },
+  });
+
+  if (dataModel) {
+    if (!Array.isArray(dataModel.models)) {
+      await fetchModelList(dataModel);
+    }
+
+    DataPrepStore.dispatch({
+      type: DataPrepActions.setTargetDataModel,
+      payload: {
+        targetDataModel: dataModel,
+      },
+    });
+  }
+}
+
+export function setTargetModel(model) {
+  DataPrepStore.dispatch({
+    type: DataPrepActions.setTargetModel,
+    payload: {
+      targetModel: model || null,
     },
   });
 }

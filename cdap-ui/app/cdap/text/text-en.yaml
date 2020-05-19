@@ -1031,6 +1031,16 @@ features:
         title: Swap two column names
       MapToTarget:
         title: Map to Target
+        initializingText: Initializing...
+        loadingText: Loading...
+        executingDirectiveText: Executing directive...
+        CurrentSelection:
+          emptySelection: Select Data Model
+          dataModelLabel: Data Model
+          modelLabel: Table
+        OptionFilter:
+          modelPlaceholder: Type to filter table
+          fieldPlaceholder: Type to filter field
     pageTitle: '{productName} | {featureName} {workspaceUri}'
     PipelineError:
       bigquery: Unable to find Google BigQuery plugin. Please install Google Cloud Plugins from Hub.

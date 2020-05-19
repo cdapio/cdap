@@ -25,6 +25,7 @@ const contextPath = `${baseServicePath}/methods/contexts/:context`;
 const basepath = `${contextPath}/workspaces/:workspaceId`;
 const connectionsPath = `${contextPath}/connections`;
 const connectionTypesPath = `${baseServicePath}/methods/connectionTypes`;
+const datamodelsPath = `${contextPath}/datamodels/schemas`;
 
 const MyDataPrepApi = {
   delete: apiCreator(dataSrc, 'DELETE', 'REQUEST', basepath),
@@ -35,6 +36,20 @@ const MyDataPrepApi = {
   getInfo: apiCreator(dataSrc, 'GET', 'REQUEST', `${baseServicePath}/methods/info`),
   getWorkspace: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}`),
   getWorkspaceList: apiCreator(dataSrc, 'GET', 'REQUEST', `${contextPath}/workspaces`),
+
+  // Wrangler Data Model
+  attachDataModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/datamodels`),
+  detachDataModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/datamodels`),
+  attachModel: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/models`),
+  detachModel: apiCreator(dataSrc, 'DELETE', 'REQUEST', `${basepath}/models/:modelId`),
+  addDataModels: apiCreator(dataSrc, 'POST', 'REQUEST', `${datamodelsPath}`),
+  getDataModels: apiCreator(dataSrc, 'GET', 'REQUEST', `${datamodelsPath}`),
+  getDataModel: apiCreator(
+    dataSrc,
+    'GET',
+    'REQUEST',
+    `${datamodelsPath}/:dataModelId/revisions/:dataModelRevision`
+  ),
 
   // WRANGLER SERVICE MANAGEMENT
   getApp: apiCreator(dataSrc, 'GET', 'REQUEST', appPath),
