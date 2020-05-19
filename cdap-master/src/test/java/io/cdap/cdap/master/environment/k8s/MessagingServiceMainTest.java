@@ -50,7 +50,7 @@ public class MessagingServiceMainTest extends MasterServiceMainTestBase {
 
     // Use a separate TMS client to create topic, then publish and then poll some messages
     TopicId topicId = NamespaceId.SYSTEM.topic("test");
-    MessagingService messagingService = new ClientMessagingService(discoveryServiceClient);
+    MessagingService messagingService = new ClientMessagingService(discoveryServiceClient, true);
     messagingService.createTopic(new TopicMetadata(topicId));
 
     // Publish 10 messages
