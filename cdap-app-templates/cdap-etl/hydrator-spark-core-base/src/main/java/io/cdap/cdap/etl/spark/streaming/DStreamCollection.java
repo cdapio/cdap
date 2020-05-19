@@ -36,6 +36,7 @@ import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
+import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.ComputeTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicAggregatorAggregate;
@@ -182,6 +183,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
                   .window(Durations.seconds(windower.getWidth()), Durations.seconds(windower.getSlideInterval()))
                   .transform(new CountingTransformFunction<T>(stageName, sec.getMetrics(), "records.out",
                                                              sec.getDataTracer(stageName))));
+  }
+
+  @Override
+  public SparkCollection<T> join(JoinRequest joinRequest) {
+    // TODO: (CDAP-16709) implement
+    throw new UnsupportedOperationException("auto join not supported");
   }
 
   private <U> SparkCollection<U> wrap(JavaDStream<U> stream) {
