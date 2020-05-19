@@ -25,12 +25,7 @@ import { IDataModel, IModel } from 'components/DataPrep/store';
 
 const PREFIX = 'features.DataPrep.Directives.MapToTarget.CurrentSelection';
 
-const useStyles = makeStyles((theme) => ({
-  container: {
-    paddingTop: theme.spacing(1.25),
-    paddingLeft: theme.spacing(1.25),
-    paddingRight: theme.spacing(1.25),
-  },
+const useStyles = makeStyles({
   selectedItem: {
     display: 'flex',
     flexDirection: 'row',
@@ -50,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
   clearIcon: {
     cursor: 'pointer',
   },
-}));
+});
 
 interface ISelectedItem {
   key: string;
@@ -96,7 +91,7 @@ export const CurrentSelection = (props: ICurrentSelectionProps) => {
   }
 
   return (
-    <div className={classes.container}>
+    <div>
       {selection.map((item) => (
         <div
           id={`map-to-target-selected-${item.key}`}

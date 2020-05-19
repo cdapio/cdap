@@ -26,8 +26,6 @@ const useStyles = makeStyles((theme: Theme) => ({
   searchField: {
     width: '100%',
     marginBottom: theme.spacing(0.5),
-    paddingLeft: theme.spacing(1.25),
-    paddingRight: theme.spacing(1.25),
   },
 }));
 

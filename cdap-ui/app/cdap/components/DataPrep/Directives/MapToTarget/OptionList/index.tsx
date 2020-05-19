@@ -27,6 +27,8 @@ const useStyles = makeStyles((theme: Theme) => ({
     overflowX: 'hidden',
     overflowY: 'auto',
     maxHeight: '400px',
+    marginLeft: '-10px',
+    marginRight: '-10px',
   },
   optionItemDense: {
     paddingTop: 0,
