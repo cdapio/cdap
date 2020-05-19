@@ -18,7 +18,7 @@ import * as React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
 import Helmet from 'react-helmet';
 import List from 'components/PluginCreator/List';
-import Create from 'components/Replicator/Create';
+import Create from 'components/PluginCreator/Create';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Theme } from 'services/ThemeHelper';
 
@@ -32,10 +32,10 @@ const PluginCreator: React.FC = () => {
       <Helmet title={pageTitle} />
       <Switch>
         <Route exact path={`${basepath}/create`} component={Create} />
-        <Route path={basepath} component={List} />
+        <Route path={basepath} component={Create} />
         <Route
           render={() => {
-            return <Redirect to={`/ns/${getCurrentNamespace()}/replication`} />;
+            return <Redirect to={`/ns/${getCurrentNamespace()}/plugincreation`} />;
           }}
         />
       </Switch>
