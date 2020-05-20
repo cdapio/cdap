@@ -215,14 +215,16 @@
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning"
           ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading"
+          data-cy="stop-preview-btn">
       <div class="btn-container">
         <span class="fa fa-stop text-danger"></span>
         <div class="button-label">Stop</div>
       </div>
     </div>
     <div class="btn"
-          ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+          ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading"
+          data-cy="starting-preview-btn">
       <div class="btn-container">
         <span class="fa fa-refresh fa-spin"></span>
         <div class="button-label">
