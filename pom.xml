@@ -22,7 +22,7 @@
 
   <groupId>io.cdap.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>6.2.0-SNAPSHOT</version>
+  <version>6.2.0</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -1185,7 +1185,7 @@
           <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
-          </exclusion>  
+          </exclusion>
           <exclusion>
             <groupId>org.codehaus.janino</groupId>
             <artifactId>janino</artifactId>
