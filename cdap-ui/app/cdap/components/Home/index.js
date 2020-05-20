@@ -114,6 +114,10 @@ const Ingestion = Loadable({
   loader: () => import(/* webpackChunkMame: "Ingestion" */ 'components/Ingestion'),
   loading: LoadingSVGCentered,
 });
+const PluginJSONCreator = Loadable({
+  loader: () => import(/* webpackChunkMame: "PluginJSONCreator" */ 'components/PluginJSONCreator'),
+  loading: LoadingSVGCentered,
+});
 
 export default class Home extends Component {
   constructor(props) {
@@ -214,6 +218,7 @@ export default class Home extends Component {
               );
             }}
           />
+          <Route path="/ns/:namespace/plugincreation" component={PluginJSONCreator} />
           <Route component={Page404} />
         </Switch>
       </div>
