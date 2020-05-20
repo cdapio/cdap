@@ -37,6 +37,7 @@ const styles = (theme): StyleRules => {
     },
     emptyMessage: {
       marginBottom: 0,
+      padding: '4px',
     },
     checkboxesGroup: {
       display: 'flex',
@@ -194,7 +195,7 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
       </If>
       <If condition={inputs.length === 0}>
         <div className={classes.emptyMessageContainer}>
-          <h4 className={classes.emptyMessage}>No input stages</h4>
+          <div className={classes.emptyMessage}>No input stages</div>
         </div>
       </If>
     </div>

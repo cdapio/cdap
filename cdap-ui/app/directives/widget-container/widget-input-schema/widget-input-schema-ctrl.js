@@ -16,7 +16,6 @@
 angular.module(PKG.name + '.commons')
   .controller('MyInputSchemaCtrl', function($scope, HydratorPlusPlusHydratorService) {
     this.multipleInputs = ($scope.multipleInputs === 'true' ? true : false);
-    var vm = this;
     try {
       this.inputSchemas = JSON.parse($scope.inputSchema);
     } catch(e) {
