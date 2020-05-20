@@ -189,7 +189,7 @@
           "widget-type": "textbox",
           "label": "Encryption Key Name",
           "name": "encryptionKeyName",
-          "description": "The GCP customer managed encryption key(CMEK) name used by Cloud Dataproc",
+          "description": "The GCP customer managed encryption key (CMEK) name used by Cloud Dataproc",
           "widget-attributes": {
             "placeholder": "projects/<gcp-project-id>/locations/<key-location>/keyRings/<key-ring-name>/cryptoKeys/<key-name>"
           }
