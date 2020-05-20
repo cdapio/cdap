@@ -65,10 +65,13 @@ public class KryoSerializerTest {
       .set("double", 2.25d)
       .set("string", "Hello World")
       .set("bytes", "Hello Bytes".getBytes(StandardCharsets.UTF_8))
+      .set("ts", System.currentTimeMillis())
       .set("enum", "a")
       .set("array", new int[]{1, 2, 3})
       .set("map", ImmutableMap.of("1", 1, "2", 2, "3", 3))
-      .set("union", null).build();
+      .set("union", null)
+      .set("node", StructuredRecord.builder(schema.getField("node").getSchema()).build())
+      .build();
 
     Kryo kryo = new Kryo();
     kryo.addDefaultSerializer(Schema.class, SchemaSerializer.class);
@@ -88,6 +91,10 @@ public class KryoSerializerTest {
   }
 
   private Schema createSchema() {
+    // The node schema is to test recusrive structure in the schema.
+    Schema nodeSchema = Schema.recordOf(
+      "node", Schema.Field.of("children", Schema.nullableOf(Schema.arrayOf(Schema.recordOf("node")))));
+
     return Schema.recordOf("record",
       Schema.Field.of("boolean", Schema.of(Schema.Type.BOOLEAN)),
       Schema.Field.of("int", Schema.of(Schema.Type.INT)),
@@ -96,10 +103,12 @@ public class KryoSerializerTest {
       Schema.Field.of("double", Schema.of(Schema.Type.DOUBLE)),
       Schema.Field.of("string", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("bytes", Schema.of(Schema.Type.BYTES)),
+      Schema.Field.of("ts", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
       Schema.Field.of("enum", Schema.enumWith("a", "b", "c")),
       Schema.Field.of("array", Schema.arrayOf(Schema.of(Schema.Type.INT))),
       Schema.Field.of("map", Schema.mapOf(Schema.of(Schema.Type.STRING), Schema.of(Schema.Type.INT))),
-      Schema.Field.of("union", Schema.unionOf(Schema.of(Schema.Type.NULL), Schema.of(Schema.Type.STRING)))
+      Schema.Field.of("union", Schema.unionOf(Schema.of(Schema.Type.NULL), Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("node", nodeSchema)
     );
   }
 }
