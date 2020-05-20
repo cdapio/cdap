@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.2.0-SNAPSHOT</version>
+    <version>6.2.0</version>
   </parent>
 
   <artifactId>cdap-master</artifactId>
@@ -686,7 +686,7 @@
                         <exclude name="${additional.artifacts.exclude.pattern}"/>
                         <exclude name="**/target/*-sources.jar"/>
                         <exclude name="**/target/*-javadoc.jar"/>
-                        <!-- Wrangler excludes --> 
+                        <!-- Wrangler excludes -->
                         <exclude name="**/target/wrangler-core*"/>
                         <exclude name="**/target/wrangler-test*"/>
                         <!--We don't want to package the following plugins with CDAP-->
