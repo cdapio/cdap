@@ -66,6 +66,7 @@ import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -102,7 +103,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
   public SparkCollection<T> cache() {
     SparkConf sparkConf = jsc.getConf();
     if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL, 
+      String cacheStorageLevelString = sparkConf.get(Constants.SPARK_PIPELINE_CACHING_STORAGE_LEVEL,
                                                      Constants.DEFAULT_CACHING_STORAGE_LEVEL);
       StorageLevel cacheStorageLevel = StorageLevel.fromString(cacheStorageLevelString);
       return wrap(rdd.persist(cacheStorageLevel));
@@ -147,17 +148,21 @@ public class RDDCollection<T> implements SparkCollection<T> {
     JavaRDD<StructuredRecord> map = rdd.map(f1);
 
     JavaPairRDD<Object, StructuredRecord> keyedCollection = map.flatMapToPair(sparkGroupByFunction);
+    keyedCollection.sortByKey();
+
+    JavaRDD<Object> objectJavaRDD = keyedCollection.mapPartitions(
+      new FlatMapFunction<Iterator<Tuple2<Object, StructuredRecord>>, Object>() {
+        @Override
+        public Iterable<Object> call(Iterator<Tuple2<Object, StructuredRecord>> tuple2Iterator) throws Exception {
+          return null;
+        }
+      });
+
+    JavaPairRDD<Object, Object> objectObjectJavaPairRDD = objectJavaRDD.flatMapToPair();
 
     Function2<StructuredRecord, StructuredRecord, StructuredRecord> func = new SumFunction();
     JavaPairRDD<Object, StructuredRecord> groupedCollection = partitions == null ?
-      keyedCollection.reduceByKey(
-        new Function2<StructuredRecord, StructuredRecord, StructuredRecord>() {
-          @Override
-          public StructuredRecord call(StructuredRecord v1, StructuredRecord v2) throws Exception {
-            return null;
-          }
-        }
-      ) : keyedCollection.reduceByKey(func, partitions);
+      keyedCollection.reduceByKey(func) : keyedCollection.reduceByKey(func, partitions);
 
 //    FlatMapFunc<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> aggregateFunction =
 //      new AggregatorAggregateFunction<>(pluginFunctionContext);
