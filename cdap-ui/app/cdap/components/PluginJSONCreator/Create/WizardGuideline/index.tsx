@@ -68,7 +68,11 @@ interface IWizardGuidelineProps extends WithStyles<typeof styles> {
   setActiveStep: (step: number) => void;
 }
 
-const WizardGuidelineView: React.FC<IWizardGuidelineProps> = ({ classes, setActiveStep, activeStep }) => {
+const WizardGuidelineView: React.FC<IWizardGuidelineProps> = ({
+  classes,
+  setActiveStep,
+  activeStep,
+}) => {
   function handleStepClick(step) {
     if (step >= activeStep) {
       return;

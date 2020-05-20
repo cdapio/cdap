@@ -46,8 +46,10 @@ interface ICreateState {
   displayName: string;
   emitAlerts: boolean;
   emitErrors: boolean;
+  configurationGroups: IConfigurationGroup[];
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
+  setConfigurationGroups: (groups: IConfigurationGroup[]) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -56,6 +58,11 @@ export interface IBasicPluginInfo {
   displayName: string;
   emitAlerts: boolean;
   emitErrors: boolean;
+}
+
+export interface IConfigurationGroup {
+  label: string;
+  description?: string;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -76,16 +83,22 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     });
   };
 
+  public setConfigurationGroups = (configurationGroups: IConfigurationGroup[]) => {
+    this.setState({ configurationGroups });
+  };
+
   public state = {
+    activeStep: 0,
     pluginName: '',
     pluginType: '',
     displayName: '',
     emitAlerts: true,
     emitErrors: true,
-    activeStep: 0,
+    configurationGroups: [],
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
+    setConfigurationGroups: this.setConfigurationGroups,
   };
 
   public render() {
