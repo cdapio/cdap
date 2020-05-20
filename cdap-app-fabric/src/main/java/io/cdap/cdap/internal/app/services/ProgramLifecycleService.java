@@ -437,8 +437,8 @@ public class ProgramLifecycleService {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     checkConcurrentExecution(programId);
 
-    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
-    Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
+    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
+    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
     if (overrides != null) {
       userArgs.putAll(overrides);
     }
@@ -574,10 +574,10 @@ public class ProgramLifecycleService {
     authorizationEnforcer.enforce(programId, authenticationContext.getPrincipal(), Action.EXECUTE);
     checkConcurrentExecution(programId);
 
-    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(Id.Program.fromEntityId(programId));
+    Map<String, String> sysArgs = propertiesResolver.getSystemProperties(programId);
     sysArgs.put(ProgramOptionConstants.SKIP_PROVISIONING, "true");
     sysArgs.put(SystemArguments.PROFILE_NAME, ProfileId.NATIVE.getScopedName());
-    Map<String, String> userArgs = propertiesResolver.getUserProperties(Id.Program.fromEntityId(programId));
+    Map<String, String> userArgs = propertiesResolver.getUserProperties(programId);
     if (overrides != null) {
       userArgs.putAll(overrides);
     }

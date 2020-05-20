@@ -200,7 +200,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     Injector injector;
     synchronized (this) {
       if (!ensureCapacity()) {
-        throw new IllegalStateException("No more than " + maxPreviews + " can be executed concurrently");
+        throw new IllegalStateException("There are currently " + maxPreviews +
+                                          " concurrent active previews running. Please retry in a minute.");
       }
 
       PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);

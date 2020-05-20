@@ -36,7 +36,6 @@ import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.ConfigurationUtil;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.FileUtils;
 import io.cdap.cdap.data.dataset.SystemDatasetInstantiatorFactory;
@@ -1291,7 +1290,7 @@ public abstract class BaseHiveExploreService extends AbstractIdleService impleme
     QueryHandle queryHandle = QueryHandle.generate();
     sessionConf.put(Constants.Explore.QUERY_ID, queryHandle.getHandle());
 
-    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(Id.Namespace.fromEntityId(namespace))
+    String schedulerQueue = namespace != null ? schedulerQueueResolver.getQueue(namespace)
                                               : schedulerQueueResolver.getDefaultQueue();
 
     if (schedulerQueue != null && !schedulerQueue.isEmpty()) {

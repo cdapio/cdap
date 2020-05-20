@@ -152,6 +152,11 @@ const MetricsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
 
     unsubscribePoll();
 
+    // Reset values on time change
+    Object.values(updateMap).forEach((updater) => {
+      updater(0);
+    });
+
     const tags = {
       namespace: getCurrentNamespace(),
       app: name,
@@ -178,12 +183,22 @@ const MetricsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
     // Don't poll when status is not running - only do a single request
     const poll = MyReplicatorApi.pollMetrics({ queryParams }).subscribe(
       (res) => {
+        const valueMap = {
+          insert: 0,
+          update: 0,
+          delete: 0,
+        };
+
         res.series.forEach((metric) => {
           const value = aggregateValue(metric.data);
           const metricName = metric.metricName.split('.');
           const metricType = metricName[metricName.length - 1];
 
-          updateMap[metricType](value);
+          valueMap[metricType] = value;
+        });
+
+        Object.keys(valueMap).forEach((metricType) => {
+          updateMap[metricType](valueMap[metricType]);
         });
       },
       (err) => {
