@@ -21,8 +21,20 @@ const TEST_PATH = '__UI_test_path';
 const TEST_SENDER = '__UI_test_sender';
 const TEST_RECIPIENT = '__UI_test@test.com';
 const TEST_SUBJECT = '__UI_test_subject';
+const PREVIEW_FAILED_BANNER_MSG = 'Please add a source and sink to the pipeline';
 
 let headers = {};
+
+// We don't have preview enabled in distributed mode.
+// TODO(CDAP-16620) To enable preview in distributed mode. Once it is enabled we can remove.
+let skipPreviewTests = false;
+// @ts-ignore "cy.state" is not in the "cy" type
+const getMochaContext = () => cy.state('runnable').ctx;
+const skip = () => {
+  const ctx = getMochaContext();
+  return ctx.skip();
+};
+
 describe('Creating a pipeline', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
@@ -59,7 +71,7 @@ describe('Creating a pipeline', () => {
     });
   });
 
-  it('is configured correctly', () => {
+  it('can configure simple pipeline, including post-run actions', () => {
     // Go to Pipelines studio
     cy.visit('/cdap/ns/default/pipelines');
     cy.get('#resource-center-btn').click();
@@ -143,31 +155,50 @@ describe('Creating a pipeline', () => {
     });
 
     cy.get('[data-testid=config-apply-close]').click();
-
-    // Export pipeline JSON and check email alert properties
-    cy.get_pipeline_json().then((pipelineConfig) => {
-      const config = pipelineConfig.config;
-
-      expect(config).to.haveOwnProperty('postActions');
-      expect(config.postActions.length).eq(1);
-
-      const alert = config.postActions[0];
-      expect(alert).to.haveOwnProperty('plugin');
-      expect(alert.plugin.name).eq('Email');
-      expect(alert.plugin.type).eq('postaction');
-      expect(alert.plugin).to.haveOwnProperty('properties');
-
-      const pluginProps = alert.plugin.properties;
-      // TO DO: re-enable once Cypress typing bug is resolved: https://github.com/cypress-io/cypress/issues/5480
-      // expect(pluginProps.sender).eq(TEST_SENDER);
-      expect(pluginProps.message).eq('${}');
+  });
+  it('does not run Preview when user clicks No on postrun action modal', () => {
+    cy.window().then((window) => {
+      skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
     });
+    if (skipPreviewTests) {
+      skip();
+    }
+    cy.get('[data-cy="pipeline-preview-btn"]').click();
+    cy.get('[data-cy="preview-top-run-btn"]').click();
+    cy.get('[data-cy="run-preview-action-modal"]').should('be.visible');
 
-    // Name pipeline then deploy pipeline
+    // When user clicks No, Preview should not start
+    cy.get('[data-cy="no-preview-btn"]').click();
+    cy.get('[data-cy="preview-top-run-btn"]').should('be.visible');
+  });
+  it('runs Preview when user clicks Yes on postrun action modal', () => {
+    cy.window().then((window) => {
+      skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+    });
+    if (skipPreviewTests) {
+      skip();
+    }
+    // When user clicks Yes, Preview should fail to start and show banner about missing source and sink
+    cy.get('[data-cy="run-preview-btn"]').click();
+    cy.get('[data-cy="run-preview-action-modal"]').should('be.visible');
+    cy.get('[data-cy="yes-preview-btn"]').click();
+    // Close banner reminding user to add source and sink
+    cy.get('[data-cy="valium-banner-hydrator"]').contains(PREVIEW_FAILED_BANNER_MSG);
+    cy.get('.close').click();
+    cy.get('[data-cy="preview-active-btn"]')
+      .should('be.visible')
+      .click();
+    cy.get('[data-cy="pipeline-schedule-modeless-btn"]').should('be.visible');
+  });
+
+  it('shows correct configuration after deploying pipeline', () => {
+    // Name pipeline
     cy.get('.pipeline-name').click();
     cy.get('#pipeline-name-input')
       .type(TEST_PIPELINE_NAME)
       .type('{enter}');
+
+    // Deploy pipeline
     cy.get('[data-testid=deploy-pipeline]').click();
 
     // Do assertions
