@@ -35,12 +35,12 @@ import javax.annotation.Nullable;
  */
 @Beta
 public class JoinDefinition {
-  private final List<Field> selectedFields;
+  private final List<JoinField> selectedFields;
   private final List<JoinStage> stages;
   private final JoinCondition condition;
   private final Schema outputSchema;
 
-  private JoinDefinition(List<Field> selectedFields, List<JoinStage> stages,
+  private JoinDefinition(List<JoinField> selectedFields, List<JoinStage> stages,
                          JoinCondition condition, Schema outputSchema) {
     this.stages = Collections.unmodifiableList(stages);
     this.selectedFields = Collections.unmodifiableList(new ArrayList<>(selectedFields));
@@ -48,7 +48,7 @@ public class JoinDefinition {
     this.outputSchema = outputSchema;
   }
 
-  public List<Field> getSelectedFields() {
+  public List<JoinField> getSelectedFields() {
     return selectedFields;
   }
 
@@ -76,7 +76,7 @@ public class JoinDefinition {
    */
   public static class Builder {
     private final List<JoinStage> stages;
-    private final List<Field> selectedFields;
+    private final List<JoinField> selectedFields;
     private JoinCondition condition;
     private String schemaName;
 
@@ -87,13 +87,13 @@ public class JoinDefinition {
       condition = null;
     }
 
-    public Builder select(List<Field> selectedFields) {
+    public Builder select(List<JoinField> selectedFields) {
       this.selectedFields.clear();
       this.selectedFields.addAll(selectedFields);
       return this;
     }
 
-    public Builder select(Field... fields) {
+    public Builder select(JoinField... fields) {
       return select(Arrays.asList(fields));
     }
 
@@ -148,7 +148,7 @@ public class JoinDefinition {
       Map<String, JoinStage> stageMap = stages.stream()
         .collect(Collectors.toMap(JoinStage::getStageName, s -> s));
 
-      for (Field field : selectedFields) {
+      for (JoinField field : selectedFields) {
         JoinStage joinStage = stageMap.get(field.getStageName());
         if (joinStage == null) {
           throw new InvalidJoinException(String.format(
