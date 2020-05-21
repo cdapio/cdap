@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.etl.proto.v1;
 
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
-import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 import java.util.Map;
 import java.util.Objects;
@@ -90,7 +90,7 @@ public final class ETLStage {
     return Objects.hash(name, plugin, errorDatasetName);
   }
 
-  public io.cdap.cdap.etl.proto.v2.ETLStage upgradeStage(String type, UpgradeContext upgradeContext) {
+  public io.cdap.cdap.etl.proto.v2.ETLStage upgradeStage(String type, ApplicationUpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig = upgradeContext.getPluginArtifact(type, plugin.getName());
     if (artifactSelectorConfig == null) {
       artifactSelectorConfig = plugin.getArtifact();

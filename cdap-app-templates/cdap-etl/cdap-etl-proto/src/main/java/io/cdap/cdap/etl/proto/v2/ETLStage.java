@@ -16,8 +16,8 @@
 
 package io.cdap.cdap.etl.proto.v2;
 
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
-import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 import java.util.Objects;
 
@@ -69,11 +69,11 @@ public final class ETLStage {
   }
 
   // used by UpgradeTool to upgrade a 3.4.x stage to 3.5.x, which may include an update of the plugin artifact
-  public ETLStage upgradeStage(UpgradeContext upgradeContext) {
+  public ETLStage upgradeStage(ApplicationUpgradeContext upgradeContext) {
     ArtifactSelectorConfig artifactSelectorConfig =
-      upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
+        upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
     io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
-      plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
+        plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 

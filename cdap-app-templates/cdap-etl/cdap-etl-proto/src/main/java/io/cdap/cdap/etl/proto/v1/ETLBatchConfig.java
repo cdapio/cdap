@@ -20,8 +20,9 @@ import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.proto.Connection;
-import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.UpgradeableConfig;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -80,7 +81,7 @@ public final class ETLBatchConfig extends ETLConfig
   }
 
   @Override
-  public io.cdap.cdap.etl.proto.v2.ETLBatchConfig upgrade(UpgradeContext upgradeContext) {
+  public io.cdap.cdap.etl.proto.v2.ETLBatchConfig upgrade(ApplicationUpgradeContext upgradeContext) {
     io.cdap.cdap.etl.proto.v2.ETLBatchConfig.Builder builder =
       io.cdap.cdap.etl.proto.v2.ETLBatchConfig.builder(schedule)
         .setEngine(io.cdap.cdap.etl.api.Engine.valueOf(getEngine().name()))

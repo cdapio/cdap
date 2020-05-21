@@ -395,6 +395,44 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * failure for each of the requested application in the same order as the request.
    */
   @POST
+  @Path("/upgrade")
+  public void UpgradeApplications(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespace) throws Exception {
+    LOG.info("Jay Pandya in upgrade application api 1");
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
+    Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.upgradeApplications(appIds, createProgramTerminator());
+    LOG.info("Jay Pandya in upgrade application api 2");
+
+    List<BatchApplicationDetail> result = new ArrayList<>();
+    for (ApplicationId appId : appIds) {
+      LOG.info("Jay Pandya upgrading application %s", appId.toString());
+      ApplicationDetail detail = details.get(appId);
+      if (detail == null) {
+        result.add(new BatchApplicationDetail(new NotFoundException(appId)));
+      } else {
+        result.add(new BatchApplicationDetail(detail));
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
+  }
+
+  /**
+   * Gets {@link ApplicationDetail} for a set of applications. It expects a post body as a array of object, with each
+   * object specifying the applciation id and an optional version. E.g.
+   *
+   * <pre>
+   * {@code
+   * [
+   *   {"appId":"XYZ", "version":"1.2.3"},
+   *   {"appId":"ABC"},
+   *   {"appId":"FOO", "version":"2.3.4"},
+   * ]
+   * }
+   * </pre>
+   * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
+   * failure for each of the requested application in the same order as the request.
+   */
+  @POST
   @Path("/appdetail")
   public void getApplicationDetails(FullHttpRequest request, HttpResponder responder,
                                     @PathParam("namespace-id") String namespace) throws Exception {

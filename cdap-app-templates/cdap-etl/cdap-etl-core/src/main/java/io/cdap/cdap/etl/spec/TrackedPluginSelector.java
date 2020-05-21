@@ -19,7 +19,7 @@ package io.cdap.cdap.etl.spec;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.plugin.PluginClass;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 import java.util.Map;
 import java.util.SortedMap;

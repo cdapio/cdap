@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
@@ -48,9 +49,11 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.id.Id.Artifact;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.internal.app.DefaultApplicationUpgradeContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -79,6 +82,8 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -125,16 +130,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
+  private final Impersonator impersonator;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
-                              Store store, Scheduler scheduler, UsageRegistry usageRegistry,
-                              PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
-                              OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
-                              ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
-                              MetadataServiceClient metadataServiceClient,
-                              AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              MessagingService messagingService) {
+      Store store, Scheduler scheduler, UsageRegistry usageRegistry,
+      PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
+      OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
+      ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
+      MetadataServiceClient metadataServiceClient,
+      AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
+      MessagingService messagingService, Impersonator impersonator) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.store = store;
@@ -148,6 +154,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.impersonator = impersonator;
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
   }
@@ -344,6 +351,88 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
                      programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
   }
+
+  /**
+   * Update an existing application. An application's configuration and artifact version can be updated.
+   *
+   * @param appId the id of the application to update
+   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
+   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @return information about the deployed application
+   * @throws ApplicationNotFoundException if the specified application does not exist
+   * @throws ArtifactNotFoundException if the requested artifact does not exist
+   * @throws InvalidArtifactException if the specified artifact is invalid. For example, if the artifact name changed,
+   *                                  if the version is an invalid version, or the artifact contains no app classes
+   * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
+   *                   the actual exception
+   */
+  public ApplicationWithPrograms upgradeApp(ApplicationId appId, ArtifactId newArtifactId,
+      ProgramTerminator programTerminator) throws Exception {
+    LOG.info("Jay Pandya reached here in upgradeApp 6.1");
+    // Check if the current user has admin privileges on it before updating.
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.2");
+    // check that app exists
+    ApplicationSpecification currentSpec = store.getApplication(appId);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3");
+    if (currentSpec == null) {
+      throw new ApplicationNotFoundException(appId);
+    }
+
+    /* Jay Pandya: This block yet not sure about
+    // ownerAdmin.getImpersonationPrincipal will give the owner which will be impersonated for the application
+    // irrespective of the version
+    SecurityUtil.verifyOwnerPrincipal(appId, currentSpec., ownerAdmin);
+
+    // if config is null, use the previous config. Shouldn't use a static GSON since the request Config object can
+    // be a user class, otherwise there will be ClassLoader leakage.
+    String requestedConfigStr = requestedConfigObj == null ?
+        currentSpec.getConfiguration() : new Gson().toJson(requestedConfigObj);*/
+
+
+    /*Jay Pandya: See if we need application version id as third parameter*/
+    /*Jay Pandya: change this canupdateschedule*/
+    /*Jay Pandya: See what to do about artifact detail*/
+    LOG.info("Jay Pandya reached here in upgradeApp 6.4");
+
+    Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
+    LOG.info("Jay Pandya reached here in upgradeApp 6.5");
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(artifactId);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.6");
+
+    return upgradeApp2(appId, appId.getParent(), appId.getApplication(), null, currentSpec.getConfiguration(), programTerminator,
+        artifactDetail, ownerAdmin.getOwner(appId), true);
+  }
+
+  /**
+   * Gets details for a set of given applications.
+   *
+   * @param appIds the set of application id to get details
+   * @return a {@link Map} from the application id to the corresponding detail. There will be no entry for applications
+   * that don't exist.
+   * @throws Exception if failed to get details.
+   */
+  public Map<ApplicationId, ApplicationDetail> upgradeApplications(Collection<ApplicationId> appIds, ProgramTerminator programTerminator) throws Exception {
+    LOG.info("Jay Pandya reached here 1");
+    Map<ApplicationId, ApplicationDetail> appDetails = getAppDetails(appIds);
+    //Map<ApplicationId, ApplicationDetail> upgradedAppDetails = new HashMap<>();
+    for (Map.Entry<ApplicationId, ApplicationDetail> appDetail : appDetails.entrySet()) {
+      ApplicationId appId = appDetail.getKey();
+      // Check if the current user has admin privileges on it before updating.
+      authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+      LOG.info("Jay Pandya reached here 2");
+      // check that app exists
+      // Jay Pandya: Pass new appID.
+      ApplicationSpecification currentSpec = store.getApplication(appId);
+      LOG.info("Jay Pandya reached here 3");
+
+      upgradeApp(appDetail.getKey(), currentSpec.getArtifactId(), programTerminator);
+      LOG.info("Jay Pandya reached here 4");
+
+    }
+    return appDetails;
+  }
+
 
   /**
    * Deploy an application by first adding the application jar to the artifact repository, then creating an application
@@ -578,6 +667,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
   }
 
+  // Jay Pandya: use this to get current plugin details.
+  // Check after upgrade, plugin details are updated or not.
   /**
    * Get detail about the plugin in the specified application
    *
@@ -639,6 +730,97 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     preferencesService.deleteProperties(appId);
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespace(), appId.getApplication());
+  }
+
+  private ApplicationWithPrograms upgradeApp2(ApplicationId applicationId, NamespaceId namespaceId, @Nullable String appName,
+      @Nullable String appVersion,
+      @Nullable String configStr,
+      ProgramTerminator programTerminator,
+      ArtifactDetail artifactDetail,
+      @Nullable KerberosPrincipalId ownerPrincipal,
+      boolean updateSchedules) throws Exception {
+    // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
+    // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
+    // pipeline - LocalArtifactLoaderStage
+
+    // need to enforce on the principal id if impersonation is involved
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.1");
+    KerberosPrincipalId effectiveOwner =
+        SecurityUtil.getEffectiveOwner(ownerAdmin, namespaceId,
+            ownerPrincipal == null ? null : ownerPrincipal.getPrincipal());
+
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.2");
+    Principal requestingUser = authenticationContext.getPrincipal();
+    // enforce that the current principal, if not the same as the owner principal, has the admin privilege on the
+    // impersonated principal
+    if (effectiveOwner != null) {
+      authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
+    }
+
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.3");
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
+    if (appClass == null) {
+      throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
+          artifactDetail.getDescriptor().getArtifactId(), namespaceId));
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.4");
+    io.cdap.cdap.proto.id.ArtifactId artifactId = Artifacts
+        .toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId());
+    EntityImpersonator classLoaderImpersonator =
+        new EntityImpersonator(artifactId, this.impersonator);
+    ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+        classLoaderImpersonator);
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.5");
+    String newConfigStr = "";
+    try {
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.6");
+      Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.7");
+      if (!(appMain instanceof Application)) {
+        throw new IllegalStateException(
+            String.format("Application main class is of invalid type: %s",
+                appMain.getClass().getName()));
+      }
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.8");
+
+      DefaultApplicationUpgradeContext upgradeContext = new DefaultApplicationUpgradeContext(namespaceId, applicationId,
+          artifactId, artifactRepository);
+      Application app = (Application) appMain;
+      newConfigStr = app.upgradeApplicationConfig(configStr, upgradeContext);
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.9");
+    } catch (Exception ex) {
+      LOG.info("Jay Pandya reached here in upgradeApp2 error!!!!");
+      LOG.error("Failed to upgrade application %s due to exception ", appName, ex);
+      Throwables.propagateIfPossible(ex.getCause(), Exception.class);
+      throw Throwables.propagate(ex.getCause());
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.91");
+
+      // deploy application with newly added artifact
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
+        appClass.getClassName(), appName, appVersion,
+        newConfigStr, ownerPrincipal, updateSchedules);
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.92");
+
+    Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.93");
+    // TODO: (CDAP-3258) Manager needs MUCH better error handling.
+    ApplicationWithPrograms applicationWithPrograms;
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.94");
+    try {
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.95");
+      applicationWithPrograms = manager.deploy(deploymentInfo).get();
+    } catch (ExecutionException e) {
+      LOG.info("Jay Pandya reached here in upgradeApp2 2nd error!!!!");
+      Throwables.propagateIfPossible(e.getCause(), Exception.class);
+      throw Throwables.propagate(e.getCause());
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.96");
+
+    adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
+        applicationWithPrograms.getSpecification());
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.97");
+    return applicationWithPrograms;
   }
 
   private ApplicationWithPrograms deployApp(NamespaceId namespaceId, @Nullable String appName,

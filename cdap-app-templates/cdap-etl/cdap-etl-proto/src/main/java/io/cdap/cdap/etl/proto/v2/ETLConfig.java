@@ -19,10 +19,11 @@ package io.cdap.cdap.etl.proto.v2;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.Transform;
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
-import io.cdap.cdap.etl.proto.UpgradeContext;
 import io.cdap.cdap.etl.proto.UpgradeableConfig;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
+
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -141,7 +142,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
       builder.disableStageLogging();
     }
 
-    UpgradeContext dummyUpgradeContext = new UpgradeContext() {
+    ApplicationUpgradeContext dummyUpgradeContext = new ApplicationUpgradeContext() {
       @Nullable
       @Override
       public ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName) {
@@ -201,7 +202,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   }
 
   @Override
-  public UpgradeableConfig upgrade(UpgradeContext upgradeContext) {
+  public UpgradeableConfig upgrade(ApplicationUpgradeContext upgradeContext) {
     throw new UnsupportedOperationException("This is the latest config and cannot be upgraded.");
   }
 

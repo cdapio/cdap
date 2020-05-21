@@ -22,7 +22,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import io.cdap.cdap.api.plugin.PluginSelector;
-import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 import javax.annotation.Nullable;
 

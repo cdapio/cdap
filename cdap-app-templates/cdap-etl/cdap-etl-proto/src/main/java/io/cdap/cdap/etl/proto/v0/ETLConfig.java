@@ -19,11 +19,12 @@ package io.cdap.cdap.etl.proto.v0;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.Transform;
-import io.cdap.cdap.etl.proto.UpgradeContext;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 /**
  * Common ETL Config.
@@ -58,7 +59,7 @@ public abstract class ETLConfig extends Config {
   }
 
   protected <T extends io.cdap.cdap.etl.proto.v1.ETLConfig.Builder> T upgradeBase(T builder,
-                                                                                  UpgradeContext upgradeContext,
+                                                                                  ApplicationUpgradeContext upgradeContext,
                                                                                   String sourceType,
                                                                                   String sinkType) {
     builder.setResources(resources);

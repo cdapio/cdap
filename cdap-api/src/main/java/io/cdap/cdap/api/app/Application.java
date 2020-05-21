@@ -32,4 +32,6 @@ public interface Application<T extends Config> {
    * @param context Used to access the environment, application configuration, and application (deployment) arguments
    */
   void configure(ApplicationConfigurer configurer, ApplicationContext<T> context);
+
+  String upgradeApplicationConfig(String configStr, ApplicationUpgradeContext upgradeContext);
 }

@@ -15,6 +15,7 @@
  */
 
 package io.cdap.cdap.etl.proto;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
 
 /**
  * Upgradeable config for ETL applications, which allows chain upgrading until the latest version is reached.
@@ -37,5 +38,5 @@ public interface UpgradeableConfig<T extends UpgradeableConfig> {
    * @param upgradeContext context for upgrading
    * @return the upgraded config
    */
-  T upgrade(UpgradeContext upgradeContext);
+  T upgrade(ApplicationUpgradeContext upgradeContext);
 }

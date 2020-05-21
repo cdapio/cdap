@@ -138,7 +138,7 @@ public class Upgrader {
       .setNumOfRecordsPreview(config.getNumOfRecordsPreview());
 
     for (ETLStage stage : config.getStages()) {
-      builder.addStage(stage.upgradeStage(dataStreamsContext));
+      //builder.addStage(stage.upgradeStage(dataStreamsContext));
     }
     return builder.build();
   }
@@ -161,16 +161,16 @@ public class Upgrader {
         .setEngine(batchConfig.getEngine());
       // upgrade any of the plugin artifact versions if needed
       for (ETLStage postAction : batchConfig.getPostActions()) {
-        builder.addPostAction(postAction.upgradeStage(upgradeContext));
+        //builder.addPostAction(postAction.upgradeStage(upgradeContext));
       }
       for (ETLStage stage : batchConfig.getStages()) {
-        builder.addStage(stage.upgradeStage(upgradeContext));
+        //builder.addStage(stage.upgradeStage(upgradeContext));
       }
       return builder.build();
     }
 
     while (config.canUpgrade()) {
-      config = config.upgrade(upgradeContext);
+      //config = config.upgrade(upgradeContext);
     }
     return (ETLBatchConfig) config;
   }

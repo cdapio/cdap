@@ -22,7 +22,8 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.proto.Connection;
-import io.cdap.cdap.etl.proto.UpgradeContext;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -127,10 +128,10 @@ public class ETLConfig extends Config {
   }
 
   protected <T extends io.cdap.cdap.etl.proto.v2.ETLConfig.Builder> T upgradeBase(T builder,
-                                                                                  UpgradeContext upgradeContext,
+                                                                                  ApplicationUpgradeContext upgradeContext,
                                                                                   String sourceType,
                                                                                   String sinkType) {
-    builder.setResources(getResources()).addConnections(getConnections());
+    /*builder.setResources(getResources()).addConnections(getConnections());
 
     if (!isStageLoggingEnabled()) {
       builder.disableStageLogging();
@@ -142,7 +143,7 @@ public class ETLConfig extends Config {
     }
     for (ETLStage sinkStage : getSinks()) {
       builder.addStage(sinkStage.upgradeStage(sinkType, upgradeContext));
-    }
+    }*/
     return builder;
   }
 

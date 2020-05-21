@@ -18,7 +18,9 @@ package io.cdap.cdap.datapipeline;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.datapipeline.service.StudioService;
@@ -37,19 +39,26 @@ import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 
+import io.cdap.cdap.etl.proto.v2.ETLStage;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ETL Data Pipeline Application.
  */
 public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
+  private static final Logger LOG = LoggerFactory.getLogger(DataPipelineApp.class);
+
   public static final String SCHEDULE_NAME = "dataPipelineSchedule";
   public static final String DEFAULT_DESCRIPTION = "Data Pipeline Application";
+  // Jay Pandya: Check validity of plugin type based on supported list here.
   private static final Set<String> supportedPluginTypes = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, BatchSink.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchJoiner.PLUGIN_TYPE,
     Constants.Connector.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
     Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE,
     Condition.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
+  private static final Gson GSON = new Gson();
 
   @Override
   public void configure() {
@@ -75,5 +84,33 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
       }
       schedule(scheduleBuilder.triggerByTime(timeSchedule));
     }
+  }
+
+  @Override
+  public String updateAppConfig(String configStr, ApplicationUpgradeContext upgradeContext) {
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 1");
+    ETLBatchConfig batchConfig = GSON.fromJson(configStr, ETLBatchConfig.class);
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 2");
+    // Jay Pandya: Verify is nothing is missing in deep copy.
+    ETLBatchConfig.Builder builder = ETLBatchConfig.builder()
+        .setTimeSchedule(batchConfig.getSchedule())
+        .addConnections(batchConfig.getConnections())
+        .setResources(batchConfig.getResources())
+        .setDriverResources(batchConfig.getDriverResources())
+        .setEngine(batchConfig.getEngine());
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 3");
+    // upgrade any of the plugin artifact versions if needed
+    for (ETLStage postAction : batchConfig.getPostActions()) {
+      LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 4");
+      builder.addPostAction(postAction.upgradeStage(upgradeContext));
+      LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 5");
+    }
+    for (ETLStage stage : batchConfig.getStages()) {
+      LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 6");
+      builder.addStage(stage.upgradeStage(upgradeContext));
+      LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 7");
+    }
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 8");
+    return GSON.toJson(builder.build());
   }
 }

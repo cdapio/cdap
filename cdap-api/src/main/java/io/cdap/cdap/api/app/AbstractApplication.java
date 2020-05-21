@@ -17,7 +17,9 @@
 package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.mapreduce.MapReduce;
+import io.cdap.cdap.api.plugin.PluginSelector;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.api.schedule.TriggerFactory;
 import io.cdap.cdap.api.service.BasicService;
@@ -28,6 +30,10 @@ import io.cdap.cdap.api.worker.Worker;
 import io.cdap.cdap.api.workflow.Workflow;
 import io.cdap.cdap.internal.api.AbstractPluginConfigurable;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import sun.rmi.runtime.Log;
 
 /**
  * A support class for {@link Application Applications} which reduces repetition and results in
@@ -42,6 +48,8 @@ import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
  */
 public abstract class AbstractApplication<T extends Config> extends AbstractPluginConfigurable<ApplicationConfigurer>
   implements Application<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractApplication.class);
+
   private ApplicationContext<T> context;
   private ApplicationConfigurer configurer;
   private TriggerFactory triggerFactory;
@@ -57,6 +65,16 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
     this.configurer = configurer;
     this.triggerFactory = configurer.getTriggerFactory();
     configure();
+  }
+
+  public String updateAppConfig(String ConfigStr, ApplicationUpgradeContext upgradeContext) {
+    LOG.info("Jay Pandya in abstract application updateappconfig");
+    return ConfigStr;
+  }
+
+  @Override
+  public final String upgradeApplicationConfig(String configStr, ApplicationUpgradeContext upgradeContext) {
+    return updateAppConfig(configStr, upgradeContext);
   }
 
   /**

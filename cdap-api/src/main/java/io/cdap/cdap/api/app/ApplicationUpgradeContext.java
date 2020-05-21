@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,15 +14,14 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.proto;
+package io.cdap.cdap.api.app;
 
 import javax.annotation.Nullable;
 
-// Jay Pandya: Remove this and make use of the new UpgradeContext
 /**
- * Context for upgrading configs.
+ * Context for upgrading Application configs.
  */
-public interface UpgradeContext {
+public interface ApplicationUpgradeContext {
 
   /**
    * Gets artifact information for a given plugin type and name.
@@ -36,3 +35,4 @@ public interface UpgradeContext {
   ArtifactSelectorConfig getPluginArtifact(String pluginType, String pluginName);
 
 }
+
