@@ -38,8 +38,10 @@ import java.util.stream.Collectors;
 
 /**
  * An implementation of {@link BatchJoiner} using a {@link BatchAutoJoiner}.
+ *
+ * @param <INPUT_RECORD> type of input record
  */
-public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord, StructuredRecord> {
+public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, INPUT_RECORD, StructuredRecord> {
   private final BatchAutoJoiner autoJoiner;
   private final JoinDefinition joinDefinition;
   private final Set<String> requiredStages;
@@ -85,7 +87,15 @@ public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord
   }
 
   @Override
-  public StructuredRecord joinOn(String stageName, StructuredRecord input) {
+  public StructuredRecord joinOn(String stageName, INPUT_RECORD input) {
+    if (!(input instanceof StructuredRecord)) {
+      // don't expect this to ever be the case since all existing plugins use StructuredRecord,
+      // but it is technically possible.
+      throw new IllegalArgumentException(String.format(
+        "Received an input record of unsupported type '%s' from stage '%s'.",
+        input.getClass().getName(), stageName));
+    }
+
     List<String> key = joinKeys.get(stageName);
     if (key == null) {
       // this should not happen, it should be caught by the pipeline app at configure or prepare time and failed then
@@ -94,15 +104,16 @@ public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord
                         "Check the plugin to make sure it is including all input stages.", stageName));
     }
 
+    StructuredRecord inputRecord = (StructuredRecord) input;
     if (keySchema == null) {
-      keySchema = getKeySchema(stageName, input.getSchema(), key);
+      keySchema = getKeySchema(stageName, inputRecord.getSchema(), key);
     }
 
     StructuredRecord.Builder keyRecord = StructuredRecord.builder(keySchema);
     int fieldNum = 0;
     for (String keyField : key) {
       String translatedName = "f" + fieldNum++;
-      keyRecord.set(translatedName, input.get(keyField));
+      keyRecord.set(translatedName, inputRecord.get(keyField));
     }
     return keyRecord.build();
   }
@@ -135,11 +146,11 @@ public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord
 
   @Override
   public StructuredRecord merge(StructuredRecord structuredRecord,
-                                Iterable<JoinElement<StructuredRecord>> joinResult) {
+                                Iterable<JoinElement<INPUT_RECORD>> joinResult) {
     StructuredRecord.Builder joined = StructuredRecord.builder(joinDefinition.getOutputSchema());
-    for (JoinElement<StructuredRecord> joinElement : joinResult) {
+    for (JoinElement<INPUT_RECORD> joinElement : joinResult) {
       String stageName = joinElement.getStageName();
-      StructuredRecord record = joinElement.getInputRecord();
+      StructuredRecord record = (StructuredRecord) joinElement.getInputRecord();
 
       List<JoinField> outputFields = stageFields.get(stageName);
       for (JoinField outputField : outputFields) {

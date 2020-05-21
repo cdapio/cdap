@@ -19,11 +19,15 @@ package io.cdap.cdap.etl.spark.function;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.Transformation;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultEmitter;
 import io.cdap.cdap.etl.common.TrackedTransform;
+import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import scala.Tuple2;
 
 import java.util.List;
@@ -49,9 +53,7 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
   @Override
   public Iterable<OUT> call(Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input) throws Exception {
     if (joinFunction == null) {
-      BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = pluginFunctionContext.createPlugin();
-      BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
-      joiner.initialize(context);
+      BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = createInitializedJoiner();
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
                                             pluginFunctionContext.createStageMetrics(),
                                             Constants.Metrics.JOIN_KEYS,
@@ -62,6 +64,28 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
     emitter.reset();
     joinFunction.transform(input, emitter);
     return emitter.getEntries();
+  }
+
+  private <K, V, O> BatchJoiner<K, V, O> createInitializedJoiner() throws Exception {
+    Object plugin = pluginFunctionContext.createPlugin();
+    BatchJoiner<K, V, O> joiner;
+    if (plugin instanceof BatchAutoJoiner) {
+      BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
+      AutoJoinerContext autoJoinerContext = pluginFunctionContext.createAutoJoinerContext();
+      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+      if (joinDefinition == null) {
+        throw new IllegalStateException(String.format(
+          "Join stage '%s' did not specify a join definition. " +
+            "Check with the plugin developer to ensure it is implemented correctly.",
+          pluginFunctionContext.getStageSpec().getName()));
+      }
+      joiner = new JoinerBridge(autoJoiner, joinDefinition);
+    } else {
+      joiner = (BatchJoiner<K, V, O>) plugin;
+      BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
+      joiner.initialize(context);
+    }
+    return joiner;
   }
 
   private static class JoinOnTransform<JOIN_KEY, INPUT, OUT>
