@@ -16,12 +16,14 @@
 
 package io.cdap.cdap.etl.common;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinStage;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Default implementation of AutoJoinerContext.
@@ -38,4 +40,9 @@ public class DefaultAutoJoinerContext implements AutoJoinerContext {
     return inputStages;
   }
 
+  public static DefaultAutoJoinerContext from(Map<String, Schema> inputSchemas) {
+    return new DefaultAutoJoinerContext(inputSchemas.entrySet().stream()
+      .map(e -> JoinStage.builder(e.getKey(), e.getValue()).build())
+      .collect(Collectors.toMap(JoinStage::getStageName, s -> s)));
+  }
 }
