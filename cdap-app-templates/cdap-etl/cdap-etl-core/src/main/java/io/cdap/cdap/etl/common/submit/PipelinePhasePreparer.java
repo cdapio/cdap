@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common.submit;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
@@ -31,10 +32,15 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
+import io.cdap.cdap.etl.api.join.AutoJoiner;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.MultiConnectorFactory;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
@@ -45,6 +51,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -112,6 +120,7 @@ public abstract class PipelinePhasePreparer {
           submitterPlugin = createJoiner(batchJoiner, stageSpec);
         } else if (plugin instanceof BatchAutoJoiner) {
           BatchAutoJoiner batchJoiner = (BatchAutoJoiner) plugin;
+          validateAutoJoiner(batchJoiner, stageSpec);
           submitterPlugin = createAutoJoiner(batchJoiner, stageSpec);
         } else {
           throw new IllegalStateException(String.format("Join stage '%s' is of an unsupported class '%s'.",
@@ -131,6 +140,42 @@ public abstract class PipelinePhasePreparer {
     }
 
     return finishers;
+  }
+
+  private void validateAutoJoiner(AutoJoiner autoJoiner, StageSpec stageSpec) {
+    // validate that the join definition is not null
+    // it could be null at configure time due to macros not being evaluated, but at this
+    // point all macros should be evaluated and the definition should be non-null.
+    String stageName = stageSpec.getName();
+    String pluginName = stageSpec.getPlugin().getName();
+    AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas());
+    JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+    if (joinDefinition == null) {
+      throw new IllegalArgumentException(String.format(
+        "Joiner stage '%s' using plugin '%s' did not provide a join definition. " +
+          "Check with the plugin developer to make sure it is implemented correctly.",
+        stageName, pluginName));
+    }
+
+    // validate that the stages mentioned in the join definition are actually inputs into the joiner.
+    Set<String> inputStages = stageSpec.getInputSchemas().keySet();
+    Set<String> joinStages = joinDefinition.getStages().stream()
+      .map(JoinStage::getStageName)
+      .collect(Collectors.toSet());
+    Set<String> missingInputs = Sets.difference(inputStages, joinStages);
+    if (!missingInputs.isEmpty()) {
+      throw new IllegalArgumentException(
+        String.format("Joiner stage '%s' using plugin '%s' did not include input stage %s in the join. " +
+                        "Check with the plugin developer to make sure it is implemented correctly.",
+                      stageName, pluginName, String.join(", ", missingInputs)));
+    }
+    Set<String> extraInputs = Sets.difference(joinStages, inputStages);
+    if (!extraInputs.isEmpty()) {
+      throw new IllegalArgumentException(
+        String.format("Joiner stage '%s' using plugin '%s' is trying to join stage %s, which is not an input. " +
+                        "Check with the plugin developer to make sure it is implemented correctly.",
+                      stageName, pluginName, String.join(", ", missingInputs)));
+    }
   }
 
   // for map reduce engine, spark related plugin cannot be created

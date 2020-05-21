@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.batch.mapreduce;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.metrics.Metrics;
@@ -218,8 +219,21 @@ public class MapReducePreparer extends PipelinePhasePreparer {
 
   @Override
   protected SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner, StageSpec stageSpec) {
-    // TODO: (CDAP-16709) implement auto-join for mapreduce
-    throw new UnsupportedOperationException("");
+    String stageName = stageSpec.getName();
+    ContextProvider<DefaultJoinerContext> contextProvider =
+      new JoinerContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
+    return new SubmitterPlugin<>(stageName, context, batchJoiner, contextProvider, joinerContext -> {
+      if (joinerContext.getNumPartitions() != null) {
+        job.setNumReduceTasks(joinerContext.getNumPartitions());
+      }
+      hConf.set(ETLMapReduce.MAP_KEY_CLASS, StructuredRecord.class.getName());
+      hConf.set(ETLMapReduce.MAP_VAL_CLASS, StructuredRecord.class.getName());
+      job.setMapOutputKeyClass(getOutputKeyClass(stageName, StructuredRecord.class));
+      getOutputValClass(stageName, StructuredRecord.class);
+      // for joiner plugin map output is tagged with stageName
+      job.setMapOutputValueClass(TaggedWritable.class);
+      stageOperations.put(stageName, joinerContext.getFieldOperations());
+    });
   }
 
   private Class<?> getOutputKeyClass(String reducerName, Class<?> outputKeyClass) {

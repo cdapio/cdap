@@ -279,8 +279,10 @@ public abstract class SparkPipelineRunner {
           }
           AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
 
-          emittedBuilder = emittedBuilder.setOutput(handleAutoJoin(autoJoiner, autoJoinerContext,
-                                                                   inputDataCollections));
+          // joinDefinition will always be non-null because
+          // it is checked by PipelinePhasePreparer at the start of the run.
+          JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+          emittedBuilder = emittedBuilder.setOutput(handleAutoJoin(joinDefinition, inputDataCollections));
 
         } else {
           // should never happen unless there is a bug in the code. should have failed during deployment
@@ -360,10 +362,8 @@ public abstract class SparkPipelineRunner {
    * The purpose of this method is to collect various pieces of information together into a JoinRequest.
    * This amounts to gathering the SparkCollection, schema, join key, and join type for each stage involved in the join.
    */
-  private SparkCollection<Object> handleAutoJoin(AutoJoiner autoJoiner, AutoJoinerContext autoJoinerContext,
+  private SparkCollection<Object> handleAutoJoin(JoinDefinition joinDefinition,
                                                  Map<String, SparkCollection<Object>> inputDataCollections) {
-    JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
-
     Iterator<JoinStage> stageIter = joinDefinition.getStages().iterator();
     JoinStage left = stageIter.next();
     SparkCollection<Object> leftCollection = inputDataCollections.get(left.getStageName());
