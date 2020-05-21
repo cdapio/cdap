@@ -25,16 +25,16 @@ import javax.annotation.Nullable;
  * The name of a field and an optional alias to rename it to.
  */
 @Beta
-public class Field {
+public class JoinField {
   private final String stageName;
   private final String fieldName;
   private final String alias;
 
-  public Field(String stageName, String fieldName) {
+  public JoinField(String stageName, String fieldName) {
     this(stageName, fieldName, null);
   }
 
-  public Field(String stageName, String fieldName, @Nullable String alias) {
+  public JoinField(String stageName, String fieldName, @Nullable String alias) {
     this.stageName = stageName;
     this.fieldName = fieldName;
     this.alias = alias;
@@ -61,7 +61,7 @@ public class Field {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Field field1 = (Field) o;
+    JoinField field1 = (JoinField) o;
     return Objects.equals(stageName, field1.stageName) &&
       Objects.equals(fieldName, field1.fieldName) &&
       Objects.equals(alias, field1.alias);
