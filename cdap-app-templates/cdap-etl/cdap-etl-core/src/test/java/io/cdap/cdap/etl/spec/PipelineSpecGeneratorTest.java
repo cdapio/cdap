@@ -39,9 +39,9 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
-import io.cdap.cdap.etl.api.join.Field;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.validation.ValidationException;
@@ -494,7 +494,7 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     joinDefinition = JoinDefinition.builder()
-      .select(new Field("tA", "a"), new Field("tABC", "b"), new Field("tABC", "c"))
+      .select(new JoinField("tA", "a"), new JoinField("tABC", "b"), new JoinField("tABC", "c"))
       .from(JoinStage.builder("tA", SCHEMA_A).isRequired().build(),
             JoinStage.builder("tABC", SCHEMA_ABC).isOptional().build())
       .on(JoinCondition.onKeys()

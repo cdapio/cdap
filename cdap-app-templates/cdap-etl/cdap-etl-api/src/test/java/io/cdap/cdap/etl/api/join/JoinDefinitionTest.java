@@ -124,9 +124,9 @@ public class JoinDefinitionTest {
     JoinStage users = JoinStage.builder("users", null).build();
 
     JoinDefinition definition = JoinDefinition.builder()
-      .select(new Field("purchases", "id", "purchase_id"),
-              new Field("users", "id", "user_id"),
-              new Field("users", "name"))
+      .select(new JoinField("purchases", "id", "purchase_id"),
+              new JoinField("users", "id", "user_id"),
+              new JoinField("users", "name"))
       .from(purchases, users)
       .on(JoinCondition.onKeys()
             .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
@@ -144,8 +144,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "id", "purchase_id"),
-                new Field("users", "abcdef"))
+        .select(new JoinField("purchases", "id", "purchase_id"),
+                new JoinField("users", "abcdef"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
@@ -165,8 +165,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "id", "purchase_id"),
-                new Field("users2", "id"))
+        .select(new JoinField("purchases", "id", "purchase_id"),
+                new JoinField("users2", "id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
@@ -186,8 +186,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "user_id"),
-                new Field("users", "id", "user_id"))
+        .select(new JoinField("purchases", "user_id"),
+                new JoinField("users", "id", "user_id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
@@ -207,8 +207,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "id"),
-                new Field("users", "id", "user_id"))
+        .select(new JoinField("purchases", "id"),
+                new JoinField("users", "id", "user_id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("abc", Collections.singletonList("user_id")))
@@ -228,8 +228,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "id"),
-                new Field("users", "id", "user_id"))
+        .select(new JoinField("purchases", "id"),
+                new JoinField("users", "id", "user_id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Collections.singletonList("abc")))
@@ -249,8 +249,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "id"),
-                new Field("users", "id", "user_id"))
+        .select(new JoinField("purchases", "id"),
+                new JoinField("users", "id", "user_id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Arrays.asList("id", "user_id")))
@@ -270,8 +270,8 @@ public class JoinDefinitionTest {
 
     try {
       JoinDefinition.builder()
-        .select(new Field("purchases", "id"),
-                new Field("users", "id", "user_id"))
+        .select(new JoinField("purchases", "id"),
+                new JoinField("users", "id", "user_id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Arrays.asList("id")))
@@ -286,15 +286,15 @@ public class JoinDefinitionTest {
 
   private void testUserPurchaseSchema(JoinStage purchases, JoinStage users, Schema expected) {
     JoinDefinition definition = JoinDefinition.builder()
-      .select(new Field("purchases", "id", "purchase_id"),
-              new Field("users", "id", "user_id"),
-              new Field("purchases", "ts"),
-              new Field("purchases", "price"),
-              new Field("purchases", "coupon"),
-              new Field("users", "name"),
-              new Field("users", "email"),
-              new Field("users", "age"),
-              new Field("users", "bday"))
+      .select(new JoinField("purchases", "id", "purchase_id"),
+              new JoinField("users", "id", "user_id"),
+              new JoinField("purchases", "ts"),
+              new JoinField("purchases", "price"),
+              new JoinField("purchases", "coupon"),
+              new JoinField("users", "name"),
+              new JoinField("users", "email"),
+              new JoinField("users", "age"),
+              new JoinField("users", "bday"))
       .from(purchases, users)
       .on(JoinCondition.onKeys()
             .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
