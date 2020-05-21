@@ -66,12 +66,12 @@ import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * This is run at application configure time to take an application config {@link ETLConfig} and call
@@ -283,7 +283,6 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     DefaultStageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     FailureCollector collector = stageConfigurer.getFailureCollector();
     Object plugin = getPlugin(stageName, etlPlugin, pluginSelector, type, pluginName, collector);
-    JoinDefinition joinDefinition = null;
     try {
       if (type.equals(BatchJoiner.PLUGIN_TYPE)) {
         MultiInputPipelineConfigurable multiPlugin = (MultiInputPipelineConfigurable) plugin;
@@ -292,16 +291,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
         // This is because we want to allow a Joiner plugin to switch from using the BatchJoiner interface
         // to the BatchAutoJoiner while preserving backwards compatibility in the pipeline config.
         if (plugin instanceof AutoJoiner) {
-          Map<String, JoinStage> stageMap = new HashMap<>();
-          for (Map.Entry<String, Schema> e : stageConfigurer.getInputSchemas().entrySet()) {
-            stageMap.put(e.getKey(), JoinStage.builder(e.getKey(), e.getValue()).build());
-          }
-
-          AutoJoinerContext autoContext = new DefaultAutoJoinerContext(stageMap);
-          joinDefinition = ((AutoJoiner) plugin).define(autoContext);
-          if (joinDefinition != null) {
-            stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
-          }
+          configureAutoJoiner(stageName, (AutoJoiner) plugin, stageConfigurer, collector);
         }
       } else if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
         MultiOutputPipelineConfigurable multiOutputPlugin = (MultiOutputPipelineConfigurable) plugin;
@@ -356,6 +346,31 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
     }
     return specBuilder;
+  }
+
+  private void configureAutoJoiner(String stageName, AutoJoiner autoJoiner, DefaultStageConfigurer stageConfigurer,
+                                   FailureCollector collector) {
+    AutoJoinerContext autoContext = DefaultAutoJoinerContext.from(stageConfigurer.getInputSchemas());
+    JoinDefinition joinDefinition = autoJoiner.define(autoContext);
+    if (joinDefinition != null) {
+      stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
+      Set<String> inputStages = stageConfigurer.getInputSchemas().keySet();
+      Set<String> joinStages = joinDefinition.getStages().stream()
+        .map(JoinStage::getStageName)
+        .collect(Collectors.toSet());
+      Set<String> missingInputs = Sets.difference(inputStages, joinStages);
+      if (!missingInputs.isEmpty()) {
+        collector.addFailure(String.format("Joiner stage '%s' did not include input stage %s in the join.",
+                                           stageName, String.join(", ", missingInputs)),
+                             "Check with the plugin developer to make sure it is implemented correctly.");
+      }
+      Set<String> extraInputs = Sets.difference(joinStages, inputStages);
+      if (!extraInputs.isEmpty()) {
+        collector.addFailure(String.format("Joiner stage '%s' is trying to join stage %s, which is not an input.",
+                                           stageName, String.join(", ", missingInputs)),
+                             "Check with the plugin developer to make sure it is implemented correctly.");
+      }
+    }
   }
 
   /**

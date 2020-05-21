@@ -36,9 +36,11 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.batch.ConnectorSourceEmitter;
 import io.cdap.cdap.etl.batch.DirectOutputPipeStage;
 import io.cdap.cdap.etl.batch.MultiOutputTransformPipeStage;
@@ -52,6 +54,7 @@ import io.cdap.cdap.etl.batch.conversion.WritableConversions;
 import io.cdap.cdap.etl.batch.join.Join;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.NoErrorEmitter;
@@ -63,6 +66,7 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
+import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
@@ -166,7 +170,18 @@ public class MapReduceTransformExecutorFactory<T> {
                                        stageMetrics, taskContext.getDataTracer(stageName), collector);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
-      BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      BatchJoiner<?, ?, ?> batchJoiner;
+      if (plugin instanceof BatchAutoJoiner) {
+        BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
+        DefaultAutoJoinerContext context = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas());
+        // definition will be non-null due to validate by PipelinePhasePreparer at the start of the run
+        JoinDefinition joinDefinition = autoJoiner.define(context);
+        batchJoiner = new JoinerBridge(autoJoiner, joinDefinition);
+      } else {
+        batchJoiner = (BatchJoiner<?, ?, ?>) plugin;
+      }
+
       BatchJoinerRuntimeContext runtimeContext = createRuntimeContext(stageSpec);
       batchJoiner.initialize(runtimeContext);
       if (isMapPhase) {
