@@ -47,9 +47,14 @@ interface ICreateState {
   emitAlerts: boolean;
   emitErrors: boolean;
   configurationGroups: IConfigurationGroup[];
+  // groupToWidgets: Map<string, string[]>;
+  groupToWidgets: any;
+  widgetsToInfo: any;
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
   setConfigurationGroups: (groups: IConfigurationGroup[]) => void;
+  setGroupToWidgets: (groupToWidgets: any) => void;
+  setWidgetsToInfo: (widgetsToInfo: any) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -61,8 +66,16 @@ export interface IBasicPluginInfo {
 }
 
 export interface IConfigurationGroup {
+  id: string;
   label: string;
   description?: string;
+}
+
+export interface IWidgetInfo {
+  name: string;
+  label: string;
+  widgetType: string;
+  widgetCategory?: string;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -87,6 +100,14 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ configurationGroups });
   };
 
+  public setGroupToWidgets = (groupToWidgets: any) => {
+    this.setState({ groupToWidgets });
+  };
+
+  public setWidgetsToInfo = (widgetsToInfo: any) => {
+    this.setState({ widgetsToInfo });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
@@ -95,10 +116,15 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     emitAlerts: true,
     emitErrors: true,
     configurationGroups: [],
+    // groupToWidgets: new Map<string, string[]>(),
+    groupToWidgets: {},
+    widgetsToInfo: {},
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
     setConfigurationGroups: this.setConfigurationGroups,
+    setGroupToWidgets: this.setGroupToWidgets,
+    setWidgetsToInfo: this.setWidgetsToInfo,
   };
 
   public render() {

@@ -18,13 +18,9 @@ import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPl
 import ConfigurationGroupsInfo from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsInfo';
 
 export const STEPS = [
-  /*{
+  {
     label: 'Basic Plugin Information',
     component: BasicPluginInfo,
-  },*/
-  {
-    label: 'Configuration Groups',
-    component: ConfigurationGroupsInfo,
   },
   {
     label: 'Configuration Groups',

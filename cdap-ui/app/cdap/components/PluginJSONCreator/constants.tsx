@@ -15,7 +15,10 @@
  */
 
 import { GLOBALS } from 'services/global-constants';
+import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
 
 export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
   (t) => t !== 'sqljoiner' && t !== 'batchjoiner' && t !== 'errortransform'
 );
+
+export const WidgetTypes = Object.keys(WIDGET_FACTORY);
