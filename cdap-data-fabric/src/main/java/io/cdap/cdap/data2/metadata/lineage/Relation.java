@@ -98,7 +98,7 @@ public class Relation {
       "data=" + data +
       ", program=" + program +
       ", access=" + access +
-      ", runs=" + run +
+      ", run=" + run +
       ", components=" + components +
       '}';
   }

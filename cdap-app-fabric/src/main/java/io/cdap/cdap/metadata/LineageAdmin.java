@@ -114,17 +114,17 @@ public class LineageAdmin {
   private Lineage doComputeLineage(DatasetId sourceData,
                                    long startMillis, long endMillis,
                                    int levels, @Nullable String rollup) {
-    LOG.trace("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
+    LOG.info("Computing lineage for data {}, startMillis {}, endMillis {}, levels {}",
               sourceData, startMillis, endMillis, levels);
     boolean rollUpWorkflow = rollup != null && rollup.contains("workflow");
 
     // Convert start time and end time period into scan keys in terms of program start times.
     Set<RunId> runningInRange = store.getRunningInRange(TimeUnit.MILLISECONDS.toSeconds(startMillis),
                                                         TimeUnit.MILLISECONDS.toSeconds(endMillis));
-    LOG.trace("Got {} rundIds in time range ({}, {})", runningInRange.size(), startMillis, endMillis);
+    LOG.info("Got {} rundIds in time range ({}, {})", runningInRange.size(), startMillis, endMillis);
 
     ScanRangeWithFilter scanRange = getScanRange(runningInRange);
-    LOG.trace("Using scan start = {}, scan end = {}", scanRange.getStart(), scanRange.getEnd());
+    LOG.info("Using scan start = {}, scan end = {}", scanRange.getStart(), scanRange.getEnd());
 
     Multimap<RelationKey, Relation> relations = HashMultimap.create();
     Set<DatasetId> visitedDatasets = new HashSet<>();
@@ -137,16 +137,16 @@ public class LineageAdmin {
 
     toVisitDatasets.add(sourceData);
     for (int i = 0; i < levels; ++i) {
-      LOG.trace("Level {}", i);
+      LOG.info("Level {}", i);
       toVisitPrograms.clear();
       for (DatasetId d : toVisitDatasets) {
         if (visitedDatasets.add(d)) {
-          LOG.trace("Visiting dataset {}", d);
+          LOG.info("Visiting dataset {}", d);
           // Fetch related programs, the programs will be the inner programs which access the datasets. For example,
           // mapreduce or spark program in a workflow
           Set<Relation> programRelations = lineageStoreReader.getRelations(d, scanRange.getStart(), scanRange.getEnd(),
                                                                            scanRange.getFilter());
-          LOG.trace("Got program relations {}", programRelations);
+          LOG.info("Got program relations {}", programRelations);
 
           // if we want to roll up lineage for workflow, we need to figure out what workflow these programs are related
           // to and find out all the inner programs of that workflow, the workflow run id can also be used to
@@ -165,11 +165,20 @@ public class LineageAdmin {
       toVisitDatasets.clear();
       for (ProgramId p : toVisitPrograms) {
         if (visitedPrograms.add(p)) {
-          LOG.trace("Visiting program {}", p);
+          LOG.info("Visiting program {}", p);
           // Fetch related datasets
           Set<Relation> datasetRelations = lineageStoreReader.getRelations(p, scanRange.getStart(),
                                                                            scanRange.getEnd(), scanRange.getFilter());
-          LOG.trace("Got data relations {}", datasetRelations);
+
+          // if we want to roll up lineage for workflow, we need to figure out what workflow these programs are related
+          // to and find out all the inner programs of that workflow, the workflow run id can also be used to
+          // determine if a dataset is local dataset. The local dataset always ends with the workflow run id
+          if (rollUpWorkflow) {
+            // update programWorkflowMap with all the runs of the inner programs
+            computeWorkflowInnerPrograms(toVisitPrograms, programWorkflowMap, datasetRelations);
+          }
+
+          LOG.info("Got data relations {}", datasetRelations);
           Set<DatasetId> localDatasets = filterAndAddRelations(rollUpWorkflow, relations,
                                                                programWorkflowMap, datasetRelations);
           toVisitDatasets.addAll(
@@ -181,7 +190,7 @@ public class LineageAdmin {
 
     Lineage lineage = new Lineage(
       Iterables.concat(Maps.transformValues(relations.asMap(), COLLAPSE_UNKNOWN_TYPE_FUNCTION::apply).values()));
-    LOG.trace("Got lineage {}", lineage);
+    LOG.info("Got lineage {}", lineage);
     return lineage;
   }
 
