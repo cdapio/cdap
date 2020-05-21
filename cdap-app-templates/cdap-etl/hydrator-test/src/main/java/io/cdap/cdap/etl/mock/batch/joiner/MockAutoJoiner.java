@@ -153,12 +153,12 @@ public class MockAutoJoiner extends BatchAutoJoiner {
   }
 
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
-                                    boolean filterNullKeys) {
+                                    boolean nullSafe) {
     Map<String, String> properties = new HashMap<>();
     properties.put("stages", GSON.toJson(stages));
     properties.put("required", GSON.toJson(required));
     properties.put("key", GSON.toJson(key));
-    properties.put("nullSafe", Boolean.toString(filterNullKeys));
+    properties.put("nullSafe", Boolean.toString(nullSafe));
     return new ETLPlugin(NAME, BatchJoiner.PLUGIN_TYPE, properties, null);
   }
 
