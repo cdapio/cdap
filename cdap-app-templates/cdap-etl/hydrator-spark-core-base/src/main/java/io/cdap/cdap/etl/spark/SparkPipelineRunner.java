@@ -259,37 +259,10 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
+        Integer numPartitions = stagePartitions.get(stageName);
         Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        if (plugin instanceof BatchJoiner) {
-          BatchJoiner<Object, Object, Object> joiner = (BatchJoiner<Object, Object, Object>) plugin;
-          BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
-          joiner.initialize(joinerRuntimeContext);
-
-          Integer numPartitions = stagePartitions.get(stageName);
-
-          SparkCollection<Object> joined = handleJoin(joiner, inputDataCollections,
-                                                      stageSpec, numPartitions, collector);
-          emittedBuilder = emittedBuilder.setOutput(joined.cache());
-        } else if (plugin instanceof AutoJoiner) {
-          AutoJoiner autoJoiner = (AutoJoiner) plugin;
-          Map<String, JoinStage> inputStages = new HashMap<>();
-          for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
-            StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
-            inputStages.put(inputStageName,
-                            JoinStage.builder(inputStageName, inputStageSpec.getOutputSchema()).build());
-          }
-          AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
-
-          // joinDefinition will always be non-null because
-          // it is checked by PipelinePhasePreparer at the start of the run.
-          JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
-          emittedBuilder = emittedBuilder.setOutput(handleAutoJoin(joinDefinition, inputDataCollections));
-
-        } else {
-          // should never happen unless there is a bug in the code. should have failed during deployment
-          throw new IllegalStateException(String.format("Stage '%s' is an unknown joiner type %s",
-                                                        stageName, plugin.getClass().getName()));
-        }
+        emittedBuilder.setOutput(handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
+                                            stageSpec, plugin, numPartitions, collector));
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -359,6 +332,38 @@ public abstract class SparkPipelineRunner {
     }
   }
 
+  protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
+                                               PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
+                                               StageSpec stageSpec, Object plugin, Integer numPartitions,
+                                               StageStatisticsCollector collector) throws Exception {
+    String stageName = stageSpec.getName();
+    if (plugin instanceof BatchJoiner) {
+      BatchJoiner<Object, Object, Object> joiner = (BatchJoiner<Object, Object, Object>) plugin;
+      BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
+      joiner.initialize(joinerRuntimeContext);
+
+      return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector).cache();
+    } else if (plugin instanceof AutoJoiner) {
+      AutoJoiner autoJoiner = (AutoJoiner) plugin;
+      Map<String, JoinStage> inputStages = new HashMap<>();
+      for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
+        StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
+        inputStages.put(inputStageName,
+                        JoinStage.builder(inputStageName, inputStageSpec.getOutputSchema()).build());
+      }
+      AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
+
+      // joinDefinition will always be non-null because
+      // it is checked by PipelinePhasePreparer at the start of the run.
+      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);;
+      return handleAutoJoin(joinDefinition, inputDataCollections);
+    } else {
+      // should never happen unless there is a bug in the code. should have failed during deployment
+      throw new IllegalStateException(String.format("Stage '%s' is an unknown joiner type %s",
+                                                    stageName, plugin.getClass().getName()));
+    }
+  }
+
   /**
    * The purpose of this method is to collect various pieces of information together into a JoinRequest.
    * This amounts to gathering the SparkCollection, schema, join key, and join type for each stage involved in the join.
@@ -396,7 +401,6 @@ public abstract class SparkPipelineRunner {
     // C -> [z, k]
     Map<String, List<String>> stageKeys = onKeys.getKeys().stream()
       .collect(Collectors.toMap(JoinKey::getStageName, JoinKey::getFields));
-
     List<JoinCollection> toJoin = new ArrayList<>();
     while (stageIter.hasNext()) {
       // in this loop, information for each stage to be joined is gathered together into a JoinCollection
@@ -417,10 +421,10 @@ public abstract class SparkPipelineRunner {
     return leftCollection.join(joinRequest);
   }
 
-  private SparkCollection<Object> handleJoin(BatchJoiner<Object, Object, Object> joiner,
-                                             Map<String, SparkCollection<Object>> inputDataCollections,
-                                             StageSpec stageSpec, Integer numPartitions,
-                                             StageStatisticsCollector collector) throws Exception {
+  protected SparkCollection<Object> handleJoin(BatchJoiner<?, ?, ?> joiner,
+                                               Map<String, SparkCollection<Object>> inputDataCollections,
+                                               StageSpec stageSpec, Integer numPartitions,
+                                               StageStatisticsCollector collector) throws Exception {
     Map<String, SparkPairCollection<Object, Object>> preJoinStreams = new HashMap<>();
     for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
       String inputStage = inputStreamEntry.getKey();
