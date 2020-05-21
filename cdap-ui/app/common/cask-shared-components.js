@@ -119,6 +119,8 @@ var Page500 = require('../cdap/components/500').default;
 var WindowManager = require('../cdap/services/WindowManager').default;
 var { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } = require('../cdap/services/WindowManager');
 var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
+var DownloadFile = require('../cdap/services/download-file').default;
+var PreviewUtilities = require('../cdap/components/PreviewData/utilities');
 
 export {
   Store,
@@ -212,4 +214,6 @@ export {
   WINDOW_ON_FOCUS,
   WINDOW_ON_BLUR,
   PREVIEW_STATUS,
+  DownloadFile,
+  PreviewUtilities,
 };
