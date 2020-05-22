@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -111,8 +112,17 @@ public abstract class PipelinePhasePreparer {
         Transform<?, ?> transform = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         submitterPlugin = createTransform(transform, stageSpec);
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
-        BatchAggregator<?, ?, ?> aggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
-        submitterPlugin = createAggregator(aggregator, stageSpec);
+        Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+        if (plugin instanceof BatchAggregator) {
+          BatchAggregator<?, ?, ?> aggregator = (BatchAggregator) plugin;
+          submitterPlugin = createAggregator(aggregator, stageSpec);
+        } else if (plugin instanceof BatchReducibleAggregator) {
+          BatchReducibleAggregator<?, ?, ?, ?> aggregator = (BatchReducibleAggregator) plugin;
+          submitterPlugin = createReducibleAggregator(aggregator, stageSpec);
+        } else {
+          throw new IllegalStateException(String.format("Aggregator stage '%s' is of an unsupported class '%s'.",
+                                                        stageSpec.getName(), plugin.getClass().getName()));
+        }
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
         Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
         if (plugin instanceof BatchJoiner) {
@@ -196,6 +206,9 @@ public abstract class PipelinePhasePreparer {
                                                              StageSpec stageSpec);
 
   protected abstract SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator, StageSpec stageSpec);
+
+  protected abstract SubmitterPlugin createReducibleAggregator(BatchReducibleAggregator<?, ?, ?, ?> aggregator,
+                                                               StageSpec stageSpec);
 
   protected abstract SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner, StageSpec stageSpec);
 
