@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,32 +29,33 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
-import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Distinct aggregator.
+ * Distinct aggregator
  */
-@Plugin(type = BatchAggregator.PLUGIN_TYPE)
-@Name("Distinct")
-@Description("Deduplicates input records so that only provided fields are used to apply distinction on while other " +
-  "fields are projected out.")
-public class DistinctAggregator extends BatchAggregator<StructuredRecord, StructuredRecord, StructuredRecord> {
-  public static final String NAME = "Distinct";
+@Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
+@Name(DistinctReducibleAggregator.NAME)
+@Description(DistinctReducibleAggregator.DESCRIPTION)
+public class DistinctReducibleAggregator
+  extends BatchReducibleAggregator<StructuredRecord, StructuredRecord, StructuredRecord, StructuredRecord> {
+  public static final String NAME = "Distinct Aggregator";
+  public static final String DESCRIPTION = "Deduplicates input records so that only provided fields are used to " +
+    "apply distinction on while other fields are projected out.";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
-  private final Conf conf;
+  private final Conf config;
   private Iterable<String> fields;
   private Schema outputSchema;
 
-  public DistinctAggregator(Conf conf) {
-    this.conf = conf;
+  public DistinctReducibleAggregator(Conf config) {
+    this.config = config;
   }
 
   @Override
@@ -62,14 +63,14 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Schema inputSchema = stageConfigurer.getInputSchema();
 
-    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema, conf.getFields());
+    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema, config.getFields());
     stageConfigurer.setOutputSchema(outputSchema);
   }
 
   @Override
   public void initialize(BatchRuntimeContext context) {
     outputSchema = context.getOutputSchema();
-    fields = conf.getFields();
+    fields = config.getFields();
   }
 
   @Override
@@ -82,8 +83,22 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
   }
 
   @Override
-  public void aggregate(StructuredRecord groupKey, Iterator<StructuredRecord> iterator,
-                        Emitter<StructuredRecord> emitter) {
+  public StructuredRecord initializeAggregateValue(StructuredRecord val) throws Exception {
+    return val;
+  }
+
+  @Override
+  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue) throws Exception {
+    return aggValue;
+  }
+
+  @Override
+  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2) throws Exception {
+    return value1;
+  }
+
+  @Override
+  public void finalize(StructuredRecord groupKey, StructuredRecord iterator, Emitter<StructuredRecord> emitter) {
     emitter.emit(groupKey);
   }
 
@@ -100,7 +115,7 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
       outputFields.add(field);
     }
     collector.getOrThrowException();
-    return Schema.recordOf(inputSchema.getRecordName() + ".distinct", outputFields);
+    return Schema.recordOf("record", outputFields);
   }
 
   /**
@@ -118,13 +133,15 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
   public static ETLPlugin getPlugin(String field) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", field);
-    return new ETLPlugin(DistinctAggregator.NAME, BatchAggregator.PLUGIN_TYPE, properties);
+    return new ETLPlugin(NAME, BatchReducibleAggregator.PLUGIN_TYPE, properties);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "DistinctAggregator", "", DistinctAggregator.class.getName(),
+    properties.put("fields", new PluginPropertyField(
+      "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
+    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
+                           DistinctReducibleAggregator.class.getName(),
                            "config", properties);
   }
 }
