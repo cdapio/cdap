@@ -14,15 +14,32 @@
  * the License.
  */
 
-import ConfigurationGroupsInfo from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsInfo';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import * as React from 'react';
 
-export const STEPS = [
-  /*{
-    label: 'Basic Plugin Information',
-    component: BasicPluginInfo,
-  },*/
-  {
-    label: 'Configuration Groups',
-    component: ConfigurationGroupsInfo,
-  },
-];
+const PluginTextareaInput = ({ setValue, value, label }) => {
+  const widget = {
+    label,
+    name: label,
+    'widget-type': 'textarea',
+    'widget-attributes': {
+      placeholder: 'Write a ' + label,
+    },
+  };
+
+  const property = {
+    required: false,
+    name: 'description',
+  };
+
+  return (
+    <WidgetWrapper
+      widgetProperty={widget}
+      pluginProperty={property}
+      value={value}
+      onChange={setValue}
+    />
+  );
+};
+
+export default PluginTextareaInput;

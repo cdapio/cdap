@@ -24,19 +24,20 @@ import Typography from '@material-ui/core/Typography';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import {
   createContextConnect,
   IConfigurationGroup,
   ICreateContext,
-  IWidgetInfo,
 } from 'components/PluginJSONCreator/Create';
+import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonLiveViewer';
+import PluginTextareaInput from 'components/PluginJSONCreator/Create/Content/PluginTextareaInput';
+import PluginTextboxInput from 'components/PluginJSONCreator/Create/Content/PluginTextboxInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
+import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import * as React from 'react';
-import { WidgetTypes } from 'components/PluginJSONCreator/constants';
-import Divider from '@material-ui/core/Divider';
+import uuidV4 from 'uuid/v4';
 
 const styles = (theme): StyleRules => {
   return {
@@ -63,45 +64,10 @@ const styles = (theme): StyleRules => {
     actionButtons: {
       float: 'right',
     },
-    eachWidget: {
-      display: 'block',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      marginTop: '10px',
-      marginBottom: '10px',
-      // padding: '7px 10px 5px',
-      '& > *': {
-        //  margin: '6px',
-        marginTop: '15px',
-        marginBottom: '15px',
-      },
-    },
-    eachWidgetInput: {
-      marginTop: '15px',
-      marginBottom: '15px',
-    },
-    widgetInput: {
-      '& > *': {
-        width: '80%',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
-    },
-    nestedWidgets: {
-      border: `1px solid`,
-      borderColor: theme.palette.grey[300],
-      borderRadius: '6px',
+    groupInputContainer: {
       position: 'relative',
       padding: '7px 10px 5px',
       margin: '25px',
-    },
-    errorBorder: {
-      border: '2px solid',
-      borderColor: theme.palette.red[50],
-    },
-    noWrapper: {
-      border: 0,
-      padding: 0,
     },
     label: {
       fontSize: '12px',
@@ -111,43 +77,19 @@ const styles = (theme): StyleRules => {
       padding: '0 5px',
       backgroundColor: theme.palette.white[50],
     },
-    required: {
-      fontSize: '14px',
-      marginLeft: '5px',
-      lineHeight: '12px',
-      verticalAlign: 'middle',
-    },
     widgetContainer: {
-      width: 'calc(100%)',
-    },
-    widgetDivider: {
-      width: '100%',
-    },
-    tooltipContainer: {
-      position: 'absolute',
-      right: '5px',
-      top: '10px',
-    },
-    focus: {
-      borderColor: theme.palette.blue[200],
-      '& $label': {
-        color: theme.palette.blue[100],
-      },
+      width: 'calc(100%-1000px)',
     },
   };
 };
 
 const GroupBasicInfoInput = ({ classes, label, setLabel, description, setDescription }) => {
   return (
-    <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
-      <div className={`widget-wrapper-label ${classes.label}`}>
-        Configure Group
-        <span className={classes.required}>*</span>
-      </div>
+    <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
       <div className={classes.widgetContainer}>
         <div className={classes.groupInput}>
-          <GroupLabelInput value={label} setValue={setLabel} label={'Label'} />
-          <GroupDescriptionInput
+          <PluginTextboxInput value={label} setValue={setLabel} label={'Label'} />
+          <PluginTextareaInput
             value={description}
             setValue={setDescription}
             label={'Description'}
@@ -158,91 +100,17 @@ const GroupBasicInfoInput = ({ classes, label, setLabel, description, setDescrip
   );
 };
 
-export const GroupLabelInput = ({ setValue, value, label, placeholder = '', required = true }) => {
-  const widget = {
-    label,
-    name: label,
-    'widget-type': 'textbox',
-    'widget-attributes': {
-      default: value,
-      placeholder,
-    },
-  };
-
-  const property = {
-    required,
-    name: label,
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={setValue}
-    />
-  );
-};
-
-const GroupDescriptionInput = ({ setValue, value, label }) => {
-  const widget = {
-    label,
-    name: label,
-    'widget-type': 'textarea',
-    'widget-attributes': {
-      placeholder: 'Write a ' + label,
-    },
-  };
-
-  const property = {
-    required: false,
-    name: 'description',
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={setValue}
-    />
-  );
-};
-
-const PluginSelect = ({ setValue, value, label, options }) => {
-  const widget = {
-    label,
-    name: label,
-    'widget-type': 'select',
-    'widget-attributes': {
-      options,
-      default: options[0],
-    },
-  };
-
-  const property = {
-    required: true,
-    name: label,
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={setValue}
-    />
-  );
-};
-
 const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
   configurationGroups,
   setConfigurationGroups,
   groupToWidgets,
   setGroupToWidgets,
-  widgetsToInfo,
-  setWidgetsToInfo,
+  widgetToInfo,
+  setWidgetToInfo,
+  displayName,
+  widgetToAttributes,
+  setWidgetToAttributes,
 }) => {
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
     configurationGroups
@@ -254,9 +122,12 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   const [localGroupDescription, setLocalGroupDescription] = React.useState('');
 
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
-  const [localWidgetToInfo, setlocalWidgetToInfo] = React.useState(widgetsToInfo);
+  const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
+  const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
 
   const [activeWidgets, setActiveWidgets] = React.useState([]);
+
+  const [jsonView, setJsonView] = React.useState(false);
 
   React.useEffect(() => {
     if (localConfigurationGroups[activeGroupIndex]) {
@@ -293,77 +164,10 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   // TODO change
   const requiredFilledOut = true;
 
-  function handleAddLocalGroup(index) {
-    addLocalConfigurationGroup(index);
-    const group = activeGroup;
-  }
-
-  function handleDeleteLocalGroup(index) {
-    deleteLocalConfigurationGroup(index);
-  }
-
-  function handleAddWidget(widgetIndex) {
-    // add empty widget
-    // 1. add widget into localGroupToWidgets
-    /*const widgets =
-      activeGroup.label && localGroupToWidgets[activeGroup.label]
-        ? localGroupToWidgets[activeGroup.label]
-        : [];
-    if (widgets.length == 0) {
-      widgets.splice(0, 0, '');
-    } else {
-      widgets.splice(widgetIndex + 1, 0, '');
-    }
-    setLocalGroupToWidgets({ ...localGroupToWidgets, [activeGroup.label]: widgets });
-    // 2. add widget into localWidgetToInfo
-    setlocalWidgetToInfo({
-      ...localWidgetToInfo,
-      [newWidget]: {
-        widgetType: '',
-        label: 'hi',
-        name: 'hello',
-      } as IWidgetInfo,
-    });*/
-    addWidgetToGroup(activeGroup.id, widgetIndex);
-  }
-
-  function handleDeleteWidget(widgetIndex) {
-    // 1. delete widget from localGroupToWidgets
-    // 2. delete widget key from localWidgetToInfo
-    /*const newLocalGroups = [...localConfigurationGroups];
-    newLocalGroups.splice(index, 1);
-    setLocalConfigurationGroups(newLocalGroups);*/
-
-    const groupID = activeGroup.id;
-
-    const widgets = localGroupToWidgets[groupID];
-
-    const widgetToDelete = widgets[widgetIndex];
-
-    widgets.splice(widgetIndex, 1);
-
-    setLocalGroupToWidgets({
-      ...localGroupToWidgets,
-      [groupID]: widgets,
-    });
-
-    const { [widgetToDelete]: tmp, ...rest } = localWidgetToInfo;
-    // delete widgetToDelete
-    setlocalWidgetToInfo(rest);
-  }
-
-  function addLocalConfigurationGroup(index: number) {
+  function addConfigurationGroup(index: number) {
     const newLocalGroups = [...localConfigurationGroups];
-    /*if (newLocalGroups.length > 0) {
-      changeLocalConfigurationGroup(index);
-      const groups = localConfigurationGroups;
-    }*/
 
-    const newGroupID =
-      'ConfigGroup_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9);
+    const newGroupID = 'ConfigGroup_' + uuidV4();
     const newGroup = {
       id: newGroupID,
       label: newGroupID, // generate a unique label
@@ -389,7 +193,7 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
     console.log('configurationGroups', JSON.stringify(newLocalGroups));
   }
 
-  function deleteLocalConfigurationGroup(index: number) {
+  function deleteConfigurationGroup(index: number) {
     const newLocalGroups = [...localConfigurationGroups];
     newLocalGroups.splice(index, 1);
     setLocalConfigurationGroups(newLocalGroups);
@@ -424,172 +228,22 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
     setGroupToWidgets(localGroupToWidgets);
   }
 
-  function addWidgetToGroup(groupID: string, index?: number) {
-    const newWidgetID =
-      'Widget_' +
-      Math.random()
-        .toString(36)
-        .substr(2, 9);
-
-    if (index === undefined) {
-      setlocalWidgetToInfo({
-        ...localWidgetToInfo,
-        [newWidgetID]: {
-          widgetType: '',
-          label: '',
-          name: '',
-        } as IWidgetInfo,
-      });
-      setLocalGroupToWidgets({
-        ...localGroupToWidgets,
-        [groupID]: [...localGroupToWidgets[groupID], newWidgetID],
-      });
-    } else {
-      const widgets =
-        activeGroup.id && localGroupToWidgets[activeGroup.id]
-          ? localGroupToWidgets[activeGroup.id]
-          : [];
-      if (widgets.length == 0) {
-        widgets.splice(0, 0, newWidgetID);
-      } else {
-        widgets.splice(index + 1, 0, newWidgetID);
-      }
-      setlocalWidgetToInfo({
-        ...localWidgetToInfo,
-        [newWidgetID]: {
-          widgetType: '',
-          label: '',
-          name: '',
-        } as IWidgetInfo,
-      });
-      setLocalGroupToWidgets({
-        ...localGroupToWidgets,
-        [groupID]: widgets,
-      });
-    }
-  }
-
-  const EachWidgetInput = React.memo(
-    ({
-      classes,
-      widgetObject,
-      onNameChange,
-      onLabelChange,
-      onWidgetTypeChange,
-      onAddWidget,
-      onDeleteWidget,
-    }) => {
-      console.log('Rerendered:', widgetObject.name);
-      return (
-        <div>
-          <div className={classes.widgetInput}>
-            <GroupLabelInput
-              value={widgetObject.name}
-              setValue={onNameChange}
-              label={'Widget Name'}
-              placeholder={'Name a Widget'}
-            />
-            <GroupLabelInput
-              value={widgetObject.label}
-              setValue={onLabelChange}
-              label={'Widget Label'}
-              placeholder={'Label a Widget'}
-            />
-            <PluginSelect
-              label={'Widget Type'}
-              options={WidgetTypes}
-              value={widgetObject.widgetType}
-              setValue={onWidgetTypeChange}
-            />
-          </div>
-
-          <div>
-            <IconButton onClick={onAddWidget} data-cy="add-row">
-              <AddIcon fontSize="small" />
-            </IconButton>
-            <IconButton onClick={onDeleteWidget} color="secondary" data-cy="remove-row">
-              <DeleteIcon fontSize="small" />
-            </IconButton>
-          </div>
-        </div>
-      );
-    },
-    (prevProps, nextProps) => {
-      const result =
-        prevProps.widgetObject.label === nextProps.widgetObject.label &&
-        prevProps.widgetObject.name === nextProps.widgetObject.name &&
-        prevProps.widgetObject.widgetType == nextProps.widgetObject.widgetType;
-      return result;
-    }
-  );
-
-  const WidgetInput = ({ groupID }) => {
-    function handleNameChange(obj, id) {
-      return (name) => {
-        setlocalWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
-      };
-    }
-
-    function handleLabelChange(obj, id) {
-      return (label) => {
-        setlocalWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
-      };
-    }
-
-    function handleWidgetTypeChange(obj, id) {
-      return (widgetType) => {
-        setlocalWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
-      };
-    }
-
-    return (
-      <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
-        <If condition={true}>
-          <div className={`widget-wrapper-label ${classes.label}`}>
-            Add Widgets
-            <span className={classes.required}>*</span>
-          </div>
-        </If>
-        <div className={classes.widgetContainer}>
-          {activeWidgets.map((widgetID, widgetIndex) => {
-            return (
-              <div>
-                <div className={classes.eachWidget}>
-                  <EachWidgetInput
-                    classes={classes}
-                    widgetObject={localWidgetToInfo[widgetID]}
-                    onNameChange={handleNameChange(localWidgetToInfo[widgetID], widgetID)}
-                    onLabelChange={handleLabelChange(localWidgetToInfo[widgetID], widgetID)}
-                    onWidgetTypeChange={handleWidgetTypeChange(
-                      localWidgetToInfo[widgetID],
-                      widgetID
-                    )}
-                    onAddWidget={() => handleAddWidget(widgetIndex)}
-                    onDeleteWidget={() => handleDeleteWidget(widgetIndex)}
-                  />
-                </div>
-                <Divider className={classes.widgetDivider} />
-              </div>
-            );
-          })}
-
-          <If condition={Object.keys(activeWidgets).length == 0}>
-            <Button variant="contained" color="primary" onClick={() => handleAddWidget(0)}>
-              Add Properties
-            </Button>
-          </If>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className={classes.root}>
+      <JsonLiveViewer
+        displayName={displayName}
+        configurationGroups={localConfigurationGroups}
+        groupToWidgets={localGroupToWidgets}
+        widgetToInfo={localWidgetToInfo}
+        widgetToAttributes={localWidgetToAttributes}
+        open={jsonView}
+        onClose={() => setJsonView(!jsonView)}
+      />
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Configuration Groups" />
         <br />
         <If condition={localConfigurationGroups.length == 0}>
-          <Button variant="contained" color="primary" onClick={() => handleAddLocalGroup(0)}>
+          <Button variant="contained" color="primary" onClick={() => addConfigurationGroup(0)}>
             Add Configuration Group
           </Button>
         </If>
@@ -618,13 +272,24 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
                   description={localGroupDescription}
                   setDescription={setLocalGroupDescription}
                 />
-                <WidgetInput groupID={group.id} />
+                <WidgetCollection
+                  activeWidgets={activeWidgets}
+                  activeGroupIndex={activeGroupIndex}
+                  setLocalGroupToWidgets={setLocalGroupToWidgets}
+                  groupID={group.id}
+                  localConfigurationGroups={localConfigurationGroups}
+                  localGroupToWidgets={localGroupToWidgets}
+                  localWidgetToInfo={localWidgetToInfo}
+                  setLocalWidgetToInfo={setLocalWidgetToInfo}
+                  localWidgetToAttributes={localWidgetToAttributes}
+                  setLocalWidgetToAttributes={setLocalWidgetToAttributes}
+                />
                 <div className={classes.actionButtons}>
-                  <IconButton onClick={() => handleAddLocalGroup(i)} data-cy="add-row">
+                  <IconButton onClick={() => addConfigurationGroup(i)} data-cy="add-row">
                     <AddIcon fontSize="small" />
                   </IconButton>
                   <IconButton
-                    onClick={() => handleDeleteLocalGroup(i)}
+                    onClick={() => deleteConfigurationGroup(i)}
                     color="secondary"
                     data-cy="remove-row"
                   >

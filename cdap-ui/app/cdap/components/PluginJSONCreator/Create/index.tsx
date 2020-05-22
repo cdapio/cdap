@@ -14,10 +14,10 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Content from 'components/PluginJSONCreator/Create/Content';
+import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
+import * as React from 'react';
 
 export const CreateContext = React.createContext({});
 export const LEFT_PANEL_WIDTH = 250;
@@ -49,12 +49,14 @@ interface ICreateState {
   configurationGroups: IConfigurationGroup[];
   // groupToWidgets: Map<string, string[]>;
   groupToWidgets: any;
-  widgetsToInfo: any;
+  widgetToInfo: any;
+  widgetToAttributes: any;
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
   setConfigurationGroups: (groups: IConfigurationGroup[]) => void;
   setGroupToWidgets: (groupToWidgets: any) => void;
-  setWidgetsToInfo: (widgetsToInfo: any) => void;
+  setWidgetToInfo: (widgetToInfo: any) => void;
+  setWidgetToAttributes: (widgetToAttributes: any) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -104,8 +106,12 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ groupToWidgets });
   };
 
-  public setWidgetsToInfo = (widgetsToInfo: any) => {
-    this.setState({ widgetsToInfo });
+  public setWidgetToInfo = (widgetToInfo: any) => {
+    this.setState({ widgetToInfo });
+  };
+
+  public setWidgetToAttributes = (widgetToAttributes: any) => {
+    this.setState({ widgetToAttributes });
   };
 
   public state = {
@@ -118,13 +124,15 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     configurationGroups: [],
     // groupToWidgets: new Map<string, string[]>(),
     groupToWidgets: {},
-    widgetsToInfo: {},
+    widgetToInfo: {},
+    widgetToAttributes: {},
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
     setConfigurationGroups: this.setConfigurationGroups,
     setGroupToWidgets: this.setGroupToWidgets,
-    setWidgetsToInfo: this.setWidgetsToInfo,
+    setWidgetToInfo: this.setWidgetToInfo,
+    setWidgetToAttributes: this.setWidgetToAttributes,
   };
 
   public render() {

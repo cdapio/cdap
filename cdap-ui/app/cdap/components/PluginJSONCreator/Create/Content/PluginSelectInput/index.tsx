@@ -14,15 +14,32 @@
  * the License.
  */
 
-import ConfigurationGroupsInfo from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsInfo';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import * as React from 'react';
 
-export const STEPS = [
-  /*{
-    label: 'Basic Plugin Information',
-    component: BasicPluginInfo,
-  },*/
-  {
-    label: 'Configuration Groups',
-    component: ConfigurationGroupsInfo,
-  },
-];
+const PluginSelectInput = ({ setValue, value, label, options }) => {
+  const widget = {
+    label,
+    name: label,
+    'widget-type': 'select',
+    'widget-attributes': {
+      options,
+    },
+  };
+
+  const property = {
+    required: true,
+    name: label,
+  };
+
+  return (
+    <WidgetWrapper
+      widgetProperty={widget}
+      pluginProperty={property}
+      value={value}
+      onChange={setValue}
+    />
+  );
+};
+
+export default PluginSelectInput;
