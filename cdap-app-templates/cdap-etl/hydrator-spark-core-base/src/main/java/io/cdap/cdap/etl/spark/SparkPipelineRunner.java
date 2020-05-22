@@ -32,6 +32,7 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
@@ -251,10 +252,19 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
+        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
         Integer partitions = stagePartitions.get(stageName);
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
-        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+
+        if (plugin instanceof BatchReduceAggregator) {
+          SparkCollection<RecordInfo<Object>> combinedData = stageData.reduceAggregate(stageSpec, partitions,
+                                                                                       collector);
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, hasErrorOutput, hasAlertOutput);
+        } else {
+          SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, hasErrorOutput, hasAlertOutput);
+        }
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
