@@ -51,6 +51,8 @@ import io.cdap.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import io.cdap.cdap.etl.mock.batch.joiner.DupeFlagger;
 import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
 import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
+import io.cdap.cdap.etl.mock.batch.reduceaggregator.DistinctReduceAggregator;
+import io.cdap.cdap.etl.mock.batch.reduceaggregator.FieldCountReduceAggregator;
 import io.cdap.cdap.etl.mock.condition.MockCondition;
 import io.cdap.cdap.etl.mock.spark.Window;
 import io.cdap.cdap.etl.mock.spark.compute.StringValueFilterCompute;
@@ -90,7 +92,8 @@ public class HydratorTestBase extends TestBase {
     MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
+    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS, DistinctReduceAggregator.PLUGIN_CLASS,
+    FieldCountReduceAggregator.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,

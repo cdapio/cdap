@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.mock.batch.aggregator;
+package io.cdap.cdap.etl.mock.batch.reduceaggregator;
 
 import com.google.common.base.Splitter;
 import io.cdap.cdap.api.annotation.Description;
@@ -30,7 +30,9 @@ import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
+import io.cdap.cdap.etl.mock.batch.aggregator.DistinctAggregator;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
@@ -40,21 +42,23 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Distinct aggregator.
+ * Distinct aggregator
+ * TODO: CDAP-16856 remove and use the existing {@link DistinctAggregator} once mapreduce implementation is done
  */
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
-@Name("Distinct")
+@Name(DistinctReduceAggregator.NAME)
 @Description("Deduplicates input records so that only provided fields are used to apply distinction on while other " +
   "fields are projected out.")
-public class DistinctAggregator extends BatchAggregator<StructuredRecord, StructuredRecord, StructuredRecord> {
-  public static final String NAME = "Distinct";
+public class DistinctReduceAggregator
+  extends BatchReduceAggregator<StructuredRecord, StructuredRecord, StructuredRecord> {
+  public static final String NAME = "Distinct Aggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
-  private final Conf conf;
+  private final Conf config;
   private Iterable<String> fields;
   private Schema outputSchema;
 
-  public DistinctAggregator(Conf conf) {
-    this.conf = conf;
+  public DistinctReduceAggregator(Conf config) {
+    this.config = config;
   }
 
   @Override
@@ -62,14 +66,14 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
     StageConfigurer stageConfigurer = pipelineConfigurer.getStageConfigurer();
     Schema inputSchema = stageConfigurer.getInputSchema();
 
-    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema, conf.getFields());
+    this.outputSchema = getOutputSchema(stageConfigurer.getFailureCollector(), inputSchema, config.getFields());
     stageConfigurer.setOutputSchema(outputSchema);
   }
 
   @Override
   public void initialize(BatchRuntimeContext context) {
     outputSchema = context.getOutputSchema();
-    fields = conf.getFields();
+    fields = config.getFields();
   }
 
   @Override
@@ -100,7 +104,12 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
       outputFields.add(field);
     }
     collector.getOrThrowException();
-    return Schema.recordOf(inputSchema.getRecordName() + ".distinct", outputFields);
+    return Schema.recordOf("record", outputFields);
+  }
+
+  @Override
+  public StructuredRecord reduce(StructuredRecord value1, StructuredRecord value2) throws Exception {
+    return value1;
   }
 
   /**
@@ -118,13 +127,14 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
   public static ETLPlugin getPlugin(String field) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", field);
-    return new ETLPlugin(DistinctAggregator.NAME, BatchAggregator.PLUGIN_TYPE, properties);
+    return new ETLPlugin(NAME, BatchAggregator.PLUGIN_TYPE, properties);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "DistinctAggregator", "", DistinctAggregator.class.getName(),
+    properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
+    return new PluginClass(BatchReduceAggregator.PLUGIN_TYPE, NAME, "",
+                           DistinctReduceAggregator.class.getName(),
                            "config", properties);
   }
 }

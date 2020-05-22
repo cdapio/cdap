@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.PostAction;
@@ -94,6 +95,8 @@ public class PipelinePluginContext implements PluginContext {
       return new WrappedErrorTransform<>((ErrorTransform) plugin, caller, operationTimer);
     } else if (plugin instanceof Transform) {
       return new WrappedTransform<>((Transform) plugin, caller, operationTimer);
+    } else if (plugin instanceof BatchReduceAggregator) {
+      return new WrappedReduceAggregator<>((BatchReduceAggregator) plugin, caller, operationTimer);
     } else if (plugin instanceof BatchAggregator) {
       return new WrappedBatchAggregator<>((BatchAggregator) plugin, caller, operationTimer);
     } else if (plugin instanceof BatchJoiner) {
