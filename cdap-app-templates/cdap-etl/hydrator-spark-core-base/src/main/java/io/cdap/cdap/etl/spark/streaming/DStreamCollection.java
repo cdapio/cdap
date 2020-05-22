@@ -132,6 +132,14 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
+  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
+                                                             StageStatisticsCollector collector) {
+    // TODO: implement
+    throw new UnsupportedOperationException("auto join not supported");
+  }
+
+
+  @Override
   public <U> SparkCollection<U> compute(final StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
     final SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec, new NoopStageStatisticsCollector()), compute);
