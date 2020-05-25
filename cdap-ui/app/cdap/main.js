@@ -278,6 +278,25 @@ class CDAP extends Component {
                       );
                     }}
                   />
+                  <Route
+                    exact
+                    path="/schema"
+                    render={(props) => {
+                      if (window.CDAP_CONFIG.cdap.mode !== 'development') {
+                        return <Page404 {...props} />;
+                      }
+                      const SchemaEditorDemo = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "SchemaEditor" */ 'components/AbstractWidget/SchemaEditor/SchemaEditorDemo'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ErrorBoundary>
+                          <SchemaEditorDemo />
+                        </ErrorBoundary>
+                      );
+                    }}
+                  />
                   {/*
                     Eventually handling 404 should move to the error boundary and all container components will have the error object.
                   */}
