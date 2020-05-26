@@ -53,18 +53,13 @@ const styles = (theme): StyleRules => {
       padding: '0px 0',
       width: 'calc(100%)',
     },
-    groupInput: {
-      '& > *': {
-        width: '80%',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
+    eachGroup: {
+      display: 'grid',
+      gridTemplateColumns: '5fr 1fr',
     },
-    actionButtons: {},
-    groupInputContainer: {
-      position: 'relative',
-      padding: '7px 10px 5px',
-      margin: '25px',
+    groupInputs: {},
+    groupActionButtons: {
+      marginTop: '10px',
     },
     label: {
       fontSize: '12px',
@@ -74,9 +69,7 @@ const styles = (theme): StyleRules => {
       padding: '0 5px',
       backgroundColor: theme.palette.white[50],
     },
-    widgetContainer: {
-      width: 'calc(100%-1000px)',
-    },
+    widgetContainer: {},
   };
 };
 
@@ -93,8 +86,7 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   displayName,
   widgetToAttributes,
   setWidgetToAttributes,
-  outputSchemaType,
-  schemaTypes,
+  outputName,
   filters,
   filterToName,
   filterToCondition,
@@ -111,9 +103,6 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
     ? localConfigurationGroups[activeGroupIndex]
     : null;
 
-  const [localGroupLabel, setLocalGroupLabel] = React.useState('');
-  const [localGroupDescription, setLocalGroupDescription] = React.useState('');
-
   const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
   const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
@@ -122,20 +111,6 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   const [activeWidgets, setActiveWidgets] = React.useState([]);
 
   const [jsonView, setJsonView] = React.useState(false);
-
-  React.useEffect(() => {
-    if (activeGroupID) {
-      const activeGroupInfo = localGroupToInfo[activeGroupID];
-      setLocalGroupLabel(activeGroupInfo.label);
-      setLocalGroupDescription(activeGroupInfo.description);
-    } /* else {
-      setLocalGroupLabel('');
-      setLocalGroupDescription('');
-    }*/
-    if (activeGroupID) {
-      setActiveWidgets(localGroupToWidgets[activeGroupID]);
-    }
-  }, [activeGroupIndex]);
 
   React.useEffect(() => {
     if (activeGroupID) {
@@ -170,7 +145,7 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
     setLocalGroupToInfo({
       ...localGroupToInfo,
       [newGroupID]: {
-        label: newGroupID,
+        label: '',
         description: '',
       } as IConfigurationGroupInfo,
     });
@@ -207,25 +182,7 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
     setLocalWidgetToAttributes(newWidgetToAttributes);
   }
 
-  function modifyConfigurationGroup(index: number) {
-    const newLocalGroups = [...localConfigurationGroups];
-    /*const editGroupID = newLocalGroups[index];
-    newLocalGroups[index] = editGroupID;
-    setLocalConfigurationGroups(newLocalGroups);*/
-    const editGroupID = newLocalGroups[index];
-    const editGroup = {
-      label: localGroupLabel,
-      description: localGroupDescription,
-    } as IConfigurationGroupInfo;
-    const groups = localConfigurationGroups;
-    setLocalGroupToInfo({ ...localGroupToInfo, [editGroupID]: editGroup });
-  }
-
   const switchEditConfigurationGroup = (index) => (event, newExpanded) => {
-    const oldActiveGroupIndex = activeGroupIndex;
-    if (!(newExpanded && activeGroupIndex == null)) {
-      modifyConfigurationGroup(oldActiveGroupIndex);
-    }
     if (newExpanded) {
       setActiveGroupIndex(index);
     } else {
@@ -248,8 +205,7 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
         groupToWidgets={localGroupToWidgets}
         widgetToInfo={localWidgetToInfo}
         widgetToAttributes={localWidgetToAttributes}
-        outputSchemaType={outputSchemaType}
-        schemaTypes={schemaTypes}
+        outputName={outputName}
         open={jsonView}
         onClose={() => setJsonView(!jsonView)}
         filters={filters}
@@ -271,52 +227,56 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
           const configurationGroupExpanded = activeGroupIndex == i;
           const group = localGroupToInfo[groupID];
           return (
-            <ExpansionPanel
-              expanded={configurationGroupExpanded}
-              onChange={switchEditConfigurationGroup(i)}
-            >
-              <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1c-content"
-                id="panel1c-header"
-              >
-                <If condition={!configurationGroupExpanded}>
-                  <Typography className={classes.heading}>{group.label}</Typography>
-                </If>
-              </ExpansionPanelSummary>
-              <ExpansionPanelActions className={classes.groupContent}>
-                <GroupInfoInput
-                  classes={classes}
-                  groupID={groupID}
-                  groupToInfo={localGroupToInfo}
-                  setGroupToInfo={setLocalGroupToInfo}
-                />
-                <WidgetCollection
-                  activeWidgets={activeWidgets}
-                  activeGroupIndex={activeGroupIndex}
-                  setGroupToWidgets={setLocalGroupToWidgets}
-                  groupID={groupID}
-                  configurationGroups={localConfigurationGroups}
-                  groupToWidgets={localGroupToWidgets}
-                  widgetToInfo={localWidgetToInfo}
-                  setWidgetToInfo={setLocalWidgetToInfo}
-                  widgetToAttributes={localWidgetToAttributes}
-                  setWidgetToAttributes={setLocalWidgetToAttributes}
-                />
-                <div className={classes.actionButtons}>
-                  <IconButton onClick={() => addConfigurationGroup(i)} data-cy="add-row">
-                    <AddIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => deleteConfigurationGroup(i)}
-                    color="secondary"
-                    data-cy="remove-row"
+            <div className={classes.eachGroup}>
+              <div className={classes.groupInputs}>
+                <ExpansionPanel
+                  expanded={configurationGroupExpanded}
+                  onChange={switchEditConfigurationGroup(i)}
+                >
+                  <ExpansionPanelSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="panel1c-content"
+                    id="panel1c-header"
                   >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </div>
-              </ExpansionPanelActions>
-            </ExpansionPanel>
+                    <If condition={!configurationGroupExpanded}>
+                      <Typography className={classes.heading}>{group.label}</Typography>
+                    </If>
+                  </ExpansionPanelSummary>
+                  <ExpansionPanelActions className={classes.groupContent}>
+                    <GroupInfoInput
+                      classes={classes}
+                      groupID={groupID}
+                      groupToInfo={localGroupToInfo}
+                      setGroupToInfo={setLocalGroupToInfo}
+                    />
+                    <WidgetCollection
+                      activeWidgets={activeWidgets}
+                      activeGroupIndex={activeGroupIndex}
+                      setGroupToWidgets={setLocalGroupToWidgets}
+                      groupID={groupID}
+                      configurationGroups={localConfigurationGroups}
+                      groupToWidgets={localGroupToWidgets}
+                      widgetToInfo={localWidgetToInfo}
+                      setWidgetToInfo={setLocalWidgetToInfo}
+                      widgetToAttributes={localWidgetToAttributes}
+                      setWidgetToAttributes={setLocalWidgetToAttributes}
+                    />
+                  </ExpansionPanelActions>
+                </ExpansionPanel>
+              </div>
+              <div className={classes.groupActionButtons}>
+                <IconButton onClick={() => addConfigurationGroup(i)} data-cy="add-row">
+                  <AddIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  onClick={() => deleteConfigurationGroup(i)}
+                  color="secondary"
+                  data-cy="remove-row"
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </div>
+            </div>
           );
         })}
       </div>

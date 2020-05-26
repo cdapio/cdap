@@ -51,8 +51,7 @@ interface ICreateState {
   groupToWidgets: any;
   widgetToInfo: any;
   widgetToAttributes: any;
-  outputSchemaType: OutputSchemaType;
-  schemaTypes: string[];
+  outputName: string;
   // data for filter page
   filters: string[];
   filterToName: any;
@@ -68,8 +67,7 @@ interface ICreateState {
   setGroupToWidgets: (groupToWidgets: any) => void;
   setWidgetToInfo: (widgetToInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
-  setOutputSchemaType: (outputSchemaType: OutputSchemaType) => void;
-  setSchemaTypes: (schemaTypes: string[]) => void;
+  setOutputName: (outputName: string) => void;
   setFilters: (filters: string[]) => void;
   setFilterToName: (filterToName: any) => void;
   setFilterToCondition: (filterToCondition: any) => void;
@@ -97,10 +95,10 @@ export interface IWidgetInfo {
   widgetCategory?: string;
 }
 
-export enum OutputSchemaType {
+/*export enum OutputSchemaType {
   Explicit = 'schema',
   Implicit = 'non-editable-schema-editor',
-}
+}*/
 
 export type ICreateContext = Partial<ICreateState>;
 
@@ -144,12 +142,8 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ widgetToAttributes });
   };
 
-  public setOutputSchemaType = (outputSchemaType: OutputSchemaType) => {
-    this.setState({ outputSchemaType });
-  };
-
-  public setSchemaTypes = (schemaTypes: string[]) => {
-    this.setState({ schemaTypes });
+  public setOutputName = (outputName: string) => {
+    this.setState({ outputName });
   };
 
   public setFilters = (filters: string[]) => {
@@ -184,8 +178,8 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToWidgets: {},
     widgetToInfo: {},
     widgetToAttributes: {},
-    outputSchemaType: OutputSchemaType.Explicit,
-    schemaTypes: [],
+    // outputSchemaType: OutputSchemaType.Explicit,
+    // schemaTypes: [],
     filters: [],
     filterToName: {},
     filterToCondition: {},
@@ -200,8 +194,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setGroupToWidgets: this.setGroupToWidgets,
     setWidgetToInfo: this.setWidgetToInfo,
     setWidgetToAttributes: this.setWidgetToAttributes,
-    setOutputSchemaType: this.setOutputSchemaType,
-    setSchemaTypes: this.setSchemaTypes,
+    setOutputName: this.setOutputName,
     setFilters: this.setFilters,
     setFilterToName: this.setFilterToName,
     setFilterToCondition: this.setFilterToCondition,

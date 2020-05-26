@@ -16,16 +16,10 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Heading, { HeadingTypes } from 'components/Heading';
-import If from 'components/If';
-import {
-  createContextConnect,
-  ICreateContext,
-  OutputSchemaType,
-} from 'components/PluginJSONCreator/Create';
+import { createContextConnect, ICreateContext } from 'components/PluginJSONCreator/Create';
 import FilterCollection from 'components/PluginJSONCreator/Create/Content/FilterCollection';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonLiveViewer';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import PluginRadioGroupInput from 'components/PluginJSONCreator/Create/Content/PluginRadioGroupInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import * as React from 'react';
 
@@ -50,10 +44,6 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
-  outputSchemaType,
-  setOutputSchemaType,
-  schemaTypes,
-  setSchemaTypes,
   filters,
   setFilters,
   filterToName,
@@ -64,9 +54,9 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   setFilterToShowList,
   showToInfo,
   setShowToInfo,
+  outputName,
+  setOutputName,
 }) => {
-  const [localOutputSchemaType, setLocalOutputSchemaType] = React.useState(outputSchemaType);
-  const [localSchemaTypes, setLocalSchemaTypes] = React.useState(schemaTypes);
   const [localFilters, setLocalFilters] = React.useState(filters);
   const [localFilterToName, setLocalFilterToName] = React.useState(filterToName);
   const [localFilterToCondition, setLocalFilterToCondition] = React.useState(filterToCondition);
@@ -74,7 +64,6 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   const [localShowToInfo, setLocalShowToInfo] = React.useState(showToInfo);
 
   function handleNext() {
-    setOutputSchemaType(localOutputSchemaType);
     setFilters(localFilters);
     setFilterToName(localFilterToName);
     setFilterToCondition(localFilterToCondition);
@@ -91,20 +80,27 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         groupToWidgets={groupToWidgets}
         widgetToInfo={widgetToInfo}
         widgetToAttributes={widgetToAttributes}
-        schemaTypes={localSchemaTypes}
-        localOutputSchemaType={localOutputSchemaType}
         filters={localFilters}
         filterToName={localFilterToName}
         filterToCondition={localFilterToCondition}
         filterToShowList={localFilterToShowList}
         showToInfo={localShowToInfo}
+        outputName={outputName}
         open={true}
         onClose={() => {}}
       />
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Outputs" />
         <br />
-        <PluginRadioGroupInput
+        <PluginInput
+          widgetType={'textbox'}
+          value={outputName}
+          setValue={setOutputName}
+          label={'Output Name'}
+          placeholder={'output name'}
+          required={false}
+        />
+        {/*<PluginRadioGroupInput
           value={localOutputSchemaType}
           setValue={(val) => setLocalOutputSchemaType(val)}
           options={[
@@ -129,9 +125,9 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
             required={true}
             /*options={SCHEMA_TYPES.types.map((type) => {
               return { id: 'type_' + uuidV4(), label: type };
-            })}*/
+            })}
           />
-        </If>
+        </If>*/}
         <Heading type={HeadingTypes.h3} label="Filters" />
         <FilterCollection
           filters={localFilters}

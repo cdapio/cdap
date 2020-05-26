@@ -14,11 +14,30 @@
  * the License.
  */
 
+import { withStyles } from '@material-ui/core';
+import { StyleRules } from '@material-ui/core/styles';
 import If from 'components/If';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { createContextConnect } from 'components/Replicator/Create';
 import * as React from 'react';
 
-export const GroupInfoInput = ({ classes, groupID, groupToInfo, setGroupToInfo }) => {
+const styles = (theme): StyleRules => {
+  return {
+    groupInput: {
+      '& > *': {
+        marginTop: '10px',
+        marginBottom: '10px',
+      },
+    },
+    groupInputContainer: {
+      position: 'relative',
+      padding: '7px 10px 5px',
+      margin: '25px',
+    },
+  };
+};
+
+export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToInfo }) => {
   function onGroupLabelChange() {
     return (label) => {
       setGroupToInfo((prevObjs) => ({
@@ -42,27 +61,27 @@ export const GroupInfoInput = ({ classes, groupID, groupToInfo, setGroupToInfo }
   return (
     <If condition={group}>
       <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
-        <div className={classes.widgetContainer}>
-          <div className={classes.groupInput}>
-            <PluginInput
-              widgetType={'textbox'}
-              value={group.label}
-              setValue={onGroupLabelChange()}
-              label={'Label'}
-              required={true}
-            />
-            <PluginInput
-              widgetType={'textarea'}
-              value={group.description}
-              setValue={onGroupDescriptionChange()}
-              label={'Description'}
-              required={false}
-            />
-          </div>
+        <div className={classes.groupInput}>
+          <PluginInput
+            widgetType={'textbox'}
+            value={group.label}
+            setValue={onGroupLabelChange()}
+            label={'Label'}
+            required={true}
+          />
+          <PluginInput
+            widgetType={'textarea'}
+            value={group.description}
+            setValue={onGroupDescriptionChange()}
+            label={'Description'}
+            required={false}
+          />
         </div>
       </div>
     </If>
   );
 };
 
+const StyledGroupInfoInput = withStyles(styles)(GroupInfoInputView);
+const GroupInfoInput = createContextConnect(StyledGroupInfoInput);
 export default GroupInfoInput;

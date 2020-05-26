@@ -14,8 +14,10 @@
  * the License.
  */
 
+import { Divider } from '@material-ui/core';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import If from 'components/If';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/WidgetAttributesCollection/AttributeKeyValueInput';
@@ -201,7 +203,7 @@ const WidgetAttributesCollectionView: React.FC<WithStyles<typeof styles>> = ({
         onAddWidget={onAddWidget}
         onDeleteWidget={onDeleteWidget}
       />
-      {attributeFields.map((field) => {
+      {attributeFields.map((field, fieldIndex) => {
         const fieldInfo = WIDGET_TYPE_TO_ATTRIBUTES[widgetType]
           ? WIDGET_TYPE_TO_ATTRIBUTES[widgetType][field]
           : {};
@@ -215,6 +217,9 @@ const WidgetAttributesCollectionView: React.FC<WithStyles<typeof styles>> = ({
               setWidgetToAttributes={setWidgetToAttributes}
               widgetID={widgetID}
             />
+            <If condition={fieldIndex < attributeFields.length - 1}>
+              <Divider />
+            </If>
           </div>
         );
       })}

@@ -14,19 +14,23 @@
  * the License.
  */
 
+import { Button, Divider, Grid, IconButton } from '@material-ui/core';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import CloseIcon from '@material-ui/icons/Close';
+import CodeIcon from '@material-ui/icons/Code';
+import GetAppIcon from '@material-ui/icons/GetApp';
+import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
 import { INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
-import {
-  createContextConnect,
-  IWidgetInfo,
-  OutputSchemaType,
-} from 'components/PluginJSONCreator/Create';
+import { createContextConnect, IWidgetInfo } from 'components/PluginJSONCreator/Create';
+import fileDownload from 'js-file-download';
 import * as React from 'react';
 
-const DRAWER_WIDTH = '600px';
+const JSON_VIEWER_WIDTH = '600px';
+const DRAWER_WIDTH = '200px';
+
 export const appDrawerListItemTextStyles = (theme) => ({
   fontWeight: 400,
   fontSize: '1.1rem',
@@ -45,13 +49,23 @@ export const appDrawerListItemStyles = (theme) => ({
 
 const styles = (theme) => {
   return {
+    jsonViewer: {
+      zIndex: theme.zIndex.drawer,
+      width: JSON_VIEWER_WIDTH,
+    },
     drawer: {
       zIndex: theme.zIndex.drawer,
       width: DRAWER_WIDTH,
     },
-    drawerPaper: {
-      width: DRAWER_WIDTH,
+    jsonViewerPaper: {
+      width: JSON_VIEWER_WIDTH,
       backgroundColor: theme.palette.grey['700'],
+    },
+    drawerPaper: {
+      backgroundColor: theme.palette.grey['700'],
+    },
+    closeJSONViewerButon: {
+      float: 'right',
     },
     listItemText: appDrawerListItemTextStyles(theme),
     toolbar: {
@@ -86,13 +100,12 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
-  outputSchemaType,
-  schemaTypes,
   filters,
   filterToName,
   filterToCondition,
   filterToShowList,
   showToInfo,
+  outputName,
   open,
   onClose,
 }) => {
@@ -104,35 +117,6 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
 
         const widgetType = widgetInfo.widgetType;
         const widgetAttributes = widgetToAttributes[widgetID];
-        /*if (widgetAttributes) {
-          // TODO remove hardcoding
-          Object.entries(widgetAttributes).forEach(([attributeField, attributeValue]) => {
-            const attributeType = WIDGET_TYPE_TO_ATTRIBUTES[widgetType][attributeField].type;
-            const isMultipleInput = attributeType.includes('[]');
-
-            if (!isMultipleInput) {
-              widgetAttributes[attributeField] = attributeValue;
-            } else {
-              if (typeof attributeValue === 'string') {
-                widgetAttributes[attributeField] = attributeValue.split(COMMON_DELIMITER);
-              } else {
-                const supportedTypes = processSupportedTypes(attributeType.split('|'));
-                // keyvalue pair
-                if (supportedTypes.has(SupportedType.ValueLabelPair)) {
-                  widgetAttributes[attributeField].forEach((attribute) => {
-                    attribute.value = attribute.key;
-                    attribute.label = attribute.value;
-                  });
-                } else {
-                  widgetAttributes[attributeField].forEach((attribute) => {
-                    attribute.id = attribute.key;
-                    attribute.label = attribute.value;
-                  });
-                }
-              }
-            }
-          });
-        }*/
         return {
           'widget-type': widgetInfo.widgetType,
           label: widgetInfo.label,
@@ -150,25 +134,9 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       };
     });
 
-    let outputs;
-    if (outputSchemaType === OutputSchemaType.Explicit) {
-      outputs = {
-        name: 'TODO',
-        'widget-type': 'schema',
-        'widget-attributes': {
-          'schema-default-type': 'TODO',
-          'schema-types': schemaTypes,
-        },
-      };
-    } else {
-      outputs = {
-        name: 'TODO',
-        'widget-type': 'non-editable-schema-editor',
-        'widget-attributes': {
-          TODO: 'TODO',
-        },
-      };
-    }
+    const outputsData = {
+      ...(outputName && { name: outputName }),
+    };
 
     const filtersData = filters.map((filterID) => {
       const filterToShowListData = filterToShowList[filterID].map((showID) => {
@@ -192,7 +160,10 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       },
       'display-name': displayName,
       'configuration-groups': configurationGroupsData,
-      outputs,
+      ...(outputsData &&
+        Object.keys(outputsData).length > 0 && {
+          outputs: outputsData,
+        }),
       ...(filtersData &&
         Object.keys(filtersData).length > 0 && {
           filters: filtersData,
@@ -203,32 +174,81 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
     return config;
   }
 
+  function downloadPluginJSON() {
+    fileDownload(JSON.stringify(JSONConfig, undefined, 4), 'sample.json');
+  }
+
   const JSONConfig = getJSONConfig();
 
+  const [isJSONViewOpen, setIsJSONViewOpen] = React.useState(true);
+
   return (
-    <Drawer
-      open={true}
-      variant="persistent"
-      onClose={onClose}
-      className={classes.drawer}
-      anchor="right"
-      disableEnforceFocus={true}
-      ModalProps={{
-        keepMounted: true,
-      }}
-      classes={{
-        paper: classes.drawerPaper,
-      }}
-      data-cy="navbar-drawer"
-    >
-      <div className={classes.toolbar} />
-      <List component="nav" dense={true} className={classes.mainMenu}>
-        <JsonEditorWidget
-          rows={50}
-          value={JSON.stringify(JSONConfig, undefined, 4)}
-        ></JsonEditorWidget>
-      </List>
-    </Drawer>
+    <div>
+      <Drawer
+        open={isJSONViewOpen}
+        variant="persistent"
+        onClose={onClose}
+        className={classes.jsonViewer}
+        anchor="right"
+        disableEnforceFocus={true}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        classes={{
+          paper: classes.jsonViewerPaper,
+        }}
+        data-cy="navbar-drawer"
+      >
+        <div className={classes.toolbar} />
+        <List component="nav" dense={true} className={classes.mainMenu}>
+          <Button variant="contained" color="primary" onClick={downloadPluginJSON}>
+            <Grid container direction="row" alignItems="center">
+              <Grid item>
+                <SaveAltIcon style={{ marginRight: '5px' }} />
+              </Grid>
+              <Grid item>Download</Grid>
+            </Grid>
+          </Button>
+          <IconButton
+            className={classes.closeJSONViewerButon}
+            onClick={() => setIsJSONViewOpen(false)}
+          >
+            <CloseIcon />
+          </IconButton>
+          <JsonEditorWidget
+            rows={50}
+            value={JSON.stringify(JSONConfig, undefined, 4)}
+          ></JsonEditorWidget>
+        </List>
+      </Drawer>
+
+      <Drawer
+        open={!isJSONViewOpen}
+        variant="persistent"
+        onClose={onClose}
+        className={classes.drawer}
+        anchor="right"
+        disableEnforceFocus={true}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        classes={{
+          paper: classes.drawerPaper,
+        }}
+        data-cy="navbar-jsonViewer"
+      >
+        <div className={classes.toolbar} />
+        <List component="nav" dense={true} className={classes.mainMenu}>
+          <IconButton onClick={() => setIsJSONViewOpen(true)}>
+            <CodeIcon />
+          </IconButton>
+          <Divider />
+          <IconButton onClick={downloadPluginJSON}>
+            <GetAppIcon />
+          </IconButton>
+        </List>
+      </Drawer>
+    </div>
   );
 };
 

@@ -14,10 +14,7 @@
  * the License.
  */
 
-import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import AddIcon from '@material-ui/icons/Add';
-import DeleteIcon from '@material-ui/icons/Delete';
 import If from 'components/If';
 import { WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
@@ -27,7 +24,7 @@ const styles = (): StyleRules => {
   return {
     widgetInput: {
       '& > *': {
-        width: '80%',
+        width: '100%',
         marginTop: '10px',
         marginBottom: '10px',
       },
@@ -42,8 +39,6 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
   onLabelChange,
   onWidgetTypeChange,
   onWidgetCategoryChange,
-  onAddWidget,
-  onDeleteWidget,
 }) => {
   return (
     <If condition={widgetObject}>
@@ -80,15 +75,6 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
           options={WIDGET_TYPES}
           required={true}
         />
-      </div>
-
-      <div>
-        <IconButton onClick={onAddWidget} data-cy="add-row">
-          <AddIcon fontSize="small" />
-        </IconButton>
-        <IconButton onClick={onDeleteWidget} color="secondary" data-cy="remove-row">
-          <DeleteIcon fontSize="small" />
-        </IconButton>
       </div>
     </If>
   );

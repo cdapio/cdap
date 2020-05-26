@@ -18,7 +18,9 @@ import { Dialog, DialogContent, DialogTitle, IconButton } from '@material-ui/cor
 import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import AddIcon from '@material-ui/icons/Add';
 import CloseIcon from '@material-ui/icons/Close';
+import DeleteIcon from '@material-ui/icons/Delete';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
@@ -40,24 +42,21 @@ const styles = (theme): StyleRules => {
       padding: '0 !important',
     },
     eachWidget: {
-      display: 'block',
+      display: 'grid',
+      gridTemplateColumns: '5fr 1fr',
       marginLeft: 'auto',
       marginRight: 'auto',
-      marginTop: '10px',
-      marginBottom: '10px',
-      // padding: '7px 10px 5px',
+    },
+    widgetInputs: {
       '& > *': {
-        //  margin: '6px',
-        marginTop: '15px',
-        marginBottom: '15px',
+        marginTop: '20px',
+        marginBottom: '20px',
       },
     },
-    widgetInput: {
-      '& > *': {
-        width: '80%',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
+    widgetActionButtons: {
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
     },
     nestedWidgets: {
       border: `1px solid`,
@@ -104,6 +103,8 @@ const WidgetCollectionView: React.FC<WithStyles<typeof styles>> = ({
 }) => {
   function addWidgetToGroup(index?: number) {
     const newWidgetID = 'Widget_' + uuidV4();
+
+    const groupID = activeGroupID;
 
     if (index === undefined) {
       setWidgetToInfo({
@@ -212,30 +213,39 @@ const WidgetCollectionView: React.FC<WithStyles<typeof styles>> = ({
 
   return (
     <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
-      <If condition={true}>
-        <div className={`widget-wrapper-label ${classes.label}`}>
-          Add Widgets
-          <span className={classes.required}>*</span>
-        </div>
-      </If>
+      <div className={`widget-wrapper-label ${classes.label}`}>
+        Add Widgets
+        <span className={classes.required}>*</span>
+      </div>
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
             <If condition={widgetToInfo[widgetID]}>
               <div className={classes.eachWidget}>
-                <WidgetInput
-                  widgetObject={widgetToInfo[widgetID]}
-                  onNameChange={handleNameChange(widgetToInfo[widgetID], widgetID)}
-                  onLabelChange={handleLabelChange(widgetToInfo[widgetID], widgetID)}
-                  onWidgetTypeChange={handleWidgetTypeChange(widgetToInfo[widgetID], widgetID)}
-                  onWidgetCategoryChange={handleWidgetCategoryChange(
-                    widgetToInfo[widgetID],
-                    widgetID
-                  )}
-                  onAddWidget={() => addWidgetToGroup(widgetIndex)}
-                  onDeleteWidget={() => deleteWidgetFromGroup(widgetIndex)}
-                />
-                <Button onClick={() => setOpenWidgetIndex(widgetIndex)}>Change Properties</Button>
+                <div className={classes.widgetInputs}>
+                  <WidgetInput
+                    widgetObject={widgetToInfo[widgetID]}
+                    onNameChange={handleNameChange(widgetToInfo[widgetID], widgetID)}
+                    onLabelChange={handleLabelChange(widgetToInfo[widgetID], widgetID)}
+                    onWidgetTypeChange={handleWidgetTypeChange(widgetToInfo[widgetID], widgetID)}
+                    onWidgetCategoryChange={handleWidgetCategoryChange(
+                      widgetToInfo[widgetID],
+                      widgetID
+                    )}
+                  />
+                </div>
+                <div className={classes.widgetActionButtons}>
+                  <IconButton onClick={() => addWidgetToGroup(widgetIndex)} data-cy="add-row">
+                    <AddIcon fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => deleteWidgetFromGroup(widgetIndex)}
+                    color="secondary"
+                    data-cy="remove-row"
+                  >
+                    <DeleteIcon fontSize="small" />
+                  </IconButton>
+                </div>
 
                 <Dialog
                   open={openWidgetIndex === widgetIndex}
@@ -272,7 +282,17 @@ const WidgetCollectionView: React.FC<WithStyles<typeof styles>> = ({
                   </DialogContent>
                 </Dialog>
               </div>
-              <Divider className={classes.widgetDivider} />
+              <Button
+                variant="contained"
+                color="primary"
+                component="span"
+                onClick={() => setOpenWidgetIndex(widgetIndex)}
+              >
+                Widget Properties
+              </Button>
+              <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
+                <Divider className={classes.widgetDivider} />
+              </If>
             </If>
           );
         })}

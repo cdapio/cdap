@@ -88,7 +88,6 @@ const AttributeKeyValueInput = ({
   <KeyValuePairs
         keyValues={keyValues}
         onKeyValueChange={(keyvalue) => {
-          debugger;
         }}
         keyPlaceholder={keyField}
         valuePlaceholder={valueField}

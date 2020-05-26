@@ -76,17 +76,6 @@ const styles = (theme): StyleRules => {
 
 const PluginJsonImporterView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  displayName,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetToInfo,
-  widgetToAttributes,
-  filters,
-  filterToName,
-  filterToCondition,
-  filterToShowList,
-  showToInfo,
   setDisplayName,
   setConfigurationGroups,
   setGroupToInfo,
@@ -98,6 +87,7 @@ const PluginJsonImporterView: React.FC<ICreateContext & WithStyles<typeof styles
   setFilterToCondition,
   setFilterToShowList,
   setShowToInfo,
+  setOutputName,
 }) => {
   const [loading, setLoading] = React.useState(false);
   const [success, setSuccess] = React.useState(false);
@@ -225,6 +215,9 @@ const PluginJsonImporterView: React.FC<ICreateContext & WithStyles<typeof styles
         });
       }
 
+      const newOutputName =
+        pluginJSON.outputs && pluginJSON.outputs.length > 0 ? pluginJSON.outputs[0].name : '';
+
       setConfigurationGroups(newConfigurationGroups);
       setGroupToInfo(newGroupToInfo);
       setGroupToWidgets(newGroupToWidgets);
@@ -235,6 +228,7 @@ const PluginJsonImporterView: React.FC<ICreateContext & WithStyles<typeof styles
       setFilterToCondition(newFilterToCondition);
       setFilterToShowList(newFilterToShowList);
       setShowToInfo(newShowToInfo);
+      setOutputName(newOutputName);
 
       setSuccess(true);
       setLoading(false);

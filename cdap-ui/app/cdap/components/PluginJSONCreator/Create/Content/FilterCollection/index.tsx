@@ -34,7 +34,7 @@ import uuidV4 from 'uuid/v4';
 
 const styles = (theme: { palette: { grey: any[]; white: any[] } }): StyleRules => {
   return {
-    eachWidget: {
+    eachFilter: {
       display: 'block',
       marginLeft: 'auto',
       marginRight: 'auto',
@@ -76,10 +76,10 @@ const styles = (theme: { palette: { grey: any[]; white: any[] } }): StyleRules =
       lineHeight: '12px',
       verticalAlign: 'middle',
     },
-    widgetContainer: {
+    filterContainer: {
       width: 'calc(100%-1000px)',
     },
-    widgetDivider: {
+    filterDivider: {
       width: '100%',
     },
   };
@@ -352,7 +352,7 @@ const FilterCollectionView: React.FC<WithStyles<typeof styles>> = ({
           <span className={classes.required}>*</span>
         </div>
       </If>
-      <div className={classes.widgetContainer}>
+      <div className={classes.filterContainer}>
         {filters.map((filterID: string, filterIndex: number) => {
           return (
             <div>
@@ -362,21 +362,21 @@ const FilterCollectionView: React.FC<WithStyles<typeof styles>> = ({
               <Button variant="contained" color="primary" onClick={() => deleteFilter(filterIndex)}>
                 Delete Filter
               </Button>
-              <div className={classes.eachWidget}>
+              <div className={classes.eachFilter}>
                 <FilterNameInput
                   filterID={filterID}
                   filterToName={filterToName}
                   setFilterToName={setFilterToName}
                 />
               </div>
-              <div className={classes.eachWidget}>
+              <div className={classes.eachFilter}>
                 <FilterConditionInput
                   filterID={filterID}
                   filterToCondition={filterToCondition}
                   setFilterToCondition={setFilterToCondition}
                 />
               </div>
-              <div className={classes.eachWidget}>
+              <div className={classes.eachFilter}>
                 <FilterShowListInput
                   filterID={filterID}
                   filterToShowList={filterToShowList}
@@ -385,7 +385,7 @@ const FilterCollectionView: React.FC<WithStyles<typeof styles>> = ({
                   setShowToInfo={setShowToInfo}
                 />
               </div>
-              <Divider className={classes.widgetDivider} />
+              <Divider className={classes.filterDivider} />
             </div>
           );
         })}
