@@ -28,14 +28,15 @@ const isNullable = (type) => {
   }
   return false;
 };
+
 const isUnion = (type) => {
   return Array.isArray(type) && !isNullable(type);
 };
 
-const getSimpleType = (type) => {
-  if (Array.isArray(type)) {
+const getNonNullableType = (type) => {
+  if (Array.isArray(type) && !isUnion(type)) {
     const nonNullTypes = type.filter((t) => t !== 'null');
-    if (nonNullTypes.length === 1) {
+    if (nonNullTypes.length === 1 && type.length - 1 === nonNullTypes.length) {
       return nonNullTypes[0];
     }
   }
@@ -43,10 +44,15 @@ const getSimpleType = (type) => {
 };
 
 const isComplexType = (complexType) => {
-  if (typeof complexType === 'string') {
+  const nullable = isNullable(complexType);
+  let type = complexType;
+  if (nullable) {
+    type = complexType.filter((t) => t !== 'null').pop();
+  }
+  if (typeof type === 'string') {
     return false;
   }
-  switch (complexType.type) {
+  switch (type.type) {
     case 'record':
     case 'enum':
     case 'array':
@@ -57,11 +63,14 @@ const isComplexType = (complexType) => {
   }
 };
 
-const getComplexType = (complexType) => {
+const getComplexTypeName = (complexType) => {
   const c = cloneDeep(complexType);
-  let type = c.type;
-  if (isNullable(type)) {
-    type = type.filter((t) => t !== 'null').pop();
+  let type;
+  if (isNullable(complexType)) {
+    type = complexType.filter((t) => t !== 'null').pop();
+    type = type.type;
+  } else {
+    type = c.type;
   }
   switch (type) {
     case 'record':
@@ -74,4 +83,4 @@ const getComplexType = (complexType) => {
   }
 };
 
-export { isNullable, isUnion, isComplexType, getSimpleType, getComplexType };
+export { isNullable, isUnion, isComplexType, getNonNullableType, getComplexTypeName };

@@ -19,22 +19,25 @@ const a = [
         },
         {
           name: 'age',
-          type: 'string',
+          type: ['string', 'null'],
         },
         {
           name: 'arr',
           type: {
             type: 'array',
-            items: 'string',
+            items: ['string', 'null'],
           },
         },
         {
           name: 'map1',
-          type: {
-            type: 'map',
-            keys: 'string',
-            values: 'string',
-          },
+          type: [
+            {
+              type: 'map',
+              keys: ['long'],
+              values: ['double'],
+            },
+            'null',
+          ],
         },
         {
           name: 'something',
@@ -49,10 +52,13 @@ const a = [
         },
         {
           name: 'enum1',
-          type: {
-            type: 'enum',
-            symbols: ['something', 'somethingelse', 'nothing', 'maybesomething'],
-          },
+          type: [
+            'null',
+            {
+              type: 'enum',
+              symbols: ['something', 'somethingelse', 'nothing', 'maybesomething'],
+            },
+          ],
         },
       ],
     },
