@@ -288,7 +288,7 @@ const WidgetCollectionView: React.FC<WithStyles<typeof styles>> = ({
                 component="span"
                 onClick={() => setOpenWidgetIndex(widgetIndex)}
               >
-                Widget Properties
+                Attributes
               </Button>
               <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
                 <Divider className={classes.widgetDivider} />

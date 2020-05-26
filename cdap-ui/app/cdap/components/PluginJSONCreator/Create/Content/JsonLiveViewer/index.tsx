@@ -158,7 +158,7 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
 
     const config = {
       metadata: {
-        'spec-version': 'TODO',
+        'spec-version': '1.5',
       },
       'display-name': displayName,
       'configuration-groups': configurationGroupsData,

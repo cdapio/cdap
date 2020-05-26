@@ -47,7 +47,7 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
           widgetType={'textbox'}
           value={widgetObject.name}
           setValue={onNameChange}
-          label={'Widget Name'}
+          label={'Name'}
           placeholder={'Name a Widget'}
           required={true}
         />
@@ -55,7 +55,7 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
           widgetType={'textbox'}
           value={widgetObject.label}
           setValue={onLabelChange}
-          label={'Widget Label'}
+          label={'Label'}
           placeholder={'Label a Widget'}
           required={true}
         />
@@ -63,7 +63,7 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
           widgetType={'textbox'}
           value={widgetObject.widgetCategory}
           setValue={onWidgetCategoryChange}
-          label={'Widget Category'}
+          label={'Category'}
           placeholder={'Categorize a Widget'}
           required={false}
         />
