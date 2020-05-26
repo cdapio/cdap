@@ -14,23 +14,34 @@
  * the License.
  */
 
-import * as React from 'react';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import * as React from 'react';
 
-export const PluginTextboxInput = ({
+const PluginInput = ({
+  widgetType,
   setValue,
   value,
   label,
   placeholder = '',
+  delimeter = null,
+  options = null,
   required = true,
+  keyPlaceholder = null,
+  valuePlaceholder = null,
+  kvDelimiter = null,
 }) => {
   const widget = {
     label,
     name: label,
-    'widget-type': 'textbox',
+    'widget-type': widgetType,
     'widget-attributes': {
-      default: value,
-      placeholder,
+      ...(delimeter && { delimeter }),
+      ...(options && { options }),
+      ...(placeholder && { placeholder }),
+      ...(value && { default: value }),
+      ...(keyPlaceholder && { 'key-placeholder': keyPlaceholder }),
+      ...(valuePlaceholder && { 'value-placeholder': valuePlaceholder }),
+      ...(kvDelimiter && { 'kv-delimiter': kvDelimiter }),
     },
   };
 
@@ -49,4 +60,4 @@ export const PluginTextboxInput = ({
   );
 };
 
-export default PluginTextboxInput;
+export default PluginInput;

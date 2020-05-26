@@ -14,11 +14,10 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { MarkdownWithStyles } from 'components/Markdown';
-import { getCurrentNamespace } from 'services/NamespaceStore';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import { MyReplicatorApi } from 'api/replicator';
+import * as React from 'react';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 const styles = (): StyleRules => {
   return {
@@ -57,11 +56,7 @@ const DocumentationView: React.FC<IDocumentationProps> = ({ classes, pluginInfo 
     });
   }, []);
 
-  return (
-    <div className={classes.root}>
-      <MarkdownWithStyles markdown={docs} />
-    </div>
-  );
+  return <div className={classes.root}></div>;
 };
 
 const Documentation = withStyles(styles)(DocumentationView);

@@ -46,17 +46,35 @@ interface ICreateState {
   displayName: string;
   emitAlerts: boolean;
   emitErrors: boolean;
-  configurationGroups: IConfigurationGroup[];
-  // groupToWidgets: Map<string, string[]>;
+  configurationGroups: string[];
+  groupToInfo: any;
   groupToWidgets: any;
   widgetToInfo: any;
   widgetToAttributes: any;
+  outputSchemaType: OutputSchemaType;
+  schemaTypes: string[];
+  // data for filter page
+  filters: string[];
+  filterToName: any;
+  filterToCondition: any;
+  filterToShowList: any;
+  showToInfo: any;
+
   setActiveStep: (step: number) => void;
+  setDisplayName: (displayName: string) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
-  setConfigurationGroups: (groups: IConfigurationGroup[]) => void;
+  setConfigurationGroups: (groups: string[]) => void;
+  setGroupToInfo: (groupToInfo: any) => void;
   setGroupToWidgets: (groupToWidgets: any) => void;
   setWidgetToInfo: (widgetToInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
+  setOutputSchemaType: (outputSchemaType: OutputSchemaType) => void;
+  setSchemaTypes: (schemaTypes: string[]) => void;
+  setFilters: (filters: string[]) => void;
+  setFilterToName: (filterToName: any) => void;
+  setFilterToCondition: (filterToCondition: any) => void;
+  setFilterToShowList: (filterToShowList: any) => void;
+  setShowToInfo: (showToInfo: any) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -67,8 +85,7 @@ export interface IBasicPluginInfo {
   emitErrors: boolean;
 }
 
-export interface IConfigurationGroup {
-  id: string;
+export interface IConfigurationGroupInfo {
   label: string;
   description?: string;
 }
@@ -80,11 +97,20 @@ export interface IWidgetInfo {
   widgetCategory?: string;
 }
 
+export enum OutputSchemaType {
+  Explicit = 'schema',
+  Implicit = 'non-editable-schema-editor',
+}
+
 export type ICreateContext = Partial<ICreateState>;
 
 class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof styles>> {
   public setActiveStep = (activeStep: number) => {
     this.setState({ activeStep });
+  };
+
+  public setDisplayName = (displayName: string) => {
+    this.setState({ displayName });
   };
 
   public setBasicPluginInfo = (basicPluginInfo: IBasicPluginInfo) => {
@@ -98,8 +124,12 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     });
   };
 
-  public setConfigurationGroups = (configurationGroups: IConfigurationGroup[]) => {
+  public setConfigurationGroups = (configurationGroups: string[]) => {
     this.setState({ configurationGroups });
+  };
+
+  public setGroupToInfo = (groupToInfo: any) => {
+    this.setState({ groupToInfo });
   };
 
   public setGroupToWidgets = (groupToWidgets: any) => {
@@ -114,6 +144,34 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ widgetToAttributes });
   };
 
+  public setOutputSchemaType = (outputSchemaType: OutputSchemaType) => {
+    this.setState({ outputSchemaType });
+  };
+
+  public setSchemaTypes = (schemaTypes: string[]) => {
+    this.setState({ schemaTypes });
+  };
+
+  public setFilters = (filters: string[]) => {
+    this.setState({ filters });
+  };
+
+  public setFilterToName = (filterToName: any) => {
+    this.setState({ filterToName });
+  };
+
+  public setFilterToCondition = (filterToCondition: any) => {
+    this.setState({ filterToCondition });
+  };
+
+  public setFilterToShowList = (filterToShowList: any) => {
+    this.setState({ filterToShowList });
+  };
+
+  public setShowToInfo = (showToInfo: any) => {
+    this.setState({ showToInfo });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
@@ -122,17 +180,33 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     emitAlerts: true,
     emitErrors: true,
     configurationGroups: [],
-    // groupToWidgets: new Map<string, string[]>(),
+    groupToInfo: {},
     groupToWidgets: {},
     widgetToInfo: {},
     widgetToAttributes: {},
+    outputSchemaType: OutputSchemaType.Explicit,
+    schemaTypes: [],
+    filters: [],
+    filterToName: {},
+    filterToCondition: {},
+    filterToShowList: {},
+    showToInfo: {},
 
     setActiveStep: this.setActiveStep,
+    setDisplayName: this.setDisplayName,
     setBasicPluginInfo: this.setBasicPluginInfo,
     setConfigurationGroups: this.setConfigurationGroups,
+    setGroupToInfo: this.setGroupToInfo,
     setGroupToWidgets: this.setGroupToWidgets,
     setWidgetToInfo: this.setWidgetToInfo,
     setWidgetToAttributes: this.setWidgetToAttributes,
+    setOutputSchemaType: this.setOutputSchemaType,
+    setSchemaTypes: this.setSchemaTypes,
+    setFilters: this.setFilters,
+    setFilterToName: this.setFilterToName,
+    setFilterToCondition: this.setFilterToCondition,
+    setFilterToShowList: this.setFilterToShowList,
+    setShowToInfo: this.setShowToInfo,
   };
 
   public render() {

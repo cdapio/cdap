@@ -28,12 +28,11 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import {
   createContextConnect,
-  IConfigurationGroup,
+  IConfigurationGroupInfo,
   ICreateContext,
 } from 'components/PluginJSONCreator/Create';
+import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/GroupInfoInput';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonLiveViewer';
-import PluginTextareaInput from 'components/PluginJSONCreator/Create/Content/PluginTextareaInput';
-import PluginTextboxInput from 'components/PluginJSONCreator/Create/Content/PluginTextboxInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import * as React from 'react';
@@ -61,9 +60,7 @@ const styles = (theme): StyleRules => {
         marginBottom: '10px',
       },
     },
-    actionButtons: {
-      float: 'right',
-    },
+    actionButtons: {},
     groupInputContainer: {
       position: 'relative',
       padding: '7px 10px 5px',
@@ -83,27 +80,12 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const GroupBasicInfoInput = ({ classes, label, setLabel, description, setDescription }) => {
-  return (
-    <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
-      <div className={classes.widgetContainer}>
-        <div className={classes.groupInput}>
-          <PluginTextboxInput value={label} setValue={setLabel} label={'Label'} />
-          <PluginTextareaInput
-            value={description}
-            setValue={setDescription}
-            label={'Description'}
-          />
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
   configurationGroups,
   setConfigurationGroups,
+  groupToInfo,
+  setGroupToInfo,
   groupToWidgets,
   setGroupToWidgets,
   widgetToInfo,
@@ -111,16 +93,28 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   displayName,
   widgetToAttributes,
   setWidgetToAttributes,
+  outputSchemaType,
+  schemaTypes,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
 }) => {
+  console.log('configuration group rerendering');
+
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
     configurationGroups
   );
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
-  const activeGroup = localConfigurationGroups ? localConfigurationGroups[activeGroupIndex] : null;
+  const activeGroupID = localConfigurationGroups
+    ? localConfigurationGroups[activeGroupIndex]
+    : null;
 
   const [localGroupLabel, setLocalGroupLabel] = React.useState('');
   const [localGroupDescription, setLocalGroupDescription] = React.useState('');
 
+  const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
   const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
   const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
@@ -130,91 +124,107 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   const [jsonView, setJsonView] = React.useState(false);
 
   React.useEffect(() => {
-    if (localConfigurationGroups[activeGroupIndex]) {
-      setLocalGroupLabel(localConfigurationGroups[activeGroupIndex].label);
-      setLocalGroupDescription(localConfigurationGroups[activeGroupIndex].description);
+    if (activeGroupID) {
+      const activeGroupInfo = localGroupToInfo[activeGroupID];
+      setLocalGroupLabel(activeGroupInfo.label);
+      setLocalGroupDescription(activeGroupInfo.description);
     } /* else {
       setLocalGroupLabel('');
       setLocalGroupDescription('');
     }*/
-    if (activeGroup) {
-      setActiveWidgets(localGroupToWidgets[activeGroup.id]);
+    if (activeGroupID) {
+      setActiveWidgets(localGroupToWidgets[activeGroupID]);
     }
   }, [activeGroupIndex]);
 
   React.useEffect(() => {
-    if (activeGroup) {
-      setActiveWidgets(localGroupToWidgets[activeGroup.id]);
+    if (activeGroupID) {
+      setActiveWidgets(localGroupToWidgets[activeGroupID]);
     } else {
       setActiveWidgets([]);
     }
   }, [localGroupToWidgets, activeGroupIndex]);
 
-  /*React.useEffect(() => {
-    if (activeGroup) {
-      const groupLabel = activeGroup.label;
-
-      setLocalGroupToWidgets({
-        ...localGroupToWidgets,
-        [groupLabel]: Object.keys(localWidgetToInfo),
-      });
-    }
-  }, [localWidgetToInfo]);*/
-
   // TODO change
   const requiredFilledOut = true;
 
   function addConfigurationGroup(index: number) {
-    const newLocalGroups = [...localConfigurationGroups];
-
     const newGroupID = 'ConfigGroup_' + uuidV4();
-    const newGroup = {
-      id: newGroupID,
-      label: newGroupID, // generate a unique label
-      description: '',
-    } as IConfigurationGroup;
 
-    setLocalGroupToWidgets({ ...localGroupToWidgets, [newGroupID]: [] });
+    const newGroups = [...localConfigurationGroups];
 
-    if (newLocalGroups.length == 0) {
-      newLocalGroups.splice(0, 0, newGroup);
+    if (newGroups.length == 0) {
+      newGroups.splice(0, 0, newGroupID);
     } else {
-      newLocalGroups.splice(index + 1, 0, newGroup);
+      newGroups.splice(index + 1, 0, newGroupID);
     }
 
-    setLocalConfigurationGroups(newLocalGroups);
+    setLocalConfigurationGroups(newGroups);
 
-    if (newLocalGroups.length <= 1) {
+    if (newGroups.length <= 1) {
       setActiveGroupIndex(0);
     } else {
       setActiveGroupIndex(index + 1);
     }
 
-    console.log('configurationGroups', JSON.stringify(newLocalGroups));
+    setLocalGroupToInfo({
+      ...localGroupToInfo,
+      [newGroupID]: {
+        label: newGroupID,
+        description: '',
+      } as IConfigurationGroupInfo,
+    });
+    setLocalGroupToWidgets({ ...localGroupToWidgets, [newGroupID]: [] });
   }
 
   function deleteConfigurationGroup(index: number) {
-    const newLocalGroups = [...localConfigurationGroups];
-    newLocalGroups.splice(index, 1);
-    setLocalConfigurationGroups(newLocalGroups);
+    setActiveGroupIndex(null);
+
+    const newGroups = [...localConfigurationGroups];
+    const groupToDelete = newGroups[index];
+    newGroups.splice(index, 1);
+    setLocalConfigurationGroups(newGroups);
+
+    // groupToInfo
+    const { [groupToDelete]: info, ...restGroupToInfo } = localGroupToInfo;
+    setLocalGroupToInfo(restGroupToInfo);
+
+    // groupToWidgets
+    const { [groupToDelete]: widgets, ...restGroupToWidgets } = localGroupToWidgets;
+    setLocalGroupToWidgets(restGroupToWidgets);
+
+    // widgetToInfo
+    // widgetToAttributes
+    const newWidgetToInfo = localWidgetToInfo;
+    const newWidgetToAttributes = localWidgetToAttributes;
+
+    widgets.map((widget) => {
+      delete newWidgetToInfo[widget];
+      delete newWidgetToAttributes[widget];
+    });
+
+    setLocalWidgetToInfo(newWidgetToInfo);
+    setLocalWidgetToAttributes(newWidgetToAttributes);
   }
 
-  function changeLocalConfigurationGroup(index: number) {
+  function modifyConfigurationGroup(index: number) {
     const newLocalGroups = [...localConfigurationGroups];
-    const modifiedGroup = {
-      id: newLocalGroups[index].id,
+    /*const editGroupID = newLocalGroups[index];
+    newLocalGroups[index] = editGroupID;
+    setLocalConfigurationGroups(newLocalGroups);*/
+    const editGroupID = newLocalGroups[index];
+    const editGroup = {
       label: localGroupLabel,
       description: localGroupDescription,
-    } as IConfigurationGroup;
-    newLocalGroups[index] = modifiedGroup;
-    setLocalConfigurationGroups(newLocalGroups);
+    } as IConfigurationGroupInfo;
     const groups = localConfigurationGroups;
+    setLocalGroupToInfo({ ...localGroupToInfo, [editGroupID]: editGroup });
   }
 
   const switchEditConfigurationGroup = (index) => (event, newExpanded) => {
     const oldActiveGroupIndex = activeGroupIndex;
     if (!(newExpanded && activeGroupIndex == null)) {
-      changeLocalConfigurationGroup(oldActiveGroupIndex);
+      modifyConfigurationGroup(oldActiveGroupIndex);
     }
     if (newExpanded) {
       setActiveGroupIndex(index);
@@ -226,6 +236,7 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   function saveAllResults() {
     setConfigurationGroups(localConfigurationGroups);
     setGroupToWidgets(localGroupToWidgets);
+    setGroupToInfo(localGroupToInfo);
   }
 
   return (
@@ -233,11 +244,19 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
       <JsonLiveViewer
         displayName={displayName}
         configurationGroups={localConfigurationGroups}
+        groupToInfo={localGroupToInfo}
         groupToWidgets={localGroupToWidgets}
         widgetToInfo={localWidgetToInfo}
         widgetToAttributes={localWidgetToAttributes}
+        outputSchemaType={outputSchemaType}
+        schemaTypes={schemaTypes}
         open={jsonView}
         onClose={() => setJsonView(!jsonView)}
+        filters={filters}
+        filterToName={filterToName}
+        filterToCondition={filterToCondition}
+        filterToShowList={filterToShowList}
+        showToInfo={showToInfo}
       />
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Configuration Groups" />
@@ -248,8 +267,9 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
           </Button>
         </If>
 
-        {localConfigurationGroups.map((group, i) => {
+        {localConfigurationGroups.map((groupID, i) => {
           const configurationGroupExpanded = activeGroupIndex == i;
+          const group = localGroupToInfo[groupID];
           return (
             <ExpansionPanel
               expanded={configurationGroupExpanded}
@@ -265,24 +285,23 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
                 </If>
               </ExpansionPanelSummary>
               <ExpansionPanelActions className={classes.groupContent}>
-                <GroupBasicInfoInput
+                <GroupInfoInput
                   classes={classes}
-                  label={localGroupLabel}
-                  setLabel={setLocalGroupLabel}
-                  description={localGroupDescription}
-                  setDescription={setLocalGroupDescription}
+                  groupID={groupID}
+                  groupToInfo={localGroupToInfo}
+                  setGroupToInfo={setLocalGroupToInfo}
                 />
                 <WidgetCollection
                   activeWidgets={activeWidgets}
                   activeGroupIndex={activeGroupIndex}
-                  setLocalGroupToWidgets={setLocalGroupToWidgets}
-                  groupID={group.id}
-                  localConfigurationGroups={localConfigurationGroups}
-                  localGroupToWidgets={localGroupToWidgets}
-                  localWidgetToInfo={localWidgetToInfo}
-                  setLocalWidgetToInfo={setLocalWidgetToInfo}
-                  localWidgetToAttributes={localWidgetToAttributes}
-                  setLocalWidgetToAttributes={setLocalWidgetToAttributes}
+                  setGroupToWidgets={setLocalGroupToWidgets}
+                  groupID={groupID}
+                  configurationGroups={localConfigurationGroups}
+                  groupToWidgets={localGroupToWidgets}
+                  widgetToInfo={localWidgetToInfo}
+                  setWidgetToInfo={setLocalWidgetToInfo}
+                  widgetToAttributes={localWidgetToAttributes}
+                  setWidgetToAttributes={setLocalWidgetToAttributes}
                 />
                 <div className={classes.actionButtons}>
                   <IconButton onClick={() => addConfigurationGroup(i)} data-cy="add-row">

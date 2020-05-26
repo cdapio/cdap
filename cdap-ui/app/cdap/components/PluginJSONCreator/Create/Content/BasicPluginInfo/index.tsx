@@ -14,18 +14,18 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import Heading, { HeadingTypes } from 'components/Heading';
+import { PLUGIN_TYPES } from 'components/PluginJSONCreator/constants';
 import {
   createContextConnect,
-  ICreateContext,
   IBasicPluginInfo,
+  ICreateContext,
 } from 'components/PluginJSONCreator/Create';
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { PluginToggleInput } from 'components/PluginJSONCreator/Create/Content/PluginToggleInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import Heading, { HeadingTypes } from 'components/Heading';
-import { PluginTypes } from 'components/PluginJSONCreator/constants';
-import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
+import * as React from 'react';
 
 const styles = (): StyleRules => {
   return {
@@ -38,78 +38,6 @@ const styles = (): StyleRules => {
       minWidth: '600px',
     },
   };
-};
-
-const PluginTextInput = ({ setValue, value, label }) => {
-  const widget = {
-    label,
-    name: label,
-    'widget-type': 'textbox',
-    'widget-attributes': {
-      placeholder: 'Select a ' + label,
-    },
-  };
-
-  const property = {
-    required: true,
-    name: label,
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={setValue}
-    />
-  );
-};
-
-const PluginSelect = ({ setValue, value, label, options }) => {
-  const widget = {
-    label,
-    name: label,
-    'widget-type': 'select',
-    'widget-attributes': {
-      options,
-      default: options[0],
-    },
-  };
-
-  const property = {
-    required: true,
-    name: label,
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={setValue}
-    />
-  );
-};
-
-const PluginToggle = ({ setValue, value, label }) => {
-  const widget = {
-    label,
-    name: label,
-    'widget-type': 'toggle',
-    'widget-attributes': {
-      default: value ? 'true' : 'false',
-      on: {
-        value: 'true',
-        label: 'True',
-      },
-      off: {
-        value: 'false',
-        label: 'False',
-      },
-    },
-  };
-
-  return <ToggleSwitchWidget widgetProps={widget} value={value} onChange={setValue} />;
 };
 
 const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
@@ -145,36 +73,44 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
         <br />
-        <PluginTextInput
-          label={'Plugin Name'}
+        <PluginInput
+          widgetType={'textbox'}
           value={localPluginName}
           setValue={setLocalPluginName}
+          label={'Plugin Name'}
+          placeholder={'Plugin Name'}
+          required={true}
         />
         <br />
         <br />
-        <PluginSelect
-          label={'Plugin Type'}
-          options={PluginTypes}
+        <PluginInput
+          widgetType={'select'}
           value={localPluginType}
           setValue={setLocalPluginType}
+          label={'Plugin Type'}
+          options={PLUGIN_TYPES}
+          required={true}
         />
         <br />
         <br />
-        <PluginTextInput
-          label={'Display Name'}
+        <PluginInput
+          widgetType={'textbox'}
           value={localDisplayName}
           setValue={setLocalDisplayName}
+          label={'Display Name'}
+          placeholder={'Display Name'}
+          required={true}
         />
         <br />
         <Heading type={HeadingTypes.h5} label="Emit Alerts?" />
-        <PluginToggle
+        <PluginToggleInput
           label={'Emit Alerts?'}
           value={localEmitAlerts}
           setValue={setLocalEmitAlerts}
         />
         <br />
         <Heading type={HeadingTypes.h5} label="Emit Errors?" />
-        <PluginToggle
+        <PluginToggleInput
           label={'Emit Errors?'}
           value={localEmitErrors}
           setValue={setLocalEmitErrors}

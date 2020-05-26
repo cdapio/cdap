@@ -14,32 +14,28 @@
  * the License.
  */
 
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import * as React from 'react';
 
-const PluginTextareaInput = ({ setValue, value, label }) => {
+export const PluginToggleInput = ({ setValue, value, label }) => {
   const widget = {
     label,
     name: label,
-    'widget-type': 'textarea',
+    'widget-type': 'toggle',
     'widget-attributes': {
-      placeholder: 'Write a ' + label,
+      default: value ? 'true' : 'false',
+      on: {
+        value: 'true',
+        label: 'True',
+      },
+      off: {
+        value: 'false',
+        label: 'False',
+      },
     },
   };
 
-  const property = {
-    required: false,
-    name: 'description',
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={setValue}
-    />
-  );
+  return <ToggleSwitchWidget widgetProps={widget} value={value} onChange={setValue} />;
 };
 
-export default PluginTextareaInput;
+export default PluginToggleInput;

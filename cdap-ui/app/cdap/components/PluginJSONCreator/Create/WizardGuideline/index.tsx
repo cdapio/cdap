@@ -14,13 +14,13 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { createContextConnect } from 'components/PluginJSONCreator/Create';
 import Chip from '@material-ui/core/Chip';
-import { STEPS } from 'components/PluginJSONCreator/Create/steps';
-import classnames from 'classnames';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Check from '@material-ui/icons/Check';
+import classnames from 'classnames';
+import { createContextConnect } from 'components/PluginJSONCreator/Create';
+import { STEPS } from 'components/PluginJSONCreator/Create/steps';
+import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
@@ -74,9 +74,9 @@ const WizardGuidelineView: React.FC<IWizardGuidelineProps> = ({
   activeStep,
 }) => {
   function handleStepClick(step) {
-    if (step >= activeStep) {
+    /*if (step >= activeStep) {
       return;
-    }
+    }*/
 
     setActiveStep(step);
   }

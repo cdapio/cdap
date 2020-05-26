@@ -14,20 +14,31 @@
  * the License.
  */
 
+import { Dialog, DialogContent, DialogTitle, IconButton } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import CloseIcon from '@material-ui/icons/Close';
+import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
+import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
 import { IWidgetInfo } from 'components/PluginJSONCreator/Create';
-import WidgetAttributesInput, {
-  WidgetTypeToAttribues,
-} from 'components/PluginJSONCreator/Create/Content/WidgetAttributesInput';
+import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetAttributesCollection';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetInput';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 
 const styles = (theme): StyleRules => {
   return {
+    attributeDialog: {
+      minHeight: '80vh',
+      maxHeight: '80vh',
+    },
+    dialogTitle: {
+      display: 'flex',
+      justifyContent: 'flex-end',
+      padding: '0 !important',
+    },
     eachWidget: {
       display: 'block',
       marginLeft: 'auto',
@@ -81,144 +92,123 @@ const styles = (theme): StyleRules => {
 
 const WidgetCollectionView: React.FC<WithStyles<typeof styles>> = ({
   classes,
-  localConfigurationGroups,
+  configurationGroups,
   activeWidgets,
   activeGroupIndex,
-  localWidgetToInfo,
-  localGroupToWidgets,
-  setLocalWidgetToInfo,
-  setLocalGroupToWidgets,
-  localWidgetToAttributes,
-  setLocalWidgetToAttributes,
+  widgetToInfo,
+  groupToWidgets,
+  setWidgetToInfo,
+  setGroupToWidgets,
+  widgetToAttributes,
+  setWidgetToAttributes,
 }) => {
-  function addWidgetToGroup(groupID: string, index?: number) {
+  function addWidgetToGroup(index?: number) {
     const newWidgetID = 'Widget_' + uuidV4();
 
     if (index === undefined) {
-      setLocalWidgetToInfo({
-        ...localWidgetToInfo,
+      setWidgetToInfo({
+        ...widgetToInfo,
         [newWidgetID]: {
           widgetType: '',
           label: '',
           name: '',
         } as IWidgetInfo,
       });
-      setLocalGroupToWidgets({
-        ...localGroupToWidgets,
-        [groupID]: [...localGroupToWidgets[groupID], newWidgetID],
+      setGroupToWidgets({
+        ...groupToWidgets,
+        [groupID]: [...groupToWidgets[groupID], newWidgetID],
       });
-      setLocalWidgetToAttributes({
-        ...localWidgetToAttributes,
+      setWidgetToAttributes({
+        ...widgetToAttributes,
         [newWidgetID]: {},
       });
     } else {
       const widgets =
-        activeGroup.id && localGroupToWidgets[activeGroup.id]
-          ? localGroupToWidgets[activeGroup.id]
-          : [];
+        activeGroupID && groupToWidgets[activeGroupID] ? groupToWidgets[activeGroupID] : [];
       if (widgets.length == 0) {
         widgets.splice(0, 0, newWidgetID);
       } else {
         widgets.splice(index + 1, 0, newWidgetID);
       }
-      setLocalWidgetToInfo({
-        ...localWidgetToInfo,
+      setWidgetToInfo({
+        ...widgetToInfo,
         [newWidgetID]: {
           widgetType: '',
           label: '',
           name: '',
         } as IWidgetInfo,
       });
-      setLocalGroupToWidgets({
-        ...localGroupToWidgets,
+      setGroupToWidgets({
+        ...groupToWidgets,
         [groupID]: widgets,
       });
-      setLocalWidgetToAttributes({
-        ...localWidgetToAttributes,
+      setWidgetToAttributes({
+        ...widgetToAttributes,
         [newWidgetID]: {},
       });
     }
   }
 
-  function handleAddWidget(widgetIndex) {
-    // add empty widget
-    // 1. add widget into localGroupToWidgets
-    /*const widgets =
-      activeGroup.label && localGroupToWidgets[activeGroup.label]
-        ? localGroupToWidgets[activeGroup.label]
-        : [];
-    if (widgets.length == 0) {
-      widgets.splice(0, 0, '');
-    } else {
-      widgets.splice(widgetIndex + 1, 0, '');
-    }
-    setLocalGroupToWidgets({ ...localGroupToWidgets, [activeGroup.label]: widgets });
-    // 2. add widget into localWidgetToInfo
-    setLocalWidgetToInfo({
-      ...localWidgetToInfo,
-      [newWidget]: {
-        widgetType: '',
-        label: 'hi',
-        name: 'hello',
-      } as IWidgetInfo,
-    });*/
-    addWidgetToGroup(activeGroup.id, widgetIndex);
-  }
+  function deleteWidgetFromGroup(widgetIndex) {
+    const groupID = activeGroupID;
 
-  function handleDeleteWidget(widgetIndex) {
-    // 1. delete widget from localGroupToWidgets
-    // 2. delete widget key from localWidgetToInfo
-    /*const newLocalGroups = [...localConfigurationGroups];
-    newLocalGroups.splice(index, 1);
-    setLocalConfigurationGroups(newLocalGroups);*/
-
-    const groupID = activeGroup.id;
-
-    const widgets = localGroupToWidgets[groupID];
+    const widgets = groupToWidgets[groupID];
 
     const widgetToDelete = widgets[widgetIndex];
 
     widgets.splice(widgetIndex, 1);
 
-    setLocalGroupToWidgets({
-      ...localGroupToWidgets,
+    setGroupToWidgets({
+      ...groupToWidgets,
       [groupID]: widgets,
     });
 
-    const { [widgetToDelete]: tmp, ...rest } = localWidgetToInfo;
+    const { [widgetToDelete]: info, ...restWidgetToInfo } = widgetToInfo;
     // delete widgetToDelete
-    setLocalWidgetToInfo(rest);
+    setWidgetToInfo(restWidgetToInfo);
 
-    const { [widgetToDelete]: tmp2, ...rest2 } = localWidgetToAttributes;
-    setLocalWidgetToAttributes(rest2);
+    const { [widgetToDelete]: attributes, ...restWidgetToAttributes } = widgetToAttributes;
+    setWidgetToAttributes(restWidgetToAttributes);
   }
 
   function handleNameChange(obj, id) {
     return (name) => {
-      setLocalWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
     };
   }
 
   function handleLabelChange(obj, id) {
     return (label) => {
-      setLocalWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
     };
   }
 
   function handleWidgetTypeChange(obj, id) {
     return (widgetType) => {
-      setLocalWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
 
-      if (widgetType) {
-        setLocalWidgetToAttributes({
-          ...localWidgetToAttributes,
-          [id]: WidgetTypeToAttribues[widgetType],
-        });
-      }
+      setWidgetToAttributes({
+        ...widgetToAttributes,
+        [id]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
+          acc[curr] = '';
+          return acc;
+        }, {}),
+      });
     };
   }
 
-  const activeGroup = localConfigurationGroups ? localConfigurationGroups[activeGroupIndex] : null;
+  function handleWidgetCategoryChange(obj, id) {
+    return (widgetCategory) => {
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetCategory } }));
+    };
+  }
+
+  function handleDialogClose() {
+    setOpenWidgetIndex(null);
+  }
+
+  const activeGroupID = configurationGroups ? configurationGroups[activeGroupIndex] : null;
+  const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
 
   return (
     <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
@@ -231,30 +221,64 @@ const WidgetCollectionView: React.FC<WithStyles<typeof styles>> = ({
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-            <div>
+            <If condition={widgetToInfo[widgetID]}>
               <div className={classes.eachWidget}>
                 <WidgetInput
-                  widgetObject={localWidgetToInfo[widgetID]}
-                  onNameChange={handleNameChange(localWidgetToInfo[widgetID], widgetID)}
-                  onLabelChange={handleLabelChange(localWidgetToInfo[widgetID], widgetID)}
-                  onWidgetTypeChange={handleWidgetTypeChange(localWidgetToInfo[widgetID], widgetID)}
-                  onAddWidget={() => handleAddWidget(widgetIndex)}
-                  onDeleteWidget={() => handleDeleteWidget(widgetIndex)}
+                  widgetObject={widgetToInfo[widgetID]}
+                  onNameChange={handleNameChange(widgetToInfo[widgetID], widgetID)}
+                  onLabelChange={handleLabelChange(widgetToInfo[widgetID], widgetID)}
+                  onWidgetTypeChange={handleWidgetTypeChange(widgetToInfo[widgetID], widgetID)}
+                  onWidgetCategoryChange={handleWidgetCategoryChange(
+                    widgetToInfo[widgetID],
+                    widgetID
+                  )}
+                  onAddWidget={() => addWidgetToGroup(widgetIndex)}
+                  onDeleteWidget={() => deleteWidgetFromGroup(widgetIndex)}
                 />
-                <WidgetAttributesInput
-                  widgetID={widgetID}
-                  widgetToInfo={localWidgetToInfo}
-                  widgetToAttributes={localWidgetToAttributes}
-                  setWidgetToAttributes={setLocalWidgetToAttributes}
-                />
+                <Button onClick={() => setOpenWidgetIndex(widgetIndex)}>Change Properties</Button>
+
+                <Dialog
+                  open={openWidgetIndex === widgetIndex}
+                  onClose={handleDialogClose}
+                  disableBackdropClick={true}
+                  fullWidth={true}
+                  maxWidth={'md'}
+                  classes={{ paper: classes.attributeDialog }}
+                >
+                  <DialogTitle disableTypography className={classes.dialogTitle}>
+                    <IconButton onClick={handleDialogClose}>
+                      <CloseIcon />
+                    </IconButton>
+                  </DialogTitle>
+                  <DialogContent>
+                    <Heading type={HeadingTypes.h3} label={'Set Widget Property'} />
+                    <br></br>
+                    <WidgetAttributesCollection
+                      widgetID={widgetID}
+                      widgetObject={widgetToInfo[widgetID]}
+                      onNameChange={handleNameChange(widgetToInfo[widgetID], widgetID)}
+                      onLabelChange={handleLabelChange(widgetToInfo[widgetID], widgetID)}
+                      onWidgetTypeChange={handleWidgetTypeChange(widgetToInfo[widgetID], widgetID)}
+                      onWidgetCategoryChange={handleWidgetCategoryChange(
+                        widgetToInfo[widgetID],
+                        widgetID
+                      )}
+                      onAddWidget={() => addWidgetToGroup(widgetIndex)}
+                      onDeleteWidget={() => deleteWidgetFromGroup(widgetIndex)}
+                      widgetToInfo={widgetToInfo}
+                      widgetToAttributes={widgetToAttributes}
+                      setWidgetToAttributes={setWidgetToAttributes}
+                    />
+                  </DialogContent>
+                </Dialog>
               </div>
               <Divider className={classes.widgetDivider} />
-            </div>
+            </If>
           );
         })}
 
         <If condition={Object.keys(activeWidgets).length == 0}>
-          <Button variant="contained" color="primary" onClick={() => handleAddWidget(0)}>
+          <Button variant="contained" color="primary" onClick={() => addWidgetToGroup(0)}>
             Add Properties
           </Button>
         </If>

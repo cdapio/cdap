@@ -21,8 +21,8 @@ import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEdi
 import { INamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import {
   createContextConnect,
-  IConfigurationGroup,
   IWidgetInfo,
+  OutputSchemaType,
 } from 'components/PluginJSONCreator/Create';
 import * as React from 'react';
 
@@ -82,17 +82,57 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
   classes,
   displayName,
   configurationGroups,
+  groupToInfo,
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
+  outputSchemaType,
+  schemaTypes,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
   open,
   onClose,
 }) => {
   function getJSONConfig() {
-    const configurationGroupsData = configurationGroups.map((group: IConfigurationGroup) => {
-      const widgetData = groupToWidgets[group.id].map((widgetID: string) => {
+    const configurationGroupsData = configurationGroups.map((groupID: string) => {
+      const groupLabel = groupToInfo[groupID].label;
+      const widgetData = groupToWidgets[groupID].map((widgetID: string) => {
         const widgetInfo: IWidgetInfo = widgetToInfo[widgetID];
+
+        const widgetType = widgetInfo.widgetType;
         const widgetAttributes = widgetToAttributes[widgetID];
+        /*if (widgetAttributes) {
+          // TODO remove hardcoding
+          Object.entries(widgetAttributes).forEach(([attributeField, attributeValue]) => {
+            const attributeType = WIDGET_TYPE_TO_ATTRIBUTES[widgetType][attributeField].type;
+            const isMultipleInput = attributeType.includes('[]');
+
+            if (!isMultipleInput) {
+              widgetAttributes[attributeField] = attributeValue;
+            } else {
+              if (typeof attributeValue === 'string') {
+                widgetAttributes[attributeField] = attributeValue.split(COMMON_DELIMITER);
+              } else {
+                const supportedTypes = processSupportedTypes(attributeType.split('|'));
+                // keyvalue pair
+                if (supportedTypes.has(SupportedType.ValueLabelPair)) {
+                  widgetAttributes[attributeField].forEach((attribute) => {
+                    attribute.value = attribute.key;
+                    attribute.label = attribute.value;
+                  });
+                } else {
+                  widgetAttributes[attributeField].forEach((attribute) => {
+                    attribute.id = attribute.key;
+                    attribute.label = attribute.value;
+                  });
+                }
+              }
+            }
+          });
+        }*/
         return {
           'widget-type': widgetInfo.widgetType,
           label: widgetInfo.label,
@@ -105,8 +145,44 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
         };
       });
       return {
-        label: group.label,
+        label: groupLabel,
         properties: widgetData,
+      };
+    });
+
+    let outputs;
+    if (outputSchemaType === OutputSchemaType.Explicit) {
+      outputs = {
+        name: 'TODO',
+        'widget-type': 'schema',
+        'widget-attributes': {
+          'schema-default-type': 'TODO',
+          'schema-types': schemaTypes,
+        },
+      };
+    } else {
+      outputs = {
+        name: 'TODO',
+        'widget-type': 'non-editable-schema-editor',
+        'widget-attributes': {
+          TODO: 'TODO',
+        },
+      };
+    }
+
+    const filtersData = filters.map((filterID) => {
+      const filterToShowListData = filterToShowList[filterID].map((showID) => {
+        return {
+          name: showToInfo[showID].name,
+          ...(showToInfo[showID].type && {
+            type: showToInfo[showID].type,
+          }),
+        };
+      });
+      return {
+        name: filterToName[filterID],
+        condition: filterToCondition[filterID],
+        show: filterToShowListData,
       };
     });
 
@@ -116,7 +192,11 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       },
       'display-name': displayName,
       'configuration-groups': configurationGroupsData,
-      outputs: '[TODO]',
+      outputs,
+      ...(filtersData &&
+        Object.keys(filtersData).length > 0 && {
+          filters: filtersData,
+        }),
       'jump-config': '{TODO}',
     };
 
@@ -144,12 +224,9 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       <div className={classes.toolbar} />
       <List component="nav" dense={true} className={classes.mainMenu}>
         <JsonEditorWidget
-          rows={100}
+          rows={50}
           value={JSON.stringify(JSONConfig, undefined, 4)}
         ></JsonEditorWidget>
-      </List>
-      <List component="nav" dense={true} className={classes.namespaceAdminMenu}>
-        hi
       </List>
     </Drawer>
   );

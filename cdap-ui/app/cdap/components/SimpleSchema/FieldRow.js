@@ -13,11 +13,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
 */
+import SelectWithOptions from 'components/SelectWithOptions';
 import PropTypes from 'prop-types';
-
 import React from 'react';
 import { Input } from 'reactstrap';
-import SelectWithOptions from 'components/SelectWithOptions';
+
 
 require('./FieldRow.scss');
 const defaultFieldTypes = ['', 'boolean', 'bytes', 'double', 'float', 'int', 'long', 'string'];

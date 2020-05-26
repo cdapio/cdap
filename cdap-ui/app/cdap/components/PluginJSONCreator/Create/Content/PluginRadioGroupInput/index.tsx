@@ -17,18 +17,20 @@
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import * as React from 'react';
 
-const PluginSelectInput = ({ setValue, value, label, options }) => {
+const PluginRadioGroupInput = ({ setValue, value, label, options, required = true }) => {
   const widget = {
     label,
     name: label,
-    'widget-type': 'select',
+    'widget-type': 'radio-group',
     'widget-attributes': {
+      layout: 'inline',
+      default: options ? options[0].value : '',
       options,
     },
   };
 
   const property = {
-    required: true,
+    required,
     name: label,
   };
 
@@ -42,4 +44,4 @@ const PluginSelectInput = ({ setValue, value, label, options }) => {
   );
 };
 
-export default PluginSelectInput;
+export default PluginRadioGroupInput;

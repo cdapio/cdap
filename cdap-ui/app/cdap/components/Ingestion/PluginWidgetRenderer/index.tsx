@@ -14,13 +14,13 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { Card, TextField } from '@material-ui/core';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import ConfigurationGroup from 'components/ConfigurationGroup';
 import If from 'components/If';
-import { Card, TextField } from '@material-ui/core';
-import { objectQuery } from 'services/helpers';
 import { getIcon, getPluginDisplayName } from 'components/Ingestion/helpers';
+import * as React from 'react';
+import { objectQuery } from 'services/helpers';
 
 const styles = (): StyleRules => {
   return {

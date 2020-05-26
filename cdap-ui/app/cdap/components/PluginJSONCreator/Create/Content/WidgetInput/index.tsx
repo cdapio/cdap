@@ -18,9 +18,9 @@ import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
-import { WidgetTypes } from 'components/PluginJSONCreator/constants';
-import PluginSelectInput from 'components/PluginJSONCreator/Create/Content/PluginSelectInput';
-import PluginTextboxInput from 'components/PluginJSONCreator/Create/Content/PluginTextboxInput';
+import If from 'components/If';
+import { WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
@@ -41,30 +41,44 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
   onNameChange,
   onLabelChange,
   onWidgetTypeChange,
+  onWidgetCategoryChange,
   onAddWidget,
   onDeleteWidget,
 }) => {
-  console.log('Rerendered:', widgetObject.name);
   return (
-    <div>
+    <If condition={widgetObject}>
       <div className={classes.widgetInput}>
-        <PluginTextboxInput
+        <PluginInput
+          widgetType={'textbox'}
           value={widgetObject.name}
           setValue={onNameChange}
           label={'Widget Name'}
           placeholder={'Name a Widget'}
+          required={true}
         />
-        <PluginTextboxInput
+        <PluginInput
+          widgetType={'textbox'}
           value={widgetObject.label}
           setValue={onLabelChange}
           label={'Widget Label'}
           placeholder={'Label a Widget'}
+          required={true}
         />
-        <PluginSelectInput
-          label={'Widget Type'}
-          options={WidgetTypes}
+        <PluginInput
+          widgetType={'textbox'}
+          value={widgetObject.widgetCategory}
+          setValue={onWidgetCategoryChange}
+          label={'Widget Category'}
+          placeholder={'Categorize a Widget'}
+          required={false}
+        />
+        <PluginInput
+          widgetType={'select'}
           value={widgetObject.widgetType}
           setValue={onWidgetTypeChange}
+          label={'Widget Type'}
+          options={WIDGET_TYPES}
+          required={true}
         />
       </div>
 
@@ -76,16 +90,9 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
           <DeleteIcon fontSize="small" />
         </IconButton>
       </div>
-    </div>
+    </If>
   );
 };
-/*(prevProps, nextProps) => {
-    const result =
-      prevProps.widgetObject.label === nextProps.widgetObject.label &&
-      prevProps.widgetObject.name === nextProps.widgetObject.name &&
-      prevProps.widgetObject.widgetType == nextProps.widgetObject.widgetType;
-    return result;
-  }*/
 
 const WidgetInput = withStyles(styles)(WidgetInputView);
 export default WidgetInput;
