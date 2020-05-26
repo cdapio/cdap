@@ -20,7 +20,7 @@ import PluginJsonImporter from 'components/PluginJSONCreator/Create/Content/Plug
 
 export const STEPS = [
   {
-    label: 'Json Importer',
+    label: 'JSON Importer',
     component: PluginJsonImporter,
   },
   {

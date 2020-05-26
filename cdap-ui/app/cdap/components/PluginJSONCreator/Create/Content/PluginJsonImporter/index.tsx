@@ -241,7 +241,7 @@ const PluginJsonImporterView: React.FC<ICreateContext & WithStyles<typeof styles
   return (
     <div className={classes.jsonImporter} data-cy="widget-wrapper-container">
       <div className={classes.root}>
-        <div className={classes.wrapper}>
+        <div>
           <input
             accept="json/*"
             id="raised-button-file"
