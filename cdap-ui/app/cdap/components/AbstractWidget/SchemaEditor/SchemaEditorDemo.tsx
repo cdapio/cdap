@@ -41,9 +41,10 @@ export default function SchemaEditorDemo() {
     <React.Fragment>
       <FormControl component="fieldset">
         <RadioGroup aria-label="position" name="position" value={value} onChange={handleChange} row>
-          {Object.keys(schemas).map((s) => {
+          {Object.keys(schemas).map((s, i) => {
             return (
               <FormControlLabel
+                key={i}
                 value={s}
                 control={<Radio color="primary" />}
                 label={s}

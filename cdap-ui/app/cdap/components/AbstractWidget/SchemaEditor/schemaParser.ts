@@ -20,6 +20,7 @@ import {
   getNonNullableType,
   getComplexTypeName,
 } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
+import uuidV4 from 'uuid/v4';
 
 const flattenUnionType = (complexType, parent) => {
   if (!Array.isArray(complexType)) {
@@ -31,6 +32,7 @@ const flattenUnionType = (complexType, parent) => {
       const complexTypeName = getComplexTypeName(subType);
       const name = `${parent[parent.length - 1]}-union-${complexTypeName}`;
       result.push({
+        id: `id-${uuidV4()}`,
         name,
         type: complexTypeName,
         parent,
@@ -39,6 +41,7 @@ const flattenUnionType = (complexType, parent) => {
       result.push(...flattenSubTree(subType, parent.concat([name])));
     } else {
       result.push({
+        id: `id-${uuidV4()}`,
         name: `${parent[parent.length - 1]}-union`,
         type: subType,
         parent,
@@ -59,6 +62,7 @@ const flattenMapType = (complexType, parent) => {
   const mapValuesId = `${parent[parent.length - 1]}-values`;
   if (!isComplexType(keys)) {
     result.push({
+      id: `id-${uuidV4()}`,
       name: mapKeysId,
       type: keys,
       parent,
@@ -67,6 +71,7 @@ const flattenMapType = (complexType, parent) => {
   } else {
     const complexTypeName = getComplexTypeName(keys);
     result.push({
+      id: `id-${uuidV4()}`,
       name: mapKeysId,
       type: complexTypeName,
       parent,
@@ -76,6 +81,7 @@ const flattenMapType = (complexType, parent) => {
   }
   if (!isComplexType(values)) {
     result.push({
+      id: `id-${uuidV4()}`,
       name: mapValuesId,
       type: values,
       parent,
@@ -84,6 +90,7 @@ const flattenMapType = (complexType, parent) => {
   } else {
     const complexTypeName = getComplexTypeName(values);
     result.push({
+      id: `id-${uuidV4()}`,
       name: mapValuesId,
       type: complexTypeName,
       parent,
@@ -102,6 +109,7 @@ const flattenEnumType = (complexType, parent) => {
   const { symbols } = getNonNullableType(complexType);
   for (const [i, symbol] of symbols.entries()) {
     result.push({
+      id: `id-${uuidV4()}`,
       name: `${parent[parent.length - 1]}-${i}-enum-symbol`,
       type: 'enum-symbol',
       parent,
@@ -121,6 +129,7 @@ const flattenArrayType = (complexType, parent) => {
   const itemsId = `${parent[parent.length - 1]}-array-items`;
   if (!isComplexType(items)) {
     result.push({
+      id: `id-${uuidV4()}`,
       name: itemsId,
       type: getNonNullableType(items),
       parent,
@@ -129,6 +138,7 @@ const flattenArrayType = (complexType, parent) => {
   } else {
     const complexTypeName = getComplexTypeName(items);
     result.push({
+      id: `id-${uuidV4()}`,
       type: complexTypeName,
       name: itemsId,
       nullable,
@@ -172,6 +182,7 @@ const flattenFields = (fields, parent) => {
   for (const field of fields) {
     const nullable = isNullable(field.type);
     const fieldObj = {
+      id: `id-${uuidV4()}`,
       name: field.name,
       nullable,
       parent,

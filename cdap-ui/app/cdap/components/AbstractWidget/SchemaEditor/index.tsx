@@ -61,7 +61,7 @@ function SchemaEditor({ schema, classes }: ISchemaEditorProps) {
             field.parent && Array.isArray(field.parent) ? field.parent.length * 10 : 0;
           return (
             <div
-              key={field.name}
+              key={field.id}
               style={{
                 marginLeft: `${spacing}px`,
                 gridTemplateColumns: `calc(33% - ${spacing + 10}px) 34% 33%`,
