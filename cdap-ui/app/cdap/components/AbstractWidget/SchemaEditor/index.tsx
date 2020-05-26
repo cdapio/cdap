@@ -17,8 +17,6 @@
 import * as React from 'react';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
-import flatten from 'lodash/flattenDeep';
-import isObject from 'lodash/isObject';
 import { ISchemaType, IFieldType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import uuidV4 from 'uuid/v4';
 import {
@@ -140,7 +138,7 @@ const flattenArrayType = (complexType, parent) => {
       nullable,
       parent,
     });
-    result.push(...flattenSubTree(complexType, parent.concat([itemsComplexId])));
+    result.push(...flattenSubTree(items, parent.concat([itemsComplexId])));
   }
   return result;
 };
@@ -156,6 +154,8 @@ const flattenSubTree = (complexType, parent) => {
       return flattenEnumType(complexType, parent);
     case 'array':
       return flattenArrayType(complexType, parent);
+    case 'record':
+      return flattenSchema({ schema: getNonNullableType(complexType) }, parent);
     default:
       return complexType;
   }
@@ -178,6 +178,7 @@ const flattenFields = (fields, parent) => {
     const fieldObj = {
       name: field.name,
       nullable,
+      parent,
     };
     if (!isComplexType(field.type)) {
       fieldObj.type = getNonNullableType(field.type);
@@ -191,11 +192,11 @@ const flattenFields = (fields, parent) => {
   }
   return result;
 };
-const flattenSchema = (s: ISchemaType, parent = ['root']) => {
+const flattenSchema = (s, parent = ['root']) => {
   const schema = s.schema;
   const op = [];
   if (schema.fields) {
-    op.push(...flattenFields(schema.fields, [schema.name]));
+    op.push(...flattenFields(schema.fields, parent));
   }
   return op;
 };

@@ -1,4 +1,4 @@
-const a = [
+const complex1 = [
   {
     name: 'etlSchemaBody',
     schema: {
@@ -60,9 +60,80 @@ const a = [
             },
           ],
         },
+        {
+          name: 'arr5',
+          type: [
+            {
+              type: 'array',
+              items: [
+                {
+                  type: 'record',
+                  name: 'a6a50504dc85041ba8c60fb16d578be37',
+                  fields: [
+                    {
+                      name: 'rec1',
+                      type: ['string', 'null'],
+                    },
+                    {
+                      name: 'rec2',
+                      type: ['string', 'null'],
+                    },
+                    {
+                      name: 'rec3',
+                      type: ['string', 'null'],
+                    },
+                  ],
+                },
+                'null',
+              ],
+            },
+            'null',
+          ],
+        },
       ],
     },
   },
 ];
 
-export default a;
+const complex2 = [
+  {
+    name: 'etlSchemaBody',
+    schema: {
+      type: 'record',
+      name: 'etlSchemaBody',
+      fields: [
+        {
+          name: 'arr5',
+          type: [
+            {
+              type: 'array',
+              items: [
+                {
+                  type: 'record',
+                  name: 'a6a50504dc85041ba8c60fb16d578be37',
+                  fields: [
+                    {
+                      name: 'rec1',
+                      type: ['string', 'null'],
+                    },
+                    {
+                      name: 'rec2',
+                      type: ['string', 'null'],
+                    },
+                    {
+                      name: 'rec3',
+                      type: ['string', 'null'],
+                    },
+                  ],
+                },
+                'null',
+              ],
+            },
+            'null',
+          ],
+        },
+      ],
+    },
+  },
+];
+export { complex1, complex2 };

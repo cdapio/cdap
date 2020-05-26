@@ -21,12 +21,12 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import FormControl from '@material-ui/core/FormControl';
 import FormLabel from '@material-ui/core/FormLabel';
 import simpleSchema from 'components/AbstractWidget/SchemaEditor/data/simpleSchema';
-import complexSchema from 'components/AbstractWidget/SchemaEditor/data/complexSchema';
+import { complex1, complex2 } from 'components/AbstractWidget/SchemaEditor/data/complexSchema';
 import SchemaEditor from 'components/AbstractWidget/SchemaEditor';
 
 export default function SchemaEditorDemo() {
   const [value, setValue] = React.useState('complex1');
-  const [schema, setSchema] = React.useState<any>(complexSchema);
+  const [schema, setSchema] = React.useState<any>(complex1);
   const handleChange = (event) => {
     const { value: radioValue } = event.target;
     setValue(radioValue);
@@ -34,7 +34,10 @@ export default function SchemaEditorDemo() {
       setSchema(simpleSchema);
     }
     if (radioValue === 'complex1') {
-      setSchema(complexSchema);
+      setSchema(complex1);
+    }
+    if (radioValue === 'complex2') {
+      setSchema(complex2);
     }
   };
 
@@ -57,7 +60,7 @@ export default function SchemaEditorDemo() {
           <FormControlLabel
             value="complex2"
             control={<Radio color="primary" />}
-            label="Complex Schema 1"
+            label="Complex Schema 2"
             labelPlacement="start"
           />
         </RadioGroup>
