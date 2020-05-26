@@ -22,6 +22,7 @@ import {
   IBasicPluginInfo,
   ICreateContext,
 } from 'components/PluginJSONCreator/Create';
+import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonLiveViewer';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { PluginToggleInput } from 'components/PluginJSONCreator/Create/Content/PluginToggleInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
@@ -47,6 +48,19 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   displayName,
   emitAlerts,
   emitErrors,
+  configurationGroups,
+  groupToInfo,
+  groupToWidgets,
+  widgetToInfo,
+  widgetToAttributes,
+  outputName,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
+  jsonView,
+  setJsonView,
   setBasicPluginInfo,
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
@@ -70,6 +84,23 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
 
   return (
     <div className={classes.root}>
+      <JsonLiveViewer
+        displayName={displayName}
+        configurationGroups={configurationGroups}
+        groupToInfo={groupToInfo}
+        groupToWidgets={groupToWidgets}
+        widgetToInfo={widgetToInfo}
+        widgetToAttributes={widgetToAttributes}
+        outputName={outputName}
+        jsonView={jsonView}
+        setJsonView={setJsonView}
+        onClose={() => setJsonView(!jsonView)}
+        filters={filters}
+        filterToName={filterToName}
+        filterToCondition={filterToCondition}
+        filterToShowList={filterToShowList}
+        showToInfo={showToInfo}
+      />
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
         <br />

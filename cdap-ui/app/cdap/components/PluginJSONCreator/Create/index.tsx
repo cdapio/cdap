@@ -58,6 +58,7 @@ interface ICreateState {
   filterToCondition: any;
   filterToShowList: any;
   showToInfo: any;
+  jsonView: boolean;
 
   setActiveStep: (step: number) => void;
   setDisplayName: (displayName: string) => void;
@@ -73,6 +74,7 @@ interface ICreateState {
   setFilterToCondition: (filterToCondition: any) => void;
   setFilterToShowList: (filterToShowList: any) => void;
   setShowToInfo: (showToInfo: any) => void;
+  setJsonView: (jsonView: boolean) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -166,6 +168,10 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ showToInfo });
   };
 
+  public setJsonView = (jsonView: boolean) => {
+    this.setState({ jsonView });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
@@ -185,6 +191,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     filterToCondition: {},
     filterToShowList: {},
     showToInfo: {},
+    jsonView: true,
 
     setActiveStep: this.setActiveStep,
     setDisplayName: this.setDisplayName,
@@ -200,6 +207,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setFilterToCondition: this.setFilterToCondition,
     setFilterToShowList: this.setFilterToShowList,
     setShowToInfo: this.setShowToInfo,
+    setJsonView: this.setJsonView,
   };
 
   public render() {

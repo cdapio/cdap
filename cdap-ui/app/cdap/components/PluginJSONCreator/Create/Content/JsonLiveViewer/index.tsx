@@ -106,6 +106,8 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
   filterToShowList,
   showToInfo,
   outputName,
+  jsonView,
+  setJsonView,
   open,
   onClose,
 }) => {
@@ -180,12 +182,10 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
 
   const JSONConfig = getJSONConfig();
 
-  const [isJSONViewOpen, setIsJSONViewOpen] = React.useState(true);
-
   return (
     <div>
       <Drawer
-        open={isJSONViewOpen}
+        open={jsonView}
         variant="persistent"
         onClose={onClose}
         className={classes.jsonViewer}
@@ -209,10 +209,7 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
               <Grid item>Download</Grid>
             </Grid>
           </Button>
-          <IconButton
-            className={classes.closeJSONViewerButon}
-            onClick={() => setIsJSONViewOpen(false)}
-          >
+          <IconButton className={classes.closeJSONViewerButon} onClick={() => setJsonView(false)}>
             <CloseIcon />
           </IconButton>
           <JsonEditorWidget
@@ -223,7 +220,7 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       </Drawer>
 
       <Drawer
-        open={!isJSONViewOpen}
+        open={!jsonView}
         variant="persistent"
         onClose={onClose}
         className={classes.drawer}
@@ -239,7 +236,7 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       >
         <div className={classes.toolbar} />
         <List component="nav" dense={true} className={classes.mainMenu}>
-          <IconButton onClick={() => setIsJSONViewOpen(true)}>
+          <IconButton onClick={() => setJsonView(true)}>
             <CodeIcon />
           </IconButton>
           <Divider />

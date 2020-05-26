@@ -14,10 +14,10 @@
  * the License.
  */
 
-import * as React from 'react';
-import { STEPS } from 'components/PluginJSONCreator/Create/steps';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import { createContextConnect } from 'components/PluginJSONCreator/Create';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { STEPS } from 'components/PluginJSONCreator/Create/steps';
+import * as React from 'react';
 
 const styles = (): StyleRules => {
   return {

@@ -92,6 +92,8 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   filterToCondition,
   filterToShowList,
   showToInfo,
+  jsonView,
+  setJsonView,
 }) => {
   console.log('configuration group rerendering');
 
@@ -109,8 +111,6 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
   const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
 
   const [activeWidgets, setActiveWidgets] = React.useState([]);
-
-  const [jsonView, setJsonView] = React.useState(false);
 
   React.useEffect(() => {
     if (activeGroupID) {
