@@ -139,9 +139,6 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
     services.add(new RetryOnStartFailureService(() -> injector.getInstance(DatasetService.class),
                                                 RetryStrategies.exponentialDelay(200, 5000, TimeUnit.MILLISECONDS)));
     services.add(injector.getInstance(AppFabricServer.class));
-
-    // Optionally adds the master environment task
-    masterEnv.getTask().ifPresent(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
   }
 
   @Nullable

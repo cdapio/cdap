@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import io.kubernetes.client.models.V1Container;
 import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1OwnerReference;
 import io.kubernetes.client.models.V1Volume;
@@ -44,12 +45,13 @@ public final class PodInfo {
   private final String containerImage;
   private final List<V1VolumeMount> containerVolumeMounts;
   private final List<V1EnvVar> containerEnvironments;
+  private final List<V1Container> initContainers;
 
   public PodInfo(String podInfoDir, String labelsFile, String nameFile, String namespace,
                  Map<String, String> labels, List<V1OwnerReference> ownerReferences,
                  String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
-                 List<V1EnvVar> containerEnvironments) {
+                 List<V1EnvVar> containerEnvironments, List<V1Container> initContainers) {
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
     this.nameFile = nameFile;
@@ -63,6 +65,7 @@ public final class PodInfo {
     this.containerImage = containerImage;
     this.containerVolumeMounts = Collections.unmodifiableList(new ArrayList<>(containerVolumeMounts));
     this.containerEnvironments = Collections.unmodifiableList(new ArrayList<>(containerEnvironments));
+    this.initContainers = Collections.unmodifiableList(new ArrayList<>(initContainers));
   }
 
   public String getPodInfoDir() {
@@ -118,5 +121,9 @@ public final class PodInfo {
 
   public List<V1EnvVar> getContainerEnvironments() {
     return containerEnvironments;
+  }
+
+  public List<V1Container> getInitContainers() {
+    return initContainers;
   }
 }

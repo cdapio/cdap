@@ -95,6 +95,8 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                              EnvironmentOptions options) {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(PreviewHttpServer.class));
+    // Optionally adds the master environment task
+    masterEnv.getTask().ifPresent(task -> services.add(new MasterTaskExecutorService(task, masterEnvContext)));
   }
 
   @Nullable

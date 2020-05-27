@@ -55,6 +55,10 @@ final class MasterTaskExecutorService extends AbstractScheduledService {
   protected void runOneIteration() {
     try {
       delayMillis = task.run(context);
+      if (delayMillis < 0) {
+        LOG.debug("Terminating scheduled task.");
+        executor.shutdown();
+      }
     } catch (Throwable t) {
       delayMillis = task.failureRetryDelay(t);
       LOG.warn("Exception raised from master environment task execution of task {}. Retrying in {} milliseconds",
