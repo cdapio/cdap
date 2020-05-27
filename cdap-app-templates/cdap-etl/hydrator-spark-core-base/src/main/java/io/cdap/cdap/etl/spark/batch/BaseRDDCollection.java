@@ -44,6 +44,7 @@ import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorPostReduceFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorReduceFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
@@ -158,7 +159,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                              StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(pluginFunctionContext);
+    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorReduceGroupByFunction<>(pluginFunctionContext);
     PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
 
     JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(sparkGroupByFunction);

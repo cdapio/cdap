@@ -20,6 +20,7 @@ import com.google.common.reflect.TypeToken;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.etl.api.Aggregator;
 import io.cdap.cdap.etl.api.Joiner;
+import io.cdap.cdap.etl.api.ReduceAggregator;
 
 /**
  * Helper for checking parameter types.
@@ -31,10 +32,18 @@ public class TypeChecker {
 
   public static Class<?> getGroupKeyClass(Aggregator aggregator) {
     return getParameterClass(aggregator, Aggregator.class, 0);
-}
+  }
 
   public static Class<?> getGroupValueClass(Aggregator aggregator) {
     return getParameterClass(aggregator, Aggregator.class, 1);
+  }
+
+  public static Class<?> getGroupKeyClass(ReduceAggregator aggregator) {
+    return getParameterClass(aggregator, ReduceAggregator.class, 0);
+  }
+
+  public static Class<?> getGroupValueClass(ReduceAggregator aggregator) {
+    return getParameterClass(aggregator, ReduceAggregator.class, 1);
   }
 
   public static Class<?> getJoinKeyClass(Joiner joiner) {

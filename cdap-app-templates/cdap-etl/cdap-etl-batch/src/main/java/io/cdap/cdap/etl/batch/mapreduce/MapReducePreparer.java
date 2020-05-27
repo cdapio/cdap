@@ -29,6 +29,7 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
@@ -165,6 +166,32 @@ public class MapReducePreparer extends PipelinePhasePreparer {
 
   @Override
   protected SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator, StageSpec stageSpec) {
+    String stageName = stageSpec.getName();
+    ContextProvider<DefaultAggregatorContext> contextProvider =
+      new AggregatorContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
+    return new SubmitterPlugin<>(stageName, context, aggregator, contextProvider, aggregatorContext -> {
+      if (aggregatorContext.getNumPartitions() != null) {
+        job.setNumReduceTasks(aggregatorContext.getNumPartitions());
+      }
+      Class<?> outputKeyClass = aggregatorContext.getGroupKeyClass();
+      Class<?> outputValClass = aggregatorContext.getGroupValueClass();
+
+      if (outputKeyClass == null) {
+        outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
+      }
+      if (outputValClass == null) {
+        outputValClass = TypeChecker.getGroupValueClass(aggregator);
+      }
+      hConf.set(ETLMapReduce.MAP_KEY_CLASS, outputKeyClass.getName());
+      hConf.set(ETLMapReduce.MAP_VAL_CLASS, outputValClass.getName());
+      job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
+      job.setMapOutputValueClass(getOutputValClass(stageName, outputValClass));
+      stageOperations.put(stageName, aggregatorContext.getFieldOperations());
+    });
+  }
+
+  @Override
+  protected SubmitterPlugin createReduceAggregator(BatchReduceAggregator<?, ?, ?> aggregator, StageSpec stageSpec) {
     String stageName = stageSpec.getName();
     ContextProvider<DefaultAggregatorContext> contextProvider =
       new AggregatorContextProvider(pipelineRuntime, stageSpec, context.getAdmin());

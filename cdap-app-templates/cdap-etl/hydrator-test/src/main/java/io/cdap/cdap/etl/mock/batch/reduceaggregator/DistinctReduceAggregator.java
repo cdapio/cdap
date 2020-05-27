@@ -32,18 +32,15 @@ import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
-import io.cdap.cdap.etl.mock.batch.aggregator.DistinctAggregator;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Distinct aggregator
- * TODO: CDAP-16856 remove and use the existing {@link DistinctAggregator} once mapreduce implementation is done
  */
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
 @Name(DistinctReduceAggregator.NAME)
@@ -86,8 +83,7 @@ public class DistinctReduceAggregator
   }
 
   @Override
-  public void aggregate(StructuredRecord groupKey, Iterator<StructuredRecord> iterator,
-                        Emitter<StructuredRecord> emitter) {
+  public void aggregate(StructuredRecord groupKey, StructuredRecord iterator, Emitter<StructuredRecord> emitter) {
     emitter.emit(groupKey);
   }
 

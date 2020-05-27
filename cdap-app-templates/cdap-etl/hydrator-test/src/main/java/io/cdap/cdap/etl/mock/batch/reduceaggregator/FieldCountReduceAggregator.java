@@ -31,18 +31,15 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
 import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
-import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 
 /**
  * Groups on a specific field and adds count field. Used to test that the right values are going to the
  * right groups, to test multiple group keys for the same value, and to test setting the group key class
  * at runtime, and to test setting a supported non-writable class.
- * TODO: CDAP-16856 remove and use the existing {@link FieldCountAggregator} once mapreduce implementation is done
  */
 @Plugin(type = BatchAggregator.PLUGIN_TYPE)
 @Name(FieldCountReduceAggregator.NAME)
@@ -88,19 +85,18 @@ public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, St
 
   @Override
   public StructuredRecord reduce(StructuredRecord value1, StructuredRecord value2) throws Exception {
-    Object v1Ct = value1.get("fc");
-    Object v2Ct = value2.get("fc");
-    long count = (v1Ct == null ? 1L : (Long) v1Ct) + (v2Ct == null ? 1L : (Long) v2Ct);
+    Long v1Ct = value1.get("fc");
+    Long v2Ct = value2.get("fc");
+    long count = (v1Ct == null ? 1L : v1Ct) + (v2Ct == null ? 1L : v2Ct);
     return StructuredRecord.builder(REDUCE_SCHEMA).set("fc", count).build();
   }
 
   @Override
-  public void aggregate(Object groupKey, Iterator<StructuredRecord> groupValues,
+  public void aggregate(Object groupKey, StructuredRecord groupValue,
                         Emitter<StructuredRecord> emitter) throws Exception {
-    StructuredRecord record = groupValues.next();
     emitter.emit(StructuredRecord.builder(schema)
                    .set(config.fieldName, groupKey)
-                   .set("ct", record.get("fc") == null ? 1L : record.get("fc"))
+                   .set("ct", groupValue.get("fc") == null ? 1L : groupValue.get("fc"))
                    .build());
   }
 

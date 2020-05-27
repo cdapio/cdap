@@ -18,14 +18,12 @@ package io.cdap.cdap.etl.spark.function;
 
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transformation;
-import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
 import scala.Tuple2;
-
-import java.util.Collections;
 
 /**
  * Function that uses a BatchReduceAggregator to perform the aggregate part of the aggregator.
@@ -48,7 +46,7 @@ public class AggregatorPostReduceFunction<GROUP_KEY, GROUP_VAL, OUT>
   @Override
   public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, GROUP_VAL> input) throws Exception {
     if (aggregateTransform == null) {
-      BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
+      BatchReduceAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),
@@ -64,15 +62,15 @@ public class AggregatorPostReduceFunction<GROUP_KEY, GROUP_VAL, OUT>
 
   private static class AggregateTransform<GROUP_KEY, GROUP_VAL, OUT_VAL>
     implements Transformation<Tuple2<GROUP_KEY, GROUP_VAL>, OUT_VAL> {
-    private final BatchAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator;
+    private final BatchReduceAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator;
 
-    AggregateTransform(BatchAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator) {
+    AggregateTransform(BatchReduceAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator) {
       this.aggregator = aggregator;
     }
 
     @Override
     public void transform(Tuple2<GROUP_KEY, GROUP_VAL> input, Emitter<OUT_VAL> emitter) throws Exception {
-      aggregator.aggregate(input._1(), Collections.singleton(input._2).iterator(), emitter);
+      aggregator.aggregate(input._1(), input._2, emitter);
     }
   }
 }

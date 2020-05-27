@@ -23,7 +23,6 @@ import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.common.TypeChecker;
 
-import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 /**
@@ -103,7 +102,7 @@ public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
   }
 
   @Override
-  public void aggregate(GROUP_KEY groupKey, Iterator<GROUP_VALUE> groupValues,
+  public void aggregate(GROUP_KEY groupKey, GROUP_VALUE groupValues,
                         Emitter<OUT> emitter) throws Exception {
     operationTimer.start();
     try {

@@ -43,9 +43,6 @@ public interface Aggregator<GROUP_KEY, GROUP_VALUE, OUT> {
 
   /**
    * Aggregate all objects in the same group into zero or more output objects.
-   * If this aggregator does not implement {@link Reducer}, the group values will contain all input objects with
-   * same group key. If it does, the group value will only contain one value which contains the aggregated stats for
-   * all the values, this method can use this stat to compute the desired result, i.e, average, standard deviation
    *
    * @param groupKey the key for the group
    * @param groupValues an iterator contains the group values associated with the group key
