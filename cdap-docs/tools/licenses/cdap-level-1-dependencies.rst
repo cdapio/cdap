@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2020 Cask Data, Inc.
-    :version: 6.1.1
+    :version: 6.2.0
 
 =================================================
 Cask Data Application Platform |version|
@@ -38,6 +38,7 @@ Cask Data Application Platform Level 1 Dependencies
    "com.google.apis","google-api-services-cloudkms","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.apis","google-api-services-compute","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.cloud","google-cloud-dataproc","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "com.google.cloud","google-cloud-storage","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.findbugs","jsr305","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.code.gson","gson","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.guava","guava","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -46,15 +47,12 @@ Cask Data Application Platform Level 1 Dependencies
    "com.google.inject.extensions","guice-assistedinject","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject.extensions","guice-multibindings","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.google.inject","guice","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "com.googlecode.concurrent-trees","concurrent-trees","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.jcraft","jsch","Revised BSD","http://www.jcraft.com/jsch/LICENSE.txt"
    "com.microsoft.azure","azure-data-lake-store-sdk","MIT License","http://www.opensource.org/licenses/mit-license.php"
    "com.microsoft.azure","azure-storage","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.ning","async-http-client","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "com.sun.jersey","jersey-servlet","Common Development and Distribution License (CDDL)","http://glassfish.java.net/public/CDDL+GPL_1_1.html"
    "commons-cli","commons-cli","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "commons-codec","commons-codec","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-lang","commons-lang","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "commons-logging","commons-logging","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.cdap.cdap","cdap-api","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
@@ -96,6 +94,7 @@ Cask Data Application Platform Level 1 Dependencies
    "io.cdap.common","common-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.cdap.common","common-io","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.cdap.http","netty-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "io.kubernetes","client-java","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-all","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-buffer","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-codec-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

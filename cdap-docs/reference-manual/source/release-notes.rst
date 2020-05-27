@@ -30,6 +30,150 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 6.2.0 <http://docs.cask.co/cdap/6.2.0/index.html>`__
+=============================================================
+
+Summary
+-------
+
+This release introduces a number of new features, improvements, and bug fixes to CDAP. Some of the main highlights of the release are:
+
+1. **Replication**
+    - A CDAP application using which you can easily replicate data at low-latency and in real-time from transactional and operational databases into analytical data warehouses.
+
+2. **Google Cloud Dataproc Runtime Improvement**
+    - The Google Cloud Dataproc runtime now uses native Dataproc API's for job submission instead of SSH.
+
+3. **Pipeline Studio Improvements**
+    - Added the ability to perform bulk operations (copy, delete) in the pipeline Studio. Also added a right-click context menu for the Studio.
+
+
+New Features
+------------
+
+- :cask-issue:`CDAP-16385` - Added JDBC plugin selector widget.
+
+- :cask-issue:`CDAP-16339` - Introduced a new REST endpoint for fetching scheduled time for multiple programs.
+
+- :cask-issue:`CDAP-16243` - Added new capability to start system applications using application specific config during startup.
+
+- :cask-issue:`CDAP-16223` - Added Replication feature.
+
+- :cask-issue:`CDAP-16210` - Added support for connecting to multiple hubs through market.base.urls property in cdap-site.
+
+- :cask-issue:`CDAP-16130` - Added the ability to right-click on the Pipeline Studio canvas to add a Wrangler source. This allows you to add multiple Wrangler sources (source + Wrangler transform) in the same pipeline without losing context.
+
+- :cask-issue:`CDAP-16107` - Added support for Spark 2.4.
+
+- :cask-issue:`CDAP-15941` - Added date picker widget to allow users to specify a single date or date range in a plugin.
+
+- :cask-issue:`CDAP-15633` - Added support to launch a job using Google Cloud Dataproc APIs.
+
+- :cask-issue:`CDAP-9014` -  Added the ability to select multiple plugins and connections from Pipeline Studio copy or delete them in bulk.
+
+
+Improvements
+------------
+
+- :cask-issue:`CDAP-16633` - Added option to generate scoped GoogleCredentials with Google BigQuery and Google Drive scope for all Google BigQuery requests.
+
+- :cask-issue:`CDAP-16572` - Added macro support for Format field in Google Cloud Storage plugin.
+
+- :cask-issue:`CDAP-16525` - Added an option for Database source to replace characters in the field names.
+
+- :cask-issue:`CDAP-16809` - Added support for copying header on compressed file.
+
+- :cask-issue:`CDAP-16656` - Added support for rendering large schemas (>1000 fields) in Pipeline UI by collapsing complex schemas and lazy-load fields in record types.
+
+- :cask-issue:`CDAP-16616` - Make the View Raw Logs and Download Logs buttons to be enabled all the time in the log viewer page.
+
+- :cask-issue:`CDAP-16593` - Added restrictions on the maximum number of network tags for Dataproc VM to be 64.
+
+- :cask-issue:`CDAP-16586` - Changed behavior for selecting multiple nodes in Studio to require the user to hold the key [shift] and click on the plugins (instead of holding [ctrl] and then click).
+
+- :cask-issue:`CDAP-16521` - Improved program startup performance by using a thread pool to start a program instead of starting from a single thread.
+
+- :cask-issue:`CDAP-16517` - Added an option to skip header in the files in delimited, csv, tsv, and text formats.
+
+- :cask-issue:`CDAP-16509` - Reduced memory footprint for StructureRecord which improves overall memory consumption for pipeline execution.
+
+- :cask-issue:`CDAP-16351` - Added an API that returns the names of input stages.
+
+- :cask-issue:`CDAP-16330` - Replaced config.getProperties with config.getRawProperties to make sure validation happens on raw value before macros are evaluated.
+
+- :cask-issue:`CDAP-16324` - Added macro support for Analytics plugins.
+
+- :cask-issue:`CDAP-16308` - Reduced preview startup by 60%. Also added limit to maximum concurrent preview runs (10 by default).
+
+- :cask-issue:`CDAP-16249` - Added ability to show dropped field operation from field level lineage page.
+
+- :cask-issue:`CDAP-16248` - For field level lineage, added ability for user to view all fields in a cause or impact dataset (not just the related fields).
+
+- :cask-issue:`CDAP-16211` - Unified JSON structure used by REST endpoints for fetching pipeline configuration and deploying pipelines.
+
+- :cask-issue:`CDAP-15894` - Added ability for user to navigate to non-target dataset by selecting the header of the dataset in field level lineage.
+
+- :cask-issue:`CDAP-15579` - Added the ability for SparkCompute and SparkSink to record field level lineage.
+
+- :cask-issue:`CDAP-15061` - Added a page level error when the user navigates to an invalid pipeline via the URL.
+
+- :cask-issue:`CDAP-13643` - Added support for recording field level lineage in streaming pipelines.
+
+
+Bug Fixes
+---------
+
+- :cask-issue:`CDAP-16816` - Fixed schedule properties to overwrite preferences set on the application instead of the other way around. This most visibly fixed a bug where the compute profile set on a pipeline schedule or trigger would get overwritten by the profile for the pipeline.
+
+- :cask-issue:`CDAP-16751` - Fixed a bug where UI overwrites scale and precision properties in a schema with decimal logical type if the value is 0.
+
+- :cask-issue:`CDAP-16736` - Fixed record schema comparison to include record name.
+
+- :cask-issue:`CDAP-16725` - Fixed a bug where concurrent preview runs were failing because SparkConf for the new preview runs was getting populated with the configurations from the previously started in-progress preview run.
+
+- :cask-issue:`CDAP-16724` - Fixed a bug in Wrangler that would cause it to go out of memory when sampling a Google Cloud Storage object that has a lot of rows.
+
+- :cask-issue:`CDAP-16664` - Fixed a bug that resulted in failure to update/upsert to Google BigQuery in a different project.
+
+- :cask-issue:`CDAP-16663` - Fixed a bug where UI incorrectly showed "No schema available" when the output of the previous stage is a macro.
+
+- :cask-issue:`CDAP-16655` - Fixed a bug in File source that prevented reading files from Google Cloud Storage.
+
+- :cask-issue:`CDAP-16614` - Fixed the fetch run records API to honor the limit query parameter correctly.
+
+- :cask-issue:`CDAP-16581` - Fixed a bug that prevented a user from using parse-as-json directive in Wrangler.
+
+- :cask-issue:`CDAP-16538` - Fixed a bug in the PluginProperties class where internal map was modifiable.
+
+- :cask-issue:`CDAP-16526` - Fixed Google BigQuery sink to properly allow certain types as clustering fields.
+
+- :cask-issue:`CDAP-16501` - Fixed a bug to correctly update pipeline stage metrics in UI.
+
+- :cask-issue:`CDAP-16471` - Fixed a bug that would leave zombie processes when using the Remote Hadoop Provisioner.
+
+- :cask-issue:`CDAP-16465` - Fixed a bug where Wrangler database connections could show more tables than those in the configured database.
+
+- :cask-issue:`CDAP-16453` - Fixed a bug with LimitingInputFormat that made Database source plugin fail in preview mode.
+
+- :cask-issue:`CDAP-16425` - Fixed macro support for output schema in Google BigQuery source plugin.
+
+- :cask-issue:`CDAP-16309` - Fixed a race condition bug that can cause failure when running Spark program.
+
+- :cask-issue:`CDAP-16240` - Fixed a bug to show master and worker memory in Google Cloud Dataproc compute profiles in GB.
+
+- :cask-issue:`CDAP-16055` - Fixed a bug where the failure message emitted by Spark driver was not being collected.
+
+- :cask-issue:`CDAP-16002` - Fixed a bug that caused errors when Wrangler's parse-as-csv with header was used when reading multiple small files.
+
+- :cask-issue:`CDAP-15775` - Fixed a bug that disallowed writing to an empty Google BigQuery table without any data or schema.
+
+- :cask-issue:`CDAP-15649` - Fixed a bug that would cause the Google BigQuery sink to fail the pipeline run if there was no data to write.
+
+- :cask-issue:`CDAP-14850` - Fixed a bug in the custom date range picker that prevented users from setting a custom date range that is not in the current year.
+
+- :cask-issue:`CDAP-14190` - Fixed a bug where users cannot delete the entire column name in Wrangler.
+
+
 `Release 6.1.1 <http://docs.cask.co/cdap/6.1.1/index.html>`__
 =============================================================
 
@@ -120,7 +264,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-15535` - Fixed an issue where BigQuery multi sink doesn't work if using an Oracle database as a source.
 
-- :cask-issue:`CDAP-15498` - Fixed the dataproc provisioner to disable YARN pre-emptive container killing and to disable conscrypt. 
+- :cask-issue:`CDAP-15498` - Fixed the dataproc provisioner to disable YARN pre-emptive container killing and to disable conscrypt.
 
 - :cask-issue:`CDAP-15445` - Fixed a bug in the MLPredictor plugin that caused error when using a classification model
 
@@ -156,7 +300,7 @@ Improvements
 
 - :cask-issue:`CDAP-15677` - Added support to restore preview status after restart
 
-- :cask-issue:`CDAP-15659` - Route user directly to the pipeline's detail page from pipeline card in Control Center. 
+- :cask-issue:`CDAP-15659` - Route user directly to the pipeline's detail page from pipeline card in Control Center.
 
 - :cask-issue:`CDAP-15489` - New user experience for log level selection.
 
