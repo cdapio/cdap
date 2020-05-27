@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 import React from 'react';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -33,6 +33,16 @@ const CustomizedInput = withStyles(() => {
   };
 })(InputBase);
 
+const DenseMenuItem = withStyles(() => {
+  return {
+    root: {
+      minHeight: 'unset',
+      paddingTop: '3px',
+      paddingBottom: '3px',
+    },
+  };
+})(MenuItem);
+
 interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
   label: string;
@@ -40,6 +50,7 @@ interface ISelectOptions {
 
 interface ISelectWidgetProps {
   options: ISelectOptions[] | string[] | number[];
+  dense?: boolean;
 }
 
 interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {}
@@ -58,6 +69,8 @@ const CustomSelect: React.FC<ISelectProps> = ({
   };
 
   const options = objectQuery(widgetProps, 'options') || objectQuery(widgetProps, 'values') || [];
+  const dense = objectQuery(widgetProps, 'dense') || false;
+  const OptionItem = dense ? DenseMenuItem : MenuItem;
   const optionValues = options.map((opt) => {
     return ['string', 'number'].indexOf(typeof opt) !== -1 ? { value: opt, label: opt } : opt;
   });
@@ -69,11 +82,18 @@ const CustomSelect: React.FC<ISelectProps> = ({
       onChange={onChangeHandler}
       input={<CustomizedInput />}
       readOnly={disabled}
+      MenuProps={{
+        getContentAnchorEl: null,
+        anchorOrigin: {
+          vertical: 'bottom',
+          horizontal: 'left',
+        },
+      }}
     >
       {optionValues.map((opt) => (
-        <MenuItem value={opt.value} key={opt.value}>
+        <OptionItem value={opt.value} key={opt.value}>
           {opt.label}
-        </MenuItem>
+        </OptionItem>
       ))}
     </Select>
   );

@@ -30,9 +30,9 @@ const flattenUnionType = (complexType, parent) => {
   for (const subType of getNonNullableType(complexType)) {
     if (isComplexType(subType)) {
       const complexTypeName = getComplexTypeName(subType);
-      const name = `${parent[parent.length - 1]}-union-${complexTypeName}`;
+      const name = `id-${uuidV4()}`;
       result.push({
-        id: `id-${uuidV4()}`,
+        displayType: 'union-complex-type-root',
         name,
         type: complexTypeName,
         parent,
@@ -41,8 +41,8 @@ const flattenUnionType = (complexType, parent) => {
       result.push(...flattenSubTree(subType, parent.concat([name])));
     } else {
       result.push({
-        id: `id-${uuidV4()}`,
-        name: `${parent[parent.length - 1]}-union`,
+        displayType: 'union-simple-type',
+        name: `id-${uuidV4()}`,
         type: subType,
         parent,
         nullable: isNullable(subType),
@@ -58,11 +58,11 @@ const flattenMapType = (complexType, parent) => {
   }
   const result = [];
   const { keys, values } = getNonNullableType(complexType);
-  const mapKeysId = `${parent[parent.length - 1]}-keys`;
-  const mapValuesId = `${parent[parent.length - 1]}-values`;
+  const mapKeysId = `id-${uuidV4()}`;
+  const mapValuesId = `id-${uuidV4()}`;
   if (!isComplexType(keys)) {
     result.push({
-      id: `id-${uuidV4()}`,
+      displayType: 'map-keys-simple-type',
       name: mapKeysId,
       type: keys,
       parent,
@@ -71,7 +71,7 @@ const flattenMapType = (complexType, parent) => {
   } else {
     const complexTypeName = getComplexTypeName(keys);
     result.push({
-      id: `id-${uuidV4()}`,
+      displayType: 'map-keys-complex-type-root',
       name: mapKeysId,
       type: complexTypeName,
       parent,
@@ -81,7 +81,7 @@ const flattenMapType = (complexType, parent) => {
   }
   if (!isComplexType(values)) {
     result.push({
-      id: `id-${uuidV4()}`,
+      displayType: 'map-values-simple-type',
       name: mapValuesId,
       type: values,
       parent,
@@ -90,7 +90,7 @@ const flattenMapType = (complexType, parent) => {
   } else {
     const complexTypeName = getComplexTypeName(values);
     result.push({
-      id: `id-${uuidV4()}`,
+      displayType: 'map-values-complex-type-root',
       name: mapValuesId,
       type: complexTypeName,
       parent,
@@ -107,10 +107,10 @@ const flattenEnumType = (complexType, parent) => {
   }
   const result = [];
   const { symbols } = getNonNullableType(complexType);
-  for (const [i, symbol] of symbols.entries()) {
+  for (const symbol of symbols) {
     result.push({
-      id: `id-${uuidV4()}`,
-      name: `${parent[parent.length - 1]}-${i}-enum-symbol`,
+      name: `id-${uuidV4()}`,
+      displayType: 'enum-symbol',
       type: 'enum-symbol',
       parent,
       symbol,
@@ -126,10 +126,10 @@ const flattenArrayType = (complexType, parent) => {
   const result = [];
   const { items } = getNonNullableType(complexType);
   const nullable = isNullable(items);
-  const itemsId = `${parent[parent.length - 1]}-array-items`;
+  const itemsId = `id-${uuidV4()}`;
   if (!isComplexType(items)) {
     result.push({
-      id: `id-${uuidV4()}`,
+      displayType: 'array-simple-type',
       name: itemsId,
       type: getNonNullableType(items),
       parent,
@@ -138,7 +138,7 @@ const flattenArrayType = (complexType, parent) => {
   } else {
     const complexTypeName = getComplexTypeName(items);
     result.push({
-      id: `id-${uuidV4()}`,
+      displayType: 'array-complex-type-root',
       type: complexTypeName,
       name: itemsId,
       nullable,
@@ -182,16 +182,17 @@ const flattenFields = (fields, parent) => {
   for (const field of fields) {
     const nullable = isNullable(field.type);
     const fieldObj = {
-      id: `id-${uuidV4()}`,
       name: field.name,
       nullable,
       parent,
     };
     if (!isComplexType(field.type)) {
       fieldObj.type = getNonNullableType(field.type);
+      fieldObj.displayType = 'record-field-simple-type';
       result.push(fieldObj);
     } else {
       fieldObj.type = getComplexTypeName(field.type);
+      fieldObj.displayType = 'record-field-complex-type-root';
       result.push(fieldObj);
       // flatten the complex type subtree.
       result.push(...flattenSubTree(field.type, parent.concat([field.name])));
