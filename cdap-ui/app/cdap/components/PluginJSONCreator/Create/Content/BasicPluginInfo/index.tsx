@@ -94,7 +94,6 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         outputName={outputName}
         jsonView={jsonView}
         setJsonView={setJsonView}
-        onClose={() => setJsonView(!jsonView)}
         filters={filters}
         filterToName={filterToName}
         filterToCondition={filterToCondition}

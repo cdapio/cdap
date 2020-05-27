@@ -95,7 +95,6 @@ const styles = (theme) => {
 
 interface IJsonLiveViewerProps {
   open: boolean;
-  onClose: () => void;
   context: INamespaceLinkContext;
 }
 
@@ -115,8 +114,6 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
   outputName,
   jsonView,
   setJsonView,
-  open,
-  onClose,
 }) => {
   function getJSONConfig() {
     const configurationGroupsData = configurationGroups.map((groupID: string) => {
@@ -194,7 +191,6 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       <Drawer
         open={jsonView}
         variant="persistent"
-        onClose={onClose}
         className={classes.jsonViewer}
         anchor="right"
         disableEnforceFocus={true}
@@ -226,7 +222,6 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       <Drawer
         open={!jsonView}
         variant="persistent"
-        onClose={onClose}
         className={classes.drawer}
         anchor="right"
         disableEnforceFocus={true}

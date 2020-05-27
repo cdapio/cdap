@@ -120,9 +120,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     }
   }, [localGroupToWidgets, activeGroupIndex]);
 
-  // TODO change
-  const requiredFilledOut = true;
-
   function addConfigurationGroup(index: number) {
     const newGroupID = 'ConfigGroup_' + uuidV4();
 
@@ -208,8 +205,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         widgetToInfo={localWidgetToInfo}
         widgetToAttributes={localWidgetToAttributes}
         outputName={outputName}
-        open={jsonView}
-        onClose={() => setJsonView(!jsonView)}
         filters={filters}
         filterToName={filterToName}
         filterToCondition={filterToCondition}
@@ -282,11 +277,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
           );
         })}
       </div>
-      <StepButtons
-        nextDisabled={!requiredFilledOut}
-        onPrevious={saveAllResults}
-        onNext={saveAllResults}
-      />
+      <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
     </div>
   );
 };

@@ -86,8 +86,6 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         filterToShowList={localFilterToShowList}
         showToInfo={localShowToInfo}
         outputName={outputName}
-        open={true}
-        onClose={() => {}}
       />
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Outputs" />
