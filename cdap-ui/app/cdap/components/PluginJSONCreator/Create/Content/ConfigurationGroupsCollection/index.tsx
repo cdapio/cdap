@@ -27,6 +27,7 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
+import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import {
@@ -55,6 +56,11 @@ const styles = (): StyleRules => {
 
 const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
+  pluginName,
+  pluginType,
+  displayName,
+  emitAlerts,
+  emitErrors,
   configurationGroups,
   setConfigurationGroups,
   groupToInfo,
@@ -63,6 +69,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setGroupToWidgets,
   widgetToInfo,
   setWidgetToInfo,
+  jsonView,
+  setJsonView,
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -146,6 +154,19 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
 
   return (
     <div>
+      <JsonMenu
+        pluginName={pluginName}
+        pluginType={pluginType}
+        displayName={displayName}
+        emitAlerts={emitAlerts}
+        emitErrors={emitErrors}
+        configurationGroups={localConfigurationGroups}
+        groupToInfo={localGroupToInfo}
+        groupToWidgets={localGroupToWidgets}
+        widgetToInfo={localWidgetToInfo}
+        jsonView={jsonView}
+        setJsonView={setJsonView}
+      />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />
       <If condition={localConfigurationGroups.length === 0}>

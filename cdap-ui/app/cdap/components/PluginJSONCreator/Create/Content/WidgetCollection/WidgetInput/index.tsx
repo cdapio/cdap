@@ -24,7 +24,7 @@ const styles = (): StyleRules => {
   return {
     widgetInput: {
       '& > *': {
-        width: '100%',
+        width: '95%',
         marginTop: '10px',
         marginBottom: '10px',
       },
