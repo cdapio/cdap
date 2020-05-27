@@ -58,7 +58,7 @@ public class JoinCondition {
    * Condition operation.
    */
   public enum Op {
-    EQUAL_TO
+    KEY_EQUALITY
   }
 
   public static OnKeys.Builder onKeys() {
@@ -73,7 +73,7 @@ public class JoinCondition {
     private final boolean dropNullKeys;
 
     private OnKeys(Set<JoinKey> keys, boolean dropNullKeys) {
-      super(Op.EQUAL_TO);
+      super(Op.KEY_EQUALITY);
       this.keys = Collections.unmodifiableSet(new HashSet<>(keys));
       this.dropNullKeys = dropNullKeys;
     }

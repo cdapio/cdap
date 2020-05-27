@@ -26,6 +26,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.SQLContext;
 import scala.Tuple2;
 
 /**
@@ -37,14 +38,17 @@ import scala.Tuple2;
 public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
   private final JavaSparkExecutionContext sec;
   private final JavaSparkContext jsc;
+  private final SQLContext sqlContext;
   private final DatasetContext datasetContext;
   private final SparkBatchSinkFactory sinkFactory;
   private final JavaPairRDD<K, V> pairRDD;
 
-  public PairRDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, DatasetContext datasetContext,
-                           SparkBatchSinkFactory sinkFactory, JavaPairRDD<K, V> pairRDD) {
+  public PairRDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
+                           DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
+                           JavaPairRDD<K, V> pairRDD) {
     this.sec = sec;
     this.jsc = jsc;
+    this.sqlContext = sqlContext;
     this.datasetContext = datasetContext;
     this.sinkFactory = sinkFactory;
     this.pairRDD = pairRDD;
@@ -58,7 +62,7 @@ public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
 
   @Override
   public <T> SparkCollection<T> flatMap(FlatMapFunction<Tuple2<K, V>, T> function) {
-    return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory, pairRDD.flatMap(function));
+    return new RDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, pairRDD.flatMap(function));
   }
 
   @Override
@@ -105,6 +109,6 @@ public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
   }
 
   private <X, Y> SparkPairCollection<X, Y> wrap(JavaPairRDD<X, Y> javaPairRDD) {
-    return new PairRDDCollection<>(sec, jsc, datasetContext, sinkFactory, javaPairRDD);
+    return new PairRDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, javaPairRDD);
   }
 }
