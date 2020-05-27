@@ -73,7 +73,7 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
+const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
   configurationGroups,
   setConfigurationGroups,
@@ -194,6 +194,8 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
     setConfigurationGroups(localConfigurationGroups);
     setGroupToWidgets(localGroupToWidgets);
     setGroupToInfo(localGroupToInfo);
+    setWidgetToInfo(localWidgetToInfo);
+    setWidgetToAttributes(localWidgetToAttributes);
   }
 
   return (
@@ -280,11 +282,17 @@ const ConfigurationGroupsInfoView: React.FC<ICreateContext & WithStyles<typeof s
           );
         })}
       </div>
-      <StepButtons nextDisabled={!requiredFilledOut} onNext={saveAllResults} />
+      <StepButtons
+        nextDisabled={!requiredFilledOut}
+        onPrevious={saveAllResults}
+        onNext={saveAllResults}
+      />
     </div>
   );
 };
 
-const StyledConfigurationGroupsInfoView = withStyles(styles)(ConfigurationGroupsInfoView);
-const ConfigurationGroupsInfo = createContextConnect(StyledConfigurationGroupsInfoView);
-export default ConfigurationGroupsInfo;
+const StyledConfigurationGroupsCollectionView = withStyles(styles)(
+  ConfigurationGroupsCollectionView
+);
+const ConfigurationGroupsCollection = createContextConnect(StyledConfigurationGroupsCollectionView);
+export default ConfigurationGroupsCollection;

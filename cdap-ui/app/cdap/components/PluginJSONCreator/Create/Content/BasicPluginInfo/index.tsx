@@ -72,7 +72,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   const requiredFilledOut =
     localPluginName.length > 0 && localPluginType.length > 0 && localDisplayName.length > 0;
 
-  function handleNext() {
+  function saveAllResults() {
     setBasicPluginInfo({
       pluginName: localPluginName,
       pluginType: localPluginType,
@@ -147,7 +147,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
           setValue={setLocalEmitErrors}
         />
       </div>
-      <StepButtons nextDisabled={!requiredFilledOut} onNext={handleNext} />
+      <StepButtons
+        nextDisabled={!requiredFilledOut}
+        onPrevious={saveAllResults}
+        onNext={saveAllResults}
+      />
     </div>
   );
 };

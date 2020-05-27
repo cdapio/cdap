@@ -14,12 +14,12 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import Button from '@material-ui/core/Button';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import If from 'components/If';
 import { createContextConnect, ICreateContext } from 'components/PluginJSONCreator/Create';
 import { STEPS } from 'components/PluginJSONCreator/Create/steps';
-import Button from '@material-ui/core/Button';
-import If from 'components/If';
+import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
@@ -37,6 +37,7 @@ const styles = (theme): StyleRules => {
 interface IStepButtonProps extends WithStyles<typeof styles>, ICreateContext {
   nextDisabled?: boolean;
   onNext?: () => void;
+  onPrevious?: () => void;
   onComplete?: () => void;
   completeLoading?: boolean;
 }
@@ -46,9 +47,22 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   setActiveStep,
   nextDisabled,
   onNext,
+  onPrevious,
   classes,
   onComplete,
 }) => {
+  function handlePreviousClick() {
+    if (activeStep == 0) {
+      return;
+    }
+
+    if (typeof onNext === 'function') {
+      onPrevious();
+    }
+
+    setActiveStep(activeStep - 1);
+  }
+
   function handleNextClick() {
     if (activeStep === STEPS.length - 1) {
       return;
@@ -64,7 +78,7 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   return (
     <div className={classes.root}>
       <If condition={activeStep > 0}>
-        <Button color="primary" onClick={() => setActiveStep(activeStep - 1)}>
+        <Button color="primary" onClick={handlePreviousClick}>
           Previous
         </Button>
       </If>

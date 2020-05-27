@@ -63,7 +63,7 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   const [localFilterToShowList, setLocalFilterToShowList] = React.useState(filterToShowList);
   const [localShowToInfo, setLocalShowToInfo] = React.useState(showToInfo);
 
-  function handleNext() {
+  function saveAllResults() {
     setFilters(localFilters);
     setFilterToName(localFilterToName);
     setFilterToCondition(localFilterToCondition);
@@ -100,34 +100,6 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
           placeholder={'output name'}
           required={false}
         />
-        {/*<PluginRadioGroupInput
-          value={localOutputSchemaType}
-          setValue={(val) => setLocalOutputSchemaType(val)}
-          options={[
-            {
-              id: OutputSchemaType.Explicit,
-              label: OutputSchemaType.Explicit,
-            },
-            {
-              id: OutputSchemaType.Implicit,
-              label: OutputSchemaType.Implicit,
-            },
-          ]}
-          label={'Output Schema Type'}
-          required={true}
-        />
-        <If condition={localOutputSchemaType === OutputSchemaType.Explicit}>
-          <PluginInput
-            widgetType={'csv'}
-            value={localSchemaTypes}
-            setValue={(val) => setLocalSchemaTypes(val)}
-            label={'Schema Types'}
-            required={true}
-            /*options={SCHEMA_TYPES.types.map((type) => {
-              return { id: 'type_' + uuidV4(), label: type };
-            })}
-          />
-        </If>*/}
         <Heading type={HeadingTypes.h3} label="Filters" />
         <FilterCollection
           filters={localFilters}
@@ -141,7 +113,7 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
           showToInfo={localShowToInfo}
           setShowToInfo={setLocalShowToInfo}
         />
-        <StepButtons nextDisabled={!true} onNext={handleNext} />
+        <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
       </div>
     </div>
   );

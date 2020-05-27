@@ -14,12 +14,12 @@
  * the License.
  */
 
-import { Button, Divider, Grid, IconButton } from '@material-ui/core';
+import { Divider, IconButton } from '@material-ui/core';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import CloseIcon from '@material-ui/icons/Close';
 import CodeIcon from '@material-ui/icons/Code';
+import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
@@ -29,7 +29,6 @@ import fileDownload from 'js-file-download';
 import * as React from 'react';
 
 const JSON_VIEWER_WIDTH = '600px';
-const DRAWER_WIDTH = '200px';
 
 export const appDrawerListItemTextStyles = (theme) => ({
   fontWeight: 400,
@@ -55,17 +54,13 @@ const styles = (theme) => {
     },
     drawer: {
       zIndex: theme.zIndex.drawer,
-      width: DRAWER_WIDTH,
     },
     jsonViewerPaper: {
       width: JSON_VIEWER_WIDTH,
-      backgroundColor: theme.palette.grey['700'],
+      backgroundColor: theme.palette.white[50],
     },
     drawerPaper: {
-      backgroundColor: theme.palette.grey['700'],
-    },
-    closeJSONViewerButon: {
-      float: 'right',
+      backgroundColor: theme.palette.white[50],
     },
     listItemText: appDrawerListItemTextStyles(theme),
     toolbar: {
@@ -75,6 +70,18 @@ const styles = (theme) => {
       borderTop: `1px solid ${theme.palette.grey['500']}`,
       paddingTop: theme.Spacing(1),
       paddingBottom: theme.Spacing(1),
+    },
+    jsonActionButtons: {
+      padding: '5px',
+      display: 'flex',
+    },
+    jsonCollapseActionButtons: {
+      padding: '15px',
+      flexDirection: 'column',
+    },
+    closeJSONViewerButon: {
+      marginLeft: 'auto',
+      order: '2',
     },
     namespaceAdminMenu: {
       // WUT TS?
@@ -201,17 +208,14 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       >
         <div className={classes.toolbar} />
         <List component="nav" dense={true} className={classes.mainMenu}>
-          <Button variant="contained" color="primary" onClick={downloadPluginJSON}>
-            <Grid container direction="row" alignItems="center">
-              <Grid item>
-                <SaveAltIcon style={{ marginRight: '5px' }} />
-              </Grid>
-              <Grid item>Download</Grid>
-            </Grid>
-          </Button>
-          <IconButton className={classes.closeJSONViewerButon} onClick={() => setJsonView(false)}>
-            <CloseIcon />
-          </IconButton>
+          <div className={classes.jsonActionButtons}>
+            <IconButton onClick={downloadPluginJSON}>
+              <SaveAltIcon />
+            </IconButton>
+            <IconButton className={classes.closeJSONViewerButon} onClick={() => setJsonView(false)}>
+              <FullscreenExitIcon />
+            </IconButton>
+          </div>
           <JsonEditorWidget
             rows={50}
             value={JSON.stringify(JSONConfig, undefined, 4)}
@@ -236,13 +240,15 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps & WithStyles<typeof styl
       >
         <div className={classes.toolbar} />
         <List component="nav" dense={true} className={classes.mainMenu}>
-          <IconButton onClick={() => setJsonView(true)}>
-            <CodeIcon />
-          </IconButton>
-          <Divider />
-          <IconButton onClick={downloadPluginJSON}>
-            <GetAppIcon />
-          </IconButton>
+          <div className={classes.jsonCollapseActionButtons}>
+            <IconButton onClick={() => setJsonView(true)}>
+              <CodeIcon />
+            </IconButton>
+            <Divider />
+            <IconButton onClick={downloadPluginJSON}>
+              <GetAppIcon />
+            </IconButton>
+          </div>
         </List>
       </Drawer>
     </div>
