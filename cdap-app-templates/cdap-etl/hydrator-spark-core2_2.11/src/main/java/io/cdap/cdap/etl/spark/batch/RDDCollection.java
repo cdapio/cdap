@@ -32,6 +32,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.catalyst.encoders.RowEncoder;
+import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
@@ -112,7 +113,10 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
         joinType = "outer";
       }
       seenRequired = seenRequired || toJoin.isRequired();
-      
+
+      if (toJoin.isBroadcast()) {
+        right = functions.broadcast(right);
+      }
       joined = joined.join(right, joinOn, joinType);
 
       /*

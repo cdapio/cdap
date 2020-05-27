@@ -132,6 +132,10 @@ public class JoinDefinition {
         throw new InvalidJoinException("At least two stages must be specified.");
       }
 
+      if (stages.stream().allMatch(JoinStage::isBroadcast)) {
+        throw new InvalidJoinException("Cannot broadcast all stages.");
+      }
+
       // validate the join condition
       if (condition == null) {
         throw new InvalidJoinException("A join condition must be specified.");

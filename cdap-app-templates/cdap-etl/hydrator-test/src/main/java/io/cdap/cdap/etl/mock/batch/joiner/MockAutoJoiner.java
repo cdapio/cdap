@@ -68,14 +68,19 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     Map<String, JoinStage> inputStages = context.getInputStages();
     List<JoinStage> from = new ArrayList<>(inputStages.size());
     Set<String> required = new HashSet<>(conf.getRequired());
+    Set<String> broadcast = new HashSet<>(conf.getBroadcast());
     List<JoinField> selectedFields = new ArrayList<>();
     JoinCondition.OnKeys.Builder condition = JoinCondition.onKeys()
       .setNullSafe(conf.isNullSafe());
     for (String stageName : conf.getStages()) {
-      JoinStage stage = inputStages.get(stageName);
+      JoinStage.Builder stageBuilder = JoinStage.builder(inputStages.get(stageName));
       if (!required.contains(stageName)) {
-        stage = JoinStage.builder(stage).isOptional().build();
+        stageBuilder.isOptional();
       }
+      if (broadcast.contains(stageName)) {
+        stageBuilder.setBroadcast(true);
+      }
+      JoinStage stage = stageBuilder.build();
       from.add(stage);
 
       condition.addKey(new JoinKey(stageName, conf.getKey()));
@@ -110,6 +115,7 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     @Nullable
     private Boolean nullSafe;
 
+    private String broadcast;
 
     List<String> getKey() {
       return GSON.fromJson(key, LIST);
@@ -126,13 +132,23 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     boolean isNullSafe() {
       return nullSafe == null ? true : nullSafe;
     }
+
+    List<String> getBroadcast() {
+      return broadcast == null ? Collections.emptyList() : GSON.fromJson(broadcast, LIST);
+    }
   }
 
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required) {
+    return getPlugin(stages, key, required, Collections.emptyList());
+  }
+
+  public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
+                                    List<String> broadcast) {
     Map<String, String> properties = new HashMap<>();
     properties.put("stages", GSON.toJson(stages));
     properties.put("required", GSON.toJson(required));
     properties.put("key", GSON.toJson(key));
+    properties.put("broadcast", GSON.toJson(broadcast));
     return new ETLPlugin(NAME, BatchJoiner.PLUGIN_TYPE, properties, null);
   }
 
@@ -152,6 +168,7 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     properties.put("required", new PluginPropertyField("required", "", "string", false, false));
     properties.put("key", new PluginPropertyField("key", "", "string", true, false));
     properties.put("nullSafe", new PluginPropertyField("nullSafe", "", "boolean", false, false));
+    properties.put("broadcast", new PluginPropertyField("broadcast", "", "string", false, false));
     return new PluginClass(BatchJoiner.PLUGIN_TYPE, NAME, "", MockAutoJoiner.class.getName(), "conf", properties);
   }
 
