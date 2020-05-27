@@ -29,15 +29,17 @@ public class JoinRequest {
   private final List<String> leftKey;
   private final Schema leftSchema;
   private final boolean leftRequired;
+  private final boolean nullSafe;
   private final List<JoinField> fields;
   private final Schema outputSchema;
   private final List<JoinCollection> toJoin;
 
   public JoinRequest(String leftStage, List<String> leftKey, Schema leftSchema, boolean leftRequired,
-                     List<JoinField> fields, Schema outputSchema, List<JoinCollection> toJoin) {
+                     boolean nullSafe, List<JoinField> fields, Schema outputSchema, List<JoinCollection> toJoin) {
     this.leftStage = leftStage;
     this.leftKey = leftKey;
     this.leftRequired = leftRequired;
+    this.nullSafe = nullSafe;
     this.fields = fields;
     this.leftSchema = leftSchema;
     this.outputSchema = outputSchema;
@@ -58,6 +60,10 @@ public class JoinRequest {
 
   public boolean isLeftRequired() {
     return leftRequired;
+  }
+
+  public boolean isNullSafe() {
+    return nullSafe;
   }
 
   public List<JoinField> getFields() {

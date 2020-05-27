@@ -96,9 +96,9 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
 
       Iterator<Column> leftIter = leftJoinColumns.iterator();
       Iterator<Column> rightIter = rightJoinColumns.iterator();
-      Column joinOn = leftIter.next().equalTo(rightIter.next());
+      Column joinOn = eq(leftIter.next(), rightIter.next(), joinRequest.isNullSafe());
       while (leftIter.hasNext()) {
-        joinOn = joinOn.and(leftIter.next().equalTo(rightIter.next()));
+        joinOn = joinOn.and(eq(leftIter.next(), rightIter.next(), joinRequest.isNullSafe()));
       }
 
       String joinType;
@@ -160,6 +160,13 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     Schema outputSchema = joinRequest.getOutputSchema();
     JavaRDD<StructuredRecord> output = joined.javaRDD().map(r -> DataFrames.fromRow(r, outputSchema));
     return (SparkCollection<T>) wrap(output);
+  }
+
+  private Column eq(Column left, Column right, boolean isNullSafe) {
+    if (isNullSafe) {
+      return left.eqNullSafe(right);
+    }
+    return left.equalTo(right);
   }
 
   private Dataset<Row> toDataset(JavaRDD<StructuredRecord> rdd, Schema schema) {
