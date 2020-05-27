@@ -69,7 +69,8 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     List<JoinStage> from = new ArrayList<>(inputStages.size());
     Set<String> required = new HashSet<>(conf.getRequired());
     List<JoinField> selectedFields = new ArrayList<>();
-    JoinCondition.OnKeys.Builder condition = JoinCondition.onKeys();
+    JoinCondition.OnKeys.Builder condition = JoinCondition.onKeys()
+      .setNullSafe(conf.isNullSafe());
     for (String stageName : conf.getStages()) {
       JoinStage stage = inputStages.get(stageName);
       if (!required.contains(stageName)) {
@@ -106,6 +107,9 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     @Nullable
     private String required;
 
+    @Nullable
+    private Boolean nullSafe;
+
 
     List<String> getKey() {
       return GSON.fromJson(key, LIST);
@@ -118,6 +122,10 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     List<String> getRequired() {
       return required == null ? Collections.emptyList() : GSON.fromJson(required, LIST);
     }
+
+    boolean isNullSafe() {
+      return nullSafe == null ? true : nullSafe;
+    }
   }
 
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required) {
@@ -128,11 +136,22 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     return new ETLPlugin(NAME, BatchJoiner.PLUGIN_TYPE, properties, null);
   }
 
+  public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
+                                    boolean filterNullKeys) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("stages", GSON.toJson(stages));
+    properties.put("required", GSON.toJson(required));
+    properties.put("key", GSON.toJson(key));
+    properties.put("nullSafe", Boolean.toString(filterNullKeys));
+    return new ETLPlugin(NAME, BatchJoiner.PLUGIN_TYPE, properties, null);
+  }
+
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("stages", new PluginPropertyField("left", "", "string", true, false));
-    properties.put("required", new PluginPropertyField("right", "", "string", false, false));
-    properties.put("key", new PluginPropertyField("type", "", "string", true, false));
+    properties.put("stages", new PluginPropertyField("stages", "", "string", true, false));
+    properties.put("required", new PluginPropertyField("required", "", "string", false, false));
+    properties.put("key", new PluginPropertyField("key", "", "string", true, false));
+    properties.put("nullSafe", new PluginPropertyField("nullSafe", "", "boolean", false, false));
     return new PluginClass(BatchJoiner.PLUGIN_TYPE, NAME, "", MockAutoJoiner.class.getName(), "conf", properties);
   }
 
