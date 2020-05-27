@@ -28,6 +28,7 @@ import Checkbox from '@material-ui/core/Checkbox';
 import CheckBoxOutlineBlankIcon from '@material-ui/icons/CheckBoxOutlineBlank';
 import CheckBox from '@material-ui/icons/CheckBox';
 import Box from '@material-ui/core/Box';
+import isObject from 'lodash/isObject';
 
 const styles = (theme): StyleRules => {
   return {
@@ -66,6 +67,27 @@ const CheckboxWrapper = withStyles(
   }
 )(Box);
 
+const MapWrapper = withStyles(
+  (): StyleRules => {
+    return {
+      root: {
+        display: 'grid',
+        gridTemplateColumns: '50px 100px',
+        alignItems: 'center',
+        gridGap: '10px',
+      },
+    };
+  }
+)(Box);
+
+const SingleColumnWrapper = withStyles(() => {
+  return {
+    root: {
+      width: '160px', // 50 + 100 + 10 from the mapwrapper
+    },
+  };
+})(Box);
+
 const Nullable = ({ field }) => {
   return (
     <CheckboxWrapper>
@@ -102,61 +124,113 @@ interface ISchemaEditorProps extends WithStyles<typeof styles> {
   schema: ISchemaType;
 }
 
-const FieldWrapper = ({ field, children }) => {
+const FieldWrapper = ({ field, children, style = {} }) => {
   const spacing = field.parent && Array.isArray(field.parent) ? field.parent.length * 10 : 0;
+  let customStyles = {
+    marginLeft: `${spacing}px`,
+    gridTemplateColumns: `calc(100% - 100px - ${spacing + 10}px) calc(100px + ${(spacing + 10) *
+      2}px)  `,
+    width: `calc(100% - ${spacing - 10}px)`,
+  };
+  if (style && isObject(style)) {
+    customStyles = {
+      ...customStyles,
+      ...style,
+    };
+  }
   return (
-    <Paper
-      elevation={2}
-      key={field.name}
-      style={{
-        marginLeft: `${spacing}px`,
-        gridTemplateColumns: `calc(33% - ${spacing + 10}px) 34% 33%`,
-      }}
-    >
+    <Paper elevation={2} key={field.name} style={customStyles}>
       {children}
     </Paper>
   );
 };
 
+const FieldInputWrapper = withStyles(() => {
+  return {
+    root: {
+      display: 'grid',
+      gridTemplateColumns: '75% 25%',
+    },
+  };
+})(Box);
+
 const FieldType = ({ field }) => {
   return (
     <FieldWrapper field={field}>
-      <TextBox onChange={() => {}} widgetProps={{ placeholder: 'name' }} value={field.name} />
-      <Select
-        value={field.type}
-        onChange={() => {}}
-        widgetProps={{ options: schemaTypes, dense: true }}
-      />
+      <FieldInputWrapper>
+        <TextBox onChange={() => {}} widgetProps={{ placeholder: 'name' }} value={field.name} />
+        <Select
+          value={field.type}
+          onChange={() => {}}
+          widgetProps={{ options: schemaTypes, dense: true }}
+        />
+      </FieldInputWrapper>
       <Nullable field={field} />
     </FieldWrapper>
   );
 };
 
 const RenderArraySubType = ({ field }) => {
-  // if (!isComplexType(field.type)) {
   return (
     <FieldWrapper field={field}>
-      <Select
-        value={field.type}
-        onChange={() => {}}
-        widgetProps={{ options: schemaTypes, dense: true }}
-      />
-      <div />
+      <SingleColumnWrapper>
+        <Select
+          value={field.type}
+          onChange={() => {}}
+          widgetProps={{ options: schemaTypes, dense: true }}
+        />
+      </SingleColumnWrapper>
       <Nullable field={field} />
     </FieldWrapper>
   );
-  // }
-  // return null;
 };
 
 const RenderEnumSubType = ({ field }) => {
-  if (!isComplexType(field.type)) {
-    return (
-      <FieldWrapper field={field}>
-        <TextBox value={field.symbol} onChange={() => {}} widgetProps={{ placeholder: 'symbol' }} />
-      </FieldWrapper>
-    );
+  return (
+    <FieldWrapper field={field}>
+      <TextBox value={field.symbol} onChange={() => {}} widgetProps={{ placeholder: 'symbol' }} />
+    </FieldWrapper>
+  );
+};
+
+const RenderMapSubType = ({ field }) => {
+  let label = '';
+  if (['map-keys-complex-type-root', 'map-keys-simple-type'].indexOf(field.displayType) !== -1) {
+    label = 'Keys: ';
   }
+  if (
+    ['map-values-complex-type-root', 'map-values-simple-type'].indexOf(field.displayType) !== -1
+  ) {
+    label = 'Values: ';
+  }
+  return (
+    <FieldWrapper field={field}>
+      <MapWrapper>
+        <span>{label}</span>
+        <Select
+          value={field.type}
+          onChange={() => {}}
+          widgetProps={{ options: schemaTypes, dense: true, inline: true }}
+        />
+      </MapWrapper>
+      <Nullable field={field} />
+    </FieldWrapper>
+  );
+};
+
+const RenderUnionType = ({ field }) => {
+  return (
+    <FieldWrapper field={field}>
+      <SingleColumnWrapper>
+        <Select
+          value={field.type}
+          onChange={() => {}}
+          widgetProps={{ options: schemaTypes, dense: true }}
+        />
+      </SingleColumnWrapper>
+      <Nullable field={field} />
+    </FieldWrapper>
+  );
 };
 
 const RenderSubType = ({ field }) => {
@@ -168,6 +242,14 @@ const RenderSubType = ({ field }) => {
       return <RenderArraySubType field={field} />;
     case 'enum-symbol':
       return <RenderEnumSubType field={field} />;
+    case 'map-keys-complex-type-root':
+    case 'map-keys-simple-type':
+    case 'map-values-complex-type-root':
+    case 'map-values-simple-type':
+      return <RenderMapSubType field={field} />;
+    case 'union-simple-type':
+    case 'union-complex-type-root':
+      return <RenderUnionType field={field} />;
     default:
       return (
         <div

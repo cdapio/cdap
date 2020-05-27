@@ -43,6 +43,14 @@ const DenseMenuItem = withStyles(() => {
   };
 })(MenuItem);
 
+const InlineSelect = withStyles(() => {
+  return {
+    root: {
+      display: 'inline-block',
+    },
+  };
+})(Select);
+
 interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
   label: string;
@@ -51,6 +59,7 @@ interface ISelectOptions {
 interface ISelectWidgetProps {
   options: ISelectOptions[] | string[] | number[];
   dense?: boolean;
+  inline?: boolean;
 }
 
 interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {}
@@ -70,13 +79,15 @@ const CustomSelect: React.FC<ISelectProps> = ({
 
   const options = objectQuery(widgetProps, 'options') || objectQuery(widgetProps, 'values') || [];
   const dense = objectQuery(widgetProps, 'dense') || false;
+  const inline = objectQuery(widgetProps, 'inline') || false;
   const OptionItem = dense ? DenseMenuItem : MenuItem;
+  const SelectComponent = inline ? InlineSelect : Select;
   const optionValues = options.map((opt) => {
     return ['string', 'number'].indexOf(typeof opt) !== -1 ? { value: opt, label: opt } : opt;
   });
 
   return (
-    <Select
+    <SelectComponent
       fullWidth
       value={value}
       onChange={onChangeHandler}
@@ -95,7 +106,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
           {opt.label}
         </OptionItem>
       ))}
-    </Select>
+    </SelectComponent>
   );
 };
 
