@@ -70,20 +70,20 @@ public class JoinCondition {
    */
   public static class OnKeys extends JoinCondition {
     private final Set<JoinKey> keys;
-    private final boolean dropNullKeys;
+    private final boolean nullSafe;
 
-    private OnKeys(Set<JoinKey> keys, boolean dropNullKeys) {
+    private OnKeys(Set<JoinKey> keys, boolean nullSafe) {
       super(Op.KEY_EQUALITY);
       this.keys = Collections.unmodifiableSet(new HashSet<>(keys));
-      this.dropNullKeys = dropNullKeys;
+      this.nullSafe = nullSafe;
     }
 
     public Set<JoinKey> getKeys() {
       return keys;
     }
 
-    public boolean isDropNullKeys() {
-      return dropNullKeys;
+    public boolean isNullSafe() {
+      return nullSafe;
     }
 
     @Override
@@ -170,11 +170,11 @@ public class JoinCondition {
      */
     public static class Builder {
       private final Set<JoinKey> keys;
-      private boolean dropNullKeys;
+      private boolean nullSafe;
 
       private Builder() {
         this.keys = new HashSet<>();
-        this.dropNullKeys = false;
+        this.nullSafe = true;
       }
 
       public Builder addKey(JoinKey key) {
@@ -188,8 +188,15 @@ public class JoinCondition {
         return this;
       }
 
-      public Builder setDropNullKeys(boolean dropNullKeys) {
-        this.dropNullKeys = dropNullKeys;
+      /**
+       * Whether to perform null safe equality on the join keys. Null safe means a null value equals another null value.
+       * For example, when joining on A.id = B.id, if there are rows in both A and B with null ids, they will be
+       * joined together. When not performing a null-safe join, rows with null ids would not get joined.
+       *
+       * Note that the behavior of traditional SQL systems is *not* to perform null safe joins. T
+       */
+      public Builder setNullSafe(boolean nullSafe) {
+        this.nullSafe = nullSafe;
         return this;
       }
 
@@ -219,7 +226,7 @@ public class JoinCondition {
           }
           throw new InvalidJoinConditionException(message.toString());
         }
-        return new OnKeys(keys, dropNullKeys);
+        return new OnKeys(keys, nullSafe);
       }
     }
   }

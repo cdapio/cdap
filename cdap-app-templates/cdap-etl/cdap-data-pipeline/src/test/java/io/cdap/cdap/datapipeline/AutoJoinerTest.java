@@ -495,4 +495,133 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
   }
+
+  @Test
+  public void testNullNotEqual() throws Exception {
+    Schema expectedSchema = Schema.recordOf(
+      "items.attributes",
+      Schema.Field.of("items_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("items_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("items_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("attributes_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("attributes_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("attributes_attr", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("items_id", 0)
+                   .set("items_region", "us")
+                   .set("items_name", "bacon")
+                   .set("attributes_region", "us")
+                   .set("attributes_id", 0)
+                   .set("attributes_attr", "food")
+                   .build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("items_id", 1).build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("items_region", "us").build());
+
+    testNullEquality(Engine.SPARK, false, expected);
+  }
+
+  @Test
+  public void testNullIsEqual() throws Exception {
+    Schema expectedSchema = Schema.recordOf(
+      "items.attributes",
+      Schema.Field.of("items_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("items_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("items_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("attributes_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("attributes_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("attributes_attr", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("items_id", 0)
+                   .set("items_region", "us")
+                   .set("items_name", "bacon")
+                   .set("attributes_region", "us")
+                   .set("attributes_id", 0)
+                   .set("attributes_attr", "food")
+                   .build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("items_id", 1)
+                   .set("attributes_id", 1)
+                   .set("attributes_attr", "car").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("items_region", "us")
+                   .set("attributes_region", "us").build());
+
+    testNullEquality(Engine.SPARK, true, expected);
+  }
+
+  private void testNullEquality(Engine engine, boolean nullIsEqual, Set<StructuredRecord> expected) throws Exception {
+    Schema itemSchema = Schema.recordOf(
+      "item",
+      Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Schema attributeSchema = Schema.recordOf(
+      "attribute",
+      Schema.Field.of("region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("attr", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    /*
+         items -------|
+                      |--> join --> sink
+         attributes --|
+
+         joinOn: items.region = attributes.region and items.id = attributes.id
+     */
+    String itemsInput = UUID.randomUUID().toString();
+    String attributesInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("items", MockSource.getPlugin(itemsInput, itemSchema)))
+      .addStage(new ETLStage("attributes", MockSource.getPlugin(attributesInput, attributeSchema)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("items", "attributes"),
+                                                              Arrays.asList("region", "id"),
+                                                              Collections.singletonList("items"),
+                                                              nullIsEqual)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("items", "join")
+      .addConnection("attributes", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> itemData = new ArrayList<>();
+    itemData.add(StructuredRecord.builder(itemSchema)
+                   .set("region", "us")
+                   .set("id", 0)
+                   .set("name", "bacon")
+                   .build());
+    itemData.add(StructuredRecord.builder(itemSchema)
+                   .set("id", 1)
+                   .build());
+    itemData.add(StructuredRecord.builder(itemSchema)
+                   .set("region", "us")
+                   .build());
+    DataSetManager<Table> inputManager = getDataset(itemsInput);
+    MockSource.writeInput(inputManager, itemData);
+
+    List<StructuredRecord> attributesData = new ArrayList<>();
+    attributesData.add(StructuredRecord.builder(attributeSchema)
+                         .set("region", "us")
+                         .set("id", 0)
+                         .set("attr", "food").build());
+    attributesData.add(StructuredRecord.builder(attributeSchema).set("id", 1).set("attr", "car").build());
+    attributesData.add(StructuredRecord.builder(attributeSchema).set("region", "us").build());
+    inputManager = getDataset(attributesInput);
+    MockSource.writeInput(inputManager, attributesData);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+  }
 }
