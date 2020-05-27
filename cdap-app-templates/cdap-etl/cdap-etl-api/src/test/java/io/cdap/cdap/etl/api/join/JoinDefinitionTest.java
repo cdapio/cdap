@@ -284,6 +284,34 @@ public class JoinDefinitionTest {
     }
   }
 
+  @Test
+  public void testAllBroadcastThrowsException() {
+    JoinStage purchases = JoinStage.builder("purchases", PURCHASE_SCHEMA).setBroadcast(true).build();
+    JoinStage users = JoinStage.builder("users", USER_SCHEMA).setBroadcast(true).build();
+
+    try {
+      JoinDefinition.builder()
+        .select(new JoinField("purchases", "id", "purchase_id"),
+                new JoinField("users", "id", "user_id"),
+                new JoinField("purchases", "ts"),
+                new JoinField("purchases", "price"),
+                new JoinField("purchases", "coupon"),
+                new JoinField("users", "name"),
+                new JoinField("users", "email"),
+                new JoinField("users", "age"),
+                new JoinField("users", "bday"))
+        .from(purchases, users)
+        .on(JoinCondition.onKeys()
+              .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
+              .addKey(new JoinKey("users", Collections.singletonList("id")))
+              .build())
+        .build();
+      Assert.fail("Invalid join condition did not fail as expected");
+    } catch (InvalidJoinException e) {
+      // expected
+    }
+  }
+
   private void testUserPurchaseSchema(JoinStage purchases, JoinStage users, Schema expected) {
     JoinDefinition definition = JoinDefinition.builder()
       .select(new JoinField("purchases", "id", "purchase_id"),

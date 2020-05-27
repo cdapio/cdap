@@ -97,8 +97,11 @@ public class JoinStage {
     }
 
     /**
-     * Set whether the stage data should be broadcast during the join. In order to be broadcast, the stage data must
+     * Hint that the stage data should be broadcast during the join. In order to be broadcast, the stage data must
      * be below 8gb and fit entirely in memory. You cannot broadcast both sides of a join.
+     * This is just a hint and will not always be honored.
+     * MapReduce pipelines will currently ignore this flag. Spark pipelines will hint to Spark to broadcast, but Spark
+     * may still decide to do a normal join depending on the type of join being performed and the datasets involved.
      */
     public Builder setBroadcast(boolean broadcast) {
       this.broadcast = broadcast;

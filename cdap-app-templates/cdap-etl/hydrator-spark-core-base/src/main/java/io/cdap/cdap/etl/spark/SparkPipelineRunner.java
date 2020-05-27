@@ -68,6 +68,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -364,7 +365,20 @@ public abstract class SparkPipelineRunner {
    */
   private SparkCollection<Object> handleAutoJoin(JoinDefinition joinDefinition,
                                                  Map<String, SparkCollection<Object>> inputDataCollections) {
-    Iterator<JoinStage> stageIter = joinDefinition.getStages().iterator();
+    // sort stages to join so that broadcasts happen last. This is to ensure that the left side is not a broadcast
+    // so that we don't try to broadcast both sides of the join. It also causes less data to be shuffled for the
+    // non-broadcast joins.
+    List<JoinStage> joinOrder = new ArrayList<>(joinDefinition.getStages());
+    joinOrder.sort((s1, s2) -> {
+      if (s1.isBroadcast() && !s2.isBroadcast()) {
+        return 1;
+      } else if (!s1.isBroadcast() && s2.isBroadcast()) {
+        return -1;
+      }
+      return 0;
+    });
+
+    Iterator<JoinStage> stageIter = joinOrder.iterator();
     JoinStage left = stageIter.next();
     SparkCollection<Object> leftCollection = inputDataCollections.get(left.getStageName());
     Schema leftSchema = left.getSchema();

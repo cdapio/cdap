@@ -103,6 +103,30 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   @Test
+  public void testBroadcastJoin() throws Exception {
+    Schema expectedSchema = Schema.recordOf("purchases.users",
+                                            Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_region", Schema.of(Schema.Type.STRING)),
+                                            Schema.Field.of("users_user_id", Schema.of(Schema.Type.INT)),
+                                            Schema.Field.of("users_name", Schema.of(Schema.Type.STRING)));
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice").build());
+
+    testSimpleAutoJoin(Arrays.asList("users", "purchases"), Collections.singletonList("users"),
+                       expected, Engine.SPARK);
+    testSimpleAutoJoin(Arrays.asList("users", "purchases"), Collections.singletonList("purchases"),
+                       expected, Engine.SPARK);
+  }
+
+  @Test
   public void testAutoInnerJoin() throws Exception {
     Schema expectedSchema = Schema.recordOf("purchases.users",
                                             Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
@@ -147,7 +171,7 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("purchases_purchase_id", 456)
                    .set("purchases_user_id", 2).build());
 
-    //testSimpleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK);
+    testSimpleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK);
     testSimpleAutoJoin(Collections.singletonList("purchases"), expected, Engine.MAPREDUCE);
   }
 
@@ -220,6 +244,11 @@ public class AutoJoinerTest extends HydratorTestBase {
 
   private void testSimpleAutoJoin(List<String> required, Set<StructuredRecord> expected,
                                   Engine engine) throws Exception {
+    testSimpleAutoJoin(required, Collections.emptyList(), expected, engine);
+  }
+
+  private void testSimpleAutoJoin(List<String> required, List<String> broadcast,
+                                  Set<StructuredRecord> expected, Engine engine) throws Exception {
     /*
          users ------|
                      |--> join --> sink
@@ -235,7 +264,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
                                                               Arrays.asList("region", "user_id"),
-                                                              required)))
+                                                              required, broadcast)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "join")
       .addConnection("purchases", "join")
@@ -271,6 +300,53 @@ public class AutoJoinerTest extends HydratorTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
+  }
+
+  @Test
+  public void testDoubleBroadcastJoin() throws Exception {
+    Schema expectedSchema = Schema.recordOf(
+      "purchases.users.interests",
+      Schema.Field.of("purchases_region", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("purchases_purchase_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("purchases_user_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("users_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("users_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("users_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("interests_region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("interests_user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("interests_interest", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice")
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 0)
+                   .set("interests_interest", "food").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 123)
+                   .set("purchases_user_id", 0)
+                   .set("users_region", "us")
+                   .set("users_user_id", 0)
+                   .set("users_name", "alice")
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 0)
+                   .set("interests_interest", "sports").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("purchases_region", "us")
+                   .set("purchases_purchase_id", 456)
+                   .set("purchases_user_id", 2)
+                   .set("interests_region", "us")
+                   .set("interests_user_id", 2)
+                   .set("interests_interest", "gaming").build());
+
+    testTripleAutoJoin(Collections.singletonList("purchases"), Arrays.asList("purchases", "interests"),
+                       expected, Engine.SPARK);
   }
 
   @Test
@@ -418,8 +494,13 @@ public class AutoJoinerTest extends HydratorTestBase {
     testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.MAPREDUCE);
   }
 
-  public void testTripleAutoJoin(List<String> required, Set<StructuredRecord> expected,
-                                 Engine engine) throws Exception {
+  private void testTripleAutoJoin(List<String> required, Set<StructuredRecord> expected,
+                                  Engine engine) throws Exception {
+    testTripleAutoJoin(required, Collections.emptyList(), expected, engine);
+  }
+
+  private void testTripleAutoJoin(List<String> required, List<String> broadcast,
+                                  Set<StructuredRecord> expected, Engine engine) throws Exception {
     /*
          users ------|
                      |
@@ -440,7 +521,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("interests", MockSource.getPlugin(interestInput, INTEREST_SCHEMA)))
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users", "interests"),
                                                               Arrays.asList("region", "user_id"),
-                                                              required)))
+                                                              required, broadcast)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "join")
       .addConnection("purchases", "join")
