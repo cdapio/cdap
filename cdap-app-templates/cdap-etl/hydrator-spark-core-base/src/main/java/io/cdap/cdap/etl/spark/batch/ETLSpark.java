@@ -95,6 +95,9 @@ public class ETLSpark extends AbstractSpark {
 
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.speculation", "false");
+    // turn off auto-broadcast by default until we better understand the implications and can set this to a
+    // value that we are confident is safe.
+    sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
