@@ -56,7 +56,7 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   onComplete,
 }) => {
   function handlePreviousClick() {
-    if (activeStep == 0) {
+    if (activeStep === 0) {
       return;
     }
 
