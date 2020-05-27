@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.mock.batch.reduceaggregator;
+package io.cdap.cdap.etl.mock.batch.aggregator;
 
 import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
@@ -27,7 +27,6 @@ import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
-import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
 import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
@@ -41,7 +40,7 @@ import java.util.Map;
  * right groups, to test multiple group keys for the same value, and to test setting the group key class
  * at runtime, and to test setting a supported non-writable class.
  */
-@Plugin(type = BatchAggregator.PLUGIN_TYPE)
+@Plugin(type = BatchReduceAggregator.PLUGIN_TYPE)
 @Name(FieldCountReduceAggregator.NAME)
 public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, StructuredRecord, StructuredRecord> {
   public static final String NAME = "FieldCount Aggregator";
@@ -92,8 +91,8 @@ public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, St
   }
 
   @Override
-  public void aggregate(Object groupKey, StructuredRecord groupValue,
-                        Emitter<StructuredRecord> emitter) throws Exception {
+  public void finalize(Object groupKey, StructuredRecord groupValue,
+                       Emitter<StructuredRecord> emitter) throws Exception {
     emitter.emit(StructuredRecord.builder(schema)
                    .set(config.fieldName, groupKey)
                    .set("ct", groupValue.get("fc") == null ? 1L : groupValue.get("fc"))

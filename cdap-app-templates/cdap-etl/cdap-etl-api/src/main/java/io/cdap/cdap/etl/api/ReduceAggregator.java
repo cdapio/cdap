@@ -19,25 +19,36 @@ package io.cdap.cdap.etl.api;
 import io.cdap.cdap.api.annotation.Beta;
 
 /**
- * Groups all input objects into collections, and performs an aggregation on the entire group.
+ * Groups all input objects into collections and performs an aggregation on the entire group.
  * Objects that have the same group key are placed into the same group for aggregation.
- * It has better performance than {@link Aggregator} since the number of group values is reduced in each split before
- * grouping all the values for the group key.
+ * When possible, this interface should be used over the {@link Aggregator} interface because this performs better.
+ * An {@link Aggregator} will shuffle all data across the cluster before aggregating, whereas
+ * this will aggregate both before and after the shuffle.
+ * This reduces the amount of data that needs to be sent over the network, as well as reducing the amount
+ * of memory required to perform the aggregation.
  *
  * For example, to aggregate and compute the average for the values, the plugin will first group all the values based
  * on the group key, considering it generates following splits:
  * Split 1: (key1, 1), (key1, 2), (key1, 3), (key2, 4)
  * Split 2: (key1, 2), (key1, 3), (key1, 4), (key2, 4)
  * Split 3: (key1, 3), (key1, 4), (key1, 5), (key2, 4)
+ *
  * The reduce function will be called in each split to generate following:
  * Split 1: (key1, sum: 6, count: 3), (key2, sum: 4, count: 1)
  * Split 2: (key1, sum: 9, count: 3), (key2, sum: 4, count: 1)
  * Split 3: (key1, sum: 12, count: 3), (key2, sum: 4, count: 1)
- * Then reduce function is called when grouping all values in the split:
- * Grouped result 1: (key1, sum: 27, count: 9)
- * Grouped result 2: (key2, sum: 12, count: 3)
- * At last, aggregate function is called to generate final result:
- * Final: (key1, avg: 3), (key2, avg: 4)
+ *
+ * Data is then shuffled across the cluster such that records with the same key are handled by the same executor:
+ * Split 4: (key1, sum: 6, count: 3), (key1, sum:9, count:3), (key1, sum:12, count:3)
+ * Split 5: (key2, sum:4, count:1), (key2, sum:4, count:1), (key2, sum:4, count:1)
+ *
+ * The reduce function is called again to generate:
+ * Split 4: (key1, sum:27, count:9)
+ * Split 5: (key2, sum:12, count:3)
+ *
+ * Finally, the finalize method is called to generate the final output value(s):
+ * Split 4: (key1, avg: 3)
+ * Split 5: (key2, avg: 3)
  *
  * @param <GROUP_KEY> Type of group key
  * @param <GROUP_VALUE> Type of values to group
@@ -68,14 +79,14 @@ public interface ReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
   GROUP_VALUE reduce(GROUP_VALUE value1, GROUP_VALUE value2) throws Exception;
 
   /**
-   * Aggregate the grouped object for the group key into zero or more output objects.
+   * Finalize the grouped object for the group key into zero or more output objects.
    * The group value will only contain one value which contains the aggregated stats for
    * all the values, this method can use this stat to compute the desired result, i.e, average, standard deviation
    *
    * @param groupKey the key for the group
    * @param groupValue the group value associated with the group key
-   * @param emitter the emitter to emit aggregate values for the group
+   * @param emitter the emitter to emit finalized values for the group
    * @throws Exception if there is some error aggregating
    */
-  void aggregate(GROUP_KEY groupKey, GROUP_VALUE groupValue, Emitter<OUT> emitter) throws Exception;
+  void finalize(GROUP_KEY groupKey, GROUP_VALUE groupValue, Emitter<OUT> emitter) throws Exception;
 }

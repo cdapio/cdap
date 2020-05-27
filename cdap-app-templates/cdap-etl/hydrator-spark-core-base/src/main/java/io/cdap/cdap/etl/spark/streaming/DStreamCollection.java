@@ -135,7 +135,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                              StageStatisticsCollector collector) {
     // TODO: implement
-    throw new UnsupportedOperationException("auto join not supported");
+    throw new UnsupportedOperationException("reduce aggregator not supported");
   }
 
 

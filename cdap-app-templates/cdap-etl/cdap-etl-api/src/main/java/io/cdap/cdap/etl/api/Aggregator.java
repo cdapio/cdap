@@ -45,7 +45,7 @@ public interface Aggregator<GROUP_KEY, GROUP_VALUE, OUT> {
    * Aggregate all objects in the same group into zero or more output objects.
    *
    * @param groupKey the key for the group
-   * @param groupValues an iterator contains the group values associated with the group key
+   * @param groupValues an iterator over all input objects that have the same group key
    * @param emitter the emitter to emit aggregate values for the group
    * @throws Exception if there is some error aggregating
    */

@@ -102,12 +102,11 @@ public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
   }
 
   @Override
-  public void aggregate(GROUP_KEY groupKey, GROUP_VALUE groupValues,
-                        Emitter<OUT> emitter) throws Exception {
+  public void finalize(GROUP_KEY groupKey, GROUP_VALUE groupValues, Emitter<OUT> emitter) throws Exception {
     operationTimer.start();
     try {
       caller.call((Callable<Void>) () -> {
-        aggregator.aggregate(groupKey, groupValues, new UntimedEmitter<>(emitter, operationTimer));
+        aggregator.finalize(groupKey, groupValues, new UntimedEmitter<>(emitter, operationTimer));
         return null;
       });
     } finally {
@@ -117,6 +116,11 @@ public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
 
   @Override
   public GROUP_VALUE reduce(GROUP_VALUE value1, GROUP_VALUE value2) throws Exception {
-    return caller.call(() -> aggregator.reduce(value1, value2));
+    operationTimer.start();
+    try {
+      return caller.call(() -> aggregator.reduce(value1, value2));
+    } finally {
+      operationTimer.reset();
+    }
   }
 }

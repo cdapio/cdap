@@ -74,7 +74,7 @@ public abstract class BatchReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
 
   /**
    * Initialize the Batch Reduce Aggregator. Executed inside the Batch Run. This method is guaranteed to be invoked
-   * before any calls to {@link #groupBy(Object, Emitter)} and {@link #aggregate(Object, Object, Emitter)} are made.
+   * before any calls to {@link #groupBy(Object, Emitter)} and {@link #finalize(Object, Object, Emitter)} are made.
    *
    * @param context {@link BatchRuntimeContext}
    * @throws Exception if there is any error during initialization

@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.mock.batch.reduceaggregator;
+package io.cdap.cdap.etl.mock.batch.aggregator;
 
 import com.google.common.base.Splitter;
 import io.cdap.cdap.api.annotation.Description;
@@ -29,7 +29,6 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
-import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
@@ -42,13 +41,14 @@ import java.util.Map;
 /**
  * Distinct aggregator
  */
-@Plugin(type = BatchAggregator.PLUGIN_TYPE)
+@Plugin(type = BatchReduceAggregator.PLUGIN_TYPE)
 @Name(DistinctReduceAggregator.NAME)
-@Description("Deduplicates input records so that only provided fields are used to apply distinction on while other " +
-  "fields are projected out.")
+@Description(DistinctReduceAggregator.DESCRIPTION)
 public class DistinctReduceAggregator
   extends BatchReduceAggregator<StructuredRecord, StructuredRecord, StructuredRecord> {
   public static final String NAME = "Distinct Aggregator";
+  public static final String DESCRIPTION = "Deduplicates input records so that only provided fields are used to " +
+    "apply distinction on while other fields are projected out.";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private final Conf config;
   private Iterable<String> fields;
@@ -83,7 +83,7 @@ public class DistinctReduceAggregator
   }
 
   @Override
-  public void aggregate(StructuredRecord groupKey, StructuredRecord iterator, Emitter<StructuredRecord> emitter) {
+  public void finalize(StructuredRecord groupKey, StructuredRecord iterator, Emitter<StructuredRecord> emitter) {
     emitter.emit(groupKey);
   }
 
@@ -123,13 +123,14 @@ public class DistinctReduceAggregator
   public static ETLPlugin getPlugin(String field) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", field);
-    return new ETLPlugin(NAME, BatchAggregator.PLUGIN_TYPE, properties);
+    return new ETLPlugin(NAME, BatchReduceAggregator.PLUGIN_TYPE, properties);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("fields", new PluginPropertyField("fields", "", "string", true, false));
-    return new PluginClass(BatchReduceAggregator.PLUGIN_TYPE, NAME, "",
+    properties.put("fields", new PluginPropertyField(
+      "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
+    return new PluginClass(BatchReduceAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
                            DistinctReduceAggregator.class.getName(),
                            "config", properties);
   }

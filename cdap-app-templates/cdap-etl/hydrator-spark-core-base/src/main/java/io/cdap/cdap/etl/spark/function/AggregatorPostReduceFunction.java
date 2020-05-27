@@ -70,7 +70,7 @@ public class AggregatorPostReduceFunction<GROUP_KEY, GROUP_VAL, OUT>
 
     @Override
     public void transform(Tuple2<GROUP_KEY, GROUP_VAL> input, Emitter<OUT_VAL> emitter) throws Exception {
-      aggregator.aggregate(input._1(), input._2, emitter);
+      aggregator.finalize(input._1(), input._2, emitter);
     }
   }
 }
