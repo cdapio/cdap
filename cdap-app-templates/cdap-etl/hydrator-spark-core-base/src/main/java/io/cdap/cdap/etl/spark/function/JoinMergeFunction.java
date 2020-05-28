@@ -70,6 +70,7 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
     Object plugin = pluginFunctionContext.createPlugin();
     BatchJoiner<K, V, O> joiner;
     if (plugin instanceof BatchAutoJoiner) {
+      String stageName = pluginFunctionContext.getStageName();
       BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
       AutoJoinerContext autoJoinerContext = pluginFunctionContext.createAutoJoinerContext();
       JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
@@ -77,10 +78,9 @@ public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
       if (joinDefinition == null) {
         throw new IllegalStateException(String.format(
           "Join stage '%s' did not specify a join definition. " +
-            "Check with the plugin developer to ensure it is implemented correctly.",
-          pluginFunctionContext.getStageSpec().getName()));
+            "Check with the plugin developer to ensure it is implemented correctly.", stageName));
       }
-      joiner = new JoinerBridge(autoJoiner, joinDefinition);
+      joiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
     } else {
       joiner = (BatchJoiner<K, V, O>) plugin;
       BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();

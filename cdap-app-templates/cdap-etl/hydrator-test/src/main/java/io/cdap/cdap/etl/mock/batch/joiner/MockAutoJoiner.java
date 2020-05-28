@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.mock.batch.joiner;
 
 import com.google.gson.Gson;
+import io.cdap.cdap.api.annotation.Macro;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -34,6 +35,7 @@ import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,8 +55,9 @@ import javax.annotation.Nullable;
 public class MockAutoJoiner extends BatchAutoJoiner {
   public static final String NAME = "MockAutoJoiner";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
-  private static final Type LIST = new TypeToken<List<String>>() { }.getType();
   private static final Gson GSON = new Gson();
+  private static final Type LIST = new TypeToken<List<String>>() { }.getType();
+  private static final Type SELECT_TYPE = new TypeToken<List<JoinField>>() { }.getType();
   private final Conf conf;
 
   @SuppressWarnings("unused")
@@ -65,11 +68,17 @@ public class MockAutoJoiner extends BatchAutoJoiner {
   @Nullable
   @Override
   public JoinDefinition define(AutoJoinerContext context) {
+    if (conf.containsMacro(Conf.STAGES) || conf.containsMacro(Conf.KEY) || conf.containsMacro(Conf.REQUIRED) ||
+      conf.containsMacro(Conf.SELECT)) {
+      return null;
+    }
+
     Map<String, JoinStage> inputStages = context.getInputStages();
     List<JoinStage> from = new ArrayList<>(inputStages.size());
     Set<String> required = new HashSet<>(conf.getRequired());
     Set<String> broadcast = new HashSet<>(conf.getBroadcast());
-    List<JoinField> selectedFields = new ArrayList<>();
+    List<JoinField> selectedFields = conf.getSelect();
+    boolean shouldGenerateSelected = selectedFields.isEmpty();
     JoinCondition.OnKeys.Builder condition = JoinCondition.onKeys()
       .setNullSafe(conf.isNullSafe());
     for (String stageName : conf.getStages()) {
@@ -85,7 +94,12 @@ public class MockAutoJoiner extends BatchAutoJoiner {
 
       condition.addKey(new JoinKey(stageName, conf.getKey()));
 
-      for (Schema.Field field : stage.getSchema().getFields()) {
+      Schema stageSchema = stage.getSchema();
+      if (!shouldGenerateSelected || stageSchema == null) {
+        continue;
+      }
+
+      for (Schema.Field field : stageSchema.getFields()) {
         // alias everything to stage_field
         selectedFields.add(new JoinField(stageName, field.getName(),
                                          String.format("%s_%s", stageName, field.getName())));
@@ -97,6 +111,10 @@ public class MockAutoJoiner extends BatchAutoJoiner {
       .on(condition.build())
       .from(from)
       .setOutputSchemaName(String.join(".", conf.getStages()));
+    Schema outputSchema = conf.getSchema();
+    if (outputSchema != null) {
+      builder.setOutputSchema(outputSchema);
+    }
     return builder.build();
   }
 
@@ -105,10 +123,21 @@ public class MockAutoJoiner extends BatchAutoJoiner {
    */
   @SuppressWarnings("unused")
   public static class Conf extends PluginConfig {
+    public static final String STAGES = "stages";
+    public static final String KEY = "key";
+    public static final String REQUIRED = "required";
+    public static final String NULL_SAFE = "nullSafe";
+    public static final String SELECT = "select";
+    public static final String BROADCAST = "broadcast";
+    public static final String SCHEMA = "schema";
+
+    @Macro
     private String stages;
 
+    @Macro
     private String key;
 
+    @Macro
     @Nullable
     private String required;
 
@@ -116,6 +145,14 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     private Boolean nullSafe;
 
     private String broadcast;
+
+    @Macro
+    @Nullable
+    private String select;
+
+    @Macro
+    @Nullable
+    private String schema;
 
     List<String> getKey() {
       return GSON.fromJson(key, LIST);
@@ -136,39 +173,48 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     List<String> getBroadcast() {
       return broadcast == null ? Collections.emptyList() : GSON.fromJson(broadcast, LIST);
     }
-  }
 
-  public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required) {
-    return getPlugin(stages, key, required, Collections.emptyList());
+    List<JoinField> getSelect() {
+      return select == null ? Collections.emptyList() : GSON.fromJson(select, SELECT_TYPE);
+    }
+
+    @Nullable
+    Schema getSchema() {
+      try {
+        return schema == null ? null : Schema.parseJson(schema);
+      } catch (IOException e) {
+        throw new IllegalArgumentException(e);
+      }
+    }
   }
 
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
-                                    List<String> broadcast) {
-    Map<String, String> properties = new HashMap<>();
-    properties.put("stages", GSON.toJson(stages));
-    properties.put("required", GSON.toJson(required));
-    properties.put("key", GSON.toJson(key));
-    properties.put("broadcast", GSON.toJson(broadcast));
-    return new ETLPlugin(NAME, BatchJoiner.PLUGIN_TYPE, properties, null);
+                                    List<String> broadcast, List<JoinField> select, boolean nullSafe) {
+    return new ETLPlugin(NAME, BatchAutoJoiner.PLUGIN_TYPE,
+                         getProperties(stages, key, required, broadcast, select, nullSafe));
   }
 
-  public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
-                                    boolean nullSafe) {
+  public static Map<String, String> getProperties(List<String> stages, List<String> key, List<String> required,
+                                                  List<String> broadcast, List<JoinField> select, boolean nullSafe) {
     Map<String, String> properties = new HashMap<>();
-    properties.put("stages", GSON.toJson(stages));
-    properties.put("required", GSON.toJson(required));
-    properties.put("key", GSON.toJson(key));
-    properties.put("nullSafe", Boolean.toString(nullSafe));
-    return new ETLPlugin(NAME, BatchJoiner.PLUGIN_TYPE, properties, null);
+    properties.put(Conf.STAGES, GSON.toJson(stages));
+    properties.put(Conf.REQUIRED, GSON.toJson(required));
+    properties.put(Conf.KEY, GSON.toJson(key));
+    properties.put(Conf.BROADCAST, GSON.toJson(broadcast));
+    properties.put(Conf.SELECT, GSON.toJson(select));
+    properties.put(Conf.NULL_SAFE, Boolean.toString(nullSafe));
+    return properties;
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
-    properties.put("stages", new PluginPropertyField("stages", "", "string", true, false));
-    properties.put("required", new PluginPropertyField("required", "", "string", false, false));
-    properties.put("key", new PluginPropertyField("key", "", "string", true, false));
-    properties.put("nullSafe", new PluginPropertyField("nullSafe", "", "boolean", false, false));
-    properties.put("broadcast", new PluginPropertyField("broadcast", "", "string", false, false));
+    properties.put(Conf.STAGES, new PluginPropertyField(Conf.STAGES, "", "string", true, true));
+    properties.put(Conf.REQUIRED, new PluginPropertyField(Conf.REQUIRED, "", "string", false, true));
+    properties.put(Conf.KEY, new PluginPropertyField(Conf.KEY, "", "string", true, true));
+    properties.put(Conf.NULL_SAFE, new PluginPropertyField(Conf.NULL_SAFE, "", "boolean", false, false));
+    properties.put(Conf.BROADCAST, new PluginPropertyField(Conf.BROADCAST, "", "string", false, false));
+    properties.put(Conf.SELECT, new PluginPropertyField(Conf.SELECT, "", "string", false, true));
+    properties.put(Conf.SCHEMA, new PluginPropertyField(Conf.SCHEMA, "", "string", false, true));
     return new PluginClass(BatchJoiner.PLUGIN_TYPE, NAME, "", MockAutoJoiner.class.getName(), "conf", properties);
   }
 

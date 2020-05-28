@@ -22,11 +22,14 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -34,6 +37,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.TestConfiguration;
@@ -46,8 +50,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -264,7 +270,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput, PURCHASE_SCHEMA)))
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users"),
                                                               Arrays.asList("region", "user_id"),
-                                                              required, broadcast)))
+                                                              required, broadcast, Collections.emptyList(), true)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "join")
       .addConnection("purchases", "join")
@@ -521,7 +527,8 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("interests", MockSource.getPlugin(interestInput, INTEREST_SCHEMA)))
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("purchases", "users", "interests"),
                                                               Arrays.asList("region", "user_id"),
-                                                              required, broadcast)))
+                                                              required, broadcast,
+                                                              Collections.emptyList(), true)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "join")
       .addConnection("purchases", "join")
@@ -669,6 +676,8 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("items", "attributes"),
                                                               Arrays.asList("region", "id"),
                                                               Collections.singletonList("items"),
+                                                              Collections.emptyList(),
+                                                              Collections.emptyList(),
                                                               nullIsEqual)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("items", "join")
@@ -713,5 +722,210 @@ public class AutoJoinerTest extends HydratorTestBase {
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
+  }
+
+  @Test
+  public void testLeftOuterAutoJoinWithMacros() throws Exception {
+    Schema expectedSchema;
+    if (Compat.SPARK_COMPAT.equals(SparkCompat.SPARK1_2_10.getCompat())) {
+      // spark1 has a schema bug, so it has more nullable fields than needed.
+      expectedSchema = Schema.recordOf(
+        "Record0",
+        Schema.Field.of("region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("purchase_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    } else {
+      expectedSchema = Schema.recordOf(
+        "Record0",
+        Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    }
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("region", "us")
+                   .set("purchase_id", 123)
+                   .set("user_id", 0)
+                   .set("name", "alice").build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("region", "us")
+                   .set("purchase_id", 456)
+                   .set("user_id", 2).build());
+
+    testAutoJoinWithMacros(Engine.MAPREDUCE, Collections.singletonList("purchases"), expectedSchema, expected,
+                           false, false);
+    testAutoJoinWithMacros(Engine.SPARK, Collections.singletonList("purchases"), expectedSchema, expected,
+                           false, false);
+  }
+
+  @Test
+  public void testInnerAutoJoinWithMacros() throws Exception {
+    Schema expectedSchema;
+    if (Compat.SPARK_COMPAT.equals(SparkCompat.SPARK1_2_10.getCompat())) {
+      // spark1 has a schema bug, so it has more nullable fields than needed.
+      expectedSchema = Schema.recordOf(
+        "Record0",
+        Schema.Field.of("region", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+        Schema.Field.of("purchase_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+        Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    } else {
+      expectedSchema = Schema.recordOf(
+        "Record0",
+        Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+        Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+        Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    }
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("region", "us")
+                   .set("purchase_id", 123)
+                   .set("user_id", 0)
+                   .set("name", "alice").build());
+
+    testAutoJoinWithMacros(Engine.SPARK, Arrays.asList("purchases", "users"), expectedSchema, expected,
+                           false, false);
+
+    expectedSchema = Schema.recordOf(
+      "joined",
+      Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+
+    expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("region", "us")
+                   .set("purchase_id", 123)
+                   .set("user_id", 0)
+                   .set("name", "alice").build());
+    testAutoJoinWithMacros(Engine.MAPREDUCE, Arrays.asList("purchases", "users"), expectedSchema, expected,
+                           false, false);
+  }
+
+  @Test
+  public void testAutoJoinWithMacrosAndEmptyInput() throws Exception {
+    Schema expectedSchema = Schema.recordOf(
+      "joined",
+      Schema.Field.of("region", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("purchase_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("user_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("region", "us")
+                   .set("purchase_id", 123)
+                   .set("user_id", 0).build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("region", "us")
+                   .set("purchase_id", 456)
+                   .set("user_id", 2).build());
+
+    // right side empty
+    testAutoJoinWithMacros(Engine.SPARK, Collections.singletonList("purchases"), expectedSchema, expected,
+                           true, false);
+    testAutoJoinWithMacros(Engine.MAPREDUCE, Collections.singletonList("purchases"), expectedSchema, expected,
+                           true, false);
+
+    // left side empty
+    expected.clear();
+    testAutoJoinWithMacros(Engine.MAPREDUCE, Collections.singletonList("purchases"), expectedSchema, expected,
+                           false, true);
+    testAutoJoinWithMacros(Engine.SPARK, Collections.singletonList("purchases"), expectedSchema, expected,
+                           false, true);
+
+    // both sides empty
+    expected.clear();
+    testAutoJoinWithMacros(Engine.MAPREDUCE, Collections.singletonList("purchases"), expectedSchema, expected,
+                           true, true);
+    testAutoJoinWithMacros(Engine.SPARK, Collections.singletonList("purchases"), expectedSchema, expected,
+                           true, true);
+  }
+
+  private void testAutoJoinWithMacros(Engine engine, List<String> required, Schema expectedSchema,
+                                      Set<StructuredRecord> expectedRecords, boolean excludeUsers,
+                                      boolean excludePurchases) throws Exception {
+    /*
+         users ------|
+                     |--> join --> sink
+         purchases --|
+
+         joinOn: users.region = purchases.region and users.user_id = purchases.user_id
+     */
+    String userInput = UUID.randomUUID().toString();
+    String purchaseInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+
+    Map<String, String> joinerProps = new HashMap<>();
+    joinerProps.put(MockAutoJoiner.Conf.STAGES, "${stages}");
+    joinerProps.put(MockAutoJoiner.Conf.KEY, "${key}");
+    joinerProps.put(MockAutoJoiner.Conf.REQUIRED, "${required}");
+    joinerProps.put(MockAutoJoiner.Conf.SELECT, "${select}");
+    if (engine == Engine.SPARK || (required.size() < 2 && engine == Engine.MAPREDUCE)) {
+      joinerProps.put(MockAutoJoiner.Conf.SCHEMA, "${schema}");
+    }
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput)))
+      .addStage(new ETLStage("purchases", MockSource.getPlugin(purchaseInput)))
+      .addStage(new ETLStage("join", new ETLPlugin(MockAutoJoiner.NAME, BatchJoiner.PLUGIN_TYPE, joinerProps)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("purchases", "join")
+      .addConnection("join", "sink")
+      .setEngine(engine)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    if (!excludeUsers) {
+      List<StructuredRecord> userData = Arrays.asList(USER_ALICE, USER_ALYCE, USER_BOB);
+      DataSetManager<Table> inputManager = getDataset(userInput);
+      MockSource.writeInput(inputManager, userData);
+    }
+
+    if (!excludePurchases) {
+      List<StructuredRecord> purchaseData = new ArrayList<>();
+      purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                         .set("region", "us")
+                         .set("user_id", 0)
+                         .set("purchase_id", 123).build());
+      purchaseData.add(StructuredRecord.builder(PURCHASE_SCHEMA)
+                         .set("region", "us")
+                         .set("user_id", 2)
+                         .set("purchase_id", 456).build());
+      DataSetManager<Table> inputManager = getDataset(purchaseInput);
+      MockSource.writeInput(inputManager, purchaseData);
+    }
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    List<JoinField> selectedFields = new ArrayList<>();
+    selectedFields.add(new JoinField("purchases", "region"));
+    selectedFields.add(new JoinField("purchases", "purchase_id"));
+    selectedFields.add(new JoinField("purchases", "user_id"));
+    selectedFields.add(new JoinField("users", "name"));
+    Map<String, String> joinerProperties = MockAutoJoiner.getProperties(Arrays.asList("purchases", "users"),
+                                                                        Arrays.asList("region", "user_id"),
+                                                                        required, Collections.emptyList(),
+                                                                        selectedFields, true);
+    Map<String, String> runtimeArgs = new HashMap<>();
+    runtimeArgs.put("stages", joinerProperties.get(MockAutoJoiner.Conf.STAGES));
+    runtimeArgs.put("key", joinerProperties.get(MockAutoJoiner.Conf.KEY));
+    runtimeArgs.put("required", joinerProperties.get(MockAutoJoiner.Conf.REQUIRED));
+    runtimeArgs.put("select", joinerProperties.get(MockAutoJoiner.Conf.SELECT));
+    runtimeArgs.put("schema", expectedSchema.toString());
+    workflowManager.startAndWaitForRun(runtimeArgs, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Assert.assertEquals(expectedRecords, new HashSet<>(outputRecords));
   }
 }

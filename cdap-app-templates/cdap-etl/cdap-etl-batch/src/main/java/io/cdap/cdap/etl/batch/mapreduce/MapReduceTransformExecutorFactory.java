@@ -75,7 +75,6 @@ import io.cdap.cdap.etl.common.TransformExecutor;
 import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.validation.DefaultFailureCollector;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
@@ -201,7 +200,7 @@ public class MapReduceTransformExecutorFactory<T> {
         // definition will be non-null due to validate by PipelinePhasePreparer at the start of the run
         JoinDefinition joinDefinition = autoJoiner.define(context);
         failureCollector.getOrThrowException();
-        batchJoiner = new JoinerBridge(autoJoiner, joinDefinition);
+        batchJoiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
         JoinCondition condition = joinDefinition.getCondition();
         // null safe equality means A.id = B.id will match when the id is null
         // if it's not null safe, A.id = B.id will not match when the id is null
