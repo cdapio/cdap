@@ -220,7 +220,7 @@ public class UserProgramServiceMainTest extends MasterServiceMainTestBase {
     Injector injector = getServiceMainInstance(MessagingServiceMain.class).getInjector();
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
     CConfiguration cConf = injector.getInstance(CConfiguration.class);
-    MessagingService messagingService = new ClientMessagingService(discoveryServiceClient);
+    MessagingService messagingService = new ClientMessagingService(discoveryServiceClient, true);
     TopicId topicId = NamespaceId.SYSTEM.topic(cConf.get(Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC));
     boolean foundRunning = false;
     boolean foundKilled = false;
