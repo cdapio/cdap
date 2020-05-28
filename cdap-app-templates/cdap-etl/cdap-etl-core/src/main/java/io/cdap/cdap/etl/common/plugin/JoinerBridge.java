@@ -31,7 +31,6 @@ import io.cdap.cdap.etl.api.join.JoinStage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -45,8 +44,8 @@ public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord
   private final JoinDefinition joinDefinition;
   private final Set<String> requiredStages;
   private final Map<String, List<String>> joinKeys;
-  private final Map<String, Schema> stageSchemas;
   private final Map<String, List<JoinField>> stageFields;
+  private Schema keySchema;
 
   public JoinerBridge(BatchAutoJoiner autoJoiner, JoinDefinition joinDefinition) {
     this.autoJoiner = autoJoiner;
@@ -68,7 +67,6 @@ public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord
       List<JoinField> fields = stageFields.computeIfAbsent(field.getStageName(), k -> new ArrayList<>());
       fields.add(field);
     }
-    this.stageSchemas = new HashMap<>();
   }
 
   @Override
@@ -96,39 +94,43 @@ public class JoinerBridge extends BatchJoiner<StructuredRecord, StructuredRecord
                         "Check the plugin to make sure it is including all input stages.", stageName));
     }
 
-    Schema schema = stageSchemas.get(stageName);
-    if (schema == null) {
-      List<Schema.Field> fields = new ArrayList<>(key.size());
-      // JoinDefinition can have something like A.x = B.y and A.z = B.w
-      // However, the keys emitted for both A and B must be exactly the same to make sure they
-      // all get grouped together. If the key for A has fields (x,z) while the key for B has fields (y,w),
-      // they will not match. To ensure they do match, we generate field names f0, f1, f2, etc.
-      // Also, it is valid to have a condition like A.x = B.y where the schemas for A.x and B.y are not exactly
-      // the same. For example, A.x may be an integer, while B.y is a nullable integer.
-      // or A.x could be a long while B.y is a timestamp (whose physical type is a long).
-      // To ensure that the schema is the same, we always use a schema of the nullable type.
-      int fieldNum = 0;
-      for (Schema.Field field : input.getSchema().getFields()) {
-        if (key.contains(field.getName())) {
-          Schema fieldSchema = field.getSchema();
-          fieldSchema = fieldSchema.isNullable() ? fieldSchema.getNonNullable() : fieldSchema;
-          Schema keyFieldSchema = Schema.nullableOf(Schema.of(fieldSchema.getType()));
-          String translatedName = "f" + fieldNum++;
-          fields.add(Schema.Field.of(translatedName, keyFieldSchema));
-        }
-      }
-      schema = Schema.recordOf("key", fields);
-      stageSchemas.put(stageName, schema);
+    if (keySchema == null) {
+      keySchema = getKeySchema(stageName, input.getSchema(), key);
     }
 
-    // TODO: (CDAP-16711) filter null keys if configured to do so
-    StructuredRecord.Builder keyRecord = StructuredRecord.builder(schema);
+    StructuredRecord.Builder keyRecord = StructuredRecord.builder(keySchema);
     int fieldNum = 0;
     for (String keyField : key) {
       String translatedName = "f" + fieldNum++;
       keyRecord.set(translatedName, input.get(keyField));
     }
     return keyRecord.build();
+  }
+
+  // JoinDefinition can have something like A.x = B.y and A.z = B.w
+  // However, the keys emitted for both A and B must be exactly the same to make sure they
+  // all get grouped together. If the key for A has fields (x,z) while the key for B has fields (y,w),
+  // they will not match. To ensure they do match, we generate field names f0, f1, f2, etc.
+  // Also, it is valid to have a condition like A.x = B.y where the schemas for A.x and B.y are not exactly
+  // the same. For example, A.x may be an integer, while B.y is a nullable integer.
+  // or A.x could be a long while B.y is a timestamp (whose physical type is a long).
+  // To ensure that the schema is the same, we always use a schema of the nullable type.
+  private Schema getKeySchema(String stageName, Schema schema, List<String> key) {
+    List<Schema.Field> fields = new ArrayList<>(key.size());
+    int fieldNum = 0;
+    for (String keyField : key) {
+      Schema fieldSchema = schema.getField(keyField).getSchema();
+      if (fieldSchema == null) {
+        // should never happen, this should be checked during validation.
+        throw new IllegalStateException(
+          String.format("Key field '%s' does not exist from stage '%s'", keyField, stageName));
+      }
+      fieldSchema = fieldSchema.isNullable() ? fieldSchema.getNonNullable() : fieldSchema;
+      Schema keyFieldSchema = Schema.nullableOf(Schema.of(fieldSchema.getType()));
+      String translatedName = "f" + fieldNum++;
+      fields.add(Schema.Field.of(translatedName, keyFieldSchema));
+    }
+    return Schema.recordOf("key", fields);
   }
 
   @Override
