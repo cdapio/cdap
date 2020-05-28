@@ -19,9 +19,11 @@ package io.cdap.cdap.datapipeline;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ApplicationUpgradeContext;
 import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.AlertPublisher;
@@ -36,10 +38,14 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 
 import io.cdap.cdap.etl.proto.v2.ETLStage;
+import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +64,10 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     Constants.Connector.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
     Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE,
     Condition.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder()
+      .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .create();
+
 
   @Override
   public void configure() {
@@ -88,6 +97,30 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
 
   @Override
   public String updateAppConfig(String configStr, ApplicationUpgradeContext upgradeContext) {
+    /*LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 1");
+    PipelineSpec batchPipelineSpec = GSON.fromJson(configStr, PipelineSpec.class);
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 2");
+    PipelineSpec.Builder specBuilder = PipelineSpec.builder()
+        .addConnections(batchPipelineSpec.getConnections())
+        .setResources(batchPipelineSpec.getResources())
+        .setDriverResources(batchPipelineSpec.getDriverResources())
+        .setClientResources(batchPipelineSpec.getClientResources())
+        .setStageLoggingEnabled(batchPipelineSpec.isStageLoggingEnabled())
+        .setProcessTimingEnabled(batchPipelineSpec.isProcessTimingEnabled())
+        .setNumOfRecordsPreview(batchPipelineSpec.getNumOfRecordsPreview())
+        .setProperties(batchPipelineSpec.getProperties());
+        //.addActions(batchPipelineSpec.getEndingActions());
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 3");
+    for (StageSpec stageSpec : batchPipelineSpec.getStages()) {
+      LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 6");
+      specBuilder.addStage(stageSpec.upgradeStageSpec(upgradeContext));
+      LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 7");
+    }
+    // Jay Pandya: Check if this is needed.
+    //specBuilder.addActions(batchPipelineSpec.upgradeActionSpecs(upgradeContext));
+    LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 8");
+    return GSON.toJson(specBuilder.build());*/
+
     LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 1");
     ETLBatchConfig batchConfig = GSON.fromJson(configStr, ETLBatchConfig.class);
     LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 2");
@@ -97,7 +130,18 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
         .addConnections(batchConfig.getConnections())
         .setResources(batchConfig.getResources())
         .setDriverResources(batchConfig.getDriverResources())
-        .setEngine(batchConfig.getEngine());
+        .setClientResources(batchConfig.getClientResources())
+        .setDescription(batchConfig.getDescription())
+        .setEngine(batchConfig.getEngine())
+        .setNumOfRecordsPreview(batchConfig.getNumOfRecordsPreview())
+        .setProperties(batchConfig.getProperties())
+        .setMaxConcurrentRuns(batchConfig.getMaxConcurrentRuns());
+    if(!batchConfig.isStageLoggingEnabled()) {
+      builder.disableStageLogging();
+    }
+    if(!batchConfig.isProcessTimingEnabled()) {
+      builder.disableProcessTiming();
+    }
     LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 3");
     // upgrade any of the plugin artifact versions if needed
     for (ETLStage postAction : batchConfig.getPostActions()) {
@@ -107,10 +151,15 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     }
     for (ETLStage stage : batchConfig.getStages()) {
       LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 6");
+      LOG.info("input schema " + stage.getInputSchema());
+      LOG.info("output schema " + stage.getOutputSchema());
       builder.addStage(stage.upgradeStage(upgradeContext));
       LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 7");
     }
     LOG.info("Jay Pandya reached in updateAppConfig in Data Pipeline app 8");
-    return GSON.toJson(builder.build());
+    ETLBatchConfig newConfig = builder.build();
+    newConfig.setComments(batchConfig.getComments());
+
+    return GSON.toJson(newConfig);
   }
 }

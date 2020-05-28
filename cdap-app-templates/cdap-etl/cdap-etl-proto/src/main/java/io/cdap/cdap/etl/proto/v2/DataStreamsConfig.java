@@ -49,9 +49,9 @@ public final class DataStreamsConfig extends ETLConfig {
                             @Nullable String checkpointDir,
                             int numOfRecordsPreview,
                             boolean stopGracefully,
-                            Map<String, String> properties) {
+                            Map<String, String> properties, String description) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, properties);
+          numOfRecordsPreview, properties, description);
     this.batchInterval = batchInterval;
     this.isUnitTest = isUnitTest;
     this.extraJavaOpts = "";
@@ -168,7 +168,7 @@ public final class DataStreamsConfig extends ETLConfig {
       return new DataStreamsConfig(stages, connections, resources, driverResources, clientResources,
                                    stageLoggingEnabled, processTimingEnabled, batchInterval, isUnitTest,
                                    disableCheckpoints, checkpointDir, numOfRecordsPreview, stopGraceFully,
-                                   properties);
+                                   properties, description);
     }
   }
 }

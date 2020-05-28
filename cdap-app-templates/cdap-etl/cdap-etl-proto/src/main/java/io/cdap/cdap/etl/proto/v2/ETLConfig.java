@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.etl.proto.v2;
 
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.UpgradeableConfig;
@@ -57,11 +59,14 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   private final List<io.cdap.cdap.etl.proto.v1.ETLStage> sinks;
   private final List<io.cdap.cdap.etl.proto.v1.ETLStage> transforms;
 
+  // For serialization purpose for upgrade compatibility.
+  private List<String> comments;
+
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, Resources driverResources, Resources clientResources,
                       boolean stageLoggingEnabled, boolean processTimingEnabled,
-                      int numOfRecordsPreview, Map<String, String> properties) {
-    this.description = null;
+                      int numOfRecordsPreview, Map<String, String> properties, String description) {
+    this.description = description;
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
     this.resources = resources;
@@ -75,6 +80,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.source = null;
     this.sinks = new ArrayList<>();
     this.transforms = new ArrayList<>();
+    this.comments = null;
   }
 
   @Nullable
@@ -116,6 +122,14 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   public Map<String, String> getProperties() {
     return Collections.unmodifiableMap(properties == null ? new HashMap<String, String>() : properties);
+  }
+
+  public List<String> getComments() {
+    return this.comments;
+  }
+
+  public void setComments(List<String> comments) {
+    this.comments = comments;
   }
 
   /**
@@ -232,6 +246,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
    */
   @SuppressWarnings("unchecked")
   public abstract static class Builder<T extends Builder> {
+    protected String description;
     protected Set<ETLStage> stages;
     protected Set<Connection> connections;
     protected Resources resources;
@@ -251,6 +266,12 @@ public class ETLConfig extends Config implements UpgradeableConfig {
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.properties = new HashMap<>();
+      this.description = null;
+    }
+
+    public T setDescription(String description) {
+      this.description = description;
+      return (T) this;
     }
 
     public T addStage(ETLStage stage) {

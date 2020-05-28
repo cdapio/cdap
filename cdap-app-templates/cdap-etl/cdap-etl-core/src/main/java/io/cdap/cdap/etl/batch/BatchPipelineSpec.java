@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.batch;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
 import io.cdap.cdap.etl.proto.Connection;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -51,6 +52,11 @@ public class BatchPipelineSpec extends PipelineSpec {
 
   public List<ActionSpec> getEndingActions() {
     return endingActions;
+  }
+
+  public List<ActionSpec> upgradeActionSpecs(ApplicationUpgradeContext upgradeContext) {
+    // Jay Pandya: Check if this is needed.
+    return getEndingActions();
   }
 
   @Override
@@ -91,6 +97,11 @@ public class BatchPipelineSpec extends PipelineSpec {
 
     public Builder addAction(ActionSpec action) {
       endingActions.add(action);
+      return this;
+    }
+
+    public Builder addActions(List<ActionSpec> actions) {
+      this.endingActions.addAll(actions);
       return this;
     }
 

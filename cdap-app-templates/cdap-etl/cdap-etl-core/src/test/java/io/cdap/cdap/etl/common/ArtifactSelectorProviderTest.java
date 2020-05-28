@@ -29,31 +29,26 @@ public class ArtifactSelectorProviderTest {
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidName() {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig(ArtifactScope.USER.name(), "abc?d", "1.0.0");
-    PROVIDER.getPluginSelector(config);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidVersion() {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig(ArtifactScope.USER.name(), "abc", "abc");
-    PROVIDER.getPluginSelector(config);
   }
 
   @Test(expected = IllegalArgumentException.class)
   public void testInvalidScope() {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig("usr", "abc", "1.0.0");
-    PROVIDER.getPluginSelector(config);
   }
 
   @Test
   public void testValidArtifactNameWithDot() {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
                                                                "cdap-artifact_2.10", "1.0.0");
-    PROVIDER.getPluginSelector(config);
   }
 
   @Test
   public void testNullsAllowed() {
     ArtifactSelectorConfig config = new ArtifactSelectorConfig(null, null, null);
-    PROVIDER.getPluginSelector(config);
   }
 }

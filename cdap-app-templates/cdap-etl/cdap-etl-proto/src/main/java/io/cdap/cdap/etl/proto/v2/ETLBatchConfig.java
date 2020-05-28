@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.proto.v2;
 
 import com.google.common.collect.ImmutableList;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
@@ -58,9 +59,9 @@ public final class ETLBatchConfig extends ETLConfig {
                          int numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
-                         boolean service) {
+                         boolean service, String description) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, engineProperties);
+          numOfRecordsPreview, engineProperties, description);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
@@ -170,7 +171,7 @@ public final class ETLBatchConfig extends ETLConfig {
    */
   public static ETLBatchConfig forSystemService() {
     return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
-                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true);
+                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true, null);
   }
 
   /**
@@ -231,7 +232,7 @@ public final class ETLBatchConfig extends ETLConfig {
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, maxConcurrentRuns, properties, false);
+                                numOfRecordsPreview, maxConcurrentRuns, properties, false, description);
     }
   }
 }

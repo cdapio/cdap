@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.io;
 
+import com.google.gson.JsonElement;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.internal.guava.reflect.TypeToken;
@@ -68,8 +69,9 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     simpleSchemas.put(String.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(byte[].class, Schema.of(Schema.Type.BYTES));
     simpleSchemas.put(ByteBuffer.class, Schema.of(Schema.Type.BYTES));
+    simpleSchemas.put(Object.class, Schema.of(Schema.Type.NULL));
 
-        // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
+    // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
     simpleSchemas.put(URI.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(URL.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(UUID.class, Schema.of(Schema.Type.BYTES));

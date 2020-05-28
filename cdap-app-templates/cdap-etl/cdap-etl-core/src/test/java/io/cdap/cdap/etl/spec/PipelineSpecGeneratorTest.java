@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.spec;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.Resources;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -48,6 +49,8 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -199,6 +202,161 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
+  public void testGenerateSpec1() throws ValidationException, FileNotFoundException {
+    Gson GSON = new Gson();
+    /*String configStr = "{\n"
+        + "    \"name\": \"DataFusionQuickstart\",\n"
+        + "    \"description\": \"Data Pipeline Application\",\n"
+        + "    \"artifact\": {\n"
+        + "        \"name\": \"cdap-data-pipeline\",\n"
+        + "        \"version\": \"6.3.0-SNAPSHOT\",\n"
+        + "        \"scope\": \"SYSTEM\"\n"
+        + "    },\n"
+        + "    \"config\": {\n"
+        + "        \"resources\": {\n"
+        + "            \"memoryMB\": 1024,\n"
+        + "            \"virtualCores\": 1\n"
+        + "        },\n"
+        + "        \"driverResources\": {\n"
+        + "            \"memoryMB\": 1024,\n"
+        + "            \"virtualCores\": 1\n"
+        + "        },\n"
+        + "        \"connections\": [\n"
+        + "            {\n"
+        + "                \"from\": \"NYT-Best-Sellers-Raw-Data\",\n"
+        + "                \"to\": \"Parsing-and-Transformations\"\n"
+        + "            },\n"
+        + "            {\n"
+        + "                \"from\": \"Parsing-and-Transformations\",\n"
+        + "                \"to\": \"Top-Rated-Inexpensive-Books\"\n"
+        + "            }\n"
+        + "        ],\n"
+        + "        \"comments\": [],\n"
+        + "        \"postActions\": [],\n"
+        + "        \"properties\": {},\n"
+        + "        \"processTimingEnabled\": true,\n"
+        + "        \"stageLoggingEnabled\": true,\n"
+        + "        \"stages\": [\n"
+        + "            {\n"
+        + "                \"name\": \"NYT-Best-Sellers-Raw-Data\",\n"
+        + "                \"plugin\": {\n"
+        + "                    \"name\": \"GCSFile\",\n"
+        + "                    \"type\": \"batchsource\",\n"
+        + "                    \"label\": \"NYT Best Sellers Raw Data\",\n"
+        + "                    \"artifact\": {\n"
+        + "                        \"name\": \"google-cloud\",\n"
+        + "                        \"version\": \"0.16.0-SNAPSHOT\",\n"
+        + "                        \"scope\": \"SYSTEM\"\n"
+        + "                    },\n"
+        + "                    \"properties\": {\n"
+        + "                        \"filenameOnly\": \"false\",\n"
+        + "                        \"copyHeader\": \"false\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"body\\\",\\\"type\\\":\\\"string\\\"}]}\",\n"
+        + "                        \"path\": \"gs://nyt-bestsellers/nyt2.json\",\n"
+        + "                        \"format\": \"text\",\n"
+        + "                        \"recursive\": \"false\",\n"
+        + "                        \"referenceName\": \"NYT_BestSellers_Raw\",\n"
+        + "                        \"serviceFilePath\": \"auto-detect\",\n"
+        + "                        \"project\": \"auto-detect\"\n"
+        + "                    }\n"
+        + "                },\n"
+        + "                \"outputSchema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"body\\\",\\\"type\\\":\\\"string\\\"}]}\",\n"
+        + "                \"type\": \"batchsource\",\n"
+        + "                \"label\": \"NYT Best Sellers Raw Data\",\n"
+        + "                \"icon\": \"fa-plug\"\n"
+        + "            },\n"
+        + "            {\n"
+        + "                \"name\": \"Parsing-and-Transformations\",\n"
+        + "                \"plugin\": {\n"
+        + "                    \"name\": \"Wrangler\",\n"
+        + "                    \"type\": \"transform\",\n"
+        + "                    \"label\": \"Parsing and Transformations\",\n"
+        + "                    \"artifact\": {\n"
+        + "                        \"name\": \"wrangler-transform\",\n"
+        + "                        \"version\": \"4.3.0-SNAPSHOT\",\n"
+        + "                        \"scope\": \"SYSTEM\"\n"
+        + "                    },\n"
+        + "                    \"properties\": {\n"
+        + "                        \"workspaceId\": \"b22b1b0c24b12acd45f834ac5e1dfffb\",\n"
+        + "                        \"directives\": \"split-to-rows body \\\\n\\nparse-as-json :body 1\\nparse-as-json :body__id 1\\nparse-as-json :body_weeks_on_list 1\\nparse-as-json :body_rank_last_week 1\\nparse-as-json :body_rank 1\\nparse-as-json :body_price 1\\nparse-as-json :body_published_date 2\\nparse-as-json :body_bestsellers_date 2\\ncolumns-replace s/^body_//g\\ncleanse-column-names\\nrename _id__oid id\\nrename weeks_on_list__numberint weeks_on_list\\nrename rank_last_week__numberint rank_last_week\\nrename rank__numberint rank\\nrename price__numberint price\\nrename published_date__date__numberlong published_date\\nrename bestsellers_date__date__numberlong bestsellers_date\\nrename price__numberdouble price_other\\nfill-null-or-empty :price '0'\\nfill-null-or-empty :price_other '0'\\nset-type :price float\\nset-type :price_other float\\nset-column :price_final price+price_other\\ndrop price\\ndrop price_other\\nset-type :published_date long\\nset-type :bestsellers_date long\\nset-type :weeks_on_list integer\\nset-type :rank_last_week integer\\nset-type :rank integer\\nfilter-rows-on regex-not-match rank_last_week ^0$\\ndrop rank_last_week\\ndrop weeks_on_list\\ndrop published_date\\ndrop bestsellers_date\\nfilter-rows-on condition-false rank <=3\\nfilter-rows-on regex-match price_final ^0.0$\\nfilter-rows-on condition-false price_final <25.0\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"amazon_product_url\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"author\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"description\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"publisher\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"title\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"rank\\\",\\\"type\\\":[\\\"int\\\",\\\"null\\\"]},{\\\"name\\\":\\\"price_final\\\",\\\"type\\\":[\\\"double\\\",\\\"null\\\"]}]}\",\n"
+        + "                        \"field\": \"body\",\n"
+        + "                        \"precondition\": \"false\"\n"
+        + "                    }\n"
+        + "                },\n"
+        + "                \"outputSchema\": [\n"
+        + "                    {\n"
+        + "                        \"name\": \"etlSchemaBody\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"amazon_product_url\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"author\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"description\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"publisher\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"title\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"rank\\\",\\\"type\\\":[\\\"int\\\",\\\"null\\\"]},{\\\"name\\\":\\\"price_final\\\",\\\"type\\\":[\\\"double\\\",\\\"null\\\"]}]}\"\n"
+        + "                    }\n"
+        + "                ],\n"
+        + "                \"inputSchema\": [\n"
+        + "                    {\n"
+        + "                        \"name\": \"NYT Best Sellers Raw Data\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"body\\\",\\\"type\\\":\\\"string\\\"}]}\"\n"
+        + "                    }\n"
+        + "                ],\n"
+        + "                \"type\": \"transform\",\n"
+        + "                \"label\": \"Parsing and Transformations\",\n"
+        + "                \"icon\": \"icon-DataPreparation\"\n"
+        + "            },\n"
+        + "            {\n"
+        + "                \"name\": \"Top-Rated-Inexpensive-Books\",\n"
+        + "                \"plugin\": {\n"
+        + "                    \"name\": \"BigQueryTable\",\n"
+        + "                    \"type\": \"batchsink\",\n"
+        + "                    \"label\": \"Top Rated Inexpensive Books\",\n"
+        + "                    \"artifact\": {\n"
+        + "                        \"name\": \"google-cloud\",\n"
+        + "                        \"version\": \"0.16.0-SNAPSHOT\",\n"
+        + "                        \"scope\": \"SYSTEM\"\n"
+        + "                    },\n"
+        + "                    \"properties\": {\n"
+        + "                        \"project\": \"auto-detect\",\n"
+        + "                        \"serviceFilePath\": \"auto-detect\",\n"
+        + "                        \"operation\": \"insert\",\n"
+        + "                        \"truncateTable\": \"false\",\n"
+        + "                        \"allowSchemaRelaxation\": \"false\",\n"
+        + "                        \"location\": \"US\",\n"
+        + "                        \"createPartitionedTable\": \"false\",\n"
+        + "                        \"partitionFilterRequired\": \"false\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"amazon_product_url\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"author\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"description\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"publisher\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"title\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"rank\\\",\\\"type\\\":[\\\"int\\\",\\\"null\\\"]},{\\\"name\\\":\\\"price_final\\\",\\\"type\\\":[\\\"double\\\",\\\"null\\\"]}]}\",\n"
+        + "                        \"referenceName\": \"Top_Rated_Inexpensive_Books\",\n"
+        + "                        \"dataset\": \"GCPQuickStart\",\n"
+        + "                        \"table\": \"top_rated_inexpensive\"\n"
+        + "                    }\n"
+        + "                },\n"
+        + "                \"outputSchema\": [\n"
+        + "                    {\n"
+        + "                        \"name\": \"etlSchemaBody\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"amazon_product_url\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"author\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"description\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"publisher\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"title\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"rank\\\",\\\"type\\\":[\\\"int\\\",\\\"null\\\"]},{\\\"name\\\":\\\"price_final\\\",\\\"type\\\":[\\\"double\\\",\\\"null\\\"]}]}\"\n"
+        + "                    }\n"
+        + "                ],\n"
+        + "                \"inputSchema\": [\n"
+        + "                    {\n"
+        + "                        \"name\": \"Parsing and Transformations\",\n"
+        + "                        \"schema\": \"{\\\"type\\\":\\\"record\\\",\\\"name\\\":\\\"etlSchemaBody\\\",\\\"fields\\\":[{\\\"name\\\":\\\"amazon_product_url\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"author\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"description\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"publisher\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"title\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"id\\\",\\\"type\\\":[\\\"string\\\",\\\"null\\\"]},{\\\"name\\\":\\\"rank\\\",\\\"type\\\":[\\\"int\\\",\\\"null\\\"]},{\\\"name\\\":\\\"price_final\\\",\\\"type\\\":[\\\"double\\\",\\\"null\\\"]}]}\"\n"
+        + "                    }\n"
+        + "                ],\n"
+        + "                \"type\": \"batchsink\",\n"
+        + "                \"label\": \"Top Rated Inexpensive Books\",\n"
+        + "                \"icon\": \"fa-plug\"\n"
+        + "            }\n"
+        + "        ],\n"
+        + "        \"schedule\": \"0 * * * *\",\n"
+        + "        \"engine\": \"mapreduce\",\n"
+        + "        \"numOfRecordsPreview\": 100,\n"
+        + "        \"maxConcurrentRuns\": 1\n"
+        + "    }\n"
+        + "}";*/
+    //String configStr = "{\"maxConcurrentRuns\": 1, \"description\": \"Data Pipeline Application\"}";
+    //String configStr =
+    ETLBatchConfig batchPipelineSpec = GSON.fromJson(new FileReader("/tmp/pipeline_3.json"), ETLBatchConfig.class);
+    System.out.println(batchPipelineSpec.getStages());
+    System.out.println("*******");
+  }
+
+    @Test
   public void testGenerateSpec() throws ValidationException {
     /*
      *           ---- t1 ------------

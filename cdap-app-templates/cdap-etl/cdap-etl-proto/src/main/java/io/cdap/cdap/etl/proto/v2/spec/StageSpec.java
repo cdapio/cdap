@@ -18,6 +18,11 @@
 package io.cdap.cdap.etl.proto.v2.spec;
 
 import com.google.common.collect.ImmutableList;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ArtifactSelectorConfig;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -119,6 +124,11 @@ public class StageSpec implements Serializable {
     return maxPreviewRecords;
   }
 
+  public Map<String, Schema> getPortSchemas() {
+    return portSchemas;
+  }
+
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {
@@ -166,6 +176,29 @@ public class StageSpec implements Serializable {
 
   public static Builder builder(String name, PluginSpec plugin) {
     return new Builder(name, plugin);
+  }
+
+  public StageSpec upgradeStageSpec(ApplicationUpgradeContext upgradeContext) {
+    // Jay Pandya: Make it ArtifactId.
+    ArtifactSelectorConfig artifactSelectorConfig =
+        upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
+    ArtifactScope artifactScope = "SYSTEM".equalsIgnoreCase(artifactSelectorConfig.getScope())
+        ? ArtifactScope.SYSTEM : ArtifactScope.USER;
+    ArtifactId newPluginArtifactId = new ArtifactId(plugin.getName(),
+        new ArtifactVersion(artifactSelectorConfig.getScope()), artifactScope);
+    PluginSpec newPlugin = new PluginSpec(plugin.getType(), plugin.getName(),
+        plugin.getProperties(), newPluginArtifactId);
+    StageSpec.Builder stageSpecBuilder = new StageSpec.Builder(this.getName(), newPlugin)
+        .addInputSchemas(this.getInputSchemas())
+        .addInputStages(this.getInputStages())
+        .setOutputPorts(this.getOutputPorts())
+        .setPortSchemas(this.getPortSchemas())
+        .setOutputSchema(this.getOutputSchema())
+        .setErrorSchema(this.getErrorSchema())
+        .setStageLoggingEnabled(this.isStageLoggingEnabled())
+        .setProcessTimingEnabled(this.isProcessTimingEnabled())
+        .setMaxPreviewRecords(this.getMaxPreviewRecords());
+    return stageSpecBuilder.build();
   }
 
   /**
@@ -233,6 +266,12 @@ public class StageSpec implements Serializable {
       if (port != null) {
         this.portSchemas.put(port, outputSchema);
       }
+      return this;
+    }
+
+    public Builder setOutputPorts(Map<String, Port> outputs) {
+      this.outputs.clear();
+      this.outputs.putAll(outputs);
       return this;
     }
 

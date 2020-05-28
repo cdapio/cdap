@@ -71,6 +71,8 @@ public class PluginSpec implements Externalizable {
     return artifact;
   }
 
+  public void setArtifact(ArtifactId artifactId) { this.artifact = artifactId; }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

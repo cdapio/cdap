@@ -45,11 +45,13 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.id.Id.Artifact;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
@@ -351,7 +353,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
                      programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
   }
-
   /**
    * Update an existing application. An application's configuration and artifact version can be updated.
    *
@@ -366,8 +367,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the deployment pipeline. This exception will often wrap
    *                   the actual exception
    */
-  public ApplicationWithPrograms upgradeApp(ApplicationId appId, ArtifactId newArtifactId,
-      ProgramTerminator programTerminator) throws Exception {
+  public ApplicationWithPrograms upgradeApp(ApplicationId appId, ProgramTerminator programTerminator) throws Exception {
     LOG.info("Jay Pandya reached here in upgradeApp 6.1");
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
@@ -378,7 +378,26 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (currentSpec == null) {
       throw new ApplicationNotFoundException(appId);
     }
-
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3.0.1");
+    ArtifactId currentArtifact = currentSpec.getArtifactId();
+    if(currentArtifact.getScope() != ArtifactScope.SYSTEM) {
+      LOG.info("Jay Pandya reached here in upgradeApp app currentartifact and newartifact doesnt match 6.3.0.5 upgrade not supported for non system artifact");
+    }
+    List<ArtifactSummary> newArtifactSummarys = artifactRepository.getArtifactSummaries(NamespaceId.SYSTEM, currentArtifact.getName(),
+        1, ArtifactSortOrder.DESC);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3.0.2 artifact summary size %s artifactname %s parent %s", newArtifactSummarys.size(), currentArtifact.getName(), appId);
+    ArtifactSummary newArtifactSummary = newArtifactSummarys.get(0);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3.0.3 artifact summary size %s artifactname %s parent %s", newArtifactSummarys.size(), currentArtifact.getName(), appId);
+    ArtifactVersion requestedVersion = new ArtifactVersion(newArtifactSummary.getVersion());
+    if (requestedVersion.getVersion() == null) {
+      throw new InvalidArtifactException(String.format(
+          "Requested artifact version '%s' is invalid", newArtifactSummary.getVersion()));
+    }
+    if (currentArtifact.getName() != newArtifactSummary.getName() || currentArtifact.getScope() != newArtifactSummary.getScope()) {
+      LOG.info("Jay Pandya reached here in upgradeApp app currentartifact and newartifact doesnt match 6.3.0.4 %s %s", currentArtifact, newArtifactSummary);
+    }
+    ArtifactId newArtifactId = new ArtifactId(currentArtifact.getName(), requestedVersion, currentArtifact.getScope());
+    LOG.info("Jay Pandya reached here in upgradeApp app upgraded man to version %s step 6.3.1", requestedVersion);
     /* Jay Pandya: This block yet not sure about
     // ownerAdmin.getImpersonationPrincipal will give the owner which will be impersonated for the application
     // irrespective of the version
@@ -426,7 +445,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       ApplicationSpecification currentSpec = store.getApplication(appId);
       LOG.info("Jay Pandya reached here 3");
 
-      upgradeApp(appDetail.getKey(), currentSpec.getArtifactId(), programTerminator);
+      upgradeApp(appDetail.getKey(), programTerminator);
       LOG.info("Jay Pandya reached here 4");
 
     }

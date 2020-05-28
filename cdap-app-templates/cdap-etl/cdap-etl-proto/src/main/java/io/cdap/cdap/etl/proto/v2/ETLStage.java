@@ -16,10 +16,14 @@
 
 package io.cdap.cdap.etl.proto.v2;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.app.ApplicationUpgradeContext;
 import io.cdap.cdap.api.app.ArtifactSelectorConfig;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import java.util.Objects;
+import org.apache.avro.data.Json;
 
 /**
  * ETL Stage Configuration.
@@ -30,12 +34,26 @@ public final class ETLStage {
   // removed in 5.0.0, but keeping it here so that we can validate that nobody is trying to use it.
   private final String errorDatasetName;
 
+  // Only for serialization/deserialization purpose. Making it in sync with PipelineSpec.
+  private Object inputSchema;
+  private Object outputSchema;
+
   public ETLStage(String name, ETLPlugin plugin) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = null;
+    this.inputSchema = null;
+    this.outputSchema = null;
   }
 
+  // Used only for upgrade stage purpose.
+  private ETLStage(String name, ETLPlugin plugin, Object inputSchema, Object outputSchema) {
+    this.name = name;
+    this.plugin = plugin;
+    this.errorDatasetName = null;
+    this.inputSchema = inputSchema;
+    this.outputSchema = outputSchema;
+  }
   public String getName() {
     return name;
   }
@@ -44,6 +62,9 @@ public final class ETLStage {
     return plugin;
   }
 
+  public Object getInputSchema() {return  inputSchema;}
+
+  public  Object getOutputSchema() {return outputSchema;}
   /**
    * Validate correctness. Since this object is created through deserialization, some fields that should not be null
    * may be null.
@@ -74,7 +95,7 @@ public final class ETLStage {
         upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
     io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
         plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
-    return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
+    return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin, inputSchema, outputSchema);
   }
 
   @Override

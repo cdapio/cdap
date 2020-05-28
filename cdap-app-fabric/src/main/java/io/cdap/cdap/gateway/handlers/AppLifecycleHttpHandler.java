@@ -155,7 +155,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws BadRequestException, NamespaceNotFoundException {
 
     ApplicationId applicationId = validateApplicationId(namespaceId, appId);
-
+    LOG.info("Jay Pandya on line 158 application Id %s", applicationId);
     try {
       return deployAppFromArtifact(applicationId);
     } catch (Exception ex) {
@@ -177,7 +177,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                              @HeaderParam(PRINCIPAL_HEADER) String ownerPrincipal,
                              @DefaultValue("true") @HeaderParam(SCHEDULES_HEADER) boolean updateSchedules)
     throws BadRequestException, NamespaceNotFoundException {
-
+    LOG.info("Jay Pandya on line 180 deploy application Id %s", configString);
     NamespaceId namespace = validateNamespace(namespaceId);
     // null means use name provided by app spec
     try {
@@ -201,6 +201,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     throws Exception {
 
     ApplicationId applicationId = validateApplicationVersionId(namespaceId, appId, versionId);
+    LOG.info("Jay Pandya on line 202 create applversion application Id %s", applicationId);
+
 
     if (!applicationLifecycleService.updateAppAllowed(applicationId)) {
       responder.sendString(HttpResponseStatus.CONFLICT,
@@ -400,7 +402,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       @PathParam("namespace-id") String namespace) throws Exception {
     LOG.info("Jay Pandya in upgrade application api 1");
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
-    Map<ApplicationId, ApplicationDetail> details = applicationLifecycleService.upgradeApplications(appIds, createProgramTerminator());
+    Map<ApplicationId, ApplicationDetail> details = null;
+    try {
+       details = applicationLifecycleService
+          .upgradeApplications(appIds, createProgramTerminator());
+    } catch (Exception e) {
+      LOG.info("Jay Pandya in upgrade application threw an exception ", e);
+    }
     LOG.info("Jay Pandya in upgrade application api 2");
 
     List<BatchApplicationDetail> result = new ArrayList<>();
@@ -509,6 +517,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           Object config = appRequest.getConfig();
           String configString = config == null ? null :
             config instanceof String ? (String) config : GSON.toJson(config);
+          Gson gson = new GsonBuilder().setPrettyPrinting().create();
+          LOG.info("Jay Pandya on line 520 create applversion config string is");
+          LOG.info(gson.toJson(config));
 
           try {
             applicationLifecycleService.deployApp(appId.getParent(), appId.getApplication(), appId.getVersion(),
