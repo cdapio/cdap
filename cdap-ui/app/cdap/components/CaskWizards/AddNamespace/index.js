@@ -121,9 +121,9 @@ export default class AddNamespaceWizard extends Component {
           namespaceId: newNamespaceId,
         }),
         linkLabel,
-        linkUrl: window.getAbsUIUrl({
+        linkUrl: `${window.getAbsUIUrl({
           namespaceId: currentNamespaceId,
-        }),
+        })}/control`,
       },
     });
   }

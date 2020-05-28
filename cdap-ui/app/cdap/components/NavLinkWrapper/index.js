@@ -15,11 +15,14 @@
  */
 
 import PropTypes from 'prop-types';
-
 import React from 'react';
+import isEmpty from 'lodash/isEmpty';
 import { NavLink } from 'react-router-dom';
 
 const NavLinkWrapper = ({ children, to, isNativeLink, ...attributes }) => {
+  if (isEmpty(to)) {
+    return <a {...attributes}>{children}</a>;
+  }
   if (isNativeLink) {
     return (
       <a href={to} {...attributes}>

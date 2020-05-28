@@ -49,10 +49,6 @@ const DatasetDetailedView = Loadable({
     import(/* webpackChunkName: "DatasetDetailedView" */ 'components/DatasetDetailedView'),
   loading: LoadingSVGCentered,
 });
-const AppDetailedView = Loadable({
-  loader: () => import(/* webpackChunkName: "AppDetailedView" */ 'components/AppDetailedView'),
-  loading: LoadingSVGCentered,
-});
 const Experiments = Loadable({
   loader: () => import(/* webpackChunkName: "Experiments" */ 'components/Experiments'),
   loading: LoadingSVGCentered,
@@ -120,7 +116,6 @@ export default class Home extends Component {
         <Switch>
           <Route exact path="/ns/:namespace" component={HomeActions} />
           <Route exact path="/ns/:namespace/control" component={EntityListView} />
-          <Route path="/ns/:namespace/apps/:appId" component={AppDetailedView} />
           <Route
             exact
             path="/ns/:namespace/datasets/:datasetId/fields"
