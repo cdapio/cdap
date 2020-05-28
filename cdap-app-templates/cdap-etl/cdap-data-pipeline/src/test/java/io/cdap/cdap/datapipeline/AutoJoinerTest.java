@@ -526,6 +526,7 @@ public class AutoJoinerTest extends HydratorTestBase {
     expected.add(StructuredRecord.builder(expectedSchema).set("items_region", "us").build());
 
     testNullEquality(Engine.SPARK, false, expected);
+    testNullEquality(Engine.MAPREDUCE, false, expected);
   }
 
   @Test
@@ -556,6 +557,7 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("attributes_region", "us").build());
 
     testNullEquality(Engine.SPARK, true, expected);
+    testNullEquality(Engine.MAPREDUCE, true, expected);
   }
 
   private void testNullEquality(Engine engine, boolean nullIsEqual, Set<StructuredRecord> expected) throws Exception {
