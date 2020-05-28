@@ -120,7 +120,8 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("users_user_id", 0)
                    .set("users_name", "alice").build());
 
-    testSimpleAutoJoin(Arrays.asList("users", "purchases"), expected);
+    testSimpleAutoJoin(Arrays.asList("users", "purchases"), expected, Engine.SPARK);
+    testSimpleAutoJoin(Arrays.asList("users", "purchases"), expected, Engine.MAPREDUCE);
   }
 
   @Test
@@ -146,9 +147,9 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("purchases_purchase_id", 456)
                    .set("purchases_user_id", 2).build());
 
-    testSimpleAutoJoin(Collections.singletonList("purchases"), expected);
+    //testSimpleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK);
+    testSimpleAutoJoin(Collections.singletonList("purchases"), expected, Engine.MAPREDUCE);
   }
-
 
   @Test
   public void testAutoRightOuterJoin() throws Exception {
@@ -178,7 +179,8 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("users_user_id", 1)
                    .set("users_name", "bob").build());
 
-    testSimpleAutoJoin(Collections.singletonList("users"), expected);
+    testSimpleAutoJoin(Collections.singletonList("users"), expected, Engine.SPARK);
+    testSimpleAutoJoin(Collections.singletonList("users"), expected, Engine.MAPREDUCE);
   }
 
   @Test
@@ -212,10 +214,12 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("users_user_id", 1)
                    .set("users_name", "bob").build());
 
-    testSimpleAutoJoin(Collections.emptyList(), expected);
+    testSimpleAutoJoin(Collections.emptyList(), expected, Engine.SPARK);
+    testSimpleAutoJoin(Collections.emptyList(), expected, Engine.MAPREDUCE);
   }
 
-  private void testSimpleAutoJoin(List<String> required, Set<StructuredRecord> expected) throws Exception {
+  private void testSimpleAutoJoin(List<String> required, Set<StructuredRecord> expected,
+                                  Engine engine) throws Exception {
     /*
          users ------|
                      |--> join --> sink
@@ -236,7 +240,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addConnection("users", "join")
       .addConnection("purchases", "join")
       .addConnection("join", "sink")
-      .setEngine(Engine.SPARK)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
@@ -312,7 +316,8 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("interests_user_id", 2)
                    .set("interests_interest", "gaming").build());
 
-    testTripleAutoJoin(Collections.singletonList("purchases"), expected);
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.SPARK);
+    testTripleAutoJoin(Collections.singletonList("purchases"), expected, Engine.MAPREDUCE);
   }
 
   @Test
@@ -362,9 +367,9 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("interests_user_id", 1)
                    .set("interests_interest", "gardening").build());
 
-    testTripleAutoJoin(Collections.singletonList("users"), expected);
+    testTripleAutoJoin(Collections.singletonList("users"), expected, Engine.SPARK);
+    testTripleAutoJoin(Collections.singletonList("users"), expected, Engine.MAPREDUCE);
   }
-
 
   @Test
   public void testTripleAutoTwoRequiredJoin() throws Exception {
@@ -409,10 +414,12 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("interests_user_id", 1)
                    .set("interests_interest", "gardening").build());
 
-    testTripleAutoJoin(Arrays.asList("users", "interests"), expected);
+    testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.SPARK);
+    testTripleAutoJoin(Arrays.asList("users", "interests"), expected, Engine.MAPREDUCE);
   }
 
-  public void testTripleAutoJoin(List<String> required, Set<StructuredRecord> expected) throws Exception {
+  public void testTripleAutoJoin(List<String> required, Set<StructuredRecord> expected,
+                                 Engine engine) throws Exception {
     /*
          users ------|
                      |
@@ -439,7 +446,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addConnection("purchases", "join")
       .addConnection("interests", "join")
       .addConnection("join", "sink")
-      .setEngine(Engine.SPARK)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
