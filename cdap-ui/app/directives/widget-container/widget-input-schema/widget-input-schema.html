@@ -42,9 +42,8 @@
         <span>{{::inputschema.name}}</span>
       </div>
       <div class="content"
-          ng-if="!inputschema.isMacro"
+          ng-if="!inputschema.isMacro && MyInputSchemaCtrl.currentIndex === $index"
           ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index}">
-
         <my-complex-schema
           ng-model="inputschema.schema"
           is-disabled="true"
@@ -54,7 +53,7 @@
         </my-complex-schema>
       </div>
       <div
-        ng-if="inputschema.isMacro"
+        ng-if="inputschema.isMacro && MyInputSchemaCtrl.currentIndex === $index"
         ng-class="{'hide': MyInputSchemaCtrl.currentIndex !== $index}"
       >
         {{inputschema.schema}}
