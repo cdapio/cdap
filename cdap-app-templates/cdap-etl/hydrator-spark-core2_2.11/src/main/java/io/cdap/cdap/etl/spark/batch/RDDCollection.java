@@ -43,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Spark2 RDD collection.
@@ -82,7 +83,7 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
 
         Join #1 is a straightforward join between 2 sides.
         Join #2 is a left outer because TMP1 becomes 'required', since it uses required input B.
-        Join #3 is an inner join because even though it contains 2 optional datasets, because 'B' is still required.
+        Join #3 is an inner join even though it contains 2 optional datasets, because 'B' is still required.
      */
     boolean seenRequired = joinRequest.isLeftRequired();
     Dataset<Row> joined = left;
@@ -166,16 +167,10 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     return (SparkCollection<T>) wrap(output);
   }
 
-  private Column eq(Column left, Column right, boolean isNullSafe) {
-    if (isNullSafe) {
-      return left.eqNullSafe(right);
-    }
-    return left.equalTo(right);
-  }
 
-  private Dataset<Row> toDataset(JavaRDD<StructuredRecord> rdd, Schema schema) {
+  protected Dataset<Row> toDataset(JavaRDD<StructuredRecord> rdd, Schema schema) {
     StructType sparkSchema = DataFrames.toDataType(schema);
     JavaRDD<Row> rowRDD = rdd.map(record -> DataFrames.toRow(record, sparkSchema));
-    return sqlContext.createDataset(rowRDD.rdd(), RowEncoder.apply(sparkSchema));
+    return sqlContext.createDataFrame(rowRDD.rdd(), sparkSchema);
   }
 }

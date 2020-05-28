@@ -79,6 +79,7 @@ public class JoinError {
     GENERAL,
     SELECTED_FIELD,
     JOIN_KEY,
-    JOIN_KEY_FIELD
+    JOIN_KEY_FIELD,
+    OUTPUT_SCHEMA
   }
 }
