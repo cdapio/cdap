@@ -874,7 +874,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("transactions", MockSource.getPlugin(inputSchema2, input2)))
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("customers", "transactions"),
                                                               Collections.singletonList("customer_id"),
-                                                              Collections.singletonList("transactions"))))
+                                                              Collections.singletonList("transactions"),
+                                                              Collections.emptyList(), Collections.emptyList(), true)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(outputName)))
       .addConnection("customers", "join")
       .addConnection("transactions", "join")
@@ -986,6 +987,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("customers", "transactions"),
                                                               Collections.singletonList("customer_id"),
                                                               Collections.singletonList("transactions"),
+                                                              Collections.emptyList(), Collections.emptyList(),
                                                               nullSafe)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(outputName)))
       .addConnection("customers", "join")

@@ -48,8 +48,17 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
   private final Map<String, List<String>> joinKeys;
   private final Map<String, List<JoinField>> stageFields;
   private Schema keySchema;
+  private Schema outputSchema;
 
-  public JoinerBridge(BatchAutoJoiner autoJoiner, JoinDefinition joinDefinition) {
+  public JoinerBridge(String stageName, BatchAutoJoiner autoJoiner, JoinDefinition joinDefinition) {
+    // if this is not an inner join and the output schema is not set,
+    // we have no way of determining what the output schema should be and need to error out.
+    if (joinDefinition.getOutputSchema() == null &&
+      joinDefinition.getStages().stream().anyMatch(s -> !s.isRequired())) {
+      throw new IllegalArgumentException(
+        String.format("An output schema could not be generated for joiner stage '%s'. " +
+                        "Provide the expected output schema directly.", stageName));
+    }
     this.autoJoiner = autoJoiner;
     this.joinDefinition = joinDefinition;
     this.requiredStages = joinDefinition.getStages().stream()
@@ -147,7 +156,16 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
   @Override
   public StructuredRecord merge(StructuredRecord structuredRecord,
                                 Iterable<JoinElement<INPUT_RECORD>> joinResult) {
-    StructuredRecord.Builder joined = StructuredRecord.builder(joinDefinition.getOutputSchema());
+    if (outputSchema == null) {
+      outputSchema = joinDefinition.getOutputSchema();
+      // can only still be null if this is an inner join, which means we can generate the output schema
+      // based on the JoinElements.
+      if (outputSchema == null) {
+        outputSchema = generateOutputSchema(joinResult);
+      }
+    }
+
+    StructuredRecord.Builder joined = StructuredRecord.builder(outputSchema);
     for (JoinElement<INPUT_RECORD> joinElement : joinResult) {
       String stageName = joinElement.getStageName();
       StructuredRecord record = (StructuredRecord) joinElement.getInputRecord();
@@ -163,4 +181,33 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
     return joined.build();
   }
 
+  private Schema generateOutputSchema(Iterable<JoinElement<INPUT_RECORD>> elements) {
+    Map<String, Schema> stageSchemas = new HashMap<>();
+    for (JoinElement<INPUT_RECORD> joinElement : elements) {
+      StructuredRecord joinRecord = (StructuredRecord) joinElement.getInputRecord();
+      stageSchemas.put(joinElement.getStageName(), joinRecord.getSchema());
+    }
+
+    List<Schema.Field> fields = new ArrayList<>(joinDefinition.getSelectedFields().size());
+    for (JoinField joinField : joinDefinition.getSelectedFields()) {
+      String originalName = joinField.getFieldName();
+      String outputName = joinField.getAlias() == null ? originalName : joinField.getAlias();
+      Schema stageSchema = stageSchemas.get(joinField.getStageName());
+      if (stageSchema == null) {
+        // should not be possible, should be validated earlier
+        throw new IllegalArgumentException(String.format(
+          "Unable to select field '%s' from stage '%s' because data for the stage could not be found.",
+          originalName, joinField.getStageName()));
+      }
+      Schema.Field stageField = stageSchema.getField(originalName);
+      if (stageField == null) {
+        // should not be possible, should be validated earlier
+        throw new IllegalArgumentException(String.format(
+          "Unable to select field '%s' from stage '%s' because the field for the stage could not be found.",
+          originalName, joinField.getStageName()));
+      }
+      fields.add(Schema.Field.of(outputName, stageField.getSchema()));
+    }
+    return Schema.recordOf("joined", fields);
+  }
 }
