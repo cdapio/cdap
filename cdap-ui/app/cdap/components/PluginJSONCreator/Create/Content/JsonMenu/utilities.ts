@@ -13,6 +13,7 @@ function getJSONConfig(widgetJSONData) {
     groupToWidgets,
     widgetToInfo,
     widgetToAttributes,
+    outputName,
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
@@ -38,6 +39,10 @@ function getJSONConfig(widgetJSONData) {
     };
   });
 
+  const outputsData = {
+    ...(outputName && { name: outputName }),
+  };
+
   const config = {
     metadata: {
       'spec-version': '1.5',
@@ -48,6 +53,10 @@ function getJSONConfig(widgetJSONData) {
     ...(emitAlerts && { 'emit-alerts': emitAlerts }),
     ...(emitErrors && { 'emit-errors': emitErrors }),
     'configuration-groups': configurationGroupsData,
+    ...(outputsData &&
+      Object.keys(outputsData).length > 0 && {
+        outputs: [outputsData],
+      }),
   };
 
   return config;

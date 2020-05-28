@@ -54,6 +54,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   widgetToAttributes,
   jsonView,
   setJsonView,
+  outputName,
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
@@ -89,6 +90,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         widgetToAttributes={widgetToAttributes}
         jsonView={jsonView}
         setJsonView={setJsonView}
+        outputName={outputName}
       />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInputs}>

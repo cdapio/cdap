@@ -65,6 +65,7 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
   widgetToAttributes,
   jsonView,
   setJsonView,
+  outputName,
 }) => {
   const widgetJSONData = {
     pluginName,
@@ -77,6 +78,7 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
     groupToWidgets,
     widgetToInfo,
     widgetToAttributes,
+    outputName,
   };
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (

@@ -77,6 +77,7 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
   widgetToAttributes,
   jsonView,
   setJsonView,
+  outputName,
 }) => {
   const widgetJSONData = {
     pluginName,
@@ -89,6 +90,7 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
     groupToWidgets,
     widgetToInfo,
     widgetToAttributes,
+    outputName,
   };
   const JSONConfig = getJSONConfig(widgetJSONData);
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
