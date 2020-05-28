@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as React from 'react';
 import PropTypes from 'prop-types';
@@ -67,21 +67,27 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
 
   public componentDidMount() {
     // Polls for namespace data
-    this.namespacesubscription = MyNamespaceApi.pollList().subscribe((res) => {
-      if (res.length > 0) {
-        NamespaceStore.dispatch({
-          type: NamespaceActions.updateNamespaces,
-          payload: {
-            namespaces: res,
-          },
-        });
-      } else {
-        // TL;DR - This is emitted for Authorization in main.js
-        // This means there is no namespace for the user to work on.
-        // which indicates she/he have no authorization for any namesapce in the system.
-        this.eventEmitter.emit(globalEvents.NONAMESPACE);
+    this.namespacesubscription = MyNamespaceApi.pollList().subscribe(
+      (res) => {
+        if (res.length > 0) {
+          NamespaceStore.dispatch({
+            type: NamespaceActions.updateNamespaces,
+            payload: {
+              namespaces: res,
+            },
+          });
+        } else {
+          // TL;DR - This is emitted for Authorization in main.js
+          // This means there is no namespace for the user to work on.
+          // which indicates she/he have no authorization for any namesapce in the system.
+          this.eventEmitter.emit(globalEvents.NONAMESPACE);
+        }
+      },
+      (err) => {
+        // tslint:disable-next-line: no-console
+        console.log('Error retrieving list of namespaces', err);
       }
-    });
+    );
     this.nsSubscription = NamespaceStore.subscribe(() => {
       let selectedNamespace: string = getLastSelectedNamespace() as string;
       const { namespaces } = NamespaceStore.getState();

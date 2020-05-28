@@ -109,6 +109,10 @@ angular
     myNamespace.getList();
   })
 
+  .run(function() {
+    window.CaskCommon.StatusFactory.startPollingForBackendStatus();
+  })
+
   .config(function (MyDataSourceProvider) {
     MyDataSourceProvider.defaultInterval = 5;
   })
