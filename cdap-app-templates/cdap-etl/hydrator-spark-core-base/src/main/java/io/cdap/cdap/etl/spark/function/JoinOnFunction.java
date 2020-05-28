@@ -51,7 +51,9 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
       BatchJoiner<JOIN_KEY, INPUT_RECORD, Object> joiner = pluginFunctionContext.createPlugin();
       BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(context);
-      joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName),
+      // TODO: CDAP-16709 pass in the right flag for filtering based on if the joiner is an auto-join or not
+      //   The plugin should only potentially be an auto-joiner in streaming pipelines
+      joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName, false),
                                             pluginFunctionContext.createStageMetrics(),
                                             Constants.Metrics.RECORDS_IN,
                                             null, pluginFunctionContext.getDataTracer(),
@@ -66,14 +68,19 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
   private static class JoinOnTransform<INPUT, JOIN_KEY> implements Transformation<INPUT, Tuple2<JOIN_KEY, INPUT>> {
     private final BatchJoiner<JOIN_KEY, INPUT, ?> joiner;
     private final String inputStageName;
+    private final boolean filterNullKeys;
 
-    JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, ?> joiner, String inputStageName) {
+    JoinOnTransform(BatchJoiner<JOIN_KEY, INPUT, ?> joiner, String inputStageName, boolean filterNullKeys) {
       this.joiner = joiner;
       this.inputStageName = inputStageName;
+      this.filterNullKeys = filterNullKeys;
     }
 
     @Override
     public void transform(final INPUT inputValue, Emitter<Tuple2<JOIN_KEY, INPUT>> emitter) throws Exception {
+      if (filterNullKeys && inputValue == null) {
+        return;
+      }
       emitter.emit(new Tuple2<>(joiner.joinOn(inputStageName, inputValue), inputValue));
     }
   }
