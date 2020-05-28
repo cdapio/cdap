@@ -69,6 +69,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setGroupToWidgets,
   widgetToInfo,
   setWidgetToInfo,
+  widgetToAttributes,
+  setWidgetToAttributes,
   jsonView,
   setJsonView,
 }) => {
@@ -79,6 +81,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
   const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
+  const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
 
   function addConfigurationGroup(index: number) {
     return () => {
@@ -130,10 +133,13 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
 
       // Delete all the widget information that belong to the group
       const newWidgetToInfo = localWidgetToInfo;
+      const newWidgetToAttributes = localWidgetToAttributes;
       widgets.map((widget) => {
         delete newWidgetToInfo[widget];
+        delete newWidgetToAttributes[widget];
       });
       setLocalWidgetToInfo(newWidgetToInfo);
+      setLocalWidgetToAttributes(newWidgetToAttributes);
     };
   }
 
@@ -150,6 +156,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setGroupToInfo(localGroupToInfo);
     setGroupToWidgets(localGroupToWidgets);
     setWidgetToInfo(localWidgetToInfo);
+    setWidgetToAttributes(localWidgetToAttributes);
   }
 
   return (
@@ -164,6 +171,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         groupToInfo={localGroupToInfo}
         groupToWidgets={localGroupToWidgets}
         widgetToInfo={localWidgetToInfo}
+        widgetToAttributes={localWidgetToAttributes}
         jsonView={jsonView}
         setJsonView={setJsonView}
       />
@@ -206,6 +214,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
                   setGroupToWidgets={setLocalGroupToWidgets}
                   widgetToInfo={localWidgetToInfo}
                   setWidgetToInfo={setLocalWidgetToInfo}
+                  widgetToAttributes={localWidgetToAttributes}
+                  setWidgetToAttributes={setLocalWidgetToAttributes}
                 />
               </ExpansionPanelActions>
             </ExpansionPanel>

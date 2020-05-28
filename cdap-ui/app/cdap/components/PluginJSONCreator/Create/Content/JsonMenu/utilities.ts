@@ -12,18 +12,24 @@ function getJSONConfig(widgetJSONData) {
     groupToInfo,
     groupToWidgets,
     widgetToInfo,
+    widgetToAttributes,
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
     const groupLabel = groupToInfo[groupID].label;
     const widgetData = groupToWidgets[groupID].map((widgetID: string) => {
       const widgetInfo: IWidgetInfo = widgetToInfo[widgetID];
+      const widgetAttributes = widgetToAttributes[widgetID];
 
       return {
         'widget-type': widgetInfo.widgetType,
         label: widgetInfo.label,
         name: widgetInfo.name,
         ...(widgetInfo.widgetCategory && { 'widget-category': widgetInfo.widgetCategory }),
+        ...(widgetAttributes &&
+          Object.keys(widgetAttributes).length > 0 && {
+            'widget-attributes': widgetAttributes,
+          }),
       };
     });
     return {

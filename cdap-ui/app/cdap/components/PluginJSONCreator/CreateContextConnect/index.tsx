@@ -29,6 +29,7 @@ interface ICreateState {
   groupToInfo: any;
   groupToWidgets: any;
   widgetToInfo: any;
+  widgetToAttributes: any;
   jsonView: boolean;
 
   setActiveStep: (step: number) => void;
@@ -37,6 +38,7 @@ interface ICreateState {
   setGroupToInfo: (groupToInfo: any) => void;
   setGroupToWidgets: (groupToWidgets: any) => void;
   setWidgetToInfo: (widgetToInfo: any) => void;
+  setWidgetToAttributes: (widgetToAttributes: any) => void;
   setJsonView: (jsonView: boolean) => void;
 }
 

@@ -33,14 +33,14 @@ const styles = (): StyleRules => {
 const WidgetActionButtonsView: React.FC<WithStyles<typeof styles>> = ({
   classes,
   onAddWidgetToGroup,
-  onDeleteWidgetToGroup,
+  onDeleteWidgetFromGroup,
 }) => {
   return (
     <div className={classes.widgetActionButtons}>
       <IconButton onClick={onAddWidgetToGroup} data-cy="add-row">
         <AddIcon fontSize="small" />
       </IconButton>
-      <IconButton onClick={onDeleteWidgetToGroup} color="secondary" data-cy="remove-row">
+      <IconButton onClick={onDeleteWidgetFromGroup} color="secondary" data-cy="remove-row">
         <DeleteIcon fontSize="small" />
       </IconButton>
     </div>
