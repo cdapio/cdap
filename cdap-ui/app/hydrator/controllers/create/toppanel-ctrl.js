@@ -55,7 +55,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.resolvedMacros = {};
     this.userRuntimeArgumentsMap = {};
     this.runtimeArguments = {};
-    this.validToStartPreview = true;
+    this.doesPreviewHaveEmptyMacros = true;
     this.$stateParams = $stateParams;
     this.HydratorUpgradeService = HydratorUpgradeService;
 
@@ -391,7 +391,7 @@ class HydratorPlusPlusTopPanelCtrl {
         value: '',
         uniqueId: 'id-' + this.uuid.v4()
       }];
-      this.validToStartPreview = this.isValidToStartPreview();
+      this.doesPreviewHaveEmptyMacros = this.checkForEmptyMacrosForPreview();
       this.previewStore.dispatch(
         this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
       );
@@ -450,7 +450,7 @@ class HydratorPlusPlusTopPanelCtrl {
             this.previewStore.dispatch(
               this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
             );
-            this.validToStartPreview = this.isValidToStartPreview();
+            this.doesPreviewHaveEmptyMacros = this.checkForEmptyMacrosForPreview();
             return this.runtimeArguments;
           },
           err => {
@@ -468,7 +468,7 @@ class HydratorPlusPlusTopPanelCtrl {
       this.previewStore.dispatch(
         this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
       );
-      this.validToStartPreview = this.isValidToStartPreview();
+      this.doesPreviewHaveEmptyMacros = this.checkForEmptyMacrosForPreview();
       return this.$q.when(this.runtimeArguments);
     }
   }
@@ -481,8 +481,17 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   startOrStopPreview() {
-    if (this.validToStartPreview) {
-      this.getRuntimeArguments()
+    if (this.doesPreviewHaveEmptyMacros) {
+      this.doStartOrStopPreview();
+    } else {
+      // Validate and show runtime arguments if there are
+      // un-fulfilled macros.
+      this.toggleConfig();
+    }
+  }
+
+  doStartOrStopPreview() {
+    this.getRuntimeArguments()
       .then(() => {
         if (this.previewRunning) {
           this.stopPreview();
@@ -490,9 +499,6 @@ class HydratorPlusPlusTopPanelCtrl {
           this.onPreviewStart();
         }
       });
-    } else {
-      this.toggleConfig();
-    }
   }
 
   toggleScheduler() {
@@ -510,10 +516,10 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewStore.dispatch(
       this.previewActions.setRuntimeArgsForDisplay(_.cloneDeep(this.runtimeArguments))
     );
-    this.validToStartPreview = this.isValidToStartPreview();
+    this.doesPreviewHaveEmptyMacros = this.checkForEmptyMacrosForPreview();
   }
 
-  isValidToStartPreview() {
+  checkForEmptyMacrosForPreview() {
     return !this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.runtimeArguments);
   }
 
