@@ -28,6 +28,7 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.TransformContext;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
 import java.lang.reflect.Type;
@@ -96,5 +97,13 @@ public class PluggableFilterTransform extends Transform<StructuredRecord, Struct
     properties.put("filterPlugin", filterPlugin);
     properties.put("filterProperties", GSON.toJson(filterProperties));
     return new ETLPlugin(NAME, Transform.PLUGIN_TYPE, properties, null);
+  }
+
+  public static ETLPlugin getPlugin(String filterPlugin, Map<String, String> filterProperties,
+                                    ArtifactSelectorConfig config) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("filterPlugin", filterPlugin);
+    properties.put("filterProperties", GSON.toJson(filterProperties));
+    return new ETLPlugin(NAME, Transform.PLUGIN_TYPE, properties, config);
   }
 }
