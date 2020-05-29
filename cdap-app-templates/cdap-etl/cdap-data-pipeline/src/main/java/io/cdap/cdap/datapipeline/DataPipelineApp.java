@@ -18,8 +18,13 @@ package io.cdap.cdap.datapipeline;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ConfigUpgradeResult;
 import io.cdap.cdap.api.app.ProgramType;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.AlertPublisher;
@@ -37,6 +42,7 @@ import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import java.util.Set;
 
 /**
@@ -75,5 +81,13 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
       }
       schedule(scheduleBuilder.triggerByTime(timeSchedule));
     }
+  }
+
+  @Override
+  public ConfigUpgradeResult<ETLBatchConfig> upgradeConfig(ETLBatchConfig batchConfig,
+                                                           ApplicationUpgradeContext upgradeContext) {
+    ConfigUpgradeResult.Builder<ETLBatchConfig> builder = ConfigUpgradeResult.builder();
+    batchConfig.upgradeBatchConfig(upgradeContext, builder);
+    return builder.build();
   }
 }

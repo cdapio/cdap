@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.proto.v2;
 
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.proto;
 
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersion;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -85,4 +87,18 @@ public class ArtifactSelectorConfig {
       ", version='" + version + '\'' +
       '}';
   }
+
+  public io.cdap.cdap.api.artifact.ArtifactVersion getApiArtifactVersion() {
+    return new io.cdap.cdap.api.artifact.ArtifactVersion(version);
+  }
+
+  public io.cdap.cdap.api.artifact.ArtifactScope getApiArtifactScope() {
+    ArtifactScope artifactScope = scope == null ? null : ArtifactScope.valueOf(scope.toUpperCase());
+    return artifactScope;
+  }
+
+  public io.cdap.cdap.api.artifact.ArtifactId toApiArtifactId() {
+    return new io.cdap.cdap.api.artifact.ArtifactId(name, getApiArtifactVersion(), getApiArtifactScope());
+  }
+
 }

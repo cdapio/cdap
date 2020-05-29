@@ -47,6 +47,10 @@ public class ConfigUpgradeResult<T extends Config> {
     return upgradedArtifacts;
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   /**
    * Builder for creating config upgrade result.
    *
@@ -58,18 +62,22 @@ public class ConfigUpgradeResult<T extends Config> {
     protected T newConfig;
     protected List<UpgradedArtifact> upgradedArtifacts;
 
-    protected Builder(T newConfig) {
+    public Builder(T newConfig) {
       this.newConfig = newConfig;
       this.upgradedArtifacts = new ArrayList<>();
     }
 
-    public Builder addUpgradeArtifact(UpgradedArtifact upgradedArtifact) {
+    public Builder() {
+      this(null);
+    }
+
+    public Builder addUpgradedArtifact(UpgradedArtifact upgradedArtifact) {
       this.upgradedArtifacts.add(upgradedArtifact);
       return this;
     }
 
-    public Builder setUpgradeArtifacts(List<UpgradedArtifact> upgradedArtifacts) {
-      this.upgradedArtifacts = new ArrayList<>(upgradedArtifacts);
+    public Builder addUpgradedArtifacts(List<UpgradedArtifact> upgradedArtifacts) {
+      this.upgradedArtifacts.addAll(upgradedArtifacts);
       return this;
     }
 

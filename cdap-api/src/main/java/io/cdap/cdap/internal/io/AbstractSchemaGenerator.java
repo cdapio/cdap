@@ -68,6 +68,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     simpleSchemas.put(String.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(byte[].class, Schema.of(Schema.Type.BYTES));
     simpleSchemas.put(ByteBuffer.class, Schema.of(Schema.Type.BYTES));
+    simpleSchemas.put(Object.class, Schema.of(Schema.Type.NULL));
 
         // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
     simpleSchemas.put(URI.class, Schema.of(Schema.Type.STRING));

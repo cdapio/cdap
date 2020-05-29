@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.proto.v2;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.app.ApplicationUpgradeContext;
+import io.cdap.cdap.api.app.ConfigUpgradeResult;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -58,9 +60,9 @@ public final class ETLBatchConfig extends ETLConfig {
                          int numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
-                         boolean service) {
+                         boolean service, List<String> comments) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, engineProperties);
+          numOfRecordsPreview, engineProperties, comments);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
@@ -109,6 +111,17 @@ public final class ETLBatchConfig extends ETLConfig {
   @Nullable
   public Integer getMaxConcurrentRuns() {
     return maxConcurrentRuns;
+  }
+
+  public ETLBatchConfig upgradeBatchConfig(ApplicationUpgradeContext upgradeContext,
+                                           ConfigUpgradeResult.Builder builder) {
+    Set<ETLStage> upgradedStages = new HashSet<>();
+    for (ETLStage stage : getStages()) {
+      upgradedStages.add(stage.upgradeStage(upgradeContext, builder));
+    }
+    return new ETLBatchConfig(upgradedStages, getConnections(), getPostActions(), getResources(), isStageLoggingEnabled(),
+                              isProcessTimingEnabled(), engine, schedule, getDriverResources(), getClientResources(),
+                              getNumOfRecordsPreview(), maxConcurrentRuns, getProperties(), service, comments);
   }
 
   @Override
@@ -170,7 +183,8 @@ public final class ETLBatchConfig extends ETLConfig {
    */
   public static ETLBatchConfig forSystemService() {
     return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
-                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true);
+                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true,
+                              Collections.emptyList());
   }
 
   /**
@@ -181,9 +195,12 @@ public final class ETLBatchConfig extends ETLConfig {
     private Engine engine;
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
+    // Only used for upgrade purpose.
+    private List<String> comments;
 
     private Builder() {
       this(null);
+      this.comments = new ArrayList<>();
     }
 
     /**
@@ -231,7 +248,7 @@ public final class ETLBatchConfig extends ETLConfig {
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, maxConcurrentRuns, properties, false);
+                                numOfRecordsPreview, maxConcurrentRuns, properties, false, comments);
     }
   }
 }
