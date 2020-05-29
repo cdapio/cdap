@@ -38,7 +38,6 @@ public interface Joiner<JOIN_KEY, INPUT_RECORD, OUT> {
    */
   JOIN_KEY joinOn(String stageName, INPUT_RECORD inputRecord) throws Exception;
 
-
   /**
    * Creates join configuration which holds information about required inputs which are needed to decide
    * type of the join and produce join result.
