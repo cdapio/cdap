@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.function;
 
 import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
@@ -24,20 +25,29 @@ import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.StageMetrics;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorSink;
 import io.cdap.cdap.etl.batch.connector.SingleConnectorSource;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.batch.SparkBatchRuntimeContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -92,6 +102,14 @@ public class PluginFunctionContext implements Serializable {
     }
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
     return getPluginContext().newPluginInstance(stageSpec.getName(), macroEvaluator);
+  }
+
+  public AutoJoinerContext createAutoJoinerContext() {
+    Map<String, JoinStage> inputStages = new HashMap<>();
+    for (Map.Entry<String, Schema> entry : stageSpec.getInputSchemas().entrySet()) {
+      inputStages.put(entry.getKey(), JoinStage.builder(entry.getKey(), entry.getValue()).build());
+    }
+    return new DefaultAutoJoinerContext(inputStages);
   }
 
   public String getStageName() {

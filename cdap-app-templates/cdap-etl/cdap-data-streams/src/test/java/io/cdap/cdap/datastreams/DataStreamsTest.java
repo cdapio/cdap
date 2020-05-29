@@ -42,6 +42,7 @@ import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import io.cdap.cdap.etl.mock.batch.joiner.DupeFlagger;
+import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
 import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
 import io.cdap.cdap.etl.mock.spark.Window;
 import io.cdap.cdap.etl.mock.spark.compute.StringValueFilterCompute;
@@ -78,12 +79,14 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -787,6 +790,235 @@ public class DataStreamsTest extends HydratorTestBase {
     validateMetric(appId, "outerjoin.records.in", 5);
     validateMetric(appId, "outerjoin.records.out", 3);
     validateMetric(appId, "multijoinSink.records.in", 3);
+  }
+
+  @Test
+  public void testAutoJoin() throws Exception {
+    /*
+     * customers ----------|
+     *                     |
+     *                     |---> join ---> sink
+     *                     |
+     * transactions -------|
+     */
+
+    Schema inputSchema1 = Schema.recordOf(
+      "customer",
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_name", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema inputSchema2 = Schema.recordOf(
+      "transaction",
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema outSchema = Schema.recordOf(
+      "customers.transactions",
+      Schema.Field.of("customers_customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customers_customer_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("transactions_t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("transactions_customer_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("transactions_item_id", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1)
+      .set("customer_id", "1")
+      .set("customer_name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema1)
+      .set("customer_id", "2")
+      .set("customer_name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema1)
+      .set("customer_id", "3")
+      .set("customer_name", "jane").build();
+
+    StructuredRecord tx1 = StructuredRecord.builder(inputSchema2)
+      .set("t_id", "1")
+      .set("customer_id", "1")
+      .set("item_id", "11").build();
+    StructuredRecord tx2 = StructuredRecord.builder(inputSchema2)
+      .set("t_id", "2")
+      .set("customer_id", "3")
+      .set("item_id", "22").build();
+    StructuredRecord tx3 = StructuredRecord.builder(inputSchema2)
+      .set("t_id", "3")
+      .set("customer_id", "4")
+      .set("item_id", "33").build();
+
+    List<StructuredRecord> input1 = ImmutableList.of(recordSamuel, recordBob, recordJane);
+    List<StructuredRecord> input2 = ImmutableList.of(tx1, tx2, tx3);
+
+    String outputName = UUID.randomUUID().toString();
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+      .addStage(new ETLStage("customers", MockSource.getPlugin(inputSchema1, input1)))
+      .addStage(new ETLStage("transactions", MockSource.getPlugin(inputSchema2, input2)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("customers", "transactions"),
+                                                              Collections.singletonList("customer_id"),
+                                                              Collections.singletonList("transactions"))))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(outputName)))
+      .addConnection("customers", "join")
+      .addConnection("transactions", "join")
+      .addConnection("join", "sink")
+      .setBatchInterval("5s")
+      .setCheckpointDir(checkpointDir)
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("AutoJoinerApp");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start();
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    StructuredRecord join1 = StructuredRecord.builder(outSchema)
+      .set("customers_customer_id", "1").set("customers_customer_name", "samuel")
+      .set("transactions_t_id", "1").set("transactions_customer_id", "1").set("transactions_item_id", "11").build();
+
+    StructuredRecord join2 = StructuredRecord.builder(outSchema)
+      .set("customers_customer_id", "3").set("customers_customer_name", "jane")
+      .set("transactions_t_id", "2").set("transactions_customer_id", "3").set("transactions_item_id", "22").build();
+
+    StructuredRecord join3 = StructuredRecord.builder(outSchema)
+      .set("transactions_t_id", "3").set("transactions_customer_id", "4").set("transactions_item_id", "33").build();
+    Set<StructuredRecord> expected = ImmutableSet.of(join1, join2, join3);
+
+    DataSetManager<Table> outputManager = getDataset(outputName);
+    Tasks.waitFor(
+      true,
+      () -> {
+        outputManager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(outputManager));
+        return expected.equals(outputRecords);
+      },
+      4,
+      TimeUnit.MINUTES);
+
+    sparkManager.stop();
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
+  }
+
+  @Test
+  public void testAutoJoinNullEquality() throws Exception {
+    testAutoJoinNullEquality(true);
+    testAutoJoinNullEquality(false);
+  }
+
+  private void testAutoJoinNullEquality(boolean nullSafe) throws Exception {
+    /*
+     * customers ----------|
+     *                     |
+     *                     |---> join ---> sink
+     *                     |
+     * transactions -------|
+     */
+
+    Schema inputSchema1 = Schema.recordOf(
+      "customer",
+      Schema.Field.of("customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customer_name", Schema.nullableOf(Schema.of(Schema.Type.STRING)))
+    );
+
+    Schema inputSchema2 = Schema.recordOf(
+      "transaction",
+      Schema.Field.of("t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("item_id", Schema.of(Schema.Type.STRING))
+    );
+
+    Schema outSchema = Schema.recordOf(
+      "customers.transactions",
+      Schema.Field.of("customers_customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("customers_customer_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("transactions_t_id", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("transactions_customer_id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("transactions_item_id", Schema.of(Schema.Type.STRING))
+    );
+
+    StructuredRecord recordSamuel = StructuredRecord.builder(inputSchema1)
+      .set("customer_id", "1")
+      .set("customer_name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(inputSchema1)
+      .set("customer_name", "bob").build();
+    StructuredRecord recordJane = StructuredRecord.builder(inputSchema1)
+      .set("customer_id", "3")
+      .set("customer_name", "jane").build();
+
+    StructuredRecord trans1 = StructuredRecord.builder(inputSchema2)
+      .set("t_id", "1")
+      .set("customer_id", "1")
+      .set("item_id", "11").build();
+    StructuredRecord trans2 = StructuredRecord.builder(inputSchema2)
+      .set("t_id", "2")
+      .set("customer_id", "3")
+      .set("item_id", "22").build();
+    StructuredRecord trans3 = StructuredRecord.builder(inputSchema2)
+      .set("t_id", "3")
+      .set("item_id", "33").build();
+
+    List<StructuredRecord> input1 = ImmutableList.of(recordSamuel, recordBob, recordJane);
+    List<StructuredRecord> input2 = ImmutableList.of(trans1, trans2, trans3);
+
+    String outputName = UUID.randomUUID().toString();
+    DataStreamsConfig etlConfig = DataStreamsConfig.builder()
+      .addStage(new ETLStage("customers", MockSource.getPlugin(inputSchema1, input1)))
+      .addStage(new ETLStage("transactions", MockSource.getPlugin(inputSchema2, input2)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("customers", "transactions"),
+                                                              Collections.singletonList("customer_id"),
+                                                              Collections.singletonList("transactions"),
+                                                              nullSafe)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(outputName)))
+      .addConnection("customers", "join")
+      .addConnection("transactions", "join")
+      .addConnection("join", "sink")
+      .setBatchInterval("5s")
+      .setCheckpointDir(checkpointDir)
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.start();
+    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+
+    StructuredRecord join1 = StructuredRecord.builder(outSchema)
+      .set("customers_customer_id", "1").set("customers_customer_name", "samuel")
+      .set("transactions_t_id", "1").set("transactions_customer_id", "1").set("transactions_item_id", "11").build();
+
+    StructuredRecord join2 = StructuredRecord.builder(outSchema)
+      .set("customers_customer_id", "3").set("customers_customer_name", "jane")
+      .set("transactions_t_id", "2").set("transactions_customer_id", "3").set("transactions_item_id", "22").build();
+
+    StructuredRecord join3;
+    if (nullSafe) {
+      // this transaction has a null customer id, which should match with the null id from customers
+      join3 = StructuredRecord.builder(outSchema)
+        .set("transactions_t_id", "3").set("transactions_item_id", "33").set("customers_customer_name", "bob").build();
+    } else {
+      // this transaction has a null customer id, which should not match with the null id from customers
+      join3 = StructuredRecord.builder(outSchema)
+        .set("transactions_t_id", "3").set("transactions_item_id", "33").build();
+    }
+    Set<StructuredRecord> expected = ImmutableSet.of(join1, join2, join3);
+
+    DataSetManager<Table> outputManager = getDataset(outputName);
+    Tasks.
+      waitFor(
+      true,
+      () -> {
+        outputManager.flush();
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(outputManager));
+        return expected.equals(outputRecords);
+      },
+      4,
+      TimeUnit.MINUTES);
+
+    sparkManager.stop();
+    sparkManager.waitForStopped(10, TimeUnit.SECONDS);
   }
 
   @Test
