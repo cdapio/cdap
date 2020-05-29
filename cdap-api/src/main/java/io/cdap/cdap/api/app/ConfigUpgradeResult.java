@@ -46,7 +46,7 @@ public class ConfigUpgradeResult<T extends Config> {
   public List<UpgradedArtifact> getUpgradedArtifacts() {
     return upgradedArtifacts;
   }
-  
+
   /**
    * Builder for creating config upgrade result.
    *

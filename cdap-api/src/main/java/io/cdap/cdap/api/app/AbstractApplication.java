@@ -64,7 +64,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
    * override this method.
    */
   @Override
-  public boolean allowConfigUpgrade() {
+  public boolean isUpgradeAllowed() {
     return false;
   }
 
