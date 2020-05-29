@@ -40,6 +40,7 @@ import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
 import io.cdap.cdap.etl.mock.alert.TMSAlertPublisher;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountReducibleAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import io.cdap.cdap.etl.mock.batch.joiner.DupeFlagger;
 import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
@@ -329,6 +330,11 @@ public class DataStreamsTest extends HydratorTestBase {
 
   @Test
   public void testAggregatorJoinerMacrosWithCheckpoints() throws Exception {
+    testAggregatorJoinerMacrosWithCheckpoints(false);
+    testAggregatorJoinerMacrosWithCheckpoints(true);
+  }
+
+  private void testAggregatorJoinerMacrosWithCheckpoints(boolean isReducibleAggregator) throws Exception {
     /*
                  |--> aggregator --> sink1
         users1 --|
@@ -359,7 +365,9 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("users2", MockSource.getPlugin(userSchema, users2)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin("sink1")))
       .addStage(new ETLStage("sink2", MockSink.getPlugin("sink2")))
-      .addStage(new ETLStage("aggregator", FieldCountAggregator.getPlugin("${aggfield}", "${aggType}")))
+      .addStage(new ETLStage("aggregator", isReducibleAggregator ?
+        FieldCountReducibleAggregator.getPlugin("${aggfield}", "${aggType}") :
+        FieldCountAggregator.getPlugin("${aggfield}", "${aggType}")))
       .addStage(new ETLStage("dupeFlagger", DupeFlagger.getPlugin("users1", "${flagField}")))
       .addConnection("users1", "aggregator")
       .addConnection("aggregator", "sink1")
@@ -370,7 +378,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggJoinApp" + isReducibleAggregator);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // run it once with this set of macros
@@ -466,12 +474,20 @@ public class DataStreamsTest extends HydratorTestBase {
       TimeUnit.MINUTES);
 
     sparkManager.stop();
+
+    MockSink.clear(sink1);
+    MockSink.clear(sink2);
   }
 
   @Test
   public void testParallelAggregators() throws Exception {
-    String sink1Name = "pAggOutput1";
-    String sink2Name = "pAggOutput2";
+    testParallelAggregators(false);
+    testParallelAggregators(true);
+  }
+
+  private void testParallelAggregators(boolean isReducibleAggregator) throws Exception {
+    String sink1Name = "pAggOutput1-" + isReducibleAggregator;
+    String sink2Name = "pAggOutput2-" + isReducibleAggregator;
 
     Schema inputSchema = Schema.recordOf(
       "testRecord",
@@ -499,8 +515,10 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("source2", MockSource.getPlugin(inputSchema, input2)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
-      .addStage(new ETLStage("agg1", FieldCountAggregator.getPlugin("user", "string")))
-      .addStage(new ETLStage("agg2", FieldCountAggregator.getPlugin("item", "long")))
+      .addStage(new ETLStage("agg1", isReducibleAggregator ?
+        FieldCountReducibleAggregator.getPlugin("user", "string") : FieldCountAggregator.getPlugin("user", "string")))
+      .addStage(new ETLStage("agg2", isReducibleAggregator ?
+        FieldCountReducibleAggregator.getPlugin("item", "long") : FieldCountAggregator.getPlugin("item", "long")))
       .addConnection("source1", "agg1")
       .addConnection("source1", "agg2")
       .addConnection("source2", "agg1")
@@ -512,7 +530,7 @@ public class DataStreamsTest extends HydratorTestBase {
       .build();
 
     AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, pipelineConfig);
-    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp");
+    ApplicationId appId = NamespaceId.DEFAULT.app("ParallelAggApp" + isReducibleAggregator);
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
