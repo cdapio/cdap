@@ -231,6 +231,25 @@ public class ApplicationClient {
   }
 
   /**
+   * Upgrades an application.
+   *
+   * @param app the application to delete
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void upgradeApplication(ApplicationId app)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    String path = String.format("apps/%s/upgrade", app.getApplication());
+    HttpResponse response = restClient.execute(HttpMethod.POST,
+                                               config.resolveNamespacedURLV3(app.getParent(), path),
+                                               config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
+    if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
+      throw new ApplicationNotFoundException(app);
+    }
+  }
+
+  /**
    * Deletes an application.
    *
    * @param app the application to delete

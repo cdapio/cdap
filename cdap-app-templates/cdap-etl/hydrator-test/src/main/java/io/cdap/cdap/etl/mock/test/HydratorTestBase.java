@@ -128,7 +128,8 @@ public class HydratorTestBase extends TestBase {
                    InvalidStageException.class.getPackage().getName(),
                    "org.apache.avro.mapred", "org.apache.avro", "org.apache.avro.generic", "org.apache.avro.io");
 
-    batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks", "1.0.0");
+    batchMocksArtifactId = new ArtifactId(artifactId.getNamespace(), artifactId.getArtifact() + "-mocks",
+                                          artifactId.getVersion());
     // add plugins artifact
     addPluginArtifact(batchMocksArtifactId,
                       artifactId,
