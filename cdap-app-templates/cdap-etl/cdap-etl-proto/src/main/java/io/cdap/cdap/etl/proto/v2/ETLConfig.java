@@ -41,20 +41,23 @@ import javax.annotation.Nullable;
 // though not marked nullable, fields can be null since these objects are created through gson deserialization
 @SuppressWarnings("ConstantConditions")
 public class ETLConfig extends Config implements UpgradeableConfig {
-  private final String description;
-  private final Set<ETLStage> stages;
-  private final Set<Connection> connections;
-  private final Resources resources;
-  private final Resources driverResources;
-  private final Resources clientResources;
-  private final Boolean stageLoggingEnabled;
-  private final Boolean processTimingEnabled;
-  private final Integer numOfRecordsPreview;
-  private final Map<String, String> properties;
+  protected final String description;
+  protected final Set<ETLStage> stages;
+  protected final Set<Connection> connections;
+  protected final Resources resources;
+  protected final Resources driverResources;
+  protected final Resources clientResources;
+  protected final Boolean stageLoggingEnabled;
+  protected final Boolean processTimingEnabled;
+  protected final Integer numOfRecordsPreview;
+  protected final Map<String, String> properties;
   // v1 fields to support backwards compatibility
-  private final io.cdap.cdap.etl.proto.v1.ETLStage source;
-  private final List<io.cdap.cdap.etl.proto.v1.ETLStage> sinks;
-  private final List<io.cdap.cdap.etl.proto.v1.ETLStage> transforms;
+  protected io.cdap.cdap.etl.proto.v1.ETLStage source;
+  protected List<io.cdap.cdap.etl.proto.v1.ETLStage> sinks;
+  protected List<io.cdap.cdap.etl.proto.v1.ETLStage> transforms;
+
+  // For serialization purpose for upgrade compatibility.
+  protected List<String> comments;
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, Resources driverResources, Resources clientResources,
@@ -74,6 +77,18 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.source = null;
     this.sinks = new ArrayList<>();
     this.transforms = new ArrayList<>();
+    this.comments = new ArrayList<>();
+  }
+
+  protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
+                      Resources resources, Resources driverResources, Resources clientResources,
+                      boolean stageLoggingEnabled, boolean processTimingEnabled,
+                      int numOfRecordsPreview, Map<String, String> properties, List<String> comments) {
+    this(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
+        numOfRecordsPreview, properties);
+    this.comments = comments;
+    this.sinks = null;
+    this.transforms = null;
   }
 
   @Nullable

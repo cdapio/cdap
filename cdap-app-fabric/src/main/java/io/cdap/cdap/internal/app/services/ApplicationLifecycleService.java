@@ -22,9 +22,14 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -32,6 +37,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -48,9 +54,11 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -62,6 +70,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -79,17 +88,22 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -108,6 +122,8 @@ import javax.annotation.Nullable;
  */
 public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
+  private static final Gson GSON =
+      new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
 
   /**
    * Store manages non-runtime lifecycle.
@@ -125,6 +141,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
+  private final Impersonator impersonator;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
@@ -134,7 +151,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataServiceClient metadataServiceClient,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              MessagingService messagingService) {
+                              MessagingService messagingService, Impersonator impersonator) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.store = store;
@@ -148,6 +165,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.impersonator = impersonator;
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
   }
@@ -343,6 +361,132 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Id.Artifact artifactId = Id.Artifact.fromEntityId(Artifacts.toArtifactId(appId.getParent(), newArtifactId));
     return deployApp(appId.getParent(), appId.getApplication(), null, artifactId, requestedConfigStr,
                      programTerminator, ownerAdmin.getOwner(appId), appRequest.canUpdateSchedules());
+  }
+
+  /**
+   * Upgrades an existing application by upgrading application artifact versions and plugin artifact versions.
+   *
+   * @param appId the id of the application to upgrade.
+   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
+   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @throws IllegalStateException if something unexpected happened during upgrade.
+   * @throws IOException if there was an IO error during initializing application class from artifact.
+   * @throws JsonIOException if there was an error in serializing or deserializing app config.
+   * @throws UnsupportedOperationException if application does not support upgrade operation.
+   * @throws InvalidArtifactException if candidate application artifact is invalid for upgrade purpose.
+   * @throws NotFoundException if any object related to upgrade is not found like application/artifact.
+   * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
+   *                   the actual exception
+   */
+  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
+    throws Exception {
+    // Check if the current user has admin privileges on it before updating.
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    // check that app exists
+    ApplicationSpecification currentSpec = store.getApplication(appId);
+    if (currentSpec == null) {
+      LOG.info("Application {} not found for upgrade.", appId);
+      throw new NotFoundException(appId);
+    }
+    ArtifactId currentArtifact = currentSpec.getArtifactId();
+    NamespaceId currentArtifactNamespace =
+      ArtifactScope.SYSTEM.equals(currentArtifact.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
+
+    // Get the artifact with latest version for upgrade.
+    List<ArtifactSummary> availableArtifacts =
+      artifactRepository.getArtifactSummaries(currentArtifactNamespace, currentArtifact.getName(), 1,
+                                              ArtifactSortOrder.DESC);
+    if (availableArtifacts.isEmpty()) {
+      String error = String.format("No artifacts found for artifact id %s in namespace %s.", currentArtifact.getName(),
+                                   currentArtifactNamespace);
+      throw new NotFoundException(error);
+    }
+    // The latest version should be first (and only) value in the result.
+    ArtifactSummary candidateArtifact = availableArtifacts.get(0);
+    ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
+
+    // Current artifact should not have higher version than candidate artifact.
+    if (currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0) {
+      String error = String.format(
+        "The current artifact has a version higher %s than any existing artifact.", currentArtifact.getVersion());
+      throw new InvalidArtifactException(error);
+    }
+
+    ArtifactId newArtifactId =
+      new ArtifactId(currentArtifact.getName(), candidateArtifactVersion, currentArtifact.getScope());
+
+    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
+    ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
+    List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
+
+    updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
+                              upgradeActions, ownerAdmin.getOwner(appId), false);
+  }
+
+  /**
+   * Updates an application config by applying given update actions. The app should know how to apply these actions
+   * to its config.
+   */
+  private void updateApplicationInternal(ApplicationId appId,
+                                         @Nullable String currentConfigStr,
+                                         ProgramTerminator programTerminator,
+                                         ArtifactDetail artifactDetail,
+                                         List<ApplicationConfigUpdateAction> updateActions,
+                                         @Nullable KerberosPrincipalId ownerPrincipal,
+                                         boolean updateSchedules) throws Exception {
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
+    if (appClass == null) {
+      // This should never happen.
+      throw new IllegalStateException(String.format("No application class found in artifact '%s' in namespace '%s'.",
+                                      artifactDetail.getDescriptor().getArtifactId(), appId.getParent()));
+    }
+    io.cdap.cdap.proto.id.ArtifactId artifactId =
+      Artifacts.toProtoArtifactId(appId.getParent(), artifactDetail.getDescriptor().getArtifactId());
+    EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId, this.impersonator);
+
+    String updatedAppConfig = "";
+    DefaultApplicationUpdateContext updateContext =
+      new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
+                                          artifactRepository, currentConfigStr, updateActions);
+
+    try (CloseableClassLoader artifactClassLoader =
+      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+                                                   classLoaderImpersonator)) {
+      Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+      // Run config update logic for the application to generate updated config.
+      if (!(appMain instanceof Application)) {
+        throw new IllegalStateException(
+          String.format("Application main class is of invalid type: %s",
+                        appMain.getClass().getName()));
+      }
+      Application app = (Application) appMain;
+      Type configType = Artifacts.getConfigType(app.getClass());
+      if (!app.isUpdateSupported()) {
+        String errorMessage = String.format("Application %s does not support update.", appId);
+        throw new UnsupportedOperationException(errorMessage);
+      }
+      ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
+      updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
+    }
+
+
+    // Deploy application with with potentially new app config and new artifact.
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), appId.getParent(),
+                                                             appClass.getClassName(), appId.getApplication(),
+                                                             appId.getVersion(), updatedAppConfig, ownerPrincipal,
+                                                             updateSchedules);
+
+    Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
+    // TODO: (CDAP-3258) Manager needs MUCH better error handling.
+    ApplicationWithPrograms applicationWithPrograms;
+    try {
+      applicationWithPrograms = manager.deploy(deploymentInfo).get();
+    } catch (ExecutionException e) {
+      Throwables.propagateIfPossible(e.getCause(), Exception.class);
+      throw Throwables.propagate(e.getCause());
+    }
+    adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
+                                           applicationWithPrograms.getSpecification());
   }
 
   /**
