@@ -17,9 +17,9 @@
 package io.cdap.cdap.api.app;
 
 import io.cdap.cdap.api.Config;
-import io.cdap.cdap.api.artifact.ArtifactId;
-import java.util.HashMap;
-import java.util.Map;
+import io.cdap.cdap.api.artifact.UpgradedArtifact;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Stores results of upgrading an application config like new config, artifact upgrade map etc.
@@ -31,9 +31,9 @@ public class ConfigUpgradeResult<T extends Config> {
   // Upgraded config.
   private T newConfig;
   // Stores mapping of old and new artifact after an upgrade in form <oldArtifact, newArtifact>.
-  private Map<ArtifactId, ArtifactId> upgradedArtifacts;
+  private List<UpgradedArtifact> upgradedArtifacts;
 
-  private ConfigUpgradeResult(T newConfig, Map<ArtifactId, ArtifactId> upgradedArtifacts) {
+  private ConfigUpgradeResult(T newConfig, List<UpgradedArtifact> upgradedArtifacts) {
 
     this.newConfig = newConfig;
     this.upgradedArtifacts = upgradedArtifacts;
@@ -43,11 +43,10 @@ public class ConfigUpgradeResult<T extends Config> {
     return newConfig;
   }
 
-  public Map<ArtifactId, ArtifactId> getUpgradedArtifacts() {
+  public List<UpgradedArtifact> getUpgradedArtifacts() {
     return upgradedArtifacts;
   }
-
-
+  
   /**
    * Builder for creating config upgrade result.
    *
@@ -57,20 +56,20 @@ public class ConfigUpgradeResult<T extends Config> {
   public static class Builder<T extends Config> {
 
     protected T newConfig;
-    protected Map<ArtifactId, ArtifactId> upgradedArtifacts;
+    protected List<UpgradedArtifact> upgradedArtifacts;
 
     protected Builder(T newConfig) {
       this.newConfig = newConfig;
-      this.upgradedArtifacts = new HashMap<>();
+      this.upgradedArtifacts = new ArrayList<>();
     }
 
-    public Builder addUpgradeArtifact(ArtifactId oldArtifact, ArtifactId newArtifact) {
-      this.upgradedArtifacts.put(oldArtifact, newArtifact);
+    public Builder addUpgradeArtifact(UpgradedArtifact upgradedArtifact) {
+      this.upgradedArtifacts.add(upgradedArtifact);
       return this;
     }
 
-    public Builder setUpgradeArtifacts(Map<ArtifactId, ArtifactId> upgradedArtifacts) {
-      this.upgradedArtifacts = new HashMap<>(upgradedArtifacts);
+    public Builder setUpgradeArtifacts(List<UpgradedArtifact> upgradedArtifacts) {
+      this.upgradedArtifacts = new ArrayList<>(upgradedArtifacts);
       return this;
     }
 
