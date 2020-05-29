@@ -14,13 +14,13 @@
  * the License.
  */
 
-import { Divider, IconButton, Tooltip } from '@material-ui/core';
+import { Button, Divider, Tooltip } from '@material-ui/core';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import CodeIcon from '@material-ui/icons/Code';
 import GetAppIcon from '@material-ui/icons/GetApp';
-import { downloadPluginJSON } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJSONImporter';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
@@ -43,6 +43,9 @@ const styles = (theme) => {
     jsonCollapseActionButtons: {
       padding: '15px',
       flexDirection: 'column',
+      '& > *': {
+        margin: '5px',
+      },
     },
     jsonViewerTooltip: {
       fontSize: '14px',
@@ -51,40 +54,52 @@ const styles = (theme) => {
   };
 };
 
+const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
+  return (
+    <Tooltip
+      title={
+        downloadDisabled
+          ? 'Download is disabled until the required fields are filled in'
+          : 'Download Plugin JSON'
+      }
+      classes={{
+        tooltip: classes.jsonViewerTooltip,
+      }}
+    >
+      <Button disabled={downloadDisabled} onClick={onDownloadClick}>
+        <GetAppIcon />
+      </Button>
+    </Tooltip>
+  );
+};
+
+const ExpandJSONViewButton = ({ classes, expandJSONView }) => {
+  return (
+    <Tooltip
+      title="Open JSON View"
+      classes={{
+        tooltip: classes.jsonViewerTooltip,
+      }}
+    >
+      <Button onClick={expandJSONView}>
+        <CodeIcon />
+      </Button>
+    </Tooltip>
+  );
+};
+
 const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  pluginName,
-  pluginType,
-  displayName,
-  emitAlerts,
-  emitErrors,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetToInfo,
-  widgetToAttributes,
-  jsonView,
-  setJsonView,
-  outputName,
+  expandJSONView,
+  downloadDisabled,
+  onDownloadClick,
+  populateImportResults,
+  JSONStatus,
 }) => {
-  const widgetJSONData = {
-    pluginName,
-    pluginType,
-    displayName,
-    emitAlerts,
-    emitErrors,
-    configurationGroups,
-    groupToInfo,
-    groupToWidgets,
-    widgetToInfo,
-    widgetToAttributes,
-    outputName,
-  };
-  const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (
     <div>
       <Drawer
-        open={!jsonView}
+        open={true}
         variant="persistent"
         className={classes.closedJsonMenu}
         anchor="right"
@@ -100,38 +115,25 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
         <div className={classes.toolbar} />
         <List component="nav" dense={true} className={classes.mainMenu}>
           <div className={classes.jsonCollapseActionButtons}>
-            <Tooltip
-              title="Open JSON View"
-              classes={{
-                tooltip: classes.jsonViewerTooltip,
-              }}
-            >
-              <IconButton onClick={() => setJsonView(true)}>
-                <CodeIcon />
-              </IconButton>
-            </Tooltip>
+            <ExpandJSONViewButton classes={classes} expandJSONView={expandJSONView} />
             <Divider />
 
             <Tooltip
-              title={
-                downloadDisabled
-                  ? 'Download is disabled until the required fields are filled in'
-                  : 'Download Plugin JSON'
-              }
               classes={{
                 tooltip: classes.jsonViewerTooltip,
-                arrow: classes.jsonViewerTooltipArrow,
               }}
+              title="Import JSON"
             >
-              <span>
-                <IconButton
-                  disabled={downloadDisabled}
-                  onClick={() => downloadPluginJSON(widgetJSONData)}
-                >
-                  <GetAppIcon />
-                </IconButton>
-              </span>
+              <PluginJSONImporter
+                populateImportResults={populateImportResults}
+                JSONStatus={JSONStatus}
+              />
             </Tooltip>
+            <DownloadJSONButton
+              classes={classes}
+              downloadDisabled={downloadDisabled}
+              onDownloadClick={onDownloadClick}
+            />
           </div>
         </List>
       </Drawer>

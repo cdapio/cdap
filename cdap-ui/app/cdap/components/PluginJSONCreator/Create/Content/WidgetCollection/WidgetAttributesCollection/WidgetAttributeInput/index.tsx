@@ -46,7 +46,7 @@ const WidgetAttributeInput = ({
       'scala-editor',
       'sql-editor',
     ];
-    if (field === 'default' && codeEditors.includes(widgetType)) {
+    if (codeEditors.includes(widgetType)) {
       return (
         <WidgetWrapper
           widgetProperty={{

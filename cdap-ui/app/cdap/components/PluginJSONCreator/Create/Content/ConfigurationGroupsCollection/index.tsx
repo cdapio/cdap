@@ -74,6 +74,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   jsonView,
   setJsonView,
   outputName,
+  setPluginState,
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -83,6 +84,23 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
   const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
   const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
+
+  // In case user uploads new file
+  React.useEffect(() => {
+    setLocalConfigurationGroups(configurationGroups);
+  }, [configurationGroups]);
+  React.useEffect(() => {
+    setLocalGroupToInfo(groupToInfo);
+  }, [groupToInfo]);
+  React.useEffect(() => {
+    setLocalGroupToWidgets(groupToWidgets);
+  }, [groupToWidgets]);
+  React.useEffect(() => {
+    setLocalWidgetToInfo(widgetToInfo);
+  }, [widgetToInfo]);
+  React.useEffect(() => {
+    setLocalWidgetToAttributes(widgetToAttributes);
+  }, [widgetToAttributes]);
 
   function addConfigurationGroup(index: number) {
     return () => {
@@ -176,6 +194,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         jsonView={jsonView}
         setJsonView={setJsonView}
         outputName={outputName}
+        setPluginState={setPluginState}
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />
@@ -205,7 +224,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
               </ExpansionPanelSummary>
               <ExpansionPanelActions className={classes.groupContent}>
                 <GroupInfoInput
-                  classes={classes}
                   groupID={groupID}
                   groupToInfo={localGroupToInfo}
                   setGroupToInfo={setLocalGroupToInfo}
