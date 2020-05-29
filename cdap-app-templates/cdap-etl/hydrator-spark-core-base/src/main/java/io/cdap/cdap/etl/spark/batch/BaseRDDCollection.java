@@ -41,9 +41,11 @@ import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorFinalizeFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
-import io.cdap.cdap.etl.spark.function.AggregatorPostReduceFunction;
-import io.cdap.cdap.etl.spark.function.AggregatorReduceFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorInitializeFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergePartitionFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergeValueFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
@@ -56,6 +58,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.SQLContext;
@@ -164,13 +167,17 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
 
     JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(sparkGroupByFunction);
 
-    Function2<T, T, T> reduceFunction = new AggregatorReduceFunction<>(pluginFunctionContext);
-    JavaPairRDD<Object, T> groupedCollection = partitions == null ?
-      keyedCollection.reduceByKey(reduceFunction) : keyedCollection.reduceByKey(reduceFunction, partitions);
+    Function<T, Object> initializeFunction = new AggregatorInitializeFunction<>(pluginFunctionContext);
+    Function2<Object, T, Object> mergeValueFunction = new AggregatorMergeValueFunction<>(pluginFunctionContext);
+    Function2<Object, Object, Object> mergePartitionFunction =
+      new AggregatorMergePartitionFunction<>(pluginFunctionContext);
+    JavaPairRDD<Object, Object> groupedCollection = partitions == null ?
+      keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction) :
+      keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction, partitions);
 
-    FlatMapFunc<Tuple2<Object, T>, RecordInfo<Object>> postFunction =
-      new AggregatorPostReduceFunction<>(pluginFunctionContext);
-    FlatMapFunction<Tuple2<Object, T>, RecordInfo<Object>> postReduceFunction = Compat.convert(postFunction);
+    FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =
+      new AggregatorFinalizeFunction<>(pluginFunctionContext);
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postReduceFunction = Compat.convert(postFunction);
 
     return wrap(groupedCollection.flatMap(postReduceFunction));
   }

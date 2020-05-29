@@ -19,28 +19,29 @@ package io.cdap.cdap.etl.common.plugin;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.common.TypeChecker;
 
 import java.util.concurrent.Callable;
 
 /**
- * Wrapper around {@link BatchReduceAggregator} that makes sure logging, classloading, and other pipeline capabilities
- * are setup correctly.
+ * Wrapper around {@link BatchReducibleAggregator} that makes sure logging, classloading, and other pipeline
+ * capabilities are setup correctly.
  *
  * @param <GROUP_KEY> group key type. Must be a supported type
  * @param <GROUP_VALUE> group value type. Must be a supported type
+ * @param <AGG_VALUE> agg value type
  * @param <OUT> output object type
  */
-public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
-  extends BatchReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>  {
-  private final BatchReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator;
+public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
+  extends BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> {
+  private final BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator;
   private final Caller caller;
   private final OperationTimer operationTimer;
 
-  public WrappedReduceAggregator(BatchReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT> aggregator, Caller caller,
-                                 OperationTimer operationTimer) {
+  public WrappedReduceAggregator(BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> aggregator,
+                                 Caller caller, OperationTimer operationTimer) {
     this.aggregator = aggregator;
     this.caller = caller;
     this.operationTimer = operationTimer;
@@ -102,23 +103,43 @@ public class WrappedReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
   }
 
   @Override
-  public void finalize(GROUP_KEY groupKey, GROUP_VALUE groupValues, Emitter<OUT> emitter) throws Exception {
+  public AGG_VALUE initializeAggregateValue(GROUP_VALUE val) throws Exception {
     operationTimer.start();
     try {
-      caller.call((Callable<Void>) () -> {
-        aggregator.finalize(groupKey, groupValues, new UntimedEmitter<>(emitter, operationTimer));
-        return null;
-      });
+      return caller.call(() -> aggregator.initializeAggregateValue(val));
     } finally {
       operationTimer.reset();
     }
   }
 
   @Override
-  public GROUP_VALUE reduce(GROUP_VALUE value1, GROUP_VALUE value2) throws Exception {
+  public AGG_VALUE mergeValues(AGG_VALUE aggValue, GROUP_VALUE value) throws Exception {
     operationTimer.start();
     try {
-      return caller.call(() -> aggregator.reduce(value1, value2));
+      return caller.call(() -> aggregator.mergeValues(aggValue, value));
+    } finally {
+      operationTimer.reset();
+    }
+  }
+
+  @Override
+  public AGG_VALUE mergePartitions(AGG_VALUE value1, AGG_VALUE value2) throws Exception {
+    operationTimer.start();
+    try {
+      return caller.call(() -> aggregator.mergePartitions(value1, value2));
+    } finally {
+      operationTimer.reset();
+    }
+  }
+
+  @Override
+  public void finalize(GROUP_KEY groupKey, AGG_VALUE groupValue, Emitter<OUT> emitter) throws Exception {
+    operationTimer.start();
+    try {
+      caller.call((Callable<Void>) () -> {
+        aggregator.finalize(groupKey, groupValue, new UntimedEmitter<>(emitter, operationTimer));
+        return null;
+      });
     } finally {
       operationTimer.reset();
     }

@@ -28,7 +28,7 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -116,9 +116,9 @@ public abstract class PipelinePhasePreparer {
         if (plugin instanceof BatchAggregator) {
           BatchAggregator<?, ?, ?> aggregator = (BatchAggregator) plugin;
           submitterPlugin = createAggregator(aggregator, stageSpec);
-        } else if (plugin instanceof BatchReduceAggregator) {
-          BatchReduceAggregator aggregator = (BatchReduceAggregator) plugin;
-          submitterPlugin = createReduceAggregator(aggregator, stageSpec);
+        } else if (plugin instanceof BatchReducibleAggregator) {
+          BatchReducibleAggregator<?, ?, ?, ?> aggregator = (BatchReducibleAggregator) plugin;
+          submitterPlugin = createReducibleAggregator(aggregator, stageSpec);
         } else {
           throw new IllegalStateException(String.format("Aggregator stage '%s' is of an unsupported class '%s'.",
                                                         stageSpec.getName(), plugin.getClass().getName()));
@@ -207,8 +207,8 @@ public abstract class PipelinePhasePreparer {
 
   protected abstract SubmitterPlugin createAggregator(BatchAggregator<?, ?, ?> aggregator, StageSpec stageSpec);
 
-  protected abstract SubmitterPlugin createReduceAggregator(BatchReduceAggregator<?, ?, ?> aggregator,
-                                                            StageSpec stageSpec);
+  protected abstract SubmitterPlugin createReducibleAggregator(BatchReducibleAggregator<?, ?, ?, ?> aggregator,
+                                                               StageSpec stageSpec);
 
   protected abstract SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner, StageSpec stageSpec);
 

@@ -16,29 +16,31 @@
 
 package io.cdap.cdap.etl.spark.function;
 
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
-import org.apache.spark.api.java.function.Function2;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
+import org.apache.spark.api.java.function.Function;
 
 /**
- * Function that uses a BatchReduceAggregator to perform the reduce part of the aggregator.
+ * Function that uses a BatchReducibleAggregator to initialize the aggregated value.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  *
  * @param <GROUP_VALUE> type of group value
+ * @param <AGG_VALUE> type of the agg value
  */
-public class AggregatorReduceFunction<GROUP_VALUE> implements Function2<GROUP_VALUE, GROUP_VALUE, GROUP_VALUE> {
-  private final PluginFunctionContext pluginFunctionContext;
-  private transient BatchReduceAggregator<?, GROUP_VALUE, ?> aggregator;
+public class AggregatorInitializeFunction<GROUP_VALUE, AGG_VALUE> implements Function<GROUP_VALUE, AGG_VALUE> {
 
-  public AggregatorReduceFunction(PluginFunctionContext pluginFunctionContext) {
+  private final PluginFunctionContext pluginFunctionContext;
+  private transient BatchReducibleAggregator<?, GROUP_VALUE, AGG_VALUE, ?> aggregator;
+
+  public AggregatorInitializeFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public GROUP_VALUE call(GROUP_VALUE v1, GROUP_VALUE v2) throws Exception {
+  public AGG_VALUE call(GROUP_VALUE value) throws Exception {
     if (aggregator == null) {
       aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
     }
-    return aggregator.reduce(v1, v2);
+    return aggregator.initializeAggregateValue(value);
   }
 }

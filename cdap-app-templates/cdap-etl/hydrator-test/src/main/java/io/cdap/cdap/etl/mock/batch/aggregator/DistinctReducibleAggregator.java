@@ -29,7 +29,7 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
@@ -41,11 +41,11 @@ import java.util.Map;
 /**
  * Distinct aggregator
  */
-@Plugin(type = BatchReduceAggregator.PLUGIN_TYPE)
-@Name(DistinctReduceAggregator.NAME)
-@Description(DistinctReduceAggregator.DESCRIPTION)
-public class DistinctReduceAggregator
-  extends BatchReduceAggregator<StructuredRecord, StructuredRecord, StructuredRecord> {
+@Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
+@Name(DistinctReducibleAggregator.NAME)
+@Description(DistinctReducibleAggregator.DESCRIPTION)
+public class DistinctReducibleAggregator
+  extends BatchReducibleAggregator<StructuredRecord, StructuredRecord, StructuredRecord, StructuredRecord> {
   public static final String NAME = "Distinct Aggregator";
   public static final String DESCRIPTION = "Deduplicates input records so that only provided fields are used to " +
     "apply distinction on while other fields are projected out.";
@@ -54,7 +54,7 @@ public class DistinctReduceAggregator
   private Iterable<String> fields;
   private Schema outputSchema;
 
-  public DistinctReduceAggregator(Conf config) {
+  public DistinctReducibleAggregator(Conf config) {
     this.config = config;
   }
 
@@ -83,6 +83,21 @@ public class DistinctReduceAggregator
   }
 
   @Override
+  public StructuredRecord initializeAggregateValue(StructuredRecord val) throws Exception {
+    return val;
+  }
+
+  @Override
+  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue) throws Exception {
+    return aggValue;
+  }
+
+  @Override
+  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2) throws Exception {
+    return value1;
+  }
+
+  @Override
   public void finalize(StructuredRecord groupKey, StructuredRecord iterator, Emitter<StructuredRecord> emitter) {
     emitter.emit(groupKey);
   }
@@ -103,11 +118,6 @@ public class DistinctReduceAggregator
     return Schema.recordOf("record", outputFields);
   }
 
-  @Override
-  public StructuredRecord reduce(StructuredRecord value1, StructuredRecord value2) throws Exception {
-    return value1;
-  }
-
   /**
    * Plugin Configuration.
    */
@@ -123,15 +133,15 @@ public class DistinctReduceAggregator
   public static ETLPlugin getPlugin(String field) {
     Map<String, String> properties = new HashMap<>();
     properties.put("fields", field);
-    return new ETLPlugin(NAME, BatchReduceAggregator.PLUGIN_TYPE, properties);
+    return new ETLPlugin(NAME, BatchReducibleAggregator.PLUGIN_TYPE, properties);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("fields", new PluginPropertyField(
       "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
-    return new PluginClass(BatchReduceAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
-                           DistinctReduceAggregator.class.getName(),
+    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
+                           DistinctReducibleAggregator.class.getName(),
                            "config", properties);
   }
 }

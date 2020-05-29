@@ -33,7 +33,10 @@ import io.cdap.cdap.api.annotation.Beta;
  * Split 2: (key1, 2), (key1, 3), (key1, 4), (key2, 4)
  * Split 3: (key1, 3), (key1, 4), (key1, 5), (key2, 4)
  *
- * The reduce function will be called in each split to generate following:
+ * First, the initializeValue method will be called in each split to generate an agg value with following info:
+ * (sum: value, count: num)
+ *
+ * The mergeValues function will be called in each split to generate following:
  * Split 1: (key1, sum: 6, count: 3), (key2, sum: 4, count: 1)
  * Split 2: (key1, sum: 9, count: 3), (key2, sum: 4, count: 1)
  * Split 3: (key1, sum: 12, count: 3), (key2, sum: 4, count: 1)
@@ -42,20 +45,21 @@ import io.cdap.cdap.api.annotation.Beta;
  * Split 4: (key1, sum: 6, count: 3), (key1, sum:9, count:3), (key1, sum:12, count:3)
  * Split 5: (key2, sum:4, count:1), (key2, sum:4, count:1), (key2, sum:4, count:1)
  *
- * The reduce function is called again to generate:
+ * The mergePartitions function is called to generate:
  * Split 4: (key1, sum:27, count:9)
  * Split 5: (key2, sum:12, count:3)
  *
  * Finally, the finalize method is called to generate the final output value(s):
  * Split 4: (key1, avg: 3)
- * Split 5: (key2, avg: 3)
+ * Split 5: (key2, avg: 4)
  *
  * @param <GROUP_KEY> Type of group key
  * @param <GROUP_VALUE> Type of values to group
+ * @param <AGG_VALUE> Type of agg values to group
  * @param <OUT> Type of output object
  */
 @Beta
-public interface ReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
+public interface ReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT> {
 
   /**
    * Emit the group key(s) for a given input value. If no group key is emitted, the input value
@@ -68,15 +72,34 @@ public interface ReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
   void groupBy(GROUP_VALUE groupValue, Emitter<GROUP_KEY> emitter) throws Exception;
 
   /**
-   * Reduce the given values to a single value. This method is called before and after grouping of the keys.
+   * Initialize the aggregated value based on the given value. This method is called before mergeValues.
+   * For example, to compute the average, the aggregated value will be (sum: value of the group value, count: 1)
+   *
+   * @param val the value to group
+   * @return the aggregated value
+   */
+  AGG_VALUE initializeAggregateValue(GROUP_VALUE val) throws Exception;
+
+  /**
+   * Merge the given values to a single value. This method is called before grouping of the keys.
    * For example, to compute the sum, the returned value will be the sum of two given values.
    * To compute average, the returned value will contain the sum and count for the two given values.
    *
-   * @param value1 the value to reduce
-   * @param value2 the value to reduce
+   * @param aggValue the aggregated value which contains the current aggregated information
+   * @param value the value to merge
    * @return the aggregated value of two given values
    */
-  GROUP_VALUE reduce(GROUP_VALUE value1, GROUP_VALUE value2) throws Exception;
+  AGG_VALUE mergeValues(AGG_VALUE aggValue, GROUP_VALUE value) throws Exception;
+
+  /**
+   * Merge the given aggregated values from each split to a final aggregated value. This method is called after
+   * grouping of the keys.
+   *
+   * @param value1 the aggregated value to merge
+   * @param value2 the aggregated value to merge
+   * @return the aggregated value of two given values
+   */
+  AGG_VALUE mergePartitions(AGG_VALUE value1, AGG_VALUE value2) throws Exception;
 
   /**
    * Finalize the grouped object for the group key into zero or more output objects.
@@ -88,5 +111,5 @@ public interface ReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT> {
    * @param emitter the emitter to emit finalized values for the group
    * @throws Exception if there is some error aggregating
    */
-  void finalize(GROUP_KEY groupKey, GROUP_VALUE groupValue, Emitter<OUT> emitter) throws Exception;
+  void finalize(GROUP_KEY groupKey, AGG_VALUE groupValue, Emitter<OUT> emitter) throws Exception;
 }

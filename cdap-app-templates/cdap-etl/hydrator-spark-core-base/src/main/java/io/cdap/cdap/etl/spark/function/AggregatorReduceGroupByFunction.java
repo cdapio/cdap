@@ -18,7 +18,7 @@ package io.cdap.cdap.etl.spark.function;
 
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transformation;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultEmitter;
 import io.cdap.cdap.etl.common.NoErrorEmitter;
@@ -45,7 +45,7 @@ public class AggregatorReduceGroupByFunction<GROUP_KEY, GROUP_VAL>
   @Override
   public Iterable<Tuple2<GROUP_KEY, GROUP_VAL>> call(GROUP_VAL input) throws Exception {
     if (groupByFunction == null) {
-      BatchReduceAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator = pluginFunctionContext.createPlugin();
+      BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, ?> aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       groupByFunction = new TrackedTransform<>(new GroupByTransform<>(aggregator),
                                                pluginFunctionContext.createStageMetrics(),
@@ -61,10 +61,10 @@ public class AggregatorReduceGroupByFunction<GROUP_KEY, GROUP_VAL>
 
   private static class GroupByTransform<GROUP_KEY, GROUP_VAL>
     implements Transformation<GROUP_VAL, Tuple2<GROUP_KEY, GROUP_VAL>> {
-    private final BatchReduceAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator;
+    private final BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, ?> aggregator;
     private final NoErrorEmitter<GROUP_KEY> keyEmitter;
 
-    GroupByTransform(BatchReduceAggregator<GROUP_KEY, GROUP_VAL, ?> aggregator) {
+    GroupByTransform(BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, ?> aggregator) {
       this.aggregator = aggregator;
       this.keyEmitter =
         new NoErrorEmitter<>("Errors and Alerts cannot be emitted from the groupBy method of an aggregator");

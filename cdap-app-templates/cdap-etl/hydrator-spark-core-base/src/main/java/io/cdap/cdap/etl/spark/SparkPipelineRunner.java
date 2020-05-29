@@ -32,7 +32,7 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
@@ -256,7 +256,7 @@ public abstract class SparkPipelineRunner {
         Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
         Integer partitions = stagePartitions.get(stageName);
 
-        if (plugin instanceof BatchReduceAggregator) {
+        if (plugin instanceof BatchReducibleAggregator) {
           SparkCollection<RecordInfo<Object>> combinedData = stageData.reduceAggregate(stageSpec, partitions,
                                                                                        collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,

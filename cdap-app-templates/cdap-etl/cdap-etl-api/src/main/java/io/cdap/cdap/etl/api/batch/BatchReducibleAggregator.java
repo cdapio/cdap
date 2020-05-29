@@ -20,13 +20,13 @@ import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurable;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
-import io.cdap.cdap.etl.api.ReduceAggregator;
+import io.cdap.cdap.etl.api.ReducibleAggregator;
 import io.cdap.cdap.etl.api.StageLifecycle;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 
 /**
- * A {@link ReduceAggregator} used in batch programs.
- * As it is used in batch programs, a BatchReduceAggregator must be parameterized
+ * A {@link ReducibleAggregator} used in batch programs.
+ * As it is used in batch programs, a BatchReducibleAggregator must be parameterized
  * with supported group key and value classes. Group keys and values can be a
  * byte[], Boolean, Integer, Long, Float, Double, String, or StructuredRecord.
  * If the group key is not one of those types and is being used in mapreduce,
@@ -38,12 +38,15 @@ import io.cdap.cdap.etl.api.validation.ValidationException;
  *
  * @param <GROUP_KEY> group key type. Must be a supported type
  * @param <GROUP_VALUE> group value type. Must be a supported type
+ * @param <AGG_VALUE> agg value type
  * @param <OUT> output object type
  */
 @Beta
-public abstract class BatchReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>
+public abstract class BatchReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>
   extends BatchConfigurable<BatchAggregatorContext>
-  implements ReduceAggregator<GROUP_KEY, GROUP_VALUE, OUT>, PipelineConfigurable, StageLifecycle<BatchRuntimeContext> {
+  implements ReducibleAggregator<GROUP_KEY, GROUP_VALUE, AGG_VALUE, OUT>,
+  PipelineConfigurable, StageLifecycle<BatchRuntimeContext> {
+
   public static final String PLUGIN_TYPE = BatchAggregator.PLUGIN_TYPE;
 
   /**

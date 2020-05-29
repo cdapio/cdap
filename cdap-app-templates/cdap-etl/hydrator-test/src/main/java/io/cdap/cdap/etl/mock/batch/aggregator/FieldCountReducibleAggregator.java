@@ -28,7 +28,7 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
 import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 
@@ -40,9 +40,10 @@ import java.util.Map;
  * right groups, to test multiple group keys for the same value, and to test setting the group key class
  * at runtime, and to test setting a supported non-writable class.
  */
-@Plugin(type = BatchReduceAggregator.PLUGIN_TYPE)
-@Name(FieldCountReduceAggregator.NAME)
-public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, StructuredRecord, StructuredRecord> {
+@Plugin(type = BatchReducibleAggregator.PLUGIN_TYPE)
+@Name(FieldCountReducibleAggregator.NAME)
+public class FieldCountReducibleAggregator
+  extends BatchReducibleAggregator<Object, StructuredRecord, StructuredRecord, StructuredRecord> {
   public static final String NAME = "FieldCount Aggregator";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Schema REDUCE_SCHEMA =
@@ -50,7 +51,7 @@ public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, St
   private final Config config;
   private Schema schema;
 
-  public FieldCountReduceAggregator(Config config) {
+  public FieldCountReducibleAggregator(Config config) {
     this.config = config;
   }
 
@@ -83,11 +84,18 @@ public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, St
   }
 
   @Override
-  public StructuredRecord reduce(StructuredRecord value1, StructuredRecord value2) throws Exception {
-    Long v1Ct = value1.get("fc");
-    Long v2Ct = value2.get("fc");
-    long count = (v1Ct == null ? 1L : v1Ct) + (v2Ct == null ? 1L : v2Ct);
-    return StructuredRecord.builder(REDUCE_SCHEMA).set("fc", count).build();
+  public StructuredRecord initializeAggregateValue(StructuredRecord val) throws Exception {
+    return StructuredRecord.builder(REDUCE_SCHEMA).set("fc", 1L).build();
+  }
+
+  @Override
+  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue) throws Exception {
+    return combine(aggValue, groupValue);
+  }
+
+  @Override
+  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2) throws Exception {
+    return combine(value1, value2);
   }
 
   @Override
@@ -106,6 +114,13 @@ public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, St
     if (context.getOutputSchema() != null && !schema.equals(context.getOutputSchema())) {
       throw new IllegalStateException("Output schema does not match what was set at configure time.");
     }
+  }
+
+  private StructuredRecord combine(StructuredRecord value1, StructuredRecord value2) {
+    Long v1Ct = value1.get("fc");
+    Long v2Ct = value2.get("fc");
+    long count = (v1Ct == null ? 1L : v1Ct) + (v2Ct == null ? 1L : v2Ct);
+    return StructuredRecord.builder(REDUCE_SCHEMA).set("fc", count).build();
   }
 
   /**
@@ -144,14 +159,14 @@ public class FieldCountReduceAggregator extends BatchReduceAggregator<Object, St
     Map<String, String> properties = new HashMap<>();
     properties.put("fieldName", fieldName);
     properties.put("fieldType", fieldType);
-    return new ETLPlugin(NAME, BatchReduceAggregator.PLUGIN_TYPE, properties, null);
+    return new ETLPlugin(NAME, BatchReducibleAggregator.PLUGIN_TYPE, properties, null);
   }
 
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("fieldName", new PluginPropertyField("fieldName", "", "string", true, true));
     properties.put("fieldType", new PluginPropertyField("fieldType", "", "string", true, true));
-    return new PluginClass(BatchReduceAggregator.PLUGIN_TYPE, NAME, "",
-                           FieldCountReduceAggregator.class.getName(), "config", properties);
+    return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, "",
+                           FieldCountReducibleAggregator.class.getName(), "config", properties);
   }
 }

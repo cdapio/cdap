@@ -18,7 +18,7 @@ package io.cdap.cdap.etl.spark.function;
 
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transformation;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
@@ -26,27 +26,28 @@ import io.cdap.cdap.etl.spark.CombinedEmitter;
 import scala.Tuple2;
 
 /**
- * Function that uses a BatchReduceAggregator to perform the aggregate part of the aggregator.
+ * Function that uses a BatchReducibleAggregator to perform the finalize part of the aggregator.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  *
  * @param <GROUP_KEY> type of group key
  * @param <GROUP_VAL> type of group value
+ * @param <AGG_VAL> type of agg value
  * @param <OUT> type of aggregate output
  */
-public class AggregatorPostReduceFunction<GROUP_KEY, GROUP_VAL, OUT>
-  implements FlatMapFunc<Tuple2<GROUP_KEY, GROUP_VAL>, RecordInfo<Object>> {
+public class AggregatorFinalizeFunction<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT>
+  implements FlatMapFunc<Tuple2<GROUP_KEY, AGG_VAL>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
-  private transient TrackedTransform<Tuple2<GROUP_KEY, GROUP_VAL>, OUT> aggregateTransform;
+  private transient TrackedTransform<Tuple2<GROUP_KEY, AGG_VAL>, OUT> aggregateTransform;
   private transient CombinedEmitter<OUT> emitter;
 
-  public AggregatorPostReduceFunction(PluginFunctionContext pluginFunctionContext) {
+  public AggregatorFinalizeFunction(PluginFunctionContext pluginFunctionContext) {
     this.pluginFunctionContext = pluginFunctionContext;
   }
 
   @Override
-  public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, GROUP_VAL> input) throws Exception {
+  public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, AGG_VAL> input) throws Exception {
     if (aggregateTransform == null) {
-      BatchReduceAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
+      BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),
@@ -60,16 +61,16 @@ public class AggregatorPostReduceFunction<GROUP_KEY, GROUP_VAL, OUT>
     return emitter.getEmitted();
   }
 
-  private static class AggregateTransform<GROUP_KEY, GROUP_VAL, OUT_VAL>
-    implements Transformation<Tuple2<GROUP_KEY, GROUP_VAL>, OUT_VAL> {
-    private final BatchReduceAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator;
+  private static class AggregateTransform<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT_VAL>
+    implements Transformation<Tuple2<GROUP_KEY, AGG_VAL>, OUT_VAL> {
+    private final BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT_VAL> aggregator;
 
-    AggregateTransform(BatchReduceAggregator<GROUP_KEY, GROUP_VAL, OUT_VAL> aggregator) {
+    AggregateTransform(BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT_VAL> aggregator) {
       this.aggregator = aggregator;
     }
 
     @Override
-    public void transform(Tuple2<GROUP_KEY, GROUP_VAL> input, Emitter<OUT_VAL> emitter) throws Exception {
+    public void transform(Tuple2<GROUP_KEY, AGG_VAL> input, Emitter<OUT_VAL> emitter) throws Exception {
       aggregator.finalize(input._1(), input._2, emitter);
     }
   }

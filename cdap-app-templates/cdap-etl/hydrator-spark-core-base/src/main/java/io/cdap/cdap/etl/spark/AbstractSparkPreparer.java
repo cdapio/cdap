@@ -28,7 +28,7 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
-import io.cdap.cdap.etl.api.batch.BatchReduceAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkPluginContext;
@@ -147,7 +147,8 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
   }
 
   @Override
-  protected SubmitterPlugin createReduceAggregator(BatchReduceAggregator<?, ?, ?> aggregator, StageSpec stageSpec) {
+  protected SubmitterPlugin createReducibleAggregator(BatchReducibleAggregator<?, ?, ?, ?> aggregator,
+                                                      StageSpec stageSpec) {
     String stageName = stageSpec.getName();
     ContextProvider<DefaultAggregatorContext> contextProvider =
       new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);

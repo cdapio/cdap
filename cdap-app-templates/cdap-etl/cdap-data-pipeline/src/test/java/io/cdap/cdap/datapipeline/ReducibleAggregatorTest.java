@@ -28,8 +28,8 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
-import io.cdap.cdap.etl.mock.batch.aggregator.DistinctReduceAggregator;
-import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountReduceAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.DistinctReducibleAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountReducibleAggregator;
 import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -58,9 +58,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * Tests for BatchReduceAggregator plugins.
+ * Tests for BatchReducibleAggregator plugins.
  */
-public class ReduceAggregatorTest extends HydratorTestBase {
+public class ReducibleAggregatorTest extends HydratorTestBase {
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
 
@@ -92,7 +92,7 @@ public class ReduceAggregatorTest extends HydratorTestBase {
     String output = "outputSink";
     ETLBatchConfig config = ETLBatchConfig.builder()
       .addStage(new ETLStage("users", MockSource.getPlugin(userInput, inputSchema)))
-      .addStage(new ETLStage("aggregator", DistinctReduceAggregator.getPlugin("id,name")))
+      .addStage(new ETLStage("aggregator", DistinctReducibleAggregator.getPlugin("id,name")))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "aggregator")
       .addConnection("aggregator", "sink")
@@ -157,8 +157,8 @@ public class ReduceAggregatorTest extends HydratorTestBase {
       .addStage(new ETLStage("source2", MockSource.getPlugin(source2Name, inputSchema)))
       .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
       .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
-      .addStage(new ETLStage("agg1", FieldCountReduceAggregator.getPlugin("user", "string")))
-      .addStage(new ETLStage("agg2", FieldCountReduceAggregator.getPlugin("item", "long")))
+      .addStage(new ETLStage("agg1", FieldCountReducibleAggregator.getPlugin("user", "string")))
+      .addStage(new ETLStage("agg2", FieldCountReducibleAggregator.getPlugin("item", "long")))
       .addConnection("source1", "agg1")
       .addConnection("source1", "agg2")
       .addConnection("source2", "agg1")
