@@ -32,6 +32,7 @@ export const styles = (): StyleRules => {
     },
     emptyMessage: {
       marginBottom: 0,
+      padding: '4px',
     },
     textDanger: { whiteSpace: 'pre-line' },
     rulesContainer: {
@@ -259,7 +260,7 @@ class SqlConditionsWidgetView extends React.Component<
           })}
         </div>
         <If condition={this.state.stageList.length === 0}>
-          <h4 className={classes.emptyMessage}>No input stages</h4>
+          <div className={classes.emptyMessage}>No input stages</div>
         </If>
       </div>
     );

@@ -319,7 +319,7 @@ class SqlSelectorWidgetView extends React.PureComponent<
           </React.Fragment>
         </If>
         <If condition={this.state.parsedInputSchemas.length === 0}>
-          <h4 className={classes.emptyMessage}>No input stages</h4>
+          <div className={classes.emptyMessage}>No input stages</div>
         </If>
       </div>
     );
