@@ -83,20 +83,25 @@ public class ReducibleAggregatorTest extends HydratorTestBase {
 
   @Test
   public void testSimpleAggregator() throws Exception {
+    testSimpleAggregator(Engine.MAPREDUCE);
+    testSimpleAggregator(Engine.SPARK);
+  }
+
+  private void testSimpleAggregator(Engine engine) throws Exception {
     Schema inputSchema = Schema.recordOf(
       "input",
       Schema.Field.of("id", Schema.of(Schema.Type.INT)),
       Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
       Schema.Field.of("used_name", Schema.of(Schema.Type.STRING)));
-    String userInput = "inputSource";
-    String output = "outputSink";
+    String userInput = "inputSource-" + engine;
+    String output = "outputSink-" + engine;
     ETLBatchConfig config = ETLBatchConfig.builder()
       .addStage(new ETLStage("users", MockSource.getPlugin(userInput, inputSchema)))
       .addStage(new ETLStage("aggregator", DistinctReducibleAggregator.getPlugin("id,name")))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "aggregator")
       .addConnection("aggregator", "sink")
-      .setEngine(Engine.SPARK)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
@@ -136,7 +141,11 @@ public class ReducibleAggregatorTest extends HydratorTestBase {
 
   @Test
   public void testFieldCountAgg() throws Exception {
-    Engine engine = Engine.SPARK;
+    testFieldCountAgg(Engine.MAPREDUCE);
+    testFieldCountAgg(Engine.SPARK);
+  }
+
+  private void testFieldCountAgg(Engine engine) throws Exception {
     String source1Name = "pAggInput1-" + engine.name();
     String source2Name = "pAggInput2-" + engine.name();
     String sink1Name = "pAggOutput1-" + engine.name();
