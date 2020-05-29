@@ -46,7 +46,7 @@ public class DynamicAggregatorAggregate<GROUP_KEY, GROUP_VAL, OUT>
 
   @Override
   public JavaRDD<RecordInfo<Object>> call(JavaPairRDD<GROUP_KEY, Iterable<GROUP_VAL>> input,
-                                               Time batchTime) throws Exception {
+                                          Time batchTime) throws Exception {
     if (function == null) {
       function = Compat.convert(
         new AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>(dynamicDriverContext.getPluginFunctionContext()));
