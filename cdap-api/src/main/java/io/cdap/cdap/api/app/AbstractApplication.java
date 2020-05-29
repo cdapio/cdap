@@ -59,7 +59,7 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
     configure();
   }
 
-  /**
+  /*
    * By default, applications do not support config upgrade. Applications supporting config upgrade should
    * override this method.
    */
@@ -68,6 +68,9 @@ public abstract class AbstractApplication<T extends Config> extends AbstractPlug
     return false;
   }
 
+  /*
+   * By default, an application does not support upgrade operation.
+   */
   @Override
   public ConfigUpgradeResult<T> upgradeConfig(T config, ApplicationUpgradeContext applicationUpgradeContext) {
     throw new UnsupportedOperationException("Application config upgrade operation is not supported.");

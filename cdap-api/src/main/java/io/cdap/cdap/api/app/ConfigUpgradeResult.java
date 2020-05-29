@@ -28,7 +28,9 @@ import java.util.Map;
  */
 public class ConfigUpgradeResult<T extends Config> {
 
+  // Upgraded config.
   private T newConfig;
+  // Stores mapping of old and new artifact after an upgrade in form <oldArtifact, newArtifact>.
   private Map<ArtifactId, ArtifactId> upgradedArtifacts;
 
   private ConfigUpgradeResult(T newConfig, Map<ArtifactId, ArtifactId> upgradedArtifacts) {
