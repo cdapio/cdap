@@ -28,7 +28,7 @@ public class ApplicationUpdateResult<T extends Config> {
   // Upgraded config.
   private final T newConfig;
 
-  private ApplicationUpdateResult(T newConfig) {
+  public ApplicationUpdateResult(T newConfig) {
     this.newConfig = newConfig;
   }
 

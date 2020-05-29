@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.proto.v2;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -43,7 +44,7 @@ public final class ETLBatchConfig extends ETLConfig {
   private final List<ETLStage> postActions;
   // for backwards compatibility
   private final List<ETLStage> actions;
-  private final boolean service;
+  private final Boolean service;
 
   private ETLBatchConfig(Set<ETLStage> stages,
                          Set<Connection> connections,
@@ -58,9 +59,9 @@ public final class ETLBatchConfig extends ETLConfig {
                          int numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
-                         boolean service) {
+                         Boolean service, List<String> comments) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
-          numOfRecordsPreview, engineProperties);
+          numOfRecordsPreview, engineProperties, comments);
     this.postActions = ImmutableList.copyOf(postActions);
     this.engine = engine;
     this.schedule = schedule;
@@ -71,6 +72,9 @@ public final class ETLBatchConfig extends ETLConfig {
   }
 
   public boolean isService() {
+    if (this.service == null) {
+      return false;
+    }
     return service;
   }
 
@@ -109,6 +113,25 @@ public final class ETLBatchConfig extends ETLConfig {
   @Nullable
   public Integer getMaxConcurrentRuns() {
     return maxConcurrentRuns;
+  }
+
+  /**
+   * Updates current ETLBatchConfig by running update actions provided in context such as upgrading plugin artifact
+   * versions.
+   *
+   * @param upgradeContext Context for performing update for current batch config.
+   * @return a new (updated) etl batch config after performing update operations.
+   */
+  public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext)
+    throws Exception {
+    Set<ETLStage> upgradedStages = new HashSet<>();
+    // Upgrade all stages.
+    for (ETLStage stage : getStages()) {
+      upgradedStages.add(stage.updateStage(upgradeContext));
+    }
+    return new ETLBatchConfig(upgradedStages, connections, postActions, resources, stageLoggingEnabled,
+                              processTimingEnabled, engine, schedule, driverResources, clientResources,
+                              numOfRecordsPreview, maxConcurrentRuns, properties, service, comments);
   }
 
   @Override
@@ -170,7 +193,8 @@ public final class ETLBatchConfig extends ETLConfig {
    */
   public static ETLBatchConfig forSystemService() {
     return new ETLBatchConfig(Collections.emptySet(), Collections.emptySet(), Collections.emptyList(),
-                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true);
+                              null, false, false, null, null, null, null, 0, null, Collections.emptyMap(), true,
+                              Collections.emptyList());
   }
 
   /**
@@ -181,9 +205,12 @@ public final class ETLBatchConfig extends ETLConfig {
     private Engine engine;
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
+    // Only used for upgrade purpose.
+    private List<String> comments;
 
     private Builder() {
       this(null);
+      this.comments = new ArrayList<>();
     }
 
     /**
@@ -231,7 +258,7 @@ public final class ETLBatchConfig extends ETLConfig {
     public ETLBatchConfig build() {
       return new ETLBatchConfig(stages, connections, endingActions, resources, stageLoggingEnabled,
                                 processTimingEnabled, engine, schedule, driverResources, clientResources,
-                                numOfRecordsPreview, maxConcurrentRuns, properties, false);
+                                numOfRecordsPreview, maxConcurrentRuns, properties, false, comments);
     }
   }
 }
