@@ -41,6 +41,7 @@ import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
@@ -70,6 +71,7 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
+import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.hadoop.conf.Configuration;
@@ -163,7 +165,15 @@ public class MapReduceTransformExecutorFactory<T> {
     StageStatisticsCollector collector = isPipelineContainsCondition ?
       new MapReduceStageStatisticsCollector(stageName, taskAttemptContext) : new NoopStageStatisticsCollector();
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
-      BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      BatchAggregator<?, ?, ?> batchAggregator;
+      if (plugin instanceof BatchReducibleAggregator) {
+        BatchReducibleAggregator<?, ?, ?, ?> reducibleAggregator = (BatchReducibleAggregator<?, ?, ?, ?>) plugin;
+        batchAggregator = new AggregatorBridge<>(reducibleAggregator);
+      } else {
+        batchAggregator = (BatchAggregator<?, ?, ?>) plugin;
+      }
+
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageSpec);
       batchAggregator.initialize(runtimeContext);
       if (isMapPhase) {
