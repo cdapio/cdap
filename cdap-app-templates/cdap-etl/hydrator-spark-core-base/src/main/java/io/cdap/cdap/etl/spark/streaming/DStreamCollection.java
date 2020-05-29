@@ -134,8 +134,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                              StageStatisticsCollector collector) {
-    // TODO: implement
-    throw new UnsupportedOperationException("reduce aggregator not supported");
+    return aggregate(stageSpec, partitions, collector);
   }
 
 

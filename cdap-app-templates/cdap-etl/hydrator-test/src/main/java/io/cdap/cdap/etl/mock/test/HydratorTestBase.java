@@ -103,6 +103,7 @@ public class HydratorTestBase extends TestBase {
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     FilterTransform.PLUGIN_CLASS,
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
+    FieldCountReducibleAggregator.PLUGIN_CLASS,
     GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
