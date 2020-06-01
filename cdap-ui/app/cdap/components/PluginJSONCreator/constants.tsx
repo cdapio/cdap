@@ -15,6 +15,7 @@
  */
 
 import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
+import { CustomOperator, PropertyShowConfigTypeEnums } from 'components/ConfigurationGroup/types';
 import { GLOBALS } from 'services/global-constants';
 
 export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
@@ -204,3 +205,7 @@ export const WIDGET_TYPE_TO_ATTRIBUTES = {
 };
 
 export const COMMON_DELIMITER = ',';
+
+export const FILTER_CONDITION_PROPERTIES = ['property', 'operator', 'value', 'expression'];
+export const OPERATOR_VALUES = Object.values(CustomOperator);
+export const SHOW_TYPE_VALUES = Object.values(PropertyShowConfigTypeEnums);

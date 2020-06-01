@@ -79,12 +79,32 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ widgetToAttributes });
   };
 
-  public setJsonView = (jsonView: boolean) => {
-    this.setState({ jsonView });
+  public setLiveView = (liveView: boolean) => {
+    this.setState({ liveView });
   };
 
   public setOutputName = (outputName: string) => {
     this.setState({ outputName });
+  };
+
+  public setFilters = (filters: string[]) => {
+    this.setState({ filters });
+  };
+
+  public setFilterToName = (filterToName: any) => {
+    this.setState({ filterToName });
+  };
+
+  public setFilterToCondition = (filterToCondition: any) => {
+    this.setState({ filterToCondition });
+  };
+
+  public setFilterToShowList = (filterToShowList: any) => {
+    this.setState({ filterToShowList });
+  };
+
+  public setShowToInfo = (showToInfo: any) => {
+    this.setState({ showToInfo });
   };
 
   public setPluginState = ({
@@ -95,6 +115,11 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     widgetToInfo,
     widgetToAttributes,
     outputName,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
   }) => {
     const { pluginName, pluginType, displayName, emitAlerts, emitErrors } = basicPluginInfo;
     this.setState({
@@ -109,6 +134,11 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
       widgetToInfo,
       widgetToAttributes,
       outputName,
+      filters,
+      filterToName,
+      filterToCondition,
+      filterToShowList,
+      showToInfo,
     });
   };
 
@@ -124,8 +154,13 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToWidgets: {},
     widgetToInfo: {},
     widgetToAttributes: {},
-    jsonView: true,
+    liveView: true,
     outputName: '',
+    filters: [],
+    filterToName: {},
+    filterToCondition: {},
+    filterToShowList: {},
+    showToInfo: {},
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
@@ -134,9 +169,14 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setGroupToWidgets: this.setGroupToWidgets,
     setWidgetToInfo: this.setWidgetToInfo,
     setWidgetToAttributes: this.setWidgetToAttributes,
-    setJsonView: this.setJsonView,
+    setLiveView: this.setLiveView,
     setOutputName: this.setOutputName,
     setPluginState: this.setPluginState,
+    setFilters: this.setFilters,
+    setFilterToName: this.setFilterToName,
+    setFilterToCondition: this.setFilterToCondition,
+    setFilterToShowList: this.setFilterToShowList,
+    setShowToInfo: this.setShowToInfo,
   };
 
   public render() {

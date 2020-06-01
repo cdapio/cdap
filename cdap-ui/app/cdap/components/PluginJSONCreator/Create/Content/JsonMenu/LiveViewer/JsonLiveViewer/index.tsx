@@ -15,15 +15,10 @@
  */
 
 import { Button, Tooltip } from '@material-ui/core';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
-import If from 'components/If';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
-import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJSONImporter';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
@@ -31,11 +26,11 @@ const JSON_VIEWER_WIDTH = '600px';
 
 const styles = (theme) => {
   return {
-    jsonViewer: {
+    liveViewer: {
       zIndex: theme.zIndex.drawer,
       width: JSON_VIEWER_WIDTH,
     },
-    jsonViewerPaper: {
+    liveViewerPaper: {
       width: JSON_VIEWER_WIDTH,
       backgroundColor: theme.palette.white[50],
     },
@@ -75,7 +70,7 @@ const styles = (theme) => {
       marginLeft: 'auto',
       order: '3',
     },
-    jsonViewerTooltip: {
+    liveViewerTooltip: {
       fontSize: '14px',
       backgroundColor: theme.palette.grey[500],
     },
@@ -91,7 +86,7 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
           : 'Download Plugin JSON'
       }
       classes={{
-        tooltip: classes.jsonViewerTooltip,
+        tooltip: classes.liveViewerTooltip,
       }}
     >
       <Button disabled={downloadDisabled} onClick={onDownloadClick}>
@@ -101,15 +96,15 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
   );
 };
 
-const CollapseJSONViewButton = ({ classes, collapseJSONView }) => {
+const CollapseJSONViewButton = ({ classes, collapseLiveView }) => {
   return (
     <Tooltip
       classes={{
-        tooltip: classes.jsonViewerTooltip,
+        tooltip: classes.liveViewerTooltip,
       }}
       title="Close JSON View"
     >
-      <Button className={classes.closeJSONViewerButon} onClick={collapseJSONView}>
+      <Button className={classes.closeJSONViewerButon} onClick={collapseLiveView}>
         <FullscreenExitIcon />
       </Button>
     </Tooltip>
@@ -118,81 +113,14 @@ const CollapseJSONViewButton = ({ classes, collapseJSONView }) => {
 
 const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  collapseJSONView,
   JSONConfig,
-  downloadDisabled,
-  onDownloadClick,
-  populateImportResults,
-  filename,
-  JSONStatus,
-  JSONErrorMessage,
 }) => {
   return (
     <div>
-      <Drawer
-        open={true}
-        variant="persistent"
-        className={classes.jsonViewer}
-        anchor="right"
-        disableEnforceFocus={true}
-        ModalProps={{
-          keepMounted: true,
-        }}
-        classes={{
-          paper: classes.jsonViewerPaper,
-        }}
-        data-cy="navbar-drawer"
-      >
-        <div className={classes.toolbar} />
-        <List component="nav" dense={true} className={classes.mainMenu}>
-          <div className={classes.jsonActionButtons}>
-            <Tooltip
-              classes={{
-                tooltip: classes.jsonViewerTooltip,
-              }}
-              title="Import JSON"
-            >
-              <PluginJSONImporter
-                populateImportResults={populateImportResults}
-                JSONStatus={JSONStatus}
-              />
-            </Tooltip>
-            <DownloadJSONButton
-              classes={classes}
-              downloadDisabled={downloadDisabled}
-              onDownloadClick={onDownloadClick}
-            />
-            <If
-              condition={
-                JSONStatus !== JSONStatusMessage.Success && JSONStatus !== JSONStatusMessage.Fail
-              }
-            >
-              <div className={classes.currentFilename}>{filename}</div>
-            </If>
-            <If
-              condition={
-                JSONStatus === JSONStatusMessage.Success || JSONStatus === JSONStatusMessage.Fail
-              }
-            >
-              <div
-                className={
-                  JSONStatus === JSONStatusMessage.Success
-                    ? classes.jsonSuccessStatus
-                    : classes.jsonFailStatus
-                }
-              >
-                {JSONErrorMessage}
-              </div>
-            </If>
-
-            <CollapseJSONViewButton classes={classes} collapseJSONView={collapseJSONView} />
-          </div>
-          <JsonEditorWidget
-            rows={50}
-            value={JSON.stringify(JSONConfig, undefined, 4)}
-          ></JsonEditorWidget>
-        </List>
-      </Drawer>
+      <JsonEditorWidget
+        rows={50}
+        value={JSON.stringify(JSONConfig, undefined, 4)}
+      ></JsonEditorWidget>
     </div>
   );
 };

@@ -15,6 +15,7 @@
  */
 
 import Heading, { HeadingTypes } from 'components/Heading';
+import FilterCollection from 'components/PluginJSONCreator/Create/Content/FilterCollection';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
@@ -36,18 +37,49 @@ const OutputsView: React.FC<ICreateContext> = ({
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  filters,
+  setFilters,
+  filterToName,
+  setFilterToName,
+  filterToCondition,
+  setFilterToCondition,
+  filterToShowList,
+  setFilterToShowList,
+  showToInfo,
+  setShowToInfo,
+  liveView,
+  setLiveView,
   outputName,
   setOutputName,
   setPluginState,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
+  const [localFilters, setLocalFilters] = React.useState(filters);
+  const [localFilterToName, setLocalFilterToName] = React.useState(filterToName);
+  const [localFilterToCondition, setLocalFilterToCondition] = React.useState(filterToCondition);
+  const [localFilterToShowList, setLocalFilterToShowList] = React.useState(filterToShowList);
+  const [localShowToInfo, setLocalShowToInfo] = React.useState(showToInfo);
+
   // In case user uploads new file
   React.useEffect(() => {
     setLocalOutputName(outputName);
   }, [outputName]);
+  React.useEffect(() => {
+    setLocalFilters(filters);
+  }, [filters]);
+  React.useEffect(() => {
+    setLocalFilterToName(filterToName);
+  }, [filterToName]);
+  React.useEffect(() => {
+    setLocalFilterToCondition(filterToCondition);
+  }, [filterToCondition]);
+  React.useEffect(() => {
+    setLocalFilterToShowList(filterToShowList);
+  }, [filterToShowList]);
+  React.useEffect(() => {
+    setLocalShowToInfo(showToInfo);
+  }, [showToInfo]);
 
   function saveAllResults() {
     setOutputName(localOutputName);
@@ -66,8 +98,13 @@ const OutputsView: React.FC<ICreateContext> = ({
         groupToWidgets={groupToWidgets}
         widgetToInfo={widgetToInfo}
         widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
+        filters={localFilters}
+        filterToName={localFilterToName}
+        filterToCondition={localFilterToCondition}
+        filterToShowList={localFilterToShowList}
+        showToInfo={localShowToInfo}
+        liveView={liveView}
+        setLiveView={setLiveView}
         outputName={localOutputName}
         setPluginState={setPluginState}
       />
@@ -80,6 +117,19 @@ const OutputsView: React.FC<ICreateContext> = ({
         label={'Output Name'}
         placeholder={'output name'}
         required={false}
+      />
+      <Heading type={HeadingTypes.h3} label="Filters" />
+      <FilterCollection
+        filters={localFilters}
+        setFilters={setLocalFilters}
+        filterToName={localFilterToName}
+        setFilterToName={setLocalFilterToName}
+        filterToCondition={localFilterToCondition}
+        setFilterToCondition={setLocalFilterToCondition}
+        filterToShowList={localFilterToShowList}
+        setFilterToShowList={setLocalFilterToShowList}
+        showToInfo={localShowToInfo}
+        setShowToInfo={setLocalShowToInfo}
       />
       <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
     </div>

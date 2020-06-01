@@ -14,21 +14,20 @@
  * the License.
  */
 
-import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
 import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
 
 export const STEPS = [
-  {
+  /*{
     label: 'Basic Plugin Information',
     component: BasicPluginInfo,
+  },*/
+  {
+    label: 'Outputs',
+    component: Outputs,
   },
   {
     label: 'Configuration Groups',
     component: ConfigurationGroupsCollection,
-  },
-  {
-    label: 'Outputs',
-    component: Outputs,
   },
 ];

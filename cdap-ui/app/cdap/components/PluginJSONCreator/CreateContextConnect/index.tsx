@@ -30,8 +30,13 @@ interface ICreateState {
   groupToWidgets: any;
   widgetToInfo: any;
   widgetToAttributes: any;
-  jsonView: boolean;
+  liveView: boolean;
   outputName: string;
+  filters: string[];
+  filterToName: any;
+  filterToCondition: any;
+  filterToShowList: any;
+  showToInfo: any;
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
@@ -40,9 +45,14 @@ interface ICreateState {
   setGroupToWidgets: (groupToWidgets: any) => void;
   setWidgetToInfo: (widgetToInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
-  setJsonView: (jsonView: boolean) => void;
+  setLiveView: (liveView: boolean) => void;
   setOutputName: (outputName: string) => void;
   setPluginState: (pluginState: any) => void;
+  setFilters: (filters: string[]) => void;
+  setFilterToName: (filterToName: any) => void;
+  setFilterToCondition: (filterToCondition: any) => void;
+  setFilterToShowList: (filterToShowList: any) => void;
+  setShowToInfo: (showToInfo: any) => void;
 }
 
 export interface IBasicPluginInfo {

@@ -47,7 +47,7 @@ const styles = (theme) => {
         margin: '5px',
       },
     },
-    jsonViewerTooltip: {
+    liveViewerTooltip: {
       fontSize: '14px',
       backgroundColor: theme.palette.grey[500],
     },
@@ -63,7 +63,7 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
           : 'Download Plugin JSON'
       }
       classes={{
-        tooltip: classes.jsonViewerTooltip,
+        tooltip: classes.liveViewerTooltip,
       }}
     >
       <Button disabled={downloadDisabled} onClick={onDownloadClick}>
@@ -73,15 +73,15 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
   );
 };
 
-const ExpandJSONViewButton = ({ classes, expandJSONView }) => {
+const ExpandJSONViewButton = ({ classes, expandLiveView }) => {
   return (
     <Tooltip
       title="Open JSON View"
       classes={{
-        tooltip: classes.jsonViewerTooltip,
+        tooltip: classes.liveViewerTooltip,
       }}
     >
-      <Button onClick={expandJSONView}>
+      <Button onClick={expandLiveView}>
         <CodeIcon />
       </Button>
     </Tooltip>
@@ -90,7 +90,7 @@ const ExpandJSONViewButton = ({ classes, expandJSONView }) => {
 
 const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  expandJSONView,
+  expandLiveView,
   downloadDisabled,
   onDownloadClick,
   populateImportResults,
@@ -110,17 +110,17 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
         classes={{
           paper: classes.closedJsonMenuPaper,
         }}
-        data-cy="navbar-jsonViewer"
+        data-cy="navbar-liveViewer"
       >
         <div className={classes.toolbar} />
         <List component="nav" dense={true} className={classes.mainMenu}>
           <div className={classes.jsonCollapseActionButtons}>
-            <ExpandJSONViewButton classes={classes} expandJSONView={expandJSONView} />
+            <ExpandJSONViewButton classes={classes} expandLiveView={expandLiveView} />
             <Divider />
 
             <Tooltip
               classes={{
-                tooltip: classes.jsonViewerTooltip,
+                tooltip: classes.liveViewerTooltip,
               }}
               title="Import JSON"
             >
