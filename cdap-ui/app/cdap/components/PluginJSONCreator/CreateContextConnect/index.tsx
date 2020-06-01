@@ -27,11 +27,15 @@ interface ICreateState {
   emitErrors: boolean;
   configurationGroups: string[];
   groupToInfo: any;
+  groupToWidgets: any;
+  widgetToInfo: any;
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
   setConfigurationGroups: (groups: string[]) => void;
   setGroupToInfo: (groupToInfo: any) => void;
+  setGroupToWidgets: (groupToWidgets: any) => void;
+  setWidgetToInfo: (widgetToInfo: any) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -45,6 +49,13 @@ export interface IBasicPluginInfo {
 export interface IConfigurationGroupInfo {
   label: string;
   description?: string;
+}
+
+export interface IWidgetInfo {
+  name: string;
+  label: string;
+  widgetType: string;
+  widgetCategory?: string;
 }
 
 export type ICreateContext = Partial<ICreateState>;
