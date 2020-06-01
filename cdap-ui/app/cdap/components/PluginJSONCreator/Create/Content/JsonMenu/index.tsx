@@ -18,13 +18,20 @@ import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
 import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+  downloadPluginJSON,
+  getJSONConfig,
+  parsePluginJSON,
+} from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const JsonMenuView: React.FC<ICreateContext> = ({
+export enum JSONStatusMessage {
+  Pending = '',
+  Success = 'SUCCESS',
+  Fail = 'FAIL',
+}
+
+const JsonMenu: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
   displayName,
@@ -38,46 +45,108 @@ const JsonMenuView: React.FC<ICreateContext> = ({
   jsonView,
   setJsonView,
   outputName,
+  setPluginState,
 }) => {
+  const pluginData = {
+    pluginName,
+    pluginType,
+    displayName,
+    emitAlerts,
+    emitErrors,
+    configurationGroups,
+    groupToInfo,
+    groupToWidgets,
+    widgetToInfo,
+    widgetToAttributes,
+    outputName,
+  };
+
+  const [JSONStatus, setJSONStatus] = React.useState(JSONStatusMessage.Pending);
+  const [JSONErrorMessage, setJSONErrorMessage] = React.useState('');
+
+  // When JSON error occurs, show the error message for 2 seconds.
+  React.useEffect(() => {
+    const timer = setTimeout(() => setJSONStatus(JSONStatusMessage.Pending), 2000);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [JSONStatus]);
+
+  const jsonFilename = `${pluginName ? pluginName : '<PluginName>'}-${
+    pluginType ? pluginType : '<PluginType>'
+  }.json`;
+
+  const downloadDisabled =
+    !pluginName || pluginName.length === 0 || !pluginType || pluginType.length === 0;
+
+  const onDownloadClick = () => {
+    downloadPluginJSON(pluginData);
+  };
+
+  const populateImportResults = (filename: string, fileContent: string) => {
+    try {
+      const pluginJSON = JSON.parse(fileContent);
+
+      const {
+        basicPluginInfo,
+        newConfigurationGroups,
+        newGroupToInfo,
+        newGroupToWidgets,
+        newWidgetToInfo,
+        newWidgetToAttributes,
+        newOutputName,
+      } = parsePluginJSON(filename, pluginJSON);
+
+      setPluginState({
+        basicPluginInfo,
+        configurationGroups: newConfigurationGroups,
+        groupToInfo: newGroupToInfo,
+        groupToWidgets: newGroupToWidgets,
+        widgetToInfo: newWidgetToInfo,
+        widgetToAttributes: newWidgetToAttributes,
+        outputName: newOutputName,
+      });
+      setJSONStatus(JSONStatusMessage.Success);
+      setJSONErrorMessage(null);
+    } catch (e) {
+      setJSONStatus(JSONStatusMessage.Fail);
+      setJSONErrorMessage(`${e.name}: ${e.message}`);
+    }
+  };
+
+  const expandJSONView = () => {
+    setJsonView(true);
+  };
+
+  const collapseJSONView = () => {
+    setJsonView(false);
+  };
+
   return (
     <div>
       <If condition={jsonView}>
         <JsonLiveViewer
-          pluginName={pluginName}
-          pluginType={pluginType}
-          displayName={displayName}
-          emitAlerts={emitAlerts}
-          emitErrors={emitErrors}
-          configurationGroups={configurationGroups}
-          groupToInfo={groupToInfo}
-          groupToWidgets={groupToWidgets}
-          widgetToInfo={widgetToInfo}
-          widgetToAttributes={widgetToAttributes}
-          jsonView={jsonView}
-          setJsonView={setJsonView}
-          outputName={outputName}
+          JSONConfig={getJSONConfig(pluginData)}
+          downloadDisabled={downloadDisabled}
+          collapseJSONView={collapseJSONView}
+          onDownloadClick={onDownloadClick}
+          populateImportResults={populateImportResults}
+          jsonFilename={jsonFilename}
+          JSONStatus={JSONStatus}
+          JSONErrorMessage={JSONErrorMessage}
         />
       </If>
       <If condition={!jsonView}>
         <ClosedJsonMenu
-          pluginName={pluginName}
-          pluginType={pluginType}
-          displayName={displayName}
-          emitAlerts={emitAlerts}
-          emitErrors={emitErrors}
-          configurationGroups={configurationGroups}
-          groupToInfo={groupToInfo}
-          groupToWidgets={groupToWidgets}
-          widgetToInfo={widgetToInfo}
-          widgetToAttributes={widgetToAttributes}
-          jsonView={jsonView}
-          setJsonView={setJsonView}
-          outputName={outputName}
+          downloadDisabled={downloadDisabled}
+          onDownloadClick={onDownloadClick}
+          expandJSONView={expandJSONView}
+          populateImportResults={populateImportResults}
         />
       </If>
     </div>
   );
 };
 
-const JsonMenu = createContextConnect(CreateContext, JsonMenuView);
 export default JsonMenu;

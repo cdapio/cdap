@@ -226,7 +226,7 @@ const AttributeMultipleValuesInputView = ({
         </div>
       </If>
 
-      {renderAttributeMultipleValuesInput()}
+      <If condition={currentInput}>{renderAttributeMultipleValuesInput()}</If>
     </div>
   );
 };
