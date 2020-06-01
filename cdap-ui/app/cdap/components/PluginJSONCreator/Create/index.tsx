@@ -117,6 +117,10 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     });
   };
 
+  public setOutputName = (outputName: string) => {
+    this.setState({ outputName });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
