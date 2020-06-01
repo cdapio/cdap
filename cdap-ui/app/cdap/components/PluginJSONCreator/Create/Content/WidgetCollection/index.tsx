@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { Button, Divider } from '@material-ui/core';
+import { Button } from '@material-ui/core';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import WidgetPanel from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetPanel';
@@ -152,25 +152,17 @@ const WidgetCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
               <WidgetPanel
                 widgetID={widgetID}
                 closeWidgetAttributes={closeWidgetAttributes}
+                openWidgetAttributes={openWidgetAttributes(widgetIndex)}
                 addWidgetToGroup={addWidgetToGroup(widgetIndex)}
                 deleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
                 widgetToAttributes={widgetToAttributes}
                 setWidgetToAttributes={setWidgetToAttributes}
                 widgetToInfo={widgetToInfo}
                 setWidgetToInfo={setWidgetToInfo}
+                widgetIndex={widgetIndex}
                 widgetAttributesOpen={openWidgetIndex === widgetIndex}
+                activeWidgets={activeWidgets}
               />
-              <Button
-                variant="contained"
-                color="primary"
-                component="span"
-                onClick={openWidgetAttributes(widgetIndex)}
-              >
-                Attributes
-              </Button>
-              <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
-                <Divider className={classes.widgetDivider} />
-              </If>
             </If>
           );
         })}

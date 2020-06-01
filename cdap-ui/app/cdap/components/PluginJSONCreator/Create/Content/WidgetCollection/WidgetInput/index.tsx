@@ -112,7 +112,7 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
         </div>
       </If>
     ),
-    [widgetToInfo[widgetID], widgetToAttributes[widgetID]]
+    [widgetID, widgetToInfo[widgetID], widgetToAttributes[widgetID]]
   );
 };
 

@@ -14,8 +14,9 @@
  * the License.
  */
 
-import { withStyles } from '@material-ui/core';
+import { Button, Divider, withStyles } from '@material-ui/core';
 import { StyleRules } from '@material-ui/core/styles';
+import If from 'components/If';
 import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
 import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
@@ -53,6 +54,9 @@ export const WidgetPanelView = ({
   widgetToInfo,
   setWidgetToInfo,
   widgetAttributesOpen,
+  widgetIndex,
+  activeWidgets,
+  openWidgetAttributes,
 }) => {
   return React.useMemo(
     () => (
@@ -80,9 +84,21 @@ export const WidgetPanelView = ({
           widgetToAttributes={widgetToAttributes}
           setWidgetToAttributes={setWidgetToAttributes}
         />
+        <Button variant="contained" color="primary" component="span" onClick={openWidgetAttributes}>
+          Attributes
+        </Button>
+        <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
+          <Divider className={classes.widgetDivider} />
+        </If>
       </div>
     ),
-    [widgetAttributesOpen, widgetToAttributes[widgetID], widgetToInfo[widgetID]]
+    [
+      widgetIndex,
+      widgetAttributesOpen,
+      widgetToAttributes[widgetID],
+      widgetToInfo[widgetID],
+      activeWidgets,
+    ]
   );
 };
 

@@ -103,7 +103,7 @@ export const GroupPanelView = ({
         />
       </div>
     ),
-    [configurationGroupExpanded]
+    [configurationGroupExpanded, groupToWidgets[groupID], widgetToInfo, widgetToAttributes]
   );
 };
 
