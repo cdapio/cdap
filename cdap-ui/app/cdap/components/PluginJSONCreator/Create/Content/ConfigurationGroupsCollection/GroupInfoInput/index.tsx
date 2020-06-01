@@ -17,10 +17,7 @@
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import {
-  CreateContext,
-  createContextConnect,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { CreateContext, createContextConnect } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
