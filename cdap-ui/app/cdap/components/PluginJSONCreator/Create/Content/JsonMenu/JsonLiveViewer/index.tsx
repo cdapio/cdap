@@ -21,10 +21,7 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
-import {
-  downloadPluginJSON,
-  getJSONConfig,
-} from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+import { downloadPluginJSON, getJSONConfig } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
