@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-etl</artifactId>
-    <version>6.2.0</version>
+    <version>6.2.1-SNAPSHOT</version>
   </parent>
 
   <artifactId>hydrator-spark-core2_2.11</artifactId>
