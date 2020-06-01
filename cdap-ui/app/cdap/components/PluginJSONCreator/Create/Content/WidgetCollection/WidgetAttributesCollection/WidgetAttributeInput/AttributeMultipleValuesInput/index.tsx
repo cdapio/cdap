@@ -175,7 +175,7 @@ const AttributeMultipleValuesInputView = ({
   }
 
   /*
-   * Process simple attribute values in order to pass them to the input component.
+   * Process attribute values to pass the values to the input fields.
    * The component 'CSVWidget' receives the data of following structure.
    *
    * Example)
@@ -187,7 +187,7 @@ const AttributeMultipleValuesInputView = ({
   }
 
   /*
-   * Process key-value attribute values in order to pass the values to the input component.
+   * Process key-value attribute values to pass the values to the input fields.
    * The component 'KeyValuePairs' receives the data of following structure.
    *    { pairs: [{ key: '', value: '' }] }
    */
