@@ -28,8 +28,12 @@ interface ICreateState {
   configurationGroups: string[];
   groupToInfo: any;
   groupToWidgets: any;
+<<<<<<< HEAD
   widgetInfo: any;
   widgetToAttributes: any;
+=======
+  widgetToInfo: any;
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   jsonView: boolean;
 
   setActiveStep: (step: number) => void;
@@ -37,8 +41,12 @@ interface ICreateState {
   setConfigurationGroups: (groups: string[]) => void;
   setGroupToInfo: (groupToInfo: any) => void;
   setGroupToWidgets: (groupToWidgets: any) => void;
+<<<<<<< HEAD
   setWidgetInfo: (widgetInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
+=======
+  setWidgetToInfo: (widgetToInfo: any) => void;
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   setJsonView: (jsonView: boolean) => void;
 }
 

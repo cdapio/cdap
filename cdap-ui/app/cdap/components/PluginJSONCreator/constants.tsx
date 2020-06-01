@@ -23,6 +23,7 @@ export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
 
 export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
 <<<<<<< HEAD
+<<<<<<< HEAD
 export const WIDGET_CATEGORY = ['plugin'];
 
 export const SPEC_VERSION = '1.5';
@@ -215,3 +216,7 @@ export const CODE_EDITORS = [
 ];
 =======
 >>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
+=======
+
+export const SPEC_VERSION = '1.5';
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
