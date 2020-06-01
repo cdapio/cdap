@@ -14,8 +14,6 @@
  * the License.
  */
 
-import { WithStyles } from '@material-ui/core/styles/withStyles';
-import { styles } from 'components/AbstractWidget/RadioGroupWidget';
 import Heading, { HeadingTypes } from 'components/Heading';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
@@ -27,8 +25,7 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
+const OutputsView: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
   displayName,
@@ -47,6 +44,11 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   setJSONStatus,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
+
+  // In case user uploads new file
+  React.useEffect(() => {
+    setLocalOutputName(outputName);
+  }, [outputName]);
 
   function saveAllResults() {
     setOutputName(localOutputName);

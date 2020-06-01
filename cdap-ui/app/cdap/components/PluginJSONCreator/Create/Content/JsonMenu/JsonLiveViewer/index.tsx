@@ -94,7 +94,6 @@ interface IJsonLiveViewerProps extends WithStyles<typeof styles>, ICreateContext
   populateImportResults: (filename: string, fileContent: string) => void;
   jsonFilename: string;
   JSONStatus: JSONStatusMessage;
-  setJSONStatus: (JSONStatus: JSONStatusMessage) => void;
   downloadDisabled: boolean;
   JSONErrorMessage: string;
 }

@@ -129,6 +129,7 @@ export const WIDGET_TYPE_TO_ATTRIBUTES = {
   },
   select: {
     options: { type: 'ISelectOptions[]|string[]|number[]', required: true },
+    values: { type: 'ISelectOptions[]|string[]|number[]', required: true },
     default: { type: 'string', required: false },
   },
   text: {
