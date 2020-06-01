@@ -15,10 +15,15 @@
  */
 
 import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
+import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
 
 export const STEPS = [
   {
     label: 'Basic Plugin Information',
     component: BasicPluginInfo,
+  },
+  {
+    label: 'Configuration Groups',
+    component: ConfigurationGroupsCollection,
   },
 ];

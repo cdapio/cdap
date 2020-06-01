@@ -24,6 +24,14 @@ import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
+    root: {
+      padding: '30px 40px',
+    },
+    content: {
+      width: '50%',
+      maxWidth: '1000px',
+      minWidth: '600px',
+    },
     comp: {
       borderRight: `1px solid ${theme.palette.grey[400]}`,
       width: '60%',
@@ -46,8 +54,10 @@ const ContentView: React.FC<IContentProps & WithStyles<typeof styles>> = ({
 
   const Comp = STEPS[activeStep].component;
   return (
-    <div>
-      <Comp className={classes.comp} />
+    <div className={classes.root}>
+      <div className={classes.content}>
+        <Comp className={classes.comp} />
+      </div>
     </div>
   );
 };
