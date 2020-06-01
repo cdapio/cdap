@@ -21,7 +21,11 @@ import Alert from 'components/Alert';
 import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
-import { downloadPluginJSON, getJSONConfig, parsePluginJSON } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+import {
+  downloadPluginJSON,
+  getJSONConfig,
+  parsePluginJSON,
+} from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
