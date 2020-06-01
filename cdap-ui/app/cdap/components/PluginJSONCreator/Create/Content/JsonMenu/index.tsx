@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * Copyright © 2020 Cask Data, Inc.
+=======
+ * Copyright © 2018 Cask Data, Inc.
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,6 +18,7 @@
  * the License.
  */
 
+<<<<<<< HEAD
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
@@ -189,9 +194,70 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
         type="error"
         onClose={resetJSONStatus}
       />
+=======
+import If from 'components/If';
+import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
+import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
+import {
+  CreateContext,
+  createContextConnect,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
+import * as React from 'react';
+
+const JsonMenuView: React.FC<ICreateContext> = ({
+  pluginName,
+  pluginType,
+  displayName,
+  emitAlerts,
+  emitErrors,
+  configurationGroups,
+  groupToInfo,
+  groupToWidgets,
+  widgetToInfo,
+  jsonView,
+  setJsonView,
+}) => {
+  return (
+    <div>
+      <If condition={jsonView}>
+        <JsonLiveViewer
+          pluginName={pluginName}
+          pluginType={pluginType}
+          displayName={displayName}
+          emitAlerts={emitAlerts}
+          emitErrors={emitErrors}
+          configurationGroups={configurationGroups}
+          groupToInfo={groupToInfo}
+          groupToWidgets={groupToWidgets}
+          widgetToInfo={widgetToInfo}
+          jsonView={jsonView}
+          setJsonView={setJsonView}
+        />
+      </If>
+      <If condition={!jsonView}>
+        <ClosedJsonMenu
+          pluginName={pluginName}
+          pluginType={pluginType}
+          displayName={displayName}
+          emitAlerts={emitAlerts}
+          emitErrors={emitErrors}
+          configurationGroups={configurationGroups}
+          groupToInfo={groupToInfo}
+          groupToWidgets={groupToWidgets}
+          widgetToInfo={widgetToInfo}
+          jsonView={jsonView}
+          setJsonView={setJsonView}
+        />
+      </If>
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
     </div>
   );
 };
 
+<<<<<<< HEAD
 const JsonMenu = withStyles(styles)(JsonMenuView);
+=======
+const JsonMenu = createContextConnect(CreateContext, JsonMenuView);
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 export default JsonMenu;

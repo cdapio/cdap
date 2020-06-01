@@ -16,7 +16,11 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import { WIDGET_CATEGORY, WIDGET_TYPES, WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
+import {
+  WIDGET_CATEGORY,
+  WIDGET_TYPES,
+  WIDGET_TYPE_TO_ATTRIBUTES,
+} from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';

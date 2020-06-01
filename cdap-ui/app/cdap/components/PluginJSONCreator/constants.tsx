@@ -23,6 +23,7 @@ export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
 );
 
 export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
+<<<<<<< HEAD
 export const WIDGET_CATEGORY = ['plugin'];
 
 // including additional property that was found from the docs
@@ -218,3 +219,7 @@ export const SPEC_VERSION = '1.5';
 // FILTER PAGE
 export const OPERATOR_VALUES = Object.values(CustomOperator);
 export const SHOW_TYPE_VALUES = Object.values(PropertyShowConfigTypeEnums);
+=======
+
+export const SPEC_VERSION = '1.5';
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)

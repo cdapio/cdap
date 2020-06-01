@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import {
   IBasicPluginInfo,
   IConfigurationGroupInfo,
@@ -5,6 +6,10 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
+=======
+import { IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
+import fileDownload from 'js-file-download';
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 
 function getJSONConfig(widgetJSONData) {
   const {
@@ -14,6 +19,7 @@ function getJSONConfig(widgetJSONData) {
     configurationGroups,
     groupToInfo,
     groupToWidgets,
+<<<<<<< HEAD
     widgetInfo,
     widgetToAttributes,
     filters,
@@ -22,11 +28,15 @@ function getJSONConfig(widgetJSONData) {
     filterToShowList,
     showToInfo,
     outputName,
+=======
+    widgetToInfo,
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
     const groupLabel = groupToInfo[groupID].label;
     const widgetData = groupToWidgets[groupID].map((widgetID: string) => {
+<<<<<<< HEAD
       const info: IWidgetInfo = widgetInfo[widgetID];
       const widgetAttributes = widgetToAttributes[widgetID];
 
@@ -39,6 +49,15 @@ function getJSONConfig(widgetJSONData) {
           Object.keys(widgetAttributes).length > 0 && {
             'widget-attributes': widgetAttributes,
           }),
+=======
+      const widgetInfo: IWidgetInfo = widgetToInfo[widgetID];
+
+      return {
+        'widget-type': widgetInfo.widgetType,
+        label: widgetInfo.label,
+        name: widgetInfo.name,
+        ...(widgetInfo.widgetCategory && { 'widget-category': widgetInfo.widgetCategory }),
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
       };
     });
     return {
@@ -47,6 +66,7 @@ function getJSONConfig(widgetJSONData) {
     };
   });
 
+<<<<<<< HEAD
   const outputsData = {
     ...(outputName && { name: outputName }),
   };
@@ -67,6 +87,8 @@ function getJSONConfig(widgetJSONData) {
     };
   });
 
+=======
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   const config = {
     metadata: {
       'spec-version': '1.5',
@@ -75,6 +97,7 @@ function getJSONConfig(widgetJSONData) {
     ...(emitAlerts && { 'emit-alerts': emitAlerts }),
     ...(emitErrors && { 'emit-errors': emitErrors }),
     'configuration-groups': configurationGroupsData,
+<<<<<<< HEAD
     ...(outputsData &&
       Object.keys(outputsData).length > 0 && {
         outputs: [outputsData],
@@ -83,11 +106,14 @@ function getJSONConfig(widgetJSONData) {
       Object.keys(filtersData).length > 0 && {
         filters: filtersData,
       }),
+=======
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   };
 
   return config;
 }
 
+<<<<<<< HEAD
 function parsePluginJSON(filename, pluginJSON) {
   // Parse filename in order to set pluginName and pluginType
   // Currently the filename is designed to be <pluginName>-<pluginType>.json
@@ -206,10 +232,16 @@ function parsePluginJSON(filename, pluginJSON) {
   };
 }
 
+=======
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 function downloadPluginJSON(widgetJSONData) {
   const JSONConfig = getJSONConfig(widgetJSONData);
   const { pluginName, pluginType } = widgetJSONData;
   fileDownload(JSON.stringify(JSONConfig, undefined, 4), `${pluginName}-${pluginType}.json`);
 }
 
+<<<<<<< HEAD
 export { getJSONConfig, parsePluginJSON, downloadPluginJSON };
+=======
+export { getJSONConfig, downloadPluginJSON };
+>>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
