@@ -17,7 +17,11 @@
 import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
-import { CreateContext, createContextConnect, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  createContextConnect,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const JsonMenuView: React.FC<ICreateContext> = ({

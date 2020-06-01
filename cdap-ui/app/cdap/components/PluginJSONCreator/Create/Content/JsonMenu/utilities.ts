@@ -57,4 +57,3 @@ function downloadPluginJSON(widgetJSONData) {
 }
 
 export { getJSONConfig, downloadPluginJSON };
-
