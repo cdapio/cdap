@@ -163,7 +163,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToWidgets: {},
     widgetInfo: {},
     widgetToAttributes: {},
-<<<<<<< HEAD
     liveView: true,
     outputName: '',
     JSONStatus: JSONStatusMessage.Normal,
@@ -172,10 +171,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     filterToCondition: {},
     filterToShowList: {},
     showToInfo: {},
-=======
-    jsonView: true,
-    outputName: '',
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
@@ -184,7 +179,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setGroupToWidgets: this.setGroupToWidgets,
     setWidgetInfo: this.setWidgetInfo,
     setWidgetToAttributes: this.setWidgetToAttributes,
-<<<<<<< HEAD
     setLiveView: this.setLiveView,
     setOutputName: this.setOutputName,
     setPluginState: this.setPluginState,
@@ -194,10 +188,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setFilterToCondition: this.setFilterToCondition,
     setFilterToShowList: this.setFilterToShowList,
     setShowToInfo: this.setShowToInfo,
-=======
-    setJsonView: this.setJsonView,
-    setOutputName: this.setOutputName,
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
   };
 
   public render() {

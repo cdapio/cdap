@@ -14,11 +14,6 @@
  * the License.
  */
 
-<<<<<<< HEAD
-=======
-import { WithStyles } from '@material-ui/core/styles/withStyles';
-import { styles } from 'components/AbstractWidget/RadioGroupWidget';
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 import Heading, { HeadingTypes } from 'components/Heading';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
@@ -30,12 +25,7 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-<<<<<<< HEAD
 const OutputsView: React.FC<ICreateContext> = ({
-=======
-const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
   pluginName,
   pluginType,
   displayName,
@@ -44,7 +34,6 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   configurationGroups,
   groupToInfo,
   groupToWidgets,
-<<<<<<< HEAD
   widgetInfo,
   widgetToAttributes,
   liveView,
@@ -59,16 +48,13 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   filterToCondition,
   filterToShowList,
   showToInfo,
-=======
-  widgetToInfo,
-  widgetToAttributes,
-  jsonView,
-  setJsonView,
-  outputName,
-  setOutputName,
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
+
+  // In case user uploads new file
+  React.useEffect(() => {
+    setLocalOutputName(outputName);
+  }, [outputName]);
 
   function saveAllResults() {
     setOutputName(localOutputName);
@@ -85,7 +71,6 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         configurationGroups={configurationGroups}
         groupToInfo={groupToInfo}
         groupToWidgets={groupToWidgets}
-<<<<<<< HEAD
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
         liveView={liveView}
@@ -101,24 +86,11 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         showToInfo={showToInfo}
       />
       <Heading type={HeadingTypes.h3} label="Output" />
-=======
-        widgetToInfo={widgetToInfo}
-        widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
-        outputName={localOutputName}
-      />
-      <Heading type={HeadingTypes.h3} label="Outputs" />
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
       <br />
       <PluginInput
         widgetType={'textbox'}
         value={localOutputName}
-<<<<<<< HEAD
         onChange={setLocalOutputName}
-=======
-        setValue={setLocalOutputName}
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
         label={'Output Name'}
         placeholder={'output name'}
         required={false}

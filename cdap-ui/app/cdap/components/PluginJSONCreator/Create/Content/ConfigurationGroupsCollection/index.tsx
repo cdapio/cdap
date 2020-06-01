@@ -28,7 +28,12 @@ import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/Configur
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
-import { CreateContext, createContextConnect, IConfigurationGroupInfo, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  createContextConnect,
+  IConfigurationGroupInfo,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 
@@ -63,7 +68,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setWidgetInfo,
   widgetToAttributes,
   setWidgetToAttributes,
-<<<<<<< HEAD
   liveView,
   setLiveView,
   outputName,
@@ -75,11 +79,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   filterToCondition,
   filterToShowList,
   showToInfo,
-=======
-  jsonView,
-  setJsonView,
-  outputName,
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -179,7 +178,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         groupToWidgets={localGroupToWidgets}
         widgetInfo={localWidgetInfo}
         widgetToAttributes={localWidgetToAttributes}
-<<<<<<< HEAD
         liveView={liveView}
         setLiveView={setLiveView}
         outputName={outputName}
@@ -191,11 +189,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         setPluginState={setPluginState}
         JSONStatus={JSONStatus}
         setJSONStatus={setJSONStatus}
-=======
-        jsonView={jsonView}
-        setJsonView={setJsonView}
-        outputName={outputName}
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />

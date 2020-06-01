@@ -14,14 +14,10 @@
  * the License.
  */
 
-<<<<<<< HEAD
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import IconButton from '@material-ui/core/IconButton';
-=======
-import { Dialog, DialogContent, DialogTitle, IconButton } from '@material-ui/core';
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import CloseIcon from '@material-ui/icons/Close';
 import If from 'components/If';
@@ -34,16 +30,6 @@ import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
-<<<<<<< HEAD
-=======
-    widgetAttributeInput: {
-      '& > *': {
-        width: '100%',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
-    },
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
     widgetAttributesTitle: {
       marginTop: '15px',
       marginBottom: '15px',
@@ -66,21 +52,12 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
   widgetAttributesOpen,
   onWidgetAttributesClose,
   widgetID,
-<<<<<<< HEAD
   widgetInfo,
   setWidgetInfo,
   widgetToAttributes,
   setWidgetToAttributes,
 }) => {
   const widget = widgetInfo[widgetID];
-=======
-  widgetToInfo,
-  setWidgetToInfo,
-  widgetToAttributes,
-  setWidgetToAttributes,
-}) => {
-  const widget = widgetToInfo[widgetID];
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
   const widgetType = widget ? widget.widgetType : null;
   const attributeFields =
     widgetToAttributes && widgetToAttributes[widgetID]
@@ -106,15 +83,9 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
             <h1 className={classes.h2Title}>Widget Property</h1>
           </div>
           <WidgetInput
-<<<<<<< HEAD
             widgetInfo={widgetInfo}
             widgetID={widgetID}
             setWidgetInfo={setWidgetInfo}
-=======
-            widgetToInfo={widgetToInfo}
-            widgetID={widgetID}
-            setWidgetToInfo={setWidgetToInfo}
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
             widgetToAttributes={widgetToAttributes}
             setWidgetToAttributes={setWidgetToAttributes}
           />
@@ -128,7 +99,6 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
               ? WIDGET_TYPE_TO_ATTRIBUTES[widgetType][field]
               : {};
             return (
-<<<<<<< HEAD
               <WidgetAttributeInput
                 key={fieldIndex}
                 widgetType={widgetType}
@@ -138,18 +108,6 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
                 setWidgetToAttributes={setWidgetToAttributes}
                 widgetID={widgetID}
               />
-=======
-              <div className={classes.widgetAttributeInput}>
-                <WidgetAttributeInput
-                  widgetType={widgetType}
-                  field={field}
-                  fieldInfo={fieldInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                  widgetID={widgetID}
-                />
-              </div>
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
             );
           })}
         </DialogContent>

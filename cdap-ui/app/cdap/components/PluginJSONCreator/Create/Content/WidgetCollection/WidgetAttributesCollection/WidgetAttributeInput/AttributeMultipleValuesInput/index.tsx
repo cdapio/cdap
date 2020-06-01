@@ -14,19 +14,13 @@
  * the License.
  */
 
-<<<<<<< HEAD
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-=======
-import { withStyles } from '@material-ui/core';
-import { StyleRules } from '@material-ui/core/styles';
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
 import If from 'components/If';
 import KeyValuePairs from 'components/KeyValuePairs';
 import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import * as React from 'react';
 
-<<<<<<< HEAD
 /*
  * AttributeMultipleValuesInput is a component used for setting widget-attributes of "array" type.
  * For instance, users will be able to set following widget attributes.
@@ -76,8 +70,6 @@ import * as React from 'react';
  *     supportedTypes.add(SupportedType.ValueLabelPair);
  */
 
-=======
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
 export enum SupportedType {
   String = 'string',
   Number = 'number',
@@ -142,7 +134,6 @@ const AttributeMultipleValuesInputView = ({
   React.useEffect(() => {
     const initialType = getInitialType();
     setSelectedType(initialType);
-<<<<<<< HEAD
     setCurrentInput(getCurrentWidgetAttributeValues(initialType));
   }, []);
 
@@ -160,19 +151,6 @@ const AttributeMultipleValuesInputView = ({
     } else if (widgetAttributeValues[0].value) {
       newType = SupportedType.ValueLabelPair;
     } else if (widgetAttributeValues[0].id) {
-=======
-    setCurrentInput(getUpdatedCurrentInput(initialType));
-  }, []);
-
-  function getInitialType() {
-    const widgetAttributes = widgetToAttributes[widgetID][field];
-    let newType;
-    if (!widgetAttributes || widgetAttributes.length === 0) {
-      newType = cleanSupportedTypes[0];
-    } else if (widgetAttributes[0].value) {
-      newType = SupportedType.ValueLabelPair;
-    } else if (widgetAttributes[0].id) {
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
       newType = SupportedType.IDLabelPair;
     } else {
       newType = SupportedType.String;
@@ -180,7 +158,6 @@ const AttributeMultipleValuesInputView = ({
     return newType;
   }
 
-<<<<<<< HEAD
   /*
    * The input fields can have some pre-populated values.
    * For instance, when the user imports a plugin JSON file into the UI,
@@ -234,46 +211,14 @@ const AttributeMultipleValuesInputView = ({
       };
     } else {
       return { pairs: [{ key: '', value: '' }] };
-=======
-  function getUpdatedCurrentInput(newType) {
-    const widgetAttributes = widgetToAttributes[widgetID][field];
-    if (!newType) {
-      return '';
-    } else if (newType === SupportedType.Number || newType === SupportedType.String) {
-      return widgetAttributes ? widgetAttributes.join(COMMON_DELIMITER) : '';
-    } else {
-      if (widgetAttributes && widgetAttributes.length > 0) {
-        return {
-          pairs: widgetAttributes.map((keyvalue) => {
-            if (keyvalue.id) {
-              return {
-                key: keyvalue.id,
-                value: keyvalue.label,
-              };
-            } else {
-              return {
-                key: keyvalue.value,
-                value: keyvalue.label,
-              };
-            }
-          }),
-        };
-      } else {
-        return { pairs: [{ key: '', value: '' }] };
-      }
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
     }
   }
 
   const switchInputType = (newType) => {
     setSelectedType(newType);
-<<<<<<< HEAD
     setCurrentInput(getCurrentWidgetAttributeValues(newType));
 
     // When user switches the 'selectedType', the value will reset back to an empty array.
-=======
-    setCurrentInput(getUpdatedCurrentInput(newType));
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
     setWidgetToAttributes((prevObjs) => ({
       ...prevObjs,
       [widgetID]: { ...prevObjs[widgetID], [field]: [] },
@@ -309,7 +254,6 @@ const AttributeMultipleValuesInputView = ({
   };
 
   const renderAttributeMultipleValuesInput = () => {
-<<<<<<< HEAD
     switch (selectedType) {
       case SupportedType.ValueLabelPair:
         return (
@@ -349,46 +293,6 @@ const AttributeMultipleValuesInputView = ({
             required={true}
           />
         );
-=======
-    if (selectedType === SupportedType.ValueLabelPair) {
-      return (
-        <KeyValuePairs
-          keyValues={currentInput}
-          onKeyValueChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
-          keyPlaceholder={'value'}
-          valuePlaceholder={'label'}
-        />
-      );
-    } else if (selectedType === SupportedType.IDLabelPair) {
-      return (
-        <KeyValuePairs
-          keyValues={currentInput}
-          onKeyValueChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
-          keyPlaceholder={'id'}
-          valuePlaceholder={'label'}
-        />
-      );
-    } else if (selectedType === SupportedType.Number) {
-      return (
-        <PluginInput
-          widgetType={'dsv'}
-          value={currentInput}
-          setValue={onAttributeChange}
-          label={field}
-          required={true}
-        />
-      );
-    } else {
-      return (
-        <PluginInput
-          widgetType={'dsv'}
-          value={currentInput}
-          setValue={onAttributeChange}
-          label={field}
-          required={true}
-        />
-      );
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
     }
   };
 
@@ -399,22 +303,14 @@ const AttributeMultipleValuesInputView = ({
           <PluginInput
             widgetType={'select'}
             value={selectedType}
-<<<<<<< HEAD
             onChange={switchInputType}
-=======
-            setValue={switchInputType}
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
             label={'select value type'}
             options={cleanSupportedTypes}
           />
         </div>
       </If>
 
-<<<<<<< HEAD
       <If condition={currentInput}>{renderAttributeMultipleValuesInput()}</If>
-=======
-      {renderAttributeMultipleValuesInput()}
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
     </div>
   );
 };

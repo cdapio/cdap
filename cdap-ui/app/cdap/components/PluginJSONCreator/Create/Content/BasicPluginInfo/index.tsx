@@ -48,7 +48,6 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   configurationGroups,
   groupToInfo,
   groupToWidgets,
-<<<<<<< HEAD
   widgetInfo,
   widgetToAttributes,
   liveView,
@@ -62,22 +61,29 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   filterToCondition,
   filterToShowList,
   showToInfo,
-=======
-  widgetToInfo,
-  widgetToAttributes,
-  jsonView,
-  setJsonView,
-<<<<<<< HEAD
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
-=======
-  outputName,
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
   const [localDisplayName, setLocalDisplayName] = React.useState(displayName);
   const [localEmitAlerts, setLocalEmitAlerts] = React.useState(emitAlerts);
   const [localEmitErrors, setLocalEmitErrors] = React.useState(emitErrors);
+
+  // In case user uploads new file
+  React.useEffect(() => {
+    setLocalPluginName(pluginName);
+  }, [pluginName]);
+  React.useEffect(() => {
+    setLocalPluginType(pluginType);
+  }, [pluginType]);
+  React.useEffect(() => {
+    setLocalDisplayName(displayName);
+  }, [displayName]);
+  React.useEffect(() => {
+    setLocalEmitAlerts(emitAlerts);
+  }, [emitAlerts]);
+  React.useEffect(() => {
+    setLocalEmitErrors(emitErrors);
+  }, [emitErrors]);
 
   const requiredFilledOut =
     localPluginName.length > 0 && localPluginType.length > 0 && localDisplayName.length > 0;
@@ -103,7 +109,6 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         configurationGroups={configurationGroups}
         groupToInfo={groupToInfo}
         groupToWidgets={groupToWidgets}
-<<<<<<< HEAD
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
         liveView={liveView}
@@ -117,16 +122,6 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         filterToCondition={filterToCondition}
         filterToShowList={filterToShowList}
         showToInfo={showToInfo}
-=======
-        widgetToInfo={widgetToInfo}
-        widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
-<<<<<<< HEAD
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
-=======
-        outputName={outputName}
->>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
       />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInput}>
