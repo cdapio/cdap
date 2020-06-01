@@ -117,14 +117,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     });
   };
 
-  public setWidgetToAttributes = (widgetToAttributes: any) => {
-    this.setState({ widgetToAttributes });
-  };
-
-  public setJsonView = (jsonView: boolean) => {
-    this.setState({ jsonView });
-  };
-
   public state = {
     activeStep: 0,
     pluginName: '',
