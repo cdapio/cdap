@@ -18,19 +18,17 @@ import {
   ExpansionPanel,
   ExpansionPanelActions,
   ExpansionPanelSummary,
-  IconButton,
   Typography,
   withStyles,
 } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import AddIcon from '@material-ui/icons/Add';
-import DeleteIcon from '@material-ui/icons/Delete';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
+import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import {
   CreateContext,
   createContextConnect,
@@ -39,6 +37,7 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
+import GroupActionButtons from './GroupActionButtons';
 
 const styles = (): StyleRules => {
   return {
@@ -60,54 +59,74 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setConfigurationGroups,
   groupToInfo,
   setGroupToInfo,
+  groupToWidgets,
+  setGroupToWidgets,
+  widgetToInfo,
+  setWidgetToInfo,
 }) => {
+  const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
     configurationGroups
   );
-  const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
+  const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
+  const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
 
   function addConfigurationGroup(index: number) {
-    const newGroupID = 'ConfigGroup_' + uuidV4();
+    return () => {
+      const newGroupID = 'ConfigGroup_' + uuidV4();
 
-    // add a new group's ID at the specified index
-    const newGroups = [...localConfigurationGroups];
-    if (newGroups.length === 0) {
-      newGroups.splice(0, 0, newGroupID);
-    } else {
-      newGroups.splice(index + 1, 0, newGroupID);
-    }
-    setLocalConfigurationGroups(newGroups);
+      // Add a new group's ID at the specified index
+      const newGroups = [...localConfigurationGroups];
+      if (newGroups.length === 0) {
+        newGroups.splice(0, 0, newGroupID);
+      } else {
+        newGroups.splice(index + 1, 0, newGroupID);
+      }
+      setLocalConfigurationGroups(newGroups);
 
-    // set the activeGroupIndex to the new group's index
-    if (newGroups.length <= 1) {
-      setActiveGroupIndex(0);
-    } else {
-      setActiveGroupIndex(index + 1);
-    }
+      // Set the activeGroupIndex to the new group's index
+      if (newGroups.length <= 1) {
+        setActiveGroupIndex(0);
+      } else {
+        setActiveGroupIndex(index + 1);
+      }
 
-    // set the default label and description of the group
-    setLocalGroupToInfo({
-      ...localGroupToInfo,
-      [newGroupID]: {
-        label: '',
-        description: '',
-      } as IConfigurationGroupInfo,
-    });
+      // Set the mappings for the newly added group
+      setLocalGroupToInfo({
+        ...localGroupToInfo,
+        [newGroupID]: {
+          label: '',
+          description: '',
+        } as IConfigurationGroupInfo,
+      });
+      setLocalGroupToWidgets({ ...localGroupToWidgets, [newGroupID]: [] });
+    };
   }
 
   function deleteConfigurationGroup(index: number) {
-    setActiveGroupIndex(null);
+    return () => {
+      setActiveGroupIndex(null);
 
-    // delete a group at the specified index
-    const newGroups = [...localConfigurationGroups];
-    const groupToDelete = newGroups[index];
-    newGroups.splice(index, 1);
-    setLocalConfigurationGroups(newGroups);
+      // Delete a group at the specified index
+      const newGroups = [...localConfigurationGroups];
+      const groupToDelete = newGroups[index];
+      newGroups.splice(index, 1);
+      setLocalConfigurationGroups(newGroups);
 
-    // delete the corresponding information of the group
-    const { [groupToDelete]: info, ...restGroupToInfo } = localGroupToInfo;
-    setLocalGroupToInfo(restGroupToInfo);
+      // Delete the corresponding data of the group
+      const { [groupToDelete]: info, ...restGroupToInfo } = localGroupToInfo;
+      const { [groupToDelete]: widgets, ...restGroupToWidgets } = localGroupToWidgets;
+      setLocalGroupToInfo(restGroupToInfo);
+      setLocalGroupToWidgets(restGroupToWidgets);
+
+      // Delete all the widget information that belong to the group
+      const newWidgetToInfo = localWidgetToInfo;
+      widgets.map((widget) => {
+        delete newWidgetToInfo[widget];
+      });
+      setLocalWidgetToInfo(newWidgetToInfo);
+    };
   }
 
   const switchEditConfigurationGroup = (index) => (event, newExpanded) => {
@@ -121,6 +140,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   function saveAllResults() {
     setConfigurationGroups(localConfigurationGroups);
     setGroupToInfo(localGroupToInfo);
+    setGroupToWidgets(localGroupToWidgets);
+    setWidgetToInfo(localWidgetToInfo);
   }
 
   return (
@@ -128,7 +149,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />
       <If condition={localConfigurationGroups.length === 0}>
-        <Button variant="contained" color="primary" onClick={() => addConfigurationGroup(0)}>
+        <Button variant="contained" color="primary" onClick={addConfigurationGroup(0)}>
           Add Configuration Group
         </Button>
       </If>
@@ -158,21 +179,20 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
                   groupToInfo={localGroupToInfo}
                   setGroupToInfo={setLocalGroupToInfo}
                 />
+                <WidgetCollection
+                  groupID={groupID}
+                  groupToWidgets={localGroupToWidgets}
+                  setGroupToWidgets={setLocalGroupToWidgets}
+                  widgetToInfo={localWidgetToInfo}
+                  setWidgetToInfo={setLocalWidgetToInfo}
+                />
               </ExpansionPanelActions>
             </ExpansionPanel>
 
-            <div className={classes.groupActionButtons}>
-              <IconButton onClick={() => addConfigurationGroup(i)} data-cy="add-row">
-                <AddIcon fontSize="small" />
-              </IconButton>
-              <IconButton
-                onClick={() => deleteConfigurationGroup(i)}
-                color="secondary"
-                data-cy="remove-row"
-              >
-                <DeleteIcon fontSize="small" />
-              </IconButton>
-            </div>
+            <GroupActionButtons
+              onAddConfigurationGroup={addConfigurationGroup(i)}
+              onDeleteConfigurationGroup={deleteConfigurationGroup(i)}
+            />
           </div>
         );
       })}
