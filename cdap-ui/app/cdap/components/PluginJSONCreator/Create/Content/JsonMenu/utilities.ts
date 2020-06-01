@@ -30,7 +30,11 @@ function getJSONConfig(widgetJSONData) {
     outputName,
 =======
     widgetToInfo,
+<<<<<<< HEAD
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+    widgetToAttributes,
+>>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
@@ -51,13 +55,21 @@ function getJSONConfig(widgetJSONData) {
           }),
 =======
       const widgetInfo: IWidgetInfo = widgetToInfo[widgetID];
+      const widgetAttributes = widgetToAttributes[widgetID];
 
       return {
         'widget-type': widgetInfo.widgetType,
         label: widgetInfo.label,
         name: widgetInfo.name,
         ...(widgetInfo.widgetCategory && { 'widget-category': widgetInfo.widgetCategory }),
+<<<<<<< HEAD
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+        ...(widgetAttributes &&
+          Object.keys(widgetAttributes).length > 0 && {
+            'widget-attributes': widgetAttributes,
+          }),
+>>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
       };
     });
     return {

@@ -64,6 +64,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   showToInfo,
 =======
   widgetToInfo,
+  widgetToAttributes,
   jsonView,
   setJsonView,
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
@@ -114,6 +115,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         showToInfo={showToInfo}
 =======
         widgetToInfo={widgetToInfo}
+        widgetToAttributes={widgetToAttributes}
         jsonView={jsonView}
         setJsonView={setJsonView}
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)

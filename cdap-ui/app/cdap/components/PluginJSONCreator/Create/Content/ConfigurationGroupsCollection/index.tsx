@@ -28,12 +28,7 @@ import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/Configur
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
-import {
-  CreateContext,
-  createContextConnect,
-  IConfigurationGroupInfo,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { CreateContext, createContextConnect, IConfigurationGroupInfo, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 
@@ -64,7 +59,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setGroupToInfo,
   groupToWidgets,
   setGroupToWidgets,
-<<<<<<< HEAD
   widgetInfo,
   setWidgetInfo,
   widgetToAttributes,
@@ -80,12 +74,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   filterToCondition,
   filterToShowList,
   showToInfo,
-=======
-  widgetToInfo,
-  setWidgetToInfo,
-  jsonView,
-  setJsonView,
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -183,7 +171,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         configurationGroups={localConfigurationGroups}
         groupToInfo={localGroupToInfo}
         groupToWidgets={localGroupToWidgets}
-<<<<<<< HEAD
         widgetInfo={localWidgetInfo}
         widgetToAttributes={localWidgetToAttributes}
         liveView={liveView}
@@ -197,11 +184,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         setPluginState={setPluginState}
         JSONStatus={JSONStatus}
         setJSONStatus={setJSONStatus}
-=======
-        widgetToInfo={localWidgetToInfo}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />

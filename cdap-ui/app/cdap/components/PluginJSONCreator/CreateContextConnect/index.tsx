@@ -29,7 +29,6 @@ interface ICreateState {
   configurationGroups: string[];
   groupToInfo: any;
   groupToWidgets: any;
-<<<<<<< HEAD
   widgetInfo: any;
   widgetToAttributes: any;
   liveView: boolean;
@@ -40,17 +39,12 @@ interface ICreateState {
   filterToCondition: any;
   filterToShowList: any;
   showToInfo: any;
-=======
-  widgetToInfo: any;
-  jsonView: boolean;
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
   setConfigurationGroups: (groups: string[]) => void;
   setGroupToInfo: (groupToInfo: any) => void;
   setGroupToWidgets: (groupToWidgets: any) => void;
-<<<<<<< HEAD
   setWidgetInfo: (widgetInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
   setLiveView: (liveView: boolean) => void;
@@ -62,10 +56,6 @@ interface ICreateState {
   setFilterToCondition: (filterToCondition: any) => void;
   setFilterToShowList: (filterToShowList: any) => void;
   setShowToInfo: (showToInfo: any) => void;
-=======
-  setWidgetToInfo: (widgetToInfo: any) => void;
-  setJsonView: (jsonView: boolean) => void;
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 }
 
 export interface IBasicPluginInfo {

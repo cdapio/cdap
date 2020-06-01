@@ -14,10 +14,10 @@
  * the License.
  */
 
+import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
 import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
 import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
-import BasicPluginInfo from './Content/BasicPluginInfo';
 
 export const STEPS = [
   {
