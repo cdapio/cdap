@@ -67,7 +67,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   widgetToAttributes,
   jsonView,
   setJsonView,
+<<<<<<< HEAD
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+  outputName,
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
@@ -118,7 +122,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         widgetToAttributes={widgetToAttributes}
         jsonView={jsonView}
         setJsonView={setJsonView}
+<<<<<<< HEAD
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+        outputName={outputName}
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
       />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInput}>

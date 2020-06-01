@@ -34,7 +34,11 @@ function getJSONConfig(widgetJSONData) {
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 =======
     widgetToAttributes,
+<<<<<<< HEAD
 >>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
+=======
+    outputName,
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
@@ -79,10 +83,14 @@ function getJSONConfig(widgetJSONData) {
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
   const outputsData = {
     ...(outputName && { name: outputName }),
   };
 
+<<<<<<< HEAD
   const filtersData = filters.map((filterID) => {
     const filterToShowListData = filterToShowList[filterID].map((showID) => {
       return {
@@ -101,6 +109,8 @@ function getJSONConfig(widgetJSONData) {
 
 =======
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
   const config = {
     metadata: {
       'spec-version': '1.5',
@@ -110,16 +120,22 @@ function getJSONConfig(widgetJSONData) {
     ...(emitErrors && { 'emit-errors': emitErrors }),
     'configuration-groups': configurationGroupsData,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
     ...(outputsData &&
       Object.keys(outputsData).length > 0 && {
         outputs: [outputsData],
       }),
+<<<<<<< HEAD
     ...(filtersData &&
       Object.keys(filtersData).length > 0 && {
         filters: filtersData,
       }),
 =======
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
   };
 
   return config;

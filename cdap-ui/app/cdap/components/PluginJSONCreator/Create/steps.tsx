@@ -16,7 +16,10 @@
 
 import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
+<<<<<<< HEAD
 import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
+=======
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
 
 export const STEPS = [
@@ -29,6 +32,7 @@ export const STEPS = [
     component: ConfigurationGroupsCollection,
   },
   {
+<<<<<<< HEAD
     label: 'Output',
     component: Outputs,
   },
@@ -36,4 +40,9 @@ export const STEPS = [
     label: 'Filters',
     component: Filters,
   },
+=======
+    label: 'Outputs',
+    component: Outputs,
+  },
+>>>>>>> ceedd81608d... [CDAP-16869] Create a page for outputs configuration (plugin JSON creator)
 ];
