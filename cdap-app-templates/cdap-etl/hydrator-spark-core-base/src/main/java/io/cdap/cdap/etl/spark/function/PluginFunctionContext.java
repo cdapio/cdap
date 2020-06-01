@@ -24,6 +24,7 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
@@ -45,6 +46,7 @@ import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.batch.SparkBatchRuntimeContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
+import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -105,11 +107,8 @@ public class PluginFunctionContext implements Serializable {
   }
 
   public AutoJoinerContext createAutoJoinerContext() {
-    Map<String, JoinStage> inputStages = new HashMap<>();
-    for (Map.Entry<String, Schema> entry : stageSpec.getInputSchemas().entrySet()) {
-      inputStages.put(entry.getKey(), JoinStage.builder(entry.getKey(), entry.getValue()).build());
-    }
-    return new DefaultAutoJoinerContext(inputStages);
+    FailureCollector failureCollector = new LoggingFailureCollector(getStageName(), stageSpec.getInputSchemas());
+    return DefaultAutoJoinerContext.from(stageSpec.getInputSchemas(), failureCollector);
   }
 
   public String getStageName() {
