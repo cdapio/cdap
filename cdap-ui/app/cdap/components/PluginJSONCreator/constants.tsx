@@ -22,6 +22,7 @@ export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
 );
 
 export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
+<<<<<<< HEAD
 export const WIDGET_CATEGORY = ['plugin'];
 
 export const SPEC_VERSION = '1.5';
@@ -212,3 +213,5 @@ export const CODE_EDITORS = [
   'scala-editor',
   'sql-editor',
 ];
+=======
+>>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)

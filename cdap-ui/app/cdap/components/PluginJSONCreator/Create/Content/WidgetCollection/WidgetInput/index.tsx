@@ -16,11 +16,15 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
+<<<<<<< HEAD
 import {
   WIDGET_CATEGORY,
   WIDGET_TYPES,
   WIDGET_TYPE_TO_ATTRIBUTES,
 } from 'components/PluginJSONCreator/constants';
+=======
+import { WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
+>>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
@@ -28,6 +32,7 @@ import * as React from 'react';
 const styles = (): StyleRules => {
   return {
     widgetInput: {
+<<<<<<< HEAD
       width: '100%',
       marginTop: '20px',
       marginBottom: '20px',
@@ -36,6 +41,13 @@ const styles = (): StyleRules => {
       width: '100%',
       marginTop: '10px',
       marginBottom: '10px',
+=======
+      '& > *': {
+        width: '100%',
+        marginTop: '10px',
+        marginBottom: '10px',
+      },
+>>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
     },
   };
 };
@@ -47,6 +59,7 @@ interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
 const WidgetInputView: React.FC<IWidgetInputProps> = ({
   classes,
   widgetID,
+<<<<<<< HEAD
   widgetInfo,
   setWidgetInfo,
   widgetToAttributes,
@@ -139,6 +152,72 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
             required={true}
           />
         </div>
+=======
+  widgetToInfo,
+  setWidgetToInfo,
+}) => {
+  function onNameChange(obj, id) {
+    return (name) => {
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
+    };
+  }
+
+  function onLabelChange(obj, id) {
+    return (label) => {
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
+    };
+  }
+
+  function onWidgetTypeChange(obj, id) {
+    return (widgetType) => {
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
+    };
+  }
+
+  function onWidgetCategoryChange(obj, id) {
+    return (widgetCategory) => {
+      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetCategory } }));
+    };
+  }
+
+  const widgetInfo = widgetToInfo[widgetID];
+
+  return (
+    <If condition={widgetInfo}>
+      <div className={classes.widgetInput}>
+        <PluginInput
+          widgetType={'textbox'}
+          value={widgetInfo.name}
+          setValue={onNameChange(widgetInfo, widgetID)}
+          label={'Name'}
+          placeholder={'Name a Widget'}
+          required={false}
+        />
+        <PluginInput
+          widgetType={'textbox'}
+          value={widgetInfo.label}
+          setValue={onLabelChange(widgetInfo, widgetID)}
+          label={'Label'}
+          placeholder={'Label a Widget'}
+          required={false}
+        />
+        <PluginInput
+          widgetType={'textbox'}
+          value={widgetInfo.widgetCategory}
+          setValue={onWidgetCategoryChange(widgetInfo, widgetID)}
+          label={'Category'}
+          placeholder={'Categorize a Widget'}
+          required={false}
+        />
+        <PluginInput
+          widgetType={'select'}
+          value={widgetInfo.widgetType}
+          setValue={onWidgetTypeChange(widgetInfo, widgetID)}
+          label={'Widget Type'}
+          options={WIDGET_TYPES}
+          required={true}
+        />
+>>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
       </div>
     </If>
   );
