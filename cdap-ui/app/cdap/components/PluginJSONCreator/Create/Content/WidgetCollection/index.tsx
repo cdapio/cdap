@@ -17,27 +17,13 @@
 import { Button, Divider } from '@material-ui/core';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
+import WidgetPanel from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetPanel';
 import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
-import WidgetActionButtons from './WidgetActionButtons';
-import WidgetInput from './WidgetInput';
 
 const styles = (theme): StyleRules => {
   return {
-    eachWidget: {
-      display: 'grid',
-      gridTemplateColumns: '5fr 1fr',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-    },
-    widgetInputs: {
-      '& > *': {
-        marginTop: '20px',
-        marginBottom: '20px',
-      },
-    },
     nestedWidgets: {
       border: `1px solid`,
       borderColor: theme.palette.grey[300],
@@ -163,31 +149,17 @@ const WidgetCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
             <If condition={widgetToInfo[widgetID]}>
-              <div className={classes.eachWidget}>
-                <div className={classes.widgetInputs}>
-                  <WidgetInput
-                    widgetToInfo={widgetToInfo}
-                    widgetID={widgetID}
-                    setWidgetToInfo={setWidgetToInfo}
-                    widgetToAttributes={widgetToAttributes}
-                    setWidgetToAttributes={setWidgetToAttributes}
-                  />
-                </div>
-                <WidgetActionButtons
-                  onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
-                  onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
-                />
-
-                <WidgetAttributesCollection
-                  open={openWidgetIndex === widgetIndex}
-                  onWidgetAttributesClose={closeWidgetAttributes}
-                  widgetID={widgetID}
-                  widgetToInfo={widgetToInfo}
-                  setWidgetToInfo={setWidgetToInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                />
-              </div>
+              <WidgetPanel
+                widgetID={widgetID}
+                closeWidgetAttributes={closeWidgetAttributes}
+                addWidgetToGroup={addWidgetToGroup(widgetIndex)}
+                deleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
+                widgetToAttributes={widgetToAttributes}
+                setWidgetToAttributes={setWidgetToAttributes}
+                widgetToInfo={widgetToInfo}
+                setWidgetToInfo={setWidgetToInfo}
+                widgetAttributesOpen={openWidgetIndex === widgetIndex}
+              />
               <Button
                 variant="contained"
                 color="primary"
@@ -213,4 +185,4 @@ const WidgetCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
 };
 
 const WidgetCollection = withStyles(styles)(WidgetCollectionView);
-export default WidgetCollection;
+export default React.memo(WidgetCollection);

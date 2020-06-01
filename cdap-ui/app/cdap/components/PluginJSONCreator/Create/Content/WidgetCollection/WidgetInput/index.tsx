@@ -33,8 +33,8 @@ const styles = (): StyleRules => {
 
 const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
   classes,
-  widgetToInfo,
   widgetID,
+  widgetToInfo,
   setWidgetToInfo,
   widgetToAttributes,
   setWidgetToAttributes,
@@ -73,43 +73,46 @@ const WidgetInputView: React.FC<WithStyles<typeof styles>> = ({
 
   const widgetInfo = widgetToInfo[widgetID];
 
-  return (
-    <If condition={widgetInfo}>
-      <div className={classes.widgetInput}>
-        <PluginInput
-          widgetType={'textbox'}
-          value={widgetInfo.name}
-          setValue={onNameChange(widgetInfo, widgetID)}
-          label={'Name'}
-          placeholder={'Name a Widget'}
-          required={false}
-        />
-        <PluginInput
-          widgetType={'textbox'}
-          value={widgetInfo.label}
-          setValue={onLabelChange(widgetInfo, widgetID)}
-          label={'Label'}
-          placeholder={'Label a Widget'}
-          required={false}
-        />
-        <PluginInput
-          widgetType={'textbox'}
-          value={widgetInfo.widgetCategory}
-          setValue={onWidgetCategoryChange(widgetInfo, widgetID)}
-          label={'Category'}
-          placeholder={'Categorize a Widget'}
-          required={false}
-        />
-        <PluginInput
-          widgetType={'select'}
-          value={widgetInfo.widgetType}
-          setValue={onWidgetTypeChange(widgetInfo, widgetID)}
-          label={'Widget Type'}
-          options={WIDGET_TYPES}
-          required={true}
-        />
-      </div>
-    </If>
+  return React.useMemo(
+    () => (
+      <If condition={widgetInfo}>
+        <div className={classes.widgetInput}>
+          <PluginInput
+            widgetType={'textbox'}
+            value={widgetInfo.name}
+            setValue={onNameChange(widgetInfo, widgetID)}
+            label={'Name'}
+            placeholder={'Name a Widget'}
+            required={false}
+          />
+          <PluginInput
+            widgetType={'textbox'}
+            value={widgetInfo.label}
+            setValue={onLabelChange(widgetInfo, widgetID)}
+            label={'Label'}
+            placeholder={'Label a Widget'}
+            required={false}
+          />
+          <PluginInput
+            widgetType={'textbox'}
+            value={widgetInfo.widgetCategory}
+            setValue={onWidgetCategoryChange(widgetInfo, widgetID)}
+            label={'Category'}
+            placeholder={'Categorize a Widget'}
+            required={false}
+          />
+          <PluginInput
+            widgetType={'select'}
+            value={widgetInfo.widgetType}
+            setValue={onWidgetTypeChange(widgetInfo, widgetID)}
+            label={'Widget Type'}
+            options={WIDGET_TYPES}
+            required={true}
+          />
+        </div>
+      </If>
+    ),
+    [widgetToInfo[widgetID], widgetToAttributes[widgetID]]
   );
 };
 

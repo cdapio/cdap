@@ -17,7 +17,6 @@
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Heading, { HeadingTypes } from 'components/Heading';
 import { PluginTypes } from 'components/PluginJSONCreator/constants';
-import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import {
@@ -100,7 +99,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
 
   return (
     <div>
-      <JsonMenu
+      {/*<JsonMenu
         pluginName={localPluginName}
         pluginType={localPluginType}
         displayName={localDisplayName}
@@ -120,7 +119,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         filterToCondition={filterToCondition}
         filterToShowList={filterToShowList}
         showToInfo={showToInfo}
-      />
+      />*/}
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInputs}>
         <PluginInput

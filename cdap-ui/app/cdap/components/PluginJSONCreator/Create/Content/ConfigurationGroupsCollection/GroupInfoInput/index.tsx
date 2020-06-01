@@ -61,7 +61,32 @@ export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToIn
 
   const group = groupToInfo ? groupToInfo[groupID] : null;
 
-  return (
+  return React.useMemo(
+    () => (
+      <If condition={group}>
+        <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
+          <div className={classes.groupInput}>
+            <PluginInput
+              widgetType={'textbox'}
+              value={group.label}
+              setValue={onGroupLabelChange()}
+              label={'Label'}
+              required={true}
+            />
+            <PluginInput
+              widgetType={'textarea'}
+              value={group.description}
+              setValue={onGroupDescriptionChange()}
+              label={'Description'}
+              required={false}
+            />
+          </div>
+        </div>
+      </If>
+    ),
+    [groupToInfo[groupID]]
+  );
+  /*return (
     <If condition={group}>
       <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
         <div className={classes.groupInput}>
@@ -82,7 +107,7 @@ export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToIn
         </div>
       </div>
     </If>
-  );
+  );*/
 };
 
 const StyledGroupInfoInput = withStyles(styles)(GroupInfoInputView);

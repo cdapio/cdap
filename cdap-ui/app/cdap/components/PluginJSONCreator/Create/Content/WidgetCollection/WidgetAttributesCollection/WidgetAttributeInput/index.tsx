@@ -23,9 +23,9 @@ import * as React from 'react';
 const WidgetAttributeInput = ({
   field,
   fieldInfo,
+  widgetID,
   widgetToAttributes,
   setWidgetToAttributes,
-  widgetID,
   widgetType,
 }) => {
   const onAttributeChange = (newVal) => {
@@ -150,7 +150,12 @@ const WidgetAttributeInput = ({
     }
   };
 
-  return <div>{renderAttributeInput()}</div>;
+  return React.useMemo(() => <div>{renderAttributeInput()}</div>, [
+    widgetToAttributes[widgetID],
+    widgetType,
+    field,
+    fieldInfo,
+  ]);
 };
 
 export default WidgetAttributeInput;

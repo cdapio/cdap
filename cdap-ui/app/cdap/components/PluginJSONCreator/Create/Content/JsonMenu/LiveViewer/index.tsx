@@ -178,32 +178,10 @@ const LiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         newPluginProperties[widgetName] = { name: widgetName };
       });
     });
-    debugger;
     setPluginProperties(newPluginProperties);
   }, [JSONConfig]);
 
   const [values, setValues] = React.useState<Record<string, string>>({});
-
-  /*const name = '';
-  const version = '';
-  const scope = '';
-  const params = {
-    namespace: getCurrentNamespace(),
-    artifactId: name,
-    version,
-    scope,
-    extensionType: pluginType,
-    pluginName,
-  };
-
-  React.useEffect(() => {
-    debugger;
-    MyArtifactApi.fetchPluginDetails(params).subscribe((res) => {
-      debugger;
-      setPluginProperties(res[0].properties);
-      debugger;
-    });
-  }, []);*/
 
   const artifactName = 'database-plugins';
   const artifactScope = 'SYSTEM';
@@ -230,7 +208,6 @@ const LiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
       if (res && res.length > 0) {
         const a = res[0].properties;
         const b = pluginProperties;
-        debugger;
         // setPluginProperties(res[0].properties);
       }
     });

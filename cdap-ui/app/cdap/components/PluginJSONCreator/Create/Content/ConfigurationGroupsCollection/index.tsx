@@ -14,44 +14,24 @@
  * the License.
  */
 
-import {
-  ExpansionPanel,
-  ExpansionPanelActions,
-  ExpansionPanelSummary,
-  Typography,
-  withStyles,
-} from '@material-ui/core';
+import { withStyles } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
-import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
+import GroupPanel from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupPanel';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import {
   CreateContext,
   createContextConnect,
   IConfigurationGroupInfo,
-  ICreateContext,
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
-import GroupActionButtons from './GroupActionButtons';
 
 const styles = (): StyleRules => {
-  return {
-    eachGroup: {
-      display: 'grid',
-      gridTemplateColumns: '5fr 1fr',
-    },
-    groupContent: {
-      display: 'block',
-      padding: '0px 0',
-      width: 'calc(100%)',
-    },
-  };
+  return {};
 };
 
 const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
@@ -216,45 +196,22 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
 
       {localConfigurationGroups.map((groupID, i) => {
         const configurationGroupExpanded = activeGroupIndex === i;
-        const group = localGroupToInfo[groupID];
         return (
-          <div className={classes.eachGroup}>
-            <ExpansionPanel
-              expanded={configurationGroupExpanded}
-              onChange={switchEditConfigurationGroup(i)}
-            >
-              <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1c-content"
-                id="panel1c-header"
-              >
-                <If condition={!configurationGroupExpanded}>
-                  <Typography className={classes.heading}>{group.label}</Typography>
-                </If>
-              </ExpansionPanelSummary>
-              <ExpansionPanelActions className={classes.groupContent}>
-                <GroupInfoInput
-                  groupID={groupID}
-                  groupToInfo={localGroupToInfo}
-                  setGroupToInfo={setLocalGroupToInfo}
-                />
-                <WidgetCollection
-                  groupID={groupID}
-                  groupToWidgets={localGroupToWidgets}
-                  setGroupToWidgets={setLocalGroupToWidgets}
-                  widgetToInfo={localWidgetToInfo}
-                  setWidgetToInfo={setLocalWidgetToInfo}
-                  widgetToAttributes={localWidgetToAttributes}
-                  setWidgetToAttributes={setLocalWidgetToAttributes}
-                />
-              </ExpansionPanelActions>
-            </ExpansionPanel>
-
-            <GroupActionButtons
-              onAddConfigurationGroup={addConfigurationGroup(i)}
-              onDeleteConfigurationGroup={deleteConfigurationGroup(i)}
-            />
-          </div>
+          <GroupPanel
+            groupID={groupID}
+            configurationGroupExpanded={configurationGroupExpanded}
+            switchEditConfigurationGroup={switchEditConfigurationGroup(i)}
+            addConfigurationGroup={addConfigurationGroup(i)}
+            deleteConfigurationGroup={deleteConfigurationGroup(i)}
+            groupToInfo={localGroupToInfo}
+            setGroupToInfo={setLocalGroupToInfo}
+            groupToWidgets={localGroupToWidgets}
+            setGroupToWidgets={setLocalGroupToWidgets}
+            widgetToInfo={localWidgetToInfo}
+            setWidgetToInfo={setLocalWidgetToInfo}
+            widgetToAttributes={localWidgetToAttributes}
+            setWidgetToAttributes={setLocalWidgetToAttributes}
+          />
         );
       })}
       <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
