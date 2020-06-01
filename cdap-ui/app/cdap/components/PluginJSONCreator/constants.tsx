@@ -22,3 +22,5 @@ export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
 );
 
 export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
+
+export const SPEC_VERSION = '1.5';
