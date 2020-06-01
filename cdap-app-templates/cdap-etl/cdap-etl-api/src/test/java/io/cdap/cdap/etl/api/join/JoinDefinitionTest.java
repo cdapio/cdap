@@ -17,10 +17,15 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.join.error.JoinError;
+import io.cdap.cdap.etl.api.join.error.JoinKeyError;
+import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
+import io.cdap.cdap.etl.api.join.error.SelectedFieldError;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 
 /**
@@ -155,6 +160,11 @@ public class JoinDefinitionTest {
       Assert.fail("Select missing field did not fail as expected");
     } catch (InvalidJoinException e) {
       // expected
+      Assert.assertEquals(1, e.getErrors().size());
+      JoinError error = e.getErrors().iterator().next();
+      Assert.assertEquals(JoinError.Type.SELECTED_FIELD, error.getType());
+      SelectedFieldError fieldError = (SelectedFieldError) error;
+      Assert.assertEquals(new JoinField("users", "abcdef"), fieldError.getField());
     }
   }
 
@@ -187,7 +197,8 @@ public class JoinDefinitionTest {
     try {
       JoinDefinition.builder()
         .select(new JoinField("purchases", "user_id"),
-                new JoinField("users", "id", "user_id"))
+                new JoinField("users", "id", "user_id"),
+                new JoinField("users", "name"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
               .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
@@ -197,6 +208,12 @@ public class JoinDefinitionTest {
       Assert.fail("Duplicate fields did not fail as expected");
     } catch (InvalidJoinException e) {
       // expected
+      Collection<JoinError> errors = e.getErrors();
+      Assert.assertEquals(1, errors.size());
+      JoinError error = e.getErrors().iterator().next();
+      Assert.assertEquals(JoinError.Type.SELECTED_FIELD, error.getType());
+      SelectedFieldError fieldError = (SelectedFieldError) error;
+      Assert.assertEquals(new JoinField("users", "id", "user_id"), fieldError.getField());
     }
   }
 
@@ -216,8 +233,14 @@ public class JoinDefinitionTest {
               .build())
         .build();
       Assert.fail("Invalid join condition did not fail as expected");
-    } catch (InvalidJoinConditionException e) {
+    } catch (InvalidJoinException e) {
       // expected
+      Collection<JoinError> errors = e.getErrors();
+      Assert.assertEquals(1, errors.size());
+      JoinError error = e.getErrors().iterator().next();
+      Assert.assertEquals(JoinError.Type.JOIN_KEY, error.getType());
+      JoinKeyError keyError = (JoinKeyError) error;
+      Assert.assertEquals("abc", keyError.getKey().getStageName());
     }
   }
 
@@ -237,28 +260,27 @@ public class JoinDefinitionTest {
               .build())
         .build();
       Assert.fail("Invalid join condition did not fail as expected");
-    } catch (InvalidJoinConditionException e) {
+    } catch (InvalidJoinException e) {
       // expected
+      Collection<JoinError> errors = e.getErrors();
+      Assert.assertEquals(1, errors.size());
+      JoinError error = e.getErrors().iterator().next();
+      Assert.assertEquals(JoinError.Type.JOIN_KEY, error.getType());
+      JoinKeyError keyError = (JoinKeyError) error;
+      Assert.assertEquals("purchases", keyError.getKey().getStageName());
+      Assert.assertEquals(Collections.singletonList("abc"), keyError.getKey().getFields());
     }
   }
 
   @Test
   public void testJoinKeyMismatchedNumFieldsThrowsException() {
-    JoinStage purchases = JoinStage.builder("purchases", PURCHASE_SCHEMA).build();
-    JoinStage users = JoinStage.builder("users", USER_SCHEMA).build();
-
     try {
-      JoinDefinition.builder()
-        .select(new JoinField("purchases", "id"),
-                new JoinField("users", "id", "user_id"))
-        .from(purchases, users)
-        .on(JoinCondition.onKeys()
-              .addKey(new JoinKey("purchases", Arrays.asList("id", "user_id")))
-              .addKey(new JoinKey("users", Collections.singletonList("id")))
-              .build())
+      JoinCondition.onKeys()
+        .addKey(new JoinKey("purchases", Arrays.asList("id", "user_id")))
+        .addKey(new JoinKey("users", Collections.singletonList("id")))
         .build();
       Assert.fail("Invalid join condition did not fail as expected");
-    } catch (InvalidJoinConditionException e) {
+    } catch (InvalidJoinException e) {
       // expected
     }
   }
@@ -274,41 +296,20 @@ public class JoinDefinitionTest {
                 new JoinField("users", "id", "user_id"))
         .from(purchases, users)
         .on(JoinCondition.onKeys()
-              .addKey(new JoinKey("purchases", Arrays.asList("id")))
+              .addKey(new JoinKey("purchases", Collections.singletonList("id")))
               .addKey(new JoinKey("users", Collections.singletonList("email")))
-              .build())
-        .build();
-      Assert.fail("Invalid join condition did not fail as expected");
-    } catch (InvalidJoinConditionException e) {
-      // expected
-    }
-  }
-
-  @Test
-  public void testAllBroadcastThrowsException() {
-    JoinStage purchases = JoinStage.builder("purchases", PURCHASE_SCHEMA).setBroadcast(true).build();
-    JoinStage users = JoinStage.builder("users", USER_SCHEMA).setBroadcast(true).build();
-
-    try {
-      JoinDefinition.builder()
-        .select(new JoinField("purchases", "id", "purchase_id"),
-                new JoinField("users", "id", "user_id"),
-                new JoinField("purchases", "ts"),
-                new JoinField("purchases", "price"),
-                new JoinField("purchases", "coupon"),
-                new JoinField("users", "name"),
-                new JoinField("users", "email"),
-                new JoinField("users", "age"),
-                new JoinField("users", "bday"))
-        .from(purchases, users)
-        .on(JoinCondition.onKeys()
-              .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
-              .addKey(new JoinKey("users", Collections.singletonList("id")))
               .build())
         .build();
       Assert.fail("Invalid join condition did not fail as expected");
     } catch (InvalidJoinException e) {
       // expected
+      Collection<JoinError> errors = e.getErrors();
+      Assert.assertEquals(1, errors.size());
+      JoinError error = e.getErrors().iterator().next();
+      Assert.assertEquals(JoinError.Type.JOIN_KEY_FIELD, error.getType());
+      JoinKeyFieldError keyError = (JoinKeyFieldError) error;
+      Assert.assertEquals("users", keyError.getStageName());
+      Assert.assertEquals("email", keyError.getKeyField());
     }
   }
 
