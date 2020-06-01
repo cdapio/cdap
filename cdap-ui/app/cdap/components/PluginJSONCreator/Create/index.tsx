@@ -95,6 +95,10 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ jsonView });
   };
 
+  public setOutputName = (outputName: string) => {
+    this.setState({ outputName });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
