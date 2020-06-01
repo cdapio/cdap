@@ -91,8 +91,19 @@ const WidgetAttributeInputView = ({
     if (!fieldInfo) {
       return;
     }
+<<<<<<< HEAD
 
     if (field === 'default' && CODE_EDITORS.includes(widgetType)) {
+=======
+    const codeEditors = [
+      'javascript-editor',
+      'json-editor',
+      'python-editor',
+      'scala-editor',
+      'sql-editor',
+    ];
+    if (codeEditors.includes(widgetType)) {
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
       return (
         <WidgetWrapper
           widgetProperty={{

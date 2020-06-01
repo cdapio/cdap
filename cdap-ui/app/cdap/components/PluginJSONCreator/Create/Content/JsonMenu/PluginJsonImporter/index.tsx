@@ -14,15 +14,43 @@
  * the License.
  */
 
+<<<<<<< HEAD
 import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import SaveIcon from '@material-ui/icons/Save';
+=======
+import { Button, CircularProgress, WithStyles, withStyles } from '@material-ui/core';
+import { green } from '@material-ui/core/colors';
+import { StyleRules } from '@material-ui/core/styles';
+import CheckIcon from '@material-ui/icons/Check';
+import SaveIcon from '@material-ui/icons/Save';
+import clsx from 'clsx';
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { ICreateContext } from 'components/Replicator/Create';
 import React from 'react';
 
+<<<<<<< HEAD
 const styles = (): StyleRules => {
   return {
+=======
+const styles = (theme): StyleRules => {
+  return {
+    buttonSuccess: {
+      backgroundColor: green[500],
+      '&:hover': {
+        backgroundColor: green[700],
+      },
+    },
+    buttonProgress: {
+      color: green[500],
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      marginTop: -12,
+      marginLeft: -12,
+    },
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
     fileInput: {
       display: 'none',
     },
@@ -37,9 +65,34 @@ interface IPluginJSONImporterProps extends WithStyles<typeof styles>, ICreateCon
 const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
   classes,
   populateImportResults,
+<<<<<<< HEAD
 }) => {
   function processFileUpload() {
     return (e) => {
+=======
+  JSONStatus,
+}) => {
+  const [loading, setLoading] = React.useState(false);
+  const [success, setSuccess] = React.useState(false);
+
+  const buttonClassname = clsx({
+    [classes.buttonSuccess]: success,
+  });
+
+  React.useEffect(() => {
+    if (JSONStatus === JSONStatusMessage.Success) {
+      setSuccess(true);
+    } else {
+      setSuccess(false);
+    }
+  }, [JSONStatus]);
+
+  function processFileUpload() {
+    return (e) => {
+      if (!loading) {
+        setLoading(true);
+      }
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
       const files = e.target.files;
       if (files.length > 0) {
         const filename = files[0].name;
@@ -52,12 +105,22 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
           fileContent = r.target.result;
           renderFileContent(filenameWithoutExtension, fileContent);
         };
+<<<<<<< HEAD
+=======
+      } else {
+        setLoading(false);
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
       }
     };
   }
 
   async function renderFileContent(filename, fileContent) {
+<<<<<<< HEAD
     populateImportResults(filename, fileContent);
+=======
+    await populateImportResults(filename, fileContent);
+    setLoading(false);
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
   }
 
   return (
@@ -70,9 +133,22 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
         onChange={processFileUpload()}
       />
       <label htmlFor="raised-button-file">
+<<<<<<< HEAD
         <Button aria-label="save" component="span" color="primary">
           <SaveIcon />
         </Button>
+=======
+        <Button
+          aria-label="save"
+          component="span"
+          color="primary"
+          disabled={loading}
+          className={buttonClassname}
+        >
+          {success ? <CheckIcon /> : <SaveIcon />}
+        </Button>
+        {loading && <CircularProgress size={24} className={classes.buttonProgress} />}
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
       </label>
     </div>
   );

@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 import { SPEC_VERSION } from 'components/PluginJSONCreator/constants';
+=======
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
 import {
   IBasicPluginInfo,
   IConfigurationGroupInfo,
@@ -82,7 +85,11 @@ function parsePluginJSON(filename, pluginJSON) {
   const newConfigurationGroups = [];
   const newGroupToInfo = {};
   const newGroupToWidgets = {};
+<<<<<<< HEAD
   const newWidgetInfo = {};
+=======
+  const newWidgetToInfo = {};
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
   const newWidgetToAttributes = {};
 
   pluginJSON['configuration-groups'].forEach((groupObj) => {
@@ -116,7 +123,11 @@ function parsePluginJSON(filename, pluginJSON) {
         ...(widgetObj['widget-category'] && { widgetCategory: widgetObj['widget-category'] }),
       } as IWidgetInfo;
 
+<<<<<<< HEAD
       newWidgetInfo[newWidgetID] = widgetInfo;
+=======
+      newWidgetToInfo[newWidgetID] = widgetInfo;
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
 
       if (
         widgetObj['widget-attributes'] &&
@@ -135,7 +146,11 @@ function parsePluginJSON(filename, pluginJSON) {
     newConfigurationGroups,
     newGroupToInfo,
     newGroupToWidgets,
+<<<<<<< HEAD
     newWidgetInfo,
+=======
+    newWidgetToInfo,
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
     newWidgetToAttributes,
     newOutputName,
   };

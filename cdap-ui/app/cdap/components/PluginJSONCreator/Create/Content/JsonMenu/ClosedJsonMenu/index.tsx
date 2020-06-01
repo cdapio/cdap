@@ -30,6 +30,9 @@ const styles = (theme): StyleRules => {
     jsonActionButtons: {
       padding: '15px',
       flexDirection: 'column',
+      '& > *': {
+        margin: '5px',
+      },
     },
     jsonActionButton: {
       margin: '5px',

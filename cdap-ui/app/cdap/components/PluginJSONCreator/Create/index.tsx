@@ -121,6 +121,31 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ outputName });
   };
 
+  public setPluginState = ({
+    basicPluginInfo,
+    configurationGroups,
+    groupToInfo,
+    groupToWidgets,
+    widgetToInfo,
+    widgetToAttributes,
+    outputName,
+  }) => {
+    const { pluginName, pluginType, displayName, emitAlerts, emitErrors } = basicPluginInfo;
+    this.setState({
+      pluginName,
+      pluginType,
+      displayName,
+      emitAlerts,
+      emitErrors,
+      configurationGroups,
+      groupToInfo,
+      groupToWidgets,
+      widgetToInfo,
+      widgetToAttributes,
+      outputName,
+    });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
