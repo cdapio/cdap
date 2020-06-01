@@ -20,7 +20,6 @@ import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.Throwables;
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
 import com.google.api.gax.longrunning.OperationFuture;
@@ -459,7 +458,7 @@ final class DataprocClient implements AutoCloseable {
       if (cause instanceof ApiException) {
         throw handleApiException((ApiException) cause);
       }
-      throw Throwables.propagate(e);
+      throw new DataprocRuntimeException(cause);
     }
   }
 
@@ -506,7 +505,7 @@ final class DataprocClient implements AutoCloseable {
         }
         throw handleApiException((ApiException) cause);
       }
-      throw Throwables.propagate(e);
+      throw new DataprocRuntimeException(cause);
     }
   }
 
@@ -777,7 +776,7 @@ final class DataprocClient implements AutoCloseable {
     if (e.getStatusCode().getCode().getHttpStatusCode() / 100 != 4) {
       throw new RetryableProvisionException(e);
     }
-    throw e;
+    throw new DataprocRuntimeException(e);
   }
 
   /**
