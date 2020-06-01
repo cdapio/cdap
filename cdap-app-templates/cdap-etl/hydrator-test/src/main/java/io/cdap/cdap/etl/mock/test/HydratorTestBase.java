@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
@@ -44,10 +45,13 @@ import io.cdap.cdap.etl.mock.batch.MockRuntimeDatasetSource;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.MockSource;
 import io.cdap.cdap.etl.mock.batch.NodeStatesAction;
+import io.cdap.cdap.etl.mock.batch.aggregator.DistinctReducibleAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountReducibleAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import io.cdap.cdap.etl.mock.batch.joiner.DupeFlagger;
+import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
 import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
 import io.cdap.cdap.etl.mock.condition.MockCondition;
 import io.cdap.cdap.etl.mock.spark.Window;
@@ -79,7 +83,7 @@ public class HydratorTestBase extends TestBase {
   // To work around, we'll just explicitly specify each plugin.
   private static final Set<PluginClass> BATCH_MOCK_PLUGINS = ImmutableSet.of(
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS, GroupFilterAggregator.PLUGIN_CLASS,
-    MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
+    MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     MockRuntimeDatasetSink.PLUGIN_CLASS, MockRuntimeDatasetSource.PLUGIN_CLASS,
     MockExternalSource.PLUGIN_CLASS, MockExternalSink.PLUGIN_CLASS,
     DoubleTransform.PLUGIN_CLASS, AllErrorTransform.PLUGIN_CLASS, IdentityTransform.PLUGIN_CLASS,
@@ -88,7 +92,8 @@ public class HydratorTestBase extends TestBase {
     MockAction.PLUGIN_CLASS, FileMoveAction.PLUGIN_CLASS, FieldLineageAction.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS,
-    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS
+    MockCondition.PLUGIN_CLASS, MockSource.PLUGIN_CLASS, MockSink.PLUGIN_CLASS,
+    DistinctReducibleAggregator.PLUGIN_CLASS, FieldCountReducibleAggregator.PLUGIN_CLASS
   );
   private static final Set<PluginClass> STREAMING_MOCK_PLUGINS = ImmutableSet.of(
     io.cdap.cdap.etl.mock.spark.streaming.MockSource.PLUGIN_CLASS,
@@ -98,7 +103,8 @@ public class HydratorTestBase extends TestBase {
     IntValueFilterTransform.PLUGIN_CLASS, StringValueFilterTransform.PLUGIN_CLASS, DropNullTransform.PLUGIN_CLASS,
     FilterTransform.PLUGIN_CLASS,
     FieldCountAggregator.PLUGIN_CLASS, IdentityAggregator.PLUGIN_CLASS,
-    GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
+    FieldCountReducibleAggregator.PLUGIN_CLASS,
+    GroupFilterAggregator.PLUGIN_CLASS, MockJoiner.PLUGIN_CLASS, MockAutoJoiner.PLUGIN_CLASS, DupeFlagger.PLUGIN_CLASS,
     StringValueFilterCompute.PLUGIN_CLASS, Window.PLUGIN_CLASS,
     FlattenErrorTransform.PLUGIN_CLASS, FilterErrorTransform.PLUGIN_CLASS,
     NullFieldSplitterTransform.PLUGIN_CLASS, TMSAlertPublisher.PLUGIN_CLASS, NullAlertTransform.PLUGIN_CLASS
@@ -114,6 +120,7 @@ public class HydratorTestBase extends TestBase {
     addAppArtifact(artifactId, appClass,
                    BatchSource.class.getPackage().getName(),
                    Action.class.getPackage().getName(),
+                   AutoJoiner.class.getPackage().getName(),
                    Condition.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
                    AccessType.class.getPackage().getName(),
@@ -141,6 +148,7 @@ public class HydratorTestBase extends TestBase {
     addAppArtifact(artifactId, appClass,
                    StreamingSource.class.getPackage().getName(),
                    Transform.class.getPackage().getName(),
+                   AutoJoiner.class.getPackage().getName(),
                    SparkCompute.class.getPackage().getName(),
                    InvalidStageException.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),

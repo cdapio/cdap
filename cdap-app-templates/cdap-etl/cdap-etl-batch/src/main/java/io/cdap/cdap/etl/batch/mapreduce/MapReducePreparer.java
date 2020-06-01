@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.batch.mapreduce;
 
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceContext;
 import io.cdap.cdap.api.metrics.Metrics;
@@ -25,8 +26,10 @@ import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchConfigurable;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.api.batch.BatchSourceContext;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
@@ -188,6 +191,33 @@ public class MapReducePreparer extends PipelinePhasePreparer {
   }
 
   @Override
+  protected SubmitterPlugin createReducibleAggregator(BatchReducibleAggregator<?, ?, ?, ?> aggregator,
+                                                      StageSpec stageSpec) {
+    String stageName = stageSpec.getName();
+    ContextProvider<DefaultAggregatorContext> contextProvider =
+      new AggregatorContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
+    return new SubmitterPlugin<>(stageName, context, aggregator, contextProvider, aggregatorContext -> {
+      if (aggregatorContext.getNumPartitions() != null) {
+        job.setNumReduceTasks(aggregatorContext.getNumPartitions());
+      }
+      Class<?> outputKeyClass = aggregatorContext.getGroupKeyClass();
+      Class<?> outputValClass = aggregatorContext.getGroupValueClass();
+
+      if (outputKeyClass == null) {
+        outputKeyClass = TypeChecker.getGroupKeyClass(aggregator);
+      }
+      if (outputValClass == null) {
+        outputValClass = TypeChecker.getGroupValueClass(aggregator);
+      }
+      hConf.set(ETLMapReduce.MAP_KEY_CLASS, outputKeyClass.getName());
+      hConf.set(ETLMapReduce.MAP_VAL_CLASS, outputValClass.getName());
+      job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
+      job.setMapOutputValueClass(getOutputValClass(stageName, outputValClass));
+      stageOperations.put(stageName, aggregatorContext.getFieldOperations());
+    });
+  }
+
+  @Override
   protected SubmitterPlugin createJoiner(BatchJoiner<?, ?, ?> batchJoiner, StageSpec stageSpec) {
     String stageName = stageSpec.getName();
     ContextProvider<DefaultJoinerContext> contextProvider =
@@ -209,6 +239,25 @@ public class MapReducePreparer extends PipelinePhasePreparer {
       hConf.set(ETLMapReduce.MAP_VAL_CLASS, inputRecordClass.getName());
       job.setMapOutputKeyClass(getOutputKeyClass(stageName, outputKeyClass));
       getOutputValClass(stageName, inputRecordClass);
+      // for joiner plugin map output is tagged with stageName
+      job.setMapOutputValueClass(TaggedWritable.class);
+      stageOperations.put(stageName, joinerContext.getFieldOperations());
+    });
+  }
+
+  @Override
+  protected SubmitterPlugin createAutoJoiner(BatchAutoJoiner batchJoiner, StageSpec stageSpec) {
+    String stageName = stageSpec.getName();
+    ContextProvider<DefaultJoinerContext> contextProvider =
+      new JoinerContextProvider(pipelineRuntime, stageSpec, context.getAdmin());
+    return new SubmitterPlugin<>(stageName, context, batchJoiner, contextProvider, joinerContext -> {
+      if (joinerContext.getNumPartitions() != null) {
+        job.setNumReduceTasks(joinerContext.getNumPartitions());
+      }
+      hConf.set(ETLMapReduce.MAP_KEY_CLASS, StructuredRecord.class.getName());
+      hConf.set(ETLMapReduce.MAP_VAL_CLASS, StructuredRecord.class.getName());
+      job.setMapOutputKeyClass(getOutputKeyClass(stageName, StructuredRecord.class));
+      getOutputValClass(stageName, StructuredRecord.class);
       // for joiner plugin map output is tagged with stageName
       job.setMapOutputValueClass(TaggedWritable.class);
       stageOperations.put(stageName, joinerContext.getFieldOperations());

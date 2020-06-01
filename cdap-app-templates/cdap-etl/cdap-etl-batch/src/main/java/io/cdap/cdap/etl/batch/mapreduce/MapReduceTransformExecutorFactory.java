@@ -19,6 +19,8 @@ package io.cdap.cdap.etl.batch.mapreduce;
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Sets;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
@@ -36,9 +38,14 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
+import io.cdap.cdap.etl.api.join.JoinCondition;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.batch.ConnectorSourceEmitter;
 import io.cdap.cdap.etl.batch.DirectOutputPipeStage;
 import io.cdap.cdap.etl.batch.MultiOutputTransformPipeStage;
@@ -52,6 +59,7 @@ import io.cdap.cdap.etl.batch.conversion.WritableConversions;
 import io.cdap.cdap.etl.batch.join.Join;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.NoErrorEmitter;
@@ -63,6 +71,8 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
+import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
+import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
@@ -73,10 +83,13 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiPredicate;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -152,7 +165,15 @@ public class MapReduceTransformExecutorFactory<T> {
     StageStatisticsCollector collector = isPipelineContainsCondition ?
       new MapReduceStageStatisticsCollector(stageName, taskAttemptContext) : new NoopStageStatisticsCollector();
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
-      BatchAggregator<?, ?, ?> batchAggregator = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      BatchAggregator<?, ?, ?> batchAggregator;
+      if (plugin instanceof BatchReducibleAggregator) {
+        BatchReducibleAggregator<?, ?, ?, ?> reducibleAggregator = (BatchReducibleAggregator<?, ?, ?, ?>) plugin;
+        batchAggregator = new AggregatorBridge<>(reducibleAggregator);
+      } else {
+        batchAggregator = (BatchAggregator<?, ?, ?>) plugin;
+      }
+
       BatchRuntimeContext runtimeContext = createRuntimeContext(stageSpec);
       batchAggregator.initialize(runtimeContext);
       if (isMapPhase) {
@@ -166,12 +187,36 @@ public class MapReduceTransformExecutorFactory<T> {
                                        stageMetrics, taskContext.getDataTracer(stageName), collector);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
-      BatchJoiner<?, ?, ?> batchJoiner = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+      BatchJoiner<?, ?, ?> batchJoiner;
+      Set<String> filterNullKeyStages = new HashSet<>();
+      if (plugin instanceof BatchAutoJoiner) {
+        BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
+        DefaultAutoJoinerContext context = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas());
+        // definition will be non-null due to validate by PipelinePhasePreparer at the start of the run
+        JoinDefinition joinDefinition = autoJoiner.define(context);
+        batchJoiner = new JoinerBridge(autoJoiner, joinDefinition);
+        JoinCondition condition = joinDefinition.getCondition();
+        // null safe equality means A.id = B.id will match when the id is null
+        // if it's not null safe, A.id = B.id will not match when the id is null
+        // this is the same as filtering out records that have a null key if they are from an optional stage
+        if (condition.getOp() == JoinCondition.Op.KEY_EQUALITY && !((JoinCondition.OnKeys) condition).isNullSafe()) {
+          filterNullKeyStages = joinDefinition.getStages().stream()
+            .filter(s -> !s.isRequired())
+            .map(JoinStage::getStageName)
+            .collect(Collectors.toSet());
+        }
+      } else {
+        batchJoiner = (BatchJoiner<?, ?, ?>) plugin;
+      }
+
       BatchJoinerRuntimeContext runtimeContext = createRuntimeContext(stageSpec);
       batchJoiner.initialize(runtimeContext);
       if (isMapPhase) {
         return getTrackedEmitKeyStep(
-          new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName, mapOutputValClassName), stageMetrics,
+          new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
+                                         mapOutputValClassName, filterNullKeyStages),
+          stageMetrics,
           taskContext.getDataTracer(stageName), collector);
       } else {
         return getTrackedMergeStep(
@@ -351,15 +396,51 @@ public class MapReduceTransformExecutorFactory<T> {
     private final Joiner<JOIN_KEY, INPUT_RECORD, OUT> joiner;
     private final WritableConversion<JOIN_KEY, OUT_KEY> keyConversion;
     private final WritableConversion<INPUT_RECORD, OUT_VALUE> inputConversion;
+    private final BiPredicate<String, JOIN_KEY> shouldFilter;
 
     MapperJoinerTransformation(Joiner<JOIN_KEY, INPUT_RECORD, OUT> joiner, String joinKeyClassName,
-                               String joinInputClassName) {
+                               String joinInputClassName, Set<String> filterNullKeyStages) {
       this.joiner = joiner;
       WritableConversion<JOIN_KEY, OUT_KEY> keyConversion = WritableConversions.getConversion(joinKeyClassName);
       WritableConversion<INPUT_RECORD, OUT_VALUE> inputConversion =
         WritableConversions.getConversion(joinInputClassName);
       this.keyConversion = keyConversion == null ? new CastConversion<>() : keyConversion;
       this.inputConversion = inputConversion == null ? new CastConversion<>() : inputConversion;
+      if (StructuredRecord.class.getName().equals(joinKeyClassName)) {
+        /*
+           Filter out the record if it comes from an optional stage
+           and the key is null, or if any of the fields in the key is null.
+           For example, suppose we are performing a left outer join on:
+
+            A (id, name) = (0, alice), (null, bob)
+            B (id, email) = (0, alice@example.com), (null, placeholder@example.com)
+
+           The final output should be:
+
+           joined (A.id, A.name, B.email) = (0, alice, alice@example.com), (null, bob, null, null)
+
+           that is, the bob record should not be joined to the placeholder@example email, even though both their
+           ids are null.
+         */
+        shouldFilter = (stage, key) -> {
+          if (!filterNullKeyStages.contains(stage)) {
+            return false;
+          }
+          if (key == null) {
+            return true;
+          }
+          StructuredRecord record = (StructuredRecord) key;
+          for (Schema.Field field : record.getSchema().getFields()) {
+            if (record.get(field.getName()) == null) {
+              return true;
+            }
+          }
+          return false;
+        };
+      } else {
+        // filter out the record if it comes from an optional stage and the key is null
+        shouldFilter = (stage, key) -> key == null & filterNullKeyStages.contains(stage);
+      }
     }
 
     @Override
@@ -367,6 +448,9 @@ public class MapReduceTransformExecutorFactory<T> {
                           Emitter<KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> emitter) throws Exception {
       String stageName = input.getFromStage();
       JOIN_KEY key = joiner.joinOn(stageName, input.getValue());
+      if (shouldFilter.test(stageName, key)) {
+        return;
+      }
       TaggedWritable<OUT_VALUE> output = new TaggedWritable<>(stageName,
                                                               inputConversion.toWritable(input.getValue()));
       emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));

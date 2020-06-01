@@ -41,7 +41,12 @@ import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.function.AggregatorAggregateFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorFinalizeFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorInitializeFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergePartitionFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergeValueFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
@@ -53,7 +58,10 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.sql.SQLContext;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
@@ -61,22 +69,27 @@ import javax.annotation.Nullable;
 
 
 /**
- * Implementation of {@link SparkCollection} that is backed by a JavaRDD.
+ * Implementation of {@link SparkCollection} that is backed by a JavaRDD. Spark1 and Spark2 implementations need to be
+ * separate because DataFrames are not compatible between Spark1 and Spark2. In Spark2, DataFrame is just a
+ * Dataset of Row. In Spark1, DataFrame is its own class. Spark1 and Spark2 also have different methods that they
+ * support on a DataFrame/Dataset.
  *
  * @param <T> type of object in the collection
  */
-public class RDDCollection<T> implements SparkCollection<T> {
+public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   private static final Gson GSON = new Gson();
-  private final JavaSparkExecutionContext sec;
-  private final JavaSparkContext jsc;
-  private final DatasetContext datasetContext;
-  private final SparkBatchSinkFactory sinkFactory;
-  private final JavaRDD<T> rdd;
+  protected final JavaSparkExecutionContext sec;
+  protected final JavaSparkContext jsc;
+  protected final SQLContext sqlContext;
+  protected final DatasetContext datasetContext;
+  protected final SparkBatchSinkFactory sinkFactory;
+  protected final JavaRDD<T> rdd;
 
-  public RDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc,
-                       DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
+  protected BaseRDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
+                              DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
     this.sec = sec;
     this.jsc = jsc;
+    this.sqlContext = sqlContext;
     this.datasetContext = datasetContext;
     this.sinkFactory = sinkFactory;
     this.rdd = rdd;
@@ -146,8 +159,32 @@ public class RDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
+  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
+                                                             StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorReduceGroupByFunction<>(pluginFunctionContext);
+    PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
+
+    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(sparkGroupByFunction);
+
+    Function<T, Object> initializeFunction = new AggregatorInitializeFunction<>(pluginFunctionContext);
+    Function2<Object, T, Object> mergeValueFunction = new AggregatorMergeValueFunction<>(pluginFunctionContext);
+    Function2<Object, Object, Object> mergePartitionFunction =
+      new AggregatorMergePartitionFunction<>(pluginFunctionContext);
+    JavaPairRDD<Object, Object> groupedCollection = partitions == null ?
+      keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction) :
+      keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction, partitions);
+
+    FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =
+      new AggregatorFinalizeFunction<>(pluginFunctionContext);
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postReduceFunction = Compat.convert(postFunction);
+
+    return wrap(groupedCollection.flatMap(postReduceFunction));
+  }
+
+  @Override
   public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function) {
-    return new PairRDDCollection<>(sec, jsc, datasetContext, sinkFactory, rdd.flatMapToPair(function));
+    return new PairRDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd.flatMapToPair(function));
   }
 
   @Override
@@ -227,8 +264,7 @@ public class RDDCollection<T> implements SparkCollection<T> {
     throw new UnsupportedOperationException("Windowing is not supported on RDDs.");
   }
 
-  private <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
-    return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory, rdd);
+  protected <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
+    return new RDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd);
   }
-
 }

@@ -35,7 +35,7 @@ public class ValidationException extends RuntimeException {
    * @param failures list of validation failures
    */
   public ValidationException(List<ValidationFailure> failures) {
-    super("Errors were encountered during validation.");
+    super(generateMessage(failures));
     this.failures = Collections.unmodifiableList(new ArrayList<>(failures));
   }
 
@@ -44,5 +44,10 @@ public class ValidationException extends RuntimeException {
    */
   public List<ValidationFailure> getFailures() {
     return failures;
+  }
+
+  private static String generateMessage(List<ValidationFailure> failures) {
+    return String.format("Errors were encountered during validation. %s",
+                         failures.isEmpty() ? "" : failures.iterator().next().getMessage());
   }
 }

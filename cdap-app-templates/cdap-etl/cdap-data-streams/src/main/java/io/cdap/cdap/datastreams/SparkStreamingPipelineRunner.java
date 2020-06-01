@@ -21,10 +21,20 @@ import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.JoinElement;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
+import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.join.AutoJoiner;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
+import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
@@ -44,7 +54,9 @@ import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Driver for running pipelines using Spark Streaming.
@@ -122,5 +134,44 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     JavaPairDStream<Object, List<JoinElement<Object>>> pairDStream = joinedInputs.getUnderlying();
     JavaDStream<Object> result = pairDStream.transform(new DynamicJoinMerge<>(dynamicDriverContext));
     return new DStreamCollection<>(sec, result);
+  }
+
+  @Override
+  protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
+                                               PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
+                                               StageSpec stageSpec, Object plugin, Integer numPartitions,
+                                               StageStatisticsCollector collector) throws Exception {
+    String stageName = stageSpec.getName();
+    BatchJoiner<?, ?, ?> joiner;
+    if (plugin instanceof BatchAutoJoiner) {
+      BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
+
+      Map<String, JoinStage> inputStages = new HashMap<>();
+      for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
+        StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
+        inputStages.put(inputStageName,
+                        JoinStage.builder(inputStageName, inputStageSpec.getOutputSchema()).build());
+      }
+      AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
+
+      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+      if (joinDefinition == null) {
+        throw new IllegalStateException(
+          String.format("Joiner stage '%s' did not specify a join definition. " +
+                          "Check with the plugin developer to ensure it is implemented correctly.",
+                        stageName));
+      }
+      joiner = new JoinerBridge(autoJoiner, joinDefinition);
+    } else if (plugin instanceof BatchJoiner) {
+      joiner = (BatchJoiner) plugin;
+    } else {
+      // should never happen unless there is a bug in the code. should have failed during deployment
+      throw new IllegalStateException(String.format("Stage '%s' is an unknown joiner type %s",
+                                                    stageName, plugin.getClass().getName()));
+    }
+
+    BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
+    joiner.initialize(joinerRuntimeContext);
+    return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector).cache();
   }
 }

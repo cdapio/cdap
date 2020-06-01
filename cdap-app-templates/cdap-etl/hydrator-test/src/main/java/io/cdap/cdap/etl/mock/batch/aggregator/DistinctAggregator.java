@@ -124,7 +124,7 @@ public class DistinctAggregator extends BatchAggregator<StructuredRecord, Struct
   private static PluginClass getPluginClass() {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("field", new PluginPropertyField("field", "", "string", true, false));
-    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "DistinctAggregator", "", GroupFilterAggregator.class.getName(),
+    return new PluginClass(BatchAggregator.PLUGIN_TYPE, "DistinctAggregator", "", DistinctAggregator.class.getName(),
                            "config", properties);
   }
 }

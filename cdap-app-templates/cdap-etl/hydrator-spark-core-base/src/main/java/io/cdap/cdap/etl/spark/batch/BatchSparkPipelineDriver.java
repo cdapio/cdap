@@ -50,6 +50,7 @@ import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.SQLContext;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -82,7 +83,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   @Override
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec, StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return new RDDCollection<>(sec, jsc, datasetContext, sinkFactory,
+    return new RDDCollection<>(sec, jsc, new SQLContext(jsc), datasetContext, sinkFactory,
                                sourceFactory.createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
                                  .flatMap(Compat.convert(new BatchSourceFunction(pluginFunctionContext))));
   }
