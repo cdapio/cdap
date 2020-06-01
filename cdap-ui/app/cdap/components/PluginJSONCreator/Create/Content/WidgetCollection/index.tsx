@@ -17,6 +17,7 @@
 import { Button, Divider } from '@material-ui/core';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
+import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
 import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
@@ -76,11 +77,14 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   classes,
   groupID,
   widgetToInfo,
-  groupToWidgets,
   setWidgetToInfo,
+  groupToWidgets,
   setGroupToWidgets,
+  widgetToAttributes,
+  setWidgetToAttributes,
 }) => {
   const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
+  const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
 
   React.useEffect(() => {
     if (groupID) {
@@ -115,6 +119,11 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
           name: '',
         } as IWidgetInfo,
       });
+
+      setWidgetToAttributes({
+        ...widgetToAttributes,
+        [newWidgetID]: {},
+      });
     };
   }
 
@@ -132,7 +141,20 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
 
       const { [widgetToDelete]: info, ...restWidgetToInfo } = widgetToInfo;
       setWidgetToInfo(restWidgetToInfo);
+
+      const { [widgetToDelete]: attributes, ...restWidgetToAttributes } = widgetToAttributes;
+      setWidgetToAttributes(restWidgetToAttributes);
     };
+  }
+
+  function openWidgetAttributes(widgetIndex) {
+    return () => {
+      setOpenWidgetIndex(widgetIndex);
+    };
+  }
+
+  function closeWidgetAttributes() {
+    setOpenWidgetIndex(null);
   }
 
   return (
@@ -151,13 +173,33 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
                     widgetToInfo={widgetToInfo}
                     widgetID={widgetID}
                     setWidgetToInfo={setWidgetToInfo}
+                    widgetToAttributes={widgetToAttributes}
+                    setWidgetToAttributes={setWidgetToAttributes}
                   />
                 </div>
                 <WidgetActionButtons
                   onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
                   onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
                 />
+
+                <WidgetAttributesCollection
+                  widgetAttributesOpen={openWidgetIndex === widgetIndex}
+                  onWidgetAttributesClose={closeWidgetAttributes}
+                  widgetID={widgetID}
+                  widgetToInfo={widgetToInfo}
+                  setWidgetToInfo={setWidgetToInfo}
+                  widgetToAttributes={widgetToAttributes}
+                  setWidgetToAttributes={setWidgetToAttributes}
+                />
               </div>
+              <Button
+                variant="contained"
+                color="primary"
+                component="span"
+                onClick={openWidgetAttributes(widgetIndex)}
+              >
+                Attributes
+              </Button>
               <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
                 <Divider className={classes.widgetDivider} />
               </If>

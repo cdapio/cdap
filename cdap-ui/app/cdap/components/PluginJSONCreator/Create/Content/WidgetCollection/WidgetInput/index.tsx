@@ -16,7 +16,7 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import { WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
+import { WIDGET_TYPES, WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
@@ -25,7 +25,6 @@ const styles = (): StyleRules => {
   return {
     widgetInput: {
       '& > *': {
-        width: '100%',
         marginTop: '10px',
         marginBottom: '10px',
       },
@@ -42,6 +41,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   widgetID,
   widgetToInfo,
   setWidgetToInfo,
+  widgetToAttributes,
+  setWidgetToAttributes,
 }) => {
   function onNameChange(obj, id) {
     return (name) => {
@@ -58,6 +59,14 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   function onWidgetTypeChange(obj, id) {
     return (widgetType) => {
       setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
+
+      setWidgetToAttributes({
+        ...widgetToAttributes,
+        [id]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
+          acc[curr] = '';
+          return acc;
+        }, {}),
+      });
     };
   }
 

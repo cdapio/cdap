@@ -51,6 +51,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   groupToInfo,
   groupToWidgets,
   widgetToInfo,
+  widgetToAttributes,
   jsonView,
   setJsonView,
 }) => {
@@ -85,6 +86,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         groupToInfo={groupToInfo}
         groupToWidgets={groupToWidgets}
         widgetToInfo={widgetToInfo}
+        widgetToAttributes={widgetToAttributes}
         jsonView={jsonView}
         setJsonView={setJsonView}
       />
