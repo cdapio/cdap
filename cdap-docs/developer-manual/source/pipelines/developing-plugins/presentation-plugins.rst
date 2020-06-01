@@ -279,7 +279,7 @@ CDAP pipelines as of version |version|.
             "widget-attributes": {}
           }
 
-    * - ``daterange``
+   * - ``daterange``
      - No attributes
      - ``string``
      - Selector for a date and time range using graphical calendar
@@ -293,7 +293,7 @@ CDAP pipelines as of version |version|.
             "widget-attributes": {}
           }
 
-    * - ``datetime``
+   * - ``datetime``
      - No attributes
      - ``string``
      - Selector for a single date and time using graphical calendar
