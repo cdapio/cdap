@@ -17,7 +17,11 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.join.error.JoinError;
+import io.cdap.cdap.etl.api.join.error.JoinKeyError;
+import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,12 +50,15 @@ public class JoinCondition {
 
   /**
    * Validate that is condition is valid to use when joining the given stages.
+   * Returns errors found when performing validation.
    *
    * @param joinStages the stages that will be joined on this condition
-   * @throws InvalidJoinConditionException if the condition is invalid
+   * @return collection of errors found when performing validation.
+   *   The collection will be empty if there are no problems.
    */
-  public void validate(List<JoinStage> joinStages) {
+  public Collection<JoinError> validate(List<JoinStage> joinStages) {
     // no-op
+    return Collections.emptyList();
   }
 
   /**
@@ -87,8 +94,8 @@ public class JoinCondition {
     }
 
     @Override
-    public void validate(List<JoinStage> joinStages) {
-      super.validate(joinStages);
+    public Collection<JoinError> validate(List<JoinStage> joinStages) {
+      List<JoinError> errors = new ArrayList<>();
 
       Map<String, JoinStage> stageMap = joinStages.stream()
         .collect(Collectors.toMap(JoinStage::getStageName, s -> s));
@@ -98,9 +105,10 @@ public class JoinCondition {
         JoinStage joinStage = stageMap.get(joinStageName);
         // check that the stage for each key is in the list of stages
         if (joinStage == null) {
-          throw new InvalidJoinConditionException(String.format(
-            "Join key for stage '%s' is invalid. Stage '%s' is not a join input.",
-            joinStageName, joinStageName));
+          errors.add(new JoinKeyError(joinKey,
+                                      String.format("Join key for stage '%s' is invalid. " +
+                                                      "Stage '%s' is not an input.", joinStageName, joinStageName)));
+          continue;
         }
         // this happens if the schema for that stage is unknown.
         // for example, because of macros could not be evaluated yet.
@@ -116,25 +124,31 @@ public class JoinCondition {
         Set<String> keysCopy = new HashSet<>(joinKey.getFields());
         keysCopy.removeAll(fields);
         if (keysCopy.size() == 1) {
-          throw new InvalidJoinConditionException(String.format(
-            "Join key for stage '%s' is invalid. Field '%s' does not exist in the stage.",
-            joinStageName, keysCopy.iterator().next()));
+          errors.add(new JoinKeyError(joinKey,
+                                      String.format("Join key for stage '%s' is invalid. " +
+                                                      "Field '%s' does not exist in the stage.",
+                                                    joinStageName, keysCopy.iterator().next())));
         }
         if (keysCopy.size() > 1) {
-          throw new InvalidJoinConditionException(String.format(
-            "Join key for stage '%s' is invalid. Fields %s do not exist in the stage.",
-            joinStageName, String.join(", ", keysCopy)));
+          errors.add(new JoinKeyError(joinKey,
+                                      String.format("Join key for stage '%s' is invalid. " +
+                                                      "Fields %s do not exist in the stage.",
+                                                    joinStageName, String.join(", ", keysCopy))));
         }
       }
 
-      // check that the keys have the same type.
+      // end validation early since the rest of the validation assumes all stages and fields exist
+      if (!errors.isEmpty()) {
+        return errors;
+      }
 
+      // check that the keys have the same type.
       Iterator<JoinKey> keyIter = keys.iterator();
       JoinKey key1 = keyIter.next();
       // stage is guaranteed to be exist because of above validation
       Schema schema1 = stageMap.get(key1.getStageName()).getSchema();
       if (schema1 == null) {
-        return;
+        return errors;
       }
       while (keyIter.hasNext()) {
         JoinKey otherKey = keyIter.next();
@@ -147,17 +161,20 @@ public class JoinCondition {
           Schema key1Schema = getNonNullableFieldSchema(schema1, key1Field);
 
           // don't need to check hasNext() because already verified they are all the same length
+          // in the build() method
           String otherField = fieldIter.next();
           Schema otherFieldSchema = getNonNullableFieldSchema(otherSchema, otherField);
 
           if (key1Schema.getType() != otherFieldSchema.getType()) {
-            throw new InvalidJoinConditionException(String.format(
+            errors.add(new JoinKeyFieldError(otherKey.getStageName(), otherField, String.format(
               "Type mismatch on join keys. '%s'.'%s' is of type '%s' while '%s'.'%s' is of type '%s'.",
               key1.getStageName(), key1Field, key1Schema.getDisplayName(),
-              otherKey.getStageName(), otherField, otherFieldSchema.getDisplayName()));
+              otherKey.getStageName(), otherField, otherFieldSchema.getDisplayName())));
           }
         }
       }
+
+      return errors;
     }
 
     private Schema getNonNullableFieldSchema(Schema schema, String field) {
@@ -200,9 +217,13 @@ public class JoinCondition {
         return this;
       }
 
+      /**
+       * @return a join condition.
+       * @throws InvalidJoinException if the join condition is invalid
+       */
       public OnKeys build() {
         if (keys.size() < 2) {
-          throw new InvalidJoinConditionException("Must specify a join key for each input stage.");
+          throw new InvalidJoinException("Must specify a join key for each input stage.");
         }
         Map<Integer, Set<String>> numFieldsToStages = new HashMap<>();
         for (JoinKey joinKey : keys) {
@@ -224,7 +245,7 @@ public class JoinCondition {
               message.append(String.format("Stages %s have %s. ", String.join(", ", stages), fieldsStr));
             }
           }
-          throw new InvalidJoinConditionException(message.toString());
+          throw new InvalidJoinException(message.toString());
         }
         return new OnKeys(keys, nullSafe);
       }

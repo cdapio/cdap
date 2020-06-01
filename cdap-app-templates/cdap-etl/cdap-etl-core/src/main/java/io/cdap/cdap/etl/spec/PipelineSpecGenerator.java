@@ -350,26 +350,29 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
 
   private void configureAutoJoiner(String stageName, AutoJoiner autoJoiner, DefaultStageConfigurer stageConfigurer,
                                    FailureCollector collector) {
-    AutoJoinerContext autoContext = DefaultAutoJoinerContext.from(stageConfigurer.getInputSchemas());
+    AutoJoinerContext autoContext = DefaultAutoJoinerContext.from(stageConfigurer.getInputSchemas(),
+                                                                  collector);
     JoinDefinition joinDefinition = autoJoiner.define(autoContext);
-    if (joinDefinition != null) {
-      stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
-      Set<String> inputStages = stageConfigurer.getInputSchemas().keySet();
-      Set<String> joinStages = joinDefinition.getStages().stream()
-        .map(JoinStage::getStageName)
-        .collect(Collectors.toSet());
-      Set<String> missingInputs = Sets.difference(inputStages, joinStages);
-      if (!missingInputs.isEmpty()) {
-        collector.addFailure(String.format("Joiner stage '%s' did not include input stage %s in the join.",
-                                           stageName, String.join(", ", missingInputs)),
-                             "Check with the plugin developer to make sure it is implemented correctly.");
-      }
-      Set<String> extraInputs = Sets.difference(joinStages, inputStages);
-      if (!extraInputs.isEmpty()) {
-        collector.addFailure(String.format("Joiner stage '%s' is trying to join stage %s, which is not an input.",
-                                           stageName, String.join(", ", missingInputs)),
-                             "Check with the plugin developer to make sure it is implemented correctly.");
-      }
+    if (joinDefinition == null) {
+      return;
+    }
+
+    stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
+    Set<String> inputStages = stageConfigurer.getInputSchemas().keySet();
+    Set<String> joinStages = joinDefinition.getStages().stream()
+      .map(JoinStage::getStageName)
+      .collect(Collectors.toSet());
+    Set<String> missingInputs = Sets.difference(inputStages, joinStages);
+    if (!missingInputs.isEmpty()) {
+      collector.addFailure(String.format("Joiner stage '%s' did not include input stage %s in the join.",
+                                         stageName, String.join(", ", missingInputs)),
+                           "Check with the plugin developer to make sure it is implemented correctly.");
+    }
+    Set<String> extraInputs = Sets.difference(joinStages, inputStages);
+    if (!extraInputs.isEmpty()) {
+      collector.addFailure(String.format("Joiner stage '%s' is trying to join stage %s, which is not an input.",
+                                         stageName, String.join(", ", missingInputs)),
+                           "Check with the plugin developer to make sure it is implemented correctly.");
     }
   }
 

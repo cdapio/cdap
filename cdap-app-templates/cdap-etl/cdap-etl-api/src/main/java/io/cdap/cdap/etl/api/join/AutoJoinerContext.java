@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.etl.api.join;
 
+import io.cdap.cdap.etl.api.FailureCollector;
+
 import java.util.Map;
 
 /**
@@ -27,4 +29,9 @@ public interface AutoJoinerContext {
    * @return all input stages
    */
   Map<String, JoinStage> getInputStages();
+
+  /**
+   * @return a failure collector
+   */
+  FailureCollector getFailureCollector();
 }
