@@ -19,7 +19,11 @@ import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { STEPS } from 'components/PluginJSONCreator/Create/steps';
-import { CreateContext, createContextConnect, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  createContextConnect,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
