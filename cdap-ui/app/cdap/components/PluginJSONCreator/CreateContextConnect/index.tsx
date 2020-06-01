@@ -42,6 +42,7 @@ interface ICreateState {
   setWidgetToAttributes: (widgetToAttributes: any) => void;
   setJsonView: (jsonView: boolean) => void;
   setOutputName: (outputName: string) => void;
+  setPluginState: (pluginState: any) => void;
 }
 
 export interface IBasicPluginInfo {

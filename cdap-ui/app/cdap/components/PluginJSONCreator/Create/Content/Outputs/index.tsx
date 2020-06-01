@@ -20,7 +20,11 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import { CreateContext, createContextConnect, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  createContextConnect,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({

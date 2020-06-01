@@ -20,11 +20,19 @@ import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
+<<<<<<< HEAD
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import {
   downloadPluginJSON,
   getJSONConfig,
 } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+=======
+import GetAppIcon from '@material-ui/icons/GetApp';
+import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
+import If from 'components/If';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJsonImporter';
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
@@ -49,8 +57,28 @@ const styles = (theme): StyleRules => {
       paddingBottom: theme.Spacing(1),
     },
     jsonActionButtons: {
-      padding: '5px',
+      padding: '0px',
       display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    currentFilename: {
+      position: 'relative',
+      margin: '0 auto',
+      left: '25px',
+      fontFamily: 'Courier New',
+    },
+    jsonFailStatus: {
+      position: 'relative',
+      margin: '0 auto',
+      color: theme.palette.red[50],
+      fontFamily: 'Courier New',
+    },
+    jsonSuccessStatus: {
+      position: 'relative',
+      margin: '0 auto',
+      color: theme.palette.blue[50],
+      fontFamily: 'Courier New',
     },
     closeJSONViewerButon: {
       marginLeft: 'auto',
@@ -65,16 +93,75 @@ const styles = (theme): StyleRules => {
   };
 };
 
+<<<<<<< HEAD
 const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   widgetJSONData
 ) => {
   const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
   const JSONConfig = getJSONConfig(widgetJSONData);
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
+=======
+const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
+  return (
+    <Tooltip
+      title={
+        downloadDisabled
+          ? 'Download is disabled until the required fields are filled in'
+          : 'Download Plugin JSON'
+      }
+      classes={{
+        tooltip: classes.jsonViewerTooltip,
+      }}
+    >
+      <Button disabled={downloadDisabled} onClick={onDownloadClick}>
+        <GetAppIcon />
+      </Button>
+    </Tooltip>
+  );
+};
+
+const CollapseJSONViewButton = ({ classes, collapseJSONView }) => {
+  return (
+    <Tooltip
+      classes={{
+        tooltip: classes.jsonViewerTooltip,
+      }}
+      title="Close JSON View"
+    >
+      <Button className={classes.closeJSONViewerButon} onClick={collapseJSONView}>
+        <FullscreenExitIcon />
+      </Button>
+    </Tooltip>
+  );
+};
+
+interface IJsonLiveViewerProps extends WithStyles<typeof styles>, ICreateContext {
+  JSONConfig: any;
+  collapseJSONView: () => void;
+  onDownloadClick: () => void;
+  populateImportResults: (filename: string, fileContent: string) => void;
+  jsonFilename: string;
+  JSONStatus: JSONStatusMessage;
+  downloadDisabled: boolean;
+  JSONErrorMessage: string;
+}
+
+const JsonLiveViewerView: React.FC<IJsonLiveViewerProps> = ({
+  classes,
+  JSONConfig,
+  collapseJSONView,
+  onDownloadClick,
+  populateImportResults,
+  jsonFilename,
+  JSONStatus,
+  downloadDisabled,
+  JSONErrorMessage,
+}) => {
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
   return (
     <div>
       <Drawer
-        open={jsonView}
+        open={true}
         variant="persistent"
         className={classes.jsonViewer}
         anchor="right"
@@ -93,31 +180,42 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
               classes={{
                 tooltip: classes.jsonViewerTooltip,
               }}
-              title={
-                downloadDisabled
-                  ? 'Download is disabled until the required fields are filled in'
-                  : 'Download Plugin JSON'
+              title="Import JSON"
+            >
+              <PluginJSONImporter
+                populateImportResults={populateImportResults}
+                JSONStatus={JSONStatus}
+              />
+            </Tooltip>
+            <DownloadJSONButton
+              classes={classes}
+              downloadDisabled={downloadDisabled}
+              onDownloadClick={onDownloadClick}
+            />
+            <If
+              condition={
+                JSONStatus !== JSONStatusMessage.Success && JSONStatus !== JSONStatusMessage.Fail
               }
             >
-              <span>
-                <Button
-                  disabled={downloadDisabled}
-                  onClick={() => downloadPluginJSON(widgetJSONData)}
-                >
-                  <SaveAltIcon />
-                </Button>
-              </span>
-            </Tooltip>
-            <Tooltip
-              classes={{
-                tooltip: classes.jsonViewerTooltip,
-              }}
-              title="Close JSON View"
+              <div className={classes.currentFilename}>{jsonFilename}</div>
+            </If>
+            <If
+              condition={
+                JSONStatus === JSONStatusMessage.Success || JSONStatus === JSONStatusMessage.Fail
+              }
             >
-              <Button className={classes.closeJSONViewerButon} onClick={() => setJsonView(false)}>
-                <FullscreenExitIcon />
-              </Button>
-            </Tooltip>
+              <div
+                className={
+                  JSONStatus === JSONStatusMessage.Success
+                    ? classes.jsonSuccessStatus
+                    : classes.jsonFailStatus
+                }
+              >
+                {JSONErrorMessage}
+              </div>
+            </If>
+
+            <CollapseJSONViewButton classes={classes} collapseJSONView={collapseJSONView} />
           </div>
           <div className={classes.jsonLiveCode}>
             <pre>{JSON.stringify(JSONConfig, undefined, 2)}</pre>

@@ -53,12 +53,30 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   jsonView,
   setJsonView,
   outputName,
+  setPluginState,
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
   const [localDisplayName, setLocalDisplayName] = React.useState(displayName);
   const [localEmitAlerts, setLocalEmitAlerts] = React.useState(emitAlerts);
   const [localEmitErrors, setLocalEmitErrors] = React.useState(emitErrors);
+
+  // In case user uploads new file
+  React.useEffect(() => {
+    setLocalPluginName(pluginName);
+  }, [pluginName]);
+  React.useEffect(() => {
+    setLocalPluginType(pluginType);
+  }, [pluginType]);
+  React.useEffect(() => {
+    setLocalDisplayName(displayName);
+  }, [displayName]);
+  React.useEffect(() => {
+    setLocalEmitAlerts(emitAlerts);
+  }, [emitAlerts]);
+  React.useEffect(() => {
+    setLocalEmitErrors(emitErrors);
+  }, [emitErrors]);
 
   const requiredFilledOut =
     localPluginName.length > 0 && localPluginType.length > 0 && localDisplayName.length > 0;
@@ -89,6 +107,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         jsonView={jsonView}
         setJsonView={setJsonView}
         outputName={outputName}
+        setPluginState={setPluginState}
       />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInput}>
@@ -125,7 +144,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         <PluginInput
           widgetType={'toggle'}
           value={localEmitAlerts ? 'true' : 'false'}
+<<<<<<< HEAD
           onChange={(val) => setLocalEmitAlerts(val === 'true')}
+=======
+          setValue={setLocalEmitAlerts}
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
           label={'Emit Alerts?'}
         />
       </div>
@@ -133,7 +156,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         <PluginInput
           widgetType={'toggle'}
           value={localEmitErrors ? 'true' : 'false'}
+<<<<<<< HEAD
           onChange={(val) => setLocalEmitErrors(val === 'true')}
+=======
+          setValue={setLocalEmitErrors}
+>>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
           label={'Emit Errors?'}
         />
       </div>
