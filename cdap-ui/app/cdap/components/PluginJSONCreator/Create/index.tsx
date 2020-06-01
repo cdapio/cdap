@@ -18,11 +18,7 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Content from 'components/PluginJSONCreator/Create/Content';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
-import {
-  CreateContext,
-  IBasicPluginInfo,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { CreateContext, IBasicPluginInfo, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 export const LEFT_PANEL_WIDTH = 250;
@@ -115,6 +111,10 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
       widgetToAttributes,
       outputName,
     });
+  };
+
+  public setJsonView = (jsonView: boolean) => {
+    this.setState({ jsonView });
   };
 
   public state = {
