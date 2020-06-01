@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * Copyright © 2020 Cask Data, Inc.
-=======
- * Copyright © 2018 Cask Data, Inc.
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,7 +14,6 @@
  * the License.
  */
 
-<<<<<<< HEAD
 import Button from '@material-ui/core/Button';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
@@ -26,19 +21,7 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
-=======
-import { Button, Tooltip } from '@material-ui/core';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
-import SaveAltIcon from '@material-ui/icons/SaveAlt';
-import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
-import {
-  downloadPluginJSON,
-  getJSONConfig,
-} from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+import { downloadPluginJSON, getJSONConfig } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
@@ -73,7 +56,6 @@ const styles = (theme): StyleRules => {
       fontSize: '14px',
       backgroundColor: theme.palette.grey[500],
     },
-<<<<<<< HEAD
     jsonLiveCode: {
       padding: '14px',
     },
@@ -84,36 +66,6 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
   widgetJSONData
 ) => {
   const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
-=======
-  };
-};
-
-const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
-  pluginName,
-  pluginType,
-  displayName,
-  emitAlerts,
-  emitErrors,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetToInfo,
-  jsonView,
-  setJsonView,
-}) => {
-  const widgetJSONData = {
-    pluginName,
-    pluginType,
-    displayName,
-    emitAlerts,
-    emitErrors,
-    configurationGroups,
-    groupToInfo,
-    groupToWidgets,
-    widgetToInfo,
-  };
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   const JSONConfig = getJSONConfig(widgetJSONData);
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (
@@ -123,10 +75,6 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
         variant="persistent"
         className={classes.jsonViewer}
         anchor="right"
-<<<<<<< HEAD
-=======
-        disableEnforceFocus={true}
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
         ModalProps={{
           keepMounted: true,
         }}
@@ -168,16 +116,9 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
               </Button>
             </Tooltip>
           </div>
-<<<<<<< HEAD
           <div className={classes.jsonLiveCode}>
             <pre>{JSON.stringify(JSONConfig, undefined, 2)}</pre>
           </div>
-=======
-          <JsonEditorWidget
-            rows={50}
-            value={JSON.stringify(JSONConfig, undefined, 4)}
-          ></JsonEditorWidget>
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
         </List>
       </Drawer>
     </div>

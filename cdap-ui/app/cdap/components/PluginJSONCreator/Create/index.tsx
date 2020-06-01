@@ -17,11 +17,7 @@
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Content from 'components/PluginJSONCreator/Create/Content';
 import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
-import {
-  CreateContext,
-  IBasicPluginInfo,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { CreateContext, IBasicPluginInfo, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 export const LEFT_PANEL_WIDTH = 250;
@@ -92,7 +88,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     pluginName: '',
     pluginType: '',
     displayName: '',
-<<<<<<< HEAD
     emitAlerts: false,
     emitErrors: false,
     configurationGroups: [],
@@ -100,14 +95,6 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToWidgets: {},
     widgetInfo: {},
     widgetToAttributes: {},
-=======
-    emitAlerts: null,
-    emitErrors: null,
-    configurationGroups: [],
-    groupToInfo: {},
-    groupToWidgets: {},
-    widgetToInfo: {},
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
     jsonView: true,
 
     setActiveStep: this.setActiveStep,
@@ -115,12 +102,8 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setConfigurationGroups: this.setConfigurationGroups,
     setGroupToInfo: this.setGroupToInfo,
     setGroupToWidgets: this.setGroupToWidgets,
-<<<<<<< HEAD
     setWidgetInfo: this.setWidgetInfo,
     setWidgetToAttributes: this.setWidgetToAttributes,
-=======
-    setWidgetToInfo: this.setWidgetToInfo,
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
     setJsonView: this.setJsonView,
   };
 

@@ -33,7 +33,11 @@ interface ICreateState {
   widgetToAttributes: any;
 =======
   widgetToInfo: any;
+<<<<<<< HEAD
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+  widgetToAttributes: any;
+>>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
   jsonView: boolean;
 
   setActiveStep: (step: number) => void;
@@ -46,7 +50,11 @@ interface ICreateState {
   setWidgetToAttributes: (widgetToAttributes: any) => void;
 =======
   setWidgetToInfo: (widgetToInfo: any) => void;
+<<<<<<< HEAD
 >>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
+=======
+  setWidgetToAttributes: (widgetToAttributes: any) => void;
+>>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
   setJsonView: (jsonView: boolean) => void;
 }
 

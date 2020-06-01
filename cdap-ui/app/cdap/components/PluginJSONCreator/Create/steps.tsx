@@ -14,8 +14,8 @@
  * the License.
  */
 
+import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
-import BasicPluginInfo from './Content/BasicPluginInfo';
 
 export const STEPS = [
   {

@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * Copyright © 2020 Cask Data, Inc.
-=======
- * Copyright © 2018 Cask Data, Inc.
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,11 +17,7 @@
 import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
-import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { CreateContext, createContextConnect, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const JsonMenuView: React.FC<ICreateContext> = ({
@@ -37,12 +29,8 @@ const JsonMenuView: React.FC<ICreateContext> = ({
   configurationGroups,
   groupToInfo,
   groupToWidgets,
-<<<<<<< HEAD
   widgetInfo,
   widgetToAttributes,
-=======
-  widgetToInfo,
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   jsonView,
   setJsonView,
 }) => {
@@ -58,12 +46,8 @@ const JsonMenuView: React.FC<ICreateContext> = ({
           configurationGroups={configurationGroups}
           groupToInfo={groupToInfo}
           groupToWidgets={groupToWidgets}
-<<<<<<< HEAD
           widgetInfo={widgetInfo}
           widgetToAttributes={widgetToAttributes}
-=======
-          widgetToInfo={widgetToInfo}
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
           jsonView={jsonView}
           setJsonView={setJsonView}
         />
@@ -78,12 +62,8 @@ const JsonMenuView: React.FC<ICreateContext> = ({
           configurationGroups={configurationGroups}
           groupToInfo={groupToInfo}
           groupToWidgets={groupToWidgets}
-<<<<<<< HEAD
           widgetInfo={widgetInfo}
           widgetToAttributes={widgetToAttributes}
-=======
-          widgetToInfo={widgetToInfo}
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
           jsonView={jsonView}
           setJsonView={setJsonView}
         />

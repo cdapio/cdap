@@ -14,11 +14,7 @@
  * the License.
  */
 
-<<<<<<< HEAD
 import IconButton from '@material-ui/core/IconButton';
-=======
-import { IconButton } from '@material-ui/core';
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';

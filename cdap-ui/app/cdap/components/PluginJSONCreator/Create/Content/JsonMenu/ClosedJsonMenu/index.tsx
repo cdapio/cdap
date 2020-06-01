@@ -1,9 +1,5 @@
 /*
-<<<<<<< HEAD
  * Copyright © 2020 Cask Data, Inc.
-=======
- * Copyright © 2018 Cask Data, Inc.
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,19 +14,12 @@
  * the License.
  */
 
-<<<<<<< HEAD
 import Divider from '@material-ui/core/Divider';
 import Drawer from '@material-ui/core/Drawer';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Tooltip from '@material-ui/core/Tooltip';
-=======
-import { Divider, IconButton, Tooltip } from '@material-ui/core';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
 import CodeIcon from '@material-ui/icons/Code';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import { downloadPluginJSON } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
@@ -64,38 +53,10 @@ const styles = (theme): StyleRules => {
   };
 };
 
-<<<<<<< HEAD
 const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
   widgetJSONData
 ) => {
   const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
-=======
-const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
-  pluginName,
-  pluginType,
-  displayName,
-  emitAlerts,
-  emitErrors,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetToInfo,
-  jsonView,
-  setJsonView,
-}) => {
-  const widgetJSONData = {
-    pluginName,
-    pluginType,
-    displayName,
-    emitAlerts,
-    emitErrors,
-    configurationGroups,
-    groupToInfo,
-    groupToWidgets,
-    widgetToInfo,
-  };
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (
     <div>
@@ -104,10 +65,6 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
         variant="persistent"
         className={classes.closedJsonMenu}
         anchor="right"
-<<<<<<< HEAD
-=======
-        disableEnforceFocus={true}
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
         ModalProps={{
           keepMounted: true,
         }}

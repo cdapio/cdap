@@ -14,7 +14,6 @@
  * the License.
  */
 
-<<<<<<< HEAD
 import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
@@ -25,16 +24,6 @@ import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetColle
 import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
-=======
-import { Button, Divider } from '@material-ui/core';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import If from 'components/If';
-import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
-import * as React from 'react';
-import uuidV4 from 'uuid/v4';
-import WidgetActionButtons from './WidgetActionButtons';
-import WidgetInput from './WidgetInput';
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
 
 const styles = (theme): StyleRules => {
   return {
@@ -44,15 +33,6 @@ const styles = (theme): StyleRules => {
       marginLeft: 'auto',
       marginRight: 'auto',
     },
-<<<<<<< HEAD
-=======
-    widgetInputs: {
-      '& > *': {
-        marginTop: '20px',
-        marginBottom: '20px',
-      },
-    },
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
     nestedWidgets: {
       border: `1px solid`,
       borderColor: theme.palette.grey[300],
@@ -91,7 +71,6 @@ interface IWidgetCollectionProps extends WithStyles<typeof styles>, ICreateConte
 const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   classes,
   groupID,
-<<<<<<< HEAD
   widgetInfo,
   groupToWidgets,
   setWidgetInfo,
@@ -101,14 +80,6 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
 }) => {
   const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
   const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
-=======
-  widgetToInfo,
-  groupToWidgets,
-  setWidgetToInfo,
-  setGroupToWidgets,
-}) => {
-  const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
 
   React.useEffect(() => {
     if (groupID) {
@@ -135,27 +106,19 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       });
 
       // Set the default empty properties of the widget
-<<<<<<< HEAD
       setWidgetInfo({
         ...widgetInfo,
-=======
-      setWidgetToInfo({
-        ...widgetToInfo,
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
         [newWidgetID]: {
           widgetType: '',
           label: '',
           name: '',
         } as IWidgetInfo,
       });
-<<<<<<< HEAD
 
       setWidgetToAttributes({
         ...widgetToAttributes,
         [newWidgetID]: {},
       });
-=======
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
     };
   }
 
@@ -171,7 +134,6 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
         [groupID]: newWidgets,
       });
 
-<<<<<<< HEAD
       const { [widgetToDelete]: info, ...restWidgetInfo } = widgetInfo;
       setWidgetInfo(restWidgetInfo);
 
@@ -193,23 +155,12 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   return (
     <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
       <div className={classes.addWidgetLabel}>
-=======
-      const { [widgetToDelete]: info, ...restWidgetToInfo } = widgetToInfo;
-      setWidgetToInfo(restWidgetToInfo);
-    };
-  }
-
-  return (
-    <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
-      <div className={`widget-wrapper-label ${classes.addWidgetLabel}`}>
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
         Add Widgets
         <span className={classes.required}>*</span>
       </div>
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-<<<<<<< HEAD
             <If condition={widgetInfo[widgetID]} key={widgetIndex}>
               <div className={classes.eachWidget}>
                 <WidgetInput
@@ -219,22 +170,10 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
                   widgetToAttributes={widgetToAttributes}
                   setWidgetToAttributes={setWidgetToAttributes}
                 />
-=======
-            <If condition={widgetToInfo[widgetID]}>
-              <div className={classes.eachWidget}>
-                <div className={classes.widgetInputs}>
-                  <WidgetInput
-                    widgetToInfo={widgetToInfo}
-                    widgetID={widgetID}
-                    setWidgetToInfo={setWidgetToInfo}
-                  />
-                </div>
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
                 <WidgetActionButtons
                   onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
                   onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
                 />
-<<<<<<< HEAD
 
                 <WidgetAttributesCollection
                   widgetAttributesOpen={openWidgetIndex === widgetIndex}
@@ -254,9 +193,6 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
               >
                 Attributes
               </Button>
-=======
-              </div>
->>>>>>> f3cdee8cbf7... [CDAP-16862] Define properties under each configuration group (plugin JSON creator)
               <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
                 <Divider className={classes.widgetDivider} />
               </If>
