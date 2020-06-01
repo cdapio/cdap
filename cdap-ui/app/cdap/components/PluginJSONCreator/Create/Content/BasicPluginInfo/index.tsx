@@ -17,6 +17,7 @@
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Heading, { HeadingTypes } from 'components/Heading';
 import { PluginTypes } from 'components/PluginJSONCreator/constants';
+import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import {
@@ -44,6 +45,12 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   emitAlerts,
   emitErrors,
   setBasicPluginInfo,
+  configurationGroups,
+  groupToInfo,
+  groupToWidgets,
+  widgetToInfo,
+  jsonView,
+  setJsonView,
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
@@ -66,6 +73,19 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
 
   return (
     <div>
+      <JsonMenu
+        pluginName={localPluginName}
+        pluginType={localPluginType}
+        displayName={localDisplayName}
+        emitAlerts={localEmitAlerts}
+        emitErrors={localEmitErrors}
+        configurationGroups={configurationGroups}
+        groupToInfo={groupToInfo}
+        groupToWidgets={groupToWidgets}
+        widgetToInfo={widgetToInfo}
+        jsonView={jsonView}
+        setJsonView={setJsonView}
+      />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInput}>
         <PluginInput
