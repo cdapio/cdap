@@ -18,6 +18,8 @@
 package io.cdap.cdap.internal.provision.task;
 
 import io.cdap.cdap.common.async.RepeatedTask;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
@@ -48,6 +50,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class ProvisioningTask implements RepeatedTask {
 
   private static final Logger LOG = LoggerFactory.getLogger(ProvisioningTask.class);
+  private static final Logger PROGRESS_LOG = Loggers.sampling(
+    LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
 
   protected final ProgramRunId programRunId;
   protected final int retryTimeLimitSecs;
@@ -118,12 +122,12 @@ public abstract class ProvisioningTask implements RepeatedTask {
     }
 
     try {
-      LOG.debug("Executing {} subtask {} for program run {}.",
-                currentTaskInfo.getProvisioningOp().getType(), state, programRunId);
+      PROGRESS_LOG.debug("Executing {} subtask {} for program run {}.",
+                         currentTaskInfo.getProvisioningOp().getType(), state, programRunId);
       taskInfo = Retries.callWithInterruptibleRetries(() -> subtask.execute(currentTaskInfo), retryStrategy,
                                                       t -> t instanceof RetryableProvisionException).orElse(null);
-      LOG.debug("Completed {} subtask {} for program run {}.",
-                currentTaskInfo.getProvisioningOp().getType(), state, programRunId);
+      PROGRESS_LOG.debug("Completed {} subtask {} for program run {}.",
+                         currentTaskInfo.getProvisioningOp().getType(), state, programRunId);
 
       // Nothing more to execute
       if (taskInfo == null) {
@@ -148,8 +152,8 @@ public abstract class ProvisioningTask implements RepeatedTask {
     } catch (InterruptedException e) {
       throw e;
     } catch (Exception e) {
-      LOG.error("{} task failed in {} state for program run {}.",
-                currentTaskInfo.getProvisioningOp().getType(), state, programRunId, e);
+      LOG.error("{} task failed in {} state for program run {} due to {}.",
+                currentTaskInfo.getProvisioningOp().getType(), state, programRunId, e.getMessage(), e);
       handleSubtaskFailure(currentTaskInfo, e);
       ProvisioningOp failureOp = new ProvisioningOp(currentTaskInfo.getProvisioningOp().getType(),
                                                     ProvisioningOp.Status.FAILED);
