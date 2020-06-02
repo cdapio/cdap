@@ -18,11 +18,7 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import FilterCollection from 'components/PluginJSONCreator/Create/Content/Filters/FilterCollection';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { CreateContext, createContextConnect, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const FiltersView: React.FC<ICreateContext> = ({

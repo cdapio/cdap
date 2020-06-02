@@ -21,7 +21,11 @@ import GetAppIcon from '@material-ui/icons/GetApp';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { LiveViewMode } from 'components/PluginJSONCreator/Create/Content/JsonMenu/LiveViewer';
 import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJsonImporter';
-import { CreateContext, createContextConnect, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  createContextConnect,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import ToggleSwitch from 'components/ToggleSwitch';
 import * as React from 'react';
 
