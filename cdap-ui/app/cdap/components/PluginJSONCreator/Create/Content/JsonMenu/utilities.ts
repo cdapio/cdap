@@ -1,12 +1,5 @@
-<<<<<<< HEAD
 import { SPEC_VERSION } from 'components/PluginJSONCreator/constants';
-=======
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
-import {
-  IBasicPluginInfo,
-  IConfigurationGroupInfo,
-  IWidgetInfo,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { IBasicPluginInfo, IConfigurationGroupInfo, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
 
@@ -85,11 +78,7 @@ function parsePluginJSON(filename, pluginJSON) {
   const newConfigurationGroups = [];
   const newGroupToInfo = {};
   const newGroupToWidgets = {};
-<<<<<<< HEAD
   const newWidgetInfo = {};
-=======
-  const newWidgetToInfo = {};
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
   const newWidgetToAttributes = {};
 
   pluginJSON['configuration-groups'].forEach((groupObj) => {
@@ -123,11 +112,7 @@ function parsePluginJSON(filename, pluginJSON) {
         ...(widgetObj['widget-category'] && { widgetCategory: widgetObj['widget-category'] }),
       } as IWidgetInfo;
 
-<<<<<<< HEAD
       newWidgetInfo[newWidgetID] = widgetInfo;
-=======
-      newWidgetToInfo[newWidgetID] = widgetInfo;
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
 
       if (
         widgetObj['widget-attributes'] &&
@@ -146,11 +131,7 @@ function parsePluginJSON(filename, pluginJSON) {
     newConfigurationGroups,
     newGroupToInfo,
     newGroupToWidgets,
-<<<<<<< HEAD
     newWidgetInfo,
-=======
-    newWidgetToInfo,
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
     newWidgetToAttributes,
     newOutputName,
   };
@@ -163,3 +144,4 @@ function downloadPluginJSON(widgetJSONData) {
 }
 
 export { getJSONConfig, parsePluginJSON, downloadPluginJSON };
+
