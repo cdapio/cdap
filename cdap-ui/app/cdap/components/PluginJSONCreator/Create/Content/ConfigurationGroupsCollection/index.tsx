@@ -68,8 +68,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setWidgetInfo,
   widgetToAttributes,
   setWidgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setPluginState,
   JSONStatus,
@@ -173,8 +173,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         groupToWidgets={localGroupToWidgets}
         widgetInfo={localWidgetInfo}
         widgetToAttributes={localWidgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
+        liveView={liveView}
+        setLiveView={setLiveView}
         outputName={outputName}
         setPluginState={setPluginState}
         JSONStatus={JSONStatus}

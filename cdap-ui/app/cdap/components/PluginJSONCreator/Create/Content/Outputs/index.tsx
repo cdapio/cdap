@@ -36,12 +36,13 @@ const OutputsView: React.FC<ICreateContext> = ({
   groupToWidgets,
   widgetInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setOutputName,
   JSONStatus,
   setJSONStatus,
+  setPluginState,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
@@ -67,11 +68,12 @@ const OutputsView: React.FC<ICreateContext> = ({
         groupToWidgets={groupToWidgets}
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
+        liveView={liveView}
+        setLiveView={setLiveView}
         outputName={localOutputName}
         JSONStatus={JSONStatus}
         setJSONStatus={setJSONStatus}
+        setPluginState={setPluginState}
       />
       <Heading type={HeadingTypes.h3} label="Output" />
       <br />

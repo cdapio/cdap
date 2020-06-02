@@ -50,8 +50,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   groupToWidgets,
   widgetInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setPluginState,
   JSONStatus,
@@ -62,23 +62,6 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   const [localDisplayName, setLocalDisplayName] = React.useState(displayName);
   const [localEmitAlerts, setLocalEmitAlerts] = React.useState(emitAlerts);
   const [localEmitErrors, setLocalEmitErrors] = React.useState(emitErrors);
-
-  // In case user uploads new file
-  React.useEffect(() => {
-    setLocalPluginName(pluginName);
-  }, [pluginName]);
-  React.useEffect(() => {
-    setLocalPluginType(pluginType);
-  }, [pluginType]);
-  React.useEffect(() => {
-    setLocalDisplayName(displayName);
-  }, [displayName]);
-  React.useEffect(() => {
-    setLocalEmitAlerts(emitAlerts);
-  }, [emitAlerts]);
-  React.useEffect(() => {
-    setLocalEmitErrors(emitErrors);
-  }, [emitErrors]);
 
   const requiredFilledOut =
     localPluginName.length > 0 && localPluginType.length > 0 && localDisplayName.length > 0;
@@ -106,8 +89,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         groupToWidgets={groupToWidgets}
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
+        liveView={liveView}
+        setLiveView={setLiveView}
         outputName={outputName}
         setPluginState={setPluginState}
         JSONStatus={JSONStatus}
