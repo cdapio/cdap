@@ -22,19 +22,20 @@ import { IPluginProperty } from 'components/ConfigurationGroup/types';
 import capitalize from 'lodash/capitalize';
 import isEmpty from 'lodash/isEmpty';
 
-interface IConnection {
+export interface IConnection {
   from: string;
   to: string;
   port?: string;
 }
 
-interface INode {
+export interface INode {
   plugin?: any;
   isSource?: boolean;
   isSink?: boolean;
+  isCondition?: boolean;
 }
 
-interface IStage {
+export interface IStage {
   inputSchema: IStageSchema[] | string;
   name: string;
   outputSchema: IStageSchema[] | string;
@@ -43,12 +44,12 @@ interface IStage {
 
 type IAdjacencyMap = Map<string, List<string>>;
 
-interface IRecords {
+export interface IRecords {
   records?: any[];
   schemaFields?: string[];
 }
 
-interface IPreviewData {
+export interface IPreviewData {
   numInputStages?: number;
   input?: IRecords;
   numOutputStages?: number;
@@ -89,8 +90,6 @@ export function fetchPreview(
   };
 
   const selectedStageName = selectedNode.plugin.label;
-  const isSource = selectedNode.isSource;
-  const isSink = selectedNode.isSink;
 
   const adjacencyMap = getAdjacencyMap(connections);
   const { tracers, previousStagePort, previousStage } = getTracersAndPreviousStageInfo(
@@ -108,6 +107,7 @@ export function fetchPreview(
     (res) => {
       const previewData = getRecords(res, selectedNode, previousStage, previousStagePort);
       updatePreviewCb(previewData);
+      loadingPreviewCb(false);
     },
     (err) => {
       // TO DO: error handling here
@@ -241,14 +241,13 @@ function getRecords(res, selectedNode: INode, previousStage, previousStagePort) 
 }
 
 function formatMultipleRecords(records) {
-  if (isEmpty(records)) {
-    return records;
-  }
-
   const mapInputs: IRecords = {
     schemaFields: [],
     records: [],
   };
+  if (isEmpty(records)) {
+    return mapInputs;
+  }
 
   records.forEach((record) => {
     let json = record;
