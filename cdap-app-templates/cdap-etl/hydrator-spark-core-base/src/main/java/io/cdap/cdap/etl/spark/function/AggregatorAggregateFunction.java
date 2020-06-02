@@ -19,14 +19,17 @@ package io.cdap.cdap.etl.spark.function;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
+import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
 import scala.Tuple2;
 
 /**
- * Function that uses a BatchAggregator to perform the aggregate part of the aggregator.
+ * Function that uses a BatchAggregator or a AggregatorBridge depending on the type of the aggregator
+ * to perform the aggregate part of the aggregator.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  *
  * @param <GROUP_KEY> type of group key
@@ -46,7 +49,15 @@ public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
   @Override
   public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
     if (aggregateTransform == null) {
-      BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
+      Object plugin = pluginFunctionContext.createPlugin();
+      BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator;
+      if (plugin instanceof BatchReducibleAggregator) {
+        BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, OUT> reducibleAggregator =
+          (BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, OUT>) plugin;
+        aggregator = new AggregatorBridge<>(reducibleAggregator);
+      } else {
+        aggregator = (BatchAggregator<GROUP_KEY, GROUP_VAL, OUT>) plugin;
+      }
       aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),

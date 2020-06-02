@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark;
 
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
@@ -31,12 +32,20 @@ import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
+import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.join.AutoJoiner;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinCondition;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinKey;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
 import io.cdap.cdap.etl.common.PipelinePhase;
@@ -53,11 +62,14 @@ import io.cdap.cdap.etl.spark.function.LeftJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OutputPassFilter;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
+import io.cdap.cdap.etl.spark.join.JoinCollection;
+import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -68,6 +80,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
 
 /**
  * Base Spark program to run a Hydrator pipeline.
@@ -240,75 +253,26 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
 
+        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
         Integer partitions = stagePartitions.get(stageName);
-        SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
-        emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+
+        if (plugin instanceof BatchReducibleAggregator) {
+          SparkCollection<RecordInfo<Object>> combinedData = stageData.reduceAggregate(stageSpec, partitions,
+                                                                                       collector);
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, hasErrorOutput, hasAlertOutput);
+        } else {
+          SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
+          emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                                      combinedData, hasErrorOutput, hasAlertOutput);
+        }
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
 
-        BatchJoiner<Object, Object, Object> joiner = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
-        joiner.initialize(joinerRuntimeContext);
-
-        Map<String, SparkPairCollection<Object, Object>> preJoinStreams = new HashMap<>();
-        for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
-          String inputStage = inputStreamEntry.getKey();
-          SparkCollection<Object> inputStream = inputStreamEntry.getValue();
-          preJoinStreams.put(inputStage, addJoinKey(stageSpec, inputStage, inputStream, collector));
-        }
-
-        Set<String> remainingInputs = new HashSet<>();
-        remainingInputs.addAll(inputDataCollections.keySet());
-
         Integer numPartitions = stagePartitions.get(stageName);
-
-        SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs = null;
-        // inner join on required inputs
-        for (final String inputStageName : joiner.getJoinConfig().getRequiredInputs()) {
-          SparkPairCollection<Object, Object> preJoinCollection = preJoinStreams.get(inputStageName);
-
-          if (joinedInputs == null) {
-            joinedInputs = preJoinCollection.mapValues(new InitialJoinFunction<>(inputStageName));
-          } else {
-            JoinFlattenFunction<Object> joinFlattenFunction = new JoinFlattenFunction<>(inputStageName);
-            joinedInputs = numPartitions == null ?
-              joinedInputs.join(preJoinCollection).mapValues(joinFlattenFunction) :
-              joinedInputs.join(preJoinCollection, numPartitions).mapValues(joinFlattenFunction);
-          }
-          remainingInputs.remove(inputStageName);
-        }
-
-        // outer join on non-required inputs
-        boolean isFullOuter = joinedInputs == null;
-        for (final String inputStageName : remainingInputs) {
-          SparkPairCollection<Object, Object> preJoinStream = preJoinStreams.get(inputStageName);
-
-          if (joinedInputs == null) {
-            joinedInputs = preJoinStream.mapValues(new InitialJoinFunction<>(inputStageName));
-          } else {
-            if (isFullOuter) {
-              OuterJoinFlattenFunction<Object> flattenFunction = new OuterJoinFlattenFunction<>(inputStageName);
-
-              joinedInputs = numPartitions == null ?
-                joinedInputs.fullOuterJoin(preJoinStream).mapValues(flattenFunction) :
-                joinedInputs.fullOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
-            } else {
-              LeftJoinFlattenFunction<Object> flattenFunction = new LeftJoinFlattenFunction<>(inputStageName);
-
-              joinedInputs = numPartitions == null ?
-                joinedInputs.leftOuterJoin(preJoinStream).mapValues(flattenFunction) :
-                joinedInputs.leftOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
-            }
-          }
-        }
-
-        // should never happen, but removes warnings
-        if (joinedInputs == null) {
-          throw new IllegalStateException("There are no inputs into join stage " + stageName);
-        }
-
-        emittedBuilder = emittedBuilder.setOutput(mergeJoinResults(stageSpec, joinedInputs, collector).cache());
+        Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
+        emittedBuilder.setOutput(handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
+                                            stageSpec, plugin, numPartitions, collector));
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -376,6 +340,157 @@ public abstract class SparkPipelineRunner {
     if (error != null) {
       Throwables.propagate(error);
     }
+  }
+
+  protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
+                                               PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
+                                               StageSpec stageSpec, Object plugin, Integer numPartitions,
+                                               StageStatisticsCollector collector) throws Exception {
+    String stageName = stageSpec.getName();
+    if (plugin instanceof BatchJoiner) {
+      BatchJoiner<Object, Object, Object> joiner = (BatchJoiner<Object, Object, Object>) plugin;
+      BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
+      joiner.initialize(joinerRuntimeContext);
+
+      return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector).cache();
+    } else if (plugin instanceof AutoJoiner) {
+      AutoJoiner autoJoiner = (AutoJoiner) plugin;
+      Map<String, JoinStage> inputStages = new HashMap<>();
+      for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
+        StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
+        inputStages.put(inputStageName,
+                        JoinStage.builder(inputStageName, inputStageSpec.getOutputSchema()).build());
+      }
+      AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
+
+      // joinDefinition will always be non-null because
+      // it is checked by PipelinePhasePreparer at the start of the run.
+      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);;
+      return handleAutoJoin(joinDefinition, inputDataCollections);
+    } else {
+      // should never happen unless there is a bug in the code. should have failed during deployment
+      throw new IllegalStateException(String.format("Stage '%s' is an unknown joiner type %s",
+                                                    stageName, plugin.getClass().getName()));
+    }
+  }
+
+  /**
+   * The purpose of this method is to collect various pieces of information together into a JoinRequest.
+   * This amounts to gathering the SparkCollection, schema, join key, and join type for each stage involved in the join.
+   */
+  private SparkCollection<Object> handleAutoJoin(JoinDefinition joinDefinition,
+                                                 Map<String, SparkCollection<Object>> inputDataCollections) {
+    // sort stages to join so that broadcasts happen last. This is to ensure that the left side is not a broadcast
+    // so that we don't try to broadcast both sides of the join. It also causes less data to be shuffled for the
+    // non-broadcast joins.
+    List<JoinStage> joinOrder = new ArrayList<>(joinDefinition.getStages());
+    joinOrder.sort((s1, s2) -> {
+      if (s1.isBroadcast() && !s2.isBroadcast()) {
+        return 1;
+      } else if (!s1.isBroadcast() && s2.isBroadcast()) {
+        return -1;
+      }
+      return 0;
+    });
+
+    Iterator<JoinStage> stageIter = joinOrder.iterator();
+    JoinStage left = stageIter.next();
+    SparkCollection<Object> leftCollection = inputDataCollections.get(left.getStageName());
+    Schema leftSchema = left.getSchema();
+
+    JoinCondition condition = joinDefinition.getCondition();
+    // currently this is the only operation, but check this for future changes
+    if (condition.getOp() != JoinCondition.Op.KEY_EQUALITY) {
+      throw new IllegalStateException("Unsupport join condition operation " + condition.getOp());
+    }
+    JoinCondition.OnKeys onKeys = (JoinCondition.OnKeys) condition;
+
+    // If this is a join on A.x = B.y = C.z and A.k = B.k = C.k, then stageKeys will look like:
+    // A -> [x, k]
+    // B -> [y, k]
+    // C -> [z, k]
+    Map<String, List<String>> stageKeys = onKeys.getKeys().stream()
+      .collect(Collectors.toMap(JoinKey::getStageName, JoinKey::getFields));
+    List<JoinCollection> toJoin = new ArrayList<>();
+    while (stageIter.hasNext()) {
+      // in this loop, information for each stage to be joined is gathered together into a JoinCollection
+      JoinStage right = stageIter.next();
+      String rightName = right.getStageName();
+      // JoinCollection contains the stage name,  SparkCollection, schema, joinkey,
+      // whether it's required, and whether to broadcast
+      toJoin.add(new JoinCollection(rightName, inputDataCollections.get(rightName),
+                                    right.getSchema(), stageKeys.get(rightName),
+                                    right.isRequired(), right.isBroadcast()));
+    }
+
+    // JoinRequest contains the left side of the join, plus 1 or more other stages to join to.
+    JoinRequest joinRequest = new JoinRequest(left.getStageName(), stageKeys.get(left.getStageName()), leftSchema,
+                                              left.isRequired(), onKeys.isNullSafe(),
+                                              joinDefinition.getSelectedFields(),
+                                              joinDefinition.getOutputSchema(), toJoin);
+    return leftCollection.join(joinRequest);
+  }
+
+  protected SparkCollection<Object> handleJoin(BatchJoiner<?, ?, ?> joiner,
+                                               Map<String, SparkCollection<Object>> inputDataCollections,
+                                               StageSpec stageSpec, Integer numPartitions,
+                                               StageStatisticsCollector collector) throws Exception {
+    Map<String, SparkPairCollection<Object, Object>> preJoinStreams = new HashMap<>();
+    for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
+      String inputStage = inputStreamEntry.getKey();
+      SparkCollection<Object> inputStream = inputStreamEntry.getValue();
+      preJoinStreams.put(inputStage, addJoinKey(stageSpec, inputStage, inputStream, collector));
+    }
+
+    Set<String> remainingInputs = new HashSet<>();
+    remainingInputs.addAll(inputDataCollections.keySet());
+
+    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs = null;
+    // inner join on required inputs
+    for (final String inputStageName : joiner.getJoinConfig().getRequiredInputs()) {
+      SparkPairCollection<Object, Object> preJoinCollection = preJoinStreams.get(inputStageName);
+
+      if (joinedInputs == null) {
+        joinedInputs = preJoinCollection.mapValues(new InitialJoinFunction<>(inputStageName));
+      } else {
+        JoinFlattenFunction<Object> joinFlattenFunction = new JoinFlattenFunction<>(inputStageName);
+        joinedInputs = numPartitions == null ?
+          joinedInputs.join(preJoinCollection).mapValues(joinFlattenFunction) :
+          joinedInputs.join(preJoinCollection, numPartitions).mapValues(joinFlattenFunction);
+      }
+      remainingInputs.remove(inputStageName);
+    }
+
+    // outer join on non-required inputs
+    boolean isFullOuter = joinedInputs == null;
+    for (final String inputStageName : remainingInputs) {
+      SparkPairCollection<Object, Object> preJoinStream = preJoinStreams.get(inputStageName);
+
+      if (joinedInputs == null) {
+        joinedInputs = preJoinStream.mapValues(new InitialJoinFunction<>(inputStageName));
+      } else {
+        if (isFullOuter) {
+          OuterJoinFlattenFunction<Object> flattenFunction = new OuterJoinFlattenFunction<>(inputStageName);
+
+          joinedInputs = numPartitions == null ?
+            joinedInputs.fullOuterJoin(preJoinStream).mapValues(flattenFunction) :
+            joinedInputs.fullOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
+        } else {
+          LeftJoinFlattenFunction<Object> flattenFunction = new LeftJoinFlattenFunction<>(inputStageName);
+
+          joinedInputs = numPartitions == null ?
+            joinedInputs.leftOuterJoin(preJoinStream).mapValues(flattenFunction) :
+            joinedInputs.leftOuterJoin(preJoinStream, numPartitions).mapValues(flattenFunction);
+        }
+      }
+    }
+
+    // should never happen, but removes warnings
+    if (joinedInputs == null) {
+      throw new IllegalStateException("There are no inputs into join stage " + stageSpec.getName());
+    }
+
+    return mergeJoinResults(stageSpec, joinedInputs, collector);
   }
 
   // return whether this stage should be cached to avoid recomputation

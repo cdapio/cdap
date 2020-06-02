@@ -33,10 +33,17 @@ import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
+import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
+import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinCondition;
+import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinField;
+import io.cdap.cdap.etl.api.join.JoinKey;
+import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.batch.BatchPipelineSpecGenerator;
@@ -52,6 +59,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -63,18 +71,25 @@ import javax.annotation.Nullable;
 public class PipelineSpecGeneratorTest {
   private static final Schema SCHEMA_A = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
   private static final Schema SCHEMA_B = Schema.recordOf("b", Schema.Field.of("b", Schema.of(Schema.Type.STRING)));
+  private static final Schema SCHEMA_ABC = Schema.recordOf("abc",
+                                                           Schema.Field.of("a", Schema.of(Schema.Type.STRING)),
+                                                           Schema.Field.of("b", Schema.of(Schema.Type.STRING)),
+                                                           Schema.Field.of("c", Schema.of(Schema.Type.INT)));
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
   private static final ETLPlugin MOCK_SOURCE = new ETLPlugin("mocksource", BatchSource.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_TRANSFORM_A = new ETLPlugin("mockA", Transform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_TRANSFORM_B = new ETLPlugin("mockB", Transform.PLUGIN_TYPE, EMPTY_MAP);
+  private static final ETLPlugin MOCK_TRANSFORM_ABC = new ETLPlugin("mockABC", Transform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_SINK = new ETLPlugin("mocksink", BatchSink.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_JOINER = new ETLPlugin("mockjoiner", BatchJoiner.PLUGIN_TYPE, EMPTY_MAP);
+  private static final ETLPlugin MOCK_AUTO_JOINER = new ETLPlugin("mockautojoiner", BatchJoiner.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_ERROR = new ETLPlugin("mockerror", ErrorTransform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_ACTION = new ETLPlugin("mockaction", Action.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_CONDITION = new ETLPlugin("mockcondition", Condition.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_SPLITTER = new ETLPlugin("mocksplit", SplitterTransform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ArtifactId ARTIFACT_ID =
     new ArtifactId("plugins", new ArtifactVersion("1.0.0"), ArtifactScope.USER);
+  private static JoinDefinition joinDefinition;
   private static BatchPipelineSpecGenerator specGenerator;
 
   @BeforeClass
@@ -89,6 +104,8 @@ public class PipelineSpecGeneratorTest {
                                    artifactIds);
     pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockB",
                                    MockPlugin.builder().setOutputSchema(SCHEMA_B).build(), artifactIds);
+    pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockABC",
+                                   MockPlugin.builder().setOutputSchema(SCHEMA_ABC).build(), artifactIds);
     pluginConfigurer.addMockPlugin(BatchSink.PLUGIN_TYPE, "mocksink", MockPlugin.builder().build(), artifactIds);
     pluginConfigurer.addMockPlugin(Action.PLUGIN_TYPE, "mockaction", MockPlugin.builder().build(), artifactIds);
     pluginConfigurer.addMockPlugin(Condition.PLUGIN_TYPE, "mockcondition", MockPlugin.builder().build(), artifactIds);
@@ -97,7 +114,7 @@ public class PipelineSpecGeneratorTest {
     pluginConfigurer.addMockPlugin(SplitterTransform.PLUGIN_TYPE, "mocksplit",
                                    new MockSplitter(ImmutableMap.of("portA", SCHEMA_A, "portB", SCHEMA_B)),
                                    artifactIds);
-
+    pluginConfigurer.addMockPlugin(BatchJoiner.PLUGIN_TYPE, "mockautojoiner", new MockAutoJoin(), artifactIds);
 
     specGenerator = new BatchPipelineSpecGenerator(pluginConfigurer,
                                                    ImmutableSet.of(BatchSource.PLUGIN_TYPE),
@@ -408,6 +425,7 @@ public class PipelineSpecGeneratorTest {
       .setNumOfRecordsPreview(100)
       .build();
 
+    Map<String, String> emptyMap = Collections.emptyMap();
     PipelineSpec expected = BatchPipelineSpec.builder()
       .addStage(
         StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", EMPTY_MAP, ARTIFACT_ID))
@@ -448,6 +466,89 @@ public class PipelineSpecGeneratorTest {
       .build();
 
     PipelineSpec actual = specGenerator.generateSpec(config);
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testAutoJoin() {
+    /*
+     *           ---- transformA --------|
+     *           |                       |
+     * source ---|                       |-- autojoin --- sink
+     *           |                       |
+     *           ---- transformABC ------|
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setTimeSchedule("* * * * *")
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("tA", MOCK_TRANSFORM_A))
+      .addStage(new ETLStage("tABC", MOCK_TRANSFORM_ABC))
+      .addStage(new ETLStage("autojoin", MOCK_AUTO_JOINER))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("source", "tA")
+      .addConnection("source", "tABC")
+      .addConnection("tA", "autojoin")
+      .addConnection("tABC", "autojoin")
+      .addConnection("autojoin", "sink")
+      .setNumOfRecordsPreview(100)
+      .build();
+
+    joinDefinition = JoinDefinition.builder()
+      .select(new JoinField("tA", "a"), new JoinField("tABC", "b"), new JoinField("tABC", "c"))
+      .from(JoinStage.builder("tA", SCHEMA_A).isRequired().build(),
+            JoinStage.builder("tABC", SCHEMA_ABC).isOptional().build())
+      .on(JoinCondition.onKeys()
+            .addKey(new JoinKey("tA", Collections.singletonList("a")))
+            .addKey(new JoinKey("tABC", Collections.singletonList("a")))
+            .build())
+      .setOutputSchemaName("abc.joined")
+      .build();
+    Schema joinSchema = Schema.recordOf("abc.joined",
+                                        Schema.Field.of("a", Schema.of(Schema.Type.STRING)),
+                                        Schema.Field.of("b", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                                        Schema.Field.of("c", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+
+    Map<String, String> emptyMap = new HashMap<>();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("source", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
+          .addOutput(SCHEMA_A, "tA", "tABC")
+          .build())
+      .addStage(
+        StageSpec.builder("tA", new PluginSpec(Transform.PLUGIN_TYPE, "mockA", emptyMap, ARTIFACT_ID))
+          .addInputSchema("source", SCHEMA_A)
+          .addOutput(SCHEMA_A, "autojoin")
+          .setErrorSchema(SCHEMA_B)
+          .build())
+      .addStage(
+        StageSpec.builder("tABC", new PluginSpec(Transform.PLUGIN_TYPE, "mockABC", emptyMap, ARTIFACT_ID))
+          .addInputSchema("source", SCHEMA_A)
+          .addOutput(SCHEMA_ABC, "autojoin")
+          .setErrorSchema(SCHEMA_A)
+          .build())
+      .addStage(
+        StageSpec.builder("autojoin",
+                          new PluginSpec(BatchJoiner.PLUGIN_TYPE, "mockautojoiner", emptyMap, ARTIFACT_ID))
+          .addInputSchema("tA", SCHEMA_A)
+          .addInputSchema("tABC", SCHEMA_ABC)
+          .addOutput(joinSchema, "sink")
+          .setErrorSchema(SCHEMA_ABC)
+          .build())
+      .addStage(
+        StageSpec.builder("sink", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
+          .addInputSchema("autojoin", joinSchema)
+          .setErrorSchema(joinSchema)
+          .build())
+      .addConnections(config.getConnections())
+      .setResources(config.getResources())
+      .setDriverResources(config.getDriverResources())
+      .setClientResources(config.getClientResources())
+      .setStageLoggingEnabled(config.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(config.getNumOfRecordsPreview())
+      .build();
+
+    PipelineSpec actual = specGenerator.generateSpec(config);
+
     Assert.assertEquals(expected, actual);
   }
 
@@ -899,6 +1000,15 @@ public class PipelineSpecGeneratorTest {
     @Override
     public void configurePipeline(MultiOutputPipelineConfigurer multiOutputPipelineConfigurer) {
       multiOutputPipelineConfigurer.getMultiOutputStageConfigurer().setOutputSchemas(outputSchemas);
+    }
+  }
+
+  private static class MockAutoJoin extends BatchAutoJoiner {
+
+    @Nullable
+    @Override
+    public JoinDefinition define(AutoJoinerContext context) {
+      return joinDefinition;
     }
   }
 
