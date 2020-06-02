@@ -43,6 +43,11 @@ const OutputsView: React.FC<ICreateContext> = ({
   JSONStatus,
   setJSONStatus,
   setPluginState,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
@@ -74,6 +79,11 @@ const OutputsView: React.FC<ICreateContext> = ({
         JSONStatus={JSONStatus}
         setJSONStatus={setJSONStatus}
         setPluginState={setPluginState}
+        filters={filters}
+        filterToName={filterToName}
+        filterToCondition={filterToCondition}
+        filterToShowList={filterToShowList}
+        showToInfo={showToInfo}
       />
       <Heading type={HeadingTypes.h3} label="Output" />
       <br />

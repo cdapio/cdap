@@ -1,5 +1,9 @@
 import { SPEC_VERSION } from 'components/PluginJSONCreator/constants';
-import { IBasicPluginInfo, IConfigurationGroupInfo, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  IBasicPluginInfo,
+  IConfigurationGroupInfo,
+  IWidgetInfo,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
 
@@ -144,4 +148,3 @@ function downloadPluginJSON(widgetJSONData) {
 }
 
 export { getJSONConfig, parsePluginJSON, downloadPluginJSON };
-
