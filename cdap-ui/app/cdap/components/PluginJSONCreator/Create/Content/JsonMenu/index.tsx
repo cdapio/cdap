@@ -16,7 +16,7 @@
 
 import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
-import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
+import LiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/LiveViewer';
 import {
   downloadPluginJSON,
   getJSONConfig,
@@ -42,8 +42,8 @@ const JsonMenu: React.FC<ICreateContext> = ({
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setPluginState,
 }) => {
@@ -73,7 +73,7 @@ const JsonMenu: React.FC<ICreateContext> = ({
     };
   }, [JSONStatus]);
 
-  const jsonFilename = `${pluginName ? pluginName : '<PluginName>'}-${
+  const JSONFilename = `${pluginName ? pluginName : '<PluginName>'}-${
     pluginType ? pluginType : '<PluginType>'
   }.json`;
 
@@ -115,33 +115,33 @@ const JsonMenu: React.FC<ICreateContext> = ({
     }
   };
 
-  const expandJSONView = () => {
-    setJsonView(true);
+  const expandLiveView = () => {
+    setLiveView(true);
   };
 
-  const collapseJSONView = () => {
-    setJsonView(false);
+  const collapseLiveView = () => {
+    setLiveView(false);
   };
 
   return (
     <div>
-      <If condition={jsonView}>
-        <JsonLiveViewer
+      <If condition={liveView}>
+        <LiveViewer
           JSONConfig={getJSONConfig(pluginData)}
           downloadDisabled={downloadDisabled}
-          collapseJSONView={collapseJSONView}
+          collapseLiveView={collapseLiveView}
           onDownloadClick={onDownloadClick}
           populateImportResults={populateImportResults}
-          jsonFilename={jsonFilename}
+          JSONFilename={JSONFilename}
           JSONStatus={JSONStatus}
           JSONErrorMessage={JSONErrorMessage}
         />
       </If>
-      <If condition={!jsonView}>
+      <If condition={!liveView}>
         <ClosedJsonMenu
           downloadDisabled={downloadDisabled}
           onDownloadClick={onDownloadClick}
-          expandJSONView={expandJSONView}
+          expandLiveView={expandLiveView}
           populateImportResults={populateImportResults}
         />
       </If>

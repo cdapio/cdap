@@ -79,8 +79,8 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ widgetToAttributes });
   };
 
-  public setJsonView = (jsonView: boolean) => {
-    this.setState({ jsonView });
+  public setLiveView = (liveView: boolean) => {
+    this.setState({ liveView });
   };
 
   public setOutputName = (outputName: string) => {
@@ -124,7 +124,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToWidgets: {},
     widgetToInfo: {},
     widgetToAttributes: {},
-    jsonView: true,
+    liveView: true,
     outputName: '',
 
     setActiveStep: this.setActiveStep,
@@ -134,7 +134,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setGroupToWidgets: this.setGroupToWidgets,
     setWidgetToInfo: this.setWidgetToInfo,
     setWidgetToAttributes: this.setWidgetToAttributes,
-    setJsonView: this.setJsonView,
+    setLiveView: this.setLiveView,
     setOutputName: this.setOutputName,
     setPluginState: this.setPluginState,
   };

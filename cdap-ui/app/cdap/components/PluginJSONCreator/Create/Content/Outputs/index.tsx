@@ -36,8 +36,8 @@ const OutputsView: React.FC<ICreateContext> = ({
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setOutputName,
   setPluginState,
@@ -66,8 +66,8 @@ const OutputsView: React.FC<ICreateContext> = ({
         groupToWidgets={groupToWidgets}
         widgetToInfo={widgetToInfo}
         widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
+        liveView={liveView}
+        setLiveView={setLiveView}
         outputName={localOutputName}
         setPluginState={setPluginState}
       />
