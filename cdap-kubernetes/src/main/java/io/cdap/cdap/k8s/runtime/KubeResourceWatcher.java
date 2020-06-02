@@ -23,6 +23,7 @@ import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.common.Cancellable;
 
@@ -33,24 +34,45 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A thread for monitoring deployment state change.
+ * A thread for monitoring Kubernetes resource state change.
+ * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
-public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment> {
+abstract class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
 
   private final String selector;
-  private final Queue<ResourceChangeListener<V1Deployment>> listeners;
+  private final Queue<ResourceChangeListener<T>> listeners;
   private volatile AppsV1Api appsApi;
 
-  public DeploymentWatcher(String namespace, String selector) {
+  KubeResourceWatcher(String namespace, String selector) {
     super("kube-run-watcher", namespace);
     setDaemon(true);
     this.selector = selector;
     this.listeners = new ConcurrentLinkedQueue<>();
   }
 
-  public Cancellable addListener(ResourceChangeListener<V1Deployment> listener) {
+  static KubeResourceWatcher<V1Deployment> createDeploymentWatcher(String namespace, String selector) {
+    return new KubeResourceWatcher<V1Deployment>(namespace, selector) {
+      @Override
+      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
+                                                         null, null, null, true, null, null);
+      }
+    };
+  }
+
+  static KubeResourceWatcher<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector) {
+    return new KubeResourceWatcher<V1StatefulSet>(namespace, selector) {
+      @Override
+      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, labelSelector,
+                                                          null, null, null, true, null, null);
+      }
+    };
+  }
+
+  Cancellable addListener(ResourceChangeListener<T> listener) {
     // Wrap the listener for removal
-    ResourceChangeListener<V1Deployment> wrappedListener = wrapListener(listener);
+    ResourceChangeListener<T> wrappedListener = wrapListener(listener);
     listeners.add(wrappedListener);
     resetWatch();
     return () -> listeners.remove(wrappedListener);
@@ -63,24 +85,18 @@ public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment>
   }
 
   @Override
-  public void resourceAdded(V1Deployment deployment) {
-    listeners.forEach(l -> l.resourceAdded(deployment));
+  public void resourceAdded(T resource) {
+    listeners.forEach(l -> l.resourceAdded(resource));
   }
 
   @Override
-  public void resourceModified(V1Deployment deployment) {
-    listeners.forEach(l -> l.resourceModified(deployment));
+  public void resourceModified(T resource) {
+    listeners.forEach(l -> l.resourceModified(resource));
   }
 
   @Override
-  public void resourceDeleted(V1Deployment deployment) {
-    listeners.forEach(l -> l.resourceDeleted(deployment));
-  }
-
-  @Override
-  protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-    return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
-                                                     null, null, null, true, null, null);
+  public void resourceDeleted(T resource) {
+    listeners.forEach(l -> l.resourceDeleted(resource));
   }
 
   @Override
@@ -93,7 +109,7 @@ public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment>
    *
    * @throws IOException if exception was raised during creation of {@link AppsV1Api}
    */
-  private AppsV1Api getAppsApi() throws IOException {
+  AppsV1Api getAppsApi() throws IOException {
     AppsV1Api api = appsApi;
     if (api != null) {
       return api;
@@ -115,21 +131,21 @@ public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment>
     }
   }
 
-  private ResourceChangeListener<V1Deployment> wrapListener(ResourceChangeListener<V1Deployment> listener) {
-    return new ResourceChangeListener<V1Deployment>() {
+  private ResourceChangeListener<T> wrapListener(ResourceChangeListener<T> listener) {
+    return new ResourceChangeListener<T>() {
 
       @Override
-      public void resourceAdded(V1Deployment resource) {
+      public void resourceAdded(T resource) {
         listener.resourceAdded(resource);
       }
 
       @Override
-      public void resourceModified(V1Deployment resource) {
+      public void resourceModified(T resource) {
         listener.resourceModified(resource);
       }
 
       @Override
-      public void resourceDeleted(V1Deployment resource) {
+      public void resourceDeleted(T resource) {
         listener.resourceDeleted(resource);
       }
     };
