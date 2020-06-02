@@ -18,6 +18,7 @@ package io.cdap.cdap.k8s.discovery;
 
 import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
+import io.cdap.cdap.k8s.common.KubeResourceType;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -366,7 +367,7 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
     private final Set<String> services;
 
     WatcherThread() {
-      super("kube-discovery-service", namespace);
+      super("kube-discovery-service", namespace, KubeResourceType.SERVICE);
       this.services = Collections.newSetFromMap(new ConcurrentHashMap<>());
     }
 
