@@ -71,8 +71,8 @@ const styles = (theme): StyleRules => {
       alignItems: 'center',
       justifyContent: 'center',
     },
-    jsonLiveCode: {
-      padding: '14px',
+    liveViewLoad: {
+      maxWidth: '50%',
     },
   };
 };
