@@ -56,6 +56,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   setLiveView,
   outputName,
   setPluginState,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
@@ -110,6 +115,11 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         setLiveView={setLiveView}
         outputName={outputName}
         setPluginState={setPluginState}
+        filters={filters}
+        filterToName={filterToName}
+        filterToCondition={filterToCondition}
+        filterToShowList={filterToShowList}
+        showToInfo={showToInfo}
       />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInputs}>

@@ -32,6 +32,11 @@ interface ICreateState {
   widgetToAttributes: any;
   liveView: boolean;
   outputName: string;
+  filters: string[];
+  filterToName: any;
+  filterToCondition: any;
+  filterToShowList: any;
+  showToInfo: any;
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
@@ -43,6 +48,11 @@ interface ICreateState {
   setLiveView: (liveView: boolean) => void;
   setOutputName: (outputName: string) => void;
   setPluginState: (pluginState: any) => void;
+  setFilters: (filters: string[]) => void;
+  setFilterToName: (filterToName: any) => void;
+  setFilterToCondition: (filterToCondition: any) => void;
+  setFilterToShowList: (filterToShowList: any) => void;
+  setShowToInfo: (showToInfo: any) => void;
 }
 
 export interface IBasicPluginInfo {

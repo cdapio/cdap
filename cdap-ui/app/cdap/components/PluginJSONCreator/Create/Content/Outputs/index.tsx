@@ -41,6 +41,11 @@ const OutputsView: React.FC<ICreateContext> = ({
   outputName,
   setOutputName,
   setPluginState,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
@@ -70,6 +75,11 @@ const OutputsView: React.FC<ICreateContext> = ({
         setLiveView={setLiveView}
         outputName={localOutputName}
         setPluginState={setPluginState}
+        filters={filters}
+        filterToName={filterToName}
+        filterToCondition={filterToCondition}
+        filterToShowList={filterToShowList}
+        showToInfo={showToInfo}
       />
       <Heading type={HeadingTypes.h3} label="Outputs" />
       <br />

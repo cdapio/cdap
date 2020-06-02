@@ -75,6 +75,11 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setLiveView,
   outputName,
   setPluginState,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -194,6 +199,11 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         liveView={liveView}
         setLiveView={setLiveView}
         outputName={outputName}
+        filters={filters}
+        filterToName={filterToName}
+        filterToCondition={filterToCondition}
+        filterToShowList={filterToShowList}
+        showToInfo={showToInfo}
         setPluginState={setPluginState}
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />

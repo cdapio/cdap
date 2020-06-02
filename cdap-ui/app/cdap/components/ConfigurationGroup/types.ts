@@ -46,7 +46,7 @@ export enum PropertyShowConfigTypeEnums {
 export type IPropertyShowConfigTypes =
   | PropertyShowConfigTypeEnums.GROUP
   | PropertyShowConfigTypeEnums.PROPERTY;
-interface IPropertyShowConfig {
+export interface IPropertyShowConfig {
   name: string;
   type?: IPropertyShowConfigTypes;
 }

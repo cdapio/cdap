@@ -42,6 +42,11 @@ const JsonMenu: React.FC<ICreateContext> = ({
   groupToWidgets,
   widgetToInfo,
   widgetToAttributes,
+  filters,
+  filterToName,
+  filterToCondition,
+  filterToShowList,
+  showToInfo,
   liveView,
   setLiveView,
   outputName,
@@ -58,6 +63,11 @@ const JsonMenu: React.FC<ICreateContext> = ({
     groupToWidgets,
     widgetToInfo,
     widgetToAttributes,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
     outputName,
   };
 
@@ -96,6 +106,11 @@ const JsonMenu: React.FC<ICreateContext> = ({
         newWidgetToInfo,
         newWidgetToAttributes,
         newOutputName,
+        newFilters,
+        newFilterToName,
+        newFilterToCondition,
+        newFilterToShowList,
+        newShowToInfo,
       } = parsePluginJSON(filename, pluginJSON);
 
       setPluginState({
@@ -106,6 +121,11 @@ const JsonMenu: React.FC<ICreateContext> = ({
         widgetToInfo: newWidgetToInfo,
         widgetToAttributes: newWidgetToAttributes,
         outputName: newOutputName,
+        filters: newFilters,
+        filterToName: newFilterToName,
+        filterToCondition: newFilterToCondition,
+        filterToShowList: newFilterToShowList,
+        showToInfo: newShowToInfo,
       });
       setJSONStatus(JSONStatusMessage.Success);
       setJSONErrorMessage(null);

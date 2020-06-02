@@ -1,3 +1,4 @@
+import { IPropertyShowConfig } from 'components/ConfigurationGroup/types';
 import {
   IBasicPluginInfo,
   IConfigurationGroupInfo,
@@ -16,6 +17,11 @@ function getJSONConfig(widgetJSONData) {
     groupToWidgets,
     widgetToInfo,
     widgetToAttributes,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
     outputName,
   } = widgetJSONData;
 
@@ -46,6 +52,22 @@ function getJSONConfig(widgetJSONData) {
     ...(outputName && { name: outputName }),
   };
 
+  const filtersData = filters.map((filterID) => {
+    const filterToShowListData = filterToShowList[filterID].map((showID) => {
+      return {
+        name: showToInfo[showID].name,
+        ...(showToInfo[showID].type && {
+          type: showToInfo[showID].type,
+        }),
+      };
+    });
+    return {
+      name: filterToName[filterID],
+      condition: filterToCondition[filterID],
+      show: filterToShowListData,
+    };
+  });
+
   const config = {
     metadata: {
       'spec-version': '1.5',
@@ -57,6 +79,10 @@ function getJSONConfig(widgetJSONData) {
     ...(outputsData &&
       Object.keys(outputsData).length > 0 && {
         outputs: [outputsData],
+      }),
+    ...(filtersData &&
+      Object.keys(filtersData).length > 0 && {
+        filters: filtersData,
       }),
   };
 
@@ -83,6 +109,11 @@ function parsePluginJSON(filename, pluginJSON) {
   const newGroupToWidgets = {};
   const newWidgetToInfo = {};
   const newWidgetToAttributes = {};
+  const newFilters: string[] = [];
+  const newFilterToName = {};
+  const newFilterToCondition = {};
+  const newFilterToShowList = {};
+  const newShowToInfo = {};
 
   pluginJSON['configuration-groups'].forEach((groupObj) => {
     if (!groupObj || Object.keys(groupObj).length === 0) {
@@ -129,6 +160,37 @@ function parsePluginJSON(filename, pluginJSON) {
   const newOutputName =
     pluginJSON.outputs && pluginJSON.outputs.length > 0 ? pluginJSON.outputs[0].name : '';
 
+  if (pluginJSON.filters) {
+    pluginJSON.filters.forEach((filterObj) => {
+      if (!filterObj || Object.keys(filterObj).length === 0) {
+        return;
+      }
+
+      // generate a unique filter ID
+      const newFilterID = 'Filter_' + uuidV4();
+
+      newFilters.push(newFilterID);
+
+      newFilterToName[newFilterID] = filterObj.name;
+      newFilterToCondition[newFilterID] = filterObj.condition;
+
+      newFilterToShowList[newFilterID] = [];
+
+      if (filterObj.show) {
+        filterObj.show.map((showObj) => {
+          const newShowID = 'Show_' + uuidV4();
+
+          newFilterToShowList[newFilterID].push(newShowID);
+
+          newShowToInfo[newShowID] = {
+            name: showObj.name,
+            ...(showObj.type && { type: showObj.type }),
+          } as IPropertyShowConfig;
+        });
+      }
+    });
+  }
+
   return {
     basicPluginInfo,
     newConfigurationGroups,
@@ -137,6 +199,11 @@ function parsePluginJSON(filename, pluginJSON) {
     newWidgetToInfo,
     newWidgetToAttributes,
     newOutputName,
+    newFilters,
+    newFilterToName,
+    newFilterToCondition,
+    newFilterToShowList,
+    newShowToInfo,
   };
 }
 

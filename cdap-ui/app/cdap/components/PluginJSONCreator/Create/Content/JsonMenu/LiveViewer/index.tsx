@@ -106,7 +106,7 @@ const LiveViewerView: React.FC<ILiveViewerProps> = ({
   downloadDisabled,
   JSONErrorMessage,
 }) => {
-  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.ConfigurationGroupsView);
+  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.JSONView);
 
   // Values needed for Configuration Groups live view
   const [pluginProperties, setPluginProperties] = React.useState(null);

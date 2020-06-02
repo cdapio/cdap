@@ -29,12 +29,14 @@ const PluginInput = ({
   keyPlaceholder = null,
   valuePlaceholder = null,
   kvDelimiter = null,
+  layout = null,
 }) => {
   const widget = {
     label,
     name: label,
     'widget-type': widgetType,
     'widget-attributes': {
+      ...(layout && { layout }),
       ...(delimeter && { delimeter }),
       ...(options && { options }),
       ...(placeholder && { placeholder }),
