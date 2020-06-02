@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.ErrorRecord;
 import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
@@ -64,6 +65,7 @@ import io.cdap.cdap.etl.spark.function.OutputPassFilter;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
+import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,17 +357,18 @@ public abstract class SparkPipelineRunner {
       return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector).cache();
     } else if (plugin instanceof AutoJoiner) {
       AutoJoiner autoJoiner = (AutoJoiner) plugin;
-      Map<String, JoinStage> inputStages = new HashMap<>();
+      Map<String, Schema> inputSchemas = new HashMap<>();
       for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
         StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
-        inputStages.put(inputStageName,
-                        JoinStage.builder(inputStageName, inputStageSpec.getOutputSchema()).build());
+        inputSchemas.put(inputStageName, inputStageSpec.getOutputSchema());
       }
-      AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
+      FailureCollector failureCollector = new LoggingFailureCollector(stageName, inputSchemas);
+      AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(inputSchemas, failureCollector);
 
       // joinDefinition will always be non-null because
       // it is checked by PipelinePhasePreparer at the start of the run.
-      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);;
+      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+      failureCollector.getOrThrowException();
       return handleAutoJoin(joinDefinition, inputDataCollections);
     } else {
       // should never happen unless there is a bug in the code. should have failed during deployment
