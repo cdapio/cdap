@@ -18,11 +18,11 @@ package io.cdap.cdap.k8s.runtime;
 
 import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
+import io.cdap.cdap.k8s.common.KubeResourceType;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.common.Cancellable;
 
@@ -33,24 +33,27 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
- * A thread for monitoring deployment state change.
+ * A thread for monitoring Kubernetes resource state change.
+ * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
-public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment> {
+public final class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
 
+  private final KubeResourceType kubeResourceType;
   private final String selector;
-  private final Queue<ResourceChangeListener<V1Deployment>> listeners;
+  private final Queue<ResourceChangeListener<T>> listeners;
   private volatile AppsV1Api appsApi;
 
-  public DeploymentWatcher(String namespace, String selector) {
-    super("kube-run-watcher", namespace);
+  KubeResourceWatcher(String namespace, String selector, KubeResourceType type) {
+    super("kube-run-watcher", namespace, type);
     setDaemon(true);
     this.selector = selector;
     this.listeners = new ConcurrentLinkedQueue<>();
+    this.kubeResourceType = type;
   }
 
-  public Cancellable addListener(ResourceChangeListener<V1Deployment> listener) {
+  Cancellable addListener(ResourceChangeListener<T> listener) {
     // Wrap the listener for removal
-    ResourceChangeListener<V1Deployment> wrappedListener = wrapListener(listener);
+    ResourceChangeListener<T> wrappedListener = wrapListener(listener);
     listeners.add(wrappedListener);
     resetWatch();
     return () -> listeners.remove(wrappedListener);
@@ -63,24 +66,33 @@ public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment>
   }
 
   @Override
-  public void resourceAdded(V1Deployment deployment) {
-    listeners.forEach(l -> l.resourceAdded(deployment));
+  public void resourceAdded(T resource) {
+    listeners.forEach(l -> l.resourceAdded(resource));
   }
 
   @Override
-  public void resourceModified(V1Deployment deployment) {
-    listeners.forEach(l -> l.resourceModified(deployment));
+  public void resourceModified(T resource) {
+    listeners.forEach(l -> l.resourceModified(resource));
   }
 
   @Override
-  public void resourceDeleted(V1Deployment deployment) {
-    listeners.forEach(l -> l.resourceDeleted(deployment));
+  public void resourceDeleted(T resource) {
+    listeners.forEach(l -> l.resourceDeleted(resource));
   }
 
   @Override
   protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-    return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
-                                                     null, null, null, true, null, null);
+    switch (kubeResourceType) {
+      case DEPLOYMENT:
+        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
+                                                         null, null, null, true, null, null);
+      case STATEFULSET:
+        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, labelSelector,
+                                                          null, null, null, true, null, null);
+      default:
+        throw new RuntimeException(String.format("Kubernetes watch cannot be created for object type %s",
+                                                 kubeResourceType));
+    }
   }
 
   @Override
@@ -115,21 +127,21 @@ public final class DeploymentWatcher extends AbstractWatcherThread<V1Deployment>
     }
   }
 
-  private ResourceChangeListener<V1Deployment> wrapListener(ResourceChangeListener<V1Deployment> listener) {
-    return new ResourceChangeListener<V1Deployment>() {
+  private ResourceChangeListener<T> wrapListener(ResourceChangeListener<T> listener) {
+    return new ResourceChangeListener<T>() {
 
       @Override
-      public void resourceAdded(V1Deployment resource) {
+      public void resourceAdded(T resource) {
         listener.resourceAdded(resource);
       }
 
       @Override
-      public void resourceModified(V1Deployment resource) {
+      public void resourceModified(T resource) {
         listener.resourceModified(resource);
       }
 
       @Override
-      public void resourceDeleted(V1Deployment resource) {
+      public void resourceDeleted(T resource) {
         listener.resourceDeleted(resource);
       }
     };
