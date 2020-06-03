@@ -68,9 +68,11 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     simpleSchemas.put(String.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(byte[].class, Schema.of(Schema.Type.BYTES));
     simpleSchemas.put(ByteBuffer.class, Schema.of(Schema.Type.BYTES));
-    simpleSchemas.put(Object.class, Schema.of(Schema.Type.NULL));
 
-        // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
+    // TODO: Convert Object class mapping to union of all simple schema types.
+    simpleSchemas.put(Object.class, Schema.unionOf(Schema.of(Schema.Type.NULL)));
+
+    // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
     simpleSchemas.put(URI.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(URL.class, Schema.of(Schema.Type.STRING));
     simpleSchemas.put(UUID.class, Schema.of(Schema.Type.BYTES));
