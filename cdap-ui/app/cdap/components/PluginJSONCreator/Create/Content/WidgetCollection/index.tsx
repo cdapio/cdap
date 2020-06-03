@@ -19,6 +19,7 @@ import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
+import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
 import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
@@ -74,8 +75,11 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   groupToWidgets,
   setWidgetInfo,
   setGroupToWidgets,
+  widgetToAttributes,
+  setWidgetToAttributes,
 }) => {
   const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
+  const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
 
   React.useEffect(() => {
     if (groupID) {
@@ -110,6 +114,11 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
           name: '',
         } as IWidgetInfo,
       });
+
+      setWidgetToAttributes({
+        ...widgetToAttributes,
+        [newWidgetID]: {},
+      });
     };
   }
 
@@ -127,7 +136,20 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
 
       const { [widgetToDelete]: info, ...restWidgetInfo } = widgetInfo;
       setWidgetInfo(restWidgetInfo);
+
+      const { [widgetToDelete]: attributes, ...restWidgetToAttributes } = widgetToAttributes;
+      setWidgetToAttributes(restWidgetToAttributes);
     };
+  }
+
+  function openWidgetAttributes(widgetIndex) {
+    return () => {
+      setOpenWidgetIndex(widgetIndex);
+    };
+  }
+
+  function closeWidgetAttributes() {
+    setOpenWidgetIndex(null);
   }
 
   return (
@@ -150,7 +172,25 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
                   onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
                   onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
                 />
+
+                <WidgetAttributesCollection
+                  widgetAttributesOpen={openWidgetIndex === widgetIndex}
+                  onWidgetAttributesClose={closeWidgetAttributes}
+                  widgetID={widgetID}
+                  widgetInfo={widgetInfo}
+                  setWidgetInfo={setWidgetInfo}
+                  widgetToAttributes={widgetToAttributes}
+                  setWidgetToAttributes={setWidgetToAttributes}
+                />
               </div>
+              <Button
+                variant="contained"
+                color="primary"
+                component="span"
+                onClick={openWidgetAttributes(widgetIndex)}
+              >
+                Attributes
+              </Button>
               <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
                 <Divider className={classes.widgetDivider} />
               </If>

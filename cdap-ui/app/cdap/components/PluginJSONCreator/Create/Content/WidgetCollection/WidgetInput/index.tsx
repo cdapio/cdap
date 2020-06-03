@@ -16,7 +16,11 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import { WIDGET_CATEGORY, WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
+import {
+  WIDGET_CATEGORY,
+  WIDGET_TYPES,
+  WIDGET_TYPE_TO_ATTRIBUTES,
+} from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
@@ -45,6 +49,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   widgetID,
   widgetInfo,
   setWidgetInfo,
+  widgetToAttributes,
+  setWidgetToAttributes,
 }) => {
   function onNameChange() {
     return (name) => {
@@ -70,6 +76,14 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         ...prevObjs,
         [widgetID]: { ...prevObjs[widgetID], widgetType },
       }));
+
+      setWidgetToAttributes({
+        ...widgetToAttributes,
+        [id]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
+          acc[curr] = '';
+          return acc;
+        }, {}),
+      });
     };
   }
 
