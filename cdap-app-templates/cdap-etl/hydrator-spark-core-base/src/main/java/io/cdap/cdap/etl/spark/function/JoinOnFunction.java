@@ -64,11 +64,11 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
         AutoJoinerContext autoJoinerContext = pluginFunctionContext.createAutoJoinerContext();
         JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
         autoJoinerContext.getFailureCollector().getOrThrowException();
+        String stageName = pluginFunctionContext.getStageName();
         if (joinDefinition == null) {
           throw new IllegalStateException(String.format(
             "Join stage '%s' did not specify a join definition. " +
-              "Check with the plugin developer to ensure it is implemented correctly.",
-            pluginFunctionContext.getStageSpec().getName()));
+              "Check with the plugin developer to ensure it is implemented correctly.", stageName));
         }
         JoinCondition condition = joinDefinition.getCondition();
         /*
@@ -92,7 +92,7 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
             .map(JoinStage::getStageName)
             .anyMatch(s -> s.equals(inputStageName));
         }
-        joiner = new JoinerBridge(autoJoiner, joinDefinition);
+        joiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
       } else {
         joiner = (BatchJoiner<JOIN_KEY, INPUT_RECORD, Object>) plugin;
         BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();

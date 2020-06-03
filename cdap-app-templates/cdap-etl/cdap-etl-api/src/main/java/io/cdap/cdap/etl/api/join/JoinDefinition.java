@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.api.join;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.error.JoinError;
+import io.cdap.cdap.etl.api.join.error.OutputSchemaError;
 import io.cdap.cdap.etl.api.join.error.SelectedFieldError;
 
 import java.util.ArrayList;
@@ -81,6 +82,7 @@ public class JoinDefinition {
     private final List<JoinField> selectedFields;
     private JoinCondition condition;
     private String schemaName;
+    private Schema outputSchema;
 
     private Builder() {
       stages = new ArrayList<>();
@@ -120,6 +122,19 @@ public class JoinDefinition {
     }
 
     /**
+     * Set the output schema for the join. This should only be set if the input JoinStages do not contain known
+     * schemas. The most common scenario here is when the input schemas are not known when the pipeline is deployed
+     * due to macros.
+     *
+     * When all input schemas are known, if the expected output schema differs from this schema, an error
+     * will be thrown.
+     */
+    public Builder setOutputSchema(Schema outputSchema) {
+      this.outputSchema = outputSchema;
+      return this;
+    }
+
+    /**
      * @return a valid JoinDefinition
      * @throws InvalidJoinException if the join is invalid
      */
@@ -140,12 +155,18 @@ public class JoinDefinition {
         errors.addAll(condition.validate(stages));
       }
 
-      Schema outputSchema = getOutputSchema(errors);
+      Schema generatedOutputSchema = getOutputSchema(errors);
+      if (generatedOutputSchema != null && outputSchema != null) {
+        // verify that the plugin defined output schema is compatible with the actual output schema
+        validateSchemaCompatibility(generatedOutputSchema, outputSchema, errors);
+      }
+
       if (!errors.isEmpty()) {
         throw new InvalidJoinException(errors);
       }
 
-      return new JoinDefinition(selectedFields, stages, condition, outputSchema);
+      return new JoinDefinition(selectedFields, stages, condition,
+                                outputSchema == null ? generatedOutputSchema : outputSchema);
     }
 
     @Nullable
@@ -198,6 +219,63 @@ public class JoinDefinition {
       }
 
       return Schema.recordOf(schemaName == null ? "joined" : schemaName, outputFields);
+    }
+
+    /**
+     * Validate that the first schema is compatible with the second. Schema s1 is compatible with schema s2 if all
+     * the fields in s1 are present in s2 with the same type, or with the nullable version of the type. In addition,
+     * s2 cannot contain any fields that are not present in s1.
+     *
+     * @param expected the expected schema
+     * @param provided the provided schema
+     */
+    private static void validateSchemaCompatibility(Schema expected, Schema provided, List<JoinError> errors) {
+      Set<String> missingFields = new HashSet<>();
+      for (Schema.Field expectedField : expected.getFields()) {
+        Schema.Field providedField = provided.getField(expectedField.getName());
+        if (providedField == null) {
+          missingFields.add(expectedField.getName());
+          continue;
+        }
+        Schema expectedFieldSchema = expectedField.getSchema();
+        Schema providedFieldSchema = providedField.getSchema();
+        boolean expectedIsNullable = expectedFieldSchema.isNullable();
+        boolean providedIsNullable = providedFieldSchema.isNullable();
+        expectedFieldSchema = expectedIsNullable ? expectedFieldSchema.getNonNullable() : expectedFieldSchema;
+        providedFieldSchema = providedIsNullable ? providedFieldSchema.getNonNullable() : providedFieldSchema;
+        if (expectedFieldSchema.getType() != providedFieldSchema.getType()) {
+          errors.add(new OutputSchemaError(
+            expectedField.getName(), expectedFieldSchema.getDisplayName(),
+            String.format("Provided schema does not match expected schema. " +
+                            "Field '%s' is a '%s' but is expected to be a '%s'",
+                          expectedField.getName(), expectedFieldSchema.getDisplayName(),
+                          providedFieldSchema.getDisplayName())));
+          continue;
+        }
+        if (expectedIsNullable && !providedIsNullable) {
+          errors.add(new OutputSchemaError(
+            expectedField.getName(), expectedFieldSchema.getDisplayName(),
+            String.format("Provided schema does not match expected schema. Field '%s' should be nullable",
+                          expectedField.getName())));
+        }
+      }
+
+      if (!missingFields.isEmpty()) {
+        errors.add(new JoinError(String.format(
+          "Provided schema is missing fields: %s. Select fewer fields or update the output schema.",
+          String.join(", ", missingFields))));
+      }
+
+      for (Schema.Field providedField : provided.getFields()) {
+        String fieldName = providedField.getName();
+        if (expected.getField(fieldName) == null) {
+          errors.add(new OutputSchemaError(
+            fieldName, null,
+            String.format("The output schema contains extra field '%s' that not in the list of selected fields.",
+                          fieldName),
+            "Select it from one of the inputs, or remove it from the output schema."));
+        }
+      }
     }
   }
 

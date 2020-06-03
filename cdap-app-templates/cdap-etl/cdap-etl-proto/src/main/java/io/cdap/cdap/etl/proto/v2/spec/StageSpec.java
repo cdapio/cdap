@@ -26,6 +26,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -40,26 +42,29 @@ public class StageSpec implements Serializable {
   private final PluginSpec plugin;
   private final Map<String, Schema> inputSchemas;
   private final Map<String, Port> outputPorts;
-  private final Map<String, Schema> portSchemas;
   private final Schema outputSchema;
   private final Schema errorSchema;
   private final boolean stageLoggingEnabled;
   private final boolean processTimingEnabled;
   private final int maxPreviewRecords;
+  // These are required because GSON will not serialize null values in maps.
+  // So the null values originally in inputSchemas will not survive serialization and then deserialization
+  private final Set<String> inputStages;
+  private transient Map<String, Schema> fullInputSchemas;
 
   private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas, @Nullable Schema outputSchema,
-                    Schema errorSchema, Map<String, Schema> portSchemas, Map<String, Port> outputPorts,
+                    Schema errorSchema, Map<String, Port> outputPorts,
                     boolean stageLoggingEnabled, boolean processTimingEnabled, int maxPreviewRecords) {
     this.name = name;
     this.plugin = plugin;
-    this.inputSchemas = Collections.unmodifiableMap(inputSchemas);
+    this.inputSchemas = Collections.unmodifiableMap(new HashMap<>(inputSchemas));
     this.errorSchema = errorSchema;
     this.stageLoggingEnabled = stageLoggingEnabled;
     this.processTimingEnabled = processTimingEnabled;
     this.outputSchema = outputSchema;
     this.outputPorts = Collections.unmodifiableMap(outputPorts);
-    this.portSchemas = Collections.unmodifiableMap(portSchemas);
     this.maxPreviewRecords = maxPreviewRecords;
+    this.inputStages = inputSchemas.keySet();
   }
 
   public String getName() {
@@ -75,7 +80,13 @@ public class StageSpec implements Serializable {
   }
 
   public Map<String, Schema> getInputSchemas() {
-    return inputSchemas;
+    if (fullInputSchemas == null) {
+      fullInputSchemas = new HashMap<>();
+      for (String inputStage : inputStages) {
+        fullInputSchemas.put(inputStage, inputSchemas.get(inputStage));
+      }
+    }
+    return fullInputSchemas;
   }
 
   @Nullable
@@ -138,7 +149,6 @@ public class StageSpec implements Serializable {
       ", plugin=" + plugin +
       ", inputSchemas=" + inputSchemas +
       ", outputPorts=" + outputPorts +
-      ", portSchemas=" + portSchemas +
       ", outputSchema=" + outputSchema +
       ", errorSchema=" + errorSchema +
       ", stageLoggingEnabled=" + stageLoggingEnabled +
@@ -159,7 +169,6 @@ public class StageSpec implements Serializable {
     private final PluginSpec plugin;
     private final boolean isSplitter;
     private Map<String, Schema> inputSchemas;
-    private Map<String, Schema> portSchemas;
     private Map<String, Port> outputs;
     private Schema outputSchema;
     private Schema errorSchema;
@@ -171,7 +180,6 @@ public class StageSpec implements Serializable {
       this.name = name;
       this.plugin = plugin;
       this.inputSchemas = new HashMap<>();
-      this.portSchemas = new HashMap<>();
       this.outputs = new HashMap<>();
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
@@ -201,20 +209,11 @@ public class StageSpec implements Serializable {
       if (!isSplitter) {
         this.outputSchema = outputSchema;
       }
-      if (port != null) {
-        this.portSchemas.put(port, outputSchema);
-      }
       return this;
     }
 
     public Builder setOutputSchema(@Nullable Schema outputSchema) {
       this.outputSchema = outputSchema;
-      return this;
-    }
-
-    public Builder setPortSchemas(Map<String, Schema> portSchemas) {
-      this.portSchemas.clear();
-      this.portSchemas.putAll(portSchemas);
       return this;
     }
 
@@ -239,7 +238,7 @@ public class StageSpec implements Serializable {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, portSchemas, outputs,
+      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, outputs,
                            stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
     }
 

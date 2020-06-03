@@ -19,7 +19,10 @@ package io.cdap.cdap.etl.spark.batch;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.AlertPublisherContext;
@@ -61,10 +64,14 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.sql.Column;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
+import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
 import scala.Tuple2;
 
+import java.util.List;
 import javax.annotation.Nullable;
 
 
@@ -266,5 +273,12 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
 
   protected <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
     return new RDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+  }
+
+  protected Column eq(Column left, Column right, boolean isNullSafe) {
+    if (isNullSafe) {
+      return left.eqNullSafe(right);
+    }
+    return left.equalTo(right);
   }
 }
