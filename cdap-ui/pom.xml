@@ -360,6 +360,15 @@
                   <arguments>run build-storybook</arguments>
                 </configuration>
               </execution>
+              <execution>
+                <id>run-ui-unit-tests</id>
+                <goals>
+                  <goal>yarn</goal>
+                </goals>
+                <configuration>
+                  <arguments>jest</arguments>
+                </configuration>
+              </execution>
             </executions>
           </plugin>
         </plugins>
