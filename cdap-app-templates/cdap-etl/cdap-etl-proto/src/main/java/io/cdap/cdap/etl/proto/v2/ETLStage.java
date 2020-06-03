@@ -38,11 +38,11 @@ public final class ETLStage {
   // removed in 5.0.0, but keeping it here so that we can validate that nobody is trying to use it.
   private final String errorDatasetName;
 
-  // Only for serialization/deserialization purpose for config upgrade to not lose data set by frontend.
+  // Only for serialization/deserialization purpose for config upgrade to not lose data set by UI during update.
   private final Object inputSchema;
   private final Object outputSchema;
-  private static final Logger LOG = LoggerFactory.getLogger(ETLStage.class);
 
+  private static final Logger LOG = LoggerFactory.getLogger(ETLStage.class);
 
   public ETLStage(String name, ETLPlugin plugin) {
     this.name = name;
