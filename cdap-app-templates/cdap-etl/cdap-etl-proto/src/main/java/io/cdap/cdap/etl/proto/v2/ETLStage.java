@@ -24,10 +24,11 @@ import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 
-import java.util.List;
-import java.util.Objects;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * ETL Stage Configuration.
@@ -140,15 +141,18 @@ public final class ETLStage {
     List<ArtifactId> candidates =
         updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(),
                                          ArtifactScope.SYSTEM, null);
-    if (candidates.isEmpty())
+    if (candidates.isEmpty()) {
       return plugin;
+    }
 
     // getPluginArtifacts returns plugins sorted in ascending order.
     // TODO: Consider passing sort order as parameter.
     ArtifactId newPlugin = candidates.get(candidates.size() - 1);
     String newVersion = getUpgradedVersionString(newPlugin);
     // If getUpgradedVersionString returns null, candidate plugin is not valid for upgrade.
-    if (newVersion == null) return plugin;
+    if (newVersion == null) {
+      return plugin;
+    }
 
     ArtifactSelectorConfig newArtifactSelectorConfig =
         new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),

@@ -72,7 +72,9 @@ public final class ETLBatchConfig extends ETLConfig {
   }
 
   public boolean isService() {
-    if (this.service == null) return false;
+    if (this.service == null) {
+      return false;
+    }
     return service;
   }
 
