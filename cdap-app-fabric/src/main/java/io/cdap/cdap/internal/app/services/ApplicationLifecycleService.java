@@ -431,8 +431,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     try {
       ApplicationUpdateDetails detail =
           updateApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
-                                     currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
-                                     upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false);
+                                    currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
+                                    upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false);
       LOG.debug("Application upgrade successful. Update details: {}. Error: {}", detail.getUpdateDetails(),
                 detail.getError());
       return new ApplicationUpdateDetails("upgrade successful.", null);

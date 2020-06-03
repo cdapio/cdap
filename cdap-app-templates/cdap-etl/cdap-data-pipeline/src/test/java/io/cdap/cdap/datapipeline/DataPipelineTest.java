@@ -3528,8 +3528,8 @@ public class DataPipelineTest extends HydratorTestBase {
     addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
                       PluggableFilterTransform.class);
 
-    ArtifactSelectorConfig currentArtifactSelector = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
-                                                                                "test-plugins", "1.0.0");
+    ArtifactSelectorConfig currentArtifactSelector =
+        new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "1.0.0");
 
     Engine engine = Engine.MAPREDUCE;
     String sourceName = "testSource" + engine.name();
@@ -3594,14 +3594,14 @@ public class DataPipelineTest extends HydratorTestBase {
     // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
     // artifact version.
     addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
-        PluggableFilterTransform.class);
+                      PluggableFilterTransform.class);
     addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
-        PluggableFilterTransform.class);
+                      PluggableFilterTransform.class);
     addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
-        PluggableFilterTransform.class);
+                      PluggableFilterTransform.class);
 
-    ArtifactSelectorConfig currentArtifactSelector = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
-        "test-plugins", "[1.0.0,1.0.5)");
+    ArtifactSelectorConfig currentArtifactSelector =
+        new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,1.0.5)");
 
     Engine engine = Engine.MAPREDUCE;
     String sourceName = "testSource" + engine.name();
@@ -3667,14 +3667,17 @@ public class DataPipelineTest extends HydratorTestBase {
     // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
     // artifact version.
     addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
-        PluggableFilterTransform.class);
+                      PluggableFilterTransform.class);
     addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
-        PluggableFilterTransform.class);
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
-        PluggableFilterTransform.class);
+                      PluggableFilterTransform.class);
+    // Since filter plugin is not going to upgrade due to its range, the scope of filter plugin still stays USER.
+    // Add a filter plugin in DEFAULT namespace in the proposed range for upgraded artifact version.
+    // Needed to make deployment successful.
+    addPluginArtifact(NamespaceId.DEFAULT.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
+                      PluggableFilterTransform.class);
 
-    ArtifactSelectorConfig currentArtifactSelector = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
-        "test-plugins", "[1.0.0,2.0.0)");
+    ArtifactSelectorConfig currentArtifactSelector =
+        new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,2.0.0)");
 
     Engine engine = Engine.MAPREDUCE;
     String sourceName = "testSource" + engine.name();
@@ -3715,5 +3718,4 @@ public class DataPipelineTest extends HydratorTestBase {
     // Verify that after upgrade, application upgrades artifact version to latest version available.
     Assert.assertEquals(upgradedAppDetail.getArtifact().getVersion(), UPGRADE_APP_ARTIFACT_ID_2.getVersion());
   }
-
 }
