@@ -29,11 +29,9 @@ import * as React from 'react';
 
 const styles = (): StyleRules => {
   return {
-    basicPluginInputs: {
-      '& > *': {
-        marginTop: '30px',
-        marginBottom: '30px',
-      },
+    basicPluginInput: {
+      marginTop: '30px',
+      marginBottom: '30px',
     },
   };
 };
@@ -69,7 +67,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   return (
     <div>
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
-      <div className={classes.basicPluginInputs}>
+      <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'textbox'}
           value={localPluginName}
@@ -78,6 +76,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
           placeholder={'Select a Plugin Name'}
           required={true}
         />
+      </div>
+      <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'select'}
           value={localPluginType}
@@ -86,6 +86,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
           options={PluginTypes}
           required={true}
         />
+      </div>
+      <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'textbox'}
           value={localDisplayName}
@@ -94,12 +96,16 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
           placeholder={'Select a Display Name'}
           required={true}
         />
+      </div>
+      <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'toggle'}
           value={localEmitAlerts ? 'true' : 'false'}
           onChange={(val) => setLocalEmitAlerts(val === 'true')}
           label={'Emit Alerts?'}
         />
+      </div>
+      <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'toggle'}
           value={localEmitErrors ? 'true' : 'false'}
