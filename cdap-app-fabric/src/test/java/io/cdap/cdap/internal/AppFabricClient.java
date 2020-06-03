@@ -661,7 +661,7 @@ public class AppFabricClient {
     HttpUtil.setTransferEncodingChunked(request, true);
 
     MockResponder mockResponder = new MockResponder();
-    appLifecycleHttpHandler.UpgradeApplication(request, mockResponder, appId.getNamespace(),
+    appLifecycleHttpHandler.upgradeApplication(request, mockResponder, appId.getNamespace(),
                                                appId.getApplication());
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to upgrade app");
   }

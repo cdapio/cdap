@@ -40,12 +40,11 @@ import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.common.id.Id.Artifact;
-
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.id.Id.Artifact;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;

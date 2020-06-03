@@ -49,9 +49,13 @@ public class ArtifactVersionRange {
     return upper;
   }
 
-  public boolean isLowerInclusive() { return isLowerInclusive; }
+  public boolean isLowerInclusive() {
+    return isLowerInclusive;
+  }
 
-  public boolean isUpperInclusive() { return isUpperInclusive;}
+  public boolean isUpperInclusive() {
+    return isUpperInclusive;
+  }
 
   public boolean versionIsInRange(ArtifactVersion version) {
     int lowerCompare = version.compareTo(lower);

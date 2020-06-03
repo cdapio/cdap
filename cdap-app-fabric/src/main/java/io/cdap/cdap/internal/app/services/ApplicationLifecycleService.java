@@ -94,14 +94,15 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-import java.lang.reflect.Type;
-import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -412,7 +413,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     if (currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0) {
       throw new InvalidArtifactException(String.format(
-          "Requested artifact version %s is older than current artifact version %s.", candidateArtifact.getVersion(), currentArtifact.getVersion()));
+          "Requested artifact version %s is older than current artifact version %s.", candidateArtifact.getVersion(),
+          currentArtifact.getVersion()));
     }
 
     ArtifactId newArtifactId =

@@ -60,7 +60,7 @@ public final class ETLStage {
     this.inputSchema = inputSchema;
     this.outputSchema = outputSchema;
   }
-  
+
   public String getName() {
     return name;
   }

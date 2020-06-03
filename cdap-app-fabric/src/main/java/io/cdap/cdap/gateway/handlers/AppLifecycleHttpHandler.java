@@ -37,7 +37,6 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
-import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
@@ -77,7 +76,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import java.util.HashMap;
+
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +89,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -388,7 +388,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/apps/{app-id}/upgrade")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
-  public void UpgradeApplication(HttpRequest request, HttpResponder responder,
+  public void upgradeApplication(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") final String namespaceId,
                                  @PathParam("app-id") final String appName)
       throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
@@ -396,7 +396,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
 
     try {
-      ApplicationUpdateDetails detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+      ApplicationUpdateDetails detail =
+          applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
     } catch (Exception e) {
       LOG.error("Upgrade application failure", e);
@@ -425,7 +426,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    */
   @POST
   @Path("/upgrade")
-  public void UpgradeApplications(FullHttpRequest request, HttpResponder responder,
+  public void upgradeApplications(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
     Map<ApplicationId, ApplicationUpdateDetails> details = new HashMap<>();
