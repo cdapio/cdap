@@ -135,7 +135,6 @@ import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
-import java.util.stream.Collectors;
 import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Assert;
@@ -161,6 +160,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 /**
  *

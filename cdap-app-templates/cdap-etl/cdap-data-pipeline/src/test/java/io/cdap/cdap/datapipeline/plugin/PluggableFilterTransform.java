@@ -99,7 +99,8 @@ public class PluggableFilterTransform extends Transform<StructuredRecord, Struct
     return new ETLPlugin(NAME, Transform.PLUGIN_TYPE, properties, null);
   }
 
-  public static ETLPlugin getPlugin(String filterPlugin, Map<String, String> filterProperties, ArtifactSelectorConfig config) {
+  public static ETLPlugin getPlugin(String filterPlugin, Map<String, String> filterProperties,
+                                    ArtifactSelectorConfig config) {
     Map<String, String> properties = new HashMap<>();
     properties.put("filterPlugin", filterPlugin);
     properties.put("filterProperties", GSON.toJson(filterProperties));
