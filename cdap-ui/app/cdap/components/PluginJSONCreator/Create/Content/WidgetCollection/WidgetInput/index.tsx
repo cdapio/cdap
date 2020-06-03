@@ -16,7 +16,7 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import { WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
+import { WIDGET_CATEGORY, WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
@@ -24,11 +24,13 @@ import * as React from 'react';
 const styles = (): StyleRules => {
   return {
     widgetInput: {
-      '& > *': {
-        width: '100%',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
+      marginTop: '20px',
+      marginBottom: '20px',
+    },
+    widgetField: {
+      width: '100%',
+      marginTop: '10px',
+      marginBottom: '10px',
     },
   };
 };
@@ -72,38 +74,46 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   return (
     <If condition={widgetInfo}>
       <div className={classes.widgetInput}>
-        <PluginInput
-          widgetType={'textbox'}
-          value={widgetInfo.name}
-          setValue={onNameChange(widgetInfo, widgetID)}
-          label={'Name'}
-          placeholder={'Name a Widget'}
-          required={false}
-        />
-        <PluginInput
-          widgetType={'textbox'}
-          value={widgetInfo.label}
-          setValue={onLabelChange(widgetInfo, widgetID)}
-          label={'Label'}
-          placeholder={'Label a Widget'}
-          required={false}
-        />
-        <PluginInput
-          widgetType={'textbox'}
-          value={widgetInfo.widgetCategory}
-          setValue={onWidgetCategoryChange(widgetInfo, widgetID)}
-          label={'Category'}
-          placeholder={'Categorize a Widget'}
-          required={false}
-        />
-        <PluginInput
-          widgetType={'select'}
-          value={widgetInfo.widgetType}
-          setValue={onWidgetTypeChange(widgetInfo, widgetID)}
-          label={'Widget Type'}
-          options={WIDGET_TYPES}
-          required={true}
-        />
+        <div className={classes.widgetField}>
+          <PluginInput
+            widgetType={'textbox'}
+            value={widgetInfo.name}
+            onChange={onNameChange(widgetInfo, widgetID)}
+            label={'Name'}
+            placeholder={'Name a Widget'}
+            required={false}
+          />
+        </div>
+        <div className={classes.widgetField}>
+          <PluginInput
+            widgetType={'textbox'}
+            value={widgetInfo.label}
+            onChange={onLabelChange(widgetInfo, widgetID)}
+            label={'Label'}
+            placeholder={'Label a Widget'}
+            required={false}
+          />
+        </div>
+        <div className={classes.widgetField}>
+          <PluginInput
+            widgetType={'select'}
+            value={widgetInfo.widgetCategory}
+            onChange={onWidgetCategoryChange(widgetInfo, widgetID)}
+            label={'Category'}
+            options={WIDGET_CATEGORY}
+            required={false}
+          />
+        </div>
+        <div className={classes.widgetField}>
+          <PluginInput
+            widgetType={'select'}
+            value={widgetInfo.widgetType}
+            onChange={onWidgetTypeChange(widgetInfo, widgetID)}
+            label={'Widget Type'}
+            options={WIDGET_TYPES}
+            required={true}
+          />
+        </div>
       </div>
     </If>
   );

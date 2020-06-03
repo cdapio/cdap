@@ -22,3 +22,4 @@ export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
 );
 
 export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
+export const WIDGET_CATEGORY = ['plugin'];

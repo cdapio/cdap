@@ -23,6 +23,7 @@ import Typography from '@material-ui/core/Typography';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
+import GroupActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupActionButtons';
 import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
@@ -34,7 +35,6 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
-import GroupActionButtons from './GroupActionButtons';
 
 const styles = (): StyleRules => {
   return {
