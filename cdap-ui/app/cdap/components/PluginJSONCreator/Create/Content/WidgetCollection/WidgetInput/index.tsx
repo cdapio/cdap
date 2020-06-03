@@ -42,37 +42,35 @@ interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
 const WidgetInputView: React.FC<IWidgetInputProps> = ({
   classes,
   widgetID,
-  widgetToInfo,
-  setWidgetToInfo,
+  widgetInfo,
+  setWidgetInfo,
 }) => {
   function onNameChange(obj, id) {
     return (name) => {
-      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
+      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
     };
   }
 
   function onLabelChange(obj, id) {
     return (label) => {
-      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
+      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
     };
   }
 
   function onWidgetTypeChange(obj, id) {
     return (widgetType) => {
-      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
+      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
     };
   }
 
   function onWidgetCategoryChange(obj, id) {
     return (widgetCategory) => {
-      setWidgetToInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetCategory } }));
+      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetCategory } }));
     };
   }
 
-  const widgetInfo = widgetToInfo[widgetID];
-
   return (
-    <If condition={widgetInfo}>
+    <If condition={widgetInfo[widgetID]}>
       <div className={classes.widgetInput}>
         <div className={classes.widgetField}>
           <PluginInput

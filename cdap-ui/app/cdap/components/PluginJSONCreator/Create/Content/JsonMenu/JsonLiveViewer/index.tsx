@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,11 @@
  * the License.
  */
 
-import { Button, Tooltip } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
 import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
@@ -62,31 +63,10 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
-  pluginName,
-  pluginType,
-  displayName,
-  emitAlerts,
-  emitErrors,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetToInfo,
-  jsonView,
-  setJsonView,
-}) => {
-  const widgetJSONData = {
-    pluginName,
-    pluginType,
-    displayName,
-    emitAlerts,
-    emitErrors,
-    configurationGroups,
-    groupToInfo,
-    groupToWidgets,
-    widgetToInfo,
-  };
+const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
+  widgetJSONData
+) => {
+  const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
   const JSONConfig = getJSONConfig(widgetJSONData);
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (

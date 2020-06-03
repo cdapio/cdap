@@ -14,7 +14,8 @@
  * the License.
  */
 
-import { Button, Divider } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
+import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
@@ -69,9 +70,9 @@ interface IWidgetCollectionProps extends WithStyles<typeof styles>, ICreateConte
 const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   classes,
   groupID,
-  widgetToInfo,
+  widgetInfo,
   groupToWidgets,
-  setWidgetToInfo,
+  setWidgetInfo,
   setGroupToWidgets,
 }) => {
   const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
@@ -101,8 +102,8 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       });
 
       // Set the default empty properties of the widget
-      setWidgetToInfo({
-        ...widgetToInfo,
+      setWidgetInfo({
+        ...widgetInfo,
         [newWidgetID]: {
           widgetType: '',
           label: '',
@@ -124,8 +125,8 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
         [groupID]: newWidgets,
       });
 
-      const { [widgetToDelete]: info, ...restWidgetToInfo } = widgetToInfo;
-      setWidgetToInfo(restWidgetToInfo);
+      const { [widgetToDelete]: info, ...restwidgetInfo } = widgetInfo;
+      setWidgetInfo(restwidgetInfo);
     };
   }
 
@@ -138,12 +139,12 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-            <If condition={widgetToInfo[widgetID]}>
+            <If condition={widgetInfo[widgetID]}>
               <div className={classes.eachWidget}>
                 <WidgetInput
-                  widgetToInfo={widgetToInfo}
+                  widgetInfo={widgetInfo}
                   widgetID={widgetID}
-                  setWidgetToInfo={setWidgetToInfo}
+                  setWidgetInfo={setWidgetInfo}
                 />
                 <WidgetActionButtons
                   onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}

@@ -64,8 +64,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setGroupToInfo,
   groupToWidgets,
   setGroupToWidgets,
-  widgetToInfo,
-  setWidgetToInfo,
+  widgetInfo,
+  setWidgetInfo,
   jsonView,
   setJsonView,
 }) => {
@@ -75,7 +75,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   );
   const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
-  const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
+  const [localwidgetInfo, setLocalwidgetInfo] = React.useState(widgetInfo);
 
   function addConfigurationGroup(index: number) {
     return () => {
@@ -126,11 +126,11 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
       setLocalGroupToWidgets(restGroupToWidgets);
 
       // Delete all the widget information that belong to the group
-      const newWidgetToInfo = localWidgetToInfo;
+      const newwidgetInfo = localwidgetInfo;
       widgets.map((widget) => {
-        delete newWidgetToInfo[widget];
+        delete newwidgetInfo[widget];
       });
-      setLocalWidgetToInfo(newWidgetToInfo);
+      setLocalwidgetInfo(newwidgetInfo);
     };
   }
 
@@ -146,7 +146,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setConfigurationGroups(localConfigurationGroups);
     setGroupToInfo(localGroupToInfo);
     setGroupToWidgets(localGroupToWidgets);
-    setWidgetToInfo(localWidgetToInfo);
+    setWidgetInfo(localwidgetInfo);
   }
 
   return (
@@ -160,7 +160,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         configurationGroups={localConfigurationGroups}
         groupToInfo={localGroupToInfo}
         groupToWidgets={localGroupToWidgets}
-        widgetToInfo={localWidgetToInfo}
+        widgetInfo={localwidgetInfo}
         jsonView={jsonView}
         setJsonView={setJsonView}
       />
@@ -201,8 +201,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
                   groupID={groupID}
                   groupToWidgets={localGroupToWidgets}
                   setGroupToWidgets={setLocalGroupToWidgets}
-                  widgetToInfo={localWidgetToInfo}
-                  setWidgetToInfo={setLocalWidgetToInfo}
+                  widgetInfo={localwidgetInfo}
+                  setWidgetInfo={setLocalwidgetInfo}
                 />
               </ExpansionPanelActions>
             </ExpansionPanel>

@@ -71,8 +71,8 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ groupToWidgets });
   };
 
-  public setWidgetToInfo = (widgetToInfo: any) => {
-    this.setState({ widgetToInfo });
+  public setWidgetInfo = (widgetInfo: any) => {
+    this.setState({ widgetInfo });
   };
 
   public setJsonView = (jsonView: boolean) => {
@@ -84,17 +84,12 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     pluginName: '',
     pluginType: '',
     displayName: '',
-<<<<<<< HEAD
     emitAlerts: false,
     emitErrors: false,
-=======
-    emitAlerts: null,
-    emitErrors: null,
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
     configurationGroups: [],
     groupToInfo: {},
     groupToWidgets: {},
-    widgetToInfo: {},
+    widgetInfo: {},
     jsonView: true,
 
     setActiveStep: this.setActiveStep,
@@ -102,7 +97,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setConfigurationGroups: this.setConfigurationGroups,
     setGroupToInfo: this.setGroupToInfo,
     setGroupToWidgets: this.setGroupToWidgets,
-    setWidgetToInfo: this.setWidgetToInfo,
+    setWidgetInfo: this.setWidgetInfo,
     setJsonView: this.setJsonView,
   };
 

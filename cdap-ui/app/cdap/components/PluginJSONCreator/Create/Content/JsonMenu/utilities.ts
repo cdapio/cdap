@@ -1,3 +1,4 @@
+import { SPEC_VERSION } from 'components/PluginJSONCreator/constants';
 import { IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import fileDownload from 'js-file-download';
 
@@ -9,19 +10,19 @@ function getJSONConfig(widgetJSONData) {
     configurationGroups,
     groupToInfo,
     groupToWidgets,
-    widgetToInfo,
+    widgetInfo,
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
     const groupLabel = groupToInfo[groupID].label;
     const widgetData = groupToWidgets[groupID].map((widgetID: string) => {
-      const widgetInfo: IWidgetInfo = widgetToInfo[widgetID];
+      const info: IWidgetInfo = widgetInfo[widgetID];
 
       return {
-        'widget-type': widgetInfo.widgetType,
-        label: widgetInfo.label,
-        name: widgetInfo.name,
-        ...(widgetInfo.widgetCategory && { 'widget-category': widgetInfo.widgetCategory }),
+        'widget-type': info.widgetType,
+        label: info.label,
+        name: info.name,
+        ...(info.widgetCategory && { 'widget-category': info.widgetCategory }),
       };
     });
     return {
@@ -32,7 +33,7 @@ function getJSONConfig(widgetJSONData) {
 
   const config = {
     metadata: {
-      'spec-version': '1.5',
+      'spec-version': SPEC_VERSION,
     },
     ...(displayName && { 'display-name': displayName }),
     ...(emitAlerts && { 'emit-alerts': emitAlerts }),

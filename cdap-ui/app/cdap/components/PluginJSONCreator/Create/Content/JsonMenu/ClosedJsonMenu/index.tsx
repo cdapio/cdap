@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,10 +14,12 @@
  * the License.
  */
 
-import { Divider, IconButton, Tooltip } from '@material-ui/core';
+import Divider from '@material-ui/core/Divider';
 import Drawer from '@material-ui/core/Drawer';
+import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import Tooltip from '@material-ui/core/Tooltip';
 import CodeIcon from '@material-ui/icons/Code';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import { downloadPluginJSON } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
@@ -61,7 +63,7 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
   configurationGroups,
   groupToInfo,
   groupToWidgets,
-  widgetToInfo,
+  widgetInfo,
   jsonView,
   setJsonView,
 }) => {
@@ -74,7 +76,7 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
     configurationGroups,
     groupToInfo,
     groupToWidgets,
-    widgetToInfo,
+    widgetInfo,
   };
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (
