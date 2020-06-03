@@ -18,8 +18,7 @@ package io.cdap.cdap.etl.proto.v2;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.Resources;
-import io.cdap.cdap.api.app.ApplicationUpgradeContext;
-import io.cdap.cdap.api.app.ConfigUpgradeResult;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -45,7 +44,7 @@ public final class ETLBatchConfig extends ETLConfig {
   private final List<ETLStage> postActions;
   // for backwards compatibility
   private final List<ETLStage> actions;
-  private final boolean service;
+  private final Boolean service;
 
   private ETLBatchConfig(Set<ETLStage> stages,
                          Set<Connection> connections,
@@ -60,7 +59,7 @@ public final class ETLBatchConfig extends ETLConfig {
                          int numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
-                         boolean service, List<String> comments) {
+                         Boolean service, List<String> comments) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, engineProperties, comments);
     this.postActions = ImmutableList.copyOf(postActions);
@@ -73,6 +72,7 @@ public final class ETLBatchConfig extends ETLConfig {
   }
 
   public boolean isService() {
+    if (this.service == null) return false;
     return service;
   }
 
@@ -113,15 +113,14 @@ public final class ETLBatchConfig extends ETLConfig {
     return maxConcurrentRuns;
   }
 
-  public ETLBatchConfig upgradeBatchConfig(ApplicationUpgradeContext upgradeContext,
-                                           ConfigUpgradeResult.Builder builder) {
+  public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext) {
     Set<ETLStage> upgradedStages = new HashSet<>();
     for (ETLStage stage : getStages()) {
-      upgradedStages.add(stage.upgradeStage(upgradeContext, builder));
+      upgradedStages.add(stage.updateStage(upgradeContext));
     }
-    return new ETLBatchConfig(upgradedStages, getConnections(), getPostActions(), getResources(), isStageLoggingEnabled(),
-                              isProcessTimingEnabled(), engine, schedule, getDriverResources(), getClientResources(),
-                              getNumOfRecordsPreview(), maxConcurrentRuns, getProperties(), service, comments);
+    return new ETLBatchConfig(upgradedStages, connections, postActions, resources, stageLoggingEnabled,
+                              processTimingEnabled, engine, schedule, driverResources, clientResources,
+                              numOfRecordsPreview, maxConcurrentRuns, properties, service, comments);
   }
 
   @Override

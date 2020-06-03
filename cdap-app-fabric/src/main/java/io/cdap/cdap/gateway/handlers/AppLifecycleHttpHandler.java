@@ -37,9 +37,11 @@ import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
@@ -57,6 +59,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.ApplicationUpgradeDetails;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -74,6 +77,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
+import java.util.HashMap;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -377,6 +381,70 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
   }
+
+  /**
+   * Updates an existing application.
+   */
+  @POST
+  @Path("/apps/{app-id}/upgrade")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void UpgradeApplication(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") final String namespaceId,
+                                 @PathParam("app-id") final String appName)
+      throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+
+    ApplicationId appId = validateApplicationId(namespaceId, appName);
+
+    try {
+      ApplicationUpgradeDetails detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
+    } catch (Exception e) {
+      // this is the same behavior as deploy app pipeline, but this is bad behavior. Error handling needs improvement.
+      LOG.error("Upgrade application failure", e);
+      ApplicationUpgradeDetails detail = new ApplicationUpgradeDetails(
+          new ServiceException("Upgrade failed due to internal error.", null,
+                               HttpResponseStatus.INTERNAL_SERVER_ERROR));
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
+    }
+  }
+
+  /**
+   * Upgrades an existing application to use latest version of application artifact and plugin artifacts.
+   *
+   * <pre>
+   * {@code
+   * [
+   *   {"appId":"XYZ", "version":"1.2.3"},
+   *   {"appId":"ABC"},
+   *   {"appId":"FOO", "version":"2.3.4"},
+   * ]
+   * }
+   * </pre>
+   *
+   * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
+   * failure for each of the requested application in the same order as the request.
+   */
+  @POST
+  @Path("/upgrade")
+  public void UpgradeApplications(FullHttpRequest request, HttpResponder responder,
+      @PathParam("namespace-id") String namespace) throws Exception {
+    LOG.info("Jay Pandya in upgrade application api 1");
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
+    Map<ApplicationId, ApplicationUpgradeDetails> details = new HashMap<>();
+    for (ApplicationId appId : appIds) {
+      try {
+        details.put(appId, applicationLifecycleService.upgradeApplication(appId, createProgramTerminator()));
+      } catch (Exception e) {
+        details.put(appId,
+            new ApplicationUpgradeDetails(
+                new ServiceException("Upgrade failed due to internal error.", null,
+                                     HttpResponseStatus.INTERNAL_SERVER_ERROR)));
+        LOG.error("Upgrading application {} failed due to exception ", appIds, e);
+      }
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
+  }
+
 
   /**
    * Gets {@link ApplicationDetail} for a set of applications. It expects a post body as a array of object, with each

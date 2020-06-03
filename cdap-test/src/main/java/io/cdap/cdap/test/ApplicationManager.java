@@ -183,6 +183,11 @@ public interface ApplicationManager {
   void delete() throws Exception;
 
   /**
+   * Upgrades the application;
+   */
+  void upgrade() throws Exception;
+
+  /**
    * Returns the application's details.
    */
   ApplicationDetail getInfo() throws Exception;

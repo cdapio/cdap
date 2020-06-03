@@ -20,11 +20,17 @@ import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Iterables;
+import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.ProgramSpecification;
+import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactRange;
@@ -43,14 +49,18 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.CannotBeDeletedException;
+import io.cdap.cdap.common.ForbiddenException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
+import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
+import io.cdap.cdap.internal.app.DefaultApplicationUpdateContext;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
@@ -62,6 +72,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
+import io.cdap.cdap.proto.ApplicationUpgradeDetails;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -79,11 +90,16 @@ import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.scheduler.Scheduler;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.impersonation.EntityImpersonator;
+import io.cdap.cdap.security.impersonation.Impersonator;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+import java.lang.reflect.Type;
+import java.lang.reflect.TypeVariable;
+import java.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +124,8 @@ import javax.annotation.Nullable;
  */
 public class ApplicationLifecycleService extends AbstractIdleService {
   private static final Logger LOG = LoggerFactory.getLogger(ApplicationLifecycleService.class);
+  private static final Gson GSON =
+      new GsonBuilder().registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
 
   /**
    * Store manages non-runtime lifecycle.
@@ -125,6 +143,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final AuthenticationContext authenticationContext;
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
+  private final Impersonator impersonator;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConfiguration,
@@ -134,7 +153,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataServiceClient metadataServiceClient,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              MessagingService messagingService) {
+                              MessagingService messagingService, Impersonator impersonator) {
     this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                         Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.store = store;
@@ -148,6 +167,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
+    this.impersonator = impersonator;
     this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
                                                        new MultiThreadMessagingContext(messagingService));
   }
@@ -823,6 +843,186 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     } else {
       return new ArtifactNamesPredicate(artifactNames).and(new ArtifactVersionPredicate(artifactVersion));
     }
+  }
+
+  public ApplicationUpgradeDetails upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
+      throws Exception {
+    LOG.info("Jay Pandya reached here in upgradeApp 6.1");
+    // Check if the current user has admin privileges on it before updating.
+    authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.2");
+    // check that app exists
+    ApplicationSpecification currentSpec = store.getApplication(appId);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3");
+    if (currentSpec == null) {
+      LOG.warn("Application {} not found for upgrade.", appId);
+      return new ApplicationUpgradeDetails(new NotFoundException(appId));
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3.0.1");
+    ArtifactId currentArtifact = currentSpec.getArtifactId();
+    /*if(currentArtifact.getScope() != ArtifactScope.SYSTEM) {
+      String errorMessage = String.format("Application artifact %s for application %s is in %s scope. Upgrade is only"
+                                          + "supported for app artifacts in SYSTEM scope for now.",
+                                          currentArtifact.getName(), appId.getApplication(), currentArtifact.getScope());
+      return new ApplicationUpgradeDetails(new ForbiddenException(errorMessage));
+    }*/
+    // Get the artifact with latest version for upgrade.
+    List<ArtifactSummary> availableArtifacts =
+        artifactRepository.getArtifactSummaries(appId.getParent(), currentArtifact.getName(), Integer.MAX_VALUE,
+                                                ArtifactSortOrder.ASC);
+    if (availableArtifacts.isEmpty()) {
+      // This should not be possible.
+      LOG.error("No artifacts found for artifact {} ", currentArtifact);
+      throw new InternalError("Issues in trying to find application artifact for upgrading app " + appId);
+    }
+    ArtifactSummary candidateArtifact = availableArtifacts.get(availableArtifacts.size() - 1);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3.0.3 artifact summary size {} artifactname {} parent {}", availableArtifacts.size(), currentArtifact.getName(), appId);
+    ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
+    LOG.info("Jay Pandya reached here in upgradeApp 6.3.0.4 artifact summary size {} artifactname {} parent {}", availableArtifacts.size(), currentArtifact.getName(), candidateArtifact.getVersion());
+    if (candidateArtifactVersion.getVersion() == null) {
+      throw new InvalidArtifactException(String.format(
+          "Requested artifact version '%s' is invalid", candidateArtifact.getVersion()));
+    }
+    LOG.info("Jay Pandya 6.4 1");
+    LOG.info("Jay Pandya 6.4 2.1 {} **** {}" , candidateArtifact, currentArtifact);
+    // Check conditions for validity of candidate artifact such as name and scope should be same. Also check that
+    // candidate artifact should have higher version than current artifact.
+    if (!currentArtifact.getName().equals(candidateArtifact.getName())/*||
+        currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0*/) {
+      throw new InvalidArtifactException(String.format(
+          "Requested artifact version '%s' is invalid %s", candidateArtifact.getName(), currentArtifact.getName()));
+    }
+    if (currentArtifact.getScope() != candidateArtifact.getScope() /*||
+        currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0*/) {
+      throw new InvalidArtifactException(String.format(
+          "Requested artifact version '%s' is invalid %s", candidateArtifact.getScope(), currentArtifact.getScope()));
+    }
+    if (currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0) {
+      throw new InvalidArtifactException(String.format(
+          "Requested artifact version '%s' is invalid %s", candidateArtifact.getVersion(), currentArtifact.getVersion()));
+    }
+    LOG.info("Jay Pandya 6.4 2 {}" , candidateArtifact);
+    ArtifactId newArtifactId =
+        new ArtifactId(currentArtifact.getName(), candidateArtifactVersion, currentArtifact.getScope());
+    LOG.info("Jay Pandya reached here in upgradeApp app upgraded man to version {} step 6.3.1", candidateArtifactVersion);
+
+    /*Jay Pandya: See if we need application version id as third parameter*/
+    /*Jay Pandya: change this canupdateschedule*/
+    /*Jay Pandya: See what to do about artifact detail*/
+    LOG.info("Jay Pandya reached here in upgradeApp 6.4");
+
+    Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
+    LOG.info("Jay Pandya reached here in upgradeApp 6.5");
+    ArtifactDetail artifactDetail = artifactRepository.getArtifact(newArtifact);
+    LOG.info("Jay Pandya reached here in upgradeApp 6.6");
+
+    return upgradeApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
+                                      currentSpec.getConfiguration(), programTerminator, artifactDetail,
+                                      ownerAdmin.getOwner(appId));
+
+  }
+
+  private ApplicationUpgradeDetails upgradeApplicationInternal(ApplicationId applicationId,
+                                                               NamespaceId namespaceId,
+                                                               @Nullable String appName,
+                                                               @Nullable String appVersion,
+                                                               @Nullable String currentConfigStr,
+                                                               ProgramTerminator programTerminator,
+                                                               ArtifactDetail artifactDetail,
+                                                               @Nullable KerberosPrincipalId ownerPrincipal) throws Exception {
+    // Now to deploy an app, we need ADMIN privilege on the owner principal if it is present, and also ADMIN on the app
+    // But since at this point, app name is unknown to us, so the enforcement on the app is happening in the deploy
+    // pipeline - LocalArtifactLoaderStage
+
+    // need to enforce on the principal id if impersonation is involved
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.1");
+    KerberosPrincipalId effectiveOwner =
+        SecurityUtil.getEffectiveOwner(ownerAdmin, namespaceId,
+            ownerPrincipal == null ? null : ownerPrincipal.getPrincipal());
+
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.2");
+    Principal requestingUser = authenticationContext.getPrincipal();
+    // enforce that the current principal, if not the same as the owner principal, has the admin privilege on the
+    // impersonated principal
+    if (effectiveOwner != null) {
+      authorizationEnforcer.enforce(effectiveOwner, requestingUser, Action.ADMIN);
+    }
+
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.3");
+    ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
+    if (appClass == null) {
+      throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
+          artifactDetail.getDescriptor().getArtifactId(), namespaceId));
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.4");
+    io.cdap.cdap.proto.id.ArtifactId artifactId = Artifacts
+        .toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId());
+    EntityImpersonator classLoaderImpersonator =
+        new EntityImpersonator(artifactId, this.impersonator);
+    ClassLoader artifactClassLoader = artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+        classLoaderImpersonator);
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.5");
+    String upgradedAppConfig = "";
+    // As new actions are added for upgrade flow, add them in the list;
+    List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
+    DefaultApplicationUpdateContext upgradeContext =
+        new DefaultApplicationUpdateContext(namespaceId, applicationId, artifactDetail.getDescriptor().getArtifactId(),
+                                            artifactRepository, currentConfigStr, upgradeActions);
+    try {
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.6");
+      Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.7");
+      if (!(appMain instanceof Application)) {
+        throw new IllegalStateException(
+            String.format("Application main class is of invalid type: %s",
+                appMain.getClass().getName()));
+      }
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.8");
+      Application app = (Application) appMain;
+      Type configType = Artifacts.getConfigType(app.getClass());
+      try {
+        ApplicationUpdateResult<?> updateResult = app.updateConfig(upgradeContext);
+        upgradedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
+      } catch (UnsupportedOperationException E) {
+        String errorMessage = String.format("Application of type %s does not support upgrade.",
+                                            appMain.getClass().getName());
+        return new ApplicationUpgradeDetails(new NotImplementedException(errorMessage));
+      }
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.9");
+    } catch (Exception ex) {
+      LOG.info("Jay Pandya reached here in upgradeApp2 error!!!!");
+      LOG.error("Failed to upgrade application %s due to exception ", appName, ex);
+      Throwables.propagateIfPossible(ex.getCause(), Exception.class);
+      throw Throwables.propagate(ex.getCause());
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.91");
+
+    // deploy application with newly added artifact
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
+                                                             appClass.getClassName(), appName, appVersion,
+                                                             upgradedAppConfig, ownerPrincipal,
+                                                             /*updateSchedules=*/false);
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.92");
+
+    Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.93");
+    // TODO: (CDAP-3258) Manager needs MUCH better error handling.
+    ApplicationWithPrograms applicationWithPrograms;
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.94");
+    try {
+      LOG.info("Jay Pandya reached here in upgradeApp2 7.95");
+      applicationWithPrograms = manager.deploy(deploymentInfo).get();
+    } catch (ExecutionException e) {
+      LOG.info("Jay Pandya reached here in upgradeApp2 2nd error!!!!");
+      Throwables.propagateIfPossible(e.getCause(), Exception.class);
+      throw Throwables.propagate(e.getCause());
+    }
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.96");
+
+    adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
+        applicationWithPrograms.getSpecification());
+    LOG.info("Jay Pandya reached here in upgradeApp2 7.97");
+    return new ApplicationUpgradeDetails("Upgrade successful.", null);
   }
 
   /**

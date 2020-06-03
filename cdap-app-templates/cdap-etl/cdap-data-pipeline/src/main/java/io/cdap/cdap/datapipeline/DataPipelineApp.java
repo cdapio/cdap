@@ -21,8 +21,8 @@ import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.AbstractApplication;
-import io.cdap.cdap.api.app.ApplicationUpgradeContext;
-import io.cdap.cdap.api.app.ConfigUpgradeResult;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
@@ -42,8 +42,9 @@ import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 
-import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ETL Data Pipeline Application.
@@ -56,6 +57,7 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
     Constants.Connector.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE,
     Action.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE, Constants.SPARK_PROGRAM_PLUGIN_TYPE, SplitterTransform.PLUGIN_TYPE,
     Condition.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
+  private static final Logger LOG = LoggerFactory.getLogger(DataPipelineApp.class);
 
   @Override
   public void configure() {
@@ -84,10 +86,14 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   }
 
   @Override
-  public ConfigUpgradeResult<ETLBatchConfig> upgradeConfig(ETLBatchConfig batchConfig,
-                                                           ApplicationUpgradeContext upgradeContext) {
-    ConfigUpgradeResult.Builder<ETLBatchConfig> builder = ConfigUpgradeResult.builder();
-    batchConfig.upgradeBatchConfig(upgradeContext, builder);
-    return builder.build();
+  public ApplicationUpdateResult<ETLBatchConfig> updateConfig(ApplicationUpdateContext updateContext) {
+    LOG.error("Jay is here inside update batch config datapipeline 1");
+    ETLBatchConfig currentBatchConfig = updateContext.getConfig(ETLBatchConfig.class);
+    LOG.error("Jay is here inside update batch config datapipeline 2");
+    ETLBatchConfig updatedBatchConfig = currentBatchConfig.updateBatchConfig(updateContext);
+    LOG.error("Jay is here inside update batch config datapipeline 3");
+    ApplicationUpdateResult<ETLBatchConfig> updateResult = new ApplicationUpdateResult<>(updatedBatchConfig);
+    LOG.error("Jay is here inside update batch config datapipeline 4");
+    return updateResult;
   }
 }

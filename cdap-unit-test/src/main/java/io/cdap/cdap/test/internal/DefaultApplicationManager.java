@@ -201,6 +201,10 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   public void delete() throws Exception {
     appFabricClient.deleteApplication(application);
   }
+  @Override
+  public void upgrade() throws Exception {
+    appFabricClient.upgradeApplication(application);
+  }
 
   @Override
   public ApplicationDetail getInfo() throws Exception {

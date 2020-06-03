@@ -23,7 +23,9 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -97,6 +99,7 @@ import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
+import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.v2.ArgumentMapping;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
@@ -111,6 +114,7 @@ import io.cdap.cdap.metadata.FieldLineageAdmin;
 import io.cdap.cdap.metadata.FieldRelation;
 import io.cdap.cdap.metadata.LineageAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.RunRecord;
 import io.cdap.cdap.proto.ScheduleDetail;
@@ -131,6 +135,7 @@ import io.cdap.cdap.test.WorkflowManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import java.util.stream.Collectors;
 import org.apache.twill.api.RunId;
 import org.junit.After;
 import org.junit.Assert;
@@ -161,9 +166,13 @@ import java.util.concurrent.TimeoutException;
  *
  */
 public class DataPipelineTest extends HydratorTestBase {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
+  private static final ArtifactId UPGRADE_APP_ARTIFACT_ID_1 = NamespaceId.DEFAULT.artifact("app", "1.1.0");
+  private static final ArtifactId UPGRADE_APP_ARTIFACT_ID_2 = NamespaceId.DEFAULT.artifact("app", "1.2.0");
+  private static final ArtifactId OLD_APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "0.0.9");
+
   private static final ArtifactSummary APP_ARTIFACT_RANGE = new ArtifactSummary("app", "[0.1.0,1.1.0)");
   private static int startCount = 0;
 
@@ -3493,4 +3502,218 @@ public class DataPipelineTest extends HydratorTestBase {
                                                Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
     return getMetricsManager().getTotalMetric(tags, "user." + metric);
   }
+
+  /* Unit test tests upgrade for a deployed application.
+     1. Deploy an application with older application artifact (1.0.0) and older filter plugin version (1.0.0).
+     2. Add new version of application artifact (1.0.1) and filter plugin artifact (1.1.0).
+     3. Upgrade the older deployed application.
+     4. Verify that after upgrading, application artifact and filter plugin artifact is upgraded to use latest version
+        in its config.
+   */
+  @Test
+  public void testSimpleUpgradePipelines() throws Exception {
+    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
+    // setup.
+    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
+
+    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
+    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
+    // artifact version.
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
+                      PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
+                      PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
+                      PluggableFilterTransform.class);
+
+    ArtifactSelectorConfig currentArtifactSelector = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
+                                                                                "test-plugins", "1.0.0");
+
+    Engine engine = Engine.MAPREDUCE;
+    String sourceName = "testSource" + engine.name();
+    String sinkName = "testSink" + engine.name();
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+        .setEngine(engine)
+        .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+        .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+            ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
+        .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+        .addConnection("source", "filter")
+        .addConnection("filter", "sink")
+        .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
+    // Deploy app with artifact version 1.0.0.
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail oldAppDetail = getAppDetail(appId);
+    ETLBatchConfig oldBatchConfig = GSON.fromJson(oldAppDetail.getConfiguration(), ETLBatchConfig.class);
+    Map<String, ETLStage> oldStageMap = oldBatchConfig.getStages().stream().collect(
+        Collectors.toMap(ETLStage::getName, e -> e));
+
+    // Upgrade application.
+    appManager.upgrade();
+
+    ApplicationDetail upgradedAppDetail = getAppDetail(appId);
+    ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
+    Map<String, ETLStage> newStageMap = newBatchConfig.getStages().stream().collect(
+        Collectors.toMap(ETLStage::getName, e -> e));
+
+    // Compare stages that should be same after upgrade.
+    Assert.assertEquals(oldStageMap.get("source"), newStageMap.get("source"));
+    Assert.assertEquals(oldStageMap.get("sink"), newStageMap.get("sink"));
+
+    // Verify that after upgrade, application upgrades artifact version to latest version available.
+    Assert.assertEquals(upgradedAppDetail.getArtifact().getVersion(), UPGRADE_APP_ARTIFACT_ID_2.getVersion());
+    // Check if the filter stage, for which version should be upgraded to desired version in SYSTEM scope.
+    ETLPlugin upgradedPlugin = newStageMap.get("filter").getPlugin();
+    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getVersion(), "1.1.0");
+    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getApiArtifactScope(), ArtifactScope.SYSTEM);
+  }
+
+  /* Unit test tests upgrade for a deployed application with a plugin using plugin range.
+   1. Deploy an application with older application artifact (1.0.0) and older filter plugin version with range
+      [1.0.0-1.0.5).
+   2. Add multiple versions of same application artifact with latest being (1.2.0).
+   3. Bind newer version of filter plugin 1.1.0 with it.
+   3. Upgrade the older deployed application.
+   4. Verify that after upgrading, application artifact and filter plugin artifact is upgraded to use latest version
+      in its config. Also verify that plugin version range for filter stage is changed to use newest version of plugin.
+ */
+  @Test
+  public void testUpgradePipelinesWithPluginRange() throws Exception {
+    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
+    // setup.
+    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
+
+    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
+    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
+    // artifact version.
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
+        PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
+        PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
+        PluggableFilterTransform.class);
+
+    ArtifactSelectorConfig currentArtifactSelector = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
+        "test-plugins", "[1.0.0,1.0.5)");
+
+    Engine engine = Engine.MAPREDUCE;
+    String sourceName = "testSource" + engine.name();
+    String sinkName = "testSink" + engine.name();
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+        .setEngine(engine)
+        .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+        .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+            ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
+        .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+        .addConnection("source", "filter")
+        .addConnection("filter", "sink")
+        .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
+    // Deploy app with artifact version 1.0.0.
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail oldAppDetail = getAppDetail(appId);
+    ETLBatchConfig oldBatchConfig = GSON.fromJson(oldAppDetail.getConfiguration(), ETLBatchConfig.class);
+    Map<String, ETLStage> oldStageMap = oldBatchConfig.getStages().stream().collect(
+        Collectors.toMap(ETLStage::getName, e -> e));
+
+    // Upgrade application.
+    appManager.upgrade();
+
+    ApplicationDetail upgradedAppDetail = getAppDetail(appId);
+    ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
+    Map<String, ETLStage> newStageMap = newBatchConfig.getStages().stream().collect(
+        Collectors.toMap(ETLStage::getName, e -> e));
+
+    // Compare stages that should be same after upgrade.
+    Assert.assertEquals(oldStageMap.get("source"), newStageMap.get("source"));
+    Assert.assertEquals(oldStageMap.get("sink"), newStageMap.get("sink"));
+
+    // Verify that after upgrade, application upgrades artifact version to latest version available.
+    Assert.assertEquals(upgradedAppDetail.getArtifact().getVersion(), UPGRADE_APP_ARTIFACT_ID_2.getVersion());
+    // Check if the filter stage, for which version range should be upgraded to include latest plugin version in SYSTEM
+    // scope.
+    ETLPlugin upgradedPlugin = newStageMap.get("filter").getPlugin();
+    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getVersion(), "[1.0.0,1.1.0]");
+    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getApiArtifactScope(), ArtifactScope.SYSTEM);
+  }
+
+  /* Unit test tests upgrade for a deployed application with a plugin using plugin range.
+ 1. Deploy an application with older application artifact (1.0.0) and filter plugin version with range
+    [1.0.0-2.0.0) to make sure latest version of plugin should be included in it.
+ 2. Add multiple versions of same application artifact with latest being (1.2.0).
+ 3. Bind newer version of filter plugin 1.1.0 with it.
+ 3. Upgrade the older deployed application.
+ 4. Verify that after upgrading, application artifact uses latest version in its config.
+    But plugin range is not updated as latest version of plugin is still included in the range.
+*/
+  @Test
+  public void testUpgradePipelinesWithNoChangeInPluginRange() throws Exception {
+    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
+    // setup.
+    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
+
+    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
+    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
+    // artifact version.
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
+        PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
+        PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
+        PluggableFilterTransform.class);
+
+    ArtifactSelectorConfig currentArtifactSelector = new ArtifactSelectorConfig(ArtifactScope.USER.name(),
+        "test-plugins", "[1.0.0,2.0.0)");
+
+    Engine engine = Engine.MAPREDUCE;
+    String sourceName = "testSource" + engine.name();
+    String sinkName = "testSink" + engine.name();
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+        .setEngine(engine)
+        .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+        .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+            ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
+        .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+        .addConnection("source", "filter")
+        .addConnection("filter", "sink")
+        .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
+    ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
+    // Deploy app with artifact version 1.0.0.
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+    ApplicationDetail oldAppDetail = getAppDetail(appId);
+    ETLBatchConfig oldBatchConfig = GSON.fromJson(oldAppDetail.getConfiguration(), ETLBatchConfig.class);
+    Map<String, ETLStage> oldStageMap = oldBatchConfig.getStages().stream().collect(
+        Collectors.toMap(ETLStage::getName, e -> e));
+
+    // Upgrade application.
+    appManager.upgrade();
+
+    ApplicationDetail upgradedAppDetail = getAppDetail(appId);
+    ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
+    Map<String, ETLStage> newStageMap = newBatchConfig.getStages().stream().collect(
+        Collectors.toMap(ETLStage::getName, e -> e));
+
+    // Compare stages that should be same after upgrade.
+    Assert.assertEquals(oldStageMap.get("source"), newStageMap.get("source"));
+    Assert.assertEquals(oldStageMap.get("sink"), newStageMap.get("sink"));
+    // The filter stage is not changed as latest plugin is in the range.
+    Assert.assertEquals(oldStageMap.get("filter"), newStageMap.get("filter"));
+
+    // Verify that after upgrade, application upgrades artifact version to latest version available.
+    Assert.assertEquals(upgradedAppDetail.getArtifact().getVersion(), UPGRADE_APP_ARTIFACT_ID_2.getVersion());
+  }
+
 }

@@ -16,14 +16,18 @@
 
 package io.cdap.cdap.etl.proto.v2;
 
-import io.cdap.cdap.api.app.ApplicationUpgradeContext;
-import io.cdap.cdap.api.app.ConfigUpgradeResult;
+import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.api.artifact.UpgradedArtifact;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 
+import java.util.List;
 import java.util.Objects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * ETL Stage Configuration.
@@ -37,6 +41,8 @@ public final class ETLStage {
   // Only for serialization/deserialization purpose for config upgrade to not lose data set by frontend.
   private final Object inputSchema;
   private final Object outputSchema;
+  private static final Logger LOG = LoggerFactory.getLogger(ETLStage.class);
+
 
   public ETLStage(String name, ETLPlugin plugin) {
     this.name = name;
@@ -98,28 +104,93 @@ public final class ETLStage {
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 
-  public ETLStage upgradeStage(ApplicationUpgradeContext upgradeContext, ConfigUpgradeResult.Builder builder) {
-    ArtifactId newPlugin =
-        upgradeContext.getLatestPluginArtifact(plugin.getType(), plugin.getName());
-    // Only upgrade version if there is a candidate and its version if greater than current plugin version.
-    if(newPlugin != null
-        && newPlugin.getVersion().compareTo(plugin.getArtifactConfig().getApiArtifactVersion()) > 0) {
-      ArtifactSelectorConfig artifactSelectorConfig =
-          new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
-                                     newPlugin.getVersion().getVersion());
-      io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin =
-          new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(), plugin.getProperties(),
-                                                  artifactSelectorConfig);
+  public ETLStage updateStage(ApplicationUpdateContext updateContext) {
+    for (ApplicationConfigUpdateAction updateAction: updateContext.getUpdateActions()) {
+      LOG.error("Jay Pandya upgrade stage 0 size {}", updateContext.getUpdateActions().size());
+      switch (updateAction) {
+        case UPGRADE_ARTIFACT:
+          return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), inputSchema,
+                                                        outputSchema);
+        default:
+          return this;
+        }
+      }
+    LOG.error("Jay Pandya upgrade stage 6");
 
-      // Store this plugin upgrade info inside ConfigUpgradeResult.
-      UpgradedArtifact upgradedPlugin = new UpgradedArtifact(plugin.getArtifactConfig().toApiArtifactId(), newPlugin);
-      builder.addUpgradedArtifact(upgradedPlugin);
-
-      return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin, inputSchema, outputSchema);
-    }
-
-    // Stage can not be upgraded so return as is.
+    // No update action provided so return stage as is.
     return this;
+  }
+
+  private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) {
+    LOG.error("Jay Pandya upgrade stage 1");
+    // Currently tries to find latest plugin in SYSTEM scope and upgrades current plugin if version is higher,
+    // ignoring current plugin scope.
+    // In future, we can modify logic to fetch the latest plugin in any scope.
+    List<ArtifactId> candidates =
+        updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(),
+            ArtifactScope.SYSTEM, null);
+    LOG.error("Jay Pandya upgrade stage 2 size " + candidates.size());
+    if (candidates.isEmpty())
+      return plugin;
+
+    // getPluginArtifacts returns plugins sorted in ascending order.
+    ArtifactId newPlugin = candidates.get(candidates.size() - 1);
+    LOG.error("Jay Pandya upgrade stage 3 new plugin " + newPlugin);
+    String newVersion = getUpgradedVersionString(newPlugin);
+    if (newVersion == null) return plugin;
+    LOG.error("Jay Pandya upgrade stage 3.1 new plugin version chosen " + newVersion);
+
+    // Only upgrade version new plugin version is greater than current plugin version.
+    LOG.error("Jay Pandya upgrade stage 4 new plugin is " + newPlugin);
+    ArtifactSelectorConfig newArtifactSelectorConfig =
+        new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
+                                   newVersion);
+    io.cdap.cdap.etl.proto.v2.ETLPlugin upgradedEtlPlugin =
+        new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
+                                                plugin.getProperties(),
+                                                newArtifactSelectorConfig);
+    LOG.error("Jay Pandya upgrade stage 5 new plugin " + upgradedEtlPlugin);
+    return upgradedEtlPlugin;
+  }
+
+  // Returns new valid version string for plugin upgrade if any changes are required. Returns null if no change to
+  // current plugin version.
+  // Artifact selector config only stores plugin version as string, it can be either fixed version or range.
+  // Hence, if the plugin version is fixed, replace the fixed version with newer fixed version. If it is a range,
+  // move the upper bound of the range to the newest version.
+  private String getUpgradedVersionString(ArtifactId newPlugin) {
+    try {
+      ArtifactVersionRange currentVersionRange = plugin.getArtifactConfig().getApiArtifactVersionRange();
+      if (!currentVersionRange.isExactVersion()) {
+        // Current plugin version is version range.
+        if (currentVersionRange.versionIsInRange(newPlugin.getVersion())) {
+          // Do nothing and return as is. Note that plugin scope will not change.
+          // TODO: Figure out how to change plugin scope if a newer plugin is found but in different scope.
+          return null;
+        } else if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
+          // Current lower version is higher than newer latest version. This should not happen.
+          LOG.warn("Invalid new plugin artifact {} for upgrade for upgrading plugin {} ", newPlugin, plugin);
+          return null;
+        } else {
+          // Increase the upper bound to latest available version.
+          ArtifactVersionRange newVersionRange = new ArtifactVersionRange(currentVersionRange.getLower(),
+              currentVersionRange.isLowerInclusive(),
+              newPlugin.getVersion(),
+              /*isUpperInclusive=*/true);
+          return newVersionRange.getVersionString();
+        }
+      } else if (currentVersionRange.isExactVersion()
+          && currentVersionRange.getLower().compareTo(newPlugin.getVersion()) < 0) {
+        // Current version is a fixed version and new version is higher than current.
+        return newPlugin.getVersion().getVersion();
+      } else {
+        // Should not happen. Safety check.
+        return null;
+      }
+    } catch (Exception e) {
+      LOG.warn("Issue in parsing version string for plugin, ignoring stage for upgrade {}", plugin, e);
+      return null;
+    }
   }
 
   @Override

@@ -651,4 +651,18 @@ public class AppFabricClient {
                                                scheduleId.getSchedule());
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Delete schedule failed");
   }
+
+  public void upgradeApplication(ApplicationId appId) throws Exception {
+    HttpRequest request = new DefaultHttpRequest(
+        HttpVersion.HTTP_1_1, HttpMethod.POST,
+        String.format("%s/apps/%s/upgrade", getNamespacePath(appId.getNamespace()), appId.getApplication())
+    );
+    request.headers().set(Constants.Gateway.API_KEY, "api-key-example");
+    HttpUtil.setTransferEncodingChunked(request, true);
+
+    MockResponder mockResponder = new MockResponder();
+    appLifecycleHttpHandler.UpgradeApplication(request, mockResponder, appId.getNamespace(),
+                                               appId.getApplication());
+    verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to upgrade app");
+  }
 }
