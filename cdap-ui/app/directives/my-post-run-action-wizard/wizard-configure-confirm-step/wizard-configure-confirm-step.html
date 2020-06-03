@@ -36,11 +36,13 @@
   </div>
 
   <div class="btn btn-blue"
+       data-cy="next-btn"
        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
     Next
   </div>
   <div class="btn btn-blue"
+       data-cy="confirm-btn"
        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl.isDisabled"
        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
     Confirm

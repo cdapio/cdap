@@ -171,7 +171,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
     // Fix styling of error here.
     return (
       <div className={classnames(classes.root, { [classes.macroRow]: this.state.isMacroTextbox })}>
-        <div className={classes.row}>
+        <div data-cy={widgetProperty.name} className={classes.row}>
           <WidgetWrapper
             widgetProperty={updatedWidgetProperty}
             pluginProperty={pluginProperty}

@@ -77,7 +77,8 @@
          tooltip-placement="bottom"
          tooltip-class="toppanel-tooltip"
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.isPreviewEnabled"
+         data-cy="pipeline-preview-btn">
       <div class="btn-container">
         <span class="fa icon-eye"></span>
         <div class="button-label">Preview</div>
@@ -100,7 +101,8 @@
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         data-cy="schedule-pipeline-btn">
       <div class="btn-container">
         <span class="fa icon-runtimestarttime"></span>
         <div class="button-label">Schedule</div>
@@ -159,7 +161,8 @@
   <div class="btn-group action-buttons"
      ng-if="HydratorPlusPlusTopPanelCtrl.previewMode">
     <div class="btn active"
-         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()">
+         ng-click="HydratorPlusPlusTopPanelCtrl.togglePreviewMode()"
+         data-cy="toggle-preview-btn">
       <div class="btn-container">
         <span class="fa icon-eye"></span>
         <div class="button-label">Preview</div>
@@ -182,7 +185,8 @@
           tooltip-placement="bottom"
           tooltip-class="toppanel-tooltip"
           tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.hasNodes">
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || !HydratorPlusPlusTopPanelCtrl.hasNodes"
+          data-cy="run-preview-btn">
       <div class="btn-container">
         <span class="fa fa-play text-success"></span>
         <div class="button-label">Run</div>
@@ -191,14 +195,16 @@
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning"
           ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
-          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading">
+          ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading"
+          data-cy="stop-preview-btn">
       <div class="btn-container">
         <span class="fa fa-stop text-danger"></span>
         <div class="button-label">Stop</div>
       </div>
     </div>
     <div class="btn"
-          ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading">
+          ng-if="HydratorPlusPlusTopPanelCtrl.previewLoading"
+          data-cy="starting-preview-btn">
       <div class="btn-container">
         <span class="fa fa-refresh fa-spin"></span>
         <div class="button-label">

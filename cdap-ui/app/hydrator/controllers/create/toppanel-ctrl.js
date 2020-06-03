@@ -518,7 +518,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   onPreviewStart() {
-    this._checkAndShowConfirmationModalOnActionPlugin(this.runPreview());
+    this._checkAndShowConfirmationModalOnActionPlugin(this.runPreview.bind(this));
   }
 
   runPreview() {
