@@ -53,31 +53,10 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
-  pluginName,
-  pluginType,
-  displayName,
-  emitAlerts,
-  emitErrors,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetInfo,
-  jsonView,
-  setJsonView,
-}) => {
-  const widgetJSONData = {
-    pluginName,
-    pluginType,
-    displayName,
-    emitAlerts,
-    emitErrors,
-    configurationGroups,
-    groupToInfo,
-    groupToWidgets,
-    widgetInfo,
-  };
+const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
+  widgetJSONData
+) => {
+  const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
   const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
   return (
     <div>
@@ -86,7 +65,6 @@ const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> =
         variant="persistent"
         className={classes.closedJsonMenu}
         anchor="right"
-        disableEnforceFocus={true}
         ModalProps={{
           keepMounted: true,
         }}

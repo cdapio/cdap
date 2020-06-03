@@ -125,8 +125,8 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
         [groupID]: newWidgets,
       });
 
-      const { [widgetToDelete]: info, ...restwidgetInfo } = widgetInfo;
-      setWidgetInfo(restwidgetInfo);
+      const { [widgetToDelete]: info, ...restWidgetInfo } = widgetInfo;
+      setWidgetInfo(restWidgetInfo);
     };
   }
 
@@ -139,7 +139,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-            <If condition={widgetInfo[widgetID]}>
+            <If condition={widgetInfo[widgetID]} key={widgetIndex}>
               <div className={classes.eachWidget}>
                 <WidgetInput
                   widgetInfo={widgetInfo}

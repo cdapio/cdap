@@ -21,7 +21,6 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import SaveAltIcon from '@material-ui/icons/SaveAlt';
-import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
 import {
   downloadPluginJSON,
   getJSONConfig,
@@ -60,6 +59,9 @@ const styles = (theme): StyleRules => {
       fontSize: '14px',
       backgroundColor: theme.palette.grey[500],
     },
+    jsonLiveCode: {
+      padding: '14px',
+    },
   };
 };
 
@@ -76,7 +78,6 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
         variant="persistent"
         className={classes.jsonViewer}
         anchor="right"
-        disableEnforceFocus={true}
         ModalProps={{
           keepMounted: true,
         }}
@@ -118,10 +119,9 @@ const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> =
               </Button>
             </Tooltip>
           </div>
-          <JsonEditorWidget
-            rows={50}
-            value={JSON.stringify(JSONConfig, undefined, 4)}
-          ></JsonEditorWidget>
+          <div className={classes.jsonLiveCode}>
+            <pre>{JSON.stringify(JSONConfig, undefined, 2)}</pre>
+          </div>
         </List>
       </Drawer>
     </div>

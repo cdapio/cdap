@@ -24,6 +24,7 @@ import * as React from 'react';
 const styles = (): StyleRules => {
   return {
     widgetInput: {
+      width: '100%',
       marginTop: '20px',
       marginBottom: '20px',
     },
@@ -45,27 +46,39 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   widgetInfo,
   setWidgetInfo,
 }) => {
-  function onNameChange(obj, id) {
+  function onNameChange() {
     return (name) => {
-      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, name } }));
+      setWidgetInfo((prevObjs) => ({
+        ...prevObjs,
+        [widgetID]: { ...prevObjs[widgetID], name },
+      }));
     };
   }
 
-  function onLabelChange(obj, id) {
+  function onLabelChange() {
     return (label) => {
-      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, label } }));
+      setWidgetInfo((prevObjs) => ({
+        ...prevObjs,
+        [widgetID]: { ...prevObjs[widgetID], label },
+      }));
     };
   }
 
-  function onWidgetTypeChange(obj, id) {
+  function onWidgetTypeChange() {
     return (widgetType) => {
-      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetType } }));
+      setWidgetInfo((prevObjs) => ({
+        ...prevObjs,
+        [widgetID]: { ...prevObjs[widgetID], widgetType },
+      }));
     };
   }
 
-  function onWidgetCategoryChange(obj, id) {
+  function onWidgetCategoryChange() {
     return (widgetCategory) => {
-      setWidgetInfo((prevObjs) => ({ ...prevObjs, [id]: { ...obj, widgetCategory } }));
+      setWidgetInfo((prevObjs) => ({
+        ...prevObjs,
+        [widgetID]: { ...prevObjs[widgetID], widgetCategory },
+      }));
     };
   }
 
@@ -75,8 +88,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'textbox'}
-            value={widgetInfo.name}
-            onChange={onNameChange(widgetInfo, widgetID)}
+            value={widgetInfo[widgetID].name}
+            onChange={onNameChange()}
             label={'Name'}
             placeholder={'Name a Widget'}
             required={false}
@@ -85,8 +98,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'textbox'}
-            value={widgetInfo.label}
-            onChange={onLabelChange(widgetInfo, widgetID)}
+            value={widgetInfo[widgetID].label}
+            onChange={onLabelChange()}
             label={'Label'}
             placeholder={'Label a Widget'}
             required={false}
@@ -95,8 +108,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'select'}
-            value={widgetInfo.widgetCategory}
-            onChange={onWidgetCategoryChange(widgetInfo, widgetID)}
+            value={widgetInfo[widgetID].widgetCategory}
+            onChange={onWidgetCategoryChange()}
             label={'Category'}
             options={WIDGET_CATEGORY}
             required={false}
@@ -105,8 +118,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'select'}
-            value={widgetInfo.widgetType}
-            onChange={onWidgetTypeChange(widgetInfo, widgetID)}
+            value={widgetInfo[widgetID].widgetType}
+            onChange={onWidgetTypeChange()}
             label={'Widget Type'}
             options={WIDGET_TYPES}
             required={true}
