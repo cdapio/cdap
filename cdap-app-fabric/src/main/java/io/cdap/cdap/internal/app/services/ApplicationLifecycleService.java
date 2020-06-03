@@ -383,9 +383,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       return new ApplicationUpdateDetails(new NotFoundException(appId));
     }
     ArtifactId currentArtifact = currentSpec.getArtifactId();
+    NamespaceId currentArtifactNamespace =
+        ArtifactScope.SYSTEM.equals(currentArtifact.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
+
     // Get the artifact with latest version for upgrade.
     List<ArtifactSummary> availableArtifacts =
-        artifactRepository.getArtifactSummaries(appId.getParent(), currentArtifact.getName(), Integer.MAX_VALUE,
+        artifactRepository.getArtifactSummaries(currentArtifactNamespace, currentArtifact.getName(), Integer.MAX_VALUE,
                                                 ArtifactSortOrder.ASC);
     if (availableArtifacts.isEmpty()) {
       // This should not be possible as at least the current used artifact should be there.
@@ -398,6 +401,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new InvalidArtifactException(String.format(
           "Requested artifact version '%s' is invalid", candidateArtifact.getVersion()));
     }
+
     // Check conditions for validity of candidate artifact such as name and scope should be same. Also check that
     // candidate artifact should have higher version than current artifact.
     // In ideal cases, these conditions should never happen.
@@ -426,7 +430,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     try {
       ApplicationUpdateDetails detail =
-          upgdateApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
+          updateApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
                                      currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
                                      upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false);
       LOG.debug("Application upgrade successful. Update details: {}. Error: {}", detail.getUpdateDetails(),
@@ -441,16 +445,16 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
   // Updates an application config by applying given update actions. The app should know how to apply these actions
   // to its config.
-  private ApplicationUpdateDetails upgdateApplicationInternal(ApplicationId applicationId,
-                                                              NamespaceId namespaceId,
-                                                              @Nullable String appName,
-                                                              @Nullable String appVersion,
-                                                              @Nullable String currentConfigStr,
-                                                              ProgramTerminator programTerminator,
-                                                              ArtifactDetail artifactDetail,
-                                                              List<ApplicationConfigUpdateAction> updateActions,
-                                                              @Nullable KerberosPrincipalId ownerPrincipal,
-                                                              boolean updateSchedules) throws Exception {
+  private ApplicationUpdateDetails updateApplicationInternal(ApplicationId applicationId,
+                                                             NamespaceId namespaceId,
+                                                             @Nullable String appName,
+                                                             @Nullable String appVersion,
+                                                             @Nullable String currentConfigStr,
+                                                             ProgramTerminator programTerminator,
+                                                             ArtifactDetail artifactDetail,
+                                                             List<ApplicationConfigUpdateAction> updateActions,
+                                                             @Nullable KerberosPrincipalId ownerPrincipal,
+                                                             boolean updateSchedules) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
