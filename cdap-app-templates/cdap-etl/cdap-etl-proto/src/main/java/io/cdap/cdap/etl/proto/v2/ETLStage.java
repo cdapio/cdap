@@ -60,8 +60,7 @@ public final class ETLStage {
     this.inputSchema = inputSchema;
     this.outputSchema = outputSchema;
   }
-
-
+  
   public String getName() {
     return name;
   }
@@ -104,9 +103,16 @@ public final class ETLStage {
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 
+  /**
+   * Updates stage by performing update action logic provided in context.
+   * Current relevant update actions for stages are:
+   *  1. UPGRADE_ARTIFACT: Upgrades plugin artifact by finding the latest version of plugin to use.
+   *
+   * @param updateContext Context to use for updating stage.
+   * @return new (updated) ETLStage.
+   */
   public ETLStage updateStage(ApplicationUpdateContext updateContext) {
     for (ApplicationConfigUpdateAction updateAction: updateContext.getUpdateActions()) {
-      LOG.error("Jay Pandya upgrade stage 0 size {}", updateContext.getUpdateActions().size());
       switch (updateAction) {
         case UPGRADE_ARTIFACT:
           return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), inputSchema,
@@ -115,33 +121,35 @@ public final class ETLStage {
           return this;
         }
       }
-    LOG.error("Jay Pandya upgrade stage 6");
 
     // No update action provided so return stage as is.
     return this;
   }
 
+  // Upgrade plugin used in the stage.
+  // 1. If plugin is using fixed version and a new plugin artifact is found with higher version in SYSTEM scope,
+  //    use the new plugin.
+  // 2. If plugin is using a plugin range and a new plugin artifact is found with higher version in SYSTEM scope,
+  //    move the upper bound of the range to include the new plugin artifact. Also change plugin scope.
+  //    If new plugin is in range, do not change range. (Note: It would not change range even though new plugin is in
+  //    different scope).
   private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) {
-    LOG.error("Jay Pandya upgrade stage 1");
     // Currently tries to find latest plugin in SYSTEM scope and upgrades current plugin if version is higher,
     // ignoring current plugin scope.
     // In future, we can modify logic to fetch the latest plugin in any scope.
     List<ArtifactId> candidates =
         updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(),
-            ArtifactScope.SYSTEM, null);
-    LOG.error("Jay Pandya upgrade stage 2 size " + candidates.size());
+                                         ArtifactScope.SYSTEM, null);
     if (candidates.isEmpty())
       return plugin;
 
     // getPluginArtifacts returns plugins sorted in ascending order.
+    // TODO: Consider passing sort order as parameter.
     ArtifactId newPlugin = candidates.get(candidates.size() - 1);
-    LOG.error("Jay Pandya upgrade stage 3 new plugin " + newPlugin);
     String newVersion = getUpgradedVersionString(newPlugin);
+    // If getUpgradedVersionString returns null, candidate plugin is not valid for upgrade.
     if (newVersion == null) return plugin;
-    LOG.error("Jay Pandya upgrade stage 3.1 new plugin version chosen " + newVersion);
 
-    // Only upgrade version new plugin version is greater than current plugin version.
-    LOG.error("Jay Pandya upgrade stage 4 new plugin is " + newPlugin);
     ArtifactSelectorConfig newArtifactSelectorConfig =
         new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
                                    newVersion);
@@ -149,7 +157,6 @@ public final class ETLStage {
         new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
                                                 plugin.getProperties(),
                                                 newArtifactSelectorConfig);
-    LOG.error("Jay Pandya upgrade stage 5 new plugin " + upgradedEtlPlugin);
     return upgradedEtlPlugin;
   }
 
@@ -173,10 +180,11 @@ public final class ETLStage {
           return null;
         } else {
           // Increase the upper bound to latest available version.
-          ArtifactVersionRange newVersionRange = new ArtifactVersionRange(currentVersionRange.getLower(),
-              currentVersionRange.isLowerInclusive(),
-              newPlugin.getVersion(),
-              /*isUpperInclusive=*/true);
+          ArtifactVersionRange newVersionRange =
+              new ArtifactVersionRange(currentVersionRange.getLower(),
+                                       currentVersionRange.isLowerInclusive(),
+                                       newPlugin.getVersion(),
+                                       /*isUpperInclusive=*/true);
           return newVersionRange.getVersionString();
         }
       } else if (currentVersionRange.isExactVersion()

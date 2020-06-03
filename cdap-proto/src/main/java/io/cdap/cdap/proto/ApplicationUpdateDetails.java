@@ -20,23 +20,24 @@ import io.cdap.cdap.api.common.HttpErrorStatusProvider;
 import javax.annotation.Nullable;
 
 /**
- * Represents a application upgrade result of an {@link ApplicationDetail}.
+ * Represents an application update result of an {@link ApplicationDetail}.
  */
-public class ApplicationUpgradeDetails {
+public class ApplicationUpdateDetails {
+
   private final int statusCode;
   private final String error;
-  private final String upgradeDetails;
+  private final String updateDetails;
 
-  public ApplicationUpgradeDetails(String upgradeDetails, String error) {
+  public ApplicationUpdateDetails(String updateDetails, String error) {
     this.statusCode = 200;
     this.error = error;
-    this.upgradeDetails = upgradeDetails;
+    this.updateDetails = updateDetails;
   }
 
-  public ApplicationUpgradeDetails(HttpErrorStatusProvider statusProvider) {
+  public ApplicationUpdateDetails(HttpErrorStatusProvider statusProvider) {
     this.statusCode = statusProvider.getStatusCode();
     this.error = statusProvider.getMessage();
-    this.upgradeDetails = null;
+    this.updateDetails = null;
   }
 
   /**
@@ -55,11 +56,10 @@ public class ApplicationUpgradeDetails {
   }
 
   /**
-   * Returns the upgrade detail string if the status code is 200; otherwise return {@code null}.
+   * Returns the update detail string if the status code is 200; otherwise return {@code null}.
    */
   @Nullable
-  public String getUpgradeDetails() {
-    return this.upgradeDetails;
+  public String getUpdateDetails() {
+    return this.updateDetails;
   }
-
 }

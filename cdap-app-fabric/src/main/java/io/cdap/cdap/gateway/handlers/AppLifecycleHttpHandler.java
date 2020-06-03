@@ -59,7 +59,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.ApplicationUpgradeDetails;
+import io.cdap.cdap.proto.ApplicationUpdateDetails;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -383,7 +383,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Updates an existing application.
+   * upgrades an existing application.
    */
   @POST
   @Path("/apps/{app-id}/upgrade")
@@ -396,12 +396,11 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
 
     try {
-      ApplicationUpgradeDetails detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+      ApplicationUpdateDetails detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
     } catch (Exception e) {
-      // this is the same behavior as deploy app pipeline, but this is bad behavior. Error handling needs improvement.
       LOG.error("Upgrade application failure", e);
-      ApplicationUpgradeDetails detail = new ApplicationUpgradeDetails(
+      ApplicationUpdateDetails detail = new ApplicationUpdateDetails(
           new ServiceException("Upgrade failed due to internal error.", null,
                                HttpResponseStatus.INTERNAL_SERVER_ERROR));
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
@@ -409,37 +408,37 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   }
 
   /**
-   * Upgrades an existing application to use latest version of application artifact and plugin artifacts.
+   * Upgrades a lis of existing application to use latest version of application artifact and plugin artifacts.
    *
    * <pre>
    * {@code
    * [
-   *   {"appId":"XYZ", "version":"1.2.3"},
+   *   {"appId":"XYZ"},
    *   {"appId":"ABC"},
-   *   {"appId":"FOO", "version":"2.3.4"},
+   *   {"appId":"FOO"},
    * ]
    * }
    * </pre>
    *
-   * The response will be an array of {@link BatchApplicationDetail} object, which either indicates a success (200) or
-   * failure for each of the requested application in the same order as the request.
+   * The response will be map of Application ID to {@link ApplicationUpdateDetails} object, which either indicates a
+   * success (200) or failure for each of the requested application. The failure also indicates reason for the error.
    */
   @POST
   @Path("/upgrade")
   public void UpgradeApplications(FullHttpRequest request, HttpResponder responder,
-      @PathParam("namespace-id") String namespace) throws Exception {
-    LOG.info("Jay Pandya in upgrade application api 1");
+                                  @PathParam("namespace-id") String namespace) throws Exception {
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
-    Map<ApplicationId, ApplicationUpgradeDetails> details = new HashMap<>();
+    Map<ApplicationId, ApplicationUpdateDetails> details = new HashMap<>();
     for (ApplicationId appId : appIds) {
       try {
         details.put(appId, applicationLifecycleService.upgradeApplication(appId, createProgramTerminator()));
       } catch (Exception e) {
-        details.put(appId,
-            new ApplicationUpgradeDetails(
-                new ServiceException("Upgrade failed due to internal error.", null,
-                                     HttpResponseStatus.INTERNAL_SERVER_ERROR)));
-        LOG.error("Upgrading application {} failed due to exception ", appIds, e);
+        ApplicationUpdateDetails errorDetail = new ApplicationUpdateDetails(
+            new ServiceException("Upgrade failed due to internal error.", null,
+                                 HttpResponseStatus.INTERNAL_SERVER_ERROR));
+
+        details.put(appId, errorDetail);
+        LOG.error("Upgrading application {} failed due to exception ", appId, e);
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));

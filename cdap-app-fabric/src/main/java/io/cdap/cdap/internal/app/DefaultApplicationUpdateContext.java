@@ -66,13 +66,12 @@ import javax.annotation.Nullable;
 /**
  * Default implementation of {@link ApplicationUpdateContext}.
  *
- * Used during update of an Application config to use helper methods used during an update action like
+ * Used during update of an Application config via provided helper methods used during an update action like
  * upgrade/downgrade.
  */
 public class DefaultApplicationUpdateContext implements ApplicationUpdateContext {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultApplicationUpdateContext.class);
-  // Jay Pandya: Check if we need Schema builder here.
   private static final Gson GSON = new GsonBuilder().
       registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
 
@@ -125,27 +124,30 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     return configString;
   }
 
+  // Returns plugin artifacts using given filters in ascending order.
+  // TODO: Pass ArtifactSortOrder as argument for better flexibility.
   @Override
   public List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
                                              @Nullable ArtifactVersionRange pluginRange, int limit) {
     List<ArtifactId> pluginArtifacts = new ArrayList<>();
     NamespaceId pluginArtifactNamespace = ArtifactScope.SYSTEM.equals(pluginScope) ? NamespaceId.SYSTEM : namespaceId;
+
     Predicate<io.cdap.cdap.proto.id.ArtifactId> predicate = new Predicate<io.cdap.cdap.proto.id.ArtifactId>() {
       @Override
       public boolean apply(io.cdap.cdap.proto.id.ArtifactId input) {
         // should check if the artifact is from SYSTEM namespace, if not, check if it is from the scoped namespace.
+        // should check if plugin is in given range if provided.
         return (((pluginScope == null && NamespaceId.SYSTEM.equals(input.getParent()))
-            || pluginArtifactNamespace.equals(input.getParent())) &&
-            (pluginRange == null || pluginRange.versionIsInRange(new ArtifactVersion(input.getVersion()))));
+               || pluginArtifactNamespace.equals(input.getParent())) &&
+               (pluginRange == null || pluginRange.versionIsInRange(new ArtifactVersion(input.getVersion()))));
       }
     };
 
     try {
-      // Check what is the correct namespace here.
       Map<ArtifactDescriptor, PluginClass> plugins =
           artifactRepository.getPlugins(pluginArtifactNamespace,
-              Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
-              pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
+                                        Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
+                                        pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactId plugin = pluginsEntry.getKey().getArtifactId();
         // Only consider non-SNAPSHOT plugins for upgrade.
@@ -156,7 +158,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
       }
     } catch (Exception e) {
       LOG.warn("Failed to get plugin details for artifact {} for plugin {} of type {}",
-          applicationArtifactId, pluginName, pluginType, e);
+               applicationArtifactId, pluginName, pluginType, e);
     }
     return pluginArtifacts;
   }

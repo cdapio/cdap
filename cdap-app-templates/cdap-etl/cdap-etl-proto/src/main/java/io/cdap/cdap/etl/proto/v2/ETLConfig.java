@@ -91,7 +91,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
     this.transforms = null;
   }
 
-    @Nullable
+  @Nullable
   public String getDescription() {
     return description;
   }

@@ -113,8 +113,16 @@ public final class ETLBatchConfig extends ETLConfig {
     return maxConcurrentRuns;
   }
 
+  /**
+   * Updates current ETLBatchConfig by running update actions provided in context such as upgrading plugin artifact
+   * versions.
+   *
+   * @param upgradeContext Context for performing update for current batch config.
+   * @return a new (updated) etl batch config after performing update operations.
+   */
   public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext) {
     Set<ETLStage> upgradedStages = new HashSet<>();
+    // Upgrade all stages.
     for (ETLStage stage : getStages()) {
       upgradedStages.add(stage.updateStage(upgradeContext));
     }
