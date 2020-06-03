@@ -83,6 +83,7 @@ import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.guice.MetricsHandlerModule;
+import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
@@ -529,6 +530,7 @@ public class StandaloneMain {
       new MonitorHandlerModule(false),
       new RuntimeServerModule(),
       new OperationalStatsModule(),
+      new MetricsWriterModule(),
       new AbstractModule()  {
         @Override
         protected void configure() {

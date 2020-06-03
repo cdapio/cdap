@@ -22,15 +22,17 @@ import com.google.inject.Inject;
 import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metrics.process.loader.MetricsWriterProvider;
 import io.cdap.cdap.metrics.store.MetricDatasetFactory;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -41,6 +43,17 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
 
   private final List<MessagingMetricsProcessorService> metricsProcessorServices;
   private final List<MetricsWriter> metricsWriters;
+  private final CConfiguration cConf;
+  private final MetricDatasetFactory metricDatasetFactory;
+  private final MessagingService messagingService;
+  private final SchemaGenerator schemaGenerator;
+  private final DatumReaderFactory readerFactory;
+  private final MetricStore metricStore;
+  private final MetricsWriterProvider metricsWriterProvider;
+  private final Set<Integer> topicNumbers;
+  private final MetricsContext metricsContext;
+  private final long metricsProcessIntervalMillis;
+  private final Integer instanceId;
 
   @Inject
   MessagingMetricsProcessorManagerService(CConfiguration cConf,
@@ -49,11 +62,12 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
+                                          MetricsWriterProvider metricsWriterProvider,
                                           @Assisted Set<Integer> topicNumbers,
                                           @Assisted MetricsContext metricsContext,
                                           @Assisted Integer instanceId) {
     this(cConf, metricDatasetFactory, messagingService,
-         schemaGenerator, readerFactory, metricStore, topicNumbers, metricsContext,
+         schemaGenerator, readerFactory, metricStore, metricsWriterProvider, topicNumbers, metricsContext,
          TimeUnit.SECONDS.toMillis(cConf.getInt(Constants.Metrics.METRICS_MINIMUM_RESOLUTION_SECONDS)), instanceId);
   }
 
@@ -64,33 +78,53 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
                                           SchemaGenerator schemaGenerator,
                                           DatumReaderFactory readerFactory,
                                           MetricStore metricStore,
+                                          MetricsWriterProvider metricsWriterProvider,
                                           Set<Integer> topicNumbers,
                                           MetricsContext metricsContext,
                                           long metricsProcessIntervalMillis,
                                           int instanceId) {
     this.metricsWriters = new ArrayList<>();
     this.metricsProcessorServices = new ArrayList<>();
-    MetricStoreMetricsWriter metricsWriter = new MetricStoreMetricsWriter(metricStore);
-    metricsWriter.initialize(metricsContext);
-    this.metricsWriters.add(metricsWriter);
-
-    for (MetricsWriter metricsExtension : this.metricsWriters) {
-      metricsProcessorServices.add(new MessagingMetricsProcessorService(cConf,
-                                                                        metricDatasetFactory,
-                                                                        messagingService,
-                                                                        schemaGenerator,
-                                                                        readerFactory,
-                                                                        metricsExtension,
-                                                                        topicNumbers,
-                                                                        metricsContext,
-                                                                        metricsProcessIntervalMillis,
-                                                                        instanceId));
-
-    }
+    this.cConf = cConf;
+    this.metricDatasetFactory = metricDatasetFactory;
+    this.messagingService = messagingService;
+    this.schemaGenerator = schemaGenerator;
+    this.readerFactory = readerFactory;
+    this.metricStore = metricStore;
+    this.metricsWriterProvider = metricsWriterProvider;
+    this.topicNumbers = topicNumbers;
+    this.metricsContext = metricsContext;
+    this.metricsProcessIntervalMillis = metricsProcessIntervalMillis;
+    this.instanceId = instanceId;
   }
 
   @Override
   protected void startUp() throws Exception {
+    MetricStoreMetricsWriter metricsWriter = new MetricStoreMetricsWriter(metricStore);
+    metricsWriter.initialize(metricsContext);
+    this.metricsWriters.add(metricsWriter);
+
+    for (Map.Entry<String, MetricsWriter> metricsWriterEntry : metricsWriterProvider.loadMetricsWriters().entrySet()) {
+      MetricsWriter writer = metricsWriterEntry.getValue();
+      this.metricsWriters.add(writer);
+      writer.initialize(metricsContext);
+    }
+
+    for (MetricsWriter metricsExtension : this.metricsWriters) {
+      metricsProcessorServices.add(new MessagingMetricsProcessorService(
+        cConf,
+        metricDatasetFactory,
+        messagingService,
+        schemaGenerator,
+        readerFactory,
+        metricsExtension,
+        topicNumbers,
+        metricsContext,
+        metricsProcessIntervalMillis,
+        instanceId));
+
+    }
+
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       processorService.startAndWait();
     }
@@ -102,6 +136,9 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
     for (MessagingMetricsProcessorService processorService : metricsProcessorServices) {
       try {
         processorService.stopAndWait();
+        for (MetricsWriter metricsWriter : metricsWriters) {
+          metricsWriter.close();
+        }
       } catch (Exception e) {
         exceptions.addSuppressed(e);
       }
