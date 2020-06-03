@@ -16,10 +16,12 @@
 
 package io.cdap.cdap.datastreams;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
@@ -50,6 +52,7 @@ import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinMerge;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicJoinOn;
 import io.cdap.cdap.etl.spark.streaming.function.WrapOutputTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.preview.LimitingFunction;
+import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 import org.apache.spark.streaming.api.java.JavaStreamingContext;
@@ -146,13 +149,14 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     if (plugin instanceof BatchAutoJoiner) {
       BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
 
-      Map<String, JoinStage> inputStages = new HashMap<>();
+      Map<String, Schema> inputSchemas = new HashMap<>();
       for (String inputStageName : pipelinePhase.getStageInputs(stageName)) {
         StageSpec inputStageSpec = pipelinePhase.getStage(inputStageName);
-        inputStages.put(inputStageName,
-                        JoinStage.builder(inputStageName, inputStageSpec.getOutputSchema()).build());
+        inputSchemas.put(inputStageName, inputStageSpec.getOutputSchema());
       }
-      AutoJoinerContext autoJoinerContext = new DefaultAutoJoinerContext(inputStages);
+      FailureCollector failureCollector = new LoggingFailureCollector(stageName, inputSchemas);
+      AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(inputSchemas, failureCollector);
+      failureCollector.getOrThrowException();
 
       JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
       if (joinDefinition == null) {

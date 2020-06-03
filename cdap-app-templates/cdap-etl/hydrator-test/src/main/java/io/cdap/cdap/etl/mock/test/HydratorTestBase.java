@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
+import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
@@ -120,7 +121,7 @@ public class HydratorTestBase extends TestBase {
     addAppArtifact(artifactId, appClass,
                    BatchSource.class.getPackage().getName(),
                    Action.class.getPackage().getName(),
-                   AutoJoiner.class.getPackage().getName(),
+                   AutoJoiner.class.getPackage().getName(), JoinError.class.getPackage().getName(),
                    Condition.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
                    AccessType.class.getPackage().getName(),
@@ -148,7 +149,7 @@ public class HydratorTestBase extends TestBase {
     addAppArtifact(artifactId, appClass,
                    StreamingSource.class.getPackage().getName(),
                    Transform.class.getPackage().getName(),
-                   AutoJoiner.class.getPackage().getName(),
+                   AutoJoiner.class.getPackage().getName(), JoinError.class.getPackage().getName(),
                    SparkCompute.class.getPackage().getName(),
                    InvalidStageException.class.getPackage().getName(),
                    PipelineConfigurable.class.getPackage().getName(),
