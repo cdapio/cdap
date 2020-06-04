@@ -17,32 +17,12 @@
 <div class="step-content-heading">
   Specify runtime arguments or update the ones derived from preferences
   <div class="step-content-subtitle">
-    By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, you can skip that argument by marking it as provided.
+    By default, values for all runtime arguments must be provided before running the pipeline. If a stage in your pipeline provides the value of an argument, it needs to be left empty.
   </div>
 </div>
 <div class="runtime-arguments-labels key-value-pair-labels">
   <span class="key-label">Name</span>
   <span class="value-label">Value</span>
-  <span></span>
-  <span class="provided-label"
-        ng-if="RuntimeArgsCtrl.containsMacros">
-    <span uib-dropdown
-      class="dropdown"
-      is-open="RuntimeArgsCtrl.providedPopoverOpen">
-      <span uib-dropdown-toggle>
-        Provided
-        <span class="fa fa-caret-square-o-down">
-      </span>
-      <ul uib-dropdown-menu ng-click="$event.stopPropagation();">
-        <li ng-click="RuntimeArgsCtrl.toggleAllProvided(false)">
-          Clear All
-        </li>
-        <li ng-click="RuntimeArgsCtrl.toggleAllProvided(true)">
-          Select All
-        </li>
-      </ul>
-    </span>
-  </span>
 </div>
 <div class="runtime-arguments-values key-value-pair-values">
   <key-value-pairs
