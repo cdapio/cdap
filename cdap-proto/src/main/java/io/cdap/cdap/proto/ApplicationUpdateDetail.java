@@ -23,21 +23,21 @@ import javax.annotation.Nullable;
 /**
  * Represents an application update result of an {@link ApplicationDetail}.
  */
-public class ApplicationUpdateDetails {
+public class ApplicationUpdateDetail {
 
   private final int statusCode;
   private final String error;
   private final String updateDetails;
   private final ApplicationId applicationId;
 
-  public ApplicationUpdateDetails(ApplicationId applicationId, String updateDetails, String error) {
+  public ApplicationUpdateDetail(ApplicationId applicationId, String updateDetails, String error) {
     this.applicationId = applicationId;
     this.statusCode = 200;
     this.error = error;
     this.updateDetails = updateDetails;
   }
 
-  public ApplicationUpdateDetails(ApplicationId applicationId, HttpErrorStatusProvider statusProvider) {
+  public ApplicationUpdateDetail(ApplicationId applicationId, HttpErrorStatusProvider statusProvider) {
     this.applicationId = applicationId;
     this.statusCode = statusProvider.getStatusCode();
     this.error = statusProvider.getMessage();

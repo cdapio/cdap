@@ -389,13 +389,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void upgradeApplication(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") final String namespaceId,
-                                 @PathParam("app-id") final String appName)
-      throws Exception {
-
+                                 @PathParam("app-id") final String appName) throws Exception {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
-
-    ApplicationUpdateDetail detail =
-      applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+    ApplicationUpdateDetail detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
   }
 
@@ -428,14 +424,12 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         ApplicationUpdateDetail errorDetail =
           new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
                                                                    HttpResponseStatus.INTERNAL_SERVER_ERROR));
-
         details.add(errorDetail);
         LOG.debug("Upgrading application {} failed due to exception ", appId, e);
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }
-
 
   /**
    * Gets {@link ApplicationDetail} for a set of applications. It expects a post body as a array of object, with each

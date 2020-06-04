@@ -437,7 +437,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                              ArtifactDetail artifactDetail,
                                                              List<ApplicationConfigUpdateAction> updateActions,
                                                              @Nullable KerberosPrincipalId ownerPrincipal,
-                                                             boolean updateSchedules, String userAction) throws Exception {
+                                                             boolean updateSchedules,
+                                                             String userAction) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       // This should never happen.
