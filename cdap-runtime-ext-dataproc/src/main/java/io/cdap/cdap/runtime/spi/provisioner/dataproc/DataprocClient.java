@@ -32,7 +32,6 @@ import com.google.api.services.compute.model.Firewall;
 import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
-import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
 import com.google.cloud.dataproc.v1.Cluster;
@@ -49,7 +48,6 @@ import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
-import com.google.common.base.MoreObjects;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.rpc.Status;
@@ -62,8 +60,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -735,22 +731,21 @@ final class DataprocClient implements AutoCloseable {
       throw e;
     }
     Map<String, String> properties = new HashMap<>();
-    for (NetworkInterface networkInterface : instance.getNetworkInterfaces()) {
-      Path path = Paths.get(networkInterface.getNetwork());
-      String networkName = path.getFileName().toString();
-      if (network.getName().equals(networkName)) {
-        // if the cluster does not have an external ip then then access config is null
-        if (networkInterface.getAccessConfigs() != null) {
-          for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
-            if (accessConfig.getNatIP() != null) {
-              properties.put("ip.external", accessConfig.getNatIP());
-              break;
-            }
+
+    // Dataproc cluster node should only have exactly one network
+    instance.getNetworkInterfaces().stream().findFirst().ifPresent(networkInterface -> {
+      // if the cluster does not have an external ip then then access config is null
+      if (networkInterface.getAccessConfigs() != null) {
+        for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
+          if (accessConfig.getNatIP() != null) {
+            properties.put("ip.external", accessConfig.getNatIP());
+            break;
           }
         }
-        properties.put("ip.internal", networkInterface.getNetworkIP());
       }
-    }
+      properties.put("ip.internal", networkInterface.getNetworkIP());
+    });
+
     long ts;
     try {
       ts = DATE_FORMAT.parse(instance.getCreationTimestamp()).getTime();
@@ -759,7 +754,10 @@ final class DataprocClient implements AutoCloseable {
     }
 
     // For internal IP only cluster, nodes only have ip.internal.
-    String ip = MoreObjects.firstNonNull(properties.get("ip.external"), properties.get("ip.internal"));
+    String ip = properties.get("ip.external");
+    if (ip == null) {
+      ip = properties.get("ip.internal");
+    }
     return new Node(nodeName, type, ip, ts, properties);
   }
 
