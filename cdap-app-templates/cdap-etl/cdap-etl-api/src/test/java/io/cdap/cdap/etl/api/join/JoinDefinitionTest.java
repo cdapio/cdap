@@ -20,6 +20,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
+import io.cdap.cdap.etl.api.join.error.OutputSchemaError;
 import io.cdap.cdap.etl.api.join.error.SelectedFieldError;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,6 +28,11 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Tests for {@link JoinDefinition} and related builders.
@@ -310,6 +316,75 @@ public class JoinDefinitionTest {
       JoinKeyFieldError keyError = (JoinKeyFieldError) error;
       Assert.assertEquals("users", keyError.getStageName());
       Assert.assertEquals("email", keyError.getKeyField());
+    }
+  }
+
+  @Test
+  public void testBadOutputSchema() {
+    JoinStage purchases = JoinStage.builder("purchases", PURCHASE_SCHEMA).build();
+    JoinStage users = JoinStage.builder("users", USER_SCHEMA).isOptional().build();
+
+    /*
+         things wrong with the schema:
+
+         missing 'price' field
+         extra 'pricee' field
+         'coupon' should be nullable
+         'email' is the wrong type
+     */
+    Schema badSchema = Schema.recordOf(
+      "joined",
+      Schema.Field.of("ts", Schema.of(Schema.LogicalType.TIMESTAMP_MICROS)),
+      Schema.Field.of("purchase_id", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("user_id", Schema.nullableOf(Schema.of(Schema.Type.LONG))),
+      Schema.Field.of("pricee", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("coupon", Schema.of(Schema.Type.BOOLEAN)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("email", Schema.nullableOf(Schema.of(Schema.Type.FLOAT))),
+      Schema.Field.of("age", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("bday", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))));
+
+    try {
+      JoinDefinition.builder()
+        .select(new JoinField("purchases", "id", "purchase_id"),
+                new JoinField("users", "id", "user_id"),
+                new JoinField("purchases", "ts"),
+                new JoinField("purchases", "price"),
+                new JoinField("purchases", "coupon"),
+                new JoinField("users", "name"),
+                new JoinField("users", "email"),
+                new JoinField("users", "age"),
+                new JoinField("users", "bday"))
+        .from(purchases, users)
+        .on(JoinCondition.onKeys()
+              .addKey(new JoinKey("purchases", Collections.singletonList("user_id")))
+              .addKey(new JoinKey("users", Collections.singletonList("id")))
+              .build())
+        .setOutputSchema(badSchema)
+        .build();
+      Assert.fail("Invalid output schema did not fail as expected");
+    } catch (InvalidJoinException e) {
+      // expected
+      Collection<JoinError> errors = e.getErrors();
+      Assert.assertEquals(4, errors.size());
+
+      Map<String, String> expected = new HashMap<>();
+      expected.put("pricee", null);
+      expected.put("coupon", "boolean");
+      expected.put("email", "string");
+
+      Map<String, String> badFields = new HashMap<>();
+
+      for (JoinError joinError : errors) {
+        if (joinError.getType() != JoinError.Type.OUTPUT_SCHEMA) {
+          // this is the error about one of the selected fields missing from the output schema
+          Assert.assertEquals(JoinError.Type.GENERAL, joinError.getType());
+          continue;
+        }
+        OutputSchemaError outputSchemaError = (OutputSchemaError) joinError;
+        badFields.put(outputSchemaError.getField(), outputSchemaError.getExpectedType());
+      }
+      Assert.assertEquals(expected, badFields);
     }
   }
 

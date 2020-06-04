@@ -165,7 +165,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                           "Check with the plugin developer to ensure it is implemented correctly.",
                         stageName));
       }
-      joiner = new JoinerBridge(autoJoiner, joinDefinition);
+      joiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
     } else if (plugin instanceof BatchJoiner) {
       joiner = (BatchJoiner) plugin;
     } else {

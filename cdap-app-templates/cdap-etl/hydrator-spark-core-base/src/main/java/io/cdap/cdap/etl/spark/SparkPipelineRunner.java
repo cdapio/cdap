@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.etl.spark;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -41,6 +44,7 @@ import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.streaming.Windower;
@@ -71,12 +75,12 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -369,7 +373,7 @@ public abstract class SparkPipelineRunner {
       // it is checked by PipelinePhasePreparer at the start of the run.
       JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
       failureCollector.getOrThrowException();
-      return handleAutoJoin(joinDefinition, inputDataCollections);
+      return handleAutoJoin(stageName, joinDefinition, inputDataCollections);
     } else {
       // should never happen unless there is a bug in the code. should have failed during deployment
       throw new IllegalStateException(String.format("Stage '%s' is an unknown joiner type %s",
@@ -381,7 +385,7 @@ public abstract class SparkPipelineRunner {
    * The purpose of this method is to collect various pieces of information together into a JoinRequest.
    * This amounts to gathering the SparkCollection, schema, join key, and join type for each stage involved in the join.
    */
-  private SparkCollection<Object> handleAutoJoin(JoinDefinition joinDefinition,
+  private SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
                                                  Map<String, SparkCollection<Object>> inputDataCollections) {
     // sort stages to join so that broadcasts happen last. This is to ensure that the left side is not a broadcast
     // so that we don't try to broadcast both sides of the join. It also causes less data to be shuffled for the
@@ -398,6 +402,7 @@ public abstract class SparkPipelineRunner {
 
     Iterator<JoinStage> stageIter = joinOrder.iterator();
     JoinStage left = stageIter.next();
+    String leftName = left.getStageName();
     SparkCollection<Object> leftCollection = inputDataCollections.get(left.getStageName());
     Schema leftSchema = left.getSchema();
 
@@ -414,24 +419,232 @@ public abstract class SparkPipelineRunner {
     // C -> [z, k]
     Map<String, List<String>> stageKeys = onKeys.getKeys().stream()
       .collect(Collectors.toMap(JoinKey::getStageName, JoinKey::getFields));
+
+    Schema outputSchema = joinDefinition.getOutputSchema();
+    // if the output schema is null it means it could not be generated because some of the input schemas are null.
+    // there isn't a reliable way to get the schema from the data at this point, so we require the user to have
+    // provided the output schema directly
+    // it is technically possible to take a single StructuredRecord from each input to determine the schema,
+    // but this approach will not work if the input RDD is empty.
+    // in addition, RDD.take(1) and RDD.isEmpty() both trigger a Spark job, which is not desirable.
+    // when we properly propagate schema at runtime, this condition should no longer happen
+    if (outputSchema == null) {
+      throw new IllegalArgumentException(
+        String.format("Joiner stage '%s' cannot calculate its output schema because " +
+                        "one or more inputs have dynamic or unknown schema. " +
+                        "An output schema must be directly provided.", stageName));
+    }
     List<JoinCollection> toJoin = new ArrayList<>();
+    List<Schema> keySchema = null;
     while (stageIter.hasNext()) {
       // in this loop, information for each stage to be joined is gathered together into a JoinCollection
       JoinStage right = stageIter.next();
       String rightName = right.getStageName();
+      Schema rightSchema = right.getSchema();
+      List<String> key = stageKeys.get(rightName);
+      if (rightSchema == null) {
+        if (keySchema == null) {
+          keySchema = deriveKeySchema(stageName, stageKeys, joinDefinition);
+        }
+        // if the schema is not known, generate it from the provided output schema and the selected fields
+        rightSchema = deriveInputSchema(stageName, rightName, key, keySchema,
+                                        joinDefinition.getSelectedFields(), joinDefinition.getOutputSchema());
+      } else {
+        // drop fields that aren't included in the final output
+        // don't need to do this if the schema was derived, since it will already only contain
+        // fields in the output schema
+        Set<String> requiredFields = new HashSet<>(key);
+        for (JoinField joinField : joinDefinition.getSelectedFields()) {
+          if (!joinField.getStageName().equals(rightName)) {
+            continue;
+          }
+          requiredFields.add(joinField.getFieldName());
+        }
+        rightSchema = trimSchema(rightSchema, requiredFields);
+      }
+
       // JoinCollection contains the stage name,  SparkCollection, schema, joinkey,
       // whether it's required, and whether to broadcast
-      toJoin.add(new JoinCollection(rightName, inputDataCollections.get(rightName),
-                                    right.getSchema(), stageKeys.get(rightName),
+      toJoin.add(new JoinCollection(rightName, inputDataCollections.get(rightName), rightSchema, key,
                                     right.isRequired(), right.isBroadcast()));
     }
 
+    List<String> leftKey = stageKeys.get(leftName);
+    if (leftSchema == null) {
+      if (keySchema == null) {
+        keySchema = deriveKeySchema(stageName, stageKeys, joinDefinition);
+      }
+      leftSchema = deriveInputSchema(stageName, leftName, leftKey, keySchema,
+                                     joinDefinition.getSelectedFields(), joinDefinition.getOutputSchema());
+    }
+
     // JoinRequest contains the left side of the join, plus 1 or more other stages to join to.
-    JoinRequest joinRequest = new JoinRequest(left.getStageName(), stageKeys.get(left.getStageName()), leftSchema,
+    JoinRequest joinRequest = new JoinRequest(leftName, leftKey, leftSchema,
                                               left.isRequired(), onKeys.isNullSafe(),
                                               joinDefinition.getSelectedFields(),
                                               joinDefinition.getOutputSchema(), toJoin);
     return leftCollection.join(joinRequest);
+  }
+
+  /**
+   * Derive the key schema based on the provided output schema and the final list of selected fields.
+   * This is not possible if the key is not present in the output schema, in which case the user will need to
+   * add it to the output schema. However, this is an unlikely scenario as most joins will want to
+   * preserve the key.
+   */
+  @VisibleForTesting
+  static List<Schema> deriveKeySchema(String joinerStageName, Map<String, List<String>> keys,
+                                      JoinDefinition joinDefinition) {
+    int numKeyFields = keys.values().iterator().next().size();
+
+    // (stage, field) -> JoinField
+    Table<String, String, JoinField> fieldTable = HashBasedTable.create();
+    for (JoinField joinField : joinDefinition.getSelectedFields()) {
+      fieldTable.put(joinField.getStageName(), joinField.getFieldName(), joinField);
+    }
+
+    /*
+        Suppose the join keys are:
+
+        A, (x, y)
+        B, (x, z))
+
+        and selected fields are:
+
+        A.x as id, A.y as name, B.z as item
+     */
+    Schema outputSchema = joinDefinition.getOutputSchema();
+    List<Schema> keySchema = new ArrayList<>(numKeyFields);
+    for (int i = 0; i < numKeyFields; i++) {
+      keySchema.add(null);
+    }
+    for (Map.Entry<String, List<String>> keyEntry : keys.entrySet()) {
+      String keyStage = keyEntry.getKey();
+      int keyFieldNum = 0;
+      for (String keyField : keyEntry.getValue()) {
+        // If key field is A.x, this will fetch (A.x as id)
+        // the JoinField might not exist. For example, B.x will not find anything in the output
+        JoinField selectedKeyField = fieldTable.get(keyStage, keyField);
+        if (selectedKeyField == null) {
+          continue;
+        }
+
+        // if the key field is A.x, JoinField is (A.x as id), and outputField is the 'id' field in the output schema
+        String outputFieldName = selectedKeyField.getAlias() == null ?
+          selectedKeyField.getFieldName() : selectedKeyField.getAlias();
+        Schema.Field outputField = outputSchema.getField(outputFieldName);
+
+        if (outputField == null) {
+          // this is an invalid join definition
+          throw new IllegalArgumentException(
+            String.format("Joiner stage '%s' provided an invalid definition. " +
+                            "The output schema does not contain a field for selected field '%s'.'%s'%s",
+                          joinerStageName, keyStage, selectedKeyField.getFieldName(),
+                          selectedKeyField.getAlias() == null ? "" : "as " + selectedKeyField.getAlias()));
+        }
+
+        // make the schema nullable because one stage might have it as non-nullable
+        // while another stage has it as nullable.
+        // for example, when joining on A.id = B.id,
+        // A.id might not be nullable, but B.id could be.
+        // this will never be exposed to the user since the final output will use whatever schema that was provided
+        // by the user.
+        Schema keyFieldSchema = outputField.getSchema();
+        if (!keyFieldSchema.isNullable()) {
+          keyFieldSchema = Schema.nullableOf(keyFieldSchema);
+        }
+
+        Schema existingSchema = keySchema.get(keyFieldNum);
+        if (existingSchema != null && existingSchema.isSimpleOrNullableSimple() &&
+          !existingSchema.equals(keyFieldSchema)) {
+          // this is an invalid join definition
+          // this condition is normally checked at deployment time,
+          // but it will be skipped if the input schema is not known.
+          throw new IllegalArgumentException(
+            String.format("Joiner stage '%s' has mismatched join key types. " +
+                            "Key field '%s' from stage '%s' has a different than another stage.",
+                          joinerStageName, keyField, keyStage));
+        }
+        keySchema.set(keyFieldNum, keyFieldSchema);
+        keyFieldNum++;
+      }
+    }
+    for (int i = 0; i < numKeyFields; i++) {
+      Schema keyFieldSchema = keySchema.get(i);
+      if (keyFieldSchema == null) {
+        throw new IllegalArgumentException(
+          String.format("Joiner stage '%s' has inputs with dynamic or unknown schema. " +
+                          "Unable to derive the schema for key field #%d. " +
+                          "Please include all key fields in the output schema.",
+                        joinerStageName, i + 1));
+      }
+    }
+    return keySchema;
+  }
+
+  /**
+   * Derive the schema for an input stage based on the known output schema and the final list of selected fields.
+   * For example, if the final output schema is:
+   *
+   *   purchase_id (int), user_id (int), user_name (string)
+   *
+   * and the selected fields are:
+   *
+   *   A.id as purchase_id, B.id as user_id, B.name as user_name
+   *
+   * then the schema for A can be determined to be:
+   *
+   *   id (int)
+   *
+   * and the schema for B can be determined to be:
+   *
+   *   id (int), name (string)
+   */
+  @VisibleForTesting
+  static Schema deriveInputSchema(String joinerStageName, String inputStageName, List<String> key,
+                                  List<Schema> keySchema, List<JoinField> selectedFields, Schema outputSchema) {
+    List<Schema.Field> stageFields = new ArrayList<>();
+    Iterator<String> keyIter = key.iterator();
+    Iterator<Schema> keySchemaIter = keySchema.iterator();
+    while (keyIter.hasNext()) {
+      stageFields.add(Schema.Field.of(keyIter.next(), keySchemaIter.next()));
+    }
+
+    Set<String> keySet = new HashSet<>(key);
+    for (JoinField selectedField : selectedFields) {
+      if (!selectedField.getStageName().equals(inputStageName)) {
+        continue;
+      }
+      String preAliasedName = selectedField.getFieldName();
+      if (keySet.contains(preAliasedName)) {
+        continue;
+      }
+      String outputName = selectedField.getAlias() == null ? preAliasedName : selectedField.getAlias();
+      Schema.Field outputField = outputSchema.getField(outputName);
+      if (outputField == null) {
+        throw new IllegalArgumentException(
+          String.format("Joiner stage '%s' provided an invalid definition. " +
+                          "The output schema does not contain a field for selected field '%s'.'%s'%s",
+                        joinerStageName, selectedField.getStageName(), preAliasedName,
+                        preAliasedName == null ? "" : "as " + preAliasedName));
+      }
+      stageFields.add(Schema.Field.of(preAliasedName, outputField.getSchema()));
+    }
+    return Schema.recordOf(inputStageName, stageFields);
+  }
+
+  /**
+   * Remove fields from the given schema that are not eventually selected in the final output.
+   * This is done to trim down the amount of data that needs to be processed in the join.
+   */
+  private static Schema trimSchema(Schema stageSchema, Set<String> requiredFields) {
+    List<Schema.Field> trimmed = new ArrayList<>();
+    for (Schema.Field field : stageSchema.getFields()) {
+      if (requiredFields.contains(field.getName())) {
+        trimmed.add(field);
+      }
+    }
+    return Schema.recordOf(stageSchema.getRecordName(), trimmed);
   }
 
   protected SparkCollection<Object> handleJoin(BatchJoiner<?, ?, ?> joiner,

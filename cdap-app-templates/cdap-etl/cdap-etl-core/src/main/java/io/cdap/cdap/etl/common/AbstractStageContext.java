@@ -34,6 +34,7 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -150,7 +151,7 @@ public abstract class AbstractStageContext implements StageContext {
 
   @Override
   public List<String> getInputStages() {
-    return stageSpec.getInputStages();
+    return new ArrayList<>(stageSpec.getInputStages());
   }
 
   @Nullable
