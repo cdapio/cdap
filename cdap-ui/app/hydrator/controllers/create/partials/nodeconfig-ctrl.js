@@ -96,12 +96,21 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.isStudioMode = rIsStudioMode;
     this.isPreviewMode = this.previewStore.getState().preview.isPreviewModeEnabled;
     this.isPreviewData = this.previewStore.getState().preview.previewData;
+    this.previewId = this.getPreviewId();
 
-    if (rIsStudioMode && this.isPreviewMode) {
+    if (rIsStudioMode && this.isPreviewMode && this.previewId) {
       this.previewLoading = false;
       this.previewData = null;
       this.previewStatus = null;
-      this.fetchPreview();
+      let { stages, connections } = this.ConfigStore.getConfigForExport().config;
+      let selectedNode = { 
+        plugin: this.state.node.plugin,
+        isSource: this.state.isSource,
+        isSink: this.state.isSink,
+       }
+      let loadingCb = this.updatePreviewLoading.bind(this);
+      let updatePreviewCb = this.updatePreviewDataAndStatus.bind(this);
+      window.CaskCommon.PreviewUtilities.fetchPreview(selectedNode, this.previewId, stages, connections, loadingCb, updatePreviewCb);
     }
 
     this.activeTab = 1;
@@ -521,184 +530,26 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
   }
 
-  // PREVIEW
-  fetchPreview() {
-    this.previewLoading = true;
-    let previewId = this.previewStore.getState().preview.previewId;
-    let previousStageIsCondition = false;
-    let previousStagePort;
-
-    if (!previewId) {
-      this.previewLoading = false;
-      return;
-    }
-    let params = {
-      namespace: this.$state.params.namespace,
-      previewId: previewId,
-      scope: this.$scope
-    };
-
-    let { stages, connections } = this.ConfigStore.getConfigForExport().config;
-    let adjacencyMap = this.HydratorPlusPlusOrderingFactory.getAdjacencyMap(connections);
-    let postBody = [];
-    let previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(this.state.node.plugin.label) !== -1);
-
-    if (previousStageName) {
-      let previousStage = stages.find(stage => stage.name === previousStageName);
-      if (previousStage.plugin.type === 'splittertransform') {
-        let previousStageConnection = connections.find((connection) => connection.from === previousStageName && connection.to === this.state.node.plugin.label);
-        if (previousStageConnection) {
-          previousStagePort = previousStageConnection.port;
-        }
-      } else {
-        // In case we have multiple condition nodes in a row, we have to keep traversing back
-        // until we find a node that actually has records out
-        while (previousStage && previousStage.plugin.type === 'condition') {
-          previousStageIsCondition = true;
-          previousStageName = Object.keys(adjacencyMap).find(key => adjacencyMap[key].indexOf(previousStageName) !== -1);
-          previousStage = stages.find(stage => stage.name === previousStageName);
-        }
-      }
-      postBody.push(previousStageName);
-    }
-
-    this.myPipelineApi.getStagePreview(params, {
-      tracers: postBody.concat([this.state.node.plugin.label])
-    })
-      .$promise
-      .then((res) => {
-        delete res.$promise;
-        delete res.$resolved;
-
-        this.previewData = {
-          input: {},
-          output: {},
-          numInputStages: 0,
-          numOutputStages: 0
-        };
-        let recordsOut = {};
-        let recordsIn = {};
-
-        // Backend returns metrics for the stages listed in the `tracers` property in the API call,
-        // usually that's the stage the user is clicking on and the last stage connecting to it that
-        // has output records
-        angular.forEach(res, (stageMetrics, stageName) => {
-          let recordsOutPorts = Object.keys(stageMetrics).filter(metricName => metricName.indexOf('records.out.') !== -1);
-
-          // Looking at the metrics of the stage that the user clicked on
-          // so just set recordsOut to the value returned at the 'records.out' property
-          if (stageName === this.state.node.plugin.label) {
-            if (recordsOutPorts.length) {
-              angular.forEach(recordsOutPorts, (recordsOutPort) => {
-                let portName = _.capitalize(recordsOutPort.split('.').pop());
-                recordsOut[portName] = this.formatMultipleRecords(stageMetrics[recordsOutPort]);
-              });
-            } else {
-              recordsOut[stageName] = this.formatMultipleRecords(stageMetrics['records.out']);
-            }
-
-          // Looking at the metrics of the stage previous to the one that the user clicked on
-          // so set the recordsIn of current stage to recordsOut of previous stage with data
-          } else {
-            let correctMetricsName;
-            if (recordsOutPorts.length) {
-              correctMetricsName = recordsOutPorts.find(port => port.split('.').pop() === previousStagePort);
-            } else if (stageMetrics.hasOwnProperty('records.alert') && this.state.node.plugin.type === 'alertpublisher') {
-              correctMetricsName = 'records.alert';
-            } else {
-              correctMetricsName = 'records.out';
-            }
-            recordsIn[stageName] = this.formatMultipleRecords(stageMetrics[correctMetricsName]);
-          }
-        });
-
-        if (!this.state.isSink) {
-          this.previewData.output = recordsOut;
-          this.previewData.numOutputStages = Object.keys(recordsOut).length;
-        }
-        if (!this.state.isSource) {
-          this.previewData.input = recordsIn;
-          this.previewData.numInputStages = Object.keys(recordsIn).length;
-        }
-
-        // set current stage's input records to null only if its output records are null AND if the previous
-        // stage is a Condition, since that means data didn't flow through to that branch
-        if (_.isEmpty(recordsOut[Object.keys(recordsOut)[0]]) && previousStageIsCondition) {
-          this.previewData.input = {};
-          this.previewData.numInputStages = 0;
-        }
-
-        let logViewerState = this.LogViewerStore.getState();
-        if (logViewerState.statusInfo) {
-          // TODO: Move preview status state info HydratorPlusPlusPreviewStore, then get from there
-          this.previewStatus = logViewerState.statusInfo.status;
-        }
-        this.previewLoading = false;
-      }, () => {
-        this.previewLoading = false;
-      });
+  updatePreviewDataAndStatus(newPreviewData) {
+    this.updatePreviewStatus();
+    this.previewData = newPreviewData;
+    this.updatePreviewLoading(false);
   }
 
-  formatMultipleRecords(records) {
-    if (_.isEmpty(records)) {
-      return records;
-    }
-
-    let mapInputs = {
-      schemaFields: {},
-      records: []
-    };
-
-    angular.forEach(records, (record) => {
-      let json = record;
-      if (json.value) {
-        json = json.value;
-      }
-      let schemaFields, data;
-
-      if (json.schema) {
-        schemaFields = json.schema.fields.map( (field) => {
-          return field.name;
-        });
-      } else {
-        schemaFields = Object.keys(json);
-      }
-
-      if (json.fields) {
-        data = json.fields;
-      } else {
-        data = json;
-      }
-
-      mapInputs.schemaFields = schemaFields;
-      mapInputs.records.push(data);
-    });
-
-    return mapInputs;
+  updatePreviewLoading(isLoading) {
+    this.previewLoading = isLoading;
   }
 
-  formatRecords(records) {
-    if (!records) {
-      return {
-        schema: [],
-        records: []
-      };
+  updatePreviewStatus() {
+    const logViewerState = this.LogViewerStore.getState();
+    // TODO: Move preview status state info HydratorPlusPlusPreviewStore, then get from there
+    if (logViewerState.statusInfo) {
+      this.previewStatus = logViewerState.statusInfo.status;
     }
+  }
 
-    let jsonRecords = records;
-
-    let schema = jsonRecords[0].value.schema.fields.map( (field) => {
-      return field.name;
-    });
-
-    let data = jsonRecords.map( (record) => {
-      return record.value.fields;
-    });
-
-    return {
-      schema: schema,
-      records: data
-    };
+  getPreviewId(){
+    return this.previewStore.getState().preview.previewId;
   }
 
   // MACRO ENABLED SCHEMA
