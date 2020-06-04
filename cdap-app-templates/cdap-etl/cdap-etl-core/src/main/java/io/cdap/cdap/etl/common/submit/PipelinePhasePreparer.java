@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.SplitterTransform;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
@@ -46,6 +47,7 @@ import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
@@ -158,8 +160,10 @@ public abstract class PipelinePhasePreparer {
     // point all macros should be evaluated and the definition should be non-null.
     String stageName = stageSpec.getName();
     String pluginName = stageSpec.getPlugin().getName();
-    AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas());
+    FailureCollector failureCollector = new LoggingFailureCollector(stageSpec.getName(), stageSpec.getInputSchemas());
+    AutoJoinerContext autoJoinerContext = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas(), failureCollector);
     JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+    failureCollector.getOrThrowException();
     if (joinDefinition == null) {
       throw new IllegalArgumentException(String.format(
         "Joiner stage '%s' using plugin '%s' did not provide a join definition. " +

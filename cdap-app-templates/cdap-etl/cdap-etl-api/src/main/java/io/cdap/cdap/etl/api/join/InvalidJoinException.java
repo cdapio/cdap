@@ -16,16 +16,42 @@
 
 package io.cdap.cdap.etl.api.join;
 
+import io.cdap.cdap.etl.api.join.error.JoinError;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+
 /**
  * Thrown when a join definition is invalid.
  */
 public class InvalidJoinException extends RuntimeException {
+  private final Collection<JoinError> errors;
 
-  public InvalidJoinException(String message) {
-    super(message);
+  public InvalidJoinException(Collection<JoinError> errors) {
+    this(getMessage(errors), errors);
   }
 
-  public InvalidJoinException(String message, Throwable cause) {
-    super(message, cause);
+  public InvalidJoinException(String message) {
+    this(message, Collections.singletonList(new JoinError(message)));
+  }
+
+  public InvalidJoinException(String message, Collection<JoinError> errors) {
+    super(message);
+    this.errors = Collections.unmodifiableList(new ArrayList<>(errors));
+  }
+
+  public Collection<JoinError> getErrors() {
+    return errors;
+  }
+
+  private static String getMessage(Collection<JoinError> errors) {
+    if (errors.isEmpty()) {
+      throw new IllegalStateException("An invalid join must contain at least one error, " +
+                                        "or it must provide an error message.");
+    }
+    JoinError error = errors.iterator().next();
+    String message = error.getMessage();
+    return String.format("%s%s %s", message, message.endsWith(".") ? "" : ".", error.getCorrectiveAction());
   }
 }

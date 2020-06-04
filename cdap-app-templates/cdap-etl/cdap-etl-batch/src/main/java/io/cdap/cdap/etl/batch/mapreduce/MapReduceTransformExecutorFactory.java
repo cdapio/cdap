@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.Aggregator;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.ErrorTransform;
+import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.Joiner;
 import io.cdap.cdap.etl.api.SplitterTransform;
@@ -74,6 +75,7 @@ import io.cdap.cdap.etl.common.TransformExecutor;
 import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.io.WritableComparable;
@@ -192,10 +194,13 @@ public class MapReduceTransformExecutorFactory<T> {
       Set<String> filterNullKeyStages = new HashSet<>();
       if (plugin instanceof BatchAutoJoiner) {
         BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
-        DefaultAutoJoinerContext context = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas());
+        FailureCollector failureCollector = new LoggingFailureCollector(stageName, stageSpec.getInputSchemas());
+        DefaultAutoJoinerContext context = DefaultAutoJoinerContext.from(stageSpec.getInputSchemas(),
+                                                                         failureCollector);
         // definition will be non-null due to validate by PipelinePhasePreparer at the start of the run
         JoinDefinition joinDefinition = autoJoiner.define(context);
-        batchJoiner = new JoinerBridge(autoJoiner, joinDefinition);
+        failureCollector.getOrThrowException();
+        batchJoiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
         JoinCondition condition = joinDefinition.getCondition();
         // null safe equality means A.id = B.id will match when the id is null
         // if it's not null safe, A.id = B.id will not match when the id is null

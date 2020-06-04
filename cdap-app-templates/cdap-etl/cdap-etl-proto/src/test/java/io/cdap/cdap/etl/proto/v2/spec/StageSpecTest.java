@@ -17,14 +17,12 @@
 
 package io.cdap.cdap.etl.proto.v2.spec;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.batch.BatchSink;
-
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -42,26 +40,23 @@ public class StageSpecTest {
     @Test
     public void testInputStagesNotSet() {
         StageSpec spec = StageSpec.builder("sink",
-                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
                 .addInputSchema("source", SCHEMA_A).build();
-        Assert.assertEquals(spec.getInputStages(), ImmutableList.of("source"));
+        Assert.assertEquals(spec.getInputStages(), Collections.singleton("source"));
     }
 
     @Test
     public void testEquality() {
         StageSpec spec1 = StageSpec.builder("sink",
-                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
                 .addInputSchema("source1", SCHEMA_A)
                 .addInputSchema("source2", SCHEMA_B)
-                .addInputStages(ImmutableList.of("source1", "source2"))
                 .build();
 
         StageSpec spec2 = StageSpec.builder("sink",
-                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
                 .addInputSchema("source1", SCHEMA_A)
                 .addInputSchema("source2", SCHEMA_B)
-                .addInputStage("source2")
-                .addInputStage("source1")
                 .build();
 
         Assert.assertEquals(spec1, spec2);
@@ -70,17 +65,14 @@ public class StageSpecTest {
     @Test
     public void testHashCode() {
         StageSpec spec1 = StageSpec.builder("sink",
-                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
                 .addInputSchemas(ImmutableMap.of("source1", SCHEMA_A, "source2", SCHEMA_B))
-                .addInputStage("source1")
-                .addInputStage("source2")
                 .build();
 
         StageSpec spec2 = StageSpec.builder("sink",
-                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+                new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
                 .addInputSchema("source1", SCHEMA_A)
                 .addInputSchema("source2", SCHEMA_B)
-                .addInputStages(ImmutableList.of("source2", "source1"))
                 .build();
 
         Assert.assertEquals(spec1.hashCode(), spec2.hashCode());
@@ -90,15 +82,14 @@ public class StageSpecTest {
     public void testHashCodeWithoutInputStages() {
         // This can happen if JSON generated with old code is deserialized with newer code.
         StageSpec spec1 = StageSpec.builder("sink",
-            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
             .addInputSchemas(ImmutableMap.of("source1", SCHEMA_A, "source2", SCHEMA_B))
             .build();
 
         StageSpec spec2 = StageSpec.builder("sink",
-            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
             .addInputSchema("source1", SCHEMA_A)
             .addInputSchema("source2", SCHEMA_B)
-            .addInputStages(ImmutableList.of("source1", "source2"))
             .build();
 
         Assert.assertEquals(spec1.hashCode(), spec2.hashCode());
@@ -107,15 +98,14 @@ public class StageSpecTest {
     @Test
     public void testEqualityWithoutInputStages() {
         StageSpec spec1 = StageSpec.builder("sink",
-            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
             .addInputSchema("source1", SCHEMA_A)
             .addInputSchema("source2", SCHEMA_B)
-            .addInputStages(ImmutableList.of("source1", "source2"))
             .build();
 
         // This can happen if JSON generated with old code is deserialized with newer code.
         StageSpec spec2 = StageSpec.builder("sink",
-            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", ImmutableMap.of(), ARTIFACT_ID))
+            new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", Collections.emptyMap(), ARTIFACT_ID))
             .addInputSchema("source1", SCHEMA_A)
             .addInputSchema("source2", SCHEMA_B)
             .build();
