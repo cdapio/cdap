@@ -48,16 +48,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   configurationGroups,
   groupToInfo,
   groupToWidgets,
-<<<<<<< HEAD
   widgetInfo,
   widgetToAttributes,
-=======
-  widgetToInfo,
-<<<<<<< HEAD
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
-=======
-  widgetToAttributes,
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
   jsonView,
   setJsonView,
 }) => {
@@ -91,16 +83,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         configurationGroups={configurationGroups}
         groupToInfo={groupToInfo}
         groupToWidgets={groupToWidgets}
-<<<<<<< HEAD
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
-=======
-        widgetToInfo={widgetToInfo}
-<<<<<<< HEAD
->>>>>>> b68b04d60ed... [CDAP-16863] Show the live JSON view (plugin JSON Creator)
-=======
-        widgetToAttributes={widgetToAttributes}
->>>>>>> f1bba4bdece... [CDAP-16871] Configure widget-attributes for each property (plugin JSON creator)
         jsonView={jsonView}
         setJsonView={setJsonView}
       />

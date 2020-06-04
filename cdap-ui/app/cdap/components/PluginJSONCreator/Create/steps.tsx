@@ -16,6 +16,7 @@
 
 import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
+import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
 
 export const STEPS = [
   {
@@ -25,5 +26,9 @@ export const STEPS = [
   {
     label: 'Configuration Groups',
     component: ConfigurationGroupsCollection,
+  },
+  {
+    label: 'Outputs',
+    component: Outputs,
   },
 ];

@@ -24,8 +24,6 @@ export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
 export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
 export const WIDGET_CATEGORY = ['plugin'];
 
-export const SPEC_VERSION = '1.5';
-
 // including additional property that was found from the docs
 // (DOCS: https://docs.cdap.io/cdap/6.1.2/en/developer-manual/pipelines/developing-plugins/presentation-plugins.html)
 export const WIDGET_TYPE_TO_ATTRIBUTES = {
