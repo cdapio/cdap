@@ -87,24 +87,12 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ outputName });
   };
 
-  public setWidgetToAttributes = (widgetToAttributes: any) => {
-    this.setState({ widgetToAttributes });
-  };
-
-  public setJsonView = (jsonView: boolean) => {
-    this.setState({ jsonView });
-  };
-
-  public setOutputName = (outputName: string) => {
-    this.setState({ outputName });
-  };
-
   public setPluginState = ({
     basicPluginInfo,
     configurationGroups,
     groupToInfo,
     groupToWidgets,
-    widgetToInfo,
+    widgetInfo,
     widgetToAttributes,
     outputName,
   }) => {
@@ -118,7 +106,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
       configurationGroups,
       groupToInfo,
       groupToWidgets,
-      widgetToInfo,
+      widgetInfo,
       widgetToAttributes,
       outputName,
     });

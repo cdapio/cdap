@@ -14,12 +14,14 @@
  * the License.
  */
 
-import { Button, CircularProgress, WithStyles, withStyles } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
 import { green } from '@material-ui/core/colors';
-import { StyleRules } from '@material-ui/core/styles';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import CheckIcon from '@material-ui/icons/Check';
 import SaveIcon from '@material-ui/icons/Save';
 import clsx from 'clsx';
+import If from 'components/If';
+import LoadingSVG from 'components/LoadingSVG';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { ICreateContext } from 'components/Replicator/Create';
 import React from 'react';
@@ -118,7 +120,9 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
         >
           {success ? <CheckIcon /> : <SaveIcon />}
         </Button>
-        {loading && <CircularProgress size={24} className={classes.buttonProgress} />}
+        <If condition={loading}>
+          <LoadingSVG />
+        </If>
       </label>
     </div>
   );

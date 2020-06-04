@@ -144,11 +144,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         <PluginInput
           widgetType={'toggle'}
           value={localEmitAlerts ? 'true' : 'false'}
-<<<<<<< HEAD
           onChange={(val) => setLocalEmitAlerts(val === 'true')}
-=======
-          setValue={setLocalEmitAlerts}
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
           label={'Emit Alerts?'}
         />
       </div>
@@ -156,11 +152,7 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         <PluginInput
           widgetType={'toggle'}
           value={localEmitErrors ? 'true' : 'false'}
-<<<<<<< HEAD
           onChange={(val) => setLocalEmitErrors(val === 'true')}
-=======
-          setValue={setLocalEmitErrors}
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
           label={'Emit Errors?'}
         />
       </div>

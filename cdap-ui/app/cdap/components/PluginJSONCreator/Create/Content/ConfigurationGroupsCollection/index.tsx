@@ -93,8 +93,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setLocalGroupToWidgets(groupToWidgets);
   }, [groupToWidgets]);
   React.useEffect(() => {
-    setLocalWidgetToInfo(widgetToInfo);
-  }, [widgetToInfo]);
+    setLocalWidgetInfo(widgetInfo);
+  }, [widgetInfo]);
   React.useEffect(() => {
     setLocalWidgetToAttributes(widgetToAttributes);
   }, [widgetToAttributes]);

@@ -14,14 +14,8 @@
  * the License.
  */
 
-<<<<<<< HEAD
+import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
-=======
-import { Button, Divider, Tooltip } from '@material-ui/core';
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
-import Drawer from '@material-ui/core/Drawer';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Tooltip from '@material-ui/core/Tooltip';
 import CodeIcon from '@material-ui/icons/Code';
@@ -33,26 +27,12 @@ import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
-    closedJsonMenu: {
-      zIndex: theme.zIndex.drawer,
-    },
-    closedJsonMenuPaper: {
-      backgroundColor: theme.palette.white[50],
-    },
-    toolbar: {
-      minHeight: '48px',
-    },
-    mainMenu: {
-      borderTop: `1px solid ${theme.palette.grey['500']}`,
-      paddingTop: theme.Spacing(1),
-      paddingBottom: theme.Spacing(1),
-    },
-    jsonCollapseActionButtons: {
+    jsonActionButtons: {
       padding: '15px',
       flexDirection: 'column',
-      '& > *': {
-        margin: '5px',
-      },
+    },
+    jsonActionButton: {
+      margin: '5px',
     },
     jsonViewerTooltip: {
       fontSize: '14px',
@@ -61,13 +41,6 @@ const styles = (theme): StyleRules => {
   };
 };
 
-<<<<<<< HEAD
-const ClosedJsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
-  widgetJSONData
-) => {
-  const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
-  const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
-=======
 const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
   return (
     <Tooltip
@@ -118,47 +91,34 @@ const ClosedJsonMenuView: React.FC<IClosedJsonMenuProps> = ({
   JSONStatus,
   downloadDisabled,
 }) => {
->>>>>>> 797996d7ff1... [CDAP-16874] Importing existing plugin JSON file (plugin JSON Creator)
   return (
     <div>
-      <Drawer
-        open={true}
-        variant="persistent"
-        className={classes.closedJsonMenu}
-        anchor="right"
-        ModalProps={{
-          keepMounted: true,
-        }}
-        classes={{
-          paper: classes.closedJsonMenuPaper,
-        }}
-        data-cy="navbar-jsonViewer"
-      >
-        <div className={classes.toolbar} />
-        <List component="nav" dense={true} className={classes.mainMenu}>
-          <div className={classes.jsonCollapseActionButtons}>
-            <ExpandJSONViewButton classes={classes} expandJSONView={expandJSONView} />
-            <Divider />
-
-            <Tooltip
-              classes={{
-                tooltip: classes.jsonViewerTooltip,
-              }}
-              title="Import JSON"
-            >
-              <PluginJSONImporter
-                populateImportResults={populateImportResults}
-                JSONStatus={JSONStatus}
-              />
-            </Tooltip>
-            <DownloadJSONButton
-              classes={classes}
-              downloadDisabled={downloadDisabled}
-              onDownloadClick={onDownloadClick}
+      <div className={classes.jsonActionButtons}>
+        <div className={classes.jsonActionButton}>
+          <ExpandJSONViewButton classes={classes} expandJSONView={expandJSONView} />
+        </div>
+        <Divider />
+        <div className={classes.jsonActionButton}>
+          <Tooltip
+            classes={{
+              tooltip: classes.jsonViewerTooltip,
+            }}
+            title="Import JSON"
+          >
+            <PluginJSONImporter
+              populateImportResults={populateImportResults}
+              JSONStatus={JSONStatus}
             />
-          </div>
-        </List>
-      </Drawer>
+          </Tooltip>
+        </div>
+        <div className={classes.jsonActionButton}>
+          <DownloadJSONButton
+            classes={classes}
+            downloadDisabled={downloadDisabled}
+            onDownloadClick={onDownloadClick}
+          />
+        </div>
+      </div>
     </div>
   );
 };
