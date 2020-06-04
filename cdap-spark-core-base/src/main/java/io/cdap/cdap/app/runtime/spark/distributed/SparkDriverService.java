@@ -19,6 +19,7 @@ package io.cdap.cdap.app.runtime.spark.distributed;
 import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.workflow.WorkflowToken;
 import io.cdap.cdap.app.runtime.spark.SparkCredentialsUpdater;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeContext;
@@ -46,7 +47,8 @@ import javax.annotation.Nullable;
 
 /**
  * A service that runs in the Spark Driver process in distributed mode. It is responsible for
- * maintaining heartbeat with the client, and optionally transmitting the {@link WorkflowToken}.
+ * maintaining heartbeat with the spark client process ({@link SparkExecutionService}),
+ * and optionally transmitting the {@link WorkflowToken}.
  * If runs in secure mode, the service is also responsible for updating the delegation tokens for itself
  * as well as all executors.
  */
@@ -56,6 +58,7 @@ public class SparkDriverService extends AbstractExecutionThreadService {
   private static final long HEARTBEAT_INTERVAL_MILLIS = 1000L;
   private static final int MAX_HEARTBEAT_FAILURES = 60;
 
+  private final URI baseURI;
   private final SparkExecutionClient client;
   @Nullable
   private final SparkCredentialsUpdater credentialsUpdater;
@@ -66,6 +69,7 @@ public class SparkDriverService extends AbstractExecutionThreadService {
   private volatile boolean stopWithoutComplete;
 
   public SparkDriverService(URI baseURI, SparkRuntimeContext runtimeContext) {
+    this.baseURI = baseURI;
     this.client = new SparkExecutionClient(baseURI, runtimeContext.getProgramRunId());
     this.credentialsUpdater = createCredentialsUpdater(runtimeContext.getConfiguration(), client);
     WorkflowProgramInfo workflowInfo = runtimeContext.getWorkflowInfo();
@@ -116,13 +120,14 @@ public class SparkDriverService extends AbstractExecutionThreadService {
         // It's issue on stop. So just continue and let the while loop to handle the condition
         continue;
       } catch (BadRequestException e) {
-        LOG.error("Invalid spark program heartbeat. Terminating the execution.", e);
+        LOG.error("Invalid spark program heartbeat to {}. Terminating the execution.", baseURI, e);
         throw e;
       } catch (Throwable t) {
         if (failureCount++ < MAX_HEARTBEAT_FAILURES) {
-          LOG.warn("Failed to make heartbeat for {} times", failureCount, t);
+          LOG.warn("Failed to make heartbeat for {} times to {}", failureCount, baseURI, t);
+          Uninterruptibles.sleepUninterruptibly(HEARTBEAT_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
         } else {
-          LOG.error("Failed to make heartbeat for {} times. Terminating the execution", failureCount, t);
+          LOG.error("Failed to make heartbeat for {} times to {}. Terminating the execution", failureCount, baseURI, t);
           throw t;
         }
       }
