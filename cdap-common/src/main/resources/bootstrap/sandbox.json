@@ -67,6 +67,594 @@
         "type": "service",
         "name": "service"
       }
+    },
+    {
+      "label": "Create dataproc profile SMALL size",
+      "type": "CREATE_SYSTEM_PROFILE",
+      "runCondition": "ONCE",
+      "arguments": {
+        "name": "small",
+        "label": "SMALL",
+        "description": "This profile is suitable for processing upto a terabyte of data with light transformations (mapping, filtering, etc)\n",
+        "scope": "SYSTEM",
+        "status": "ENABLED",
+        "provisioner": {
+          "name": "gcp-dataproc",
+          "properties": [
+            {
+              "name": "accountKey",
+              "value": "auto-detect",
+              "isEditable": true
+            },
+            {
+              "name": "region",
+              "value": "us-east1",
+              "isEditable": true
+            },
+            {
+              "name": "zone",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "network",
+              "value": "default",
+              "isEditable": true
+            },
+            {
+              "name": "networkHostProjectId",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "subnet",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "imageVersion",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "serviceAccount",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "preferExternalIP",
+              "value": "false",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverLoggingEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverMonitoringEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "gcsBucket",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "encryptionKeyName",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "masterNumNodes",
+              "value": "1",
+              "isEditable": true
+            },
+            {
+              "name": "masterCPUs",
+              "value": "4",
+              "isEditable": true
+            },
+            {
+              "name": "masterMemoryMB",
+              "value": "15",
+              "isEditable": true
+            },
+            {
+              "name": "masterDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "workerNumNodes",
+              "value": "20",
+              "isEditable": true
+            },
+            {
+              "name": "workerCPUs",
+              "value": "4",
+              "isEditable": true
+            },
+            {
+              "name": "workerMemoryMB",
+              "value": "15",
+              "isEditable": true
+            },
+            {
+              "name": "workerDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateDelay",
+              "value": "60",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateJitter",
+              "value": "20",
+              "isEditable": true
+            },
+            {
+              "name": "pollDeleteDelay",
+              "value": "30",
+              "isEditable": true
+            },
+            {
+              "name": "pollInterval",
+              "value": "2",
+              "isEditable": true
+            },
+            {
+              "name": "projectId",
+              "value": "auto-detect",
+              "isEditable": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "Create dataproc profile MEDIUM size",
+      "type": "CREATE_SYSTEM_PROFILE",
+      "runCondition": "ONCE",
+      "arguments": {
+        "name": "medium",
+        "label": "MEDIUM",
+        "description": "This profile is suitable for processing upto a terabyte of data with aggregations and complex transformations",
+        "scope": "SYSTEM",
+        "status": "ENABLED",
+        "provisioner": {
+          "name": "gcp-dataproc",
+          "properties": [
+            {
+              "name": "accountKey",
+              "value": "auto-detect",
+              "isEditable": true
+            },
+            {
+              "name": "region",
+              "value": "us-east1",
+              "isEditable": true
+            },
+            {
+              "name": "zone",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "network",
+              "value": "default",
+              "isEditable": true
+            },
+            {
+              "name": "networkHostProjectId",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "subnet",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "imageVersion",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "serviceAccount",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "preferExternalIP",
+              "value": "false",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverLoggingEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverMonitoringEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "gcsBucket",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "encryptionKeyName",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "masterNumNodes",
+              "value": "1",
+              "isEditable": true
+            },
+            {
+              "name": "masterCPUs",
+              "value": "4",
+              "isEditable": true
+            },
+            {
+              "name": "masterMemoryMB",
+              "value": "15",
+              "isEditable": true
+            },
+            {
+              "name": "masterDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "workerNumNodes",
+              "value": "50",
+              "isEditable": true
+            },
+            {
+              "name": "workerCPUs",
+              "value": "8",
+              "isEditable": true
+            },
+            {
+              "name": "workerMemoryMB",
+              "value": "30",
+              "isEditable": true
+            },
+            {
+              "name": "workerDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateDelay",
+              "value": "60",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateJitter",
+              "value": "20",
+              "isEditable": true
+            },
+            {
+              "name": "pollDeleteDelay",
+              "value": "30",
+              "isEditable": true
+            },
+            {
+              "name": "pollInterval",
+              "value": "2",
+              "isEditable": true
+            },
+            {
+              "name": "projectId",
+              "value": "auto-detect",
+              "isEditable": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "Create dataproc profile LARGE size",
+      "type": "CREATE_SYSTEM_PROFILE",
+      "runCondition": "ONCE",
+      "arguments": {
+        "name": "large",
+        "label": "LARGE",
+        "description": "This profile is suitable for processing a petabyte of data with light transformations",
+        "scope": "SYSTEM",
+        "status": "ENABLED",
+        "provisioner": {
+          "name": "gcp-dataproc",
+          "properties": [
+            {
+              "name": "accountKey",
+              "value": "auto-detect",
+              "isEditable": true
+            },
+            {
+              "name": "region",
+              "value": "us-east1",
+              "isEditable": true
+            },
+            {
+              "name": "zone",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "network",
+              "value": "default",
+              "isEditable": true
+            },
+            {
+              "name": "networkHostProjectId",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "subnet",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "imageVersion",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "serviceAccount",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "preferExternalIP",
+              "value": "false",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverLoggingEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverMonitoringEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "gcsBucket",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "encryptionKeyName",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "masterNumNodes",
+              "value": "1",
+              "isEditable": true
+            },
+            {
+              "name": "masterCPUs",
+              "value": "4",
+              "isEditable": true
+            },
+            {
+              "name": "masterMemoryMB",
+              "value": "15",
+              "isEditable": true
+            },
+            {
+              "name": "masterDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "workerNumNodes",
+              "value": "100",
+              "isEditable": true
+            },
+            {
+              "name": "workerCPUs",
+              "value": "16",
+              "isEditable": true
+            },
+            {
+              "name": "workerMemoryMB",
+              "value": "60",
+              "isEditable": true
+            },
+            {
+              "name": "workerDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateDelay",
+              "value": "60",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateJitter",
+              "value": "20",
+              "isEditable": true
+            },
+            {
+              "name": "pollDeleteDelay",
+              "value": "30",
+              "isEditable": true
+            },
+            {
+              "name": "pollInterval",
+              "value": "2",
+              "isEditable": true
+            },
+            {
+              "name": "projectId",
+              "value": "auto-detect",
+              "isEditable": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "label": "Create dataproc profile XL size",
+      "type": "CREATE_SYSTEM_PROFILE",
+      "runCondition": "ONCE",
+      "arguments": {
+        "name": "xtralarge",
+        "label": "XLARGE",
+        "description": "This profile is suitable for processing a petabyte of data with aggregations",
+        "scope": "SYSTEM",
+        "status": "ENABLED",
+        "provisioner": {
+          "name": "gcp-dataproc",
+          "properties": [
+            {
+              "name": "accountKey",
+              "value": "auto-detect",
+              "isEditable": true
+            },
+            {
+              "name": "region",
+              "value": "us-east1",
+              "isEditable": true
+            },
+            {
+              "name": "zone",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "network",
+              "value": "default",
+              "isEditable": true
+            },
+            {
+              "name": "networkHostProjectId",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "subnet",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "imageVersion",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "serviceAccount",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "preferExternalIP",
+              "value": "false",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverLoggingEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "stackdriverMonitoringEnabled",
+              "value": "true",
+              "isEditable": true
+            },
+            {
+              "name": "gcsBucket",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "encryptionKeyName",
+              "value": "",
+              "isEditable": true
+            },
+            {
+              "name": "masterNumNodes",
+              "value": "3",
+              "isEditable": true
+            },
+            {
+              "name": "masterCPUs",
+              "value": "4",
+              "isEditable": true
+            },
+            {
+              "name": "masterMemoryMB",
+              "value": "15",
+              "isEditable": true
+            },
+            {
+              "name": "masterDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "workerNumNodes",
+              "value": "200",
+              "isEditable": true
+            },
+            {
+              "name": "workerCPUs",
+              "value": "32",
+              "isEditable": true
+            },
+            {
+              "name": "workerMemoryMB",
+              "value": "120",
+              "isEditable": true
+            },
+            {
+              "name": "workerDiskGB",
+              "value": "1000",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateDelay",
+              "value": "60",
+              "isEditable": true
+            },
+            {
+              "name": "pollCreateJitter",
+              "value": "20",
+              "isEditable": true
+            },
+            {
+              "name": "pollDeleteDelay",
+              "value": "30",
+              "isEditable": true
+            },
+            {
+              "name": "pollInterval",
+              "value": "2",
+              "isEditable": true
+            },
+            {
+              "name": "projectId",
+              "value": "auto-detect",
+              "isEditable": false
+            }
+          ]
+        }
+      }
     }
   ]
 }
