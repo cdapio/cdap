@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2018-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,17 +20,12 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
-import com.google.common.io.CharStreams;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
@@ -130,7 +125,7 @@ final class DataprocConf {
     this.region = region;
     this.zone = zone;
     this.projectId = projectId;
-    this.networkHostProjectID = networkHostProjectId;
+    this.networkHostProjectID = Strings.isNullOrEmpty(networkHostProjectId) ? projectId : networkHostProjectId;
     this.network = network;
     this.subnet = subnet;
     this.masterNumNodes = masterNumNodes;
@@ -179,7 +174,6 @@ final class DataprocConf {
     return network;
   }
 
-  @Nullable
   String getNetworkHostProjectID() {
     return networkHostProjectID;
   }
@@ -345,10 +339,16 @@ final class DataprocConf {
    *
    * @throws IllegalArgumentException if it is an invalid config
    */
-  static DataprocConf fromProperties(Map<String, String> properties) {
+  static DataprocConf create(Map<String, String> properties) {
     return create(properties, null);
   }
 
+  /**
+   * Create the conf from a property map while also performing validation.
+   *
+   * @param publicKey an optional {@link SSHPublicKey} for the configuration
+   * @throws IllegalArgumentException if it is an invalid config
+   */
   static DataprocConf create(Map<String, String> properties, @Nullable SSHPublicKey publicKey) {
     String accountKey = getString(properties, "accountKey");
     if (accountKey == null || AUTO_DETECT.equals(accountKey)) {
@@ -360,7 +360,7 @@ final class DataprocConf {
     }
     String projectId = getString(properties, PROJECT_ID_KEY);
     if (projectId == null || AUTO_DETECT.equals(projectId)) {
-      projectId = getSystemProjectId();
+      projectId = DataprocUtils.getSystemProjectId();
     }
 
     String zone = getString(properties, "zone");
@@ -369,9 +369,9 @@ final class DataprocConf {
       // See if the user specified a zone.
       // If it does, derived region from the provided zone; otherwise, use the system zone.
       if (zone == null || AUTO_DETECT.equals(zone)) {
-        region = getRegionFromZone(getSystemZone());
+        region = DataprocUtils.getRegionFromZone(DataprocUtils.getSystemZone());
       } else {
-        region = getRegionFromZone(zone);
+        region = DataprocUtils.getRegionFromZone(zone);
       }
     }
 
@@ -438,8 +438,7 @@ final class DataprocConf {
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
-      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"),
-                                        ";", "\\|"));
+      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"), ";", "\\|"));
 
     String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
     List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
@@ -507,79 +506,6 @@ final class DataprocConf {
     } catch (NumberFormatException e) {
       throw new IllegalArgumentException(
         String.format("Invalid config '%s' = '%s'. Must be a valid, positive long.", key, valStr));
-    }
-  }
-
-  /**
-   * Get network from the metadata server.
-   */
-  static String getSystemNetwork() {
-    try {
-      String network = getMetadata("instance/network-interfaces/0/network");
-      // will be something like projects/<project-number>/networks/default
-      return network.substring(network.lastIndexOf('/') + 1);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to get the network from the environment. "
-                                           + "Please explicitly set the network.", e);
-    }
-  }
-
-  /**
-   * Get zone from the metadata server.
-   */
-  private static String getSystemZone() {
-    try {
-      String zone = getMetadata("instance/zone");
-      // will be something like projects/<project-number>/zones/us-east1-b
-      return zone.substring(zone.lastIndexOf('/') + 1);
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to get the zone from the environment. "
-                                           + "Please explicitly set the zone.", e);
-    }
-  }
-
-  /**
-   * Returns the region of the given zone.
-   */
-  private static String getRegionFromZone(String zone) {
-    int idx = zone.lastIndexOf("-");
-    if (idx <= 0) {
-      throw new IllegalArgumentException("Invalid zone. Zone must be in the format of <region>-<zone-name>");
-    }
-    return zone.substring(0, idx);
-  }
-
-
-  /**
-   * Get project id from the metadata server.
-   */
-  static String getSystemProjectId() {
-    try {
-      return getMetadata("project/project-id");
-    } catch (IOException e) {
-      throw new IllegalArgumentException("Unable to get project id from the environment. "
-                                           + "Please explicitly set the project id and account key.", e);
-    }
-  }
-
-  /**
-   * Makes a request to the metadata server that lives on the VM, as described at
-   * https://cloud.google.com/compute/docs/storing-retrieving-metadata.
-   */
-  private static String getMetadata(String resource) throws IOException {
-    URL url = new URL("http://metadata.google.internal/computeMetadata/v1/" + resource);
-    HttpURLConnection connection = null;
-    try {
-      connection = (HttpURLConnection) url.openConnection();
-      connection.setRequestProperty("Metadata-Flavor", "Google");
-      connection.connect();
-      try (Reader reader = new InputStreamReader(connection.getInputStream(), StandardCharsets.UTF_8)) {
-        return CharStreams.toString(reader);
-      }
-    } finally {
-      if (connection != null) {
-        connection.disconnect();
-      }
     }
   }
 }
