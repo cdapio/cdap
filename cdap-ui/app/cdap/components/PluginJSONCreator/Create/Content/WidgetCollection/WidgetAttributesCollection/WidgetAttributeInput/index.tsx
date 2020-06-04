@@ -16,6 +16,7 @@
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import { CODE_EDITORS } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeKeyValueInput';
 import AttributeMultipleValuesInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeMultipleValuesInput';
@@ -47,18 +48,51 @@ const WidgetAttributeInputView = ({
     }));
   };
 
+  const generateAttributeInput = (fieldType) => {
+    if (fieldType === 'IToggle' || fieldType === 'IOption') {
+      const props = {
+        keyRequired: true,
+        valueRequired: true,
+        widgetToAttributes,
+        setWidgetToAttributes,
+        widgetID,
+        field,
+      };
+
+      const finalProps = {
+        ...props,
+        ...(fieldType === 'IToggle' && { keyField: 'label', valueField: 'value' }),
+        ...(fieldType === 'IOption' && { keyField: 'id', valueField: 'label' }),
+      };
+
+      return <AttributeKeyValueInput {...finalProps} />;
+    } else {
+      const props = {
+        label: field,
+        value: widgetToAttributes[widgetID][field],
+        onChange: onAttributeChange,
+        required: fieldInfo.required,
+        // Set default widgetType in case fieldType is invalid
+        widgetType: 'textbox',
+      };
+
+      const finalProps = {
+        ...props,
+        ...(fieldType === 'string' && { widgetType: 'textbox' }),
+        ...(fieldType === 'number' && { widgetType: 'number' }),
+        ...(fieldType === 'boolean' && { widgetType: 'select', options: ['true', 'false'] }),
+      };
+
+      return <PluginInput {...finalProps} />;
+    }
+  };
+
   const renderAttributeInput = () => {
     if (!fieldInfo) {
       return;
     }
-    const codeEditors = [
-      'javascript-editor',
-      'json-editor',
-      'python-editor',
-      'scala-editor',
-      'sql-editor',
-    ];
-    if (field === 'default' && codeEditors.includes(widgetType)) {
+
+    if (field === 'default' && CODE_EDITORS.includes(widgetType)) {
       return (
         <WidgetWrapper
           widgetProperty={{
@@ -79,77 +113,7 @@ const WidgetAttributeInputView = ({
 
     const isMultipleInput = fieldInfo.type.includes('[]');
     const supportedTypes = fieldInfo.type.split('|');
-    if (!isMultipleInput) {
-      switch (fieldInfo.type) {
-        case 'string':
-          return (
-            <PluginInput
-              widgetType={'textbox'}
-              value={widgetToAttributes[widgetID][field]}
-              onChange={onAttributeChange}
-              label={field}
-              required={fieldInfo.required}
-            />
-          );
-        case 'number':
-          return (
-            <PluginInput
-              widgetType={'number'}
-              value={widgetToAttributes[widgetID][field]}
-              onChange={onAttributeChange}
-              label={field}
-              required={fieldInfo.required}
-            />
-          );
-        case 'boolean':
-          return (
-            <PluginInput
-              widgetType={'select'}
-              value={widgetToAttributes[widgetID][field]}
-              onChange={onAttributeChange}
-              label={field}
-              options={['true', 'false']}
-              required={fieldInfo.required}
-            />
-          );
-        case 'IToggle':
-          return (
-            <AttributeKeyValueInput
-              keyField={'label'}
-              valueField={'value'}
-              keyRequired={true}
-              valueRequired={true}
-              widgetToAttributes={widgetToAttributes}
-              setWidgetToAttributes={setWidgetToAttributes}
-              widgetID={widgetID}
-              field={field}
-            />
-          );
-        case 'IOption':
-          return (
-            <AttributeKeyValueInput
-              keyField={'id'}
-              valueField={'label'}
-              keyRequired={true}
-              valueRequired={true}
-              widgetToAttributes={widgetToAttributes}
-              setWidgetToAttributes={setWidgetToAttributes}
-              widgetID={widgetID}
-              field={field}
-            />
-          );
-        default:
-          return (
-            <PluginInput
-              widgetType={'textbox'}
-              value={widgetToAttributes[widgetID][field]}
-              onChange={onAttributeChange}
-              label={field}
-              required={fieldInfo.required}
-            />
-          );
-      }
-    } else {
+    if (isMultipleInput) {
       return (
         <AttributeMultipleValuesInput
           supportedTypes={supportedTypes}
@@ -159,6 +123,8 @@ const WidgetAttributeInputView = ({
           field={field}
         />
       );
+    } else {
+      return generateAttributeInput(fieldInfo.type);
     }
   };
 

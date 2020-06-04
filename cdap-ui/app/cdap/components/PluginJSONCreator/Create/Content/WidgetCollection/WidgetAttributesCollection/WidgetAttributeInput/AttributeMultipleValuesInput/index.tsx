@@ -21,6 +21,55 @@ import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import * as React from 'react';
 
+/*
+ * AttributeMultipleValuesInput is a component used for setting widget-attributes of "array" type.
+ * For instance, users will be able to set following widget attributes.
+ *
+ * Example 1)
+ *     "options": [
+ *       {
+ *         "id": "true",
+ *        "label": "true"
+ *       },
+ *       {
+ *         "id": "false",
+ *         "label": "false"
+ *       }
+ *     ]
+ * Example 2)
+ *     "values": [
+ *       "json",
+ *       "xml",
+ *       "tsv",
+ *       "csv",
+ *       "text",
+ *       "blob"
+ *     ],
+ *
+ * As we can see from the examples above, this can be an array of string or an array of object (ID-Label pair).
+ * In this component, a prop named 'supportedTypes' stores all the available types for a certain field.
+ *
+ * For instance, 'select' widget has an attribute field called 'options'.
+ * 'options' can be of different types, therefore its 'supportedTypes' is as following:
+ *     ['ISelectOptions[]', 'string[]', 'number[]']
+ * If the user selects ISelectOptions[], then it that means the 'options' field will be
+ * an array of ISelectOptions.
+ * Since ISelectOptions interface is defined to be a 'value' and 'label' pair,
+ * our component should render multiple input rows of key-value pairs.
+ *
+ * Some types such as 'IDropdownOption', can be string, number, or value-label pair.
+ *     export type IDropdownOption = string | number | IComplexDropdown;
+ *     interface IComplexDropdown {
+ *       value: string | number;
+ *       label: string;
+ *     }
+ * Therefore, we should futher process IDropdownOption[], by adding all the available types in the function
+ * 'processSupportedTypes'.
+ *     supportedTypes.add(SupportedType.String);
+ *     supportedTypes.add(SupportedType.Number);
+ *     supportedTypes.add(SupportedType.ValueLabelPair);
+ */
+
 export enum SupportedType {
   String = 'string',
   Number = 'number',
@@ -85,17 +134,23 @@ const AttributeMultipleValuesInputView = ({
   React.useEffect(() => {
     const initialType = getInitialType();
     setSelectedType(initialType);
-    setCurrentInput(getUpdatedCurrentInput(initialType));
+    setCurrentInput(getCurrentWidgetAttributeValues(initialType));
   }, []);
 
+  /*
+   * The input fields can have some pre-populated values.
+   * For instance, when the user imports a plugin JSON file into the UI,
+   * It should parse those pre-populated values of widget attributes
+   * and decide what should be 'selectedType' for the component.
+   */
   function getInitialType() {
-    const widgetAttributes = widgetToAttributes[widgetID][field];
+    const widgetAttributeValues = widgetToAttributes[widgetID][field];
     let newType;
-    if (!widgetAttributes || widgetAttributes.length === 0) {
+    if (!widgetAttributeValues || widgetAttributeValues.length === 0) {
       newType = cleanSupportedTypes[0];
-    } else if (widgetAttributes[0].value) {
+    } else if (widgetAttributeValues[0].value) {
       newType = SupportedType.ValueLabelPair;
-    } else if (widgetAttributes[0].id) {
+    } else if (widgetAttributeValues[0].id) {
       newType = SupportedType.IDLabelPair;
     } else {
       newType = SupportedType.String;
@@ -103,38 +158,67 @@ const AttributeMultipleValuesInputView = ({
     return newType;
   }
 
-  function getUpdatedCurrentInput(newType) {
-    const widgetAttributes = widgetToAttributes[widgetID][field];
+  /*
+   * The input fields can have some pre-populated values.
+   * For instance, when the user imports a plugin JSON file into the UI,
+   * it should parse those pre-populated values of widget attributes
+   * and populate the input fields.
+   */
+  function getCurrentWidgetAttributeValues(newType) {
     if (!newType) {
       return '';
     } else if (newType === SupportedType.Number || newType === SupportedType.String) {
-      return widgetAttributes ? widgetAttributes.join(COMMON_DELIMITER) : '';
+      return processAttributeValues();
     } else {
-      if (widgetAttributes && widgetAttributes.length > 0) {
-        return {
-          pairs: widgetAttributes.map((keyvalue) => {
-            if (keyvalue.id) {
-              return {
-                key: keyvalue.id,
-                value: keyvalue.label,
-              };
-            } else {
-              return {
-                key: keyvalue.value,
-                value: keyvalue.label,
-              };
-            }
-          }),
-        };
-      } else {
-        return { pairs: [{ key: '', value: '' }] };
-      }
+      return processKeyValueAttributeValues();
+    }
+  }
+
+  /*
+   * Process simple attribute values in order to pass them to the input component.
+   * The component 'CSVWidget' receives the data of following structure.
+   *
+   * Example)
+   *     "GET,POST,PUT,DELETE"
+   */
+  function processAttributeValues() {
+    const widgetAttributeValues = widgetToAttributes[widgetID][field];
+    return widgetAttributeValues ? widgetAttributeValues.join(COMMON_DELIMITER) : '';
+  }
+
+  /*
+   * Process key-value attribute values in order to pass the values to the input component.
+   * The component 'KeyValuePairs' receives the data of following structure.
+   *    { pairs: [{ key: '', value: '' }] }
+   */
+  function processKeyValueAttributeValues() {
+    const widgetAttributeValues = widgetToAttributes[widgetID][field];
+    if (widgetAttributeValues && widgetAttributeValues.length > 0) {
+      return {
+        pairs: widgetAttributeValues.map((keyvalue) => {
+          if (keyvalue.id) {
+            return {
+              key: keyvalue.id,
+              value: keyvalue.label,
+            };
+          } else {
+            return {
+              key: keyvalue.value,
+              value: keyvalue.label,
+            };
+          }
+        }),
+      };
+    } else {
+      return { pairs: [{ key: '', value: '' }] };
     }
   }
 
   const switchInputType = (newType) => {
     setSelectedType(newType);
-    setCurrentInput(getUpdatedCurrentInput(newType));
+    setCurrentInput(getCurrentWidgetAttributeValues(newType));
+
+    // When user switches the 'selectedType', the value will reset back to an empty array.
     setWidgetToAttributes((prevObjs) => ({
       ...prevObjs,
       [widgetID]: { ...prevObjs[widgetID], [field]: [] },

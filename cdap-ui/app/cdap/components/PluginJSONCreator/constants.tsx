@@ -204,3 +204,11 @@ export const WIDGET_TYPE_TO_ATTRIBUTES = {
 };
 
 export const COMMON_DELIMITER = ',';
+
+export const CODE_EDITORS = [
+  'javascript-editor',
+  'json-editor',
+  'python-editor',
+  'scala-editor',
+  'sql-editor',
+];
