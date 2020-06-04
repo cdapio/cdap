@@ -86,7 +86,7 @@ public class DataprocTool {
       }
       try (Reader reader = new FileReader(configFile)) {
         Map<String, String> map = GSON.fromJson(reader, new TypeToken<Map<String, String>>() { }.getType());
-        conf = DataprocConf.create(map, null);
+        conf = DataprocConf.create(map);
       }
     } else {
       if (!commandLine.hasOption('k')) {
@@ -102,15 +102,15 @@ public class DataprocTool {
       Map<String, String> properties = new HashMap<>();
       properties.put("accountKey", commandLine.getOptionValue('k'));
       properties.put("projectId", commandLine.getOptionValue('p'));
-      conf = DataprocConf.fromProperties(properties);
+      conf = DataprocConf.create(properties);
     }
 
     String imageVersion = commandLine.hasOption('i') ? commandLine.getOptionValue('i') : "1.2";
 
     String name = commandLine.getOptionValue('n');
-    try (DataprocClient client = DataprocClient.fromConf(conf, false)) {
+    try (DataprocClient client = DataprocClient.fromConf(conf)) {
       if (PROVISION.equalsIgnoreCase(command)) {
-        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap());
+        ClusterOperationMetadata createOp = client.createCluster(name, imageVersion, Collections.emptyMap(), false);
         System.out.println(GSON.toJson(createOp));
       } else if (DETAILS.equalsIgnoreCase(command)) {
         Optional<Cluster> cluster = client.getCluster(name);
