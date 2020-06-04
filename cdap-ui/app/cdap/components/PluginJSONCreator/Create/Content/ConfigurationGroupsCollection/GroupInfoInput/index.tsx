@@ -26,10 +26,8 @@ import * as React from 'react';
 const styles = (): StyleRules => {
   return {
     groupInput: {
-      '& > *': {
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
+      marginTop: '10px',
+      marginBottom: '10px',
     },
     groupInputContainer: {
       position: 'relative',
@@ -71,6 +69,8 @@ export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToIn
             label={'Label'}
             required={true}
           />
+        </div>
+        <div className={classes.groupInput}>
           <PluginInput
             widgetType={'textarea'}
             value={group.description}
