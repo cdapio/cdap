@@ -14,8 +14,7 @@
  * the License.
  */
 
-import { withStyles } from '@material-ui/core';
-import { StyleRules } from '@material-ui/core/styles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import KeyValuePairs from 'components/KeyValuePairs';
 import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
@@ -171,44 +170,45 @@ const AttributeMultipleValuesInputView = ({
   };
 
   const renderAttributeMultipleValuesInput = () => {
-    if (selectedType === SupportedType.ValueLabelPair) {
-      return (
-        <KeyValuePairs
-          keyValues={currentInput}
-          onKeyValueChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
-          keyPlaceholder={'value'}
-          valuePlaceholder={'label'}
-        />
-      );
-    } else if (selectedType === SupportedType.IDLabelPair) {
-      return (
-        <KeyValuePairs
-          keyValues={currentInput}
-          onKeyValueChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
-          keyPlaceholder={'id'}
-          valuePlaceholder={'label'}
-        />
-      );
-    } else if (selectedType === SupportedType.Number) {
-      return (
-        <PluginInput
-          widgetType={'dsv'}
-          value={currentInput}
-          setValue={onAttributeChange}
-          label={field}
-          required={true}
-        />
-      );
-    } else {
-      return (
-        <PluginInput
-          widgetType={'dsv'}
-          value={currentInput}
-          setValue={onAttributeChange}
-          label={field}
-          required={true}
-        />
-      );
+    switch (selectedType) {
+      case SupportedType.ValueLabelPair:
+        return (
+          <KeyValuePairs
+            keyValues={currentInput}
+            onKeyValueChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
+            keyPlaceholder={'value'}
+            valuePlaceholder={'label'}
+          />
+        );
+      case SupportedType.IDLabelPair:
+        return (
+          <KeyValuePairs
+            keyValues={currentInput}
+            onKeyValueChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
+            keyPlaceholder={'id'}
+            valuePlaceholder={'label'}
+          />
+        );
+      case SupportedType.Number:
+        return (
+          <PluginInput
+            widgetType={'dsv'}
+            value={currentInput}
+            onChange={onAttributeChange}
+            label={field}
+            required={true}
+          />
+        );
+      default:
+        return (
+          <PluginInput
+            widgetType={'dsv'}
+            value={currentInput}
+            onChange={onAttributeChange}
+            label={field}
+            required={true}
+          />
+        );
     }
   };
 
@@ -219,7 +219,7 @@ const AttributeMultipleValuesInputView = ({
           <PluginInput
             widgetType={'select'}
             value={selectedType}
-            setValue={switchInputType}
+            onChange={switchInputType}
             label={'select value type'}
             options={cleanSupportedTypes}
           />

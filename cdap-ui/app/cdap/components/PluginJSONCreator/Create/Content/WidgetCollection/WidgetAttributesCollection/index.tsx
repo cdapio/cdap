@@ -14,7 +14,10 @@
  * the License.
  */
 
-import { Dialog, DialogContent, DialogTitle, IconButton } from '@material-ui/core';
+import Dialog from '@material-ui/core/Dialog';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogTitle from '@material-ui/core/DialogTitle';
+import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import CloseIcon from '@material-ui/icons/Close';
 import If from 'components/If';
@@ -27,13 +30,6 @@ import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
-    widgetAttributeInput: {
-      '& > *': {
-        width: '100%',
-        marginTop: '10px',
-        marginBottom: '10px',
-      },
-    },
     widgetAttributesTitle: {
       marginTop: '15px',
       marginBottom: '15px',
@@ -103,16 +99,14 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
               ? WIDGET_TYPE_TO_ATTRIBUTES[widgetType][field]
               : {};
             return (
-              <div className={classes.widgetAttributeInput}>
-                <WidgetAttributeInput
-                  widgetType={widgetType}
-                  field={field}
-                  fieldInfo={fieldInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                  widgetID={widgetID}
-                />
-              </div>
+              <WidgetAttributeInput
+                widgetType={widgetType}
+                field={field}
+                fieldInfo={fieldInfo}
+                widgetToAttributes={widgetToAttributes}
+                setWidgetToAttributes={setWidgetToAttributes}
+                widgetID={widgetID}
+              />
             );
           })}
         </DialogContent>

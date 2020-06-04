@@ -14,13 +14,25 @@
  * the License.
  */
 
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeKeyValueInput';
 import AttributeMultipleValuesInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeMultipleValuesInput';
 import * as React from 'react';
 
-const WidgetAttributeInput = ({
+const styles = (): StyleRules => {
+  return {
+    widgetAttributeInput: {
+      width: '100%',
+      marginTop: '10px',
+      marginBottom: '10px',
+    },
+  };
+};
+
+const WidgetAttributeInputView = ({
+  classes,
   field,
   fieldInfo,
   widgetToAttributes,
@@ -74,7 +86,7 @@ const WidgetAttributeInput = ({
             <PluginInput
               widgetType={'textbox'}
               value={widgetToAttributes[widgetID][field]}
-              setValue={onAttributeChange}
+              onChange={onAttributeChange}
               label={field}
               required={fieldInfo.required}
             />
@@ -84,7 +96,7 @@ const WidgetAttributeInput = ({
             <PluginInput
               widgetType={'number'}
               value={widgetToAttributes[widgetID][field]}
-              setValue={onAttributeChange}
+              onChange={onAttributeChange}
               label={field}
               required={fieldInfo.required}
             />
@@ -94,7 +106,7 @@ const WidgetAttributeInput = ({
             <PluginInput
               widgetType={'select'}
               value={widgetToAttributes[widgetID][field]}
-              setValue={onAttributeChange}
+              onChange={onAttributeChange}
               label={field}
               options={['true', 'false']}
               required={fieldInfo.required}
@@ -131,7 +143,7 @@ const WidgetAttributeInput = ({
             <PluginInput
               widgetType={'textbox'}
               value={widgetToAttributes[widgetID][field]}
-              setValue={onAttributeChange}
+              onChange={onAttributeChange}
               label={field}
               required={fieldInfo.required}
             />
@@ -150,7 +162,8 @@ const WidgetAttributeInput = ({
     }
   };
 
-  return <div>{renderAttributeInput()}</div>;
+  return <div className={classes.widgetAttributeINput}>{renderAttributeInput()}</div>;
 };
 
+const WidgetAttributeInput = withStyles(styles)(WidgetAttributeInputView);
 export default WidgetAttributeInput;

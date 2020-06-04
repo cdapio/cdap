@@ -79,7 +79,7 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
 
       setWidgetToAttributes({
         ...widgetToAttributes,
-        [id]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
+        [widgetID]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
           acc[curr] = '';
           return acc;
         }, {}),
