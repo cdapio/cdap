@@ -24,6 +24,10 @@ import com.google.common.base.Throwables;
  */
 public class DataprocRuntimeException extends RuntimeException {
 
+  public DataprocRuntimeException(String message) {
+    super(message);
+  }
+
   public DataprocRuntimeException(Throwable cause) {
     super(createMessage(cause), cause);
   }

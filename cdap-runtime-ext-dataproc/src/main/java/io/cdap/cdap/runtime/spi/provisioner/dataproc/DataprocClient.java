@@ -32,7 +32,6 @@ import com.google.api.services.compute.model.Firewall;
 import com.google.api.services.compute.model.FirewallList;
 import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
-import com.google.api.services.compute.model.NetworkInterface;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
 import com.google.cloud.dataproc.v1beta2.Cluster;
@@ -50,9 +49,10 @@ import com.google.cloud.dataproc.v1beta2.GetClusterRequest;
 import com.google.cloud.dataproc.v1beta2.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1beta2.NodeInitializationAction;
 import com.google.cloud.dataproc.v1beta2.SoftwareConfig;
-import com.google.common.base.Strings;
+import com.google.cloud.dataproc.v1beta2.UpdateClusterRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
+import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.common.IPRange;
@@ -63,8 +63,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -94,14 +92,10 @@ final class DataprocClient implements AutoCloseable {
                                                                                                    "172.16.0.0/12",
                                                                                                    "192.168.0.0/16"));
   static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
-
   private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
-  private final String projectId;
-  private final String networkHostProjectId;
-  private final String network;
-  private final boolean useInternalIP;
+  private final Network network;
 
   private enum PeeringState {
     ACTIVE,
@@ -109,25 +103,31 @@ final class DataprocClient implements AutoCloseable {
     NONE
   }
 
-  static DataprocClient fromConf(DataprocConf conf,
-                                 boolean privateInstance) throws IOException, GeneralSecurityException {
+  /**
+   * Creates a {@link DataprocClient} from the given {@link DataprocConf}.
+   *
+   * @param conf the configuration for the client
+   * @return a {@link DataprocClient} instance for using Dataproc API
+   * @throws IOException if failed to connect to GCP api during the client creation
+   * @throws GeneralSecurityException if the client is failed to authenticate
+   */
+  static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
 
     String network = conf.getNetwork();
     String systemNetwork = null;
     try {
-      systemNetwork = DataprocConf.getSystemNetwork();
+      systemNetwork = DataprocUtils.getSystemNetwork();
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP, ignore
     }
 
     String projectId = conf.getProjectId();
-    String networkHostProjectID = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
-      conf.getNetworkHostProjectID();
+    String networkHostProjectId = conf.getNetworkHostProjectID();
     String systemProjectId = null;
     try {
-      systemProjectId = DataprocConf.getSystemProjectId();
+      systemProjectId = DataprocUtils.getSystemProjectId();
     } catch (IllegalArgumentException e) {
       // expected when not running on GCP, ignore
     }
@@ -138,43 +138,20 @@ final class DataprocClient implements AutoCloseable {
     } else if (network == null) {
       // Otherwise, pick a network from the configured project using the Compute API
 
-      network = findNetwork(networkHostProjectID, compute);
+      network = findNetwork(networkHostProjectId, compute);
     }
     if (network == null) {
       throw new IllegalArgumentException("Unable to automatically detect a network, please explicitly set a network.");
     }
 
     String subnet = conf.getSubnet();
-    Network networkInfo = getNetworkInfo(networkHostProjectID, network, compute);
-
-    PeeringState state = getPeeringState(systemNetwork, systemProjectId, networkInfo);
-
-    if (conf.isPreferExternalIP() && state == PeeringState.ACTIVE) {
-      // Peering is setup between the system network and customer network and is in ACTIVE state.
-      // However user has selected to preferred external IP the instance. This is not a private instance and is
-      // capable of communicating with Dataproc cluster with external ip so just add warning message indicating that
-      // internal IP can be used.
-      LOG.info(String.format("VPC Peering from network '%s' in project '%s' to network '%s' " +
-                               "in project '%s' is in the ACTIVE state. Prefer External IP can be set to false " +
-                               "to launch Dataproc clusters with internal IP only.", systemNetwork,
-                             systemProjectId, network, networkHostProjectID));
-    }
-
-    // Use internal IP for the Dataproc cluster if instance is private
-    // or
-    // user has not preferred external IP and (CDAP is running in the same customer project as Dataproc is going to
-    // be launched
-    // or
-    // Network peering is done between customer network and system network and is in ACTIVE mode).
-    boolean useInternalIP = privateInstance ||
-      !conf.isPreferExternalIP() && ((network.equals(systemNetwork) && networkHostProjectID.equals(systemProjectId)) ||
-      state == PeeringState.ACTIVE);
+    Network networkInfo = getNetworkInfo(networkHostProjectId, network, compute);
 
     List<String> subnets = networkInfo.getSubnetworks();
     if (subnet != null && !subnetExists(subnets, subnet)) {
       throw new IllegalArgumentException(String.format("Subnet '%s' does not exist in network '%s' in project '%s'. "
                                                          + "Please use a different subnet.",
-                                                       subnet, network, networkHostProjectID));
+                                                       subnet, network, networkHostProjectId));
     }
 
     // if the network uses custom subnets, a subnet must be provided to the dataproc api
@@ -185,22 +162,16 @@ final class DataprocClient implements AutoCloseable {
       if (subnets == null || subnets.isEmpty()) {
         throw new IllegalArgumentException(String.format("Network '%s' in project '%s' does not contain any subnets. "
                                                            + "Please create a subnet or use a different network.",
-                                                         network, networkHostProjectID));
+                                                         network, networkHostProjectId));
       }
     }
 
     subnet = chooseSubnet(network, subnets, subnet, conf.getRegion());
 
-    return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, useInternalIP);
+    return new DataprocClient(new DataprocConf(conf, network, subnet), client, compute, networkInfo);
   }
 
-  private static PeeringState getPeeringState(@Nullable String systemNetwork,
-                                              String systemProjectId, Network networkInfo) {
-    // systemNetwork can be null when CDAP is not running on GCP for example CDAP running in sandbox environment
-    if (systemNetwork == null) {
-      return PeeringState.NONE;
-    }
-
+  private static PeeringState getPeeringState(String systemProjectId, String systemNetwork, Network networkInfo) {
     // note: vpc network is a global resource.
     // https://cloud.google.com/compute/docs/regions-zones/global-regional-zonal-resources#globalresources
     String systemNetworkPath = String.format("https://www.googleapis.com/compute/v1/projects/%s/global/networks/%s",
@@ -261,7 +232,7 @@ final class DataprocClient implements AutoCloseable {
                                                          + "Please create a network in the project.", project));
     }
 
-    for (Network network: networks) {
+    for (Network network : networks) {
       if ("default".equals(network.getName())) {
         return network.getName();
       }
@@ -290,6 +261,9 @@ final class DataprocClient implements AutoCloseable {
     return zoneUri.substring(idx + 1);
   }
 
+  /*
+   * Using the input Google Credentials retrieve the Dataproc Cluster controller client
+   */
   private static ClusterControllerClient getClusterControllerClient(DataprocConf conf) throws IOException {
     CredentialsProvider credentialsProvider = FixedCredentialsProvider.create(conf.getDataprocCredentials());
 
@@ -302,6 +276,9 @@ final class DataprocClient implements AutoCloseable {
     return ClusterControllerClient.create(controllerSettings);
   }
 
+  /*
+   * Retrieve Google Compute Instance using Credentials
+   */
   private static Compute getCompute(DataprocConf conf) throws GeneralSecurityException, IOException {
     HttpTransport httpTransport = GoogleNetHttpTransport.newTrustedTransport();
     return new Compute.Builder(httpTransport, JacksonFactory.getDefaultInstance(), conf.getComputeCredential())
@@ -309,30 +286,29 @@ final class DataprocClient implements AutoCloseable {
       .build();
   }
 
-  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, boolean useInternalIP) {
-    this.projectId = conf.getProjectId();
-    this.network = conf.getNetwork();
-    this.networkHostProjectId = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
-      conf.getNetworkHostProjectID();
-    this.useInternalIP = useInternalIP;
+  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, Network network) {
     this.conf = conf;
     this.client = client;
     this.compute = compute;
+    this.network = network;
   }
 
   /**
    * Create a cluster. This will return after the initial request to create the cluster is completed.
    * At this point, the cluster is likely not yet running, but in a provisioning state.
-   * @param name the name of the cluster to create
+   *
+   * @param name         the name of the cluster to create
    * @param imageVersion the image version for the cluster
-   * @param labels labels to set on the cluster
+   * @param labels       labels to set on the cluster
+   * @param privateInstance {@code true} to indicate using private instance
    * @return create operation metadata
-   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
-   * @throws AlreadyExistsException if the cluster already exists
-   * @throws IOException if there was an I/O error talking to Google Compute APIs
+   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
+   * @throws AlreadyExistsException      if the cluster already exists
+   * @throws IOException                 if there was an I/O error talking to Google Compute APIs
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public ClusterOperationMetadata createCluster(String name, String imageVersion, Map<String, String> labels)
+  ClusterOperationMetadata createCluster(String name, String imageVersion, Map<String, String> labels,
+                                         boolean privateInstance)
     throws RetryableProvisionException, InterruptedException, IOException {
 
     try {
@@ -360,51 +336,37 @@ final class DataprocClient implements AutoCloseable {
       if (conf.getZone() != null) {
         clusterConfig.setZoneUri(conf.getZone());
       }
-      String networkHostProjectId = Strings.isNullOrEmpty(conf.getNetworkHostProjectID()) ? projectId :
-        conf.getNetworkHostProjectID();
 
       // subnets are unique within a location, not within a network, which is why these configs are mutually exclusive.
       if (conf.getSubnet() != null) {
         clusterConfig.setSubnetworkUri(conf.getSubnet());
       } else {
-        clusterConfig.setNetworkUri(String.format("projects/%s/global/networks/%s", networkHostProjectId,
-                                                  conf.getNetwork()));
+        clusterConfig.setNetworkUri(network.getSelfLink());
       }
 
       //Add any defined Network Tags
       clusterConfig.addAllTags(conf.getNetworkTags());
+      boolean internalIPOnly = isInternalIPOnly(privateInstance, publicKey != null);
 
       // if public key is not null that means ssh is used to launch / monitor job on dataproc
       if (publicKey != null) {
         int maxTags = Math.max(0, DataprocConf.MAX_NETWORK_TAGS - clusterConfig.getTagsCount());
-        List<String> tags = getFirewallTargetTags(useInternalIP);
+        List<String> tags = getFirewallTargetTags(internalIPOnly);
         if (tags.size() > maxTags) {
           LOG.warn("No more than 64 tags can be added. Firewall tags ignored: {}", tags.subList(maxTags, tags.size()));
         }
         tags.stream().limit(maxTags).forEach(clusterConfig::addTags);
       }
 
-      // if internal ip is prefered then create dataproc cluster without external ip for better security
-      if (useInternalIP) {
-        clusterConfig.setInternalIpOnly(true);
-      }
+      // if internal ip is preferred then create dataproc cluster without external ip for better security
+      clusterConfig.setInternalIpOnly(internalIPOnly);
 
       Map<String, String> clusterProperties = new HashMap<>(conf.getClusterProperties());
-      // The additional property is needed to be able to provision a singlenode cluster on
-      // dataproc. Dataproc has an issue that it will treat 0 number of worker
-      // nodes as the default number, which means it will always provision a
-      // cluster with 2 worker nodes if this property is not set. Refer to
-      // https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters
-      // for more information.
-      clusterProperties.put("dataproc:dataproc.allow.zero.workers", "true");
       // Enable/Disable stackdriver
       clusterProperties.put("dataproc:dataproc.logging.stackdriver.enable",
-                        Boolean.toString(conf.isStackdriverLoggingEnabled()));
+                            Boolean.toString(conf.isStackdriverLoggingEnabled()));
       clusterProperties.put("dataproc:dataproc.monitoring.stackdriver.enable",
-                        Boolean.toString(conf.isStackdriverMonitoringEnabled()));
-      // enable container logs by default for ephemeral clusters.
-      clusterProperties.put("yarn:yarn.nodemanager.delete.debug-delay-sec", "86400");
-
+                            Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
         .setEndpointConfig(EndpointConfig.newBuilder()
@@ -455,8 +417,51 @@ final class DataprocClient implements AutoCloseable {
         .build();
 
       OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
-        client.createClusterAsync(projectId, conf.getRegion(), cluster);
+        client.createClusterAsync(conf.getProjectId(), conf.getRegion(), cluster);
       return operationFuture.getMetadata().get();
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ApiException) {
+        throw handleApiException((ApiException) cause);
+      }
+      throw new DataprocRuntimeException(cause);
+    }
+  }
+
+  /**
+   * Updates labels on the given Dataproc cluster.
+   *
+   * @param clusterName name of the cluster
+   * @param labels Key/Value pairs to set on the Dataproc cluster.
+   */
+  void updateClusterLabels(String clusterName,
+                           Map<String, String> labels) throws RetryableProvisionException, InterruptedException {
+    if (labels.isEmpty()) {
+      return;
+    }
+    try {
+      Cluster cluster = getDataprocCluster(clusterName)
+        .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
+        .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
+                                                          " does not exist or not in running state"));
+
+      FieldMask updateMask = FieldMask.newBuilder().addPaths("labels").build();
+      OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        client.updateClusterAsync(UpdateClusterRequest
+                                    .newBuilder()
+                                    .setProjectId(conf.getProjectId())
+                                    .setRegion(conf.getRegion())
+                                    .setClusterName(clusterName)
+                                    .setCluster(cluster.toBuilder().putAllLabels(labels))
+                                    .setUpdateMask(updateMask)
+                                    .build());
+
+      ClusterOperationMetadata metadata = operationFuture.getMetadata().get();
+      int numWarnings = metadata.getWarningsCount();
+      if (numWarnings > 0) {
+        LOG.warn("Encountered {} warning{} while setting labels on cluster:\n{}",
+                 numWarnings, numWarnings > 1 ? "s" : "", String.join("\n", metadata.getWarningsList()));
+      }
     } catch (ExecutionException e) {
       Throwable cause = e.getCause();
       if (cause instanceof ApiException) {
@@ -471,15 +476,15 @@ final class DataprocClient implements AutoCloseable {
    * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
    *
    * @param name the name of the cluster to delete
-   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
+   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public Optional<ClusterOperationMetadata> deleteCluster(String name)
+  Optional<ClusterOperationMetadata> deleteCluster(String name)
     throws RetryableProvisionException, InterruptedException {
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
         .setClusterName(name)
-        .setProjectId(projectId)
+        .setProjectId(conf.getProjectId())
         .setRegion(conf.getRegion())
         .build();
 
@@ -529,7 +534,7 @@ final class DataprocClient implements AutoCloseable {
     // if it failed, try to get the create operation and log the error message
     try {
       if (status == io.cdap.cdap.runtime.spi.provisioner.ClusterStatus.FAILED) {
-        String resourceName = String.format("projects/%s/regions/%s/operations", projectId, conf.getRegion());
+        String resourceName = String.format("projects/%s/regions/%s/operations", conf.getProjectId(), conf.getRegion());
         String filter = String.format("clusterName=%s AND operationType=CREATE", name);
         OperationsClient.ListOperationsPagedResponse operationsResponse =
           client.getOperationsClient().listOperations(resourceName, filter);
@@ -592,7 +597,7 @@ final class DataprocClient implements AutoCloseable {
     try {
       return Optional.of(client.getCluster(GetClusterRequest.newBuilder()
                                              .setClusterName(name)
-                                             .setProjectId(projectId)
+                                             .setProjectId(conf.getProjectId())
                                              .setRegion(conf.getRegion())
                                              .build()));
     } catch (NotFoundException e) {
@@ -608,6 +613,59 @@ final class DataprocClient implements AutoCloseable {
   }
 
   /**
+   * Determines if the Dataproc cluster is private IP only.
+   *
+   * @param privateInstance a system config to force using private instance
+   * @param sshRuntimeMonitor {@code true} if SSH is used for runtime monitoring
+   * @return {@code true} for pribvate IP only Dataproc cluster
+   */
+  private boolean isInternalIPOnly(boolean privateInstance, boolean sshRuntimeMonitor) {
+    String systemProjectId = null;
+    String systemNetwork = null;
+    try {
+      systemProjectId = DataprocUtils.getSystemProjectId();
+      systemNetwork = DataprocUtils.getSystemNetwork();
+    } catch (IllegalArgumentException e) {
+      // expected when not running on GCP, ignore
+    }
+
+    // Use private IP only cluster if privateInstance is true or if the compute profile required
+    if (!privateInstance && conf.isPreferExternalIP()) {
+      return false;
+    }
+
+    // If it is forced to be private instance or
+    // if CDAP runs in GCP project and runtime job manager is used and monitoring is not done through SSH,
+    // then we don't need to validate network connectivity
+    if (privateInstance || (systemProjectId != null && conf.isRuntimeJobManagerEnabled() && !sshRuntimeMonitor)) {
+      return true;
+    }
+
+    // If the CDAP is not running on GCP VM, then we just honor the prefer external IP config
+    if (systemProjectId == null || systemNetwork == null) {
+      return true;
+    }
+
+    // SSH will be used for job launching and/or monitoring, we need to validate network connectivity
+    // CDAP and Dataproc are in the same network, should be able to use private IP only cluster
+    if (systemProjectId.equals(conf.getNetworkHostProjectID()) && systemNetwork.equals(network.getName())) {
+      return true;
+    }
+
+    // Check network is peering, we can use private ip only cluster
+    PeeringState state = getPeeringState(systemProjectId, systemNetwork, network);
+    if (state == PeeringState.ACTIVE) {
+      return true;
+    }
+
+    // If there is no network connectivity and yet private ip only cluster is requested, raise an exception
+    throw new DataprocRuntimeException(
+      String.format("Direct network connectivity is needed for private Dataproc cluster between VPC %s/%s and %s/%s",
+                    systemProjectId, systemNetwork, conf.getNetworkHostProjectID(), network.getName())
+    );
+  }
+
+  /**
    * Finds ingress firewall rules for the configured network that matches the required firewall port as
    * defined in {@link FirewallPort}.
    *
@@ -615,7 +673,7 @@ final class DataprocClient implements AutoCloseable {
    * @throws IOException If failed to discover those firewall rules
    */
   private List<String> getFirewallTargetTags(boolean useInternalIP) throws IOException {
-    FirewallList firewalls = compute.firewalls().list(networkHostProjectId).execute();
+    FirewallList firewalls = compute.firewalls().list(conf.getNetworkHostProjectID()).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
 
@@ -625,7 +683,7 @@ final class DataprocClient implements AutoCloseable {
       // we want to get the last section of the path and compare to the configured network name
       int idx = firewall.getNetwork().lastIndexOf('/');
       String networkName = idx >= 0 ? firewall.getNetwork().substring(idx + 1) : firewall.getNetwork();
-      if (!networkName.equals(network)) {
+      if (!networkName.equals(network.getName())) {
         continue;
       }
 
@@ -677,7 +735,7 @@ final class DataprocClient implements AutoCloseable {
       throw new IllegalArgumentException(String.format(
         "Could not find an ingress firewall rule for network '%s' in project '%s' for ports '%s'. " +
           "Please create a rule to allow incoming traffic on those ports for your IP range.",
-        network, networkHostProjectId, portList));
+        network.getName(), conf.getNetworkHostProjectID(), portList));
     }
     return tags;
   }
@@ -713,7 +771,7 @@ final class DataprocClient implements AutoCloseable {
   private Node getNode(Compute compute, Node.Type type, String zone, String nodeName) throws IOException {
     Instance instance;
     try {
-      instance = compute.instances().get(projectId, zone, nodeName).execute();
+      instance = compute.instances().get(conf.getProjectId(), zone, nodeName).execute();
     } catch (GoogleJsonResponseException e) {
       // this can happen right after a cluster is created
       if (e.getStatusCode() == 404) {
@@ -722,35 +780,39 @@ final class DataprocClient implements AutoCloseable {
       throw e;
     }
     Map<String, String> properties = new HashMap<>();
-    for (NetworkInterface networkInterface : instance.getNetworkInterfaces()) {
-      Path path = Paths.get(networkInterface.getNetwork());
-      String networkName = path.getFileName().toString();
-      if (network.equals(networkName)) {
-        // if the cluster does not have an external ip then then access config is null
-        if (networkInterface.getAccessConfigs() != null) {
-          for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
-            if (accessConfig.getNatIP() != null) {
-              properties.put("ip.external", accessConfig.getNatIP());
-              break;
-            }
+
+    // Dataproc cluster node should only have exactly one network
+    instance.getNetworkInterfaces().stream().findFirst().ifPresent(networkInterface -> {
+      // if the cluster does not have an external ip then then access config is null
+      if (networkInterface.getAccessConfigs() != null) {
+        for (AccessConfig accessConfig : networkInterface.getAccessConfigs()) {
+          if (accessConfig.getNatIP() != null) {
+            properties.put("ip.external", accessConfig.getNatIP());
+            break;
           }
         }
-        properties.put("ip.internal", networkInterface.getNetworkIP());
       }
-    }
+      properties.put("ip.internal", networkInterface.getNetworkIP());
+    });
+
     long ts;
     try {
       ts = DATE_FORMAT.parse(instance.getCreationTimestamp()).getTime();
     } catch (ParseException e) {
       ts = -1L;
     }
+
+    // For internal IP only cluster, nodes only have ip.internal.
     String ip = properties.get("ip.external");
-    if (useInternalIP) {
+    if (ip == null) {
       ip = properties.get("ip.internal");
     }
     return new Node(nodeName, type, ip, ts, properties);
   }
 
+  /**
+   * Converts Google Dataproc cluster status to CDAP Cluster Status
+   */
   private io.cdap.cdap.runtime.spi.provisioner.ClusterStatus convertStatus(ClusterStatus status) {
     switch (status.getState()) {
       case ERROR:
