@@ -67,7 +67,7 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         setJsonView={setJsonView}
         outputName={localOutputName}
       />
-      <Heading type={HeadingTypes.h3} label="Outputs" />
+      <Heading type={HeadingTypes.h3} label="Output" />
       <br />
       <PluginInput
         widgetType={'textbox'}

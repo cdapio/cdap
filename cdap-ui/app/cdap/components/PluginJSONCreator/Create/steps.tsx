@@ -28,7 +28,7 @@ export const STEPS = [
     component: ConfigurationGroupsCollection,
   },
   {
-    label: 'Outputs',
+    label: 'Output',
     component: Outputs,
   },
 ];
