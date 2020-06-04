@@ -167,6 +167,8 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
                   widgetInfo={widgetInfo}
                   widgetID={widgetID}
                   setWidgetInfo={setWidgetInfo}
+                  widgetToAttributes={widgetToAttributes}
+                  setWidgetToAttributes={setWidgetToAttributes}
                 />
                 <WidgetActionButtons
                   onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}

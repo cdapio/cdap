@@ -100,6 +100,7 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
               : {};
             return (
               <WidgetAttributeInput
+                key={fieldIndex}
                 widgetType={widgetType}
                 field={field}
                 fieldInfo={fieldInfo}
