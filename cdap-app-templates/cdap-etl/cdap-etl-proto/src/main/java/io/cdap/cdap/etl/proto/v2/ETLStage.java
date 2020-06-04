@@ -112,7 +112,7 @@ public final class ETLStage {
    * @param updateContext Context to use for updating stage.
    * @return new (updated) ETLStage.
    */
-  public ETLStage updateStage(ApplicationUpdateContext updateContext) {
+  public ETLStage updateStage(ApplicationUpdateContext updateContext) throws Exception {
     for (ApplicationConfigUpdateAction updateAction: updateContext.getUpdateActions()) {
       switch (updateAction) {
         case UPGRADE_ARTIFACT:
@@ -139,13 +139,13 @@ public final class ETLStage {
    * @param updateContext To use helper functions like getPluginArtifacts.
    * @return Updated plugin object to be used for the udated stage. Returned null if no changes to current plugin.
    */
-  private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) {
+  private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) throws Exception {
     // Currently tries to find latest plugin in SYSTEM scope and upgrades current plugin if version is higher,
     // ignoring current plugin scope.
     // In future, we can modify logic to fetch the latest plugin in any scope.
     List<ArtifactId> candidates =
-        updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(),
-                                         ArtifactScope.SYSTEM, null);
+      updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(),
+                                       ArtifactScope.SYSTEM, null);
     if (candidates.isEmpty()) {
       return plugin;
     }
@@ -160,12 +160,12 @@ public final class ETLStage {
     }
 
     ArtifactSelectorConfig newArtifactSelectorConfig =
-        new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
-                                   newVersion);
+      new ArtifactSelectorConfig(newPlugin.getScope().name(), newPlugin.getName(),
+                                 newVersion);
     io.cdap.cdap.etl.proto.v2.ETLPlugin upgradedEtlPlugin =
-        new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
-                                                plugin.getProperties(),
-                                                newArtifactSelectorConfig);
+      new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
+                                              plugin.getProperties(),
+                                              newArtifactSelectorConfig);
     return upgradedEtlPlugin;
   }
 
@@ -182,7 +182,8 @@ public final class ETLStage {
    */
   private String getUpgradedVersionString(ArtifactId newPlugin) {
     try {
-      ArtifactVersionRange currentVersionRange = plugin.getArtifactConfig().getApiArtifactVersionRange();
+      ArtifactVersionRange currentVersionRange =
+        io.cdap.cdap.api.artifact.ArtifactVersionRange.parse(plugin.getArtifactConfig().getVersion());
       if (!currentVersionRange.isExactVersion()) {
         // Current plugin version is version range.
         if (currentVersionRange.versionIsInRange(newPlugin.getVersion())) {
@@ -196,10 +197,8 @@ public final class ETLStage {
         } else {
           // Increase the upper bound to latest available version.
           ArtifactVersionRange newVersionRange =
-              new ArtifactVersionRange(currentVersionRange.getLower(),
-                                       currentVersionRange.isLowerInclusive(),
-                                       newPlugin.getVersion(),
-                                       /*isUpperInclusive=*/true);
+            new ArtifactVersionRange(currentVersionRange.getLower(), currentVersionRange.isLowerInclusive(),
+                                     newPlugin.getVersion(), /*isUpperInclusive=*/true);
           return newVersionRange.getVersionString();
         }
       } else if (currentVersionRange.isExactVersion()

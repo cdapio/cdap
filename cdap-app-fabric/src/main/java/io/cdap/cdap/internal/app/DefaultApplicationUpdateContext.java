@@ -46,21 +46,24 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.id.Id.Artifact;
 import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 
-import java.util.Collections;
+import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -129,27 +132,22 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
 
   @Override
   public List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
-                                             @Nullable ArtifactVersionRange pluginRange, int limit) {
+                                             @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception {
     List<ArtifactId> pluginArtifacts = new ArrayList<>();
     NamespaceId pluginArtifactNamespace = ArtifactScope.SYSTEM.equals(pluginScope) ? NamespaceId.SYSTEM : namespaceId;
 
-    Predicate<io.cdap.cdap.proto.id.ArtifactId> predicate = new Predicate<io.cdap.cdap.proto.id.ArtifactId>() {
-      @Override
-      public boolean apply(io.cdap.cdap.proto.id.ArtifactId input) {
-        // should check if the artifact is from SYSTEM namespace, if not, check if it is from the scoped namespace.
-        // should check if plugin is in given range if provided.
-        return (((pluginScope == null && NamespaceId.SYSTEM.equals(input.getParent()))
-               || pluginArtifactNamespace.equals(input.getParent())) &&
-               (pluginRange == null || pluginRange.versionIsInRange(new ArtifactVersion(input.getVersion()))));
-      }
+    Predicate<io.cdap.cdap.proto.id.ArtifactId> predicate = input -> {
+      // Check if it is from the scoped namespace and should check if plugin is in given range if provided.
+      return (pluginArtifactNamespace.equals(input.getParent()) &&
+             (pluginRange == null || pluginRange.versionIsInRange(new ArtifactVersion(input.getVersion()))));
     };
 
     try {
       // TODO: Pass ArtifactSortOrder as argument for better flexibility.
       Map<ArtifactDescriptor, PluginClass> plugins =
-          artifactRepository.getPlugins(pluginArtifactNamespace,
-                                        Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
-                                        pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
+        artifactRepository.getPlugins(pluginArtifactNamespace,
+                                      Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
+                                      pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactId plugin = pluginsEntry.getKey().getArtifactId();
         // Only consider non-SNAPSHOT plugins for upgrade.
@@ -161,6 +159,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     } catch (Exception e) {
       LOG.warn("Failed to get plugin details for artifact {} for plugin {} of type {}",
                applicationArtifactId, pluginName, pluginType, e);
+      throw e;
     }
     return pluginArtifacts;
   }

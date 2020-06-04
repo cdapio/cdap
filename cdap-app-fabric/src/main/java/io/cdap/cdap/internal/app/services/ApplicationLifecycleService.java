@@ -23,6 +23,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.Application;
@@ -49,7 +50,6 @@ import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.CannotBeDeletedException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
-import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -69,7 +69,7 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.ApplicationUpdateDetails;
+import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -369,56 +369,46 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
    * @return Details of upgrade for the application like failure details with reason.
-   * @return
-   * @throws Exception
+   * @throws IllegalStateException if something unexpected happened during upgrade.
+   * @throws IOException if there was an IO error during initializing application class from artifact.
+   * @throws JsonIOException if there was an error in serializing or deserializing app config.
+   * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
+   *                   the actual exception
    */
-  public ApplicationUpdateDetails upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
+  public ApplicationUpdateDetail upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
       throws Exception {
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     // check that app exists
     ApplicationSpecification currentSpec = store.getApplication(appId);
     if (currentSpec == null) {
-      LOG.warn("Application {} not found for upgrade.", appId);
-      return new ApplicationUpdateDetails(appId, new NotFoundException(appId));
+      LOG.info("Application {} not found for upgrade.", appId);
+      return new ApplicationUpdateDetail(appId, new NotFoundException(appId));
     }
     ArtifactId currentArtifact = currentSpec.getArtifactId();
     NamespaceId currentArtifactNamespace =
-        ArtifactScope.SYSTEM.equals(currentArtifact.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
+      ArtifactScope.SYSTEM.equals(currentArtifact.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
 
     // Get the artifact with latest version for upgrade.
     List<ArtifactSummary> availableArtifacts =
-        artifactRepository.getArtifactSummaries(currentArtifactNamespace, currentArtifact.getName(), Integer.MAX_VALUE,
-                                                ArtifactSortOrder.ASC);
+      artifactRepository.getArtifactSummaries(currentArtifactNamespace, currentArtifact.getName(), 1,
+                                              ArtifactSortOrder.DESC);
     if (availableArtifacts.isEmpty()) {
       // This should not be possible as at least the current used artifact should be there.
-      LOG.error("No artifacts found for artifact {} ", currentArtifact);
-      throw new InternalError("Issues in trying to find application artifact for upgrading app " + appId);
+      String error = String.format("No artifacts found for artifact id %s in namespace %s.", currentArtifact.getName(),
+                                   currentArtifactNamespace);
+      return new ApplicationUpdateDetail(appId, "Upgrade failed.", error);
     }
-    ArtifactSummary candidateArtifact = availableArtifacts.get(availableArtifacts.size() - 1);
+    // The latest version should be first (and only) value in the result.
+    ArtifactSummary candidateArtifact = availableArtifacts.get(0);
     ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
-    if (candidateArtifactVersion.getVersion() == null) {
-      throw new InvalidArtifactException(String.format(
-          "Requested artifact version '%s' is invalid", candidateArtifact.getVersion()));
-    }
 
-    // Check conditions for validity of candidate artifact such as name and scope should be same. Also check that
-    // candidate artifact should have higher version than current artifact.
-    // In ideal cases, these conditions should never happen.
-    if (!currentArtifact.getName().equals(candidateArtifact.getName())) {
-      throw new InvalidArtifactException(String.format(
-          "Requested artifact name %s does not match with current name %s.", candidateArtifact.getName(),
-          currentArtifact.getName()));
-    }
-    if (currentArtifact.getScope() != candidateArtifact.getScope()) {
-      throw new InvalidArtifactException(String.format(
-          "Requested artifact scope %s does not match with current name %s.", candidateArtifact.getScope(),
-          currentArtifact.getScope()));
-    }
+    // Current artifact should not have higher version than candidate artifact.
     if (currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0) {
-      throw new InvalidArtifactException(String.format(
-          "Requested artifact version %s is older than current artifact version %s.", candidateArtifact.getVersion(),
-          currentArtifact.getVersion()));
+      String error = String.format(
+        "Requested artifact version %s is older than current artifact version %s.", candidateArtifact.getVersion(),
+        currentArtifact.getVersion());
+      return new ApplicationUpdateDetail(appId, "Upgrade failed." , error);
     }
 
     ArtifactId newArtifactId =
@@ -428,26 +418,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
     List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
 
-    try {
-      ApplicationUpdateDetails detail =
-          updateApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
+
+    return updateApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
                                     currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
-                                    upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false);
-      LOG.debug("Application upgrade successful. Update details: {}. Error: {}", detail.getUpdateDetails(),
-                detail.getError());
-      return new ApplicationUpdateDetails(appId, "upgrade successful.", null);
-    } catch (UnsupportedOperationException E) {
-      String errorMessage = String.format("Upgrade failed for application %s as artifact %s does not support upgrade.",
-                                          appId, newArtifact);
-      return new ApplicationUpdateDetails(appId, new NotImplementedException(errorMessage));
-    }
+                                    upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false, "Upgrade");
   }
 
   /**
    * Updates an application config by applying given update actions. The app should know how to apply these actions
    * to its config.
    */
-  private ApplicationUpdateDetails updateApplicationInternal(ApplicationId applicationId,
+  private ApplicationUpdateDetail updateApplicationInternal(ApplicationId applicationId,
                                                              NamespaceId namespaceId,
                                                              @Nullable String appName,
                                                              @Nullable String appVersion,
@@ -456,47 +437,42 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                                              ArtifactDetail artifactDetail,
                                                              List<ApplicationConfigUpdateAction> updateActions,
                                                              @Nullable KerberosPrincipalId ownerPrincipal,
-                                                             boolean updateSchedules) throws Exception {
+                                                             boolean updateSchedules, String userAction) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
-      throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
+      // This should never happen.
+      throw new IllegalStateException(String.format("No application class found in artifact '%s' in namespace '%s'.",
                                          artifactDetail.getDescriptor().getArtifactId(), namespaceId));
     }
     io.cdap.cdap.proto.id.ArtifactId artifactId =
-        Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId());
+      Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId());
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId, this.impersonator);
     ClassLoader artifactClassLoader =
-        artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
-                                                     classLoaderImpersonator);
+      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+                                                   classLoaderImpersonator);
 
     String updatedAppConfig = "";
     DefaultApplicationUpdateContext updateContext =
-        new DefaultApplicationUpdateContext(namespaceId, applicationId, artifactDetail.getDescriptor().getArtifactId(),
-                                            artifactRepository, currentConfigStr, updateActions);
+      new DefaultApplicationUpdateContext(namespaceId, applicationId, artifactDetail.getDescriptor().getArtifactId(),
+                                          artifactRepository, currentConfigStr, updateActions);
 
     // Run config update logic for the application to generate updated config.
-    try {
-      Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
-      if (!(appMain instanceof Application)) {
-        throw new IllegalStateException(
-            String.format("Application main class is of invalid type: %s",
-                          appMain.getClass().getName()));
-      }
-      Application app = (Application) appMain;
-      Type configType = Artifacts.getConfigType(app.getClass());
-      try {
-        ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
-        updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
-      } catch (UnsupportedOperationException ex) {
-        String errorMessage = String.format("application of type %s does not support update.",
-                                            appMain.getClass().getName());
-        LOG.error("Application update failed due to " + errorMessage);
-        throw ex;
-      }
-    } catch (Exception ex) {
-      Throwables.propagateIfPossible(ex.getCause(), Exception.class);
-      throw Throwables.propagate(ex.getCause());
+    Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+    if (!(appMain instanceof Application)) {
+      throw new IllegalStateException(
+        String.format("Application main class is of invalid type: %s",
+                      appMain.getClass().getName()));
     }
+    Application app = (Application) appMain;
+    Type configType = Artifacts.getConfigType(app.getClass());
+    if (!app.isUpdateSupported()) {
+      String status = String.format("%s failed.", userAction);
+      String errorMessage = String.format("application of type %s does not support update.",
+                                          appMain.getClass().getName());
+      return new ApplicationUpdateDetail(applicationId, status, errorMessage);
+    }
+    ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
+    updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
 
     // Deploy application with with potentially new app config and new artifact.
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
@@ -515,7 +491,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
-    return new ApplicationUpdateDetails(applicationId, "Update successful.", null);
+    return new ApplicationUpdateDetail(applicationId, String.format("%s successful.", userAction), null);
   }
 
   /**

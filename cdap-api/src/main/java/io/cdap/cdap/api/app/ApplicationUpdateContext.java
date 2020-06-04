@@ -62,7 +62,7 @@ public interface ApplicationUpdateContext {
    *         Returns empty list if no artifact for the plugin found.
    */
   default List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
-                                              @Nullable ArtifactVersionRange pluginRange) {
+                                              @Nullable ArtifactVersionRange pluginRange) throws Exception{
     return getPluginArtifacts(pluginType, pluginName, pluginScope, pluginRange, Integer.MAX_VALUE);
   }
 
@@ -80,7 +80,7 @@ public interface ApplicationUpdateContext {
    *         Returns empty list if no artifact for the plugin found.
    */
   List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
-                                      @Nullable ArtifactVersionRange pluginRange, int limit);
+                                      @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception;
 
 }
 

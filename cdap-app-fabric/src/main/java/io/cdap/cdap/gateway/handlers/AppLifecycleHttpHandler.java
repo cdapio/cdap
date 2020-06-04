@@ -58,7 +58,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
-import io.cdap.cdap.proto.ApplicationUpdateDetails;
+import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -89,7 +89,6 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -391,21 +390,13 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void upgradeApplication(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") final String namespaceId,
                                  @PathParam("app-id") final String appName)
-      throws NotFoundException, BadRequestException, UnauthorizedException, IOException {
+      throws Exception {
 
     ApplicationId appId = validateApplicationId(namespaceId, appName);
 
-    try {
-      ApplicationUpdateDetails detail =
-          applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
-    } catch (Exception e) {
-      LOG.error("Upgrade application failure", e);
-      ApplicationUpdateDetails detail =
-          new ApplicationUpdateDetails(appId, new ServiceException("Upgrade failed due to internal error.", null,
-                                                                   HttpResponseStatus.INTERNAL_SERVER_ERROR));
-      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, GSON.toJson(detail));
-    }
+    ApplicationUpdateDetail detail =
+      applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
   }
 
   /**
@@ -420,7 +411,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * ]
    * }
    * </pre>
-   * The response will be an array of {@link ApplicationUpdateDetails} object, which either indicates a success (200) or
+   * The response will be an array of {@link ApplicationUpdateDetail} object, which either indicates a success (200) or
    * failure for each of the requested application in the same order as the request. The failure also indicates reason
    * for the error.
    */
@@ -429,17 +420,17 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   public void upgradeApplications(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
-    List<ApplicationUpdateDetails> details = new ArrayList<>();
+    List<ApplicationUpdateDetail> details = new ArrayList<>();
     for (ApplicationId appId : appIds) {
       try {
         details.add(applicationLifecycleService.upgradeApplication(appId, createProgramTerminator()));
       } catch (Exception e) {
-        ApplicationUpdateDetails errorDetail =
-            new ApplicationUpdateDetails(appId, new ServiceException("Upgrade failed due to internal error.", null,
-                                                                     HttpResponseStatus.INTERNAL_SERVER_ERROR));
+        ApplicationUpdateDetail errorDetail =
+          new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                                                                   HttpResponseStatus.INTERNAL_SERVER_ERROR));
 
         details.add(errorDetail);
-        LOG.error("Upgrading application {} failed due to exception ", appId, e);
+        LOG.debug("Upgrading application {} failed due to exception ", appId, e);
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));

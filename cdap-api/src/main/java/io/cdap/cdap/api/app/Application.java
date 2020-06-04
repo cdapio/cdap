@@ -46,7 +46,8 @@ public interface Application<T extends Config> {
    * @param applicationUpdateContext Used to access methods helpful for operations like upgrading plugin version for
    * config.
    */
-  default ApplicationUpdateResult<T> updateConfig(ApplicationUpdateContext applicationUpdateContext) {
+  default ApplicationUpdateResult<T> updateConfig(ApplicationUpdateContext applicationUpdateContext)
+      throws Exception {
     throw new UnsupportedOperationException("Application config update operation is not supported.");
   }
 }

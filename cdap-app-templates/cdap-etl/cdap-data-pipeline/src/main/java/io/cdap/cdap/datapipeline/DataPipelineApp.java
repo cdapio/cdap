@@ -80,7 +80,13 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
   }
 
   @Override
-  public ApplicationUpdateResult<ETLBatchConfig> updateConfig(ApplicationUpdateContext updateContext) {
+  public boolean isUpdateSupported() {
+    return true;
+  }
+
+  @Override
+  public ApplicationUpdateResult<ETLBatchConfig> updateConfig(ApplicationUpdateContext updateContext)
+      throws Exception {
     ETLBatchConfig currentBatchConfig = updateContext.getConfig(ETLBatchConfig.class);
     ETLBatchConfig updatedBatchConfig = currentBatchConfig.updateBatchConfig(updateContext);
     return new ApplicationUpdateResult<>(updatedBatchConfig);

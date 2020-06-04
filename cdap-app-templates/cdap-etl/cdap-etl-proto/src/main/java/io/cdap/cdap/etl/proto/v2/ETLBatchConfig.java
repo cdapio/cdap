@@ -122,7 +122,8 @@ public final class ETLBatchConfig extends ETLConfig {
    * @param upgradeContext Context for performing update for current batch config.
    * @return a new (updated) etl batch config after performing update operations.
    */
-  public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext) {
+  public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext)
+      throws Exception {
     Set<ETLStage> upgradedStages = new HashSet<>();
     // Upgrade all stages.
     for (ETLStage stage : getStages()) {
