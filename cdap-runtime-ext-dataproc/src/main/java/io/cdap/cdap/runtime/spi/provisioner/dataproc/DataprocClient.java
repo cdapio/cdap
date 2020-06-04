@@ -49,8 +49,10 @@ import com.google.cloud.dataproc.v1beta2.GetClusterRequest;
 import com.google.cloud.dataproc.v1beta2.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1beta2.NodeInitializationAction;
 import com.google.cloud.dataproc.v1beta2.SoftwareConfig;
+import com.google.cloud.dataproc.v1beta2.UpdateClusterRequest;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
+import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
 import io.cdap.cdap.runtime.spi.common.IPRange;
@@ -427,14 +429,57 @@ final class DataprocClient implements AutoCloseable {
   }
 
   /**
+   * Updates labels on the given Dataproc cluster.
+   *
+   * @param clusterName name of the cluster
+   * @param labels Key/Value pairs to set on the Dataproc cluster.
+   */
+  void updateClusterLabels(String clusterName,
+                           Map<String, String> labels) throws RetryableProvisionException, InterruptedException {
+    if (labels.isEmpty()) {
+      return;
+    }
+    try {
+      Cluster cluster = getDataprocCluster(clusterName)
+        .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
+        .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
+                                                          " does not exist or not in running state"));
+
+      FieldMask updateMask = FieldMask.newBuilder().addPaths("labels").build();
+      OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
+        client.updateClusterAsync(UpdateClusterRequest
+                                    .newBuilder()
+                                    .setProjectId(conf.getProjectId())
+                                    .setRegion(conf.getRegion())
+                                    .setClusterName(clusterName)
+                                    .setCluster(cluster.toBuilder().putAllLabels(labels))
+                                    .setUpdateMask(updateMask)
+                                    .build());
+
+      ClusterOperationMetadata metadata = operationFuture.getMetadata().get();
+      int numWarnings = metadata.getWarningsCount();
+      if (numWarnings > 0) {
+        LOG.warn("Encountered {} warning{} while setting labels on cluster:\n{}",
+                 numWarnings, numWarnings > 1 ? "s" : "", String.join("\n", metadata.getWarningsList()));
+      }
+    } catch (ExecutionException e) {
+      Throwable cause = e.getCause();
+      if (cause instanceof ApiException) {
+        throw handleApiException((ApiException) cause);
+      }
+      throw new DataprocRuntimeException(cause);
+    }
+  }
+
+  /**
    * Delete the specified cluster if it exists. This will return after the initial request to delete the cluster
    * is completed. At this point, the cluster is likely not yet deleted, but in a deleting state.
    *
    * @param name the name of the cluster to delete
-   * @throws InterruptedException if the thread was interrupted while waiting for the initial request to complete
+   * @throws InterruptedException        if the thread was interrupted while waiting for the initial request to complete
    * @throws RetryableProvisionException if there was a non 4xx error code returned
    */
-  public Optional<ClusterOperationMetadata> deleteCluster(String name)
+  Optional<ClusterOperationMetadata> deleteCluster(String name)
     throws RetryableProvisionException, InterruptedException {
     try {
       DeleteClusterRequest request = DeleteClusterRequest.newBuilder()
