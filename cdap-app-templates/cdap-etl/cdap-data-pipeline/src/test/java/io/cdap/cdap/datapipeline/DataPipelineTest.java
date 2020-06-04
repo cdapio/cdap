@@ -201,6 +201,24 @@ public class DataPipelineTest extends HydratorTestBase {
                       NaiveBayesTrainer.class, NaiveBayesClassifier.class, WordCount.class, LineFilterProgram.class);
     addPluginArtifact(NamespaceId.DEFAULT.artifact("test-plugins", "1.0.0"), APP_ARTIFACT_ID,
                       PluggableFilterTransform.class);
+
+    // Upgrade tests related setup.
+
+    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
+    // setup.
+    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
+    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
+
+    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
+    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
+    // artifact version.
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
+                      PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
+                      PluggableFilterTransform.class);
+    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
+                      PluggableFilterTransform.class);
   }
 
   @After
@@ -3512,22 +3530,6 @@ public class DataPipelineTest extends HydratorTestBase {
    */
   @Test
   public void testSimpleUpgradePipelines() throws Exception {
-    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
-    // setup.
-    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
-    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
-    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
-
-    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
-    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
-    // artifact version.
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
-                      PluggableFilterTransform.class);
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
-                      PluggableFilterTransform.class);
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
-                      PluggableFilterTransform.class);
-
     ArtifactSelectorConfig currentArtifactSelector =
         new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "1.0.0");
 
@@ -3584,22 +3586,6 @@ public class DataPipelineTest extends HydratorTestBase {
  */
   @Test
   public void testUpgradePipelinesWithPluginRange() throws Exception {
-    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
-    // setup.
-    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
-    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
-    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
-
-    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
-    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
-    // artifact version.
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
-                      PluggableFilterTransform.class);
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
-                      PluggableFilterTransform.class);
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.1.0"), UPGRADE_APP_ARTIFACT_ID_2,
-                      PluggableFilterTransform.class);
-
     ArtifactSelectorConfig currentArtifactSelector =
         new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,1.0.5)");
 
@@ -3657,19 +3643,6 @@ public class DataPipelineTest extends HydratorTestBase {
 */
   @Test
   public void testUpgradePipelinesWithNoChangeInPluginRange() throws Exception {
-    // Set up 3 extra version of artifacts for DataPipelineApp apart from with APP_ARTIFACT_ID which is created in test
-    // setup.
-    setupBatchArtifacts(OLD_APP_ARTIFACT_ID, DataPipelineApp.class);
-    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_1, DataPipelineApp.class);
-    setupBatchArtifacts(UPGRADE_APP_ARTIFACT_ID_2, DataPipelineApp.class);
-
-    // Bind different version of filter plugin with different version of data pipeline app in SYSTEM namespace.
-    // Will be used to make sure upgrade choose latest version of artifact and only plugin mapped to corresponding
-    // artifact version.
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.2.0"), UPGRADE_APP_ARTIFACT_ID_1,
-                      PluggableFilterTransform.class);
-    addPluginArtifact(NamespaceId.SYSTEM.artifact("test-plugins", "1.0.5"), UPGRADE_APP_ARTIFACT_ID_2,
-                      PluggableFilterTransform.class);
     // Since filter plugin is not going to upgrade due to its range, the scope of filter plugin still stays USER.
     // Add a filter plugin in DEFAULT namespace in the proposed range for upgraded artifact version.
     // Needed to make deployment successful.

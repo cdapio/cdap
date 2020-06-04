@@ -32,7 +32,9 @@
 
 package io.cdap.cdap.internal.app;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Predicate;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
@@ -53,6 +55,7 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.util.Collections;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,8 +78,8 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
       registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
 
   private final ArtifactId applicationArtifactId;
-  private String configString;
-  private List<ApplicationConfigUpdateAction> updateActions;
+  private final String configString;
+  private final List<ApplicationConfigUpdateAction> updateActions;
   private final ArtifactRepository artifactRepository;
   private final ApplicationId applicationId;
   private final NamespaceId namespaceId;
@@ -89,7 +92,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     this.artifactRepository = artifactRepository;
     this.applicationArtifactId = applicationArtifactId;
     this.configString = configString;
-    this.updateActions = updateActions;
+    this.updateActions = Collections.unmodifiableList(updateActions);
   }
 
   @Override
@@ -99,23 +102,24 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
 
   @Override
   public <C extends Config> C getConfig(Type configType) {
-    C appConfig;
-
+    // Given configtype has to be derived from Config class.
+    Preconditions.checkArgument(Config.class.isAssignableFrom(TypeToken.of(configType).getRawType()),
+                                "Application config type " + configType + " not supported. " +
+                                "Type must extend Config and cannot be parameterized.");
     if (configString.isEmpty()) {
       try {
-        appConfig = ((Class<C>) configType).newInstance();
+        return ((Class<C>) configType).newInstance();
       } catch (Exception e) {
         throw new IllegalArgumentException("Issue in creating config class of type " + configType.getTypeName(), e);
       }
     } else {
       try {
-        appConfig = GSON.fromJson(configString, configType);
+        return GSON.fromJson(configString, configType);
       } catch (JsonSyntaxException e) {
         throw new IllegalArgumentException("Invalid JSON application configuration was provided. Please check the"
                                            + " syntax.", e);
       }
     }
-    return appConfig;
   }
 
   @Override
@@ -123,8 +127,6 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     return configString;
   }
 
-  // Returns plugin artifacts using given filters in ascending order.
-  // TODO: Pass ArtifactSortOrder as argument for better flexibility.
   @Override
   public List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
                                              @Nullable ArtifactVersionRange pluginRange, int limit) {
@@ -143,6 +145,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     };
 
     try {
+      // TODO: Pass ArtifactSortOrder as argument for better flexibility.
       Map<ArtifactDescriptor, PluginClass> plugins =
           artifactRepository.getPlugins(pluginArtifactNamespace,
                                         Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),

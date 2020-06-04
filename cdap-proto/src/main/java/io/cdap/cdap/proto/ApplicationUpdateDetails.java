@@ -17,6 +17,7 @@
 package io.cdap.cdap.proto;
 
 import io.cdap.cdap.api.common.HttpErrorStatusProvider;
+import io.cdap.cdap.proto.id.ApplicationId;
 import javax.annotation.Nullable;
 
 /**
@@ -27,14 +28,17 @@ public class ApplicationUpdateDetails {
   private final int statusCode;
   private final String error;
   private final String updateDetails;
+  private final ApplicationId applicationId;
 
-  public ApplicationUpdateDetails(String updateDetails, String error) {
+  public ApplicationUpdateDetails(ApplicationId applicationId, String updateDetails, String error) {
+    this.applicationId = applicationId;
     this.statusCode = 200;
     this.error = error;
     this.updateDetails = updateDetails;
   }
 
-  public ApplicationUpdateDetails(HttpErrorStatusProvider statusProvider) {
+  public ApplicationUpdateDetails(ApplicationId applicationId, HttpErrorStatusProvider statusProvider) {
+    this.applicationId = applicationId;
     this.statusCode = statusProvider.getStatusCode();
     this.error = statusProvider.getMessage();
     this.updateDetails = null;
@@ -61,5 +65,12 @@ public class ApplicationUpdateDetails {
   @Nullable
   public String getUpdateDetails() {
     return this.updateDetails;
+  }
+
+  /**
+   * Returns application id for which update details is stored.
+   */
+  public ApplicationId getApplicationId() {
+    return applicationId;
   }
 }

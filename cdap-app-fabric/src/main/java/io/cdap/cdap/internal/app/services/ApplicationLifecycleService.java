@@ -380,7 +380,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationSpecification currentSpec = store.getApplication(appId);
     if (currentSpec == null) {
       LOG.warn("Application {} not found for upgrade.", appId);
-      return new ApplicationUpdateDetails(new NotFoundException(appId));
+      return new ApplicationUpdateDetails(appId, new NotFoundException(appId));
     }
     ArtifactId currentArtifact = currentSpec.getArtifactId();
     NamespaceId currentArtifactNamespace =
@@ -435,16 +435,18 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                     upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false);
       LOG.debug("Application upgrade successful. Update details: {}. Error: {}", detail.getUpdateDetails(),
                 detail.getError());
-      return new ApplicationUpdateDetails("upgrade successful.", null);
+      return new ApplicationUpdateDetails(appId, "upgrade successful.", null);
     } catch (UnsupportedOperationException E) {
       String errorMessage = String.format("Upgrade failed for application %s as artifact %s does not support upgrade.",
                                           appId, newArtifact);
-      return new ApplicationUpdateDetails(new NotImplementedException(errorMessage));
+      return new ApplicationUpdateDetails(appId, new NotImplementedException(errorMessage));
     }
   }
 
-  // Updates an application config by applying given update actions. The app should know how to apply these actions
-  // to its config.
+  /**
+   * Updates an application config by applying given update actions. The app should know how to apply these actions
+   * to its config.
+   */
   private ApplicationUpdateDetails updateApplicationInternal(ApplicationId applicationId,
                                                              NamespaceId namespaceId,
                                                              @Nullable String appName,
@@ -513,7 +515,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
-    return new ApplicationUpdateDetails("Update successful.", null);
+    return new ApplicationUpdateDetails(applicationId, "Update successful.", null);
   }
 
   /**

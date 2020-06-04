@@ -127,13 +127,18 @@ public final class ETLStage {
     return this;
   }
 
-  // Upgrade plugin used in the stage.
-  // 1. If plugin is using fixed version and a new plugin artifact is found with higher version in SYSTEM scope,
-  //    use the new plugin.
-  // 2. If plugin is using a plugin range and a new plugin artifact is found with higher version in SYSTEM scope,
-  //    move the upper bound of the range to include the new plugin artifact. Also change plugin scope.
-  //    If new plugin is in range, do not change range. (Note: It would not change range even though new plugin is in
-  //    different scope).
+  /**
+   * Upgrade plugin used in the stage.
+   * 1. If plugin is using fixed version and a new plugin artifact is found with higher version in SYSTEM scope,
+   *    use the new plugin.
+   * 2. If plugin is using a plugin range and a new plugin artifact is found with higher version in SYSTEM scope,
+   *    move the upper bound of the range to include the new plugin artifact. Also change plugin scope.
+   *    If new plugin is in range, do not change range. (Note: It would not change range even though new plugin is in
+   *    different scope).
+   *
+   * @param updateContext To use helper functions like getPluginArtifacts.
+   * @return Updated plugin object to be used for the udated stage. Returned null if no changes to current plugin.
+   */
   private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) {
     // Currently tries to find latest plugin in SYSTEM scope and upgrades current plugin if version is higher,
     // ignoring current plugin scope.
@@ -164,11 +169,17 @@ public final class ETLStage {
     return upgradedEtlPlugin;
   }
 
-  // Returns new valid version string for plugin upgrade if any changes are required. Returns null if no change to
-  // current plugin version.
-  // Artifact selector config only stores plugin version as string, it can be either fixed version or range.
-  // Hence, if the plugin version is fixed, replace the fixed version with newer fixed version. If it is a range,
-  // move the upper bound of the range to the newest version.
+  /**
+   * Returns new valid version string for plugin upgrade if any changes are required. Returns null if no change to
+   * current plugin version.
+   * Artifact selector config only stores plugin version as string, it can be either fixed version or range.
+   * Hence, if the plugin version is fixed, replace the fixed version with newer fixed version. If it is a range,
+   * move the upper bound of the range to the newest version.
+   *
+   * @param newPlugin New candidate plugin for updating plugin artifact.
+   * @return version string to be used for new plugin. Might be fixed version/version range string depending on
+   *         current use.
+   */
   private String getUpgradedVersionString(ArtifactId newPlugin) {
     try {
       ArtifactVersionRange currentVersionRange = plugin.getArtifactConfig().getApiArtifactVersionRange();

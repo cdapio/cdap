@@ -401,10 +401,10 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
     } catch (Exception e) {
       LOG.error("Upgrade application failure", e);
-      ApplicationUpdateDetails detail = new ApplicationUpdateDetails(
-          new ServiceException("Upgrade failed due to internal error.", null,
-                               HttpResponseStatus.INTERNAL_SERVER_ERROR));
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
+      ApplicationUpdateDetails detail =
+          new ApplicationUpdateDetails(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                                                                   HttpResponseStatus.INTERNAL_SERVER_ERROR));
+      responder.sendJson(HttpResponseStatus.INTERNAL_SERVER_ERROR, GSON.toJson(detail));
     }
   }
 
@@ -420,25 +420,25 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * ]
    * }
    * </pre>
-   *
-   * The response will be map of Application ID to {@link ApplicationUpdateDetails} object, which either indicates a
-   * success (200) or failure for each of the requested application. The failure also indicates reason for the error.
+   * The response will be an array of {@link ApplicationUpdateDetails} object, which either indicates a success (200) or
+   * failure for each of the requested application in the same order as the request. The failure also indicates reason
+   * for the error.
    */
   @POST
   @Path("/upgrade")
   public void upgradeApplications(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
-    Map<ApplicationId, ApplicationUpdateDetails> details = new HashMap<>();
+    List<ApplicationUpdateDetails> details = new ArrayList<>();
     for (ApplicationId appId : appIds) {
       try {
-        details.put(appId, applicationLifecycleService.upgradeApplication(appId, createProgramTerminator()));
+        details.add(applicationLifecycleService.upgradeApplication(appId, createProgramTerminator()));
       } catch (Exception e) {
-        ApplicationUpdateDetails errorDetail = new ApplicationUpdateDetails(
-            new ServiceException("Upgrade failed due to internal error.", null,
-                                 HttpResponseStatus.INTERNAL_SERVER_ERROR));
+        ApplicationUpdateDetails errorDetail =
+            new ApplicationUpdateDetails(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                                                                     HttpResponseStatus.INTERNAL_SERVER_ERROR));
 
-        details.put(appId, errorDetail);
+        details.add(errorDetail);
         LOG.error("Upgrading application {} failed due to exception ", appId, e);
       }
     }
