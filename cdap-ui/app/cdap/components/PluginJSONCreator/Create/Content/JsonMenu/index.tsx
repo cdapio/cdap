@@ -17,6 +17,7 @@
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import Alert from 'components/Alert';
 import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
 import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
@@ -41,16 +42,18 @@ const styles = (theme): StyleRules => {
       minHeight: '48px',
     },
     closedJsonMenu: {
-      zIndex: theme.zIndex.drawer,
+      zIndex: 1000, // lower than '1061', which is Alert component's z-index
     },
     closedJsonMenuPaper: {
+      zIndex: 1000, // lower than '1061', which is Alert component's z-index
       backgroundColor: theme.palette.white[50],
     },
     jsonViewer: {
-      zIndex: theme.zIndex.drawer,
+      zIndex: 1000, // lower than '1061', which is Alert component's z-index
       width: JSON_VIEWER_WIDTH,
     },
     jsonViewerPaper: {
+      zIndex: 1000, // lower than '1061', which is Alert component's z-index
       width: JSON_VIEWER_WIDTH,
       backgroundColor: theme.palette.white[50],
     },
@@ -58,7 +61,7 @@ const styles = (theme): StyleRules => {
 };
 
 export enum JSONStatusMessage {
-  Pending = '',
+  Normal = '',
   Success = 'SUCCESS',
   Fail = 'FAIL',
 }
@@ -71,19 +74,10 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
     jsonView,
     setJsonView,
     setPluginState,
+    JSONStatus,
+    setJSONStatus,
   } = widgetJSONProps;
-
-  const [JSONStatus, setJSONStatus] = React.useState(JSONStatusMessage.Pending);
   const [JSONErrorMessage, setJSONErrorMessage] = React.useState('');
-
-  // When JSON error occurs, show the error message for 2 seconds.
-  React.useEffect(() => {
-    const timer = setTimeout(() => setJSONStatus(JSONStatusMessage.Pending), 2000);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [JSONStatus]);
 
   const jsonFilename = `${pluginName ? pluginName : '<PluginName>'}-${
     pluginType ? pluginType : '<PluginType>'
@@ -119,6 +113,7 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
         widgetToAttributes: newWidgetToAttributes,
         outputName: newOutputName,
       });
+
       setJSONStatus(JSONStatusMessage.Success);
       setJSONErrorMessage(null);
     } catch (e) {
@@ -135,44 +130,56 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
     setJsonView(false);
   };
 
+  const resetJSONStatus = () => {
+    // When alert closes, reset JSONStatus
+    setJSONStatus(JSONStatusMessage.Normal);
+  };
+
   return (
-    <Drawer
-      open={true}
-      variant="persistent"
-      className={jsonView ? classes.jsonViewer : classes.closedJsonMenu}
-      anchor="right"
-      ModalProps={{
-        keepMounted: true,
-      }}
-      classes={{
-        paper: jsonView ? classes.jsonViewerPaper : classes.closedJsonMenuPaper,
-      }}
-      data-cy="navbar-drawer"
-    >
-      <div className={classes.toolbar} />
-      <List component="nav" dense={true} className={classes.mainMenu}>
-        <If condition={jsonView}>
-          <JsonLiveViewer
-            JSONConfig={getJSONConfig(widgetJSONProps)}
-            downloadDisabled={downloadDisabled}
-            collapseJSONView={collapseJSONView}
-            onDownloadClick={onDownloadClick}
-            populateImportResults={populateImportResults}
-            jsonFilename={jsonFilename}
-            JSONStatus={JSONStatus}
-            JSONErrorMessage={JSONErrorMessage}
-          />
-        </If>
-        <If condition={!jsonView}>
-          <ClosedJsonMenu
-            downloadDisabled={downloadDisabled}
-            onDownloadClick={onDownloadClick}
-            expandJSONView={expandJSONView}
-            populateImportResults={populateImportResults}
-          />
-        </If>
-      </List>
-    </Drawer>
+    <div>
+      <Drawer
+        open={true}
+        variant="persistent"
+        className={jsonView ? classes.jsonViewer : classes.closedJsonMenu}
+        anchor="right"
+        ModalProps={{
+          keepMounted: true,
+        }}
+        classes={{
+          paperAnchorRight: jsonView ? classes.jsonViewerPaper : classes.closedJsonMenuPaper,
+        }}
+        data-cy="navbar-drawer"
+      >
+        <div className={classes.toolbar} />
+        <List component="nav" dense={true} className={classes.mainMenu}>
+          <If condition={jsonView}>
+            <JsonLiveViewer
+              JSONConfig={getJSONConfig(widgetJSONProps)}
+              downloadDisabled={downloadDisabled}
+              collapseJSONView={collapseJSONView}
+              onDownloadClick={onDownloadClick}
+              populateImportResults={populateImportResults}
+              jsonFilename={jsonFilename}
+              JSONStatus={JSONStatus}
+            />
+          </If>
+          <If condition={!jsonView}>
+            <ClosedJsonMenu
+              downloadDisabled={downloadDisabled}
+              onDownloadClick={onDownloadClick}
+              expandJSONView={expandJSONView}
+              populateImportResults={populateImportResults}
+            />
+          </If>
+        </List>
+      </Drawer>
+      <Alert
+        message={JSONErrorMessage}
+        showAlert={JSONStatus === JSONStatusMessage.Fail}
+        type="error"
+        onClose={resetJSONStatus}
+      />
+    </div>
   );
 };
 

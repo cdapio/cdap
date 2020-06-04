@@ -43,6 +43,8 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   setJsonView,
   outputName,
   setOutputName,
+  JSONStatus,
+  setJSONStatus,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
@@ -66,6 +68,8 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         jsonView={jsonView}
         setJsonView={setJsonView}
         outputName={localOutputName}
+        JSONStatus={JSONStatus}
+        setJSONStatus={setJSONStatus}
       />
       <Heading type={HeadingTypes.h3} label="Output" />
       <br />

@@ -15,33 +15,14 @@
  */
 
 import Button from '@material-ui/core/Button';
-import { green } from '@material-ui/core/colors';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import CheckIcon from '@material-ui/icons/Check';
 import SaveIcon from '@material-ui/icons/Save';
-import clsx from 'clsx';
-import If from 'components/If';
-import LoadingSVG from 'components/LoadingSVG';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { ICreateContext } from 'components/Replicator/Create';
 import React from 'react';
 
-const styles = (theme): StyleRules => {
+const styles = (): StyleRules => {
   return {
-    buttonSuccess: {
-      backgroundColor: green[500],
-      '&:hover': {
-        backgroundColor: green[700],
-      },
-    },
-    buttonProgress: {
-      color: green[500],
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      marginTop: -12,
-      marginLeft: -12,
-    },
     fileInput: {
       display: 'none',
     },
@@ -56,28 +37,9 @@ interface IPluginJSONImporterProps extends WithStyles<typeof styles>, ICreateCon
 const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
   classes,
   populateImportResults,
-  JSONStatus,
 }) => {
-  const [loading, setLoading] = React.useState(false);
-  const [success, setSuccess] = React.useState(false);
-
-  const buttonClassname = clsx({
-    [classes.buttonSuccess]: success,
-  });
-
-  React.useEffect(() => {
-    if (JSONStatus === JSONStatusMessage.Success) {
-      setSuccess(true);
-    } else {
-      setSuccess(false);
-    }
-  }, [JSONStatus]);
-
   function processFileUpload() {
     return (e) => {
-      if (!loading) {
-        setLoading(true);
-      }
       const files = e.target.files;
       if (files.length > 0) {
         const filename = files[0].name;
@@ -90,15 +52,12 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
           fileContent = r.target.result;
           renderFileContent(filenameWithoutExtension, fileContent);
         };
-      } else {
-        setLoading(false);
       }
     };
   }
 
   async function renderFileContent(filename, fileContent) {
     await populateImportResults(filename, fileContent);
-    setLoading(false);
   }
 
   return (
@@ -111,18 +70,9 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
         onChange={processFileUpload()}
       />
       <label htmlFor="raised-button-file">
-        <Button
-          aria-label="save"
-          component="span"
-          color="primary"
-          disabled={loading}
-          className={buttonClassname}
-        >
-          {success ? <CheckIcon /> : <SaveIcon />}
+        <Button aria-label="save" component="span" color="primary">
+          <SaveIcon />
         </Button>
-        <If condition={loading}>
-          <LoadingSVG />
-        </If>
       </label>
     </div>
   );

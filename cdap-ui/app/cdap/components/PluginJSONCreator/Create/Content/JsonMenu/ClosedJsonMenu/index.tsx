@@ -53,9 +53,11 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
         tooltip: classes.jsonViewerTooltip,
       }}
     >
-      <Button disabled={downloadDisabled} onClick={onDownloadClick}>
-        <GetAppIcon />
-      </Button>
+      <div>
+        <Button disabled={downloadDisabled} onClick={onDownloadClick}>
+          <GetAppIcon />
+        </Button>
+      </div>
     </Tooltip>
   );
 };

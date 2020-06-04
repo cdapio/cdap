@@ -54,29 +54,14 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   setJsonView,
   outputName,
   setPluginState,
+  JSONStatus,
+  setJSONStatus,
 }) => {
   const [localPluginName, setLocalPluginName] = React.useState(pluginName);
   const [localPluginType, setLocalPluginType] = React.useState(pluginType);
   const [localDisplayName, setLocalDisplayName] = React.useState(displayName);
   const [localEmitAlerts, setLocalEmitAlerts] = React.useState(emitAlerts);
   const [localEmitErrors, setLocalEmitErrors] = React.useState(emitErrors);
-
-  // In case user uploads new file
-  React.useEffect(() => {
-    setLocalPluginName(pluginName);
-  }, [pluginName]);
-  React.useEffect(() => {
-    setLocalPluginType(pluginType);
-  }, [pluginType]);
-  React.useEffect(() => {
-    setLocalDisplayName(displayName);
-  }, [displayName]);
-  React.useEffect(() => {
-    setLocalEmitAlerts(emitAlerts);
-  }, [emitAlerts]);
-  React.useEffect(() => {
-    setLocalEmitErrors(emitErrors);
-  }, [emitErrors]);
 
   const requiredFilledOut =
     localPluginName.length > 0 && localPluginType.length > 0 && localDisplayName.length > 0;
@@ -108,6 +93,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         setJsonView={setJsonView}
         outputName={outputName}
         setPluginState={setPluginState}
+        JSONStatus={JSONStatus}
+        setJSONStatus={setJSONStatus}
       />
       <Heading type={HeadingTypes.h3} label="Basic Plugin Information" />
       <div className={classes.basicPluginInput}>

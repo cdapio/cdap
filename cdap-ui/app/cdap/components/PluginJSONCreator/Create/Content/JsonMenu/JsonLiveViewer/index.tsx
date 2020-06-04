@@ -19,7 +19,6 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import GetAppIcon from '@material-ui/icons/GetApp';
-import If from 'components/If';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJsonImporter';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
@@ -37,18 +36,6 @@ const styles = (theme): StyleRules => {
       position: 'relative',
       margin: '0 auto',
       left: '25px',
-      fontFamily: 'Courier New',
-    },
-    jsonFailStatus: {
-      position: 'relative',
-      margin: '0 auto',
-      color: theme.palette.red[50],
-      fontFamily: 'Courier New',
-    },
-    jsonSuccessStatus: {
-      position: 'relative',
-      margin: '0 auto',
-      color: theme.palette.blue[50],
       fontFamily: 'Courier New',
     },
     closeJSONViewerButon: {
@@ -76,9 +63,11 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
         tooltip: classes.jsonViewerTooltip,
       }}
     >
-      <Button disabled={downloadDisabled} onClick={onDownloadClick}>
-        <GetAppIcon />
-      </Button>
+      <div>
+        <Button disabled={downloadDisabled} onClick={onDownloadClick}>
+          <GetAppIcon />
+        </Button>
+      </div>
     </Tooltip>
   );
 };
@@ -105,6 +94,7 @@ interface IJsonLiveViewerProps extends WithStyles<typeof styles>, ICreateContext
   populateImportResults: (filename: string, fileContent: string) => void;
   jsonFilename: string;
   JSONStatus: JSONStatusMessage;
+  setJSONStatus: (JSONStatus: JSONStatusMessage) => void;
   downloadDisabled: boolean;
   JSONErrorMessage: string;
 }
@@ -118,7 +108,6 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps> = ({
   jsonFilename,
   JSONStatus,
   downloadDisabled,
-  JSONErrorMessage,
 }) => {
   return (
     <div>
@@ -139,28 +128,7 @@ const JsonLiveViewerView: React.FC<IJsonLiveViewerProps> = ({
           downloadDisabled={downloadDisabled}
           onDownloadClick={onDownloadClick}
         />
-        <If
-          condition={
-            JSONStatus !== JSONStatusMessage.Success && JSONStatus !== JSONStatusMessage.Fail
-          }
-        >
-          <div className={classes.currentFilename}>{jsonFilename}</div>
-        </If>
-        <If
-          condition={
-            JSONStatus === JSONStatusMessage.Success || JSONStatus === JSONStatusMessage.Fail
-          }
-        >
-          <div
-            className={
-              JSONStatus === JSONStatusMessage.Success
-                ? classes.jsonSuccessStatus
-                : classes.jsonFailStatus
-            }
-          >
-            {JSONErrorMessage}
-          </div>
-        </If>
+        <div className={classes.currentFilename}>{jsonFilename}</div>
 
         <CollapseJSONViewButton classes={classes} collapseJSONView={collapseJSONView} />
       </div>

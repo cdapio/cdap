@@ -72,6 +72,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setJsonView,
   outputName,
   setPluginState,
+  JSONStatus,
+  setJSONStatus,
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -81,23 +83,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
   const [localWidgetInfo, setLocalWidgetInfo] = React.useState(widgetInfo);
   const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
-
-  // In case user uploads new file
-  React.useEffect(() => {
-    setLocalConfigurationGroups(configurationGroups);
-  }, [configurationGroups]);
-  React.useEffect(() => {
-    setLocalGroupToInfo(groupToInfo);
-  }, [groupToInfo]);
-  React.useEffect(() => {
-    setLocalGroupToWidgets(groupToWidgets);
-  }, [groupToWidgets]);
-  React.useEffect(() => {
-    setLocalWidgetInfo(widgetInfo);
-  }, [widgetInfo]);
-  React.useEffect(() => {
-    setLocalWidgetToAttributes(widgetToAttributes);
-  }, [widgetToAttributes]);
 
   function addConfigurationGroup(index: number) {
     return () => {
@@ -192,6 +177,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         setJsonView={setJsonView}
         outputName={outputName}
         setPluginState={setPluginState}
+        JSONStatus={JSONStatus}
+        setJSONStatus={setJSONStatus}
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />

@@ -14,6 +14,7 @@
  * the License.
  */
 
+import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import * as React from 'react';
 
 export const CreateContext = React.createContext({});
@@ -32,6 +33,7 @@ interface ICreateState {
   widgetToAttributes: any;
   jsonView: boolean;
   outputName: string;
+  JSONStatus: JSONStatusMessage;
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
@@ -43,6 +45,7 @@ interface ICreateState {
   setJsonView: (jsonView: boolean) => void;
   setOutputName: (outputName: string) => void;
   setPluginState: (pluginState: any) => void;
+  setJSONStatus: (JSONStatus: JSONStatusMessage) => void;
 }
 
 export interface IBasicPluginInfo {
