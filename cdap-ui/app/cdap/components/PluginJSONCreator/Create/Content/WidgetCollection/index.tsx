@@ -18,21 +18,15 @@ import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
-import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
 import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
+import { DndProvider } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
 import uuidV4 from 'uuid/v4';
 
 const styles = (theme): StyleRules => {
   return {
-    eachWidget: {
-      display: 'grid',
-      gridTemplateColumns: '5fr 1fr',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-    },
     nestedWidgets: {
       border: `1px solid`,
       borderColor: theme.palette.grey[300],
@@ -142,15 +136,34 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
     };
   }
 
+  const reorderWidgets = () => {
+    return (widgetID: string, afterWidgetID: string) => {
+      const newWidgets = [...activeWidgets];
+
+      const widgetIndex = newWidgets.indexOf(widgetID);
+      const afterIndex = newWidgets.indexOf(afterWidgetID);
+
+      newWidgets[widgetIndex] = afterWidgetID;
+      newWidgets[afterIndex] = widgetID;
+
+      setGroupToWidgets({
+        ...groupToWidgets,
+        [groupID]: newWidgets,
+      });
+    };
+  };
+
   function openWidgetAttributes(widgetIndex) {
     return () => {
       setOpenWidgetIndex(widgetIndex);
     };
   }
 
-  function closeWidgetAttributes() {
-    setOpenWidgetIndex(null);
-  }
+  const closeWidgetAttributes = () => {
+    return () => {
+      setOpenWidgetIndex(null);
+    };
+  };
 
   return (
     <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
@@ -161,42 +174,24 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-            <If condition={widgetInfo[widgetID]} key={widgetIndex}>
-              <div className={classes.eachWidget}>
-                <WidgetInput
-                  widgetInfo={widgetInfo}
-                  widgetID={widgetID}
-                  setWidgetInfo={setWidgetInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                />
-                <WidgetActionButtons
-                  onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
-                  onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
-                />
-
-                <WidgetAttributesCollection
-                  widgetAttributesOpen={openWidgetIndex === widgetIndex}
-                  onWidgetAttributesClose={closeWidgetAttributes}
-                  widgetID={widgetID}
-                  widgetInfo={widgetInfo}
-                  setWidgetInfo={setWidgetInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                />
-              </div>
-              <Button
-                variant="contained"
-                color="primary"
-                component="span"
-                onClick={openWidgetAttributes(widgetIndex)}
-              >
-                Attributes
-              </Button>
+            <DndProvider backend={HTML5Backend} key={widgetID}>
+              <WidgetInput
+                widgetAttributesOpen={openWidgetIndex === widgetIndex}
+                closeWidgetAttributes={closeWidgetAttributes()}
+                openWidgetAttributes={openWidgetAttributes(widgetIndex)}
+                addWidgetToGroup={addWidgetToGroup(widgetIndex)}
+                deleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
+                reorderWidgets={reorderWidgets()}
+                widgetID={widgetID}
+                widgetInfo={widgetInfo}
+                setWidgetInfo={setWidgetInfo}
+                widgetToAttributes={widgetToAttributes}
+                setWidgetToAttributes={setWidgetToAttributes}
+              />
               <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
                 <Divider className={classes.widgetDivider} />
               </If>
-            </If>
+            </DndProvider>
           );
         })}
         <If condition={Object.keys(activeWidgets).length === 0}>

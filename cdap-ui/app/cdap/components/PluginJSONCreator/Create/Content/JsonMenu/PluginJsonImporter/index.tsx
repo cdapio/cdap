@@ -16,7 +16,7 @@
 
 import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import SaveIcon from '@material-ui/icons/Save';
+import IconSVG from 'components/IconSVG';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { ICreateContext } from 'components/Replicator/Create';
 import React from 'react';
@@ -71,7 +71,7 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
       />
       <label htmlFor="raised-button-file">
         <Button aria-label="save" component="span" color="primary">
-          <SaveIcon />
+          <IconSVG name={'icon-import'} />
         </Button>
       </label>
     </div>

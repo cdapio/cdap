@@ -14,23 +14,22 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
-import { Nav, NavItem, TabPane, TabContent, NavLink } from 'reactstrap';
 import classnames from 'classnames';
 import RuleBookDetails from 'components/RulesEngineHome/RuleBookDetails';
 import RuleBooksTab from 'components/RulesEngineHome/RuleBooksTab';
-import RulesTab from 'components/RulesEngineHome/RulesTab';
-import { Provider } from 'react-redux';
+import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
 import {
   RuleBookCountWrapper,
   RulesCountWrapper,
 } from 'components/RulesEngineHome/RulesEngineTabCounters';
+import RulesTab from 'components/RulesEngineHome/RulesTab';
 import T from 'i18n-react';
-import { DragDropContext } from 'react-dnd';
-import Backend from 'react-dnd-html5-backend';
-import RulesEngineStore, { RULESENGINEACTIONS } from 'components/RulesEngineHome/RulesEngineStore';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import { DndProvider } from 'react-dnd';
+import HTML5Backend from 'react-dnd-html5-backend';
+import { Provider } from 'react-redux';
+import { Nav, NavItem, NavLink, TabContent, TabPane } from 'reactstrap';
 
 require('./RulesEngineWrapper.scss');
 const PREFIX = 'features.RulesEngine.Home';
@@ -72,55 +71,57 @@ class RulesEngineWrapper extends Component {
 
   render() {
     return (
-      <div className="rules-engine-wrapper">
-        <div className="left-panel">
-          <Nav tabs>
-            <NavItem>
-              <div onClick={this.toggleTab.bind(this, '1')}>
-                <NavLink
-                  className={classnames({
-                    active: this.state.activeTab == '1',
-                  })}
-                >
-                  <strong>
-                    {T.translate(`${PREFIX}.Tabs.rbTitle`)} (
-                    <Provider store={RulesEngineStore}>
-                      <RuleBookCountWrapper />
-                    </Provider>
-                    )
-                  </strong>
-                </NavLink>
-              </div>
-            </NavItem>
-            <NavItem>
-              <div onClick={this.toggleTab.bind(this, '2')}>
-                <NavLink
-                  className={classnames({
-                    active: this.state.activeTab == '2',
-                  })}
-                >
-                  <strong>
-                    {T.translate(`${PREFIX}.Tabs.rulesTitle`)} (
-                    <Provider store={RulesEngineStore}>
-                      <RulesCountWrapper />
-                    </Provider>
-                    )
-                  </strong>
-                </NavLink>
-              </div>
-            </NavItem>
-          </Nav>
-          <TabContent activeTab={this.state.activeTab}>
-            <TabPane tabId="1">{this.state.activeTab === '1' ? <RuleBooksTab /> : null}</TabPane>
-            <TabPane tabId="2">{this.state.activeTab === '2' ? <RulesTab /> : null}</TabPane>
-          </TabContent>
+      <DndProvider backend={HTML5Backend}>
+        <div className="rules-engine-wrapper">
+          <div className="left-panel">
+            <Nav tabs>
+              <NavItem>
+                <div onClick={this.toggleTab.bind(this, '1')}>
+                  <NavLink
+                    className={classnames({
+                      active: this.state.activeTab == '1',
+                    })}
+                  >
+                    <strong>
+                      {T.translate(`${PREFIX}.Tabs.rbTitle`)} (
+                      <Provider store={RulesEngineStore}>
+                        <RuleBookCountWrapper />
+                      </Provider>
+                      )
+                    </strong>
+                  </NavLink>
+                </div>
+              </NavItem>
+              <NavItem>
+                <div onClick={this.toggleTab.bind(this, '2')}>
+                  <NavLink
+                    className={classnames({
+                      active: this.state.activeTab == '2',
+                    })}
+                  >
+                    <strong>
+                      {T.translate(`${PREFIX}.Tabs.rulesTitle`)} (
+                      <Provider store={RulesEngineStore}>
+                        <RulesCountWrapper />
+                      </Provider>
+                      )
+                    </strong>
+                  </NavLink>
+                </div>
+              </NavItem>
+            </Nav>
+            <TabContent activeTab={this.state.activeTab}>
+              <TabPane tabId="1">{this.state.activeTab === '1' ? <RuleBooksTab /> : null}</TabPane>
+              <TabPane tabId="2">{this.state.activeTab === '2' ? <RulesTab /> : null}</TabPane>
+            </TabContent>
+          </div>
+          <div className="right-panel">
+            <RuleBookDetails onApply={this.props.onApply} />
+          </div>
         </div>
-        <div className="right-panel">
-          <RuleBookDetails onApply={this.props.onApply} />
-        </div>
-      </div>
+      </DndProvider>
     );
   }
 }
 
-export default DragDropContext(Backend)(RulesEngineWrapper);
+export default RulesEngineWrapper;

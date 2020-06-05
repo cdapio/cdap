@@ -14,34 +14,34 @@
  * the License.
  */
 
+import { Button } from '@material-ui/core';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import If from 'components/If';
-import {
-  WIDGET_CATEGORY,
-  WIDGET_TYPES,
-  WIDGET_TYPE_TO_ATTRIBUTES,
-} from 'components/PluginJSONCreator/constants';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
+import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
+import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInfoInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
+import { useDrag, useDrop } from 'react-dnd';
 
 const styles = (): StyleRules => {
   return {
-    widgetInput: {
-      width: '100%',
-      marginTop: '20px',
-      marginBottom: '20px',
-    },
-    widgetField: {
-      width: '100%',
-      marginTop: '10px',
-      marginBottom: '10px',
+    eachWidget: {
+      display: 'grid',
+      gridTemplateColumns: '5fr 1fr',
+      marginLeft: 'auto',
+      marginRight: 'auto',
     },
   };
 };
 
 interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
-  widgetID: number;
+  widgetID: string;
+  widgetAttributesOpen: boolean;
+  addWidgetToGroup: () => void;
+  deleteWidgetFromGroup: () => void;
+  openWidgetAttributes: () => void;
+  closeWidgetAttributes: () => void;
+  reorderWidgets: (widgetID: string, afterWidgetID: string) => void;
 }
 
 const WidgetInputView: React.FC<IWidgetInputProps> = ({
@@ -51,96 +51,65 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   setWidgetInfo,
   widgetToAttributes,
   setWidgetToAttributes,
+  widgetAttributesOpen,
+  addWidgetToGroup,
+  deleteWidgetFromGroup,
+  reorderWidgets,
+  openWidgetAttributes,
+  closeWidgetAttributes,
 }) => {
-  function onNameChange() {
-    return (name) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], name },
-      }));
-    };
-  }
+  // Create a reference for drag and drop. This will be used to reorder a list of widgets.
+  const dndRef = React.useRef(null);
 
-  function onLabelChange() {
-    return (label) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], label },
-      }));
-    };
-  }
+  const [{ isDragging }, connectDrag] = useDrag({
+    item: { id: widgetID, type: 'widget' },
+    collect: (monitor: any) => {
+      const result = {
+        isDragging: monitor.isDragging(),
+      };
+      return result;
+    },
+  });
 
-  function onWidgetTypeChange() {
-    return (widgetType) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], widgetType },
-      }));
+  const [, connectDrop] = useDrop({
+    accept: 'widget',
+    hover({ id: draggedID }: { id: string; type: string }) {
+      if (draggedID !== widgetID) {
+        reorderWidgets(draggedID, widgetID);
+      }
+    },
+  });
 
-      setWidgetToAttributes({
-        ...widgetToAttributes,
-        [widgetID]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
-          acc[curr] = '';
-          return acc;
-        }, {}),
-      });
-    };
-  }
-
-  function onWidgetCategoryChange() {
-    return (widgetCategory) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], widgetCategory },
-      }));
-    };
-  }
+  connectDrag(dndRef);
+  connectDrop(dndRef);
 
   return (
-    <If condition={widgetInfo[widgetID]}>
-      <div className={classes.widgetInput}>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={widgetInfo[widgetID].name}
-            onChange={onNameChange()}
-            label={'Name'}
-            placeholder={'Name a Widget'}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={widgetInfo[widgetID].label}
-            onChange={onLabelChange()}
-            label={'Label'}
-            placeholder={'Label a Widget'}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'select'}
-            value={widgetInfo[widgetID].widgetCategory}
-            onChange={onWidgetCategoryChange()}
-            label={'Category'}
-            options={WIDGET_CATEGORY}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'select'}
-            value={widgetInfo[widgetID].widgetType}
-            onChange={onWidgetTypeChange()}
-            label={'Widget Type'}
-            options={WIDGET_TYPES}
-            required={true}
-          />
-        </div>
-      </div>
-    </If>
+    <div ref={dndRef} className={classes.eachWidget}>
+      <WidgetInfoInput
+        widgetInfo={widgetInfo}
+        widgetID={widgetID}
+        setWidgetInfo={setWidgetInfo}
+        widgetToAttributes={widgetToAttributes}
+        setWidgetToAttributes={setWidgetToAttributes}
+      />
+      <WidgetActionButtons
+        onAddWidgetToGroup={addWidgetToGroup}
+        onDeleteWidgetFromGroup={deleteWidgetFromGroup}
+      />
+
+      <WidgetAttributesCollection
+        widgetAttributesOpen={widgetAttributesOpen}
+        onWidgetAttributesClose={closeWidgetAttributes}
+        widgetID={widgetID}
+        widgetInfo={widgetInfo}
+        setWidgetInfo={setWidgetInfo}
+        widgetToAttributes={widgetToAttributes}
+        setWidgetToAttributes={setWidgetToAttributes}
+      />
+      <Button variant="contained" color="primary" component="span" onClick={openWidgetAttributes}>
+        Attributes
+      </Button>
+    </div>
   );
 };
 

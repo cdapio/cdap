@@ -14,17 +14,16 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
-import { Col } from 'reactstrap';
-import { DragSource, DropTarget } from 'react-dnd';
-import flow from 'lodash/flow';
 import classnames from 'classnames';
-import { Sparklines, SparklinesLine, SparklinesBars } from 'react-sparklines';
 import IconSVG from 'components/IconSVG';
-import isNil from 'lodash/isNil';
 import T from 'i18n-react';
+import flow from 'lodash/flow';
+import isNil from 'lodash/isNil';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import { DragSource, DropTarget } from 'react-dnd';
+import { Sparklines, SparklinesBars, SparklinesLine } from 'react-sparklines';
+import { Col } from 'reactstrap';
 
 const PREFIX = 'features.RulesEngine.RulebookRule';
 const SPARKLINECOLOR = '#0099ff';
