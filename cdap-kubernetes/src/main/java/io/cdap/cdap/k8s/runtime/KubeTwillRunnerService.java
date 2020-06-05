@@ -115,15 +115,19 @@ public class KubeTwillRunnerService<T> implements TwillRunnerService {
     // Selects all runs start by the k8s twill runner that has the run id label
     String selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
     this.kubeResourceWatcher = KubeResourceWatcher.createDeploymentWatcher(kubeNamespace, selector);
+    this.objectMetaProvider = getObjectMetaProvider(kubeResourceType);
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
-    if (kubeResourceType == KubeResourceType.DEPLOYMENT) {
-      this.objectMetaProvider = (ObjectMetaProvider<T>) new DeploymentMetaProvider();
-    } else {
-      throw new RuntimeException(String.format("KubeTwillRunnerService cannot be created for K8s resource of type %s",
-                                               kubeResourceType));
-    }
     this.kubeResourceType = kubeResourceType;
+  }
+
+  @SuppressWarnings("unchecked")
+  private ObjectMetaProvider<T> getObjectMetaProvider(KubeResourceType resourceType) {
+    if (resourceType == KubeResourceType.DEPLOYMENT) {
+      return (ObjectMetaProvider<T>) new DeploymentMetaProvider();
+    }
+    throw new RuntimeException(String.format("KubeTwillRunnerService cannot be created for K8s resource of type %s",
+                                             resourceType));
   }
 
   @Override
