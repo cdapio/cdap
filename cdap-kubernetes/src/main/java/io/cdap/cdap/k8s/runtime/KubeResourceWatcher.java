@@ -18,11 +18,11 @@ package io.cdap.cdap.k8s.runtime;
 
 import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
-import io.cdap.cdap.k8s.common.KubeResourceType;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.common.Cancellable;
 
@@ -36,19 +36,27 @@ import javax.annotation.Nullable;
  * A thread for monitoring Kubernetes resource state change.
  * @param <T> type of Kubernetes resource for which state changes to be monitored
  */
-public final class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
+abstract class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
 
-  private final KubeResourceType kubeResourceType;
   private final String selector;
   private final Queue<ResourceChangeListener<T>> listeners;
   private volatile AppsV1Api appsApi;
 
-  KubeResourceWatcher(String namespace, String selector, KubeResourceType type) {
-    super("kube-run-watcher", namespace, type);
+  KubeResourceWatcher(String namespace, String selector) {
+    super("kube-run-watcher", namespace);
     setDaemon(true);
     this.selector = selector;
     this.listeners = new ConcurrentLinkedQueue<>();
-    this.kubeResourceType = type;
+  }
+
+  static KubeResourceWatcher<V1Deployment> createDeploymentWatcher(String namespace, String selector) {
+    return new KubeResourceWatcher<V1Deployment>(namespace, selector) {
+      @Override
+      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
+                                                         null, null, null, true, null, null);
+      }
+    };
   }
 
   Cancellable addListener(ResourceChangeListener<T> listener) {
@@ -81,21 +89,6 @@ public final class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
   }
 
   @Override
-  protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
-    switch (kubeResourceType) {
-      case DEPLOYMENT:
-        return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
-                                                         null, null, null, true, null, null);
-      case STATEFULSET:
-        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, labelSelector,
-                                                          null, null, null, true, null, null);
-      default:
-        throw new RuntimeException(String.format("Kubernetes watch cannot be created for object type %s",
-                                                 kubeResourceType));
-    }
-  }
-
-  @Override
   protected ApiClient getApiClient() throws IOException {
     return getAppsApi().getApiClient();
   }
@@ -105,7 +98,7 @@ public final class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
    *
    * @throws IOException if exception was raised during creation of {@link AppsV1Api}
    */
-  private AppsV1Api getAppsApi() throws IOException {
+  AppsV1Api getAppsApi() throws IOException {
     AppsV1Api api = appsApi;
     if (api != null) {
       return api;

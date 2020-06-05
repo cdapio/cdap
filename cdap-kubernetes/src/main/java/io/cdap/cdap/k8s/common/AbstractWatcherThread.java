@@ -22,9 +22,6 @@ import com.google.common.reflect.TypeToken;
 import com.squareup.okhttp.Call;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
-import io.kubernetes.client.models.V1Deployment;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.util.Watch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,26 +57,14 @@ public abstract class AbstractWatcherThread<T> extends Thread implements AutoClo
   private volatile Watch<T> watch;
   private volatile boolean stopped;
 
-  protected AbstractWatcherThread(String threadName, String namespace, KubeResourceType resource) {
+  protected AbstractWatcherThread(String threadName, String namespace) {
     super(threadName);
     this.namespace = namespace;
     this.random = new Random();
 
-    switch (resource) {
-      case DEPLOYMENT:
-        this.resourceType = TypeToken.of(V1Deployment.class).getType();
-        break;
-      case SERVICE:
-        this.resourceType = TypeToken.of(V1Service.class).getType();
-        break;
-      case STATEFULSET:
-        this.resourceType = TypeToken.of(V1StatefulSet.class).getType();
-        break;
-      default:
-        throw new RuntimeException(String.format("Kubernetes resource type %s cannot be watched. " +
-                                                   "Only resources of type DEPLOYMENT, SERVICE, and STATEFULSET are " +
-                                                   "supported.", resource));
-    }
+    // Resolve <T> to form the concrete type for Watch.Response<T>
+    this.resourceType = TypeToken.of(getClass()).resolveType(
+      AbstractWatcherThread.class.getTypeParameters()[0]).getType();
 
     @SuppressWarnings("unchecked")
     TypeToken<T> resourceTypeToken = (TypeToken<T>) TypeToken.of(resourceType);

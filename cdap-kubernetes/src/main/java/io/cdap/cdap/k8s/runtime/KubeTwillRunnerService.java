@@ -17,7 +17,9 @@
 package io.cdap.cdap.k8s.runtime;
 
 import com.google.common.util.concurrent.Uninterruptibles;
+import io.cdap.cdap.k8s.common.DeploymentMetaProvider;
 import io.cdap.cdap.k8s.common.KubeResourceType;
+import io.cdap.cdap.k8s.common.ObjectMetaProvider;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
@@ -73,9 +75,11 @@ import javax.annotation.Nullable;
  * and annotations:
  *
  * cdap.twill.app=[literal app name]
+ *
+ * @param <T> type of the K8s resource
  */
-abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractKubeTwillRunnerService.class);
+public class KubeTwillRunnerService<T> implements TwillRunnerService {
+  private static final Logger LOG = LoggerFactory.getLogger(KubeTwillRunnerService.class);
 
   static final String START_TIMEOUT_ANNOTATION = "cdap.app.start.timeout.millis";
   private static final String APP_ANNOTATION = "cdap.twill.app";
@@ -90,15 +94,17 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
   private final PodInfo podInfo;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, String> extraLabels;
-  private final KubeResourceWatcher<T> kubeResourceWatcher;
+  private final KubeResourceWatcher kubeResourceWatcher;
   private final Map<String, KubeLiveInfo> liveInfos;
   private final Lock liveInfoLock;
+  private final KubeResourceType kubeResourceType;
+  private final ObjectMetaProvider<T> objectMetaProvider;
   private ScheduledExecutorService monitorScheduler;
   private ApiClient apiClient;
 
-  AbstractKubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                 PodInfo podInfo, String resourcePrefix, Map<String, String> cConf,
-                                 Map<String, String> extraLabels, KubeResourceType kubeResourceType) {
+  public KubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient, PodInfo podInfo,
+                                String resourcePrefix, Map<String, String> cConf, Map<String, String> extraLabels,
+                                KubeResourceType kubeResourceType) {
 
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
@@ -108,9 +114,16 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
     // Selects all runs start by the k8s twill runner that has the run id label
     String selector = String.format("%s=%s,%s", RUNNER_LABEL, RUNNER_LABEL_VAL, RUN_ID_LABEL);
-    this.kubeResourceWatcher = new KubeResourceWatcher<>(kubeNamespace, selector, kubeResourceType);
+    this.kubeResourceWatcher = KubeResourceWatcher.createDeploymentWatcher(kubeNamespace, selector);
     this.liveInfos = new ConcurrentSkipListMap<>();
     this.liveInfoLock = new ReentrantLock();
+    if (kubeResourceType == KubeResourceType.DEPLOYMENT) {
+      this.objectMetaProvider = (ObjectMetaProvider<T>) new DeploymentMetaProvider();
+    } else {
+      throw new RuntimeException(String.format("KubeTwillRunnerService cannot be created for K8s resource of type %s",
+                                               kubeResourceType));
+    }
+    this.kubeResourceType = kubeResourceType;
   }
 
   @Override
@@ -138,29 +151,30 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
     // labels have more strict requirements around valid character sets,
     // so use annotations to store the app name.
     resourceMeta.setAnnotations(Collections.singletonMap(APP_ANNOTATION, spec.getName()));
-    return getTwillPreparer(apiClient, kubeNamespace, podInfo,
-                            spec, runId, resourceMeta, cConf, (timeout, timeoutUnit) -> {
 
-      // Adds the controller to the LiveInfo.
-      liveInfoLock.lock();
-      try {
-        KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), KubeLiveInfo::new);
-        KubeTwillController controller = new KubeTwillController(resourceMeta.getName(), kubeNamespace,
-                                                                 runId, apiClient, discoveryServiceClient);
-        return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller);
-      } finally {
-        liveInfoLock.unlock();
-      }
-    });
+    if (kubeResourceType == KubeResourceType.DEPLOYMENT) {
+      return new DeploymentTwillPreparer(apiClient, kubeNamespace, podInfo, spec, runId, resourceMeta, cConf,
+                                         (timeout, timeoutUnit) -> {
+
+                                           // Adds the controller to the LiveInfo.
+                                           liveInfoLock.lock();
+                                           try {
+                                             KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(),
+                                                                                               KubeLiveInfo::new);
+                                             KubeTwillController controller
+                                               = new KubeTwillController(resourceMeta.getName(), kubeNamespace,
+                                                                         runId, apiClient, discoveryServiceClient);
+                                             return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit,
+                                                                                   controller);
+                                           } finally {
+                                             liveInfoLock.unlock();
+                                           }
+                                         });
+    } else {
+      throw new RuntimeException(String.format("TwillPreparer cannot be created for K8s resource of type %s",
+                                               kubeResourceType));
+    }
   }
-
-  abstract TwillPreparer getTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo,
-                                          TwillSpecification spec, RunId twillRunId, V1ObjectMeta resourceMeta,
-                                          Map<String, String> cConf, KubeTwillControllerFactory controllerFactory);
-
-  abstract V1ObjectMeta getObjectMeta(T resource);
-
-  abstract boolean isObjectAvailable(T resource);
 
   @Nullable
   @Override
@@ -246,8 +260,8 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
 
       @Override
       public void resourceModified(T resource) {
-        if (runId.equals(getObjectMeta(resource).getLabels().get(RUN_ID_LABEL))) {
-          if (isObjectAvailable(resource)) {
+        if (runId.equals(objectMetaProvider.getObjectMeta(resource).getLabels().get(RUN_ID_LABEL))) {
+          if (objectMetaProvider.isObjectAvailable(resource)) {
             LOG.debug("Deployment for application {} with run {} is available", liveInfo.getApplicationName(), runId);
             // Cancel the scheduled termination
             terminationFuture.cancel(false);
@@ -264,7 +278,7 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
       @Override
       public void resourceDeleted(T resource) {
         // If the run is deleted, terminate the controller right away and cancel the scheduled termination
-        if (runId.equals(getObjectMeta(resource).getLabels().get(RUN_ID_LABEL))) {
+        if (runId.equals(objectMetaProvider.getObjectMeta(resource).getLabels().get(RUN_ID_LABEL))) {
           // Cancel the scheduled termination
           terminationFuture.cancel(false);
           controller.terminate();
@@ -309,7 +323,7 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
 
     @Override
     public void resourceAdded(T resource) {
-      V1ObjectMeta objectMeta = getObjectMeta(resource);
+      V1ObjectMeta objectMeta = objectMetaProvider.getObjectMeta(resource);
       String appName = objectMeta.getAnnotations().get(APP_ANNOTATION);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
@@ -342,7 +356,7 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
 
     @Override
     public void resourceDeleted(T resource) {
-      V1ObjectMeta objectMeta = getObjectMeta(resource);
+      V1ObjectMeta objectMeta = objectMetaProvider.getObjectMeta(resource);
       String appName = objectMeta.getAnnotations().get(APP_ANNOTATION);
       if (appName == null) {
         // This shouldn't happen. Just to guard against future bug.
@@ -466,6 +480,9 @@ abstract class AbstractKubeTwillRunnerService<T> implements TwillRunnerService {
     @Nullable
     KubeTwillController getController(RunId runId) {
       return controllers.get(runId.getId());
+    }
+
+    public void addControllerIfAbsent(RunId runId, Object timeout, Object timeoutUnit, KubeTwillController controller) {
     }
   }
 }

@@ -156,7 +156,7 @@ class DeploymentTwillPreparer extends AbstractKubeTwillPreparer {
     // Copy the meta and add the container label
     V1ObjectMeta deploymentMeta = new V1ObjectMetaBuilder(resourceMeta).build();
     deploymentMeta.putLabelsItem(podInfo.getContainerLabelName(), CONTAINER_NAME);
-    deploymentMeta.putAnnotationsItem(AbstractKubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
+    deploymentMeta.putAnnotationsItem(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION,
                                       Long.toString(startTimeoutMillis));
     deployment.setMetadata(deploymentMeta);
 
