@@ -111,6 +111,13 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
   if (!isModeDevelopment()) {
     let marketUrl = url.parse(cdapConfig['market.base.url']);
     let imgsrc = `${marketUrl.protocol}//${marketUrl.host}`;
+    const proxyBaseUrl = cdapConfig['dashboard.proxy.base.url'];
+    let cspWhiteListUrls = [imgsrc];
+    if (proxyBaseUrl) {
+      cspWhiteListUrls.push(proxyBaseUrl);
+    }
+    cspWhiteListUrls = cspWhiteListUrls.join(' ');
+
     /**
      * Adding nonce to every response pipe.
      */
@@ -121,7 +128,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     app.use(
       csp({
         directives: {
-          imgSrc: [`'self' data: ${imgsrc}`],
+          imgSrc: [`'self' data: ${cspWhiteListUrls}`],
           scriptSrc: [
             (req, res) => `'nonce-${res.locals.nonce}'`,
             `'unsafe-inline'`,
@@ -157,6 +164,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
           uiSettings['standalone.website.sdk.download'] === 'true' || false,
         uiDebugEnabled: uiSettings['ui.debug.enabled'] === 'true' || false,
         mode: process.env.NODE_ENV,
+        proxyBaseUrl: cdapConfig['dashboard.proxy.base.url'],
       },
       hydrator: {
         previewEnabled: cdapConfig['enable.preview'] === 'true',
