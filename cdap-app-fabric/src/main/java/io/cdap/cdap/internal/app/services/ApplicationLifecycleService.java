@@ -437,22 +437,28 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (appClass == null) {
       // This should never happen.
       throw new IllegalStateException(String.format("No application class found in artifact '%s' in namespace '%s'.",
-                                         artifactDetail.getDescriptor().getArtifactId(), appId.getParent()));
+                                      artifactDetail.getDescriptor().getArtifactId(), appId.getParent()));
     }
     io.cdap.cdap.proto.id.ArtifactId artifactId =
       Artifacts.toProtoArtifactId(appId.getParent(), artifactDetail.getDescriptor().getArtifactId());
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId, this.impersonator);
-    ClassLoader artifactClassLoader =
-      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
-                                                   classLoaderImpersonator);
 
     String updatedAppConfig = "";
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
                                           artifactRepository, currentConfigStr, updateActions);
 
+    Object appMain;
+    try {
+      ClassLoader artifactClassLoader =
+        artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+                                                     classLoaderImpersonator);
+      appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+    } catch (IOException e) {
+      throw e;
+    }
+
     // Run config update logic for the application to generate updated config.
-    Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
     if (!(appMain instanceof Application)) {
       throw new IllegalStateException(
         String.format("Application main class is of invalid type: %s",

@@ -415,6 +415,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/upgrade")
   public void upgradeApplications(FullHttpRequest request, HttpResponder responder,
                                   @PathParam("namespace-id") String namespace) throws Exception {
+    // TODO: (CDAP-16910) Improve batch API performance as each application upgrade is an event independent of each
+    //  other.
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
     List<ApplicationUpdateDetail> details = new ArrayList<>();
     for (ApplicationId appId : appIds) {

@@ -93,7 +93,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     this.artifactRepository = artifactRepository;
     this.applicationArtifactId = applicationArtifactId;
     this.configString = configString;
-    this.updateActions = Collections.unmodifiableList(updateActions);
+    this.updateActions = Collections.unmodifiableList(new ArrayList<>(updateActions));
   }
 
   @Override
@@ -109,17 +109,17 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
                                 "Type must extend Config and cannot be parameterized.");
     if (configString.isEmpty()) {
       try {
-        return ((Class<C>) configType).newInstance();
+        return ((Class<C>) TypeToken.of(configType).getRawType()).newInstance();
       } catch (Exception e) {
         throw new IllegalArgumentException("Issue in creating config class of type " + configType.getTypeName(), e);
       }
-    } else {
-      try {
-        return GSON.fromJson(configString, configType);
-      } catch (JsonSyntaxException e) {
-        throw new IllegalArgumentException("Invalid JSON application configuration was provided. Please check the"
-                                           + " syntax.", e);
-      }
+    }
+
+    try {
+      return GSON.fromJson(configString, configType);
+    } catch (JsonSyntaxException e) {
+      throw new IllegalArgumentException("Invalid JSON application configuration was provided. Please check the"
+                                         + " syntax.", e);
     }
   }
 
@@ -159,8 +159,8 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
                 pluginName, pluginType, pluginScope, applicationId);
       return Collections.emptyList();
     } catch (Exception e) {
-      LOG.warn("Failed to get plugin details for artifact {} for plugin {} of type {}",
-               applicationArtifactId, pluginName, pluginType, e);
+      LOG.debug("Failed to get plugin details for artifact {} for plugin {} of type {}",
+                applicationArtifactId, pluginName, pluginType, e);
       throw e;
     }
     return pluginArtifacts;
