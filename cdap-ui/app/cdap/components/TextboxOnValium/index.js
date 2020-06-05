@@ -43,7 +43,9 @@ export default class TextboxOnValium extends Component {
     if (!this.props.allowSpace) {
       textValue = textValue.trim();
     }
+
     if (
+      textValue.length > 0 &&
       !isNil(this.props.validCharacterRegex) &&
       this.props.validCharacterRegex instanceof RegExp &&
       !this.props.validCharacterRegex.test(textValue)
@@ -70,6 +72,10 @@ export default class TextboxOnValium extends Component {
   }
   onBlur() {
     if (this.state.isWarning) {
+      return;
+    }
+    if (this.state.textValue.length === 0) {
+      this.props.onChange(this.state.originalValue, true);
       return;
     }
     this.props.onChange(this.state.textValue, this.state.originalValue === this.state.textValue);
