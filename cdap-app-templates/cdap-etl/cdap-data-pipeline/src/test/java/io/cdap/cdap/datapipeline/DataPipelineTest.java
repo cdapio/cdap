@@ -166,7 +166,7 @@ import java.util.stream.Collectors;
  *
  */
 public class DataPipelineTest extends HydratorTestBase {
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+  private static final Gson GSON = new Gson();
   private static final ArtifactId APP_ARTIFACT_ID = NamespaceId.DEFAULT.artifact("app", "1.0.0");
   private static final ArtifactSummary APP_ARTIFACT = new ArtifactSummary("app", "1.0.0");
   private static final ArtifactId UPGRADE_APP_ARTIFACT_ID_1 = NamespaceId.DEFAULT.artifact("app", "1.1.0");
@@ -3568,7 +3568,7 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(oldStageMap.get("sink"), newStageMap.get("sink"));
 
     // Verify that after upgrade, application upgrades artifact version to latest version available.
-    Assert.assertEquals(upgradedAppDetail.getArtifact().getVersion(), UPGRADE_APP_ARTIFACT_ID_2.getVersion());
+    Assert.assertEquals(UPGRADE_APP_ARTIFACT_ID_2.getVersion(), upgradedAppDetail.getArtifact().getVersion());
     // Check if the filter stage, for which version should be upgraded to desired version in SYSTEM scope.
     ETLPlugin upgradedPlugin = newStageMap.get("filter").getPlugin();
     Assert.assertEquals(upgradedPlugin.getArtifactConfig().getVersion(), "1.1.0");

@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 
+import java.util.ArrayList;
 import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -145,8 +146,7 @@ public final class ETLStage {
     // ignoring current plugin scope.
     // In future, we can modify logic to fetch the latest plugin in any scope.
     List<ArtifactId> candidates =
-      updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(),
-                                       ArtifactScope.SYSTEM, null);
+      updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), ArtifactScope.SYSTEM, null);
     if (candidates.isEmpty()) {
       return plugin;
     }

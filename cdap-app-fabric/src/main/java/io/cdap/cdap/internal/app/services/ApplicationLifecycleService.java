@@ -470,7 +470,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     // Deploy application with with potentially new app config and new artifact.
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), appId.getParent(),
-                                                             appClass.getClassName(), appId.getNamespace(),
+                                                             appClass.getClassName(), appId.getApplication(),
                                                              appId.getVersion(), updatedAppConfig, ownerPrincipal,
                                                              updateSchedules);
 

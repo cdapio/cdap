@@ -51,6 +51,7 @@ import io.cdap.cdap.common.id.Id.Namespace;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
@@ -75,7 +76,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultApplicationUpdateContext.class);
   private static final Gson GSON = new GsonBuilder().
-      registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
+    registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory()).create();
 
   private final ArtifactId applicationArtifactId;
   private final String configString;
@@ -153,6 +154,10 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
           pluginArtifacts.add(plugin);
         }
       }
+    } catch (PluginNotExistsException e) {
+      LOG.debug("No plugin found for plugin {} of type {} in scope {} for app {}",
+                pluginName, pluginType, pluginScope, applicationId);
+      return Collections.emptyList();
     } catch (Exception e) {
       LOG.warn("Failed to get plugin details for artifact {} for plugin {} of type {}",
                applicationArtifactId, pluginName, pluginType, e);
