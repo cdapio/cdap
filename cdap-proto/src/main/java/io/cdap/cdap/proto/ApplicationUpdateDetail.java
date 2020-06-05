@@ -27,21 +27,18 @@ public class ApplicationUpdateDetail {
 
   private final int statusCode;
   private final String error;
-  private final String updateDetails;
-  private final ApplicationId applicationId;
+  private final ApplicationId appId;
 
-  public ApplicationUpdateDetail(ApplicationId applicationId, String updateDetails, String error) {
-    this.applicationId = applicationId;
+  public ApplicationUpdateDetail(ApplicationId appId, String error) {
+    this.appId = appId;
     this.statusCode = 200;
     this.error = error;
-    this.updateDetails = updateDetails;
   }
 
-  public ApplicationUpdateDetail(ApplicationId applicationId, HttpErrorStatusProvider statusProvider) {
-    this.applicationId = applicationId;
+  public ApplicationUpdateDetail(ApplicationId appId, HttpErrorStatusProvider statusProvider) {
+    this.appId = appId;
     this.statusCode = statusProvider.getStatusCode();
     this.error = statusProvider.getMessage();
-    this.updateDetails = null;
   }
 
   /**
@@ -60,17 +57,9 @@ public class ApplicationUpdateDetail {
   }
 
   /**
-   * Returns the update detail string if the status code is 200; otherwise return {@code null}.
-   */
-  @Nullable
-  public String getUpdateDetails() {
-    return this.updateDetails;
-  }
-
-  /**
    * Returns application id for which update details is stored.
    */
-  public ApplicationId getApplicationId() {
-    return applicationId;
+  public ApplicationId getAppId() {
+    return appId;
   }
 }

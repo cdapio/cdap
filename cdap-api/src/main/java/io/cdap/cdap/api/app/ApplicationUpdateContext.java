@@ -69,7 +69,6 @@ public interface ApplicationUpdateContext {
   /**
    * Gets list of plugin artifacts based on given parameters in sorted in ascending order by version.
    * Returns plugin artifacts using given filters in ascending order.
-   * TODO: Pass ArtifactSortOrder as argument for better flexibility.
    *
    * @param pluginType the plugin type.
    * @param pluginName the plugin name.

@@ -16,8 +16,6 @@
 
 package io.cdap.cdap.etl.proto;
 
-import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.artifact.InvalidArtifactRangeException;
 import java.util.Objects;
 import javax.annotation.Nullable;
 
@@ -86,10 +84,5 @@ public class ArtifactSelectorConfig {
       ", name='" + name + '\'' +
       ", version='" + version + '\'' +
       '}';
-  }
-
-  public io.cdap.cdap.api.artifact.ArtifactScope getApiArtifactScope() {
-    ArtifactScope artifactScope = scope == null ? null : ArtifactScope.valueOf(scope.toUpperCase());
-    return artifactScope;
   }
 }

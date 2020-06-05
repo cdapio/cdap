@@ -123,7 +123,7 @@ public final class ETLBatchConfig extends ETLConfig {
    * @return a new (updated) etl batch config after performing update operations.
    */
   public ETLBatchConfig updateBatchConfig(ApplicationUpdateContext upgradeContext)
-      throws Exception {
+    throws Exception {
     Set<ETLStage> upgradedStages = new HashSet<>();
     // Upgrade all stages.
     for (ETLStage stage : getStages()) {

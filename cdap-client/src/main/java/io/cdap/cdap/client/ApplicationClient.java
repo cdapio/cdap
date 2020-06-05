@@ -239,9 +239,9 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void upgradeApplication(ApplicationId app)
-      throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
     String path = String.format("apps/%s/upgrade", app.getApplication());
-    HttpResponse response = restClient.execute(HttpMethod.DELETE,
+    HttpResponse response = restClient.execute(HttpMethod.POST,
                                                config.resolveNamespacedURLV3(app.getParent(), path),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {

@@ -81,9 +81,9 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   }
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
-      Resources resources, Resources driverResources, Resources clientResources,
-      boolean stageLoggingEnabled, boolean processTimingEnabled,
-      int numOfRecordsPreview, Map<String, String> properties, List<String> comments) {
+                      Resources resources, Resources driverResources, Resources clientResources,
+                      boolean stageLoggingEnabled, boolean processTimingEnabled,
+                      int numOfRecordsPreview, Map<String, String> properties, List<String> comments) {
     this(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
         numOfRecordsPreview, properties);
     this.comments = comments;

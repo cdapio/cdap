@@ -3531,20 +3531,20 @@ public class DataPipelineTest extends HydratorTestBase {
   @Test
   public void testSimpleUpgradePipelines() throws Exception {
     ArtifactSelectorConfig currentArtifactSelector =
-        new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "1.0.0");
+      new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "1.0.0");
 
     Engine engine = Engine.MAPREDUCE;
     String sourceName = "testSource" + engine.name();
     String sinkName = "testSink" + engine.name();
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
-        .setEngine(engine)
-        .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
-        .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
-            ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
-        .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-        .addConnection("source", "filter")
-        .addConnection("filter", "sink")
-        .build();
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+        ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
@@ -3553,7 +3553,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationDetail oldAppDetail = getAppDetail(appId);
     ETLBatchConfig oldBatchConfig = GSON.fromJson(oldAppDetail.getConfiguration(), ETLBatchConfig.class);
     Map<String, ETLStage> oldStageMap = oldBatchConfig.getStages().stream().collect(
-        Collectors.toMap(ETLStage::getName, e -> e));
+      Collectors.toMap(ETLStage::getName, e -> e));
 
     // Upgrade application.
     appManager.upgrade();
@@ -3561,7 +3561,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationDetail upgradedAppDetail = getAppDetail(appId);
     ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
     Map<String, ETLStage> newStageMap = newBatchConfig.getStages().stream().collect(
-        Collectors.toMap(ETLStage::getName, e -> e));
+      Collectors.toMap(ETLStage::getName, e -> e));
 
     // Compare stages that should be same after upgrade.
     Assert.assertEquals(oldStageMap.get("source"), newStageMap.get("source"));
@@ -3572,7 +3572,8 @@ public class DataPipelineTest extends HydratorTestBase {
     // Check if the filter stage, for which version should be upgraded to desired version in SYSTEM scope.
     ETLPlugin upgradedPlugin = newStageMap.get("filter").getPlugin();
     Assert.assertEquals(upgradedPlugin.getArtifactConfig().getVersion(), "1.1.0");
-    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getApiArtifactScope(), ArtifactScope.SYSTEM);
+    Assert.assertEquals(ArtifactScope.valueOf(upgradedPlugin.getArtifactConfig().getScope().toUpperCase()),
+                        ArtifactScope.SYSTEM);
   }
 
   /* Unit test tests upgrade for a deployed application with a plugin using plugin range.
@@ -3587,20 +3588,20 @@ public class DataPipelineTest extends HydratorTestBase {
   @Test
   public void testUpgradePipelinesWithPluginRange() throws Exception {
     ArtifactSelectorConfig currentArtifactSelector =
-        new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,1.0.5)");
+      new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,1.0.5)");
 
     Engine engine = Engine.MAPREDUCE;
     String sourceName = "testSource" + engine.name();
     String sinkName = "testSink" + engine.name();
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
-        .setEngine(engine)
-        .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
-        .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
-            ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
-        .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-        .addConnection("source", "filter")
-        .addConnection("filter", "sink")
-        .build();
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+        ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
@@ -3609,7 +3610,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationDetail oldAppDetail = getAppDetail(appId);
     ETLBatchConfig oldBatchConfig = GSON.fromJson(oldAppDetail.getConfiguration(), ETLBatchConfig.class);
     Map<String, ETLStage> oldStageMap = oldBatchConfig.getStages().stream().collect(
-        Collectors.toMap(ETLStage::getName, e -> e));
+      Collectors.toMap(ETLStage::getName, e -> e));
 
     // Upgrade application.
     appManager.upgrade();
@@ -3617,7 +3618,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationDetail upgradedAppDetail = getAppDetail(appId);
     ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
     Map<String, ETLStage> newStageMap = newBatchConfig.getStages().stream().collect(
-        Collectors.toMap(ETLStage::getName, e -> e));
+      Collectors.toMap(ETLStage::getName, e -> e));
 
     // Compare stages that should be same after upgrade.
     Assert.assertEquals(oldStageMap.get("source"), newStageMap.get("source"));
@@ -3629,18 +3630,19 @@ public class DataPipelineTest extends HydratorTestBase {
     // scope.
     ETLPlugin upgradedPlugin = newStageMap.get("filter").getPlugin();
     Assert.assertEquals(upgradedPlugin.getArtifactConfig().getVersion(), "[1.0.0,1.1.0]");
-    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getApiArtifactScope(), ArtifactScope.SYSTEM);
+    Assert.assertEquals(ArtifactScope.valueOf(upgradedPlugin.getArtifactConfig().getScope().toUpperCase()),
+                        ArtifactScope.SYSTEM);
   }
 
   /* Unit test tests upgrade for a deployed application with a plugin using plugin range.
- 1. Deploy an application with older application artifact (1.0.0) and filter plugin version with range
-    [1.0.0-2.0.0) to make sure latest version of plugin should be included in it.
- 2. Add multiple versions of same application artifact with latest being (1.2.0).
- 3. Bind newer version of filter plugin 1.1.0 with it.
- 3. Upgrade the older deployed application.
- 4. Verify that after upgrading, application artifact uses latest version in its config.
-    But plugin range is not updated as latest version of plugin is still included in the range.
-*/
+   1. Deploy an application with older application artifact (1.0.0) and filter plugin version with range
+      [1.0.0-2.0.0) to make sure latest version of plugin should be included in it.
+   2. Add multiple versions of same application artifact with latest being (1.2.0).
+   3. Bind newer version of filter plugin 1.1.0 with it.
+   3. Upgrade the older deployed application.
+   4. Verify that after upgrading, application artifact uses latest version in its config.
+      But plugin range is not updated as latest version of plugin is still included in the range.
+  */
   @Test
   public void testUpgradePipelinesWithNoChangeInPluginRange() throws Exception {
     // Since filter plugin is not going to upgrade due to its range, the scope of filter plugin still stays USER.
@@ -3650,20 +3652,20 @@ public class DataPipelineTest extends HydratorTestBase {
                       PluggableFilterTransform.class);
 
     ArtifactSelectorConfig currentArtifactSelector =
-        new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,2.0.0)");
+      new ArtifactSelectorConfig(ArtifactScope.USER.name(), "test-plugins", "[1.0.0,2.0.0)");
 
     Engine engine = Engine.MAPREDUCE;
     String sourceName = "testSource" + engine.name();
     String sinkName = "testSink" + engine.name();
     ETLBatchConfig etlConfig = ETLBatchConfig.builder()
-        .setEngine(engine)
-        .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
-        .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
-            ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
-        .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
-        .addConnection("source", "filter")
-        .addConnection("filter", "sink")
-        .build();
+      .setEngine(engine)
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceName)))
+      .addStage(new ETLStage("filter", PluggableFilterTransform.getPlugin(
+        ValueFilter.NAME, ValueFilter.getProperties("${field}", "${value}"), currentArtifactSelector)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkName)))
+      .addConnection("source", "filter")
+      .addConnection("filter", "sink")
+      .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
     ApplicationId appId = NamespaceId.DEFAULT.app("sparkProgramTest");
@@ -3672,7 +3674,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationDetail oldAppDetail = getAppDetail(appId);
     ETLBatchConfig oldBatchConfig = GSON.fromJson(oldAppDetail.getConfiguration(), ETLBatchConfig.class);
     Map<String, ETLStage> oldStageMap = oldBatchConfig.getStages().stream().collect(
-        Collectors.toMap(ETLStage::getName, e -> e));
+      Collectors.toMap(ETLStage::getName, e -> e));
 
     // Upgrade application.
     appManager.upgrade();
@@ -3680,7 +3682,7 @@ public class DataPipelineTest extends HydratorTestBase {
     ApplicationDetail upgradedAppDetail = getAppDetail(appId);
     ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
     Map<String, ETLStage> newStageMap = newBatchConfig.getStages().stream().collect(
-        Collectors.toMap(ETLStage::getName, e -> e));
+      Collectors.toMap(ETLStage::getName, e -> e));
 
     // Compare stages that should be same after upgrade.
     Assert.assertEquals(oldStageMap.get("source"), newStageMap.get("source"));

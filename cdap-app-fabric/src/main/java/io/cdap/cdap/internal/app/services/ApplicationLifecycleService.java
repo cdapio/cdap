@@ -363,7 +363,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
-   * Upgrades an existing application by upgrading appliation artifact versions and plugin artifact versions.
+   * Upgrades an existing application by upgrading application artifact versions and plugin artifact versions.
    *
    * @param appId the id of the application to upgrade.
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
@@ -394,10 +394,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       artifactRepository.getArtifactSummaries(currentArtifactNamespace, currentArtifact.getName(), 1,
                                               ArtifactSortOrder.DESC);
     if (availableArtifacts.isEmpty()) {
-      // This should not be possible as at least the current used artifact should be there.
       String error = String.format("No artifacts found for artifact id %s in namespace %s.", currentArtifact.getName(),
                                    currentArtifactNamespace);
-      return new ApplicationUpdateDetail(appId, "Upgrade failed.", error);
+      return new ApplicationUpdateDetail(appId, "Upgrade failed: " + error);
     }
     // The latest version should be first (and only) value in the result.
     ArtifactSummary candidateArtifact = availableArtifacts.get(0);
@@ -406,47 +405,42 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     // Current artifact should not have higher version than candidate artifact.
     if (currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0) {
       String error = String.format(
-        "Requested artifact version %s is older than current artifact version %s.", candidateArtifact.getVersion(),
-        currentArtifact.getVersion());
-      return new ApplicationUpdateDetail(appId, "Upgrade failed." , error);
+        "The current artifact has a version higher %s than any existing artifact.", currentArtifact.getVersion());
+      return new ApplicationUpdateDetail(appId, "Upgrade failed: " + error);
     }
 
     ArtifactId newArtifactId =
-        new ArtifactId(currentArtifact.getName(), candidateArtifactVersion, currentArtifact.getScope());
+      new ArtifactId(currentArtifact.getName(), candidateArtifactVersion, currentArtifact.getScope());
 
     Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
     List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
 
 
-    return updateApplicationInternal(appId, appId.getParent(), appId.getApplication(), null,
-                                    currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
-                                    upgradeActions, ownerAdmin.getOwner(appId), /*updateSchedules=*/false, "Upgrade");
+    return updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
+                                     upgradeActions, ownerAdmin.getOwner(appId), false, "Upgrade");
   }
 
   /**
    * Updates an application config by applying given update actions. The app should know how to apply these actions
    * to its config.
    */
-  private ApplicationUpdateDetail updateApplicationInternal(ApplicationId applicationId,
-                                                             NamespaceId namespaceId,
-                                                             @Nullable String appName,
-                                                             @Nullable String appVersion,
-                                                             @Nullable String currentConfigStr,
-                                                             ProgramTerminator programTerminator,
-                                                             ArtifactDetail artifactDetail,
-                                                             List<ApplicationConfigUpdateAction> updateActions,
-                                                             @Nullable KerberosPrincipalId ownerPrincipal,
-                                                             boolean updateSchedules,
-                                                             String userAction) throws Exception {
+  private ApplicationUpdateDetail updateApplicationInternal(ApplicationId appId,
+                                                            @Nullable String currentConfigStr,
+                                                            ProgramTerminator programTerminator,
+                                                            ArtifactDetail artifactDetail,
+                                                            List<ApplicationConfigUpdateAction> updateActions,
+                                                            @Nullable KerberosPrincipalId ownerPrincipal,
+                                                            boolean updateSchedules,
+                                                            String userAction) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       // This should never happen.
       throw new IllegalStateException(String.format("No application class found in artifact '%s' in namespace '%s'.",
-                                         artifactDetail.getDescriptor().getArtifactId(), namespaceId));
+                                         artifactDetail.getDescriptor().getArtifactId(), appId.getParent()));
     }
     io.cdap.cdap.proto.id.ArtifactId artifactId =
-      Artifacts.toProtoArtifactId(namespaceId, artifactDetail.getDescriptor().getArtifactId());
+      Artifacts.toProtoArtifactId(appId.getParent(), artifactDetail.getDescriptor().getArtifactId());
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId, this.impersonator);
     ClassLoader artifactClassLoader =
       artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
@@ -454,7 +448,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     String updatedAppConfig = "";
     DefaultApplicationUpdateContext updateContext =
-      new DefaultApplicationUpdateContext(namespaceId, applicationId, artifactDetail.getDescriptor().getArtifactId(),
+      new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
                                           artifactRepository, currentConfigStr, updateActions);
 
     // Run config update logic for the application to generate updated config.
@@ -467,18 +461,17 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Application app = (Application) appMain;
     Type configType = Artifacts.getConfigType(app.getClass());
     if (!app.isUpdateSupported()) {
-      String status = String.format("%s failed.", userAction);
-      String errorMessage = String.format("application of type %s does not support update.",
-                                          appMain.getClass().getName());
-      return new ApplicationUpdateDetail(applicationId, status, errorMessage);
+      String status = String.format("%s failed: ", userAction);
+      String errorMessage = String.format("Application does not support " + userAction);
+      return new ApplicationUpdateDetail(appId, status + " " + errorMessage);
     }
     ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
     updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
 
     // Deploy application with with potentially new app config and new artifact.
-    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
-                                                             appClass.getClassName(), appName, appVersion,
-                                                             updatedAppConfig, ownerPrincipal,
+    AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), appId.getParent(),
+                                                             appClass.getClassName(), appId.getNamespace(),
+                                                             appId.getVersion(), updatedAppConfig, ownerPrincipal,
                                                              updateSchedules);
 
     Manager<AppDeploymentInfo, ApplicationWithPrograms> manager = managerFactory.create(programTerminator);
@@ -492,7 +485,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
-    return new ApplicationUpdateDetail(applicationId, String.format("%s successful.", userAction), null);
+    return new ApplicationUpdateDetail(appId, String.format("%s successful.", userAction));
   }
 
   /**

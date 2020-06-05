@@ -388,8 +388,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @Path("/apps/{app-id}/upgrade")
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void upgradeApplication(HttpRequest request, HttpResponder responder,
-                                 @PathParam("namespace-id") final String namespaceId,
-                                 @PathParam("app-id") final String appName) throws Exception {
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appName) throws Exception {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
     ApplicationUpdateDetail detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));

@@ -24,6 +24,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -180,39 +181,45 @@ public final class ETLStage {
    * @return version string to be used for new plugin. Might be fixed version/version range string depending on
    *         current use.
    */
+  @Nullable
   private String getUpgradedVersionString(ArtifactId newPlugin) {
+    ArtifactVersionRange currentVersionRange = null;
     try {
-      ArtifactVersionRange currentVersionRange =
+      currentVersionRange =
         io.cdap.cdap.api.artifact.ArtifactVersionRange.parse(plugin.getArtifactConfig().getVersion());
-      if (!currentVersionRange.isExactVersion()) {
-        // Current plugin version is version range.
-        if (currentVersionRange.versionIsInRange(newPlugin.getVersion())) {
-          // Do nothing and return as is. Note that plugin scope will not change.
-          // TODO: Figure out how to change plugin scope if a newer plugin is found but in different scope.
-          return null;
-        } else if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
-          // Current lower version is higher than newer latest version. This should not happen.
-          LOG.warn("Invalid new plugin artifact {} for upgrade for upgrading plugin {} ", newPlugin, plugin);
-          return null;
-        } else {
-          // Increase the upper bound to latest available version.
-          ArtifactVersionRange newVersionRange =
-            new ArtifactVersionRange(currentVersionRange.getLower(), currentVersionRange.isLowerInclusive(),
-                                     newPlugin.getVersion(), /*isUpperInclusive=*/true);
-          return newVersionRange.getVersionString();
-        }
-      } else if (currentVersionRange.isExactVersion()
-          && currentVersionRange.getLower().compareTo(newPlugin.getVersion()) < 0) {
-        // Current version is a fixed version and new version is higher than current.
-        return newPlugin.getVersion().getVersion();
-      } else {
-        // Should not happen. Safety check.
-        return null;
-      }
     } catch (Exception e) {
-      LOG.warn("Issue in parsing version string for plugin, ignoring stage for upgrade {}", plugin, e);
+      LOG.warn("Issue in parsing version string for plugin {}, ignoring stage {} for upgrade.", plugin, name, e);
       return null;
     }
+
+    if (currentVersionRange.isExactVersion()) {
+      if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) < 0) {
+        // Current version is a fixed version and new version is higher than current.
+        return newPlugin.getVersion().getVersion();
+      }
+      return null;
+    }
+
+    if (!currentVersionRange.isExactVersion()) {
+      // Current plugin version is version range.
+      if (currentVersionRange.versionIsInRange(newPlugin.getVersion())) {
+        // Do nothing and return as is. Note that plugin scope will not change.
+        // TODO: Figure out how to change plugin scope if a newer plugin is found but in different scope.
+        return null;
+      } else if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
+        // Current lower version is higher than newer latest version. This should not happen.
+        LOG.warn("Error in updating stage {}. Invalid new plugin artifact {} upgrading plugin {}.",
+                 name, newPlugin, plugin);
+        return null;
+      } else {
+        // Increase the upper bound to latest available version.
+        ArtifactVersionRange newVersionRange =
+          new ArtifactVersionRange(currentVersionRange.getLower(), currentVersionRange.isLowerInclusive(),
+                                   newPlugin.getVersion(), /*isUpperInclusive=*/true);
+        return newVersionRange.getVersionString();
+      }
+    }
+    return null;
   }
 
   @Override
