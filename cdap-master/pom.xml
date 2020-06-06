@@ -574,14 +574,7 @@
                       </directory>
                       <includes>
                         <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-runtime-ext-emr/src/main/resources
-                      </directory>
-                      <includes>
-                        <include>aws-emr.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>
@@ -602,14 +595,7 @@
                       </directory>
                       <includes>
                         <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-runtime-ext-dataproc/src/main/resources
-                      </directory>
-                      <includes>
-                        <include>gcp-dataproc.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>
@@ -630,14 +616,7 @@
                       </directory>
                       <includes>
                         <include>*.jar</include>
-                      </includes>
-                    </resource>
-                    <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-runtime-ext-remote-hadoop/src/main/resources
-                      </directory>
-                      <includes>
-                        <include>remote-hadoop.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>

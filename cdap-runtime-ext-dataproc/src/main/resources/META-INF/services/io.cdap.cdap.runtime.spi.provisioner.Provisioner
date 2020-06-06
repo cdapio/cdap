@@ -15,3 +15,4 @@
 #
 
 io.cdap.cdap.runtime.spi.provisioner.dataproc.DataprocProvisioner
+io.cdap.cdap.runtime.spi.provisioner.dataproc.ExistingDataprocProvisioner

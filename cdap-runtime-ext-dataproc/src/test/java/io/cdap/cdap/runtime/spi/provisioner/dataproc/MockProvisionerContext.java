@@ -30,10 +30,17 @@ import javax.annotation.Nullable;
 
 
 public class MockProvisionerContext implements ProvisionerContext {
-  private Map<String, String> properties;
+
+  private final Map<String, String> properties;
+  private final ProgramRunInfo programRunInfo;
 
   public MockProvisionerContext() {
-    properties = new HashMap<>();
+    this(null);
+  }
+
+  public MockProvisionerContext(ProgramRunInfo programRunInfo) {
+    this.properties = new HashMap<>();
+    this.programRunInfo = programRunInfo;
   }
 
   @Override
@@ -43,7 +50,7 @@ public class MockProvisionerContext implements ProvisionerContext {
 
   @Override
   public ProgramRunInfo getProgramRunInfo() {
-    return null;
+    return programRunInfo;
   }
 
   @Override

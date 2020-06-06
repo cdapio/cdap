@@ -40,7 +40,8 @@ public class DataprocProvisionerTest {
       .setProgram("program")
       .setRun(UUID.randomUUID().toString())
       .build();
-    Assert.assertEquals("cdap-app-" + programRunInfo.getRun(), DataprocProvisioner.getClusterName(programRunInfo));
+    Assert.assertEquals("cdap-app-" + programRunInfo.getRun(),
+                        new DataprocProvisioner().getClusterName(new MockProvisionerContext(programRunInfo)));
 
     // test lowercasing, stripping of invalid characters, and truncation
     programRunInfo = new ProgramRunInfo.Builder()
@@ -52,64 +53,7 @@ public class DataprocProvisionerTest {
       .setRun(UUID.randomUUID().toString())
       .build();
     Assert.assertEquals("cdap-myapplcat-" + programRunInfo.getRun(),
-                        DataprocProvisioner.getClusterName(programRunInfo));
-  }
-
-  @Test
-  public void testParseSingleLabel() {
-    Map<String, String> expected = new HashMap<>();
-    expected.put("key", "val");
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("key=val"));
-  }
-
-  @Test
-  public void testParseMultipleLabels() {
-    Map<String, String> expected = new HashMap<>();
-    expected.put("k1", "v1");
-    expected.put("k2", "v2");
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("k1=v1,k2=v2"));
-  }
-
-  @Test
-  public void testParseLabelsIgnoresWhitespace() {
-    Map<String, String> expected = new HashMap<>();
-    expected.put("k1", "v1");
-    expected.put("k2", "v2");
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels(" k1  =\tv1  ,\nk2 = v2  "));
-  }
-
-  @Test
-  public void testParseLabelsWithoutVal() {
-    Map<String, String> expected = new HashMap<>();
-    expected.put("k1", "");
-    expected.put("k2", "");
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("k1,k2="));
-  }
-
-  @Test
-  public void testParseLabelsIgnoresInvalidKey() {
-    Map<String, String> expected = new HashMap<>();
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("A"));
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("0"));
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("a.b"));
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("a^b"));
-    StringBuilder longStr = new StringBuilder();
-    for (int i = 0; i < 64; i++) {
-      longStr.append('a');
-    }
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels(longStr.toString()));
-  }
-
-  @Test
-  public void testParseLabelsIgnoresInvalidVal() {
-    Map<String, String> expected = new HashMap<>();
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("a=A"));
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels("a=ab.c"));
-    StringBuilder longStr = new StringBuilder();
-    for (int i = 0; i < 64; i++) {
-      longStr.append('a');
-    }
-    Assert.assertEquals(expected, DataprocProvisioner.parseLabels(String.format("a=%s", longStr.toString())));
+                        new DataprocProvisioner().getClusterName(new MockProvisionerContext(programRunInfo)));
   }
 
   @Test
@@ -124,7 +68,7 @@ public class DataprocProvisionerTest {
     props.put("hadoop-env:MAPREDUCE_CLASSPATH", "xyz");
     props.put("dataproc:am.primary_only", "true");
 
-    DataprocConf conf = DataprocConf.fromProperties(props);
+    DataprocConf conf = DataprocConf.create(props);
 
     Assert.assertEquals(conf.getProjectId(), "pid");
     Assert.assertEquals(conf.getRegion(), "region1");
@@ -147,7 +91,7 @@ public class DataprocProvisionerTest {
     props.put("zone", "auto-detect");
     props.put("network", "network");
 
-    DataprocConf conf = DataprocConf.fromProperties(props);
+    DataprocConf conf = DataprocConf.create(props);
     Assert.assertNull(conf.getZone());
   }
 
@@ -160,7 +104,7 @@ public class DataprocProvisionerTest {
     props.put("zone", "region2-a");
     props.put("network", "network");
 
-    DataprocConf.fromProperties(props);
+    DataprocConf.create(props);
   }
 
   @Test
@@ -169,6 +113,8 @@ public class DataprocProvisionerTest {
     String resourceMaxPercentKey = "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
     String resourceMaxPercentVal = "0.5";
     provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
+    provisionerSystemContext.addProperty(DataprocConf.NETWORK, "old-network");
+    provisionerSystemContext.addProperty(DataprocConf.STACKDRIVER_LOGGING_ENABLED, "true");
 
     DataprocProvisioner provisioner = new DataprocProvisioner();
     provisioner.initialize(provisionerSystemContext);
@@ -179,7 +125,8 @@ public class DataprocProvisionerTest {
 
     Map<String, String> properties = provisioner.createContextProperties(provisionerContext);
 
-    Assert.assertTrue(properties.get(DataprocConf.NETWORK).equals(network));
-    Assert.assertTrue(properties.get(resourceMaxPercentKey).equals(resourceMaxPercentVal));
+    Assert.assertEquals(properties.get(DataprocConf.NETWORK), network);
+    Assert.assertEquals(properties.get(DataprocConf.STACKDRIVER_LOGGING_ENABLED), "true");
+    Assert.assertEquals(properties.get(resourceMaxPercentKey), resourceMaxPercentVal);
   }
 }
