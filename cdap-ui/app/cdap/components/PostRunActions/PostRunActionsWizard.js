@@ -123,7 +123,9 @@ export default class PostRunActionsWizard extends Component {
             </a>
           </div>
         </div>
-        <ModalBody>{this.renderBody()}</ModalBody>
+        <ModalBody>
+          <div className="postrun-configuration-content">{this.renderBody()}</div>
+        </ModalBody>
         <ModalFooter>
           <div
             className="btn btn-blue float-right close-button"

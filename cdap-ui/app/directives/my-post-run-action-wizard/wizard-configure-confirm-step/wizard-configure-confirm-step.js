@@ -24,7 +24,7 @@ angular.module(PKG.name + '.commons')
         mode: '@',
         onActionConfigure: '&',
         onGotoPreviousStep: '&',
-        errors: '='
+        errors: '=',
       },
       templateUrl: 'my-post-run-action-wizard/wizard-configure-confirm-step/wizard-configure-confirm-step.html',
       controller: 'WizardConfigureConfirmStepCtrl',

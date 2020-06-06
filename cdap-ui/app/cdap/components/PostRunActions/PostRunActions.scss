@@ -86,10 +86,14 @@ $fourth-column-width: 53px;
 /* Only applying the styles to the post run actions modal in detail view for
 now, since we haven't migrated the one in Studio to use the new component yet */
 .state-hydrator-detail {
-  .post-run-actions-modal {
+  .modal.hydrator-modal.post-run-actions-modal {
     .modal-dialog {
       .modal-content {
         .modal-body {
+          height: 70vh;
+          .postrun-configuration-content {
+            height: calc(100% - 35px);
+          }
           .confirm-step-content {
             .control-label {
               display: flex;
@@ -99,6 +103,10 @@ now, since we haven't migrated the one in Studio to use the new component yet */
               }
             }
           }
+        }
+        .modal-footer {
+          padding-bottom: 0;
+          border-top: 1px solid #cccccc;
         }
       }
     }

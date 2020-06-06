@@ -28,28 +28,34 @@
   <span class="fa fa-spinner fa-spin"></span>
   <span>Loading...</span>
 </h3>
-<div class="text-right confirm-step-wizard-footer">
-  <div class="btn btn-grey-cancel"
-       ng-if="WizardConfigureConfirmStepCtrl.mode === 'create' || (WizardConfigureConfirmStepCtrl.mode === 'edit' && WizardConfigureConfirmStepCtrl.isDisabled)"
-       ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
-    Back
-  </div>
+<div class="confirm-step-wizard-footer">
+  <div class="pull-right">
+    <div class="btn btn-grey-cancel"
+        ng-if="WizardConfigureConfirmStepCtrl.mode === 'create' || (WizardConfigureConfirmStepCtrl.mode === 'edit' && WizardConfigureConfirmStepCtrl.isDisabled)"
+        ng-click="WizardConfigureConfirmStepCtrl.gotoPreviousStep()">
+      Back
+    </div>
 
-  <div class="btn btn-blue"
-       data-cy="next-btn"
-       ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl.isDisabled"
-       ng-click="WizardConfigureConfirmStepCtrl.isValid() && WizardConfigureConfirmStepCtrl.addAction()">
-    Next
-  </div>
-  <div class="btn btn-blue"
-       data-cy="confirm-btn"
-       ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl.isDisabled"
-       ng-click="WizardConfigureConfirmStepCtrl.addAction()">
-    Confirm
-  </div>
-  <div class="btn btn-blue"
-       ng-if="WizardConfigureConfirmStepCtrl.mode === 'view'"
-       ng-click="WizardConfigureConfirmStepCtrl.addAction(true)">
-    Close
+    <div class="btn btn-blue confirm-step-next-btn"
+        data-cy="next-btn"
+        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && !WizardConfigureConfirmStepCtrl.isDisabled"
+        ng-click="WizardConfigureConfirmStepCtrl.addAction()"
+        ng-disabled="WizardConfigureConfirmStepCtrl.validating">
+      <span ng-if="!WizardConfigureConfirmStepCtrl.validating">Next</span>
+      <span ng-if="WizardConfigureConfirmStepCtrl.validating">
+        <span class="fa fa-spinner fa-spin"></span>
+      </span>
+    </div>
+    <div class="btn btn-blue"
+        data-cy="confirm-btn"
+        ng-if="(['edit', 'create'].indexOf(WizardConfigureConfirmStepCtrl.mode) !== -1) && WizardConfigureConfirmStepCtrl.isDisabled"
+        ng-click="WizardConfigureConfirmStepCtrl.addAction()">
+      Confirm
+    </div>
+    <div class="btn btn-blue"
+        ng-if="WizardConfigureConfirmStepCtrl.mode === 'view'"
+        ng-click="WizardConfigureConfirmStepCtrl.addAction(true)">
+      Close
+    </div>
   </div>
 </div>
