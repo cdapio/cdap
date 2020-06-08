@@ -105,7 +105,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   public <C extends Config> C getConfig(Type configType) {
     // Given configtype has to be derived from Config class.
     Preconditions.checkArgument(Config.class.isAssignableFrom(TypeToken.of(configType).getRawType()),
-                                "Application config type " + configType + " not supported. " +
+                                "Application config type " + configType + " is not supported. " +
                                 "Type must extend Config and cannot be parameterized.");
     if (configString.isEmpty()) {
       try {
@@ -155,12 +155,10 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
         }
       }
     } catch (PluginNotExistsException e) {
-      LOG.debug("No plugin found for plugin {} of type {} in scope {} for app {}",
-                pluginName, pluginType, pluginScope, applicationId);
+      LOG.trace("No plugin found for plugin {} of type {} in scope {} for app {}",
+                pluginName, pluginType, pluginScope, applicationId, e);
       return Collections.emptyList();
     } catch (Exception e) {
-      LOG.debug("Failed to get plugin details for artifact {} for plugin {} of type {}",
-                applicationArtifactId, pluginName, pluginType, e);
       throw e;
     }
     return pluginArtifacts;

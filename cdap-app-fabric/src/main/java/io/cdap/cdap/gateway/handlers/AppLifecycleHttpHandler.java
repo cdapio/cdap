@@ -427,7 +427,6 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
           new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
                                                                    HttpResponseStatus.INTERNAL_SERVER_ERROR));
         details.add(errorDetail);
-        LOG.debug("Upgrading application {} failed due to exception ", appId, e);
       }
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));

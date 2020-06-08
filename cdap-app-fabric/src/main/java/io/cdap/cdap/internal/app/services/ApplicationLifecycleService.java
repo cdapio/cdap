@@ -37,6 +37,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
+import io.cdap.cdap.api.artifact.CloseableClassLoader;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -450,10 +451,11 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     Object appMain;
     try {
-      ClassLoader artifactClassLoader =
+      try (CloseableClassLoader artifactClassLoader =
         artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
-                                                     classLoaderImpersonator);
-      appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+                                                     classLoaderImpersonator)) {
+        appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+      }
     } catch (IOException e) {
       throw e;
     }
