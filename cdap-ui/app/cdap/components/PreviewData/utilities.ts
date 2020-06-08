@@ -153,6 +153,7 @@ function getTracersAndPreviousStageInfo(
     let previousStage = stages.find((stage) => stage.name === previousStageName);
     previousStages[previousStageName] = {};
 
+    // TO DO [CDAP-16690]: Investigate whether we need the splitter logic here, since we aren't currently using it
     if (previousStage.plugin.type === 'splittertransform') {
       const previousStageConnection = connections.find(
         (connection) => connection.from === previousStageName && connection.to === selectedStageName
