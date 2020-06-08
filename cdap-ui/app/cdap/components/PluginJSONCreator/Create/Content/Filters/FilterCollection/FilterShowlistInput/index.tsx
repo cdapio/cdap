@@ -68,11 +68,11 @@ const FilterShowlistInputView: React.FC<IFilterShowlistInputProps> = ({
   setFilterToShowList,
   showToInfo,
   setShowToInfo,
-  widgetToInfo,
+  widgetInfo,
 }) => {
-  const allWidgetNames = widgetToInfo
-    ? Object.values(widgetToInfo)
-        .map((widgetInfo: IWidgetInfo) => widgetInfo.name)
+  const allWidgetNames = widgetInfo
+    ? Object.values(widgetInfo)
+        .map((info: IWidgetInfo) => info.name)
         .filter((widgetName) => widgetName !== undefined && widgetName !== null)
     : [];
 
@@ -143,7 +143,7 @@ const FilterShowlistInputView: React.FC<IFilterShowlistInputProps> = ({
                 <PluginInput
                   widgetType={'select'}
                   value={showToInfo[showID].name}
-                  setValue={setShowProperty(showID, 'name')}
+                  onChange={setShowProperty(showID, 'name')}
                   label={'name'}
                   options={allWidgetNames}
                   required={true}
@@ -153,7 +153,7 @@ const FilterShowlistInputView: React.FC<IFilterShowlistInputProps> = ({
                 <PluginInput
                   widgetType={'select'}
                   value={showToInfo[showID].type}
-                  setValue={setShowProperty(showID, 'type')}
+                  onChange={setShowProperty(showID, 'type')}
                   options={SHOW_TYPE_VALUES}
                   label={'type'}
                   required={false}

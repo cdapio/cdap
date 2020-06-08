@@ -48,7 +48,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
   filterID,
   filterToCondition,
   setFilterToCondition,
-  widgetToInfo,
+  widgetInfo,
 }) => {
   const existingCondition = filterToCondition[filterID];
 
@@ -56,9 +56,9 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
     existingCondition.expression ? FilterConditionMode.Expression : FilterConditionMode.Operator
   );
 
-  const allWidgetNames = widgetToInfo
-    ? Object.values(widgetToInfo)
-        .map((widgetInfo: IWidgetInfo) => widgetInfo.name)
+  const allWidgetNames = widgetInfo
+    ? Object.values(widgetInfo)
+        .map((info: IWidgetInfo) => info.name)
         .filter((widgetName) => widgetName !== undefined && widgetName !== null)
     : [];
 
@@ -97,7 +97,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
         <PluginInput
           widgetType={'radio-group'}
           value={conditionMode}
-          setValue={setConditionMode}
+          onChange={setConditionMode}
           label={'Condition Type'}
           options={Object.values(FilterConditionMode).map((mode) => ({ id: mode, label: mode }))}
           layout={'inline'}
@@ -106,7 +106,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
           <PluginInput
             widgetType={'textbox'}
             value={existingCondition.expression ? existingCondition.expression : ''}
-            setValue={setFilterCondition('expression')}
+            onChange={setFilterCondition('expression')}
             label={'expression'}
             required={false}
           />
@@ -115,14 +115,14 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
           <PluginInput
             widgetType={'select'}
             value={existingCondition.property}
-            setValue={setFilterCondition('property')}
+            onChange={setFilterCondition('property')}
             label={'property'}
             options={allWidgetNames}
           />
           <PluginInput
             widgetType={'select'}
             value={existingCondition.operator}
-            setValue={setFilterCondition('operator')}
+            onChange={setFilterCondition('operator')}
             label={'operator'}
             options={OPERATOR_VALUES}
           />
@@ -135,7 +135,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
             <PluginInput
               widgetType={'textbox'}
               value={existingCondition.value}
-              setValue={setFilterCondition('value')}
+              onChange={setFilterCondition('value')}
               label={'value'}
               required={false}
             />

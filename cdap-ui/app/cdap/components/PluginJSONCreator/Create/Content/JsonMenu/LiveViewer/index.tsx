@@ -103,7 +103,7 @@ const LiveViewerView: React.FC<ILiveViewerProps> = ({
 
   // Values needed for Configuration Groups live view
   const [pluginProperties, setPluginProperties] = React.useState(null);
-  const [values, setValues] = React.useState<Record<string, string>>({});
+  const [values, onChanges] = React.useState<Record<string, string>>({});
 
   const [loading, setLoading] = React.useState(false);
 

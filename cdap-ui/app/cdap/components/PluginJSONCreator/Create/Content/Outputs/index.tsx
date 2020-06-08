@@ -51,11 +51,6 @@ const OutputsView: React.FC<ICreateContext> = ({
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
-  // In case user uploads new file
-  React.useEffect(() => {
-    setLocalOutputName(outputName);
-  }, [outputName]);
-
   function saveAllResults() {
     setOutputName(localOutputName);
   }

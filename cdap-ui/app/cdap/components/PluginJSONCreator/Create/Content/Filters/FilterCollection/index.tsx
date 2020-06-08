@@ -93,7 +93,7 @@ const FilterCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
   setFilterToShowList,
   showToInfo,
   setShowToInfo,
-  widgetToInfo,
+  widgetInfo,
 }) => {
   function addFilter(index: number) {
     const newFilterID = 'Filter_' + uuidV4();
@@ -175,13 +175,13 @@ const FilterCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
                     setFilterToShowList={setFilterToShowList}
                     showToInfo={showToInfo}
                     setShowToInfo={setShowToInfo}
-                    widgetToInfo={widgetToInfo}
+                    widgetInfo={widgetInfo}
                   />
                   <FilterConditionInput
                     filterID={filterID}
                     filterToCondition={filterToCondition}
                     setFilterToCondition={setFilterToCondition}
-                    widgetToInfo={widgetToInfo}
+                    widgetInfo={widgetInfo}
                   />
                 </div>
               </div>

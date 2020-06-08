@@ -34,7 +34,7 @@ const FiltersView: React.FC<ICreateContext> = ({
   configurationGroups,
   groupToInfo,
   groupToWidgets,
-  widgetToInfo,
+  widgetInfo,
   widgetToAttributes,
   filters,
   setFilters,
@@ -57,23 +57,6 @@ const FiltersView: React.FC<ICreateContext> = ({
   const [localFilterToShowList, setLocalFilterToShowList] = React.useState(filterToShowList);
   const [localShowToInfo, setLocalShowToInfo] = React.useState(showToInfo);
 
-  // In case user uploads new file
-  React.useEffect(() => {
-    setLocalFilters(filters);
-  }, [filters]);
-  React.useEffect(() => {
-    setLocalFilterToName(filterToName);
-  }, [filterToName]);
-  React.useEffect(() => {
-    setLocalFilterToCondition(filterToCondition);
-  }, [filterToCondition]);
-  React.useEffect(() => {
-    setLocalFilterToShowList(filterToShowList);
-  }, [filterToShowList]);
-  React.useEffect(() => {
-    setLocalShowToInfo(showToInfo);
-  }, [showToInfo]);
-
   function saveAllResults() {
     setFilters(localFilters);
     setFilterToName(localFilterToName);
@@ -93,7 +76,7 @@ const FiltersView: React.FC<ICreateContext> = ({
         configurationGroups={configurationGroups}
         groupToInfo={groupToInfo}
         groupToWidgets={groupToWidgets}
-        widgetToInfo={widgetToInfo}
+        widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
         filters={localFilters}
         filterToName={localFilterToName}
@@ -117,7 +100,7 @@ const FiltersView: React.FC<ICreateContext> = ({
         setFilterToShowList={setLocalFilterToShowList}
         showToInfo={localShowToInfo}
         setShowToInfo={setLocalShowToInfo}
-        widgetToInfo={widgetToInfo}
+        widgetInfo={widgetInfo}
       />
       <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
     </div>
