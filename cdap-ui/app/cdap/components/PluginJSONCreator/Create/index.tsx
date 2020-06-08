@@ -59,16 +59,28 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     });
   };
 
+  public setConfigurationGroups = (configurationGroups: string[]) => {
+    this.setState({ configurationGroups });
+  };
+
+  public setGroupToInfo = (groupToInfo: any) => {
+    this.setState({ groupToInfo });
+  };
+
   public state = {
+    activeStep: 0,
     pluginName: '',
     pluginType: '',
     displayName: '',
-    emitAlerts: true,
-    emitErrors: true,
-    activeStep: 0,
+    emitAlerts: false,
+    emitErrors: false,
+    configurationGroups: [],
+    groupToInfo: {},
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
+    setConfigurationGroups: this.setConfigurationGroups,
+    setGroupToInfo: this.setGroupToInfo,
   };
 
   public render() {
