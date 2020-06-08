@@ -49,6 +49,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.getPreviewId = this.getPreviewId.bind(this);
     this.previewId = this.getPreviewId();
+    this.previewStatus = null;
     this.getStagesAndConnections = this.getStagesAndConnections.bind(this);
     this.tabs = [
       {
@@ -102,7 +103,7 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     if (rIsStudioMode && this.isPreviewMode && this.previewId) {
       this.previewData = null;
-      this.previewStatus = null;
+      this.updatePreviewStatus();
       this.selectedNode = { 
         plugin: this.state.node.plugin,
         isSource: this.state.isSource,
