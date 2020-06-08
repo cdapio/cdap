@@ -15,19 +15,11 @@
  */
 
 import Button from '@material-ui/core/Button';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelActions from '@material-ui/core/ExpansionPanelActions';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
-import GroupActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupActionButtons';
-import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
+import ConfigurationGroupInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/ConfigurationGroupInput';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import {
   CreateContext,
   createContextConnect,
@@ -35,24 +27,29 @@ import {
   ICreateContext,
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
+import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 import uuidV4 from 'uuid/v4';
 
-const styles = (): StyleRules => {
-  return {
-    eachGroup: {
-      display: 'grid',
-      gridTemplateColumns: '5fr 1fr',
-    },
-    groupContent: {
-      display: 'block',
-      padding: '0px 0',
-      width: 'calc(100%)',
-    },
-  };
-};
+// using some little inline style helpers to make the app look okay(보기좋게 앱을 만드는 인라인 스타일 헬퍼)
+const grid = 8;
+const getItemStyle = (draggableStyle, isDragging) => ({
+  // some basic styles to make the items look a bit nicer(아이템을 보기 좋게 만드는 몇 가지 기본 스타일)
+  userSelect: 'none',
+  padding: grid * 2,
+  marginBottom: grid,
 
-const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
+  // change background colour if dragging(드래깅시 배경색 변경)
+  background: isDragging ? 'lightgreen' : 'white',
+
+  // styles we need to apply on draggables(드래그에 필요한 스타일 적용)
+  ...draggableStyle,
+});
+const getListStyle = (isDraggingOver) => ({
+  background: isDraggingOver ? 'lightblue' : 'white',
+  padding: grid,
+});
+
+const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
   displayName,
@@ -152,6 +149,57 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     }
   };
 
+  const reorderConfigurationGroups = (sourceIndex: number, destIndex: number) => {
+    const newGroups = [...localConfigurationGroups];
+
+    const sourceGroup = newGroups[sourceIndex];
+    const destGroup = newGroups[destIndex];
+
+    newGroups[sourceIndex] = destGroup;
+    newGroups[destIndex] = sourceGroup;
+
+    setLocalConfigurationGroups(newGroups);
+  };
+
+  const reorderWidgets = (
+    sourceGroupID: string,
+    destGroupID: string,
+    sourceIndex: number,
+    destIndex: number
+  ) => {
+    debugger;
+    const sourceWidgets = [...localGroupToWidgets[sourceGroupID]];
+    const destWidgets = [...localGroupToWidgets[destGroupID]];
+    debugger;
+
+    const sourceWidget = sourceWidgets[sourceIndex];
+    const destWidget = destWidgets[destIndex];
+    // If widgets are reordered inside the same configuration group
+    if (sourceGroupID === destGroupID) {
+      debugger;
+      sourceWidgets[sourceIndex] = destWidget;
+      sourceWidgets[destIndex] = sourceWidget;
+      debugger;
+      setLocalGroupToWidgets({ ...localGroupToWidgets, [sourceGroupID]: sourceWidgets });
+    }
+    // If widgets have been moved to a different configuration group
+    else {
+      const newSourceWidgets = [...sourceWidgets];
+      const [draggedItem] = newSourceWidgets.splice(sourceIndex, 1);
+      debugger;
+
+      const newDestWidgets = [...destWidgets];
+      newDestWidgets.splice(destIndex, 0, draggedItem);
+      debugger;
+
+      setLocalGroupToWidgets({
+        ...localGroupToWidgets,
+        [sourceGroupID]: newSourceWidgets,
+        [destGroupID]: newDestWidgets,
+      });
+    }
+  };
+
   function saveAllResults() {
     setConfigurationGroups(localConfigurationGroups);
     setGroupToInfo(localGroupToInfo);
@@ -159,6 +207,24 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setWidgetInfo(localWidgetInfo);
     setWidgetToAttributes(localWidgetToAttributes);
   }
+
+  const onDragEnd = (result) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const sourceIndex = result.source.index;
+    const destIndex = result.destination.index;
+
+    if (result.type === 'groupItem') {
+      reorderConfigurationGroups(sourceIndex, destIndex);
+    } else if (result.type === 'widgetItem') {
+      const sourceGroupID = result.source.droppableId;
+      const destGroupID = result.destination.droppableId;
+
+      reorderWidgets(sourceGroupID, destGroupID, sourceIndex, destIndex);
+    }
+  };
 
   return (
     <div>
@@ -188,59 +254,46 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         </Button>
       </If>
 
-      {localConfigurationGroups.map((groupID, i) => {
-        const configurationGroupExpanded = activeGroupIndex === i;
-        const group = localGroupToInfo[groupID];
-        return (
-          <div key={groupID} className={classes.eachGroup}>
-            <ExpansionPanel
-              expanded={configurationGroupExpanded}
-              onChange={switchEditConfigurationGroup(i)}
-            >
-              <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1c-content"
-                id="panel1c-header"
-              >
-                <If condition={!configurationGroupExpanded}>
-                  <Typography className={classes.heading}>{group.label}</Typography>
-                </If>
-              </ExpansionPanelSummary>
-              <ExpansionPanelActions className={classes.groupContent}>
-                <GroupInfoInput
-                  groupID={groupID}
-                  groupToInfo={localGroupToInfo}
-                  setGroupToInfo={setLocalGroupToInfo}
-                />
-                <WidgetCollection
-                  groupID={groupID}
-                  groupToWidgets={localGroupToWidgets}
-                  setGroupToWidgets={setLocalGroupToWidgets}
-                  widgetInfo={localWidgetInfo}
-                  setWidgetInfo={setLocalWidgetInfo}
-                  widgetToAttributes={localWidgetToAttributes}
-                  setWidgetToAttributes={setLocalWidgetToAttributes}
-                />
-              </ExpansionPanelActions>
-            </ExpansionPanel>
+      <DragDropContext onDragEnd={onDragEnd}>
+        <Droppable droppableId="droppable" type={`groupItem`}>
+          {(provided, snapshot) => (
+            <div ref={provided.innerRef} style={getListStyle(snapshot.isDraggingOver)}>
+              {localConfigurationGroups.map((groupID, i) => {
+                return (
+                  <ConfigurationGroupInput
+                    id={groupID}
+                    key={groupID}
+                    index={i}
+                    groupID={groupID}
+                    configurationGroupExpanded={activeGroupIndex === i}
+                    switchEditConfigurationGroup={switchEditConfigurationGroup(i)}
+                    addConfigurationGroup={addConfigurationGroup(i)}
+                    deleteConfigurationGroup={deleteConfigurationGroup(i)}
+                    reorderConfigurationGroups={reorderConfigurationGroups}
+                    groupToInfo={localGroupToInfo}
+                    groupToWidgets={localGroupToWidgets}
+                    widgetInfo={localWidgetInfo}
+                    widgetToAttributes={localWidgetToAttributes}
+                    setGroupToInfo={setLocalGroupToInfo}
+                    setGroupToWidgets={setLocalGroupToWidgets}
+                    setWidgetInfo={setLocalWidgetInfo}
+                    setWidgetToAttributes={setLocalWidgetToAttributes}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
-            <GroupActionButtons
-              onAddConfigurationGroup={addConfigurationGroup(i)}
-              onDeleteConfigurationGroup={deleteConfigurationGroup(i)}
-            />
-          </div>
-        );
-      })}
       <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
     </div>
   );
 };
 
-const StyledConfigurationGroupsCollectionView = withStyles(styles)(
-  ConfigurationGroupsCollectionView
-);
 const ConfigurationGroupsCollection = createContextConnect(
   CreateContext,
-  StyledConfigurationGroupsCollectionView
+  ConfigurationGroupsCollectionView
 );
 export default ConfigurationGroupsCollection;
