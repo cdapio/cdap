@@ -391,15 +391,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appName) throws Exception {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
-    try {
-      applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
-      ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
-    } catch (UnsupportedOperationException e) {
-      String errorMessage = String.format("Application %s does not support upgrade.", appId);
-      ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
-      responder.sendJson(HttpResponseStatus.METHOD_NOT_ALLOWED, GSON.toJson(updateDetail));
-    }
+    applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
 
   /**

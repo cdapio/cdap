@@ -64,6 +64,12 @@ public class HttpExceptionHandler extends ExceptionHandler {
         responder.sendString(HttpResponseStatus.CONFLICT, cause.getMessage());
         return;
       }
+
+      if (cause.getClass().getName().endsWith("UnsupportedOperationException")) {
+        logWithTrace(request, cause);
+        responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, cause.getMessage());
+        return;
+      }
     }
 
     // If it is not some known exception type, response with 500.
