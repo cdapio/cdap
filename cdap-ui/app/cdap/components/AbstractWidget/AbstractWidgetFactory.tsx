@@ -49,6 +49,7 @@ import SqlSelectorWidget from 'components/AbstractWidget/SqlSelectorWidget';
 import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
+import MultiStageSelector from 'components/AbstractWidget/MultiStageSelector';
 
 /**
  * Please maintain alphabetical order of the widget factory.
@@ -68,6 +69,7 @@ export const WIDGET_FACTORY = {
   dlp: DLPCustomWidget,
   'get-schema': GetSchemaWidget,
   'input-field-selector': InputFieldDropdown,
+  'multiple-input-stage-selector': MultiStageSelector,
   'keyvalue-dropdown': KeyValueDropdownWidget,
   'keyvalue-encoded': KeyValueEncodedWidget,
   keyvalue: KeyValueWidget,
