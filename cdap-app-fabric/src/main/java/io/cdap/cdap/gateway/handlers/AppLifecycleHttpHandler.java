@@ -391,22 +391,15 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appName) throws Exception {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
-    ApplicationUpdateDetail updateDetail;
-    HttpResponseStatus responseStatus;
     try {
       applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
-      updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+      ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
     } catch (UnsupportedOperationException e) {
       String errorMessage = String.format("Application %s does not support upgrade.", appId);
-      updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
-    } catch (InvalidArtifactException | NotFoundException e) {
-      throw e;
-    } catch (Exception e) {
-      updateDetail =
-        new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
-                                    HttpResponseStatus.INTERNAL_SERVER_ERROR));
+      ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
+      responder.sendJson(HttpResponseStatus.METHOD_NOT_ALLOWED, GSON.toJson(updateDetail));
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
 
   /**
