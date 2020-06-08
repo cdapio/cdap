@@ -65,7 +65,7 @@ public class HttpExceptionHandler extends ExceptionHandler {
         return;
       }
 
-      if (cause.getClass().getName().endsWith("UnsupportedOperationException")) {
+      if (cause instanceof UnsupportedOperationException) {
         logWithTrace(request, cause);
         responder.sendString(HttpResponseStatus.NOT_IMPLEMENTED, cause.getMessage());
         return;
