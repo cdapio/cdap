@@ -26,13 +26,13 @@ import io.kubernetes.client.models.V1ObjectMeta;
 public interface ObjectMetaProvider<T> {
   /**
    * Get the metadata.
-   * @param resource resource for which metadata to be provided
+   * @param resource the resource for which metadata to be provided
    * @return the instance of V1ObjectMeta for the resource
    */
   V1ObjectMeta getObjectMeta(T resource);
 
   /**
-   * Check if the K8s resource available.
+   * Check if the K8s resource is available.
    * @param resource resource which need to be checked for availability
    * @return {@code true} if the resource status is {@code Available}, otherwise return {@code false}
    */

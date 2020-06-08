@@ -122,10 +122,6 @@ class DeploymentTwillPreparer extends AbstractKubeTwillPreparer {
    * Return a {@link V1Deployment} object that will be deployed in Kubernetes to run the program
    */
   @VisibleForTesting
-  /*V1Deployment buildDeployment(RunId runid, String appSpec, String programOptions, V1ObjectMeta deploymentMetadata,
-                               String containerName, int vCores, int memoryMB,
-                               Map<String, Map<String, String>> environments, V1ConfigMap configMap,
-                               PodInfo currentPodInfo, long startTimeoutMillis)*/
   V1Deployment buildDeployment(V1ObjectMeta resourceMeta, V1ResourceRequirements resourceRequirements,
                                List<V1EnvVar> envVars, V1ConfigMap configMap, long startTimeoutMillis) {
 
