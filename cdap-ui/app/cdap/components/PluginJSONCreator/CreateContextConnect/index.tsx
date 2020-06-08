@@ -25,8 +25,13 @@ interface ICreateState {
   displayName: string;
   emitAlerts: boolean;
   emitErrors: boolean;
+  configurationGroups: string[];
+  groupToInfo: any;
+
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
+  setConfigurationGroups: (groups: string[]) => void;
+  setGroupToInfo: (groupToInfo: any) => void;
 }
 
 export interface IBasicPluginInfo {
@@ -35,6 +40,11 @@ export interface IBasicPluginInfo {
   displayName: string;
   emitAlerts: boolean;
   emitErrors: boolean;
+}
+
+export interface IConfigurationGroupInfo {
+  label: string;
+  description?: string;
 }
 
 export type ICreateContext = Partial<ICreateState>;
