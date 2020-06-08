@@ -182,7 +182,7 @@ public final class ETLStage {
    */
   @Nullable
   private String getUpgradedVersionString(ArtifactId newPlugin) {
-    ArtifactVersionRange currentVersionRange = null;
+    ArtifactVersionRange currentVersionRange;
     try {
       currentVersionRange =
         io.cdap.cdap.api.artifact.ArtifactVersionRange.parse(plugin.getArtifactConfig().getVersion());
@@ -205,18 +205,18 @@ public final class ETLStage {
         // Do nothing and return as is. Note that plugin scope will not change.
         // TODO: Figure out how to change plugin scope if a newer plugin is found but in different scope.
         return null;
-      } else if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
-        // Current lower version is higher than newer latest version. This should not happen.
+      }
+      // Current lower version is higher than newer latest version. This should not happen.
+      if (currentVersionRange.getLower().compareTo(newPlugin.getVersion()) > 0) {
         LOG.warn("Error in updating stage {}. Invalid new plugin artifact {} upgrading plugin {}.",
                  name, newPlugin, plugin);
         return null;
-      } else {
-        // Increase the upper bound to latest available version.
-        ArtifactVersionRange newVersionRange =
-          new ArtifactVersionRange(currentVersionRange.getLower(), currentVersionRange.isLowerInclusive(),
-                                   newPlugin.getVersion(), /*isUpperInclusive=*/true);
-        return newVersionRange.getVersionString();
       }
+      // Increase the upper bound to latest available version.
+      ArtifactVersionRange newVersionRange =
+        new ArtifactVersionRange(currentVersionRange.getLower(), currentVersionRange.isLowerInclusive(),
+                                 newPlugin.getVersion(), true);
+      return newVersionRange.getVersionString();
     }
     return null;
   }
@@ -248,5 +248,4 @@ public final class ETLStage {
   public int hashCode() {
     return Objects.hash(name, plugin);
   }
-
 }

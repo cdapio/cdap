@@ -377,7 +377,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *                   the actual exception
    */
   public ApplicationUpdateDetail upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
-      throws Exception {
+    throws Exception {
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
     // check that app exists
@@ -449,32 +449,27 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
                                           artifactRepository, currentConfigStr, updateActions);
 
-    Object appMain;
-    try {
-      try (CloseableClassLoader artifactClassLoader =
-        artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
-                                                     classLoaderImpersonator)) {
-        appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+    try (CloseableClassLoader artifactClassLoader =
+      artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
+                                                   classLoaderImpersonator)) {
+      Object appMain = artifactClassLoader.loadClass(appClass.getClassName()).newInstance();
+      // Run config update logic for the application to generate updated config.
+      if (!(appMain instanceof Application)) {
+        throw new IllegalStateException(
+          String.format("Application main class is of invalid type: %s",
+                        appMain.getClass().getName()));
       }
-    } catch (IOException e) {
-      throw e;
+      Application app = (Application) appMain;
+      Type configType = Artifacts.getConfigType(app.getClass());
+      if (!app.isUpdateSupported()) {
+        String status = String.format("%s failed: ", userAction);
+        String errorMessage = String.format("Application does not support " + userAction);
+        return new ApplicationUpdateDetail(appId, status + " " + errorMessage);
+      }
+      ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
+      updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
     }
 
-    // Run config update logic for the application to generate updated config.
-    if (!(appMain instanceof Application)) {
-      throw new IllegalStateException(
-        String.format("Application main class is of invalid type: %s",
-                      appMain.getClass().getName()));
-    }
-    Application app = (Application) appMain;
-    Type configType = Artifacts.getConfigType(app.getClass());
-    if (!app.isUpdateSupported()) {
-      String status = String.format("%s failed: ", userAction);
-      String errorMessage = String.format("Application does not support " + userAction);
-      return new ApplicationUpdateDetail(appId, status + " " + errorMessage);
-    }
-    ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
-    updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
 
     // Deploy application with with potentially new app config and new artifact.
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), appId.getParent(),
