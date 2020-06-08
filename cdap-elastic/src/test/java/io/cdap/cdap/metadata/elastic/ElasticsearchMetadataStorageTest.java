@@ -22,6 +22,7 @@ import com.google.common.io.Closeables;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataKind;
@@ -75,7 +76,8 @@ public class ElasticsearchMetadataStorageTest extends MetadataStorageTest {
       LOG.info("Elasticsearch port is {}", elasticPort);
       cConf.set(Config.CONF_ELASTIC_HOSTS, "localhost:" + elasticPort);
     }
-    elasticStore = new ElasticsearchMetadataStorage(cConf);
+    SConfiguration sConf = SConfiguration.create();
+    elasticStore = new ElasticsearchMetadataStorage(cConf, sConf);
     elasticStore.createIndex();
   }
 

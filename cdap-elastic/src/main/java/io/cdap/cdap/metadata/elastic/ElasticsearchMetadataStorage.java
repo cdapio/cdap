@@ -31,6 +31,7 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.metadata.Cursor;
 import io.cdap.cdap.common.metadata.MetadataConflictException;
 import io.cdap.cdap.common.metadata.MetadataUtil;
@@ -54,6 +55,12 @@ import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
 import io.cdap.cdap.spi.metadata.SearchRequest;
 import io.cdap.cdap.spi.metadata.Sorting;
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.lucene.search.join.ScoreMode;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
@@ -83,6 +90,7 @@ import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.cluster.metadata.MappingMetaData;
 import org.elasticsearch.common.settings.Settings;
@@ -104,6 +112,9 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URL;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -118,6 +129,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
 
 /**
  * A metadata storage provider that delegates to Elasticsearch.
@@ -171,9 +183,15 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String SUPPORTED_SORT_KEYS = String.join(", ", SORT_KEY_MAP.keySet());
 
   private final CConfiguration cConf;
+  private final SConfiguration sConf;
   private final String elasticHosts;
   private final String indexName;
   private final String scrollTimeout;
+
+  private final String credentialsUsername;
+  private final String credentialsPassword;
+
+  private final boolean verifyTls;
 
   private volatile RestHighLevelClient client;
 
@@ -184,11 +202,15 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private final RetryStrategy retryStrategyOnConflict;
 
   @Inject
-  public ElasticsearchMetadataStorage(CConfiguration cConf) {
+  public ElasticsearchMetadataStorage(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
+    this.sConf = sConf;
     this.indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
     this.scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
     this.elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
+    this.credentialsUsername = sConf.get(Config.CONF_ELASTIC_USERNAME);
+    this.credentialsPassword = sConf.get(Config.CONF_ELASTIC_PASSWORD);
+    this.verifyTls = cConf.getBoolean(Config.CONF_ELASTIC_TLS_VERIFY, Config.DEFAULT_ELASTIC_TLS_VERIFY);
     int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
                                   Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
     int retrySleepMs = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_RETRY_SLEEP_MS,
@@ -287,12 +309,57 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
 
       LOG.info("Create new Elasticsearch client for cluster {}", elasticHosts);
       HttpHost[] hosts = Arrays.stream(elasticHosts.split(",")).map(hostAndPort -> {
-        int pos = hostAndPort.indexOf(':');
-        String host = pos < 0 ? hostAndPort : hostAndPort.substring(0, pos);
-        int port = pos < 0 ? 9200 : Integer.parseInt(hostAndPort.substring(pos + 1));
-        return new HttpHost(host, port);
+        String scheme = "http";
+        String host = hostAndPort;
+
+        int schemeIdx = host.indexOf("://");
+        if (schemeIdx > 0) {
+          scheme = host.substring(0, schemeIdx);
+          host = host.substring(schemeIdx + 3);
+        }
+
+        int port;
+        int portIdx = host.lastIndexOf(":");
+        if (portIdx > 0) {
+          try {
+            port = Integer.parseInt(host.substring(portIdx + 1));
+          } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid HTTP host: " + host, e);
+          }
+
+          host = host.substring(0, portIdx);
+        } else {
+          port = scheme.equals("https") ? 9243 : 9200;
+        }
+
+        return new HttpHost(host, port, scheme);
       }).toArray(HttpHost[]::new);
-      this.client = client = new RestHighLevelClient(RestClient.builder(hosts));
+
+      RestClientBuilder builder = RestClient.builder(hosts);
+
+      builder.setHttpClientConfigCallback(httpClientConfigCallback -> {
+        if (credentialsUsername != null && credentialsPassword != null) {
+          LOG.info("Creating REST client with authentication, username: {}", credentialsUsername);
+          CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+          credentialsProvider.setCredentials(
+            AuthScope.ANY, new UsernamePasswordCredentials(credentialsUsername, credentialsPassword));
+          httpClientConfigCallback.setDefaultCredentialsProvider(credentialsProvider);
+        }
+
+        if (!verifyTls) {
+          LOG.warn("Creating REST client with TLS verification DISABLED");
+          try {
+            SSLContext sslContext = SSLContextBuilder.create().loadTrustMaterial(new TrustSelfSignedStrategy()).build();
+            httpClientConfigCallback.setSSLContext(sslContext);
+          } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
+            LOG.error("Unable to trust self-signed certificates", e);
+          }
+        }
+
+        return httpClientConfigCallback;
+      });
+
+      this.client = client = new RestHighLevelClient(builder);
       return client;
     }
   }
