@@ -43,8 +43,8 @@ interface IPreviewDataViewProps extends WithStyles<typeof styles> {
 }
 
 export interface ITableData {
-  inputs: IRecords[];
-  outputs: IRecords[];
+  inputs: { [key: string]: IRecords };
+  outputs: { [key: string]: IRecords };
 }
 
 const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
@@ -80,15 +80,15 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
   );
 
   const getTableData = () => {
-    let inputs: IRecords[] = [];
-    let outputs: IRecords[] = [];
+    let inputs = {};
+    let outputs = {};
 
     if (!isEmpty(previewData)) {
       if (!isEmpty(previewData.input) && !selectedNode.isSource) {
-        inputs = Object.values(previewData.input);
+        inputs = previewData.input;
       }
       if (!isEmpty(previewData.output) && !selectedNode.isSink) {
-        outputs = Object.values(previewData.output);
+        outputs = previewData.output;
       }
     }
     return { inputs, outputs };

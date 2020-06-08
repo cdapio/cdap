@@ -17,7 +17,9 @@
 import React from 'react';
 import If from 'components/If';
 import DataTable from 'components/PreviewData/Table';
-import { INode, IRecords } from 'components/PreviewData/utilities';
+import { ITableData } from 'components/PreviewData';
+import { INode } from 'components/PreviewData/utilities';
+import Heading, { HeadingTypes } from 'components/Heading';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
@@ -53,7 +55,7 @@ const styles = (theme): StyleRules => ({
 });
 
 interface IPreviewTableContainerProps extends WithStyles<typeof styles> {
-  tableData: { inputs: IRecords[]; outputs: IRecords[] };
+  tableData: ITableData;
   selectedNode: INode;
   previewStatus?: string;
 }
@@ -64,6 +66,8 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
   selectedNode,
   previewStatus,
 }) => {
+  const inputs = Object.entries(tableData.inputs);
+  const outputs = Object.entries(tableData.outputs);
   return (
     <div className={classes.outerContainer}>
       <If condition={!selectedNode.isSource && !selectedNode.isCondition}>
@@ -73,11 +77,12 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
           })}
         >
           <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.inputHeader`)}</h2>
-          {tableData.inputs.map((input, i) => {
-            const inputHeaders = input.schemaFields;
-            const inputRecords = input.records;
+          {inputs.map(([tableKey, tableValue], i) => {
+            const inputHeaders = tableValue.schemaFields;
+            const inputRecords = tableValue.records;
             return (
               <div key={`input-table-${i}`}>
+                <Heading type={HeadingTypes.h3} label={inputs.length > 1 ? tableKey : null} />
                 <DataTable
                   headers={inputHeaders}
                   records={inputRecords}
@@ -96,11 +101,12 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
           })}
         >
           <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.outputHeader`)}</h2>
-          {tableData.outputs.map((output, j) => {
-            const outputHeaders = output.schemaFields;
-            const outputRecords = output.records;
+          {outputs.map(([tableKey, tableValue], j) => {
+            const outputHeaders = tableValue.schemaFields;
+            const outputRecords = tableValue.records;
             return (
               <div key={`output-table-${j}`}>
+                <Heading type={HeadingTypes.h3} label={outputs.length > 1 ? tableKey : null} />
                 <DataTable
                   headers={outputHeaders}
                   records={outputRecords}
