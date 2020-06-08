@@ -369,7 +369,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appId the id of the application to upgrade.
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
-   * @return Details of upgrade for the application like failure details with reason.
    * @throws IllegalStateException if something unexpected happened during upgrade.
    * @throws IOException if there was an IO error during initializing application class from artifact.
    * @throws JsonIOException if there was an error in serializing or deserializing app config.
