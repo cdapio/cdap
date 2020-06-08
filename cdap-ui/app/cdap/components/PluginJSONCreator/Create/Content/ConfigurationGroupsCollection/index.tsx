@@ -30,25 +30,6 @@ import * as React from 'react';
 import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 import uuidV4 from 'uuid/v4';
 
-// using some little inline style helpers to make the app look okay(보기좋게 앱을 만드는 인라인 스타일 헬퍼)
-const grid = 8;
-const getItemStyle = (draggableStyle, isDragging) => ({
-  // some basic styles to make the items look a bit nicer(아이템을 보기 좋게 만드는 몇 가지 기본 스타일)
-  userSelect: 'none',
-  padding: grid * 2,
-  marginBottom: grid,
-
-  // change background colour if dragging(드래깅시 배경색 변경)
-  background: isDragging ? 'lightgreen' : 'white',
-
-  // styles we need to apply on draggables(드래그에 필요한 스타일 적용)
-  ...draggableStyle,
-});
-const getListStyle = (isDraggingOver) => ({
-  background: isDraggingOver ? 'lightblue' : 'white',
-  padding: grid,
-});
-
 const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
@@ -149,57 +130,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
     }
   };
 
-  const reorderConfigurationGroups = (sourceIndex: number, destIndex: number) => {
-    const newGroups = [...localConfigurationGroups];
-
-    const sourceGroup = newGroups[sourceIndex];
-    const destGroup = newGroups[destIndex];
-
-    newGroups[sourceIndex] = destGroup;
-    newGroups[destIndex] = sourceGroup;
-
-    setLocalConfigurationGroups(newGroups);
-  };
-
-  const reorderWidgets = (
-    sourceGroupID: string,
-    destGroupID: string,
-    sourceIndex: number,
-    destIndex: number
-  ) => {
-    debugger;
-    const sourceWidgets = [...localGroupToWidgets[sourceGroupID]];
-    const destWidgets = [...localGroupToWidgets[destGroupID]];
-    debugger;
-
-    const sourceWidget = sourceWidgets[sourceIndex];
-    const destWidget = destWidgets[destIndex];
-    // If widgets are reordered inside the same configuration group
-    if (sourceGroupID === destGroupID) {
-      debugger;
-      sourceWidgets[sourceIndex] = destWidget;
-      sourceWidgets[destIndex] = sourceWidget;
-      debugger;
-      setLocalGroupToWidgets({ ...localGroupToWidgets, [sourceGroupID]: sourceWidgets });
-    }
-    // If widgets have been moved to a different configuration group
-    else {
-      const newSourceWidgets = [...sourceWidgets];
-      const [draggedItem] = newSourceWidgets.splice(sourceIndex, 1);
-      debugger;
-
-      const newDestWidgets = [...destWidgets];
-      newDestWidgets.splice(destIndex, 0, draggedItem);
-      debugger;
-
-      setLocalGroupToWidgets({
-        ...localGroupToWidgets,
-        [sourceGroupID]: newSourceWidgets,
-        [destGroupID]: newDestWidgets,
-      });
-    }
-  };
-
   function saveAllResults() {
     setConfigurationGroups(localConfigurationGroups);
     setGroupToInfo(localGroupToInfo);
@@ -208,21 +138,37 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
     setWidgetToAttributes(localWidgetToAttributes);
   }
 
+  const reorderConfigurationGroups = (sourceIndex: number, destIndex: number) => {
+    const newGroups = [...localConfigurationGroups];
+    const [group] = newGroups.splice(sourceIndex, 1);
+    newGroups.splice(destIndex, 0, group);
+
+    setLocalConfigurationGroups(newGroups);
+  };
+
+  const reorderWidgets = (sourceWidgetIndex: number, destWidgetIndex: number) => {
+    const activeGroupID = localConfigurationGroups[activeGroupIndex];
+    const newSourceWidgets = [...localGroupToWidgets[activeGroupID]];
+    const [draggedWidget] = newSourceWidgets.splice(sourceWidgetIndex, 1);
+    newSourceWidgets.splice(destWidgetIndex, 0, draggedWidget);
+    setLocalGroupToWidgets({ ...localGroupToWidgets, [activeGroupID]: newSourceWidgets });
+  };
+
   const onDragEnd = (result) => {
     if (!result.destination) {
       return;
     }
 
-    const sourceIndex = result.source.index;
-    const destIndex = result.destination.index;
-
     if (result.type === 'groupItem') {
-      reorderConfigurationGroups(sourceIndex, destIndex);
+      const sourceGroupID = result.source.index;
+      const destGroupID = result.destination.index;
+      reorderConfigurationGroups(sourceGroupID, destGroupID);
+      // Switch the index if there is any open configuration group.
+      setActiveGroupIndex(destGroupID);
     } else if (result.type === 'widgetItem') {
-      const sourceGroupID = result.source.droppableId;
-      const destGroupID = result.destination.droppableId;
-
-      reorderWidgets(sourceGroupID, destGroupID, sourceIndex, destIndex);
+      const sourceWidgetIndex = result.source.index;
+      const targetWidgetIndex = result.destination.index;
+      reorderWidgets(sourceWidgetIndex, targetWidgetIndex);
     }
   };
 
@@ -257,11 +203,10 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
       <DragDropContext onDragEnd={onDragEnd}>
         <Droppable droppableId="droppable" type={`groupItem`}>
           {(provided, snapshot) => (
-            <div ref={provided.innerRef} style={getListStyle(snapshot.isDraggingOver)}>
+            <div ref={provided.innerRef}>
               {localConfigurationGroups.map((groupID, i) => {
                 return (
                   <ConfigurationGroupInput
-                    id={groupID}
                     key={groupID}
                     index={i}
                     groupID={groupID}
@@ -269,7 +214,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
                     switchEditConfigurationGroup={switchEditConfigurationGroup(i)}
                     addConfigurationGroup={addConfigurationGroup(i)}
                     deleteConfigurationGroup={deleteConfigurationGroup(i)}
-                    reorderConfigurationGroups={reorderConfigurationGroups}
                     groupToInfo={localGroupToInfo}
                     groupToWidgets={localGroupToWidgets}
                     widgetInfo={localWidgetInfo}

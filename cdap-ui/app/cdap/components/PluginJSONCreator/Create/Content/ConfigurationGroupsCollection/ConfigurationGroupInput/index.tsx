@@ -47,26 +47,22 @@ const styles = (): StyleRules => {
 };
 
 interface IConfigurationGroupInputProps extends ICreateContext, WithStyles<typeof styles> {
-  id: string;
   index: number;
   groupID: string;
   configurationGroupExpanded: boolean;
   switchEditConfigurationGroup: () => void;
   addConfigurationGroup: () => void;
   deleteConfigurationGroup: () => void;
-  reorderConfigurationGroups: (groupID: string, afterGroupID: string) => void;
 }
 
 const ConfigurationGroupInputView: React.FC<IConfigurationGroupInputProps> = ({
   classes,
-  id,
   index,
   groupID,
   configurationGroupExpanded,
   switchEditConfigurationGroup,
   addConfigurationGroup,
   deleteConfigurationGroup,
-  reorderConfigurationGroups,
   groupToInfo,
   groupToWidgets,
   widgetInfo,
@@ -78,7 +74,7 @@ const ConfigurationGroupInputView: React.FC<IConfigurationGroupInputProps> = ({
 }) => {
   const group = groupToInfo[groupID];
   return (
-    <Draggable draggableId={id} index={index} type="TASK">
+    <Draggable draggableId={groupID} index={index}>
       {(provided) => (
         <div
           className={classes.eachGroup}

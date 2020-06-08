@@ -129,7 +129,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToWidgets: {},
     widgetInfo: {},
     widgetToAttributes: {},
-    liveView: true,
+    liveView: false,
     outputName: '',
     JSONStatus: JSONStatusMessage.Normal,
 

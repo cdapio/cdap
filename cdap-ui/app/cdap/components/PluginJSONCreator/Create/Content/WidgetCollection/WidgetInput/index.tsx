@@ -23,14 +23,6 @@ import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnec
 import * as React from 'react';
 import { Draggable } from 'react-beautiful-dnd';
 
-const grid = 8;
-
-const getListStyle = (isDraggingOver) => ({
-  background: isDraggingOver ? 'lightblue' : 'lightgrey',
-  padding: grid,
-  margin: '10px 0',
-});
-
 const styles = (): StyleRules => {
   return {
     eachWidget: {
@@ -43,7 +35,6 @@ const styles = (): StyleRules => {
 };
 
 interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
-  id: string;
   index: number;
   widgetID: string;
   widgetAttributesOpen: boolean;
@@ -51,12 +42,10 @@ interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
   deleteWidgetFromGroup: () => void;
   openWidgetAttributes: () => void;
   closeWidgetAttributes: () => void;
-  // reorderWidgets: (widgetID: string, afterWidgetID: string) => void;
 }
 
 const WidgetInputView: React.FC<IWidgetInputProps> = ({
   classes,
-  id,
   index,
   widgetID,
   widgetInfo,
@@ -66,13 +55,12 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   widgetAttributesOpen,
   addWidgetToGroup,
   deleteWidgetFromGroup,
-  // reorderWidgets,
   openWidgetAttributes,
   closeWidgetAttributes,
 }) => {
   return (
-    <Draggable key={id} draggableId={id} index={index}>
-      {(provided, snapshot) => (
+    <Draggable key={widgetID} draggableId={widgetID} index={index}>
+      {(provided) => (
         <div
           className={classes.eachWidget}
           ref={provided.innerRef}

@@ -23,34 +23,6 @@ import * as React from 'react';
 import { Droppable } from 'react-beautiful-dnd';
 import uuidV4 from 'uuid/v4';
 
-const grid = 8;
-
-const getItemStyle = (isDragging, draggableStyle) => ({
-  // some basic styles to make the items look a bit nicer
-  userSelect: 'none',
-  padding: grid * 2,
-  margin: `0 10px 10px 0`,
-
-  width: '120px',
-
-  ...(isDragging && {
-    // change background colour if dragging
-    background: isDragging ? 'lightgreen' : 'grey',
-    display: 'inline-flex',
-    padding: '10px',
-    margin: '0 10px 10px 0',
-    border: '1px solid grey',
-    // styles we need to apply on draggables
-    ...draggableStyle,
-  }),
-});
-
-const getListStyle = (isDraggingOver) => ({
-  background: isDraggingOver ? 'lightblue' : 'lightgrey',
-  padding: grid,
-  margin: '10px 0',
-});
-
 const styles = (theme): StyleRules => {
   return {
     eachWidget: {
@@ -188,11 +160,10 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       </div>
       <div className={classes.widgetContainer}>
         <Droppable droppableId={groupID} type={`widgetItem`}>
-          {(provided, snapshot) => (
-            <div ref={provided.innerRef} style={getListStyle(snapshot.isDraggingOver)}>
+          {(provided) => (
+            <div ref={provided.innerRef}>
               {activeWidgets.map((widgetID, widgetIndex) => (
                 <WidgetInput
-                  id={widgetID}
                   key={widgetID}
                   index={widgetIndex}
                   widgetAttributesOpen={openWidgetIndex === widgetIndex}
