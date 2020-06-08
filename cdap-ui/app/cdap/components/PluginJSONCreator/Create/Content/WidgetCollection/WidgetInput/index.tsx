@@ -14,133 +14,110 @@
  * the License.
  */
 
+import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import If from 'components/If';
-import {
-  WIDGET_CATEGORY,
-  WIDGET_TYPES,
-  WIDGET_TYPE_TO_ATTRIBUTES,
-} from 'components/PluginJSONCreator/constants';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
+import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
+import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInfoInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
+import { Draggable } from 'react-beautiful-dnd';
+
+const grid = 8;
+const getDraggedWidgetStyle = (isDragging, draggableStyle) => ({
+  // some basic styles to make the items look a bit nicer
+  userSelect: 'none',
+  padding: grid * 2,
+  marginBottom: grid,
+
+  // change background colour if dragging
+  ...(isDragging && { background: 'lightgreen' }),
+
+  // styles we need to apply on draggables
+  ...draggableStyle,
+});
 
 const styles = (): StyleRules => {
   return {
-    widgetInput: {
-      width: '100%',
-      marginTop: '20px',
-      marginBottom: '20px',
-    },
-    widgetField: {
-      width: '100%',
-      marginTop: '10px',
-      marginBottom: '10px',
+    eachWidget: {
+      display: 'grid',
+      gridTemplateColumns: '5fr 1fr',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      padding: grid,
+      userSelect: 'none',
     },
   };
 };
 
 interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
-  widgetID: number;
+  index: number;
+  widgetID: string;
+  widgetAttributesOpen: boolean;
+  addWidgetToGroup: () => void;
+  deleteWidgetFromGroup: () => void;
+  openWidgetAttributes: () => void;
+  closeWidgetAttributes: () => void;
 }
 
 const WidgetInputView: React.FC<IWidgetInputProps> = ({
   classes,
+  index,
   widgetID,
   widgetInfo,
   setWidgetInfo,
   widgetToAttributes,
   setWidgetToAttributes,
+  widgetAttributesOpen,
+  addWidgetToGroup,
+  deleteWidgetFromGroup,
+  openWidgetAttributes,
+  closeWidgetAttributes,
 }) => {
-  function onNameChange() {
-    return (name) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], name },
-      }));
-    };
-  }
-
-  function onLabelChange() {
-    return (label) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], label },
-      }));
-    };
-  }
-
-  function onWidgetTypeChange() {
-    return (widgetType) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], widgetType },
-      }));
-
-      setWidgetToAttributes({
-        ...widgetToAttributes,
-        [widgetID]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
-          acc[curr] = '';
-          return acc;
-        }, {}),
-      });
-    };
-  }
-
-  function onWidgetCategoryChange() {
-    return (widgetCategory) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], widgetCategory },
-      }));
-    };
-  }
-
   return (
-    <If condition={widgetInfo[widgetID]}>
-      <div className={classes.widgetInput}>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={widgetInfo[widgetID].name}
-            onChange={onNameChange()}
-            label={'Name'}
-            placeholder={'Name a Widget'}
-            required={false}
-          />
+    <Draggable key={widgetID} draggableId={widgetID} index={index}>
+      {(provided, snapshot) => (
+        <div>
+          <div
+            className={classes.eachWidget}
+            ref={provided.innerRef}
+            {...provided.draggableProps}
+            {...provided.dragHandleProps}
+            style={getDraggedWidgetStyle(snapshot.isDragging, provided.draggableProps.style)}
+          >
+            <WidgetInfoInput
+              widgetInfo={widgetInfo}
+              widgetID={widgetID}
+              setWidgetInfo={setWidgetInfo}
+              widgetToAttributes={widgetToAttributes}
+              setWidgetToAttributes={setWidgetToAttributes}
+            />
+            <WidgetActionButtons
+              onAddWidgetToGroup={addWidgetToGroup}
+              onDeleteWidgetFromGroup={deleteWidgetFromGroup}
+            />
+            <WidgetAttributesCollection
+              widgetAttributesOpen={widgetAttributesOpen}
+              onWidgetAttributesClose={closeWidgetAttributes}
+              widgetID={widgetID}
+              widgetInfo={widgetInfo}
+              setWidgetInfo={setWidgetInfo}
+              widgetToAttributes={widgetToAttributes}
+              setWidgetToAttributes={setWidgetToAttributes}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              component="span"
+              onClick={openWidgetAttributes}
+            >
+              Attributes
+            </Button>
+          </div>
+          {provided.placeholder}
         </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={widgetInfo[widgetID].label}
-            onChange={onLabelChange()}
-            label={'Label'}
-            placeholder={'Label a Widget'}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'select'}
-            value={widgetInfo[widgetID].widgetCategory}
-            onChange={onWidgetCategoryChange()}
-            label={'Category'}
-            options={WIDGET_CATEGORY}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'select'}
-            value={widgetInfo[widgetID].widgetType}
-            onChange={onWidgetTypeChange()}
-            label={'Widget Type'}
-            options={WIDGET_TYPES}
-            required={true}
-          />
-        </div>
-      </div>
-    </If>
+      )}
+    </Draggable>
   );
 };
 

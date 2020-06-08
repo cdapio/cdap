@@ -24,7 +24,7 @@ import If from 'components/If';
 import { h2Styles } from 'components/Markdown/MarkdownHeading';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
 import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput';
-import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
+import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInfoInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
@@ -82,7 +82,7 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
           <div className={classes.widgetAttributesTitle}>
             <h1 className={classes.h2Title}>Widget Property</h1>
           </div>
-          <WidgetInput
+          <WidgetInfoInput
             widgetInfo={widgetInfo}
             widgetID={widgetID}
             setWidgetInfo={setWidgetInfo}

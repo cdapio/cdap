@@ -15,19 +15,13 @@
  */
 
 import Button from '@material-ui/core/Button';
-import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelActions from '@material-ui/core/ExpansionPanelActions';
-import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
-import GroupActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupActionButtons';
-import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
+import ConfigurationGroupInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/ConfigurationGroupInput';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import {
   CreateContext,
   createContextConnect,
@@ -35,24 +29,18 @@ import {
   ICreateContext,
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
+import { DragDropContext, Droppable } from 'react-beautiful-dnd';
 import uuidV4 from 'uuid/v4';
 
 const styles = (): StyleRules => {
   return {
-    eachGroup: {
-      display: 'grid',
-      gridTemplateColumns: '5fr 1fr',
-    },
-    groupContent: {
-      display: 'block',
-      padding: '0px 0',
-      width: 'calc(100%)',
+    draggedGroup: {
+      background: 'lightblue',
     },
   };
 };
 
-const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
+const ConfigurationGroupsCollectionView: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
   displayName,
@@ -75,6 +63,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   JSONStatus,
   setJSONStatus,
 }) => {
+  const [groupsAllOpen, setGroupsAllOpen] = React.useState(false);
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
     configurationGroups
@@ -160,6 +149,48 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setWidgetToAttributes(localWidgetToAttributes);
   }
 
+  const reorderConfigurationGroups = (sourceGroupIndex: number, destGroupIndex: number) => {
+    const newGroups = [...localConfigurationGroups];
+    const [group] = newGroups.splice(sourceGroupIndex, 1);
+    newGroups.splice(destGroupIndex, 0, group);
+
+    setLocalConfigurationGroups(newGroups);
+  };
+
+  const reorderWidgets = (
+    sourceGroupID: string,
+    sourceWidgetIndex: number,
+    destWidgetIndex: number
+  ) => {
+    const newWidgets = [...localGroupToWidgets[sourceGroupID]];
+    const [draggedWidget] = newWidgets.splice(sourceWidgetIndex, 1);
+    newWidgets.splice(destWidgetIndex, 0, draggedWidget);
+    setLocalGroupToWidgets({ ...localGroupToWidgets, [sourceGroupID]: newWidgets });
+  };
+
+  const onDragStart = (result) => {
+    if (result.type === 'groupItem') {
+      setActiveGroupIndex(null);
+    }
+  };
+
+  const onDragEnd = (result) => {
+    if (!result.destination) {
+      return;
+    }
+
+    const sourceIndex = result.source.index;
+    const destIndex = result.destination.index;
+    if (result.type === 'groupItem') {
+      reorderConfigurationGroups(sourceIndex, destIndex);
+      // Switch the index if there is any open configuration group.
+      setActiveGroupIndex(destIndex);
+    } else if (result.type === 'widgetItem') {
+      const sourceGroupID = result.source.droppableId;
+      reorderWidgets(sourceGroupID, sourceIndex, destIndex);
+    }
+  };
+
   return (
     <div>
       <JsonMenu
@@ -188,49 +219,40 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         </Button>
       </If>
 
-      {localConfigurationGroups.map((groupID, i) => {
-        const configurationGroupExpanded = activeGroupIndex === i;
-        const group = localGroupToInfo[groupID];
-        return (
-          <div key={groupID} className={classes.eachGroup}>
-            <ExpansionPanel
-              expanded={configurationGroupExpanded}
-              onChange={switchEditConfigurationGroup(i)}
+      <DragDropContext onDragStart={onDragStart} onDragEnd={onDragEnd}>
+        <Droppable droppableId="droppable" type="groupItem">
+          {(provided, snapshot) => (
+            <div
+              ref={provided.innerRef}
+              className={classnames({ draggedGroup: snapshot.isDraggingOver })}
             >
-              <ExpansionPanelSummary
-                expandIcon={<ExpandMoreIcon />}
-                aria-controls="panel1c-content"
-                id="panel1c-header"
-              >
-                <If condition={!configurationGroupExpanded}>
-                  <Typography className={classes.heading}>{group.label}</Typography>
-                </If>
-              </ExpansionPanelSummary>
-              <ExpansionPanelActions className={classes.groupContent}>
-                <GroupInfoInput
-                  groupID={groupID}
-                  groupToInfo={localGroupToInfo}
-                  setGroupToInfo={setLocalGroupToInfo}
-                />
-                <WidgetCollection
-                  groupID={groupID}
-                  groupToWidgets={localGroupToWidgets}
-                  setGroupToWidgets={setLocalGroupToWidgets}
-                  widgetInfo={localWidgetInfo}
-                  setWidgetInfo={setLocalWidgetInfo}
-                  widgetToAttributes={localWidgetToAttributes}
-                  setWidgetToAttributes={setLocalWidgetToAttributes}
-                />
-              </ExpansionPanelActions>
-            </ExpansionPanel>
+              {localConfigurationGroups.map((groupID, i) => {
+                return (
+                  <ConfigurationGroupInput
+                    key={i}
+                    index={i}
+                    groupID={groupID}
+                    configurationGroupExpanded={groupsAllOpen || activeGroupIndex === i}
+                    switchEditConfigurationGroup={switchEditConfigurationGroup(i)}
+                    addConfigurationGroup={addConfigurationGroup(i)}
+                    deleteConfigurationGroup={deleteConfigurationGroup(i)}
+                    groupToInfo={localGroupToInfo}
+                    groupToWidgets={localGroupToWidgets}
+                    widgetInfo={localWidgetInfo}
+                    widgetToAttributes={localWidgetToAttributes}
+                    setGroupToInfo={setLocalGroupToInfo}
+                    setGroupToWidgets={setLocalGroupToWidgets}
+                    setWidgetInfo={setLocalWidgetInfo}
+                    setWidgetToAttributes={setLocalWidgetToAttributes}
+                  />
+                );
+              })}
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
+      </DragDropContext>
 
-            <GroupActionButtons
-              onAddConfigurationGroup={addConfigurationGroup(i)}
-              onDeleteConfigurationGroup={deleteConfigurationGroup(i)}
-            />
-          </div>
-        );
-      })}
       <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
     </div>
   );

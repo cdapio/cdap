@@ -15,14 +15,13 @@
  */
 
 import Button from '@material-ui/core/Button';
-import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import classnames from 'classnames';
 import If from 'components/If';
-import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
-import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
 import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
+import { Droppable } from 'react-beautiful-dnd';
 import uuidV4 from 'uuid/v4';
 
 const styles = (theme): StyleRules => {
@@ -61,6 +60,9 @@ const styles = (theme): StyleRules => {
     widgetDivider: {
       width: '100%',
     },
+    draggedWidget: {
+      backgroundColor: theme.palette.blue[200],
+    },
   };
 };
 
@@ -78,16 +80,16 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   widgetToAttributes,
   setWidgetToAttributes,
 }) => {
-  const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
+  const activeWidgets = groupID ? groupToWidgets[groupID] : [];
   const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
 
-  React.useEffect(() => {
+  /*React.useEffect(() => {
     if (groupID) {
       setActiveWidgets(groupToWidgets[groupID]);
     } else {
       setActiveWidgets([]);
     }
-  }, [groupToWidgets]);
+  }, [groupToWidgets]);*/
 
   function addWidgetToGroup(index: number) {
     return () => {
@@ -148,9 +150,11 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
     };
   }
 
-  function closeWidgetAttributes() {
-    setOpenWidgetIndex(null);
-  }
+  const closeWidgetAttributes = () => {
+    return () => {
+      setOpenWidgetIndex(null);
+    };
+  };
 
   return (
     <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
@@ -159,46 +163,34 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
         <span className={classes.required}>*</span>
       </div>
       <div className={classes.widgetContainer}>
-        {activeWidgets.map((widgetID, widgetIndex) => {
-          return (
-            <If condition={widgetInfo[widgetID]} key={widgetIndex}>
-              <div className={classes.eachWidget}>
-                <WidgetInput
-                  widgetInfo={widgetInfo}
-                  widgetID={widgetID}
-                  setWidgetInfo={setWidgetInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                />
-                <WidgetActionButtons
-                  onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
-                  onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
-                />
-
-                <WidgetAttributesCollection
-                  widgetAttributesOpen={openWidgetIndex === widgetIndex}
-                  onWidgetAttributesClose={closeWidgetAttributes}
-                  widgetID={widgetID}
-                  widgetInfo={widgetInfo}
-                  setWidgetInfo={setWidgetInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                />
-              </div>
-              <Button
-                variant="contained"
-                color="primary"
-                component="span"
-                onClick={openWidgetAttributes(widgetIndex)}
+        <Droppable droppableId={groupID} type="widgetItem">
+          {(provided, snapshot) => (
+            <div>
+              <div
+                ref={provided.innerRef}
+                className={classnames({ draggedWidget: snapshot.isDraggingOver })}
               >
-                Attributes
-              </Button>
-              <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
-                <Divider className={classes.widgetDivider} />
-              </If>
-            </If>
-          );
-        })}
+                {activeWidgets.map((widgetID, widgetIndex) => (
+                  <WidgetInput
+                    key={widgetIndex}
+                    index={widgetIndex}
+                    widgetAttributesOpen={openWidgetIndex === widgetIndex}
+                    closeWidgetAttributes={closeWidgetAttributes()}
+                    openWidgetAttributes={openWidgetAttributes(widgetIndex)}
+                    addWidgetToGroup={addWidgetToGroup(widgetIndex)}
+                    deleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
+                    widgetID={widgetID}
+                    widgetInfo={widgetInfo}
+                    setWidgetInfo={setWidgetInfo}
+                    widgetToAttributes={widgetToAttributes}
+                    setWidgetToAttributes={setWidgetToAttributes}
+                  />
+                ))}
+              </div>
+              {provided.placeholder}
+            </div>
+          )}
+        </Droppable>
         <If condition={Object.keys(activeWidgets).length === 0}>
           <Button variant="contained" color="primary" onClick={addWidgetToGroup(0)}>
             Add Properties
