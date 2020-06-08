@@ -39,6 +39,7 @@ import org.apache.twill.api.TwillSpecification;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
@@ -56,7 +57,7 @@ import java.util.stream.Collectors;
  * Kubernetes version of a TwillRunner.
  */
 public abstract class AbstractKubeTwillPreparer implements TwillPreparer {
-
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractKubeTwillPreparer.class);
   private static final String CPU_MULTIPLIER = "master.environment.k8s.container.cpu.multiplier";
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
@@ -308,6 +309,10 @@ public abstract class AbstractKubeTwillPreparer implements TwillPreparer {
       createKubeResources(resourceMeta, resourceRequirements, envVars, timeout, timeoutUnit);
       return controllerFactory.create(timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
+      if (e instanceof ApiException) {
+        String msg = ((ApiException) e).getResponseBody();
+        LOG.error("Error while creating object {}", msg);
+      }
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
   }

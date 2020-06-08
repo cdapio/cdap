@@ -95,6 +95,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
   private TwillRunnerService twillRunner;
+  private String containerName;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -150,9 +151,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
+    KubeResourceType resourceType = KubeResourceType.DEPLOYMENT;
+    if (podLabels.containsKey("cdap.container.Preview")) {
+      resourceType = KubeResourceType.STATEFULSET;
+    }
     twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, conf,
-                                             Collections.singletonMap(instanceLabel, instanceName),
-                                             KubeResourceType.DEPLOYMENT);
+                                             Collections.singletonMap(instanceLabel, instanceName), resourceType);
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 
@@ -225,7 +229,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // The name of the label will be used to hold the name of new container created by this process.
     // We use the same label name so that we don't need to alter the configuration for new pod
     String containerLabelName = conf.getOrDefault(CONTAINER_LABEL, DEFAULT_CONTAINER_LABEL);
-    String containerName = podLabels.get(containerLabelName);
+    containerName = podLabels.get(containerLabelName);
+    LOG.info("container name is {}", containerName);
     V1Container container = pod.getSpec().getContainers().stream()
       .filter(c -> Objects.equals(containerName, c.getName()))
       .findFirst()
