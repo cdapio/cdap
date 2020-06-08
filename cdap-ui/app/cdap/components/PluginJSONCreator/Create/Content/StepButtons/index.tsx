@@ -42,6 +42,7 @@ interface IStepButtonProps extends WithStyles<typeof styles>, ICreateContext {
   nextDisabled?: boolean;
   onNext?: () => void;
   onComplete?: () => void;
+  onPrevious?: () => void;
   completeLoading?: boolean;
 }
 
@@ -50,9 +51,22 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   setActiveStep,
   nextDisabled,
   onNext,
+  onPrevious,
   classes,
   onComplete,
 }) => {
+  function handlePreviousClick() {
+    if (activeStep === 0) {
+      return;
+    }
+
+    if (typeof onNext === 'function') {
+      onPrevious();
+    }
+
+    setActiveStep(activeStep - 1);
+  }
+
   function handleNextClick() {
     if (activeStep === STEPS.length - 1) {
       return;
@@ -68,7 +82,7 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   return (
     <div className={classes.root}>
       <If condition={activeStep > 0}>
-        <Button color="primary" onClick={() => setActiveStep(activeStep - 1)}>
+        <Button color="primary" onClick={handlePreviousClick}>
           Previous
         </Button>
       </If>
