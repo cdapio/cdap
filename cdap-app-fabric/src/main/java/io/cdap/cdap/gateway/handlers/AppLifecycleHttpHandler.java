@@ -391,8 +391,22 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @PathParam("namespace-id") String namespaceId,
                                  @PathParam("app-id") String appName) throws Exception {
     ApplicationId appId = validateApplicationId(namespaceId, appName);
-    ApplicationUpdateDetail detail = applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(detail));
+    ApplicationUpdateDetail updateDetail;
+    HttpResponseStatus responseStatus;
+    try {
+      applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+      updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+    } catch (UnsupportedOperationException e) {
+      String errorMessage = String.format("Application %s does not support upgrade.", appId);
+      updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
+    } catch (InvalidArtifactException | NotFoundException e) {
+      throw e;
+    } catch (Exception e) {
+      updateDetail =
+        new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                                    HttpResponseStatus.INTERNAL_SERVER_ERROR));
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
 
   /**
@@ -420,14 +434,21 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
     List<ApplicationUpdateDetail> details = new ArrayList<>();
     for (ApplicationId appId : appIds) {
+      ApplicationUpdateDetail updateDetail;
       try {
-        details.add(applicationLifecycleService.upgradeApplication(appId, createProgramTerminator()));
+        applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+        updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+      } catch (UnsupportedOperationException e) {
+        String errorMessage = String.format("Application %s does not support upgrade.", appId);
+        updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
+      } catch (InvalidArtifactException | NotFoundException e) {
+        updateDetail = new ApplicationUpdateDetail(appId, e.getMessage());
       } catch (Exception e) {
-        ApplicationUpdateDetail errorDetail =
+        updateDetail =
           new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
-                                                                   HttpResponseStatus.INTERNAL_SERVER_ERROR));
-        details.add(errorDetail);
+                                      HttpResponseStatus.INTERNAL_SERVER_ERROR));
       }
+      details.add(updateDetail);
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }

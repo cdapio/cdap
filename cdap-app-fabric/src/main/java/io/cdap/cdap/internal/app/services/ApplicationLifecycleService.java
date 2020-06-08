@@ -373,10 +373,13 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws IllegalStateException if something unexpected happened during upgrade.
    * @throws IOException if there was an IO error during initializing application class from artifact.
    * @throws JsonIOException if there was an error in serializing or deserializing app config.
+   * @throws UnsupportedOperationException if application does not support upgrade operation.
+   * @throws InvalidArtifactException if candidate application artifact is invalid for upgrade purpose.
+   * @throws NotFoundException if any object related to upgrade is not found like application/artifact.
    * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
    *                   the actual exception
    */
-  public ApplicationUpdateDetail upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
+  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
     throws Exception {
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
@@ -384,7 +387,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ApplicationSpecification currentSpec = store.getApplication(appId);
     if (currentSpec == null) {
       LOG.info("Application {} not found for upgrade.", appId);
-      return new ApplicationUpdateDetail(appId, new NotFoundException(appId));
+      throw new NotFoundException(appId);
     }
     ArtifactId currentArtifact = currentSpec.getArtifactId();
     NamespaceId currentArtifactNamespace =
@@ -397,7 +400,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (availableArtifacts.isEmpty()) {
       String error = String.format("No artifacts found for artifact id %s in namespace %s.", currentArtifact.getName(),
                                    currentArtifactNamespace);
-      return new ApplicationUpdateDetail(appId, "Upgrade failed: " + error);
+      throw new NotFoundException(error);
     }
     // The latest version should be first (and only) value in the result.
     ArtifactSummary candidateArtifact = availableArtifacts.get(0);
@@ -407,7 +410,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     if (currentArtifact.getVersion().compareTo(candidateArtifactVersion) > 0) {
       String error = String.format(
         "The current artifact has a version higher %s than any existing artifact.", currentArtifact.getVersion());
-      return new ApplicationUpdateDetail(appId, "Upgrade failed: " + error);
+      throw new InvalidArtifactException(error);
     }
 
     ArtifactId newArtifactId =
@@ -417,23 +420,21 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
     List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
 
-
-    return updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
-                                     upgradeActions, ownerAdmin.getOwner(appId), false, "Upgrade");
+    updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
+                              upgradeActions, ownerAdmin.getOwner(appId), false);
   }
 
   /**
    * Updates an application config by applying given update actions. The app should know how to apply these actions
    * to its config.
    */
-  private ApplicationUpdateDetail updateApplicationInternal(ApplicationId appId,
-                                                            @Nullable String currentConfigStr,
-                                                            ProgramTerminator programTerminator,
-                                                            ArtifactDetail artifactDetail,
-                                                            List<ApplicationConfigUpdateAction> updateActions,
-                                                            @Nullable KerberosPrincipalId ownerPrincipal,
-                                                            boolean updateSchedules,
-                                                            String userAction) throws Exception {
+  private void updateApplicationInternal(ApplicationId appId,
+                                         @Nullable String currentConfigStr,
+                                         ProgramTerminator programTerminator,
+                                         ArtifactDetail artifactDetail,
+                                         List<ApplicationConfigUpdateAction> updateActions,
+                                         @Nullable KerberosPrincipalId ownerPrincipal,
+                                         boolean updateSchedules) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
     if (appClass == null) {
       // This should never happen.
@@ -462,9 +463,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Application app = (Application) appMain;
       Type configType = Artifacts.getConfigType(app.getClass());
       if (!app.isUpdateSupported()) {
-        String status = String.format("%s failed: ", userAction);
-        String errorMessage = String.format("Application does not support " + userAction);
-        return new ApplicationUpdateDetail(appId, status + " " + errorMessage);
+        String errorMessage = String.format("Application %s does not support update.", appId);
+        throw new UnsupportedOperationException(errorMessage);
       }
       ApplicationUpdateResult<?> updateResult = app.updateConfig(updateContext);
       updatedAppConfig = GSON.toJson(updateResult.getNewConfig(), configType);
@@ -488,7 +488,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
     adminEventPublisher.publishAppCreation(applicationWithPrograms.getApplicationId(),
                                            applicationWithPrograms.getSpecification());
-    return new ApplicationUpdateDetail(appId, String.format("%s successful.", userAction));
   }
 
   /**
