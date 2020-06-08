@@ -18,7 +18,6 @@ package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import io.cdap.cdap.k8s.common.KubeResourceType;
 import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
@@ -94,7 +93,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
-  private TwillRunnerService twillRunner;
+  private KubeTwillRunnerService twillRunner;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -151,8 +150,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     }
 
     twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, conf,
-                                             Collections.singletonMap(instanceLabel, instanceName),
-                                             KubeResourceType.DEPLOYMENT);
+                                             Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
 

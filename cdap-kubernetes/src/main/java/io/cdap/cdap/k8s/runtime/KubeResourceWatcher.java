@@ -23,6 +23,7 @@ import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
 import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.util.Config;
 import org.apache.twill.common.Cancellable;
 
@@ -55,6 +56,16 @@ abstract class KubeResourceWatcher<T> extends AbstractWatcherThread<T> {
       protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
         return getAppsApi().listNamespacedDeploymentCall(namespace, null, null, null, labelSelector,
                                                          null, null, null, true, null, null);
+      }
+    };
+  }
+
+  static KubeResourceWatcher<V1StatefulSet> createStatefulSetWatcher(String namespace, String selector) {
+    return new KubeResourceWatcher<V1StatefulSet>(namespace, selector) {
+      @Override
+      protected Call createCall(String namespace, @Nullable String labelSelector) throws IOException, ApiException {
+        return getAppsApi().listNamespacedStatefulSetCall(namespace, null, null, null, labelSelector,
+                                                          null, null, null, true, null, null);
       }
     };
   }

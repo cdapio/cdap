@@ -17,10 +17,9 @@
 package io.cdap.cdap.k8s.common;
 
 /**
- * Enum representing Kubernetes resource types.
+ * Enum representing Kubernetes resource types which can be run as twill applications on the Kubernetes cluster.
  */
 public enum KubeResourceType {
   DEPLOYMENT,
-  STATEFULSET,
-  SERVICE
+  STATEFULSET
 }
