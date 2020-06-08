@@ -23,6 +23,8 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import { objectQuery } from 'services/helpers';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import ThemeWrapper from 'components/ThemeWrapper';
 
 export interface IOption {
   id: string;
@@ -33,15 +35,26 @@ interface IMultiSelectWidgetProps {
   delimiter?: string;
   options: IOption[] | string[];
   showSelectionCount?: boolean;
+  emptyPlaceholder?: string;
 }
+const styles = (theme) => {
+  return {
+    root: {
+      margin: theme.Spacing(2),
+    },
+  };
+};
 
-interface IMultiSelectProps extends IWidgetProps<IMultiSelectWidgetProps> {}
+interface IMultiSelectProps
+  extends IWidgetProps<IMultiSelectWidgetProps>,
+    WithStyles<typeof styles> {}
 
-export default function MultiSelect({
+function MultiSelectBase({
   value,
   widgetProps,
   disabled,
   onChange,
+  classes,
   dataCy,
 }: IMultiSelectProps) {
   const delimiter = objectQuery(widgetProps, 'delimiter') || ',';
@@ -53,6 +66,7 @@ export default function MultiSelect({
   });
 
   const showSelectionCount = objectQuery(widgetProps, 'showSelectionCount') || false;
+  const emptyPlaceholder = objectQuery(widgetProps, 'emptyPlaceholder') || '';
 
   const initSelection = value.toString().split(delimiter);
   const [selections, setSelections] = useState<string[]>(initSelection);
@@ -72,16 +86,26 @@ export default function MultiSelect({
 
   function renderValue(values: any) {
     if (selections.length === 0 || (selections.length === 1 && selections[0] === '')) {
-      return '';
+      return emptyPlaceholder;
     }
 
     if (!showSelectionCount) {
-      return selections
+      const selectionText = selections
         .map((sel) => {
           const element = options.find((op) => op.id === sel);
           return element ? element.label : '';
         })
         .join(', ');
+      /**
+       * TODO: Magic number alert!
+       * We right now have a flexible width for widgets and we can't really
+       * show ellipsis via css (yet).
+       */
+
+      const MAX_DISPLAY_TEXT_LENGTH = 75;
+      return selectionText.length > MAX_DISPLAY_TEXT_LENGTH
+        ? `${selectionText.slice(0, MAX_DISPLAY_TEXT_LENGTH)}...`
+        : selectionText;
     }
     const selectionID = selections.find((el) => el !== '');
     const firstSelection = options.find((op) => op.id === selectionID);
@@ -105,6 +129,7 @@ export default function MultiSelect({
         'data-cy': dataCy,
       }}
       data-cy={`multiselect-${dataCy}`}
+      classes={classes}
     >
       {options.map((opt) => (
         <MenuItem value={opt.id} key={opt.id} data-cy={`multioption-${opt.label}`}>
@@ -113,6 +138,15 @@ export default function MultiSelect({
         </MenuItem>
       ))}
     </Select>
+  );
+}
+
+const StyledMultiSelect = withStyles(styles)(MultiSelectBase);
+export default function MultiSelect(props) {
+  return (
+    <ThemeWrapper>
+      <StyledMultiSelect {...props} />
+    </ThemeWrapper>
   );
 }
 
