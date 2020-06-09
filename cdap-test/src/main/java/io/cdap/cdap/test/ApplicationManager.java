@@ -29,6 +29,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
 
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Instance of this class is for managing deployed application.
@@ -183,9 +184,13 @@ public interface ApplicationManager {
   void delete() throws Exception;
 
   /**
-   * Upgrades the application;
+   * Upgrades the application.
+   *
+   * @param artifactScope Scope in which to look for artifacts for upgrade. If null, then search in all scopes.
+   * @param considerSnapshot Consider snapshot version of artifacts for upgrade or not.
+   * @throws Exception
    */
-  void upgrade() throws Exception;
+  void upgrade(@Nullable String artifactScope, boolean considerSnapshot) throws Exception;
 
   /**
    * Returns the application's details.

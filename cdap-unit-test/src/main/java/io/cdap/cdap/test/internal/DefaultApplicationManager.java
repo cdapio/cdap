@@ -45,6 +45,7 @@ import io.cdap.cdap.test.ServiceManager;
 import io.cdap.cdap.test.SparkManager;
 import io.cdap.cdap.test.WorkerManager;
 import io.cdap.cdap.test.WorkflowManager;
+import javax.annotation.Nullable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.List;
@@ -203,8 +204,8 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
-  public void upgrade() throws Exception {
-    appFabricClient.upgradeApplication(application);
+  public void upgrade(@Nullable String artifactScope, boolean considerSnapshot) throws Exception {
+    appFabricClient.upgradeApplication(application, artifactScope, considerSnapshot);
   }
 
   @Override

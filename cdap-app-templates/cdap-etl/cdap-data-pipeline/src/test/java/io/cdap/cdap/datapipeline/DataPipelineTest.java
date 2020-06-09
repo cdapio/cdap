@@ -23,7 +23,6 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.io.ByteStreams;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
@@ -3556,7 +3555,7 @@ public class DataPipelineTest extends HydratorTestBase {
       Collectors.toMap(ETLStage::getName, e -> e));
 
     // Upgrade application.
-    appManager.upgrade();
+    appManager.upgrade(null, false);
 
     ApplicationDetail upgradedAppDetail = getAppDetail(appId);
     ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
@@ -3613,7 +3612,7 @@ public class DataPipelineTest extends HydratorTestBase {
       Collectors.toMap(ETLStage::getName, e -> e));
 
     // Upgrade application.
-    appManager.upgrade();
+    appManager.upgrade(null, false);
 
     ApplicationDetail upgradedAppDetail = getAppDetail(appId);
     ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);
@@ -3629,7 +3628,7 @@ public class DataPipelineTest extends HydratorTestBase {
     // Check if the filter stage, for which version range should be upgraded to include latest plugin version in SYSTEM
     // scope.
     ETLPlugin upgradedPlugin = newStageMap.get("filter").getPlugin();
-    Assert.assertEquals(upgradedPlugin.getArtifactConfig().getVersion(), "[1.0.0,1.1.0]");
+    Assert.assertEquals("[1.0.0,1.1.0]", upgradedPlugin.getArtifactConfig().getVersion());
     Assert.assertEquals(ArtifactScope.valueOf(upgradedPlugin.getArtifactConfig().getScope().toUpperCase()),
                         ArtifactScope.SYSTEM);
   }
@@ -3677,7 +3676,7 @@ public class DataPipelineTest extends HydratorTestBase {
       Collectors.toMap(ETLStage::getName, e -> e));
 
     // Upgrade application.
-    appManager.upgrade();
+    appManager.upgrade(null, false);
 
     ApplicationDetail upgradedAppDetail = getAppDetail(appId);
     ETLBatchConfig newBatchConfig = GSON.fromJson(upgradedAppDetail.getConfiguration(), ETLBatchConfig.class);

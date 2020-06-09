@@ -652,7 +652,8 @@ public class AppFabricClient {
     verifyResponse(HttpResponseStatus.OK, responder.getStatus(), "Delete schedule failed");
   }
 
-  public void upgradeApplication(ApplicationId appId) throws Exception {
+  public void upgradeApplication(ApplicationId appId, @Nullable String artifactScope, boolean considerSnapshot)
+    throws Exception {
     HttpRequest request = new DefaultHttpRequest(
         HttpVersion.HTTP_1_1, HttpMethod.POST,
         String.format("%s/apps/%s/upgrade", getNamespacePath(appId.getNamespace()), appId.getApplication())
@@ -662,7 +663,8 @@ public class AppFabricClient {
 
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.upgradeApplication(request, mockResponder, appId.getNamespace(),
-                                               appId.getApplication());
+                                               appId.getApplication(), artifactScope,
+                                               Boolean.toString(considerSnapshot));
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to upgrade app");
   }
 }

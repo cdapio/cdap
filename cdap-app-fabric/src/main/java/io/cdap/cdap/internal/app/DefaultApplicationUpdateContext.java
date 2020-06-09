@@ -157,7 +157,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
       Map<ArtifactDescriptor, PluginClass> plugins =
         artifactRepository.getPlugins(pluginArtifactNamespace,
                                       Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
-                                      pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
+                                      pluginType, pluginName, predicate, limit, ArtifactSortOrder.DESC);
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactId plugin = pluginsEntry.getKey().getArtifactId();
         if (!plugin.getVersion().isSnapshot()) {
