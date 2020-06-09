@@ -18,7 +18,7 @@ import Select from 'components/AbstractWidget/FormInputs/Select';
 import { IWidgetProps, IStageSchema } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import MultiSelect from '../FormInputs/MultiSelect';
+import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
 
 interface IField {
   name: string;
@@ -119,6 +119,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
       delimiter,
       options: fieldValues.map((field) => ({ id: field, label: field })),
       showSelectionCount: true,
+      emptyPlaceholder: 'Select input field(s)',
     };
 
     return (
