@@ -110,8 +110,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
 
     // Object type was introduced in SIMPLE_SCHEMAS to satisfy Java Object usage in ETLConfig.
     // Do not consider Java Object as simple schema for schema generation purpose.
-    // TODO: (CDAP-16919) Remove Object class from simple schema.
-    if (rawType != Object.class && SIMPLE_SCHEMAS.containsKey(rawType)) {
+    if (SIMPLE_SCHEMAS.containsKey(rawType)) {
       return SIMPLE_SCHEMAS.get(rawType);
     }
 
