@@ -1,4 +1,3 @@
-import { IPropertyShowConfig } from 'components/ConfigurationGroup/types';
 import {
   IBasicPluginInfo,
   IConfigurationGroupInfo,

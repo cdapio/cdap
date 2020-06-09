@@ -76,15 +76,10 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
     setPluginState,
     JSONStatus,
     setJSONStatus,
-    filters,
-    filterToName,
-    filterToCondition,
-    filterToShowList,
-    showToInfo,
   } = widgetJSONProps;
   const [JSONErrorMessage, setJSONErrorMessage] = React.useState('');
 
-  const jsonFilename = `${pluginName ? pluginName : '<PluginName>'}-${
+  const JSONFilename = `${pluginName ? pluginName : '<PluginName>'}-${
     pluginType ? pluginType : '<PluginType>'
   }.json`;
 
@@ -174,7 +169,7 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
               collapseLiveView={collapseLiveView}
               onDownloadClick={onDownloadClick}
               populateImportResults={populateImportResults}
-              jsonFilename={jsonFilename}
+              JSONFilename={JSONFilename}
               JSONStatus={JSONStatus}
             />
           </If>

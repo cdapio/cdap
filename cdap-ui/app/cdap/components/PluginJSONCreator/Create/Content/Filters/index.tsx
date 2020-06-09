@@ -50,6 +50,8 @@ const FiltersView: React.FC<ICreateContext> = ({
   setLiveView,
   outputName,
   setPluginState,
+  JSONStatus,
+  setJSONStatus,
 }) => {
   const [localFilters, setLocalFilters] = React.useState(filters);
   const [localFilterToName, setLocalFilterToName] = React.useState(filterToName);
@@ -87,6 +89,8 @@ const FiltersView: React.FC<ICreateContext> = ({
         setLiveView={setLiveView}
         outputName={outputName}
         setPluginState={setPluginState}
+        JSONStatus={JSONStatus}
+        setJSONStatus={setJSONStatus}
       />
       <Heading type={HeadingTypes.h3} label="Filters" />
       <FilterCollection

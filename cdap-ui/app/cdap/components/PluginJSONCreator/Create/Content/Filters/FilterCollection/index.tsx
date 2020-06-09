@@ -16,7 +16,6 @@
 
 import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import { IPropertyShowConfig } from 'components/ConfigurationGroup/types';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import If from 'components/If';
 import FilterConditionInput from 'components/PluginJSONCreator/Create/Content/Filters/FilterCollection/FilterConditionInput';

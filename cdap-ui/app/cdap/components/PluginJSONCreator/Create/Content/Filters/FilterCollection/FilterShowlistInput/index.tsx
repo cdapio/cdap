@@ -19,7 +19,6 @@ import { StyleRules, withStyles } from '@material-ui/core/styles';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
 import classnames from 'classnames';
-import { IPropertyShowConfig } from 'components/ConfigurationGroup/types';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import { SHOW_TYPE_VALUES } from 'components/PluginJSONCreator/constants';
