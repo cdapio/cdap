@@ -19,6 +19,8 @@ package io.cdap.cdap.datapipeline;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.app.ApplicationUpdateContext;
+import io.cdap.cdap.api.app.ApplicationUpdateResult;
 import io.cdap.cdap.api.app.ProgramType;
 import io.cdap.cdap.api.schedule.ScheduleBuilder;
 import io.cdap.cdap.datapipeline.service.StudioService;
@@ -75,5 +77,18 @@ public class DataPipelineApp extends AbstractApplication<ETLBatchConfig> {
       }
       schedule(scheduleBuilder.triggerByTime(timeSchedule));
     }
+  }
+
+  @Override
+  public boolean isUpdateSupported() {
+    return true;
+  }
+
+  @Override
+  public ApplicationUpdateResult<ETLBatchConfig> updateConfig(ApplicationUpdateContext updateContext)
+    throws Exception {
+    ETLBatchConfig currentBatchConfig = updateContext.getConfig(ETLBatchConfig.class);
+    ETLBatchConfig updatedBatchConfig = currentBatchConfig.updateBatchConfig(updateContext);
+    return new ApplicationUpdateResult<>(updatedBatchConfig);
   }
 }

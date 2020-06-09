@@ -203,6 +203,11 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
+  public void upgrade() throws Exception {
+    appFabricClient.upgradeApplication(application);
+  }
+
+  @Override
   public ApplicationDetail getInfo() throws Exception {
     return appFabricClient.getInfo(application);
   }
