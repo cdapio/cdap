@@ -56,6 +56,8 @@ import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.util.EnumSet;
+import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,16 +86,22 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   private final ArtifactRepository artifactRepository;
   private final ApplicationId applicationId;
   private final NamespaceId namespaceId;
+  private final Set<ArtifactScope> artifactScopesToConsider;
+  private final boolean considerSnapshotArtifacts;
 
   public DefaultApplicationUpdateContext(NamespaceId namespaceId, ApplicationId applicationId,
-                                         ArtifactId applicationArtifactId, ArtifactRepository artifactRepository,
-                                         String configString, List<ApplicationConfigUpdateAction> updateActions) {
+                                        ArtifactId applicationArtifactId, ArtifactRepository artifactRepository,
+                                        String configString, List<ApplicationConfigUpdateAction> updateActions,
+                                        Set<ArtifactScope> artifactScopesToConsider,
+                                        boolean considerSnapshotArtifacts) {
     this.namespaceId = namespaceId;
     this.applicationId = applicationId;
     this.artifactRepository = artifactRepository;
     this.applicationArtifactId = applicationArtifactId;
     this.configString = configString;
     this.updateActions = Collections.unmodifiableList(new ArrayList<>(updateActions));
+    this.artifactScopesToConsider = Collections.unmodifiableSet(artifactScopesToConsider);
+    this.considerSnapshotArtifacts = considerSnapshotArtifacts;
   }
 
   @Override
@@ -129,6 +137,11 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
   }
 
   @Override
+  public Set<ArtifactScope> getArtifactScopesToConsider() {
+    return artifactScopesToConsider;
+  }
+
+  @Override
   public List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
                                              @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception {
     List<ArtifactId> pluginArtifacts = new ArrayList<>();
@@ -141,17 +154,16 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     };
 
     try {
-      // TODO: Pass ArtifactSortOrder as argument for better flexibility.
       Map<ArtifactDescriptor, PluginClass> plugins =
         artifactRepository.getPlugins(pluginArtifactNamespace,
                                       Artifact.from(Namespace.fromEntityId(namespaceId), applicationArtifactId),
                                       pluginType, pluginName, predicate, limit, ArtifactSortOrder.ASC);
       for (Map.Entry<ArtifactDescriptor, PluginClass> pluginsEntry : plugins.entrySet()) {
         ArtifactId plugin = pluginsEntry.getKey().getArtifactId();
-        // Only consider non-SNAPSHOT plugins for upgrade.
-        // TODO: Consider making this check optional. Helpful for integration tests.
         if (!plugin.getVersion().isSnapshot()) {
           pluginArtifacts.add(plugin);
+        } else if (plugin.getVersion().isSnapshot() && considerSnapshotArtifacts) {
+            pluginArtifacts.add(plugin);
         }
       }
     } catch (PluginNotExistsException e) {

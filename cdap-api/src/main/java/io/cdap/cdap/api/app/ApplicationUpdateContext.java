@@ -23,6 +23,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -50,6 +51,11 @@ public interface ApplicationUpdateContext {
    * Get the application configuration as json string.
    */
   String getConfigAsString();
+
+  /**
+   * Return set of artifact scopes to consider for update operation on an artifact like upgrading its version.
+   */
+  Set<ArtifactScope> getArtifactScopesToConsider();
 
   /**
    * Gets list of plugin artifacts based on given parameters in sorted in ascending order by version.

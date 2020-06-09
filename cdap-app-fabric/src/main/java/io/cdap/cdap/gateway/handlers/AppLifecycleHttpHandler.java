@@ -28,6 +28,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.app.runtime.ProgramController;
@@ -63,6 +64,7 @@ import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.Ids;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -77,6 +79,7 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
 
+import java.util.EnumSet;
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -342,6 +345,14 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
+  private ArtifactScope validateScope(String scope) throws BadRequestException {
+    try {
+      return ArtifactScope.valueOf(scope.toUpperCase());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException("Invalid scope " + scope);
+    }
+  }
+
   /**
    * Updates an existing application.
    */
@@ -389,10 +400,23 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @AuditPolicy(AuditDetail.REQUEST_BODY)
   public void upgradeApplication(HttpRequest request, HttpResponder responder,
                                  @PathParam("namespace-id") String namespaceId,
-                                 @PathParam("app-id") String appName) throws Exception {
-    ApplicationId appId = validateApplicationId(namespaceId, appName);
-    applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
-    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+                                 @PathParam("app-id") String appName,
+                                 @Nullable @QueryParam("artifact-scope") String artifactScope,
+                                 @QueryParam("consider-snapshot-artifacts") @DefaultValue("false")
+                                    String considerSnapshotArtifacts) throws Exception {
+    ApplicationId appId = validateApplicationId(validateNamespace(namespaceId), appName);
+    Set<ArtifactScope> artifactScopesToConsider;
+    // If no artifact scope is provided, consider all artifact scopes for to search in for upgrade.
+    if(artifactScope == null) {
+      artifactScopesToConsider = EnumSet.of(ArtifactScope.SYSTEM, ArtifactScope.USER);
+    } else  {
+      artifactScopesToConsider = EnumSet.of(validateScope(artifactScope));
+    }
+    boolean considerSnapshot = Boolean.parseBoolean(considerSnapshotArtifacts);
+
+    applicationLifecycleService.upgradeApplication(appId, createProgramTerminator(),
+                                                   artifactScopesToConsider, considerSnapshot);
+    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "Upgrade successful.");
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
 
@@ -415,15 +439,28 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
   @POST
   @Path("/upgrade")
   public void upgradeApplications(FullHttpRequest request, HttpResponder responder,
-                                  @PathParam("namespace-id") String namespace) throws Exception {
+                                  @PathParam("namespace-id") String namespaceId,
+                                  @Nullable @QueryParam("artifact-scope") String artifactScope,
+                                  @QueryParam("consider-snapshot-artifacts") @DefaultValue("false")
+                                    String considerSnapshotArtifacts) throws Exception {
     // TODO: (CDAP-16910) Improve batch API performance as each application upgrade is an event independent of each
     //  other.
-    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
+    Set<ArtifactScope> artifactScopesToConsider;
+    // If no artifact scope is provided, consider all artifact scopes for to search in for upgrade.
+    if(artifactScope == null) {
+      artifactScopesToConsider = EnumSet.of(ArtifactScope.SYSTEM, ArtifactScope.USER);
+    } else  {
+      artifactScopesToConsider = EnumSet.of(validateScope(artifactScope));
+    }
+    boolean considerSnapshot = Boolean.parseBoolean(considerSnapshotArtifacts);
+
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespaceId), request);
     List<ApplicationUpdateDetail> details = new ArrayList<>();
     for (ApplicationId appId : appIds) {
       ApplicationUpdateDetail updateDetail;
       try {
-        applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+        applicationLifecycleService.upgradeApplication(appId, createProgramTerminator(), artifactScopesToConsider,
+                                                       considerSnapshot);
         updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
       } catch (UnsupportedOperationException e) {
         String errorMessage = String.format("Application %s does not support upgrade.", appId);

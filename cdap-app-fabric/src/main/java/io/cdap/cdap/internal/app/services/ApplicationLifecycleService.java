@@ -369,6 +369,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @param appId the id of the application to upgrade.
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @param artifactScopesToConsider
+   * @param considerSnapshot
    * @throws IllegalStateException if something unexpected happened during upgrade.
    * @throws IOException if there was an IO error during initializing application class from artifact.
    * @throws JsonIOException if there was an error in serializing or deserializing app config.
@@ -378,7 +380,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
    *                   the actual exception
    */
-  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
+  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator,
+                                 Set<ArtifactScope> artifactScopesToConsider, boolean considerSnapshot)
     throws Exception {
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
@@ -420,7 +423,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
 
     updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
-                              upgradeActions, ownerAdmin.getOwner(appId), false);
+                              upgradeActions, artifactScopesToConsider, considerSnapshot, ownerAdmin.getOwner(appId),
+                              false);
   }
 
   /**
@@ -432,6 +436,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                          ProgramTerminator programTerminator,
                                          ArtifactDetail artifactDetail,
                                          List<ApplicationConfigUpdateAction> updateActions,
+                                         Set<ArtifactScope> artifactScopesToConsider,
+                                         boolean considerSnapshotArtifacts,
                                          @Nullable KerberosPrincipalId ownerPrincipal,
                                          boolean updateSchedules) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
@@ -447,7 +453,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String updatedAppConfig = "";
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
-                                          artifactRepository, currentConfigStr, updateActions);
+                                          artifactRepository, currentConfigStr, updateActions,
+                                          artifactScopesToConsider, considerSnapshotArtifacts);
 
     try (CloseableClassLoader artifactClassLoader =
       artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),

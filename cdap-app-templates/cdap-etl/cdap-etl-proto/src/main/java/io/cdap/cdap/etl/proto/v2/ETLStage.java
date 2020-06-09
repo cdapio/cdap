@@ -24,6 +24,10 @@ import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,15 +148,21 @@ public final class ETLStage {
     // Currently tries to find latest plugin in SYSTEM scope and upgrades current plugin if version is higher,
     // ignoring current plugin scope.
     // In future, we can modify logic to fetch the latest plugin in any scope.
-    List<ArtifactId> candidates =
-      updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), ArtifactScope.SYSTEM, null);
-    if (candidates.isEmpty()) {
+    List<ArtifactId> candidates = new ArrayList<>();
+    for(ArtifactScope scope: updateContext.getArtifactScopesToConsider()) {
+      candidates.addAll(updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), scope, null, 1));
+    }
+
+    // Find the plugin with max version.
+    Optional<ArtifactId> newPluginCandidate = candidates.stream().max(
+      Comparator.comparing(artifactId -> artifactId.getVersion()));
+    if(!newPluginCandidate.isPresent()) {
+      // This should not happen as there should be at least one plugin candidate same as current.
+      // TODO: Consider throwing exception here.
       return plugin;
     }
 
-    // getPluginArtifacts returns plugins sorted in ascending order.
-    // TODO: Consider passing sort order as parameter.
-    ArtifactId newPlugin = candidates.get(candidates.size() - 1);
+    ArtifactId newPlugin = newPluginCandidate.get();
     String newVersion = getUpgradedVersionString(newPlugin);
     // If getUpgradedVersionString returns null, candidate plugin is not valid for upgrade.
     if (newVersion == null) {
