@@ -119,6 +119,7 @@ export default class PipelineTriggers extends Component {
   render() {
     return (
       <CollapsibleSidebar
+        data-cy="inbound-triggers-toggle"
         position="left"
         toggleTabLabel={T.translate(`${this.state.tabText}`, {
           count: this.state.enabledTriggersCount,
@@ -132,6 +133,7 @@ export default class PipelineTriggers extends Component {
               <div
                 className={classnames('tab', { active: this.state.activeTab === 0 })}
                 onClick={this.setTab.bind(this, 0)}
+                data-cy="enabled-triggers-tab"
               >
                 {T.translate(`${PREFIX}.EnabledTriggers.tabLabel`, {
                   count: this.state.enabledTriggersCount,
@@ -141,6 +143,7 @@ export default class PipelineTriggers extends Component {
               <div
                 className={classnames('tab', { active: this.state.activeTab === 1 })}
                 onClick={this.setTab.bind(this, 1)}
+                data-cy="set-triggers-tab"
               >
                 {T.translate(`${PREFIX}.SetTriggers.tabLabel`)}
               </div>

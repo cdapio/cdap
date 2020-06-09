@@ -105,7 +105,11 @@ export default class EnabledTriggerRow extends Component {
         </div>
 
         <div className="action-buttons-container">
-          <button className="btn btn-secondary" onClick={this.disableTriggerClick}>
+          <button
+            className="btn btn-secondary"
+            onClick={this.disableTriggerClick}
+            data-cy="disable-trigger-btn"
+          >
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>
 
@@ -125,7 +129,11 @@ export default class EnabledTriggerRow extends Component {
 
     if (!isExpanded) {
       return (
-        <div className="pipeline-triggers-row" onClick={getPipelineInfo.bind(null, schedule)}>
+        <div
+          className="pipeline-triggers-row"
+          onClick={getPipelineInfo.bind(null, schedule)}
+          data-cy={`${schedule.trigger.programId.application}-collapsed`}
+        >
           <div className="caret-container">
             <IconSVG name="icon-caret-right" />
           </div>
@@ -136,7 +144,10 @@ export default class EnabledTriggerRow extends Component {
     }
 
     return (
-      <div className="pipeline-triggers-expanded-row">
+      <div
+        className="pipeline-triggers-expanded-row"
+        data-cy={`${schedule.trigger.programId.application}-expanded`}
+      >
         <div className="header-row" onClick={getPipelineInfo.bind(null, null)}>
           <div className="caret-container">
             <IconSVG name="icon-caret-down" />

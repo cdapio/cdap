@@ -74,6 +74,7 @@ class TriggeredPipelinesView extends Component {
 
     return (
       <CollapsibleSidebar
+        data-cy="outbound-triggers-toggle"
         position="right"
         toggleTabLabel={T.translate(`${this.state.tabText}`, { count })}
         backdrop={false}
