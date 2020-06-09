@@ -294,6 +294,7 @@ export default class PipelineScheduler extends Component {
         <div className="schedule-navigation">
           <button
             className="btn btn-primary save-schedule-btn"
+            data-cy="save-schedule-btn-studio"
             onClick={this.saveSchedule.bind(this, false)}
           >
             <span>{T.translate(`${PREFIX}.saveSchedule`)}</span>
@@ -305,6 +306,7 @@ export default class PipelineScheduler extends Component {
     return (
       <div className="schedule-navigation">
         <button
+          data-cy="save-start-schedule-btn"
           className="btn btn-primary start-schedule-btn"
           onClick={this.startScheduleAndClose}
           disabled={this.state.savingSchedule || this.state.savingAndScheduling}
@@ -319,6 +321,7 @@ export default class PipelineScheduler extends Component {
           </span>
         </button>
         <button
+          data-cy="save-schedule-btn"
           className="btn btn-secondary start-schedule-btn"
           onClick={this.saveSchedule.bind(this, false)}
           disabled={this.state.savingSchedule || this.state.savingAndScheduling}

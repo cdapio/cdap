@@ -176,7 +176,7 @@ const RepeatEveryComponent = ({ intervalOption }) => {
   switch (intervalOption) {
     case INTERVAL_OPTIONS.HOURLY:
       SelectComponent = (
-        <span className="schedule-values">
+        <span data-cy="schedule-repeats-every-hourly" className="schedule-values">
           <SelectHourInterval className="form-control small-dropdown" />
           <span>{T.translate(`${PREFIX}.hour`)}</span>
         </span>
@@ -184,7 +184,7 @@ const RepeatEveryComponent = ({ intervalOption }) => {
       break;
     case INTERVAL_OPTIONS.DAILY:
       SelectComponent = (
-        <span className="schedule-values">
+        <span data-cy="schedule-repeats-every-daily" className="schedule-values">
           <SelectDayInterval className="form-control small-dropdown" />
           <span>{T.translate(`${PREFIX}.day`)}</span>
         </span>
@@ -192,7 +192,7 @@ const RepeatEveryComponent = ({ intervalOption }) => {
       break;
     case INTERVAL_OPTIONS.WEEKLY:
       SelectComponent = (
-        <span className="schedule-values">
+        <span className="schedule-values" data-cy="schedule-repeats-every-weekly">
           {DAY_OF_WEEK_OPTIONS.map((option) => {
             return (
               <div className="day-of-week">
@@ -213,7 +213,7 @@ const RepeatEveryComponent = ({ intervalOption }) => {
       break;
     case INTERVAL_OPTIONS.MONTHLY:
       SelectComponent = (
-        <span className="schedule-values">
+        <span className="schedule-values" data-cy="schedule-repeats-every-monthly">
           <SelectDateOfMonthInterval className="form-control small-dropdown" />
           <span>{T.translate(`${PREFIX}.dayOfMonth`)}</span>
         </span>
@@ -221,7 +221,7 @@ const RepeatEveryComponent = ({ intervalOption }) => {
       break;
     case INTERVAL_OPTIONS.YEARLY:
       SelectComponent = (
-        <span className="schedule-values">
+        <span className="schedule-values" data-cy="schedule-repeats-every-yearly">
           <SelectMonthInterval className="form-control small-dropdown" />
           <SelectDateOfMonthInterval className="form-control small-dropdown" />
         </span>
