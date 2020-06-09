@@ -138,7 +138,7 @@ const Rule: React.FC<IRuleProps> = ({
           {rule.map((stage, i) => (
             <div key={`${i}-${stage.stageName}`} className={classes.stageRow}>
               <div className={classes.tableCell}>{stage.stageName}</div>
-              <div className={classes.tableCell}>
+              <div>
                 <OutlinedSelect
                   options={inputSchema[stage.stageName]}
                   disabled={disabled}
