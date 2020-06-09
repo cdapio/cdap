@@ -74,9 +74,9 @@ public class ArtifactInspectorTest {
     classLoaderFactory = new ArtifactClassLoaderFactory(cConf, new DummyProgramRunnerFactory());
     artifactInspector = new ArtifactInspector(cConf, classLoaderFactory);
   }
-  
-  @Ignore
+
   @Test(expected = InvalidArtifactException.class)
+  @Ignore
   // TODO: (CDAP-16919) Re-enable this test once schema mapping for Java Object is fixed.
   public void testInvalidConfigApp() throws Exception {
     Manifest manifest = new Manifest();
