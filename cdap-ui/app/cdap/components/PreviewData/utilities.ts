@@ -21,34 +21,45 @@ import { IStageSchema } from 'components/AbstractWidget';
 import { IPluginProperty } from 'components/ConfigurationGroup/types';
 import capitalize from 'lodash/capitalize';
 import isEmpty from 'lodash/isEmpty';
+import { objectQuery } from 'services/helpers';
 
-interface IConnection {
+export interface IConnection {
   from: string;
   to: string;
   port?: string;
 }
 
-interface INode {
+export interface INode {
   plugin?: any;
   isSource?: boolean;
   isSink?: boolean;
+  isCondition?: boolean;
 }
 
-interface IStage {
+// Stage info from ConfigStore
+export interface IStage {
   inputSchema: IStageSchema[] | string;
   name: string;
   outputSchema: IStageSchema[] | string;
   plugin: IPluginProperty;
 }
 
+// Previous stage(s) info compiled by UI
+interface IPreviousStageInfo {
+  [key: string]: {
+    port?: string;
+    condition?: boolean;
+  };
+}
+
 type IAdjacencyMap = Map<string, List<string>>;
 
-interface IRecords {
+export interface IRecords {
   records?: any[];
   schemaFields?: string[];
 }
 
-interface IPreviewData {
+export interface IPreviewData {
   numInputStages?: number;
   input?: IRecords;
   numOutputStages?: number;
@@ -89,11 +100,9 @@ export function fetchPreview(
   };
 
   const selectedStageName = selectedNode.plugin.label;
-  const isSource = selectedNode.isSource;
-  const isSink = selectedNode.isSink;
 
   const adjacencyMap = getAdjacencyMap(connections);
-  const { tracers, previousStagePort, previousStage } = getTracersAndPreviousStageInfo(
+  const { tracers, previousStages } = getTracersAndPreviousStageInfo(
     selectedStageName,
     adjacencyMap,
     stages,
@@ -106,8 +115,9 @@ export function fetchPreview(
 
   MyPreviewApi.getStageData(params, postBody).subscribe(
     (res) => {
-      const previewData = getRecords(res, selectedNode, previousStage, previousStagePort);
+      const previewData = getRecords(res, selectedNode, previousStages);
       updatePreviewCb(previewData);
+      loadingPreviewCb(false);
     },
     (err) => {
       // TO DO: error handling here
@@ -118,57 +128,60 @@ export function fetchPreview(
   );
 }
 
-export function getPreviousStageName(selectedStage: string, adjMap: IAdjacencyMap) {
+export function getPreviousStageNames(selectedStage: string, adjMap: IAdjacencyMap) {
   const keys = adjMap.keySeq().toArray();
-  const prevStageName = keys.find((key) => adjMap.get(key).includes(selectedStage));
-  return prevStageName;
-}
-
-function getPreviousStage(previousStageName: string, stages: IStage[]) {
-  return stages.find((stage) => stage.name === previousStageName);
+  const prevStageNames = keys.filter((key) => adjMap.get(key).includes(selectedStage));
+  return prevStageNames;
 }
 
 function getTracersAndPreviousStageInfo(
-  selectedStage: string,
+  selectedStageName: string,
   adjacencyMap: IAdjacencyMap,
   stages: IStage[],
   connections: IConnection[]
 ) {
-  let tracers: List<string> = List([selectedStage]);
-  let previousStageName = getPreviousStageName(selectedStage, adjacencyMap);
+  let tracers: List<string> = List([selectedStageName]);
+  const previousStageNames: string[] = getPreviousStageNames(selectedStageName, adjacencyMap);
 
   // source nodes have no previous stage
-  if (!previousStageName) {
+  if (isEmpty(previousStageNames)) {
     return { tracers: tracers.toArray() };
   }
 
-  let previousStage = getPreviousStage(previousStageName, stages);
-  let previousStagePort;
+  const previousStages: IPreviousStageInfo = {};
+  previousStageNames.forEach((previousStageName) => {
+    let previousStage = stages.find((stage) => stage.name === previousStageName);
+    previousStages[previousStageName] = {};
 
-  if (previousStage.plugin.type === 'splittertransform') {
-    const previousStageConnection = connections.find(
-      (connection) => connection.from === previousStageName && connection.to === selectedStage
-    );
-    if (previousStageConnection) {
-      previousStagePort = previousStageConnection.port;
+    // TO DO [CDAP-16690]: Investigate whether we need the splitter logic here, since we aren't currently using it
+    if (previousStage.plugin.type === 'splittertransform') {
+      const previousStageConnection = connections.find(
+        (connection) => connection.from === previousStageName && connection.to === selectedStageName
+      );
+      if (previousStageConnection) {
+        previousStages[previousStageName].port = previousStageConnection.port;
+      }
+    } else {
+      // If we have multiple condition nodes in a row, we have traverse back
+      // until we find a node that actually has records out
+      while (previousStage && previousStage.plugin.type === 'condition') {
+        previousStages[previousStageName].condition = true;
+        previousStageName = adjacencyMap
+          .keySeq()
+          .find((key) => adjacencyMap.get(key).indexOf(previousStageName) !== -1);
+        previousStage = stages.find((stage) => stage.name === previousStageName);
+      }
     }
-  } else {
-    // If we have multiple condition nodes in a row, we have traverse back
-    // until we find a node that actually has records out
-    while (previousStage && previousStage.plugin.type === 'condition') {
-      previousStageName = getPreviousStageName(previousStageName, adjacencyMap);
-      previousStage = stages.find((stage) => stage.name === previousStageName);
-    }
-  }
-  tracers = tracers.push(previousStageName);
+    tracers = tracers.push(previousStageName);
+  });
+
   return {
     tracers: tracers.toArray(),
-    previousStage,
-    previousStagePort,
+    previousStages,
   };
 }
 
-function getRecords(res, selectedNode: INode, previousStage, previousStagePort) {
+function getRecords(res, selectedNode: INode, previousStages: IPreviousStageInfo) {
   const selectedStageName = selectedNode.plugin.label;
   const isSource = selectedNode.isSource;
   const isSink = selectedNode.isSink;
@@ -206,7 +219,7 @@ function getRecords(res, selectedNode: INode, previousStage, previousStagePort) 
       let correctMetricsName;
       if (recordsOutPorts.length) {
         correctMetricsName = recordsOutPorts.find(
-          (port) => port.split('.').pop() === previousStagePort
+          (port) => port.split('.').pop() === objectQuery(previousStages, stageName, 'port')
         );
       } else if (
         stageMetrics.hasOwnProperty('records.alert') &&
@@ -229,26 +242,17 @@ function getRecords(res, selectedNode: INode, previousStage, previousStagePort) 
     previewData.numInputStages = Object.keys(recordsIn).length;
   }
 
-  // set current stage's input records to null only if its output records are null AND if the previous
-  // stage is a Condition, since that means data didn't flow through to that branch
-  const previousStageIsCondition = previousStage && previousStage.plugin.type === 'conditoin';
-
-  if (isEmpty(recordsOut[Object.keys(recordsOut)[0]]) && previousStageIsCondition) {
-    previewData.input = {};
-    previewData.numInputStages = 0;
-  }
   return previewData;
 }
 
 function formatMultipleRecords(records) {
-  if (isEmpty(records)) {
-    return records;
-  }
-
   const mapInputs: IRecords = {
     schemaFields: [],
     records: [],
   };
+  if (isEmpty(records)) {
+    return mapInputs;
+  }
 
   records.forEach((record) => {
     let json = record;

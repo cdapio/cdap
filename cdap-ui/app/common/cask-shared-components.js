@@ -107,6 +107,7 @@ var LoadingSVG = require('../cdap/components/LoadingSVG').default;
 var WindowManager = require('../cdap/services/WindowManager').default;
 var DownloadFile = require('../cdap/services/download-file').default;
 var PreviewUtilities = require('../cdap/components/PreviewData/utilities');
+var PreviewDataView = require('../cdap/components/PreviewData').default;
 var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
 
 export {
@@ -189,5 +190,6 @@ export {
   WindowManager,
   DownloadFile,
   PreviewUtilities,
+  PreviewDataView,
   PREVIEW_STATUS,
 };

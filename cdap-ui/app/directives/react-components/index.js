@@ -144,4 +144,7 @@ angular
   })
   .directive('loadingSvg', function(reactDirective) {
     return reactDirective(window.CaskCommon.LoadingSVG);
+  })
+  .directive('previewDataView', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PreviewDataView);
   });

@@ -49,7 +49,7 @@ class HydratorPlusPlusNodeService {
       }
 
       if (sourceNode.outputSchema[0].name !== this.GLOBALS.defaultSchemaName) {
-        let sourcePort = sourceConnections[0].port;
+        let sourcePort = (sourceConnections.find(sconn => sconn.port) || {}).port;
         let sourceSchema = sourceNode.outputSchema.filter(outputSchema => outputSchema.name === sourcePort);
         schema = sourceSchema[0].schema;
       } else {
