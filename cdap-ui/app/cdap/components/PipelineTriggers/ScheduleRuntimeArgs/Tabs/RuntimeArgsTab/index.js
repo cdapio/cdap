@@ -51,7 +51,7 @@ export default class RuntimArgsTab extends Component {
   }
 
   renderEnabledRow(list) {
-    return list.map((macro) => {
+    return list.map((macro, i) => {
       let matchingKeyValue = this.state.runTimeArgMapping.find((arg) => arg.value === macro);
       let key, value;
       if (matchingKeyValue) {
@@ -65,13 +65,21 @@ export default class RuntimArgsTab extends Component {
             : matchingKeyValue.value;
       }
 
-      return <RuntimeArgRow mkey={key} mvalue={value} />;
+      return (
+        <div data-cy={`row-${i}`}>
+          <RuntimeArgRow mkey={key} mvalue={value} />
+        </div>
+      );
     });
   }
 
   renderDisabledRows(list) {
-    return list.map((arg) => {
-      return <RuntimeArgRow mkey={arg.key} mvalue={arg.value} />;
+    return list.map((arg, i) => {
+      return (
+        <div data-cy={`row-${i}`}>
+          <RuntimeArgRow mkey={arg.key} mvalue={arg.value} />
+        </div>
+      );
     });
   }
 

@@ -33,7 +33,11 @@ export default function TriggeredPipelineRow({
 }) {
   if (!isExpanded) {
     return (
-      <div className="triggered-pipeline-row" onClick={onToggle.bind(null, pipeline)}>
+      <div
+        className="triggered-pipeline-row"
+        onClick={onToggle.bind(null, pipeline)}
+        data-cy={`${pipeline.application}-triggered-collapsed`}
+      >
         <div className="caret-container">
           <IconSVG name="icon-caret-right" />
         </div>
@@ -50,7 +54,10 @@ export default function TriggeredPipelineRow({
   );
 
   return (
-    <div className="triggered-pipeline-expanded-row">
+    <div
+      className="triggered-pipeline-expanded-row"
+      data-cy={`${pipeline.application}-triggered-expanded`}
+    >
       <div className="header-row" onClick={onToggle.bind(null, null)}>
         <div className="caret-container">
           <IconSVG name="icon-caret-down" />

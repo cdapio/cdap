@@ -169,6 +169,7 @@ export default class ScheduleRuntimeArgs extends Component {
           className="btn btn-primary pull-right"
           onClick={this.configureAndEnableTrigger}
           disabled={this.isEnableTriggerDisabled()}
+          data-cy="configure-and-enable-trigger-btn"
         >
           {T.translate(`${PREFIX}.configure_enable_btn`)}
         </button>
