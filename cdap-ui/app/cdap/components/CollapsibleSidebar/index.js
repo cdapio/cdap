@@ -112,4 +112,5 @@ CollapsibleSidebar.propTypes = {
   children: PropTypes.any,
   onlyOneCanOpen: PropTypes.bool,
   onToggle: PropTypes.func,
+  'data-cy': PropTypes.string,
 };
