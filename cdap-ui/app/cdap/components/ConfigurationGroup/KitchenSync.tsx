@@ -38,7 +38,7 @@ const ConfigurationGroupKitchenSync: React.FC = () => {
     const pluginParams = {
       namespace: getCurrentNamespace(),
       parentArtifact: 'cdap-data-pipeline',
-      version: '6.2.0',
+      version: '6.2.1-SNAPSHOT',
       extension: pluginType,
       pluginName,
       scope: 'SYSTEM',
