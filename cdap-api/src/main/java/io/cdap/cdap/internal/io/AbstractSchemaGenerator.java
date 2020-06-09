@@ -69,7 +69,7 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     simpleSchemas.put(byte[].class, Schema.of(Schema.Type.BYTES));
     simpleSchemas.put(ByteBuffer.class, Schema.of(Schema.Type.BYTES));
 
-    // TODO: Convert Object class mapping to union of all simple schema types.
+    // TODO: (CDAP-16919) Convert Object class mapping to union of all simple schema types.
     simpleSchemas.put(Object.class, Schema.of(Schema.Type.NULL));
 
     // Some extra ones for some common build-in types. Need corresponding handling in DatumReader/Writer
@@ -108,7 +108,10 @@ public abstract class AbstractSchemaGenerator implements SchemaGenerator {
     Type type = typeToken.getType();
     Class<?> rawType = typeToken.getRawType();
 
-    if (SIMPLE_SCHEMAS.containsKey(rawType)) {
+    // Object type was introduced in SIMPLE_SCHEMAS to satisfy Java Object usage in ETLConfig.
+    // Do not consider Java Object as simple schema for schema generation purpose.
+    // TODO: (CDAP-16919) Remove Object class from simple schema.
+    if (rawType != Object.class && SIMPLE_SCHEMAS.containsKey(rawType)) {
       return SIMPLE_SCHEMAS.get(rawType);
     }
 
