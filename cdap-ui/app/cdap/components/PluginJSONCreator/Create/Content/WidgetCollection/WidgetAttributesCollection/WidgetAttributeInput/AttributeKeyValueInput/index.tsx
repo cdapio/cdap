@@ -14,8 +14,9 @@
  * the License.
  */
 
-import * as React from 'react';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import { fromJS } from 'immutable';
+import * as React from 'react';
 
 const AttributeKeyValueInput = ({
   keyField,
@@ -28,29 +29,11 @@ const AttributeKeyValueInput = ({
   field,
 }) => {
   const onKeyChange = (newVal) => {
-    setWidgetToAttributes((prevObjs) => ({
-      ...prevObjs,
-      [widgetID]: {
-        ...prevObjs[widgetID],
-        [field]: {
-          ...prevObjs[widgetID][field],
-          [keyField]: newVal,
-        },
-      },
-    }));
+    setWidgetToAttributes(fromJS(widgetToAttributes).setIn([widgetID, field, keyField], newVal));
   };
 
   const onValueChange = (newVal) => {
-    setWidgetToAttributes((prevObjs) => ({
-      ...prevObjs,
-      [widgetID]: {
-        ...prevObjs[widgetID],
-        [field]: {
-          ...prevObjs[widgetID][field],
-          [valueField]: newVal,
-        },
-      },
-    }));
+    setWidgetToAttributes(fromJS(widgetToAttributes).setIn([widgetID, field, valueField], newVal));
   };
 
   const keyWidget = {
@@ -77,12 +60,14 @@ const AttributeKeyValueInput = ({
     name: valueField,
   };
 
-  const currentKey = widgetToAttributes[widgetID][field][keyField]
-    ? widgetToAttributes[widgetID][field][keyField]
-    : '';
-  const currentValue = widgetToAttributes[widgetID][field][valueField]
-    ? widgetToAttributes[widgetID][field][valueField]
-    : '';
+  const currentKey = widgetToAttributes
+    .get(widgetID)
+    .get(field)
+    .get(keyField);
+  const currentValue = widgetToAttributes
+    .get(widgetID)
+    .get(field)
+    .get(valueField);
 
   return (
     <div>

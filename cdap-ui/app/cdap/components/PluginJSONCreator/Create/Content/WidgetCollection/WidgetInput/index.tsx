@@ -23,6 +23,7 @@ import {
 } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { fromJS } from 'immutable';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
@@ -41,7 +42,7 @@ const styles = (): StyleRules => {
 };
 
 interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
-  widgetID: number;
+  widgetID: string;
 }
 
 const WidgetInputView: React.FC<IWidgetInputProps> = ({
@@ -52,58 +53,52 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
   widgetToAttributes,
   setWidgetToAttributes,
 }) => {
-  function onNameChange() {
+  function onNameChange(id) {
     return (name) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], name },
-      }));
+      setWidgetInfo(fromJS(widgetInfo).setIn([id, 'name'], name));
     };
   }
 
-  function onLabelChange() {
+  function onLabelChange(id) {
     return (label) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], label },
-      }));
+      setWidgetInfo(fromJS(widgetInfo).setIn([id, 'label'], label));
     };
   }
 
-  function onWidgetTypeChange() {
+  function onWidgetTypeChange(id) {
     return (widgetType) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], widgetType },
-      }));
+      setWidgetInfo(fromJS(widgetInfo).setIn([id, 'widgetType'], widgetType));
 
-      setWidgetToAttributes({
-        ...widgetToAttributes,
-        [widgetID]: Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
-          acc[curr] = '';
-          return acc;
-        }, {}),
-      });
+      setWidgetToAttributes(
+        fromJS(widgetToAttributes).set(
+          id,
+          fromJS(
+            Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
+              acc[curr] = '';
+              return acc;
+            }, {})
+          )
+        )
+      );
     };
   }
 
-  function onWidgetCategoryChange() {
+  function onWidgetCategoryChange(id) {
     return (widgetCategory) => {
-      setWidgetInfo((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], widgetCategory },
-      }));
+      setWidgetInfo(fromJS(widgetInfo).setIn([id, 'widgetCategory'], widgetCategory));
     };
   }
+
+  const info = widgetInfo.get(widgetID);
 
   return (
-    <If condition={widgetInfo[widgetID]}>
+    <If condition={info !== undefined}>
       <div className={classes.widgetInput}>
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'textbox'}
-            value={widgetInfo[widgetID].name}
-            onChange={onNameChange()}
+            value={info.get('name')}
+            onChange={onNameChange(widgetID)}
             label={'Name'}
             placeholder={'Name a Widget'}
             required={false}
@@ -112,8 +107,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'textbox'}
-            value={widgetInfo[widgetID].label}
-            onChange={onLabelChange()}
+            value={info.get('label')}
+            onChange={onLabelChange(widgetID)}
             label={'Label'}
             placeholder={'Label a Widget'}
             required={false}
@@ -122,8 +117,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'select'}
-            value={widgetInfo[widgetID].widgetCategory}
-            onChange={onWidgetCategoryChange()}
+            value={info.get('widgetCategory')}
+            onChange={onWidgetCategoryChange(widgetID)}
             label={'Category'}
             options={WIDGET_CATEGORY}
             required={false}
@@ -132,8 +127,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'select'}
-            value={widgetInfo[widgetID].widgetType}
-            onChange={onWidgetTypeChange()}
+            value={info.get('widgetType')}
+            onChange={onWidgetTypeChange(widgetID)}
             label={'Widget Type'}
             options={WIDGET_TYPES}
             required={true}

@@ -15,6 +15,7 @@
  */
 
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import { List, Map } from 'immutable';
 import * as React from 'react';
 
 export const CreateContext = React.createContext({});
@@ -26,36 +27,36 @@ interface ICreateState {
   displayName: string;
   emitAlerts: boolean;
   emitErrors: boolean;
-  configurationGroups: string[];
-  groupToInfo: any;
-  groupToWidgets: any;
-  widgetInfo: any;
-  widgetToAttributes: any;
+  configurationGroups: List<string>;
+  groupToInfo: Map<string, Map<string, string>>;
+  groupToWidgets: Map<string, List<string>>;
+  widgetInfo: Map<string, Map<string, string>>;
+  widgetToAttributes: Map<string, Map<string, string>>;
   liveView: boolean;
   outputName: string;
   JSONStatus: JSONStatusMessage;
-  filters: string[];
-  filterToName: any;
-  filterToCondition: any;
-  filterToShowList: any;
-  showToInfo: any;
+  filters: List<string>;
+  filterToName: Map<string, string>;
+  filterToCondition: Map<string, Map<string, string>>;
+  filterToShowList: Map<string, List<string>>;
+  showToInfo: Map<string, Map<string, string>>;
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
-  setConfigurationGroups: (groups: string[]) => void;
-  setGroupToInfo: (groupToInfo: any) => void;
-  setGroupToWidgets: (groupToWidgets: any) => void;
-  setWidgetInfo: (widgetInfo: any) => void;
-  setWidgetToAttributes: (widgetToAttributes: any) => void;
+  setConfigurationGroups: (groups: List<string>) => void;
+  setGroupToInfo: (groupToInfo: Map<string, Map<string, string>>) => void;
+  setGroupToWidgets: (groupToWidgets: Map<string, List<string>>) => void;
+  setWidgetInfo: (widgetInfo: Map<string, Map<string, string>>) => void;
+  setWidgetToAttributes: (widgetToAttributes: Map<string, Map<string, string>>) => void;
   setLiveView: (liveView: boolean) => void;
   setOutputName: (outputName: string) => void;
   setPluginState: (pluginState: any) => void;
   setJSONStatus: (JSONStatus: JSONStatusMessage) => void;
-  setFilters: (filters: string[]) => void;
-  setFilterToName: (filterToName: any) => void;
-  setFilterToCondition: (filterToCondition: any) => void;
-  setFilterToShowList: (filterToShowList: any) => void;
-  setShowToInfo: (showToInfo: any) => void;
+  setFilters: (filters: List<string>) => void;
+  setFilterToName: (filterToName: Map<string, string>) => void;
+  setFilterToCondition: (filterToCondition: Map<string, Map<string, string>>) => void;
+  setFilterToShowList: (filterToShowList: Map<string, List<string>>) => void;
+  setShowToInfo: (showToInfo: Map<string, Map<string, string>>) => void;
 }
 
 export interface IBasicPluginInfo {

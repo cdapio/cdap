@@ -16,9 +16,13 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Content from 'components/PluginJSONCreator/Create/Content';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
-import { CreateContext, IBasicPluginInfo, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  IBasicPluginInfo,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
+import { List, Map } from 'immutable';
 import * as React from 'react';
 
 export const LEFT_PANEL_WIDTH = 250;
@@ -56,15 +60,15 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     });
   };
 
-  public setConfigurationGroups = (configurationGroups: string[]) => {
+  public setConfigurationGroups = (configurationGroups: List<string>) => {
     this.setState({ configurationGroups });
   };
 
-  public setGroupToInfo = (groupToInfo: any) => {
+  public setGroupToInfo = (groupToInfo: Map<string, Map<string, string>>) => {
     this.setState({ groupToInfo });
   };
 
-  public setGroupToWidgets = (groupToWidgets: any) => {
+  public setGroupToWidgets = (groupToWidgets: Map<string, List<string>>) => {
     this.setState({ groupToWidgets });
   };
 
@@ -92,19 +96,19 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ filters });
   };
 
-  public setFilterToName = (filterToName: any) => {
+  public setFilterToName = (filterToName: Map<string, string>) => {
     this.setState({ filterToName });
   };
 
-  public setFilterToCondition = (filterToCondition: any) => {
+  public setFilterToCondition = (filterToCondition: Map<string, Map<string, string>>) => {
     this.setState({ filterToCondition });
   };
 
-  public setFilterToShowList = (filterToShowList: any) => {
+  public setFilterToShowList = (filterToShowList: Map<string, List<string>>) => {
     this.setState({ filterToShowList });
   };
 
-  public setShowToInfo = (showToInfo: any) => {
+  public setShowToInfo = (showToInfo: Map<string, Map<string, string>>) => {
     this.setState({ showToInfo });
   };
 
@@ -154,19 +158,18 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     displayName: '',
     emitAlerts: false,
     emitErrors: false,
-    configurationGroups: [],
-    groupToInfo: {},
-    groupToWidgets: {},
-    widgetInfo: {},
-    widgetToAttributes: {},
+    configurationGroups: List<string>(),
+    groupToInfo: Map<string, Map<string, string>>(),
+    groupToWidgets: Map<string, List<string>>(),
+    widgetInfo: Map<string, Map<string, string>>(),
+    widgetToAttributes: Map<string, Map<string, string>>(),
     liveView: true,
     outputName: '',
-    JSONStatus: JSONStatusMessage.Normal,
-    filters: [],
-    filterToName: {},
-    filterToCondition: {},
-    filterToShowList: {},
-    showToInfo: {},
+    filters: List(),
+    filterToName: Map({}),
+    filterToCondition: Map<string, Map<string, string>>(),
+    filterToShowList: Map<string, List<string>>(),
+    showToInfo: Map<string, Map<string, string>>(),
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,

@@ -26,6 +26,7 @@ import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constant
 import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { fromJS, List } from 'immutable';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -44,7 +45,7 @@ const styles = (theme): StyleRules => {
 interface IWidgetAttributesCollectionProps extends WithStyles<typeof styles>, ICreateContext {
   widgetAttributesOpen: boolean;
   onWidgetAttributesClose: () => void;
-  widgetID: number;
+  widgetID: string;
 }
 
 const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps> = ({
@@ -57,12 +58,13 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
   widgetToAttributes,
   setWidgetToAttributes,
 }) => {
-  const widget = widgetInfo[widgetID];
-  const widgetType = widget ? widget.widgetType : null;
+  const widget = widgetInfo.get(widgetID);
+  const widgetType = widget.get('widgetType');
   const attributeFields =
-    widgetToAttributes && widgetToAttributes[widgetID]
-      ? Object.keys(widgetToAttributes[widgetID])
-      : [];
+    widgetToAttributes && widgetToAttributes.get(widgetID)
+      ? List(widgetToAttributes.get(widgetID).keys())
+      : fromJS([]);
+
   return (
     <div>
       <Dialog
@@ -89,7 +91,7 @@ const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps>
             widgetToAttributes={widgetToAttributes}
             setWidgetToAttributes={setWidgetToAttributes}
           />
-          <If condition={attributeFields && attributeFields.length > 0}>
+          <If condition={attributeFields && attributeFields.size > 0}>
             <div className={classes.widgetAttributesTitle}>
               <h2 className={classes.h2Title}>Configure Widget</h2>
             </div>

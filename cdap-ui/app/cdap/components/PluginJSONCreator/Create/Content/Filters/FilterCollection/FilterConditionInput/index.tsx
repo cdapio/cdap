@@ -20,7 +20,8 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import { OPERATOR_VALUES } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
+import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { fromJS, List } from 'immutable';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
@@ -50,48 +51,54 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
   setFilterToCondition,
   widgetInfo,
 }) => {
-  const existingCondition = filterToCondition[filterID];
+  const existingCondition = filterToCondition.get(filterID);
 
   const [conditionMode, setConditionMode] = React.useState(
-    existingCondition.expression ? FilterConditionMode.Expression : FilterConditionMode.Operator
+    existingCondition.get('expression')
+      ? FilterConditionMode.Expression
+      : FilterConditionMode.Operator
   );
 
   const allWidgetNames = widgetInfo
-    ? Object.values(widgetInfo)
-        .map((info: IWidgetInfo) => info.name)
+    ? widgetInfo
+        .valueSeq()
+        .map((info) => fromJS(info).get('name'))
         .filter((widgetName) => widgetName !== undefined && widgetName !== null)
-    : [];
+    : List([]);
 
   React.useEffect(() => {
     // reset condition data
     if (conditionMode === FilterConditionMode.Expression) {
-      setFilterToCondition((prevObjs) => ({
-        ...prevObjs,
-        [filterID]: { expression: existingCondition.expression },
-      }));
+      setFilterToCondition(
+        filterToCondition.set(
+          filterID,
+          fromJS({
+            expression: existingCondition.get('expression') || '',
+          })
+        )
+      );
     } else {
-      setFilterToCondition((prevObjs) => ({
-        ...prevObjs,
-        [filterID]: {
-          property: existingCondition.property,
-          operator: existingCondition.operator,
-          value: existingCondition.value,
-        },
-      }));
+      setFilterToCondition(
+        filterToCondition.set(
+          filterID,
+          fromJS({
+            property: existingCondition.get('property') || '',
+            operator: existingCondition.get('operator') || '',
+            value: existingCondition.get('value') || '',
+          })
+        )
+      );
     }
   }, [conditionMode]);
 
   function setFilterCondition(conditionProperty: string) {
     return (val) => {
-      setFilterToCondition((prevObjs) => ({
-        ...prevObjs,
-        [filterID]: { ...prevObjs[filterID], [conditionProperty]: val },
-      }));
+      setFilterToCondition(fromJS(filterToCondition).setIn([filterID, conditionProperty], val));
     };
   }
 
   return (
-    <If condition={existingCondition}>
+    <If condition={existingCondition !== undefined}>
       <div className={classes.filterConditionInput}>
         <Heading type={HeadingTypes.h6} label="Show these widgets by the following condition..." />
         <PluginInput
@@ -105,7 +112,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
         <If condition={conditionMode === FilterConditionMode.Expression}>
           <PluginInput
             widgetType={'textbox'}
-            value={existingCondition.expression ? existingCondition.expression : ''}
+            value={existingCondition.get('expression')}
             onChange={setFilterCondition('expression')}
             label={'expression'}
             required={false}
@@ -114,27 +121,27 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
         <If condition={conditionMode === FilterConditionMode.Operator}>
           <PluginInput
             widgetType={'select'}
-            value={existingCondition.property}
+            value={existingCondition.get('property')}
             onChange={setFilterCondition('property')}
             label={'property'}
             options={allWidgetNames}
           />
           <PluginInput
             widgetType={'select'}
-            value={existingCondition.operator}
+            value={existingCondition.get('operator')}
             onChange={setFilterCondition('operator')}
             label={'operator'}
             options={OPERATOR_VALUES}
           />
           <If
             condition={
-              existingCondition.operator === CustomOperator.EQUALTO ||
-              existingCondition.operator === CustomOperator.NOTEQUALTO
+              existingCondition.get('operator') === CustomOperator.EQUALTO ||
+              existingCondition.get('operator') === CustomOperator.NOTEQUALTO
             }
           >
             <PluginInput
               widgetType={'textbox'}
-              value={existingCondition.value}
+              value={existingCondition.get('value')}
               onChange={setFilterCondition('value')}
               label={'value'}
               required={false}

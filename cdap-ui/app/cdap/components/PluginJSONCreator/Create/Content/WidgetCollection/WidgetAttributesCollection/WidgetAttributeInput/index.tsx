@@ -20,6 +20,7 @@ import { CODE_EDITORS } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeKeyValueInput';
 import AttributeMultipleValuesInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeMultipleValuesInput';
+import { fromJS } from 'immutable';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
@@ -42,10 +43,7 @@ const WidgetAttributeInputView = ({
   widgetType,
 }) => {
   const onAttributeChange = (newVal) => {
-    setWidgetToAttributes((prevObjs) => ({
-      ...prevObjs,
-      [widgetID]: { ...prevObjs[widgetID], [field]: newVal },
-    }));
+    setWidgetToAttributes(fromJS(widgetToAttributes).setIn([widgetID, field], newVal));
   };
 
   const generateAttributeInput = (fieldType) => {
@@ -69,7 +67,7 @@ const WidgetAttributeInputView = ({
     } else {
       const props = {
         label: field,
-        value: widgetToAttributes[widgetID][field],
+        value: widgetToAttributes.get(widgetID).get(field),
         onChange: onAttributeChange,
         required: fieldInfo.required,
         // Set default widgetType in case fieldType is invalid
@@ -105,7 +103,7 @@ const WidgetAttributeInputView = ({
             required: fieldInfo.required,
             name: 'code-editor',
           }}
-          value={widgetToAttributes[widgetID][field]}
+          value={widgetToAttributes.get(widgetID).get(field)}
           onChange={onAttributeChange}
         />
       );

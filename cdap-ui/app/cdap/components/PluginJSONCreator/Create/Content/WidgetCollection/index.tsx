@@ -21,7 +21,8 @@ import If from 'components/If';
 import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
 import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
 import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
-import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
+import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { fromJS } from 'immutable';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 
@@ -65,7 +66,7 @@ const styles = (theme): StyleRules => {
 };
 
 interface IWidgetCollectionProps extends WithStyles<typeof styles>, ICreateContext {
-  groupID: number;
+  groupID: string;
 }
 
 const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
@@ -78,66 +79,50 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
   widgetToAttributes,
   setWidgetToAttributes,
 }) => {
-  const [activeWidgets, setActiveWidgets] = React.useState(groupID ? groupToWidgets[groupID] : []);
+  const activeWidgets = groupID ? groupToWidgets.get(groupID) : fromJS([]);
   const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
-
-  React.useEffect(() => {
-    if (groupID) {
-      setActiveWidgets(groupToWidgets[groupID]);
-    } else {
-      setActiveWidgets([]);
-    }
-  }, [groupToWidgets]);
 
   function addWidgetToGroup(index: number) {
     return () => {
       const newWidgetID = 'Widget_' + uuidV4();
 
       // Add a new widget's ID at the specified index
-      const newWidgets = [...activeWidgets];
-      if (newWidgets.length === 0) {
-        newWidgets.splice(0, 0, newWidgetID);
+      let newWidgets;
+      if (activeWidgets.size === 0) {
+        newWidgets = activeWidgets.insert(0, newWidgetID);
       } else {
-        newWidgets.splice(index + 1, 0, newWidgetID);
+        newWidgets = activeWidgets.insert(index + 1, newWidgetID);
       }
-      setGroupToWidgets({
-        ...groupToWidgets,
-        [groupID]: newWidgets,
-      });
+      setGroupToWidgets(groupToWidgets.set(groupID, newWidgets));
 
       // Set the default empty properties of the widget
-      setWidgetInfo({
-        ...widgetInfo,
-        [newWidgetID]: {
-          widgetType: '',
-          label: '',
-          name: '',
-        } as IWidgetInfo,
-      });
+      setWidgetInfo(
+        widgetInfo.set(
+          newWidgetID,
+          fromJS({
+            widgetType: '',
+            label: '',
+            name: '',
+          })
+        )
+      );
 
-      setWidgetToAttributes({
-        ...widgetToAttributes,
-        [newWidgetID]: {},
-      });
+      setWidgetToAttributes(widgetToAttributes.set(newWidgetID, fromJS({})));
     };
   }
 
   function deleteWidgetFromGroup(widgetIndex) {
     return () => {
       // Grab the widget ID to delete
-      const widgetToDelete = activeWidgets[widgetIndex];
+      const widgetToDelete = activeWidgets.get(widgetIndex);
 
-      const newWidgets = [...activeWidgets];
-      newWidgets.splice(widgetIndex, 1);
-      setGroupToWidgets({
-        ...groupToWidgets,
-        [groupID]: newWidgets,
-      });
+      const newWidgets = activeWidgets.delete(widgetIndex);
+      setGroupToWidgets(groupToWidgets.set(groupID, newWidgets));
 
-      const { [widgetToDelete]: info, ...restWidgetInfo } = widgetInfo;
-      setWidgetInfo(restWidgetInfo);
+      const newWidgetsToInfo = fromJS(widgetInfo).delete(widgetToDelete);
+      setWidgetInfo(newWidgetsToInfo);
 
-      const { [widgetToDelete]: attributes, ...restWidgetToAttributes } = widgetToAttributes;
+      const restWidgetToAttributes = fromJS(widgetToAttributes).delete(widgetToDelete);
       setWidgetToAttributes(restWidgetToAttributes);
     };
   }
@@ -161,7 +146,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-            <If condition={widgetInfo[widgetID]} key={widgetIndex}>
+            <If key={widgetIndex} condition={widgetInfo.get(widgetID) !== undefined}>
               <div className={classes.eachWidget}>
                 <WidgetInput
                   widgetInfo={widgetInfo}
@@ -193,13 +178,13 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
               >
                 Attributes
               </Button>
-              <If condition={activeWidgets && widgetIndex < activeWidgets.length - 1}>
+              <If condition={activeWidgets && widgetIndex < activeWidgets.size - 1}>
                 <Divider className={classes.widgetDivider} />
               </If>
             </If>
           );
         })}
-        <If condition={Object.keys(activeWidgets).length === 0}>
+        <If condition={activeWidgets.size === 0}>
           <Button variant="contained" color="primary" onClick={addWidgetToGroup(0)}>
             Add Properties
           </Button>

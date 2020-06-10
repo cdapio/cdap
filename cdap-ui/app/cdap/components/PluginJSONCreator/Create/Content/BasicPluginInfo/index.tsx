@@ -20,7 +20,12 @@ import { PluginTypes } from 'components/PluginJSONCreator/constants';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import { CreateContext, createContextConnect, IBasicPluginInfo, ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import {
+  CreateContext,
+  createContextConnect,
+  IBasicPluginInfo,
+  ICreateContext,
+} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
