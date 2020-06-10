@@ -168,13 +168,10 @@
     overflow: hidden;
     .modal-dialog {
       width: 100%;
-      height: 100%;
+      height: calc(100vh - 50px);
       overflow-y: hidden;
-      margin: 50px 0 50px 0;
-
-      @media(max-width: @screen-lg-min) {
-        margin-left: 100px;
-      }
+      margin: 0;
+      margin-top: 50px;
 
       &.expand {
         margin-left: 0;
@@ -404,7 +401,7 @@ body.theme-cdap {
         .modal-dialog {
           margin-top: 0;
           margin-top: 50px;
-          height: 100%;
+          height: calc(100vh - 50px);
           width: 100%;
           .modal-content {
             .modal-header {
