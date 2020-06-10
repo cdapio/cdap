@@ -53,6 +53,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -239,8 +240,31 @@ public class ApplicationClient {
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
    */
   public void upgradeApplication(ApplicationId app)
+    throws ApplicationNotFoundException, IOException, UnauthenticatedException {
+    upgradeApplication(app, Collections.emptySet(), false);
+  }
+
+  /**
+   * Upgrades an application.
+   *
+   * @param app the application to delete
+   * @param artifactScopes artifact scopes to consider while searching for latest artifacts.
+   * @param allowSnapshot should consider snapshot artifacts or not.
+   * @throws ApplicationNotFoundException if the application with the given ID was not found
+   * @throws IOException if a network error occurred
+   * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   */
+  public void upgradeApplication(ApplicationId app, Set<String> artifactScopes, boolean allowSnapshot)
     throws ApplicationNotFoundException, IOException, UnauthenticatedException, UnauthorizedException {
-    String path = String.format("apps/%s/upgrade", app.getApplication());
+    String path = String.format("apps/%s/upgrade?allowSnapshot=%s", app.getApplication(),
+                                Boolean.toString(allowSnapshot));
+
+    if (!artifactScopes.isEmpty()) {
+      for (String scope: artifactScopes) {
+        path = path + String.format("&artifactScope=%s", scope);
+      }
+    }
+
     HttpResponse response = restClient.execute(HttpMethod.POST,
                                                config.resolveNamespacedURLV3(app.getParent(), path),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
@@ -248,6 +272,7 @@ public class ApplicationClient {
       throw new ApplicationNotFoundException(app);
     }
   }
+
 
   /**
    * Deletes an application.

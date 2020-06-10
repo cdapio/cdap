@@ -49,6 +49,8 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * A default implementation of {@link ApplicationManager}.
@@ -205,6 +207,11 @@ public class DefaultApplicationManager extends AbstractApplicationManager {
   @Override
   public void upgrade() throws Exception {
     appFabricClient.upgradeApplication(application);
+  }
+
+  @Override
+  public void upgrade(Set<String> artifactScopes, boolean allowSnapshot) throws Exception {
+    appFabricClient.upgradeApplication(application, artifactScopes, allowSnapshot);
   }
 
   @Override
