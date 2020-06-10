@@ -19,13 +19,17 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
+import io.cdap.cdap.app.preview.PreviewJob;
+import io.cdap.cdap.app.preview.PreviewJobQueueState;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -121,5 +125,84 @@ public class DefaultPreviewStoreTest {
 
     Assert.assertEquals(runId, store.getProgramRunId(applicationId));
     Assert.assertEquals(status, store.getPreviewStatus(applicationId));
+  }
+
+  @Test
+  public void testPreviewJobQueue() {
+    // no job exists in the queue
+    Assert.assertNull(store.poll("somerunnerid"));
+
+    // add single job
+    RunId id1 = RunIds.generate();
+    ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
+    AppRequest appRequest = getAppRequest();
+    PreviewJobQueueState queueState = store.add(new PreviewJob(applicationId, appRequest));
+    Assert.assertEquals(queueState.getNumOfPreviewWaiting(), 1);
+
+    // poll for job
+    PreviewJob previewJob = store.poll("runner1");
+    Assert.assertNotNull(previewJob);
+    Assert.assertEquals(applicationId, previewJob.getApplicationId());
+    Assert.assertNotNull(previewJob.getAppRequest().getPreview());
+    Assert.assertEquals("WordCount", previewJob.getAppRequest().getPreview().getProgramName());
+
+    // another poll should return null
+    previewJob = store.poll("runner2");
+    Assert.assertNull(previewJob);
+
+    // add 2 jobs to queue
+    ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
+    queueState = store.add(new PreviewJob(applicationId2, appRequest));
+    Assert.assertEquals(queueState.getNumOfPreviewWaiting(), 1);
+    ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
+    queueState = store.add(new PreviewJob(applicationId3, appRequest));
+    Assert.assertEquals(queueState.getNumOfPreviewWaiting(), 2);
+
+    // polling should return in the order they were added
+    previewJob = store.poll("runner2");
+    Assert.assertNotNull(previewJob);
+    Assert.assertEquals(applicationId2, previewJob.getApplicationId());
+
+    previewJob = store.poll("runner2");
+    Assert.assertNotNull(previewJob);
+    Assert.assertEquals(applicationId3, previewJob.getApplicationId());
+
+    // job queue is empty now
+    previewJob = store.poll("runner2");
+    Assert.assertNull(previewJob);
+  }
+
+  private AppRequest getAppRequest() {
+    String appRequestWithSchedules = "{\n" +
+      "  \"artifact\": {\n" +
+      "     \"name\": \"cdap-notifiable-workflow\",\n" +
+      "     \"version\": \"1.0.0\",\n" +
+      "     \"scope\": \"system\"\n" +
+      "  },\n" +
+      "  \"config\": {\n" +
+      "     \"plugin\": {\n" +
+      "        \"name\": \"WordCount\",\n" +
+      "        \"type\": \"sparkprogram\",\n" +
+      "        \"artifact\": {\n" +
+      "           \"name\": \"word-count-program\",\n" +
+      "           \"scope\": \"user\",\n" +
+      "           \"version\": \"1.0.0\"\n" +
+      "        }\n" +
+      "     },\n" +
+      "\n" +
+      "     \"notificationEmailSender\": \"sender@example.domain.com\",\n" +
+      "     \"notificationEmailIds\": [\"recipient@example.domain.com\"],\n" +
+      "     \"notificationEmailSubject\": \"[Critical] Workflow execution failed.\",\n" +
+      "     \"notificationEmailBody\": \"Execution of Workflow running the WordCount program failed.\"\n" +
+      "  },\n" +
+      "  \"preview\" : {\n" +
+      "    \"programName\" : \"WordCount\",\n" +
+      "    \"programType\" : \"spark\"\n" +
+      "    },\n" +
+      "  \"principal\" : \"test2\",\n" +
+      "  \"app.deploy.update.schedules\":\"false\"\n" +
+      "}";
+
+    return GSON.fromJson(appRequestWithSchedules, AppRequest.class);
   }
 }
