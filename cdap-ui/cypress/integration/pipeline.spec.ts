@@ -179,7 +179,7 @@ describe('Creating a pipeline', () => {
       skip();
     }
     // When user clicks Yes, Preview should fail to start and show banner about missing source and sink
-    cy.get('[data-cy="run-preview-btn"]').click();
+    cy.get('[data-cy="preview-top-run-btn"]').click();
     cy.get('[data-cy="run-preview-action-modal"]').should('be.visible');
     cy.get('[data-cy="yes-preview-btn"]').click();
     // Close banner reminding user to add source and sink
