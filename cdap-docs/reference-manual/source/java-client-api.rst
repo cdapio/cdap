@@ -76,7 +76,7 @@ Then, instantiate as follows::
   AuthenticationClient authenticationClient = new BasicAuthenticationClient();
   authenticationClient.setConnectionInfo("example.com", 11015, sslEnabled);
   // Configure the AuthenticationClient as documented in
-  // https://github.com/caskdata/cdap-clients/blob/develop/cdap-authentication-clients/java
+  // https://github.com/cdapio/cdap-clients/blob/develop/cdap-authentication-clients/java
   AccessToken accessToken = authenticationClient.getAccessToken();
 
   // Interact with the secure CDAP instance located at example.com, port 11015, with the provided accessToken
