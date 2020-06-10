@@ -14,14 +14,14 @@
   the License.
 -->
 
-<div class="modal-body">
+<div class="modal-body" data-cy="run-preview-action-modal">
   <div>
     <span>Actions and Post-run actions are ignored when running preview of a pipeline. Do you wish to continue anyway?</span>
   </div>
 </div>
 <div class="modal-footer">
   <div class="pull-right">
-    <button class="btn btn-grey-cancel" ng-click="$close(false)">No</button>
-    <button class="btn btn-blue" ng-click="$close(true)">Yes</button>
+    <button class="btn btn-grey-cancel" ng-click="$close(false)" data-cy="no-preview-btn">No</button>
+    <button class="btn btn-blue" ng-click="$close(true)" data-cy="yes-preview-btn">Yes</button>
   </div>
 </div>
