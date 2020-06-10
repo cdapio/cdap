@@ -77,6 +77,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -91,8 +94,8 @@ public class DefaultStore implements Store {
   // as it is not specifically metadata
   private static final DatasetId WORKFLOW_STATS_INSTANCE_ID = NamespaceId.SYSTEM.dataset("workflow.stats");
   private static final Gson GSON = new Gson();
-  private static final Map<String, String> EMPTY_STRING_MAP = ImmutableMap.of();
   private static final Type STRING_MAP_TYPE = new TypeToken<Map<String, String>>() { }.getType();
+  private static final Map<String, String> EMPTY_STRING_MAP = Collections.emptyMap();
 
   private TransactionRunner transactionRunner;
 
@@ -538,6 +541,28 @@ public class DefaultStore implements Store {
       return getAppMetadataStore(context).getAllApplications(id.getNamespace()).stream()
         .map(ApplicationMeta::getSpec).collect(Collectors.toList());
     });
+  }
+
+  @Override
+  public void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer) {
+
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+
+    while (true) {
+      AtomicInteger count = new AtomicInteger();
+
+      TransactionRunners.run(transactionRunner, context -> {
+        getAppMetadataStore(context).scanApplications(cursorRef.get(), (cursor, entry) -> {
+          cursorRef.set(cursor);
+          consumer.accept(entry.getKey(), entry.getValue().getSpec());
+          return count.incrementAndGet() < txBatchSize;
+        });
+      });
+
+      if (count.get() == 0) {
+        break;
+      }
+    }
   }
 
   @Override

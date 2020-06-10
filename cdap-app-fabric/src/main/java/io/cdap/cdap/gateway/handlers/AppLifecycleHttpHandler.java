@@ -76,7 +76,6 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-
 import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -433,8 +432,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         updateDetail = new ApplicationUpdateDetail(appId, e.getMessage());
       } catch (Exception e) {
         updateDetail =
-          new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
-                                      HttpResponseStatus.INTERNAL_SERVER_ERROR));
+          new ApplicationUpdateDetail(appId, new ServiceException(e, HttpResponseStatus.INTERNAL_SERVER_ERROR));
       }
       details.add(updateDetail);
     }

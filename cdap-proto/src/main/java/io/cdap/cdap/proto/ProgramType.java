@@ -19,6 +19,7 @@ package io.cdap.cdap.proto;
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -161,6 +162,16 @@ public enum ProgramType {
                                                        categoryName, String.join(",", CATEGORY_MAP.keySet())));
     }
     return type;
+  }
+
+  /**
+   * Gets the {@link ProgramType} from the given API {@link io.cdap.cdap.api.app.ProgramType}.
+   */
+  public static ProgramType valueOfApiProgramType(io.cdap.cdap.api.app.ProgramType apiType) {
+    return Arrays.stream(values())
+      .filter(type -> type.getApiProgramType() == apiType)
+      .findFirst()
+      .orElseThrow(() -> new IllegalArgumentException("Unsupported API program type " + apiType));
   }
 
   @Override
