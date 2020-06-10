@@ -23,6 +23,7 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -52,33 +53,30 @@ public interface ApplicationUpdateContext {
   String getConfigAsString();
 
   /**
-   * Gets list of plugin artifacts based on given parameters in sorted in ascending order by version.
+   * Returns list of available plugin artifacts based on given parameters.
    *
    * @param pluginType the plugin type.
    * @param pluginName the plugin name.
-   * @param pluginScope the scope to search plugins in.
    * @param pluginRange the range of the version candidate plugins should be in.
    * @return artifact list of plugins which matches with given parameters, sorted in ascending order.
    *         Returns empty list if no artifact for the plugin found.
    */
-  default List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
+  default List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName,
                                               @Nullable ArtifactVersionRange pluginRange) throws Exception {
-    return getPluginArtifacts(pluginType, pluginName, pluginScope, pluginRange, Integer.MAX_VALUE);
+    return getPluginArtifacts(pluginType, pluginName, pluginRange, Integer.MAX_VALUE);
   }
 
   /**
-   * Gets list of plugin artifacts based on given parameters in sorted in ascending order by version.
-   * Returns plugin artifacts using given filters in ascending order.
+   * Returns list of available plugin artifacts based on given parameters.
    *
    * @param pluginType the plugin type.
    * @param pluginName the plugin name.
-   * @param pluginScope the scope to search plugins in.
    * @param pluginRange the range of the version candidate plugins should be in.
    * @param limit number of results to return at max, if null, default will be INT_MAX.
    * @return artifact list of plugins which matches with given parameters, sorted in ascending order.
    *         Returns empty list if no artifact for the plugin found.
    */
-  List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName, ArtifactScope pluginScope,
+  List<ArtifactId> getPluginArtifacts(String pluginType, String pluginName,
                                       @Nullable ArtifactVersionRange pluginRange, int limit) throws Exception;
 
 }

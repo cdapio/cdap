@@ -45,6 +45,8 @@ import io.cdap.cdap.test.WorkflowManager;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * {@link AbstractApplicationManager} for use in integration tests.
@@ -194,6 +196,11 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   @Override
   public void upgrade() throws Exception {
     applicationClient.upgradeApplication(application);
+  }
+
+  @Override
+  public void upgrade(Set<String> artifactScopes, boolean allowSnapshot) throws Exception {
+    applicationClient.upgradeApplication(application, artifactScopes, allowSnapshot);
   }
 
   @Override
