@@ -81,8 +81,10 @@ import java.io.File;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -653,6 +655,11 @@ public class AppFabricClient {
   }
 
   public void upgradeApplication(ApplicationId appId) throws Exception {
+    upgradeApplication(appId, Collections.emptySet(), false);
+  }
+
+  public void upgradeApplication(ApplicationId appId, Set<String> artifactScopes, boolean allowSnapshot)
+    throws Exception {
     HttpRequest request = new DefaultHttpRequest(
         HttpVersion.HTTP_1_1, HttpMethod.POST,
         String.format("%s/apps/%s/upgrade", getNamespacePath(appId.getNamespace()), appId.getApplication())
@@ -662,7 +669,8 @@ public class AppFabricClient {
 
     MockResponder mockResponder = new MockResponder();
     appLifecycleHttpHandler.upgradeApplication(request, mockResponder, appId.getNamespace(),
-                                               appId.getApplication());
+                                               appId.getApplication(), artifactScopes,
+                                               allowSnapshot);
     verifyResponse(HttpResponseStatus.OK, mockResponder.getStatus(), "Failed to upgrade app");
   }
 }
