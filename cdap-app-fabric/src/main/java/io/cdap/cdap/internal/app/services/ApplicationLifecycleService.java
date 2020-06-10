@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonIOException;
+import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.Application;
@@ -70,16 +71,15 @@ import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.proto.ApplicationDetail;
-import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.DatasetDetail;
 import io.cdap.cdap.proto.PluginInstanceDetail;
 import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.ProgramTypes;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -95,15 +95,15 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -115,6 +115,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
 /**
@@ -128,6 +130,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   /**
    * Store manages non-runtime lifecycle.
    */
+  private final CConfiguration cConf;
   private final Store store;
   private final Scheduler scheduler;
   private final UsageRegistry usageRegistry;
@@ -144,7 +147,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final Impersonator impersonator;
 
   @Inject
-  ApplicationLifecycleService(CConfiguration cConfiguration,
+  ApplicationLifecycleService(CConfiguration cConf,
                               Store store, Scheduler scheduler, UsageRegistry usageRegistry,
                               PreferencesService preferencesService, MetricsSystemClient metricsSystemClient,
                               OwnerAdmin ownerAdmin, ArtifactRepository artifactRepository,
@@ -152,8 +155,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               MetadataServiceClient metadataServiceClient,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
                               MessagingService messagingService, Impersonator impersonator) {
-    this.appUpdateSchedules = cConfiguration.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
-                                                        Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
+    this.cConf = cConf;
+    this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
+                                               Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
     this.store = store;
     this.scheduler = scheduler;
     this.usageRegistry = usageRegistry;
@@ -166,8 +170,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
-    this.adminEventPublisher = new AdminEventPublisher(cConfiguration,
-                                                       new MultiThreadMessagingContext(messagingService));
+    this.adminEventPublisher = new AdminEventPublisher(cConf, new MultiThreadMessagingContext(messagingService));
   }
 
   @Override
@@ -268,7 +271,47 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return result;
   }
 
-  public Collection<String> getAppVersions(String namespace, String application) throws Exception {
+  /**
+   * Creates a ZIP archive that contains the {@link ApplicationDetail} for all applications. The archive created will
+   * contain a directory entry for each of the namespace. Inside each namespace directory, it contains the
+   * application detail json, the application name as the file name, with {@code ".json"} as the file extension.
+   * <p/>
+   * This method requires instance admin permission.
+   *
+   * @param zipOut the {@link ZipOutputStream} for writing out the application details
+   */
+  public void createAppDetailsArchive(ZipOutputStream zipOut) throws Exception {
+    authorizationEnforcer.enforce(new InstanceId(cConf.get(Constants.INSTANCE_NAME)),
+                                  authenticationContext.getPrincipal(), Action.ADMIN);
+
+    Set<NamespaceId> namespaces = new HashSet<>();
+
+    JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(zipOut, StandardCharsets.UTF_8));
+    store.scanApplications(20, (appId, appSpec) -> {
+      // Skip the SYSTEM namespace apps
+      if (NamespaceId.SYSTEM.equals(appId.getParent())) {
+        return;
+      }
+      try {
+        // Add a directory for the namespace
+        if (namespaces.add(appId.getParent())) {
+          ZipEntry entry = new ZipEntry(appId.getNamespace() + "/");
+          zipOut.putNextEntry(entry);
+          zipOut.closeEntry();
+        }
+        ZipEntry entry = new ZipEntry(appId.getNamespace() + "/" + appId.getApplication() + ".json");
+        zipOut.putNextEntry(entry);
+        GSON.toJson(ApplicationDetail.fromSpec(appSpec, null), ApplicationDetail.class, jsonWriter);
+        jsonWriter.flush();
+        zipOut.closeEntry();
+
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to add zip entry for application " + appId, e);
+      }
+    });
+  }
+
+  public Collection<String> getAppVersions(String namespace, String application) {
     Collection<ApplicationId> appIds = store.getAllAppVersionsAppIds(new ApplicationId(namespace, application));
     List<String> versions = new ArrayList<>();
     for (ApplicationId appId : appIds) {
@@ -417,10 +460,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
 
     Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
-    List<ApplicationConfigUpdateAction> upgradeActions = Arrays.asList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT);
 
     updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
-                              upgradeActions, ownerAdmin.getOwner(appId), false);
+                              Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
+                              ownerAdmin.getOwner(appId), false);
   }
 
   /**
@@ -444,7 +487,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       Artifacts.toProtoArtifactId(appId.getParent(), artifactDetail.getDescriptor().getArtifactId());
     EntityImpersonator classLoaderImpersonator = new EntityImpersonator(artifactId, this.impersonator);
 
-    String updatedAppConfig = "";
+    String updatedAppConfig;
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
                                           artifactRepository, currentConfigStr, updateActions);
@@ -742,22 +785,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     return pluginInstanceDetails;
   }
 
-  private Iterable<ProgramSpecification> getProgramSpecs(ApplicationId appId) {
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    return Iterables.concat(appSpec.getMapReduce().values(),
-                            appSpec.getServices().values(),
-                            appSpec.getSpark().values(),
-                            appSpec.getWorkers().values(),
-                            appSpec.getWorkflows().values());
-  }
-
   /**
    * Delete the metrics for an application.
    *
    * @param applicationId the application to delete metrics for.
    */
-  private void deleteMetrics(ApplicationId applicationId) throws IOException {
-    ApplicationSpecification spec = this.store.getApplication(applicationId);
+  private void deleteMetrics(ApplicationId applicationId, ApplicationSpecification spec) throws IOException {
     long endTs = System.currentTimeMillis() / 1000;
     Map<String, String> tags = new LinkedHashMap<>();
     tags.put(Constants.Metrics.Tag.NAMESPACE, applicationId.getNamespace());
@@ -773,13 +806,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    *
    * @param appId applicationId
    */
-  private void deletePreferences(ApplicationId appId) {
-    Iterable<ProgramSpecification> programSpecs = getProgramSpecs(appId);
-    for (ProgramSpecification spec : programSpecs) {
-
-      preferencesService.deleteProperties(appId.program(ProgramTypes.fromSpecification(spec), spec.getName()));
-      LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespace(), appId.getApplication(),
-                ProgramTypes.fromSpecification(spec).getCategoryName(), spec.getName());
+  private void deletePreferences(ApplicationId appId, ApplicationSpecification appSpec) {
+    for (io.cdap.cdap.api.app.ProgramType programType : io.cdap.cdap.api.app.ProgramType.values()) {
+      for (String program : appSpec.getProgramsByType(programType)) {
+        ProgramId programId = appId.program(ProgramType.valueOfApiProgramType(programType), program);
+        preferencesService.deleteProperties(programId);
+        LOG.trace("Deleted Preferences of Program : {}, {}, {}, {}", appId.getNamespace(), appId.getApplication(),
+                  programId.getType().getCategoryName(), programId.getProgram());
+      }
     }
     preferencesService.deleteProperties(appId);
     LOG.trace("Deleted Preferences of Application : {}, {}", appId.getNamespace(), appId.getApplication());
@@ -851,13 +885,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       scheduler.modifySchedulesTriggeredByDeletedProgram(appId.workflow(workflowSpec.getName()));
     }
 
-    deleteMetrics(appId);
+    deleteMetrics(appId, spec);
 
     //Delete all preferences of the application and of all its programs
-    deletePreferences(appId);
+    deletePreferences(appId, spec);
 
-    ApplicationSpecification appSpec = store.getApplication(appId);
-    deleteAppMetadata(appId, appSpec);
+    deleteAppMetadata(appId, spec);
     store.deleteWorkflowStats(appId);
     store.removeApplication(appId);
     try {
@@ -875,7 +908,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     // make sure the program profile metadata is removed
-    adminEventPublisher.publishAppDeletion(appId, appSpec);
+    adminEventPublisher.publishAppDeletion(appId, spec);
   }
 
   /**

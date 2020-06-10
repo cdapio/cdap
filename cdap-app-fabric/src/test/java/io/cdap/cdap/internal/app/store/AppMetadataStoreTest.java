@@ -631,7 +631,7 @@ public abstract class AppMetadataStoreTest {
     }
 
     // Scan the active runs with batch size of 2
-    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>();
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
     AtomicInteger count = new AtomicInteger();
     AtomicBoolean completed = new AtomicBoolean();
     while (!completed.get()) {
@@ -790,6 +790,48 @@ public abstract class AppMetadataStoreTest {
     for (int i = 0; i < 20; i++) {
       Assert.assertTrue("Missing application test" + i, result.containsKey(NamespaceId.DEFAULT.app("test" + i)));
     }
+  }
+
+  @Test
+  public void testScanApplications() {
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    // Writes 100 application specs
+    int count = 100;
+    for (int i = 0; i < count; i++) {
+      String appName = "test" + i;
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+      });
+    }
+
+    // Scan all apps
+    Map<ApplicationId, ApplicationMeta> apps = new HashMap<>();
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      store.scanApplications(AppMetadataStore.Cursor.EMPTY, ((cursor, entry) -> {
+        apps.put(entry.getKey(), entry.getValue());
+        return true;
+      }));
+    });
+
+    Assert.assertEquals(count, apps.size());
+
+    // Scan by batches
+    apps.clear();
+    AtomicReference<AppMetadataStore.Cursor> cursorRef = new AtomicReference<>(AppMetadataStore.Cursor.EMPTY);
+    for (int i = 0; i <= count / 15; i++) {
+      TransactionRunners.run(transactionRunner, context -> {
+        AppMetadataStore store = AppMetadataStore.create(context);
+        store.scanApplications(cursorRef.get(), ((cursor, entry) -> {
+          apps.put(entry.getKey(), entry.getValue());
+          cursorRef.set(cursor);
+          return apps.size() % 15 != 0;
+        }));
+      });
+    }
+    Assert.assertEquals(count, apps.size());
   }
 
   @Test
