@@ -28,18 +28,24 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import ThemeWrapper from 'components/ThemeWrapper';
 import T from 'i18n-react';
 
-const I18N_PREFIX = 'features.PreviewData.Table';
+const I18N_PREFIX = 'features.PreviewData.DataView.Table';
 
-const CustomTableCell = withStyles((theme) => ({
+export const CustomTableCell = withStyles((theme) => ({
   head: {
     backgroundColor: theme.palette.grey['300'],
     color: theme.palette.common.white,
     padding: 10,
     fontSize: 14,
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+    },
   },
   body: {
     padding: 10,
     fontSize: 14,
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+    },
   },
 }))(TableCell);
 
@@ -47,7 +53,7 @@ export const messageTextStyle = {
   fontSize: '1.3rem !important',
   margin: '10px 0',
 };
-const styles = (theme) => ({
+export const styles = (theme) => ({
   root: {
     width: '100%',
     display: 'inline-block',
@@ -119,6 +125,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
       <Table>
         <TableHead>
           <TableRow className={classes.row}>
+            <CustomTableCell />
             {headers.map((fieldName, i) => {
               return (
                 <CustomTableCell key={`header-cell-${i}`}>{format(fieldName)}</CustomTableCell>
@@ -130,6 +137,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
           {records.map((record, j) => {
             return (
               <TableRow className={classes.row} key={`tr-${j}`}>
+                <CustomTableCell>{j + 1}</CustomTableCell>
                 {headers.map((fieldName, k) => {
                   return (
                     <CustomTableCell key={`table-cell-${k}`}>
