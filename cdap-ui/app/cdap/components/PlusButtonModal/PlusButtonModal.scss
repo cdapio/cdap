@@ -69,6 +69,14 @@ $horizontal-tab-height: 45px;
     overflow: hidden;
     max-width: unset;
 
+    &.add-entity-modal {
+      width: 75vw;
+      max-width: 1200px;
+      margin: 0 auto;
+      max-height: 75vh;
+      margin-top: 120px;
+    }
+
     .modal-content {
       border-radius: 0;
       height: 100%;
@@ -186,6 +194,10 @@ $horizontal-tab-height: 45px;
       .modal-footer {
         padding: 0;
         text-align: initial;
+        .card-action-feedback {
+          width: 100%;
+          margin: 0;
+        }
       }
     }
   }
