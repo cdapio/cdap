@@ -95,6 +95,7 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,11 +107,13 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
@@ -407,11 +410,65 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   }
 
   /**
+   * Finds latest application artifact for given application and current artifact for upgrading application.
+   * If no artifact found then returns current artifact as the candidate.
+   *
+   * @param appId application Id to find latest app artifact for.
+   * @param currentArtifactId current artifact used by application.
+   * @param allowedArtifactScopes artifact scopes to search in for finding candidate artifacts.
+   * @param allowSnapshot whether to consider snapshot version of artifacts or not for upgrade.
+   * @return {@link ArtifactSummary} for the artifact to be used for upgrade purpose.
+   * @throws NotFoundException if there is no artifact available for given artifact.
+   * @throws Exception if there was an exception during finding candidate artifact.
+   */
+  private ArtifactSummary getLatestAppArtifactForUpgrade(ApplicationId appId, ArtifactId currentArtifactId,
+                                                         Set<ArtifactScope> allowedArtifactScopes,
+                                                         boolean allowSnapshot)
+    throws Exception {
+
+    List<ArtifactSummary> availableArtifacts = new ArrayList<>();
+    // At the least, current artifact should be in the set of available artifacts.
+    availableArtifacts.add(ArtifactSummary.from(currentArtifactId));
+
+    // Find candidate artifacts from all scopes we need to consider.
+    for (ArtifactScope scope: allowedArtifactScopes) {
+      NamespaceId artifactNamespaceToConsider =
+        ArtifactScope.SYSTEM.equals(scope) ? NamespaceId.SYSTEM : appId.getParent();
+      List<ArtifactSummary> artifacts;
+      try {
+        artifacts = artifactRepository.getArtifactSummaries(artifactNamespaceToConsider, currentArtifactId.getName(),
+                                                            Integer.MAX_VALUE, ArtifactSortOrder.ASC);
+      } catch (ArtifactNotFoundException e) {
+        // This can happen if we are looking for candidate artifact in multiple namespace.
+        continue;
+      }
+      for (ArtifactSummary artifactSummary: artifacts) {
+        ArtifactVersion artifactVersion = new ArtifactVersion(artifactSummary.getVersion());
+        // Consider if it is a non-snapshot version artifact or it is a snapshot version than allowSnapshot is true.
+        if ((artifactVersion.isSnapshot() && allowSnapshot) || !artifactVersion.isSnapshot()) {
+          availableArtifacts.add(artifactSummary);
+        }
+      }
+    }
+
+    // Find the artifact with latest version.
+    Optional<ArtifactSummary> newArtifactCandidate = availableArtifacts.stream().max(
+      Comparator.comparing(artifactSummary -> new ArtifactVersion(artifactSummary.getVersion())));
+
+    io.cdap.cdap.proto.id.ArtifactId currentArtifact =
+      new io.cdap.cdap.proto.id.ArtifactId(appId.getNamespace(), currentArtifactId.getName(),
+                                           currentArtifactId.getVersion().getVersion());
+    return newArtifactCandidate.orElseThrow(() -> new ArtifactNotFoundException(currentArtifact));
+  }
+
+  /**
    * Upgrades an existing application by upgrading application artifact versions and plugin artifact versions.
    *
    * @param appId the id of the application to upgrade.
    * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
    *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
+   * @param allowedArtifactScopes artifact scopes allowed while looking for latest artifacts for upgrade.
+   * @param allowSnapshot whether to consider snapshot version of artifacts or not for upgrade.
    * @throws IllegalStateException if something unexpected happened during upgrade.
    * @throws IOException if there was an IO error during initializing application class from artifact.
    * @throws JsonIOException if there was an error in serializing or deserializing app config.
@@ -421,7 +478,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
    *                   the actual exception
    */
-  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator)
+  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator,
+                                 Set<ArtifactScope> allowedArtifactScopes, boolean allowSnapshot)
     throws Exception {
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
@@ -432,20 +490,10 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new NotFoundException(appId);
     }
     ArtifactId currentArtifact = currentSpec.getArtifactId();
-    NamespaceId currentArtifactNamespace =
-      ArtifactScope.SYSTEM.equals(currentArtifact.getScope()) ? NamespaceId.SYSTEM : appId.getParent();
 
-    // Get the artifact with latest version for upgrade.
-    List<ArtifactSummary> availableArtifacts =
-      artifactRepository.getArtifactSummaries(currentArtifactNamespace, currentArtifact.getName(), 1,
-                                              ArtifactSortOrder.DESC);
-    if (availableArtifacts.isEmpty()) {
-      String error = String.format("No artifacts found for artifact id %s in namespace %s.", currentArtifact.getName(),
-                                   currentArtifactNamespace);
-      throw new NotFoundException(error);
-    }
-    // The latest version should be first (and only) value in the result.
-    ArtifactSummary candidateArtifact = availableArtifacts.get(0);
+    ArtifactSummary candidateArtifact = getLatestAppArtifactForUpgrade(appId, currentArtifact,
+                                                                       allowedArtifactScopes,
+                                                                       allowSnapshot);
     ArtifactVersion candidateArtifactVersion = new ArtifactVersion(candidateArtifact.getVersion());
 
     // Current artifact should not have higher version than candidate artifact.
@@ -456,14 +504,14 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     }
 
     ArtifactId newArtifactId =
-      new ArtifactId(currentArtifact.getName(), candidateArtifactVersion, currentArtifact.getScope());
+      new ArtifactId(candidateArtifact.getName(), candidateArtifactVersion, candidateArtifact.getScope());
 
     Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toArtifactId(appId.getParent(), newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
     updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
                               Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
-                              ownerAdmin.getOwner(appId), false);
+                              allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), false);
   }
 
   /**
@@ -475,6 +523,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                                          ProgramTerminator programTerminator,
                                          ArtifactDetail artifactDetail,
                                          List<ApplicationConfigUpdateAction> updateActions,
+                                         Set<ArtifactScope> allowedArtifactScopes,
+                                         boolean allowSnapshot,
                                          @Nullable KerberosPrincipalId ownerPrincipal,
                                          boolean updateSchedules) throws Exception {
     ApplicationClass appClass = Iterables.getFirst(artifactDetail.getMeta().getClasses().getApps(), null);
@@ -490,7 +540,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     String updatedAppConfig;
     DefaultApplicationUpdateContext updateContext =
       new DefaultApplicationUpdateContext(appId.getParent(), appId, artifactDetail.getDescriptor().getArtifactId(),
-                                          artifactRepository, currentConfigStr, updateActions);
+                                          artifactRepository, currentConfigStr, updateActions,
+                                          allowedArtifactScopes, allowSnapshot);
 
     try (CloseableClassLoader artifactClassLoader =
       artifactRepository.createArtifactClassLoader(artifactDetail.getDescriptor().getLocation(),
