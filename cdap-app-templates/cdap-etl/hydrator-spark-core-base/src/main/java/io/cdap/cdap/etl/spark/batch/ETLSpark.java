@@ -98,6 +98,7 @@ public class ETLSpark extends AbstractSpark {
     // turn off auto-broadcast by default until we better understand the implications and can set this to a
     // value that we are confident is safe.
     sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
+    sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
