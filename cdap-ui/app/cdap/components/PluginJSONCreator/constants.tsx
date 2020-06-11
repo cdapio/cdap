@@ -60,7 +60,7 @@ export const WIDGET_TYPE_TO_ATTRIBUTES = {
     */
   },
   dlp: {
-    transforms: { type: 'ITransformProp[]', required: true },
+    // transforms: { type: 'ITransformProp[]', required: true },
     filters: { type: 'FilterOption[]', required: true },
     delimiter: { type: 'string', required: false },
   },
@@ -223,3 +223,13 @@ export enum SchemaType {
   Explicit = 'schema',
   Implicit = 'non-editable-schema-editor',
 }
+
+export enum JSONStatusMessage {
+  Normal = '',
+  Success = 'SUCCESS',
+  Fail = 'FAIL',
+}
+
+// Delimiter that will be used throughout keyvalue inputs in Plugin JSON Creator
+export const KV_DELIMITER = ';';
+export const DELIMITER = ',';

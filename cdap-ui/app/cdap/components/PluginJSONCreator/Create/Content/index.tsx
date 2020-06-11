@@ -17,8 +17,8 @@
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/constants';
 import { useAppInternalState } from 'components/PluginJSONCreator/Create';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { STEPS } from 'components/PluginJSONCreator/Create/steps';
 import * as React from 'react';
 
@@ -31,11 +31,6 @@ const styles = (theme): StyleRules => {
       width: '50%',
       maxWidth: '1000px',
       minWidth: '600px',
-    },
-    comp: {
-      borderRight: `1px solid ${theme.palette.grey[400]}`,
-      width: '60%',
-      color: `${theme.palette.grey[400]}`,
     },
   };
 };
@@ -74,7 +69,7 @@ const ContentView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
       <If condition={!loading}>
         <div className={classes.root}>
           <div className={classes.content}>
-            <Comp className={classes.comp} />
+            <Comp />
           </div>
         </div>
       </If>

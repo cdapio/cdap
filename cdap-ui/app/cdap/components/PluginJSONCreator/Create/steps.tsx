@@ -14,26 +14,24 @@
  * the License.
  */
 
-import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
-import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
-import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
-import OutputPage from 'components/PluginJSONCreator/Create/Content/OutputPage';
+import ConfigurationGroupPage from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage';
+import FilterPage from 'components/PluginJSONCreator/Create/Content/FilterPage';
 
 export const STEPS = [
-  {
-    label: 'Basic Plugin Information',
-    component: BasicPluginInfo,
-  },
+  // {
+  //   label: 'Plugin Information',
+  //   component: PluginInfoPage,
+  // },
   {
     label: 'Configuration Groups',
-    component: ConfigurationGroupsCollection,
+    component: ConfigurationGroupPage,
   },
-  {
-    label: 'Output',
-    component: OutputPage,
-  },
+  // {
+  //   label: 'Output',
+  //   component: OutputPage,
+  // },
   {
     label: 'Filters',
-    component: Filters,
+    component: FilterPage,
   },
 ];
