@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -42,6 +43,7 @@ import io.cdap.cdap.test.ApplicationManager;
 import io.cdap.cdap.test.DataSetManager;
 import io.cdap.cdap.test.TestConfiguration;
 import io.cdap.cdap.test.WorkflowManager;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
@@ -57,6 +59,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for AutoJoiner plugins.
@@ -107,6 +110,12 @@ public class AutoJoinerTest extends HydratorTestBase {
     }
     setupBatchArtifacts(APP_ARTIFACT_ID, DataPipelineApp.class);
   }
+
+  @After
+  public void cleanupTest() {
+    getMetricsManager().resetAll();
+  }
+
 
   @Test
   public void testBroadcastJoin() throws Exception {
@@ -306,6 +315,9 @@ public class AutoJoinerTest extends HydratorTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(5, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
   }
 
   @Test
@@ -589,6 +601,9 @@ public class AutoJoinerTest extends HydratorTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(9, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
   }
 
   @Test
@@ -927,5 +942,15 @@ public class AutoJoinerTest extends HydratorTestBase {
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
 
     Assert.assertEquals(expectedRecords, new HashSet<>(outputRecords));
+  }
+
+  private void validateMetric(long expected, ApplicationId appId,
+                              String metric) throws TimeoutException, InterruptedException {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, appId.getNamespace(),
+                                               Constants.Metrics.Tag.APP, appId.getEntityName(),
+                                               Constants.Metrics.Tag.WORKFLOW, SmartWorkflow.NAME);
+    getMetricsManager().waitForTotalMetricCount(tags, "user." + metric, expected, 20, TimeUnit.SECONDS);
+    // wait for won't throw an exception if the metric count is greater than expected
+    Assert.assertEquals(expected, getMetricsManager().getTotalMetric(tags, "user." + metric));
   }
 }
