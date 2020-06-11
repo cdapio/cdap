@@ -15,12 +15,8 @@
  */
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
-import { CODE_EDITORS } from 'components/PluginJSONCreator/constants';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeKeyValueInput';
-import AttributeMultipleValuesInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/AttributeMultipleValuesInput';
-import { fromJS } from 'immutable';
+import MultipleAttributesInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/MultipleAttributesInput';
+import SingleAttributeInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput/SingleAttributeInput';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
@@ -37,92 +33,39 @@ const WidgetAttributeInputView = ({
   classes,
   field,
   fieldInfo,
-  widgetToAttributes,
-  setWidgetToAttributes,
   widgetID,
   widgetType,
+  localWidgetToAttributes,
+  setLocalWidgetToAttributes,
 }) => {
-  const onAttributeChange = (newVal) => {
-    setWidgetToAttributes(fromJS(widgetToAttributes).setIn([widgetID, field], newVal));
-  };
-
-  const generateAttributeInput = (fieldType) => {
-    if (fieldType === 'IToggle' || fieldType === 'IOption') {
-      const props = {
-        keyRequired: true,
-        valueRequired: true,
-        widgetToAttributes,
-        setWidgetToAttributes,
-        widgetID,
-        field,
-      };
-
-      const finalProps = {
-        ...props,
-        ...(fieldType === 'IToggle' && { keyField: 'label', valueField: 'value' }),
-        ...(fieldType === 'IOption' && { keyField: 'id', valueField: 'label' }),
-      };
-
-      return <AttributeKeyValueInput {...finalProps} />;
-    } else {
-      const props = {
-        label: field,
-        value: widgetToAttributes.get(widgetID).get(field),
-        onChange: onAttributeChange,
-        required: fieldInfo.required,
-        // Set default widgetType in case fieldType is invalid
-        widgetType: 'textbox',
-      };
-
-      const finalProps = {
-        ...props,
-        ...(fieldType === 'string' && { widgetType: 'textbox' }),
-        ...(fieldType === 'number' && { widgetType: 'number' }),
-        ...(fieldType === 'boolean' && { widgetType: 'select', options: ['true', 'false'] }),
-      };
-
-      return <PluginInput {...finalProps} />;
-    }
-  };
-
   const renderAttributeInput = () => {
     if (!fieldInfo) {
       return;
-    }
-
-    if (field === 'default' && CODE_EDITORS.includes(widgetType)) {
-      return (
-        <WidgetWrapper
-          widgetProperty={{
-            field,
-            name: field,
-            'widget-type': widgetType,
-            'widget-attributes': {},
-          }}
-          pluginProperty={{
-            required: fieldInfo.required,
-            name: 'code-editor',
-          }}
-          value={widgetToAttributes.get(widgetID).get(field)}
-          onChange={onAttributeChange}
-        />
-      );
     }
 
     const isMultipleInput = fieldInfo.type.includes('[]');
     const supportedTypes = fieldInfo.type.split('|');
     if (isMultipleInput) {
       return (
-        <AttributeMultipleValuesInput
+        <MultipleAttributesInput
           supportedTypes={supportedTypes}
-          widgetToAttributes={widgetToAttributes}
-          setWidgetToAttributes={setWidgetToAttributes}
           widgetID={widgetID}
           field={field}
+          localWidgetToAttributes={localWidgetToAttributes}
+          setLocalWidgetToAttributes={setLocalWidgetToAttributes}
         />
       );
     } else {
-      return generateAttributeInput(fieldInfo.type);
+      return (
+        <SingleAttributeInput
+          widgetID={widgetID}
+          widgetType={widgetType}
+          field={field}
+          fieldInfo={fieldInfo}
+          localWidgetToAttributes={localWidgetToAttributes}
+          setLocalWidgetToAttributes={setLocalWidgetToAttributes}
+        />
+      );
     }
   };
 

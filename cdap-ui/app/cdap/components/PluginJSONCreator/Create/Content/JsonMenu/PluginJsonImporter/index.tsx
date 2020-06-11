@@ -18,7 +18,6 @@ import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import SaveIcon from '@material-ui/icons/Save';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
-import { ICreateContext } from 'components/Replicator/Create';
 import React from 'react';
 
 const styles = (): StyleRules => {
@@ -29,7 +28,7 @@ const styles = (): StyleRules => {
   };
 };
 
-interface IPluginJSONImporterProps extends WithStyles<typeof styles>, ICreateContext {
+interface IPluginJSONImporterProps extends WithStyles<typeof styles> {
   populateImportResults: (filename: string, fileContent: string) => void;
   JSONStatus: JSONStatusMessage;
 }
@@ -56,7 +55,7 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
     };
   }
 
-  async function renderFileContent(filename, fileContent) {
+  function renderFileContent(filename, fileContent) {
     populateImportResults(filename, fileContent);
   }
 

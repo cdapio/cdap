@@ -15,7 +15,7 @@
  */
 
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
-import { fromJS } from 'immutable';
+import { fromJS, Map } from 'immutable';
 import * as React from 'react';
 
 const AttributeKeyValueInput = ({
@@ -23,17 +23,39 @@ const AttributeKeyValueInput = ({
   valueField,
   keyRequired,
   valueRequired,
-  widgetToAttributes,
-  setWidgetToAttributes,
   widgetID,
   field,
+  localWidgetToAttributes,
+  setLocalWidgetToAttributes,
 }) => {
   const onKeyChange = (newVal) => {
-    setWidgetToAttributes(fromJS(widgetToAttributes).setIn([widgetID, field, keyField], newVal));
+    const existingKeyvalue = fromJS(localWidgetToAttributes).getIn([widgetID, field]);
+    if (!Map.isMap(existingKeyvalue)) {
+      setLocalWidgetToAttributes(
+        fromJS(localWidgetToAttributes).setIn(
+          [widgetID, field],
+          Map({ [keyField]: '', [valueField]: '' })
+        )
+      );
+    }
+    setLocalWidgetToAttributes(
+      fromJS(localWidgetToAttributes).setIn([widgetID, field, keyField], newVal)
+    );
   };
 
   const onValueChange = (newVal) => {
-    setWidgetToAttributes(fromJS(widgetToAttributes).setIn([widgetID, field, valueField], newVal));
+    const existingKeyvalue = fromJS(localWidgetToAttributes).getIn([widgetID, field]);
+    if (!Map.isMap(existingKeyvalue)) {
+      setLocalWidgetToAttributes(
+        fromJS(localWidgetToAttributes).setIn(
+          [widgetID, field],
+          Map({ [keyField]: '', [valueField]: '' })
+        )
+      );
+    }
+    setLocalWidgetToAttributes(
+      fromJS(localWidgetToAttributes).setIn([widgetID, field, valueField], newVal)
+    );
   };
 
   const keyWidget = {
@@ -60,14 +82,12 @@ const AttributeKeyValueInput = ({
     name: valueField,
   };
 
-  const currentKey = widgetToAttributes
-    .get(widgetID)
-    .get(field)
-    .get(keyField);
-  const currentValue = widgetToAttributes
-    .get(widgetID)
-    .get(field)
-    .get(valueField);
+  const widgetAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
+
+  const currentKey = Map.isMap(widgetAttributeValues) ? widgetAttributeValues.get(keyField) : '';
+  const currentValue = Map.isMap(widgetAttributeValues)
+    ? widgetAttributeValues.get(valueField)
+    : '';
 
   return (
     <div>

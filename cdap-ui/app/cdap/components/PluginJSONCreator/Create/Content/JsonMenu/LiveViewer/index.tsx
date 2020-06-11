@@ -17,12 +17,10 @@
 import Drawer from '@material-ui/core/Drawer';
 import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import ConfigurationGroup from 'components/ConfigurationGroup';
 import If from 'components/If';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import JsonActionButtons from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonActionButtons';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import LiveConfigurationGroup from 'components/PluginJSONCreator/Create/Content/JsonMenu/LiveViewer/LiveConfigurationGroup';
 import * as React from 'react';
 
 export enum LiveViewMode {
@@ -64,13 +62,6 @@ const styles = (theme): StyleRules => {
       color: theme.palette.blue[50],
       fontFamily: 'Courier New',
     },
-    liveViewLoadBox: {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
     liveViewLoad: {
       maxWidth: '50%',
     },
@@ -80,8 +71,8 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface ILiveViewerProps extends WithStyles<typeof styles>, ICreateContext {
-  JSONConfig: any;
+interface ILiveViewerProps extends WithStyles<typeof styles> {
+  JSONOutput: any;
   collapseLiveView: () => void;
   onDownloadClick: () => void;
   populateImportResults: (filename: string, fileContent: string) => void;
@@ -93,7 +84,7 @@ interface ILiveViewerProps extends WithStyles<typeof styles>, ICreateContext {
 
 const LiveViewerView: React.FC<ILiveViewerProps> = ({
   classes,
-  JSONConfig,
+  JSONOutput,
   collapseLiveView,
   onDownloadClick,
   populateImportResults,
@@ -103,58 +94,6 @@ const LiveViewerView: React.FC<ILiveViewerProps> = ({
   JSONErrorMessage,
 }) => {
   const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.JSONView);
-
-  // Values needed for Configuration Groups live view
-  const [pluginProperties, setPluginProperties] = React.useState(null);
-  const [values, onChanges] = React.useState<Record<string, string>>({});
-
-  const [loading, setLoading] = React.useState(false);
-
-  // When JSON config changes, show loading view for 500ms
-  // This is in order to force rerender ConfigurationGroup component
-  React.useEffect(() => {
-    // after a setTimeout for 500ms, set the loading state back to false
-    setLoading(true);
-
-    // for rerendering ConfigurationGroup
-    const newPluginProperties = getNewPluginProperties(JSONConfig);
-    setPluginProperties(newPluginProperties);
-
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 500);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, [JSONConfig]);
-
-  function getNewPluginProperties(config) {
-    if (!config['configuration-groups']) {
-      return;
-    }
-    const newPluginProperties = {};
-    config['configuration-groups'].forEach((group) => {
-      return group.get('properties').forEach((widget) => {
-        const widgetName = widget.get('name');
-        newPluginProperties[widgetName] = { name: widgetName };
-      });
-    });
-    return newPluginProperties;
-  }
-
-  function processForConfigurationGroup(config) {
-    const processed = {
-      ...config,
-      ...(config['configuration-groups'] && {
-        'configuration-groups': config['configuration-groups'].toJS(),
-      }),
-      ...(config.filters && {
-        filters: config.filters.toJS(),
-      }),
-    };
-    return processed;
-  }
 
   return (
     <div>
@@ -186,22 +125,11 @@ const LiveViewerView: React.FC<ILiveViewerProps> = ({
         <List component="nav" dense={true} className={classes.mainMenu}>
           <If condition={liveViewMode === LiveViewMode.JSONView}>
             <div className={classes.jsonLiveCode}>
-              <pre>{JSON.stringify(JSONConfig, undefined, 2)}</pre>
+              <pre>{JSON.stringify(JSONOutput, undefined, 2)}</pre>
             </div>
           </If>
           <If condition={liveViewMode === LiveViewMode.ConfigurationGroupsView}>
-            <If condition={loading}>
-              <div className={classes.liveViewLoadBox}>
-                <LoadingSVGCentered />
-              </div>
-            </If>
-            <If condition={!loading}>
-              <ConfigurationGroup
-                pluginProperties={pluginProperties}
-                widgetJson={processForConfigurationGroup(JSONConfig)}
-                values={values}
-              />
-            </If>
+            <LiveConfigurationGroup JSONOutput={JSONOutput} />
           </If>
         </List>
       </Drawer>

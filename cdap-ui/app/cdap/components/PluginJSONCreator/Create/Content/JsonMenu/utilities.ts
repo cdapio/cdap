@@ -1,9 +1,8 @@
-import { IBasicPluginInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import { fromJS, List, Map } from 'immutable';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
 
-function getJSONConfig(widgetJSONData) {
+function getJSONOutput(widgetData) {
   const {
     displayName,
     emitAlerts,
@@ -19,11 +18,11 @@ function getJSONConfig(widgetJSONData) {
     filterToShowList,
     showToInfo,
     outputName,
-  } = widgetJSONData;
+  } = widgetData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
-    const groupLabel = groupToInfo.get(groupID).get('label');
-    const widgetData = groupToWidgets.get(groupID).map((widgetID: string) => {
+    const label = groupToInfo.get(groupID).get('label');
+    const properties = groupToWidgets.get(groupID).map((widgetID: string) => {
       const info = widgetInfo.get(widgetID);
       const widgetAttributes = widgetToAttributes.get(widgetID);
 
@@ -41,8 +40,8 @@ function getJSONConfig(widgetJSONData) {
       });
     });
     return fromJS({
-      label: groupLabel,
-      properties: widgetData,
+      label,
+      properties,
     });
   });
 
@@ -90,28 +89,25 @@ function getJSONConfig(widgetJSONData) {
 function parsePluginJSON(filename, pluginJSON) {
   // Parse filename in order to set pluginName and pluginType
   // Currently the filename is designed to be <pluginName>-<pluginType>.json
-  const [pluginName, pluginType] = filename.split('-');
+  const pluginName = filename.split('-')[0] || '';
+  const pluginType = filename.split('-')[1] || '';
 
   // Parse file data in order to populate the rest of properties
-  const basicPluginInfo = {
-    // If the string fields are undefined, set them to empty string
-    displayName: pluginJSON['display-name'] ? pluginJSON['display-name'] : '',
-    pluginName: pluginName ? pluginName : '',
-    pluginType: pluginType ? pluginType : '',
-    emitAlerts: pluginJSON['emit-alerts'],
-    emitErrors: pluginJSON['emit-errors'],
-  } as IBasicPluginInfo;
+  // If the string fields are undefined, set them to empty string
+  const displayName = pluginJSON['display-name'] ? pluginJSON['display-name'] : '';
+  const emitAlerts = pluginJSON['emit-alerts'];
+  const emitErrors = pluginJSON['emit-errors'];
 
-  let newConfigurationGroups = List([]);
-  let newGroupToInfo = Map({});
-  let newGroupToWidgets = Map({});
-  let newWidgetInfo = Map({});
-  let newWidgetToAttributes = Map({});
-  let newFilters = List([]);
-  let newFilterToName = Map({});
-  let newFilterToCondition = Map({});
-  let newFilterToShowList = Map({});
-  let newShowToInfo = Map({});
+  let configurationGroups = List([]);
+  let groupToInfo = Map({});
+  let groupToWidgets = Map({});
+  let widgetInfo = Map({});
+  let widgetToAttributes = Map({});
+  let filters = List([]);
+  let filterToName = Map({});
+  let filterToCondition = Map({});
+  let filterToShowList = Map({});
+  let showToInfo = Map({});
 
   pluginJSON['configuration-groups'].forEach((groupObj) => {
     if (!groupObj || Object.keys(groupObj).length === 0) {
@@ -122,27 +118,27 @@ function parsePluginJSON(filename, pluginJSON) {
     // generate a unique group ID
     const newGroupID = 'ConfigGroup_' + uuidV4();
 
-    newConfigurationGroups = newConfigurationGroups.push(newGroupID);
+    configurationGroups = configurationGroups.push(newGroupID);
 
-    newGroupToInfo = newGroupToInfo.set(
+    groupToInfo = groupToInfo.set(
       newGroupID,
       fromJS({
         label: groupLabel,
       })
     );
 
-    newGroupToWidgets = newGroupToWidgets.set(newGroupID, fromJS([]));
+    groupToWidgets = groupToWidgets.set(newGroupID, fromJS([]));
 
     const groupWidgets = groupObj.properties;
     groupWidgets.forEach((widgetObj) => {
       // generate a unique widget ID
       const newWidgetID = 'Widget_' + uuidV4();
 
-      newGroupToWidgets = newGroupToWidgets.update(newGroupID, (widgets) =>
+      groupToWidgets = groupToWidgets.update(newGroupID, (widgets) =>
         fromJS(widgets).push(newWidgetID)
       );
 
-      newWidgetInfo = newWidgetInfo.set(
+      widgetInfo = widgetInfo.set(
         newWidgetID,
         fromJS({
           widgetType: widgetObj['widget-type'],
@@ -156,7 +152,7 @@ function parsePluginJSON(filename, pluginJSON) {
         widgetObj['widget-attributes'] &&
         Object.keys(widgetObj['widget-attributes']).length > 0
       ) {
-        newWidgetToAttributes = newWidgetToAttributes.set(
+        widgetToAttributes = widgetToAttributes.set(
           newWidgetID,
           fromJS(widgetObj['widget-attributes'])
         );
@@ -164,7 +160,7 @@ function parsePluginJSON(filename, pluginJSON) {
     });
   });
 
-  const newOutputName =
+  const outputName =
     pluginJSON.outputs && pluginJSON.outputs.length > 0 ? pluginJSON.outputs[0].name : '';
 
   if (pluginJSON.filters) {
@@ -176,22 +172,22 @@ function parsePluginJSON(filename, pluginJSON) {
       // generate a unique filter ID
       const newFilterID = 'Filter_' + uuidV4();
 
-      newFilters = newFilters.push(newFilterID);
+      filters = filters.push(newFilterID);
 
-      newFilterToName = newFilterToName.set(newFilterID, filterObj.name);
-      newFilterToCondition = newFilterToCondition.set(newFilterID, fromJS(filterObj.condition));
+      filterToName = filterToName.set(newFilterID, filterObj.name);
+      filterToCondition = filterToCondition.set(newFilterID, fromJS(filterObj.condition));
 
-      newFilterToShowList = newFilterToShowList.set(newFilterID, fromJS([]));
+      filterToShowList = filterToShowList.set(newFilterID, fromJS([]));
 
       if (filterObj.show) {
         filterObj.show.map((showObj) => {
           const newShowID = 'Show_' + uuidV4();
 
-          newFilterToShowList = newFilterToShowList.update(newFilterID, (showlist) =>
+          filterToShowList = filterToShowList.update(newFilterID, (showlist) =>
             fromJS(showlist).push(newShowID)
           );
 
-          newShowToInfo = newShowToInfo.set(
+          showToInfo = showToInfo.set(
             newShowID,
             fromJS({
               name: showObj.name,
@@ -204,25 +200,29 @@ function parsePluginJSON(filename, pluginJSON) {
   }
 
   return {
-    basicPluginInfo,
-    newConfigurationGroups,
-    newGroupToInfo,
-    newGroupToWidgets,
-    newWidgetInfo,
-    newWidgetToAttributes,
-    newOutputName,
-    newFilters,
-    newFilterToName,
-    newFilterToCondition,
-    newFilterToShowList,
-    newShowToInfo,
+    pluginName,
+    pluginType,
+    displayName,
+    emitAlerts,
+    emitErrors,
+    configurationGroups,
+    groupToInfo,
+    groupToWidgets,
+    widgetInfo,
+    widgetToAttributes,
+    outputName,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
   };
 }
 
-function downloadPluginJSON(widgetJSONData) {
-  const JSONConfig = getJSONConfig(widgetJSONData);
-  const { pluginName, pluginType } = widgetJSONData;
-  fileDownload(JSON.stringify(JSONConfig, undefined, 4), `${pluginName}-${pluginType}.json`);
+function downloadPluginJSON(widgetData) {
+  const JSONOutput = getJSONOutput(widgetData);
+  const { pluginName, pluginType } = widgetData;
+  fileDownload(JSON.stringify(JSONOutput, undefined, 4), `${pluginName}-${pluginType}.json`);
 }
 
-export { getJSONConfig, parsePluginJSON, downloadPluginJSON };
+export { getJSONOutput, parsePluginJSON, downloadPluginJSON };

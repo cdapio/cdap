@@ -22,8 +22,8 @@ import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import { SHOW_TYPE_VALUES } from 'components/PluginJSONCreator/constants';
+import { useFilterState, useWidgetState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import { fromJS, List } from 'immutable';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
@@ -57,19 +57,14 @@ const styles = (): StyleRules => {
   };
 };
 
-interface IFilterShowlistInputProps extends WithStyles<typeof styles>, ICreateContext {
+interface IFilterShowlistInputProps extends WithStyles<typeof styles> {
   filterID: string;
 }
 
-const FilterShowlistInputView: React.FC<IFilterShowlistInputProps> = ({
-  classes,
-  filterID,
-  filterToShowList,
-  setFilterToShowList,
-  showToInfo,
-  setShowToInfo,
-  widgetInfo,
-}) => {
+const FilterShowlistInputView: React.FC<IFilterShowlistInputProps> = ({ classes, filterID }) => {
+  const { widgetInfo } = useWidgetState();
+  const { filterToShowList, setFilterToShowList, showToInfo, setShowToInfo } = useFilterState();
+
   const allWidgetNames = widgetInfo
     ? widgetInfo
         .valueSeq()
@@ -119,57 +114,60 @@ const FilterShowlistInputView: React.FC<IFilterShowlistInputProps> = ({
     setShowToInfo(newShowToInfo);
   }
 
-  return (
-    <If condition={filterToShowList.get(filterID) !== undefined}>
-      <Heading type={HeadingTypes.h6} label="Add widgets to configure" />
-      {filterToShowList.get(filterID).map((showID: string, showIndex: number) => {
-        return (
-          <If condition={showToInfo.get(showID) !== undefined}>
-            <div className={classes.showConfigCollection}>
-              <div className={classnames(classes.showConfigInput, classes.showConfigNameInput)}>
-                <PluginInput
-                  widgetType={'select'}
-                  value={showToInfo.get(showID).get('name')}
-                  onChange={setShowProperty(showID, 'name')}
-                  label={'name'}
-                  options={allWidgetNames}
-                  required={true}
-                />
-              </div>
-              <div className={classnames(classes.showConfigInput, classes.showConfigTypeInput)}>
-                <PluginInput
-                  widgetType={'select'}
-                  value={showToInfo.get(showID).get('type')}
-                  onChange={setShowProperty(showID, 'type')}
-                  options={SHOW_TYPE_VALUES}
-                  label={'type'}
-                  required={false}
-                />
-              </div>
-              <div
-                className={classnames(classes.showConfigInput, classes.showAddDeleteButtonInput)}
-              >
-                <div className={classes.showAddDeleteButton}>
-                  <IconButton
-                    onClick={() => addShowToFilter(filterID, showIndex)}
-                    data-cy="add-row"
-                  >
-                    <AddIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton
-                    onClick={() => deleteShowFromFilter(filterID, showIndex)}
-                    color="secondary"
-                    data-cy="remove-row"
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
+  return React.useMemo(
+    () => (
+      <If condition={filterToShowList.get(filterID) !== undefined}>
+        <Heading type={HeadingTypes.h6} label="Add widgets to configure" />
+        {filterToShowList.get(filterID).map((showID: string, showIndex: number) => {
+          return (
+            <If condition={showToInfo.get(showID) !== undefined}>
+              <div className={classes.showConfigCollection}>
+                <div className={classnames(classes.showConfigInput, classes.showConfigNameInput)}>
+                  <PluginInput
+                    widgetType={'select'}
+                    value={showToInfo.get(showID).get('name')}
+                    onChange={setShowProperty(showID, 'name')}
+                    label={'name'}
+                    options={allWidgetNames}
+                    required={true}
+                  />
+                </div>
+                <div className={classnames(classes.showConfigInput, classes.showConfigTypeInput)}>
+                  <PluginInput
+                    widgetType={'select'}
+                    value={showToInfo.get(showID).get('type')}
+                    onChange={setShowProperty(showID, 'type')}
+                    options={SHOW_TYPE_VALUES}
+                    label={'type'}
+                    required={false}
+                  />
+                </div>
+                <div
+                  className={classnames(classes.showConfigInput, classes.showAddDeleteButtonInput)}
+                >
+                  <div className={classes.showAddDeleteButton}>
+                    <IconButton
+                      onClick={() => addShowToFilter(filterID, showIndex)}
+                      data-cy="add-row"
+                    >
+                      <AddIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => deleteShowFromFilter(filterID, showIndex)}
+                      color="secondary"
+                      data-cy="remove-row"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </div>
                 </div>
               </div>
-            </div>
-          </If>
-        );
-      })}
-    </If>
+            </If>
+          );
+        })}
+      </If>
+    ),
+    [filterToShowList.get(filterID), showToInfo]
   );
 };
 

@@ -15,90 +15,29 @@
  */
 
 import Heading, { HeadingTypes } from 'components/Heading';
-import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import { useOutputState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const OutputsView: React.FC<ICreateContext> = ({
-  pluginName,
-  pluginType,
-  displayName,
-  emitAlerts,
-  emitErrors,
-  configurationGroups,
-  groupToInfo,
-  groupToWidgets,
-  widgetInfo,
-  widgetToAttributes,
-  liveView,
-  setLiveView,
-  outputName,
-  setOutputName,
-  JSONStatus,
-  setJSONStatus,
-  setPluginState,
-  filters,
-  filterToName,
-  filterToCondition,
-  filterToShowList,
-  showToInfo,
-}) => {
-  const [localOutputName, setLocalOutputName] = React.useState(outputName);
-
-  // In case user uploads new file
-  React.useEffect(() => {
-    setLocalOutputName(outputName);
-  }, [outputName]);
-
-  function saveAllResults() {
-    setOutputName(localOutputName);
-  }
+const Outputs = () => {
+  const { outputName, setOutputName } = useOutputState();
 
   return (
     <div>
-      <JsonMenu
-        pluginName={pluginName}
-        pluginType={pluginType}
-        displayName={displayName}
-        emitAlerts={emitAlerts}
-        emitErrors={emitErrors}
-        configurationGroups={configurationGroups}
-        groupToInfo={groupToInfo}
-        groupToWidgets={groupToWidgets}
-        widgetInfo={widgetInfo}
-        widgetToAttributes={widgetToAttributes}
-        liveView={liveView}
-        setLiveView={setLiveView}
-        outputName={localOutputName}
-        JSONStatus={JSONStatus}
-        setJSONStatus={setJSONStatus}
-        setPluginState={setPluginState}
-        filters={filters}
-        filterToName={filterToName}
-        filterToCondition={filterToCondition}
-        filterToShowList={filterToShowList}
-        showToInfo={showToInfo}
-      />
       <Heading type={HeadingTypes.h3} label="Output" />
       <br />
       <PluginInput
         widgetType={'textbox'}
-        value={localOutputName}
-        onChange={setLocalOutputName}
+        value={outputName}
+        onChange={setOutputName}
         label={'Output Name'}
         placeholder={'output name'}
         required={false}
       />
-      <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
+      <StepButtons nextDisabled={false} />
     </div>
   );
 };
 
-const Outputs = createContextConnect(CreateContext, OutputsView);
 export default Outputs;

@@ -16,11 +16,8 @@
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
+import { useConfigurationGroupState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import {
-  CreateContext,
-  createContextConnect,
-} from 'components/PluginJSONCreator/CreateContextConnect';
 import { fromJS } from 'immutable';
 import * as React from 'react';
 
@@ -38,7 +35,9 @@ const styles = (): StyleRules => {
   };
 };
 
-export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToInfo }) => {
+export const GroupInfoInputView = ({ classes, groupID }) => {
+  const { groupToInfo, setGroupToInfo } = useConfigurationGroupState();
+
   function onGroupLabelChange() {
     return (label) => {
       setGroupToInfo(fromJS(groupToInfo).setIn([groupID, 'label'], label));
@@ -53,32 +52,34 @@ export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToIn
 
   const group = groupToInfo ? groupToInfo.get(groupID) : null;
 
-  return (
-    <If condition={group}>
-      <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
-        <div className={classes.groupInput}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={group.get('label')}
-            onChange={onGroupLabelChange()}
-            label={'Label'}
-            required={true}
-          />
+  return React.useMemo(
+    () => (
+      <If condition={group !== undefined}>
+        <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
+          <div className={classes.groupInput}>
+            <PluginInput
+              widgetType={'textbox'}
+              value={group.get('label')}
+              onChange={onGroupLabelChange()}
+              label={'Label'}
+              required={true}
+            />
+          </div>
+          <div className={classes.groupInput}>
+            <PluginInput
+              widgetType={'textarea'}
+              value={group.get('description')}
+              onChange={onGroupDescriptionChange()}
+              label={'Description'}
+              required={false}
+            />
+          </div>
         </div>
-        <div className={classes.groupInput}>
-          <PluginInput
-            widgetType={'textarea'}
-            value={group.get('description')}
-            onChange={onGroupDescriptionChange()}
-            label={'Description'}
-            required={false}
-          />
-        </div>
-      </div>
-    </If>
+      </If>
+    ),
+    [group]
   );
 };
 
-const StyledGroupInfoInput = withStyles(styles)(GroupInfoInputView);
-const GroupInfoInput = createContextConnect(CreateContext, StyledGroupInfoInput);
+const GroupInfoInput = withStyles(styles)(GroupInfoInputView);
 export default GroupInfoInput;

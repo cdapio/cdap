@@ -17,13 +17,9 @@
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { useAppInternalState } from 'components/PluginJSONCreator/Create';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { STEPS } from 'components/PluginJSONCreator/Create/steps';
-import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -44,12 +40,8 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const ContentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
-  activeStep,
-  JSONStatus,
-  setJSONStatus,
-}) => {
+const ContentView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+  const { activeStep, JSONStatus, setJSONStatus } = useAppInternalState();
   const [loading, setLoading] = React.useState(false);
 
   // When JSON status was successful, show loading view for 500ms
@@ -90,6 +82,5 @@ const ContentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   );
 };
 
-const StyledContentView = withStyles(styles)(ContentView);
-const Content = createContextConnect(CreateContext, StyledContentView);
+const Content = withStyles(styles)(ContentView);
 export default Content;

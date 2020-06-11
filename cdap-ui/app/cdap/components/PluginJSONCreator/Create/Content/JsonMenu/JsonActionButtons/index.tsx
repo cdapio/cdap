@@ -21,11 +21,6 @@ import GetAppIcon from '@material-ui/icons/GetApp';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { LiveViewMode } from 'components/PluginJSONCreator/Create/Content/JsonMenu/LiveViewer';
 import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJsonImporter';
-import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
 import ToggleSwitch from 'components/ToggleSwitch';
 import * as React from 'react';
 
@@ -108,7 +103,7 @@ const LiveViewModeSwitcher = ({ liveViewMode, setLiveViewMode }) => {
   );
 };
 
-interface IJsonActionButtonsProps extends WithStyles<typeof styles>, ICreateContext {
+interface IJsonActionButtonsProps extends WithStyles<typeof styles> {
   collapseLiveView: () => void;
   onDownloadClick: () => void;
   populateImportResults: (filename: string, fileContent: string) => void;
@@ -157,6 +152,5 @@ const JsonActionButtonsView: React.FC<IJsonActionButtonsProps> = ({
   );
 };
 
-const StyledJsonActionButtons = withStyles(styles)(JsonActionButtonsView);
-const JsonActionButtons = createContextConnect(CreateContext, StyledJsonActionButtons);
+const JsonActionButtons = withStyles(styles)(JsonActionButtonsView);
 export default JsonActionButtons;

@@ -21,8 +21,8 @@ import {
   WIDGET_TYPES,
   WIDGET_TYPE_TO_ATTRIBUTES,
 } from 'components/PluginJSONCreator/constants';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import { fromJS } from 'immutable';
 import * as React from 'react';
 
@@ -41,18 +41,13 @@ const styles = (): StyleRules => {
   };
 };
 
-interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
+interface IWidgetInfoInputProps extends WithStyles<typeof styles> {
   widgetID: string;
 }
 
-const WidgetInputView: React.FC<IWidgetInputProps> = ({
-  classes,
-  widgetID,
-  widgetInfo,
-  setWidgetInfo,
-  widgetToAttributes,
-  setWidgetToAttributes,
-}) => {
+const WidgetInfoInputView: React.FC<IWidgetInfoInputProps> = ({ classes, widgetID }) => {
+  const { widgetInfo, setWidgetInfo, widgetToAttributes, setWidgetToAttributes } = useWidgetState();
+
   function onNameChange(id) {
     return (name) => {
       setWidgetInfo(fromJS(widgetInfo).setIn([id, 'name'], name));
@@ -89,55 +84,57 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
     };
   }
 
-  const info = widgetInfo.get(widgetID);
-
-  return (
-    <If condition={info !== undefined}>
-      <div className={classes.widgetInput}>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={info.get('name')}
-            onChange={onNameChange(widgetID)}
-            label={'Name'}
-            placeholder={'Name a Widget'}
-            required={false}
-          />
+  const widget = widgetInfo.get(widgetID);
+  return React.useMemo(
+    () => (
+      <If condition={widget !== undefined}>
+        <div className={classes.widgetInput}>
+          <div className={classes.widgetField}>
+            <PluginInput
+              widgetType={'textbox'}
+              value={widget.get('name')}
+              onChange={onNameChange(widgetID)}
+              label={'Name'}
+              placeholder={'Name a Widget'}
+              required={false}
+            />
+          </div>
+          <div className={classes.widgetField}>
+            <PluginInput
+              widgetType={'textbox'}
+              value={widget.get('label')}
+              onChange={onLabelChange(widgetID)}
+              label={'Label'}
+              placeholder={'Label a Widget'}
+              required={false}
+            />
+          </div>
+          <div className={classes.widgetField}>
+            <PluginInput
+              widgetType={'select'}
+              value={widget.get('widgetCategory')}
+              onChange={onWidgetCategoryChange(widgetID)}
+              label={'Category'}
+              options={WIDGET_CATEGORY}
+              required={false}
+            />
+          </div>
+          <div className={classes.widgetField}>
+            <PluginInput
+              widgetType={'select'}
+              value={widget.get('widgetType')}
+              onChange={onWidgetTypeChange(widgetID)}
+              label={'Widget Type'}
+              options={WIDGET_TYPES}
+              required={true}
+            />
+          </div>
         </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'textbox'}
-            value={info.get('label')}
-            onChange={onLabelChange(widgetID)}
-            label={'Label'}
-            placeholder={'Label a Widget'}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'select'}
-            value={info.get('widgetCategory')}
-            onChange={onWidgetCategoryChange(widgetID)}
-            label={'Category'}
-            options={WIDGET_CATEGORY}
-            required={false}
-          />
-        </div>
-        <div className={classes.widgetField}>
-          <PluginInput
-            widgetType={'select'}
-            value={info.get('widgetType')}
-            onChange={onWidgetTypeChange(widgetID)}
-            label={'Widget Type'}
-            options={WIDGET_TYPES}
-            required={true}
-          />
-        </div>
-      </div>
-    </If>
+      </If>
+    ),
+    [widget]
   );
 };
 
-const WidgetInput = withStyles(styles)(WidgetInputView);
-export default WidgetInput;
+const WidgetInfoInput = withStyles(styles)(WidgetInfoInputView);
+export default WidgetInfoInput;

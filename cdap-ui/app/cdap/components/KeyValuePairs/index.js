@@ -25,15 +25,14 @@
   This will warrant its own PR as it affects quite a number of places.
 */
 
+import cloneDeep from 'lodash/cloneDeep';
 import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
 import { connect, Provider } from 'react-redux';
+import { objectQuery } from 'services/helpers';
+import KeyValuePair from './KeyValuePair';
 import KeyValueStore from './KeyValueStore';
 import KeyValueStoreActions from './KeyValueStoreActions';
-import KeyValuePair from './KeyValuePair';
-import { objectQuery } from 'services/helpers';
-import cloneDeep from 'lodash/cloneDeep';
 
 // Prop Name is used in place of the reserved prop 'key'
 const mapStateToFieldNameProps = (state, ownProps) => {

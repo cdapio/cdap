@@ -19,14 +19,21 @@ import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Alert from 'components/Alert';
 import If from 'components/If';
+import {
+  useAppInternalState,
+  useConfigurationGroupState,
+  useFilterState,
+  useOutputState,
+  usePluginInfoState,
+  useWidgetState,
+} from 'components/PluginJSONCreator/Create';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
 import LiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/LiveViewer';
 import {
   downloadPluginJSON,
-  getJSONConfig,
+  getJSONOutput,
   parsePluginJSON,
 } from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const LIVE_VIEWER_WIDTH = '600px';
@@ -66,66 +73,104 @@ export enum JSONStatusMessage {
   Fail = 'FAIL',
 }
 
-const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widgetJSONProps) => {
+const JsonMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const {
-    classes,
+    pluginName,
+    setPluginName,
+    pluginType,
+    setPluginType,
+    displayName,
+    setDisplayName,
+    emitAlerts,
+    setEmitAlerts,
+    emitErrors,
+    setEmitErrors,
+  } = usePluginInfoState();
+
+  const {
+    configurationGroups,
+    setConfigurationGroups,
+    groupToInfo,
+    setGroupToInfo,
+  } = useConfigurationGroupState();
+
+  const {
+    groupToWidgets,
+    setGroupToWidgets,
+    widgetInfo,
+    setWidgetInfo,
+    widgetToAttributes,
+    setWidgetToAttributes,
+  } = useWidgetState();
+
+  const { outputName, setOutputName } = useOutputState();
+
+  const {
+    filters,
+    setFilters,
+    filterToName,
+    setFilterToName,
+    filterToCondition,
+    setFilterToCondition,
+    filterToShowList,
+    setFilterToShowList,
+    showToInfo,
+    setShowToInfo,
+  } = useFilterState();
+
+  const { liveView, setLiveView, JSONStatus, setJSONStatus } = useAppInternalState();
+
+  // Compilation of all the data that goes into JSON.
+  const widgetData = {
     pluginName,
     pluginType,
-    liveView,
-    setLiveView,
-    setPluginState,
-    JSONStatus,
-    setJSONStatus,
-  } = widgetJSONProps;
-  const [JSONErrorMessage, setJSONErrorMessage] = React.useState('');
+    displayName,
+    emitAlerts,
+    emitErrors,
+    configurationGroups,
+    setConfigurationGroups,
+    groupToInfo,
+    setGroupToInfo,
+    groupToWidgets,
+    widgetInfo,
+    widgetToAttributes,
+    outputName,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
+  };
 
-  const JSONFilename = `${pluginName ? pluginName : '<PluginName>'}-${
-    pluginType ? pluginType : '<PluginType>'
-  }.json`;
-
-  const downloadDisabled =
-    !pluginName || pluginName.length === 0 || !pluginType || pluginType.length === 0;
-
-  const onDownloadClick = () => {
-    downloadPluginJSON(widgetJSONProps);
+  const updateEntireUI = (newWidgetData) => {
+    setPluginName(newWidgetData.pluginName);
+    setPluginType(newWidgetData.pluginType);
+    setDisplayName(newWidgetData.displayName);
+    setEmitAlerts(newWidgetData.emitAlerts);
+    setEmitErrors(newWidgetData.emitErrors);
+    setConfigurationGroups(newWidgetData.configurationGroups);
+    setGroupToInfo(newWidgetData.groupToInfo);
+    setGroupToWidgets(newWidgetData.groupToWidgets);
+    setWidgetInfo(newWidgetData.widgetInfo);
+    setWidgetToAttributes(newWidgetData.widgetToAttributes);
+    setOutputName(newWidgetData.outputName);
+    setFilters(newWidgetData.filters);
+    setFilterToName(newWidgetData.filterToName);
+    setFilterToCondition(newWidgetData.filterToCondition);
+    setFilterToShowList(newWidgetData.filterToShowList);
+    setShowToInfo(newWidgetData.showToInfo);
   };
 
   const populateImportResults = (filename: string, fileContent: string) => {
     try {
       const pluginJSON = JSON.parse(fileContent);
 
-      const {
-        basicPluginInfo,
-        newConfigurationGroups,
-        newGroupToInfo,
-        newGroupToWidgets,
-        newWidgetInfo,
-        newWidgetToAttributes,
-        newOutputName,
-        newFilters,
-        newFilterToName,
-        newFilterToCondition,
-        newFilterToShowList,
-        newShowToInfo,
-      } = parsePluginJSON(filename, pluginJSON);
-
-      setPluginState({
-        basicPluginInfo,
-        configurationGroups: newConfigurationGroups,
-        groupToInfo: newGroupToInfo,
-        groupToWidgets: newGroupToWidgets,
-        widgetInfo: newWidgetInfo,
-        widgetToAttributes: newWidgetToAttributes,
-        outputName: newOutputName,
-        filters: newFilters,
-        filterToName: newFilterToName,
-        filterToCondition: newFilterToCondition,
-        filterToShowList: newFilterToShowList,
-        showToInfo: newShowToInfo,
-      });
+      const newWidgetData = parsePluginJSON(filename, pluginJSON);
 
       setJSONStatus(JSONStatusMessage.Success);
       setJSONErrorMessage(null);
+
+      updateEntireUI(newWidgetData);
     } catch (e) {
       setJSONStatus(JSONStatusMessage.Fail);
       setJSONErrorMessage(`${e.name}: ${e.message}`);
@@ -144,6 +189,27 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
     // When alert closes, reset JSONStatus
     setJSONStatus(JSONStatusMessage.Normal);
   };
+
+  const onDownloadClick = () => {
+    downloadPluginJSON(widgetData);
+  };
+
+  const [JSONErrorMessage, setJSONErrorMessage] = React.useState('');
+
+  const [JSONOutput, setJSONOutput] = React.useState(null);
+
+  const JSONFilename = `${pluginName ? pluginName : '<PluginName>'}-${
+    pluginType ? pluginType : '<PluginType>'
+  }.json`;
+
+  const downloadDisabled =
+    !pluginName || pluginName.length === 0 || !pluginType || pluginType.length === 0;
+
+  React.useEffect(() => {
+    if (JSONStatus === JSONStatusMessage.Normal) {
+      setJSONOutput(getJSONOutput(widgetData));
+    }
+  }, [JSONStatus, ...Object.values(widgetData)]);
 
   return (
     <div>
@@ -164,7 +230,7 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
         <List component="nav" dense={true} className={classes.mainMenu}>
           <If condition={liveView}>
             <LiveViewer
-              JSONConfig={getJSONConfig(widgetJSONProps)}
+              JSONOutput={JSONOutput}
               downloadDisabled={downloadDisabled}
               collapseLiveView={collapseLiveView}
               onDownloadClick={onDownloadClick}
@@ -194,4 +260,4 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
 };
 
 const JsonMenu = withStyles(styles)(JsonMenuView);
-export default JsonMenu;
+export default React.memo(JsonMenu);
