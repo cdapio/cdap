@@ -121,6 +121,7 @@ var { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } = require('../cdap/services/WindowManage
 var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
 var DownloadFile = require('../cdap/services/download-file').default;
 var PreviewUtilities = require('../cdap/components/PreviewData/utilities');
+var PreviewDataView = require('../cdap/components/PreviewData').default;
 
 export {
   Store,
@@ -216,4 +217,5 @@ export {
   PREVIEW_STATUS,
   DownloadFile,
   PreviewUtilities,
+  PreviewDataView,
 };
