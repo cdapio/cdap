@@ -23,6 +23,7 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.apache.spark.api.java.JavaRDD;
@@ -163,7 +164,10 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     joined = joined.select(outputColumnSeq);
 
     Schema outputSchema = joinRequest.getOutputSchema();
-    JavaRDD<StructuredRecord> output = joined.javaRDD().map(r -> DataFrames.fromRow(r, outputSchema));
+    JavaRDD<StructuredRecord> output = joined.javaRDD()
+      .map(r -> DataFrames.fromRow(r, outputSchema))
+      .map(new CountingFunction<>(joinRequest.getStageName(), sec.getMetrics(), "records.out",
+                                  sec.getDataTracer(joinRequest.getStageName())));
     return (SparkCollection<T>) wrap(output);
   }
 

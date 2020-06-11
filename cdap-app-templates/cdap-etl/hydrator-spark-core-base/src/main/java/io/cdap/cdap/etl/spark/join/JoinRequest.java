@@ -25,6 +25,7 @@ import java.util.List;
  * Request to join some collection to another collection.
  */
 public class JoinRequest {
+  private final String stageName;
   private final String leftStage;
   private final List<String> leftKey;
   private final Schema leftSchema;
@@ -34,8 +35,9 @@ public class JoinRequest {
   private final Schema outputSchema;
   private final List<JoinCollection> toJoin;
 
-  public JoinRequest(String leftStage, List<String> leftKey, Schema leftSchema, boolean leftRequired,
+  public JoinRequest(String stageName, String leftStage, List<String> leftKey, Schema leftSchema, boolean leftRequired,
                      boolean nullSafe, List<JoinField> fields, Schema outputSchema, List<JoinCollection> toJoin) {
+    this.stageName = stageName;
     this.leftStage = leftStage;
     this.leftKey = leftKey;
     this.leftRequired = leftRequired;
@@ -44,6 +46,10 @@ public class JoinRequest {
     this.leftSchema = leftSchema;
     this.outputSchema = outputSchema;
     this.toJoin = toJoin;
+  }
+
+  public String getStageName() {
+    return stageName;
   }
 
   public String getLeftStage() {
