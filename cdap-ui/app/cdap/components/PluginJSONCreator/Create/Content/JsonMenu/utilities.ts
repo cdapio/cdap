@@ -1,3 +1,4 @@
+import { SchemaType } from 'components/PluginJSONCreator/constants';
 import { fromJS, List, Map } from 'immutable';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
@@ -18,6 +19,10 @@ function getJSONOutput(widgetData) {
     filterToShowList,
     showToInfo,
     outputName,
+    outputWidgetType,
+    schemaTypes,
+    schemaDefaultType,
+    schema,
   } = widgetData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
@@ -45,8 +50,16 @@ function getJSONOutput(widgetData) {
     });
   });
 
-  const outputsData = {
+  const outputData = {
     ...(outputName && { name: outputName }),
+    'widget-type': outputWidgetType,
+    ...(outputWidgetType === SchemaType.Implicit && { schema: schema || {} }),
+    ...(outputWidgetType === SchemaType.Explicit && {
+      'widget-attributes': {
+        'schema-default-type': schemaDefaultType || '',
+        'schema-types': schemaTypes || [],
+      },
+    }),
   };
 
   const filtersData = filters.map((filterID) => {
@@ -73,9 +86,9 @@ function getJSONOutput(widgetData) {
     ...(emitAlerts && { 'emit-alerts': emitAlerts }),
     ...(emitErrors && { 'emit-errors': emitErrors }),
     'configuration-groups': configurationGroupsData || List(),
-    ...(outputsData &&
-      Object.keys(outputsData).length > 0 && {
-        outputs: [outputsData],
+    ...(outputData &&
+      Object.keys(outputData).length > 0 && {
+        outputs: [outputData],
       }),
     ...(filtersData &&
       filtersData.size > 0 && {
@@ -109,59 +122,76 @@ function parsePluginJSON(filename, pluginJSON) {
   let filterToShowList = Map({});
   let showToInfo = Map({});
 
-  pluginJSON['configuration-groups'].forEach((groupObj) => {
-    if (!groupObj || Object.keys(groupObj).length === 0) {
-      return;
-    }
-    const groupLabel = groupObj.label;
+  if (pluginJSON['configuration-groups']) {
+    pluginJSON['configuration-groups'].forEach((groupObj) => {
+      if (!groupObj || Object.keys(groupObj).length === 0) {
+        return;
+      }
+      const groupLabel = groupObj.label;
 
-    // generate a unique group ID
-    const newGroupID = 'ConfigGroup_' + uuidV4();
+      // generate a unique group ID
+      const newGroupID = 'ConfigGroup_' + uuidV4();
 
-    configurationGroups = configurationGroups.push(newGroupID);
+      configurationGroups = configurationGroups.push(newGroupID);
 
-    groupToInfo = groupToInfo.set(
-      newGroupID,
-      fromJS({
-        label: groupLabel,
-      })
-    );
-
-    groupToWidgets = groupToWidgets.set(newGroupID, fromJS([]));
-
-    const groupWidgets = groupObj.properties;
-    groupWidgets.forEach((widgetObj) => {
-      // generate a unique widget ID
-      const newWidgetID = 'Widget_' + uuidV4();
-
-      groupToWidgets = groupToWidgets.update(newGroupID, (widgets) =>
-        fromJS(widgets).push(newWidgetID)
-      );
-
-      widgetInfo = widgetInfo.set(
-        newWidgetID,
+      groupToInfo = groupToInfo.set(
+        newGroupID,
         fromJS({
-          widgetType: widgetObj['widget-type'],
-          label: widgetObj.label,
-          name: widgetObj.name,
-          ...(widgetObj['widget-category'] && { widgetCategory: widgetObj['widget-category'] }),
+          label: groupLabel,
         })
       );
 
-      if (
-        widgetObj['widget-attributes'] &&
-        Object.keys(widgetObj['widget-attributes']).length > 0
-      ) {
-        widgetToAttributes = widgetToAttributes.set(
-          newWidgetID,
-          fromJS(widgetObj['widget-attributes'])
-        );
-      }
-    });
-  });
+      groupToWidgets = groupToWidgets.set(newGroupID, fromJS([]));
 
-  const outputName =
-    pluginJSON.outputs && pluginJSON.outputs.length > 0 ? pluginJSON.outputs[0].name : '';
+      const groupWidgets = groupObj.properties;
+      groupWidgets.forEach((widgetObj) => {
+        // generate a unique widget ID
+        const newWidgetID = 'Widget_' + uuidV4();
+
+        groupToWidgets = groupToWidgets.update(newGroupID, (widgets) =>
+          fromJS(widgets).push(newWidgetID)
+        );
+
+        widgetInfo = widgetInfo.set(
+          newWidgetID,
+          fromJS({
+            widgetType: widgetObj['widget-type'],
+            label: widgetObj.label,
+            name: widgetObj.name,
+            ...(widgetObj['widget-category'] && { widgetCategory: widgetObj['widget-category'] }),
+          })
+        );
+
+        if (
+          widgetObj['widget-attributes'] &&
+          Object.keys(widgetObj['widget-attributes']).length > 0
+        ) {
+          widgetToAttributes = widgetToAttributes.set(
+            newWidgetID,
+            fromJS(widgetObj['widget-attributes'])
+          );
+        }
+      });
+    });
+  }
+
+  let outputName;
+  let outputWidgetType;
+  let schemaTypes;
+  let schemaDefaultType;
+  let schema;
+  if (pluginJSON.outputs && pluginJSON.outputs.length > 0) {
+    const output = pluginJSON.outputs[0];
+    outputName = output.name || '';
+    outputWidgetType = output['widget-type'] || '';
+
+    const schemaAttributes = output['widget-attributes'] || '';
+    if (schemaAttributes) {
+      schemaTypes = schemaAttributes['schema-types'] || [];
+      schemaDefaultType = schemaAttributes['schema-default-type'] || '';
+    }
+    schema = output.schema || {};
+  }
 
   if (pluginJSON.filters) {
     pluginJSON.filters.forEach((filterObj) => {
@@ -211,6 +241,10 @@ function parsePluginJSON(filename, pluginJSON) {
     widgetInfo,
     widgetToAttributes,
     outputName,
+    outputWidgetType,
+    schemaTypes,
+    schemaDefaultType,
+    schema,
     filters,
     filterToName,
     filterToCondition,

@@ -30,6 +30,7 @@ const PluginInput = ({
   valuePlaceholder = null,
   kvDelimiter = null,
   layout = null,
+  delimiter = null,
 }) => {
   let widgetAttributes;
   if (widgetType !== 'toggle') {
@@ -42,6 +43,7 @@ const PluginInput = ({
       ...(keyPlaceholder && { 'key-placeholder': keyPlaceholder }),
       ...(valuePlaceholder && { 'value-placeholder': valuePlaceholder }),
       ...(kvDelimiter && { 'kv-delimiter': kvDelimiter }),
+      ...(delimiter && { delimiter }),
     };
   } else {
     widgetAttributes = {

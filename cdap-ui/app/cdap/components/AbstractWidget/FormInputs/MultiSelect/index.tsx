@@ -14,12 +14,12 @@
  * the License.
  */
 
-import React, { useState, useEffect } from 'react';
-import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import React, { useEffect, useState } from 'react';
+import { objectQuery } from 'services/helpers';
 
 export interface IOption {
   id: string;

@@ -17,7 +17,7 @@
 import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
 import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
-import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
+import OutputPage from 'components/PluginJSONCreator/Create/Content/OutputPage';
 
 export const STEPS = [
   {
@@ -30,7 +30,7 @@ export const STEPS = [
   },
   {
     label: 'Output',
-    component: Outputs,
+    component: OutputPage,
   },
   {
     label: 'Filters',
