@@ -192,6 +192,11 @@ public class RemoteApplicationManager extends AbstractApplicationManager {
   }
 
   @Override
+  public void upgrade() throws Exception {
+    applicationClient.upgradeApplication(application);
+  }
+
+  @Override
   public ApplicationDetail getInfo() throws Exception {
     return applicationClient.get(application);
   }
