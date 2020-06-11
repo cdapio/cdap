@@ -84,7 +84,6 @@ const FilterShowlistInput: React.FC<IFilterShowlistInputProps> = ({ filterID }) 
           return (
             <div key={showID}>
               <If condition={show !== undefined}>
-                show {JSON.stringify(show)}
                 <ShowPropertyRow
                   showName={show.get('name')}
                   showType={show.get('type')}

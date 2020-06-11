@@ -54,7 +54,7 @@ const FilterPanelView: React.FC<IFilterPanelProps> = ({
   deleteFilter,
 }) => {
   return (
-    <div className={classes.filterContainer} data-cy="widget-wrapper-container">
+    <div className={classes.filterContainer}>
       <Button variant="contained" color="primary" onClick={addFilter}>
         Add Filter
       </Button>

@@ -52,7 +52,7 @@ export const GroupInfoInputView = ({ classes, groupID }) => {
   const group = groupToInfo.get(groupID);
   return React.useMemo(
     () => (
-      <div className={classes.groupInputContainer} data-cy="widget-wrapper-container">
+      <div className={classes.groupInputContainer}>
         <div className={classes.groupInput}>
           <PluginInput
             widgetType={'textbox'}

@@ -90,15 +90,6 @@ const styles = (theme): StyleRules => {
       position: 'relative',
       padding: '7px 10px 5px',
     },
-    // },
-    // fieldLabel: {
-    //   fontSize: '12px',
-    //   position: 'absolute',
-    //   top: '-10px',
-    //   left: '15px',
-    //   padding: '0 5px',
-    //   backgroundColor: theme.palette.white[50],
-    // },
     typeSelectInput: {
       marginTop: '5px',
       marginBottom: '5px',
@@ -186,7 +177,7 @@ const MultipleAttributesInputView = ({
   };
 
   return (
-    <div className={classes.multipleAtributesWrapper} data-cy="widget-wrapper-container">
+    <div className={classes.multipleAtributesWrapper}>
       <If condition={cleanSupportedTypes.length > 1}>
         <FormControl className={classes.typeSelectInput}>
           <InputLabel shrink id="demo-simple-select-placeholder-label-label">

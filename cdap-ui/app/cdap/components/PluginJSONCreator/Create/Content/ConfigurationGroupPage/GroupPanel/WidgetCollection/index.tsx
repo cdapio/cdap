@@ -118,7 +118,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({ classes, group
 
   return React.useMemo(
     () => (
-      <div className={classes.widgetWrapper} data-cy="widget-wrapper-container">
+      <div className={classes.widgetWrapper}>
         <div className={classes.addWidgetLabel}>Add Widgets</div>
         <div className={classes.widgetContainer}>
           <If condition={activeWidgets.size === 0}>

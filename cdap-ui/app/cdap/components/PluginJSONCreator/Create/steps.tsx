@@ -16,20 +16,22 @@
 
 import ConfigurationGroupPage from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage';
 import FilterPage from 'components/PluginJSONCreator/Create/Content/FilterPage';
+import OutputPage from 'components/PluginJSONCreator/Create/Content/OutputPage';
+import PluginInfoPage from 'components/PluginJSONCreator/Create/Content/PluginInfoPage';
 
 export const STEPS = [
-  // {
-  //   label: 'Plugin Information',
-  //   component: PluginInfoPage,
-  // },
+  {
+    label: 'Plugin Information',
+    component: PluginInfoPage,
+  },
   {
     label: 'Configuration Groups',
     component: ConfigurationGroupPage,
   },
-  // {
-  //   label: 'Output',
-  //   component: OutputPage,
-  // },
+  {
+    label: 'Output',
+    component: OutputPage,
+  },
   {
     label: 'Filters',
     component: FilterPage,

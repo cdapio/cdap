@@ -87,7 +87,7 @@ const outputInitialState = {
   setSchema: undefined,
 };
 
-// Define initial values for states within FilterPage
+// Define initial values for states within Filter Page
 const filtersInitialState = {
   filters: List<string>(),
   setFilters: undefined,
