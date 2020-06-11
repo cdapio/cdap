@@ -50,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
@@ -302,6 +303,15 @@ public interface Store {
    * @return collection of all application specs in the namespace
    */
   Collection<ApplicationSpecification> getAllApplications(NamespaceId id);
+
+  /**
+   * Scans for applications across all namespaces.
+   *
+   * @param txBatchSize maximum number of applications to scan in one transaction to
+   *                    prevent holding a single transaction for too long
+   * @param consumer a {@link BiConsumer} to consume each application being scanned
+   */
+  void scanApplications(int txBatchSize, BiConsumer<ApplicationId, ApplicationSpecification> consumer);
 
   /**
    * Returns a Map of {@link ApplicationSpecification} for the given set of {@link ApplicationId}.
