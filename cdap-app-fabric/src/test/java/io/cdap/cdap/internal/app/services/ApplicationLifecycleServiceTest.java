@@ -21,17 +21,22 @@ import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.ProgramResources;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
+import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
+import io.cdap.cdap.proto.ProgramRecord;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -48,11 +53,15 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.zip.ZipOutputStream;
 
 /**
  */
@@ -232,6 +241,49 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     appId.workflow(AppWithProgramsUsingGuava.NoOpWorkflow.NAME);
     startProgram(Id.Program.fromEntityId(workflow), ImmutableMap.of("fail.in.workflow.initialize", "true"));
     waitForRuns(1, workflow, ProgramRunStatus.FAILED);
+  }
+
+  @Test
+  public void testCreateAppDetailsArchive() throws Exception {
+    createNamespace("ns1");
+    createNamespace("ns2");
+    createNamespace("ns3");
+
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns1");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns2");
+    deploy(AllProgramsApp.class, HttpResponseStatus.OK.code(), Constants.Gateway.API_VERSION_3_TOKEN, "ns3");
+
+    File archiveFile = tmpFolder.newFile();
+    try (ZipOutputStream zipOut = new ZipOutputStream(new FileOutputStream(archiveFile))) {
+      applicationLifecycleService.createAppDetailsArchive(zipOut);
+    }
+
+    // Validate the ZIP file content
+    File dir = tmpFolder.newFolder();
+    BundleJarUtil.unJar(archiveFile, dir);
+
+    ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
+
+    for (String ns : Arrays.asList("ns1", "ns2", "ns3")) {
+      File nsDir = new File(dir, ns);
+      Assert.assertTrue(nsDir.isDirectory());
+
+      ApplicationDetail appDetail = GSON.fromJson(Files.toString(new File(nsDir, appSpec.getName() + ".json"),
+                                                                 StandardCharsets.UTF_8),
+                                                  ApplicationDetail.class);
+      Assert.assertEquals(appSpec.getName(), appDetail.getName());
+
+      // Check if all the programs are there
+      int programCount = Arrays.stream(io.cdap.cdap.api.app.ProgramType.values())
+        .map(appSpec::getProgramsByType)
+        .mapToInt(Set::size)
+        .reduce(0, Integer::sum);
+      Assert.assertEquals(programCount, appDetail.getPrograms().size());
+
+      for (ProgramRecord record : appDetail.getPrograms()) {
+        Assert.assertTrue(appSpec.getProgramsByType(record.getType().getApiProgramType()).contains(record.getName()));
+      }
+    }
   }
 
   private void waitForRuns(int expected, final ProgramId programId, final ProgramRunStatus status) throws Exception {

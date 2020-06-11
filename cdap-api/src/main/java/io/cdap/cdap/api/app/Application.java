@@ -32,4 +32,26 @@ public interface Application<T extends Config> {
    * @param context Used to access the environment, application configuration, and application (deployment) arguments
    */
   void configure(ApplicationConfigurer configurer, ApplicationContext<T> context);
+
+  /**
+   * Returns if application supports config update or not.
+   */
+  default boolean isUpdateSupported() {
+    return false;
+  }
+
+  /**
+   * Updates application configuration based on config and update actions inside applicationUpdateContext.
+   *
+   * @param applicationUpdateContext Used to access methods helpful for operations like upgrading plugin version for
+   * config.
+   * @return {@link ApplicationUpdateResult} object for the config update operation.
+   * @throws UnsupportedOperationException if application does not support config update operation.
+   * @throws Exception if there was an exception during update of app config. This exception will often wrap
+   *                   the actual exception.
+   */
+  default ApplicationUpdateResult<T> updateConfig(ApplicationUpdateContext applicationUpdateContext)
+    throws Exception {
+    throw new UnsupportedOperationException("Application config update operation is not supported.");
+  }
 }

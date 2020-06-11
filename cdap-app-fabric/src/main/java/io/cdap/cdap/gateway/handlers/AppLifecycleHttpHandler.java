@@ -40,6 +40,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.AbstractBodyConsumer;
@@ -57,6 +58,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ApplicationRecord;
+import io.cdap.cdap.proto.ApplicationUpdateDetail;
 import io.cdap.cdap.proto.BatchApplicationDetail;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -376,6 +378,65 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
       LOG.error("Deploy failure", e);
       responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     }
+  }
+
+  /**
+   * upgrades an existing application.
+   */
+  @POST
+  @Path("/apps/{app-id}/upgrade")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void upgradeApplication(HttpRequest request, HttpResponder responder,
+                                 @PathParam("namespace-id") String namespaceId,
+                                 @PathParam("app-id") String appName) throws Exception {
+    ApplicationId appId = validateApplicationId(namespaceId, appName);
+    applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
+  }
+
+  /**
+   * Upgrades a lis of existing application to use latest version of application artifact and plugin artifacts.
+   *
+   * <pre>
+   * {@code
+   * [
+   *   {"appId":"XYZ"},
+   *   {"appId":"ABC"},
+   *   {"appId":"FOO"},
+   * ]
+   * }
+   * </pre>
+   * The response will be an array of {@link ApplicationUpdateDetail} object, which either indicates a success (200) or
+   * failure for each of the requested application in the same order as the request. The failure also indicates reason
+   * for the error.
+   */
+  @POST
+  @Path("/upgrade")
+  @AuditPolicy(AuditDetail.REQUEST_BODY)
+  public void upgradeApplications(FullHttpRequest request, HttpResponder responder,
+                                  @PathParam("namespace-id") String namespace) throws Exception {
+    // TODO: (CDAP-16910) Improve batch API performance as each application upgrade is an event independent of each
+    //  other.
+    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespace), request);
+    List<ApplicationUpdateDetail> details = new ArrayList<>();
+    for (ApplicationId appId : appIds) {
+      ApplicationUpdateDetail updateDetail;
+      try {
+        applicationLifecycleService.upgradeApplication(appId, createProgramTerminator());
+        updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+      } catch (UnsupportedOperationException e) {
+        String errorMessage = String.format("Application %s does not support upgrade.", appId);
+        updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
+      } catch (InvalidArtifactException | NotFoundException e) {
+        updateDetail = new ApplicationUpdateDetail(appId, e.getMessage());
+      } catch (Exception e) {
+        updateDetail =
+          new ApplicationUpdateDetail(appId, new ServiceException(e, HttpResponseStatus.INTERNAL_SERVER_ERROR));
+      }
+      details.add(updateDetail);
+    }
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }
 
   /**

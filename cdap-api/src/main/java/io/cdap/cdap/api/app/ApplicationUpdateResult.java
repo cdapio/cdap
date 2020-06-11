@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,25 @@
  * the License.
  */
 
+package io.cdap.cdap.api.app;
 
-package io.cdap.cdap.gateway.router;
+import io.cdap.cdap.api.Config;
 
 /**
- * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}
+ * Stores results of upgrading an application config.
+ *
+ * @param <T> {@link Config} config class that represents the configuration type of an Application.
  */
-public final class ExpectedNumberOfAuditPolicyPaths {
-  public static final int EXPECTED_PATH_NUMBER = 51;
+public class ApplicationUpdateResult<T extends Config> {
+
+  // Upgraded config.
+  private final T newConfig;
+
+  public ApplicationUpdateResult(T newConfig) {
+    this.newConfig = newConfig;
+  }
+
+  public T getNewConfig() {
+    return newConfig;
+  }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,12 +14,12 @@
  * the License.
  */
 
-
-package io.cdap.cdap.gateway.router;
+package io.cdap.cdap.api.app;
 
 /**
- * Expected number of paths annotated with {@link io.cdap.cdap.common.security.AuditPolicy}
+ * Possible update actions for application config.
  */
-public final class ExpectedNumberOfAuditPolicyPaths {
-  public static final int EXPECTED_PATH_NUMBER = 51;
+public enum ApplicationConfigUpdateAction {
+  // Upgrade artifacts to latest available versions.
+  UPGRADE_ARTIFACT,
 }
