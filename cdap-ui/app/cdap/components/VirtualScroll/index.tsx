@@ -96,7 +96,7 @@ const VirtualScroll = ({
         setPromise(p);
       }
     }
-  }, [startNode, visibleNodeCount, itemCount]);
+  }, [startNode, visibleNodeCount, itemCount, renderList]);
 
   useEffect(() => {
     if (!promise) {

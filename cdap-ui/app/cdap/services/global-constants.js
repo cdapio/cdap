@@ -263,6 +263,13 @@ const GLOBALS = {
             'The artifacts required for this data pipeline are still being loaded. Please try again in a few minutes',
         },
         pluginDoesNotExist: 'This plugin does not exist: ',
+        PREVIEW: {
+          timerLabels: {
+            PENDING: 'Pending',
+            RUNNING: 'Running',
+            DURATION: 'Duration',
+          }
+        }
       },
       wizard: {
         welcomeMessage1: 'Hydrator makes it easy to prepare data so you ',

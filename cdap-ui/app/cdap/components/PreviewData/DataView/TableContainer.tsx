@@ -16,7 +16,7 @@
 
 import React from 'react';
 import If from 'components/If';
-import DataTable from 'components/PreviewData/Table';
+import DataTable from 'components/PreviewData/DataView/Table';
 import { ITableData } from 'components/PreviewData';
 import { INode } from 'components/PreviewData/utilities';
 import Heading, { HeadingTypes } from 'components/Heading';
@@ -24,14 +24,17 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import classnames from 'classnames';
 import T from 'i18n-react';
 
-const I18N_PREFIX = 'features.PreviewData.TableContainer';
+const I18N_PREFIX = 'features.PreviewData.DataView.TableContainer';
 
-const styles = (theme): StyleRules => ({
+export const styles = (theme): StyleRules => ({
   outerContainer: {
     display: 'flex',
+    '& :last-of-type': {
+      borderRight: 0,
+    },
   },
   innerContainer: {
-    overflow: 'scroll',
+    overflow: 'hidden',
     padding: '10px',
     width: '100%',
   },
@@ -40,9 +43,10 @@ const styles = (theme): StyleRules => ({
     borderBottom: `1px solid ${theme.palette.grey[400]}`,
     padding: '10px',
     borderRight: `1px solid ${theme.palette.grey[400]}`,
-    '& :last-of-type': {
-      borderRight: 0,
-    },
+    height: 'inherit',
+  },
+  tableContainer: {
+    overflow: 'scroll',
   },
   h2Title: {
     fontSize: '1.4rem !important',
@@ -66,8 +70,8 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
   selectedNode,
   previewStatus,
 }) => {
-  const inputs = Object.entries(tableData.inputs);
-  const outputs = Object.entries(tableData.outputs);
+  const inputs = tableData.inputs;
+  const outputs = tableData.outputs;
   return (
     <div className={classes.outerContainer}>
       <If condition={!selectedNode.isSource && !selectedNode.isCondition}>
@@ -81,8 +85,8 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const inputHeaders = tableValue.schemaFields;
             const inputRecords = tableValue.records;
             return (
-              <div key={`input-table-${i}`}>
-                <Heading type={HeadingTypes.h3} label={inputs.length > 1 ? tableKey : null} />
+              <div key={`input-table-${i}`} className={classes.tableContainer}>
+                {inputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={inputHeaders}
                   records={inputRecords}
@@ -105,8 +109,8 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const outputHeaders = tableValue.schemaFields;
             const outputRecords = tableValue.records;
             return (
-              <div key={`output-table-${j}`}>
-                <Heading type={HeadingTypes.h3} label={outputs.length > 1 ? tableKey : null} />
+              <div key={`output-table-${j}`} className={classes.tableContainer}>
+                {outputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={outputHeaders}
                   records={outputRecords}
