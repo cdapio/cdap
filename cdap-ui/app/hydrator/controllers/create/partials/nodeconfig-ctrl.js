@@ -47,6 +47,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.setDefaults(rPlugin);
     this.myAlertOnValium = myAlertOnValium;
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
+    this.getPreviewId = this.getPreviewId.bind(this);
+    this.previewId = this.getPreviewId();
+    this.previewStatus = null;
+    this.getStagesAndConnections = this.getStagesAndConnections.bind(this);
     this.tabs = [
       {
         label: 'Properties',
@@ -96,21 +100,16 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.isStudioMode = rIsStudioMode;
     this.isPreviewMode = this.previewStore.getState().preview.isPreviewModeEnabled;
     this.isPreviewData = this.previewStore.getState().preview.previewData;
-    this.previewId = this.getPreviewId();
 
     if (rIsStudioMode && this.isPreviewMode && this.previewId) {
-      this.previewLoading = false;
       this.previewData = null;
-      this.previewStatus = null;
-      let { stages, connections } = this.ConfigStore.getConfigForExport().config;
-      let selectedNode = { 
+      this.updatePreviewStatus();
+      this.selectedNode = { 
         plugin: this.state.node.plugin,
         isSource: this.state.isSource,
         isSink: this.state.isSink,
+        isCondition: this.state.isCondition,
        }
-      let loadingCb = this.updatePreviewLoading.bind(this);
-      let updatePreviewCb = this.updatePreviewDataAndStatus.bind(this);
-      window.CaskCommon.PreviewUtilities.fetchPreview(selectedNode, this.previewId, stages, connections, loadingCb, updatePreviewCb);
     }
 
     this.activeTab = 1;
@@ -533,11 +532,6 @@ class HydratorPlusPlusNodeConfigCtrl {
   updatePreviewDataAndStatus(newPreviewData) {
     this.updatePreviewStatus();
     this.previewData = newPreviewData;
-    this.updatePreviewLoading(false);
-  }
-
-  updatePreviewLoading(isLoading) {
-    this.previewLoading = isLoading;
   }
 
   updatePreviewStatus() {
@@ -548,8 +542,12 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
   }
 
-  getPreviewId(){
+  getPreviewId() {
     return this.previewStore.getState().preview.previewId;
+  }
+
+  getStagesAndConnections() {
+    return this.ConfigStore.getConfigForExport().config;
   }
 
   // MACRO ENABLED SCHEMA
