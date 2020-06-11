@@ -14,19 +14,7 @@
  * the License.
  */
 
-import {
-  loginIfRequired,
-  getGenericEndpoint,
-  getConditionNodeEndpoint,
-  getArtifactsPoll,
-} from '../helpers';
-import {
-  DEFAULT_GCP_PROJECTID,
-  DEFAULT_GCP_SERVICEACCOUNT_PATH,
-  DEFAULT_BIGQUERY_DATASET,
-  DEFAULT_BIGQUERY_TABLE,
-} from '../support/constants';
-import { INodeInfo, INodeIdentifier } from '../typings';
+import { loginIfRequired, getArtifactsPoll } from '../helpers';
 let headers = {};
 
 describe('Pipeline Canvas actions', () => {
@@ -42,10 +30,22 @@ describe('Pipeline Canvas actions', () => {
         };
       });
     });
+    cy.visit('/cdap', {
+      onBeforeLoad: (win) => {
+        win.sessionStorage.clear();
+        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
+      },
+    });
   });
 
   beforeEach(() => {
     getArtifactsPoll(headers);
+  });
+
+  after(() => {
+    cy.window().then((win) => {
+      win.sessionStorage.removeItem('pipelineConfigTesting');
+    });
   });
 
   it('Should correctly undo/redo actions done by the user', () => {
