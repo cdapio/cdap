@@ -479,7 +479,7 @@ public abstract class SparkPipelineRunner {
     }
 
     // JoinRequest contains the left side of the join, plus 1 or more other stages to join to.
-    JoinRequest joinRequest = new JoinRequest(leftName, leftKey, leftSchema,
+    JoinRequest joinRequest = new JoinRequest(stageName, leftName, leftKey, leftSchema,
                                               left.isRequired(), onKeys.isNullSafe(),
                                               joinDefinition.getSelectedFields(),
                                               joinDefinition.getOutputSchema(), toJoin);
