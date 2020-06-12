@@ -190,13 +190,9 @@ public final class SparkContainerLauncher {
     }
 
     // Otherwise start the gateway server using reflection. Also write the port number to a local file
-    Path portFile = Paths.get("cdap.py4j.gateway.port.txt");
     try {
       final Object server = classLoader.loadClass(SparkPythonUtil.class.getName())
-        .getMethod("startPy4jGateway", Path.class).invoke(null, portFile);
-
-      log(logger, "info", "Py4j GatewayServer started, listening at port {}",
-          new String(Files.readAllBytes(portFile), StandardCharsets.UTF_8));
+        .getMethod("startPy4jGateway", Path.class).invoke(null, Paths.get(System.getProperty("user.dir")));
 
       return new Runnable() {
         @Override
