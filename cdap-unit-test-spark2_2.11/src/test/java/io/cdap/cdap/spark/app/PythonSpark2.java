@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,16 +16,15 @@
 
 package io.cdap.cdap.spark.app;
 
-import io.cdap.cdap.api.app.AbstractApplication;
+import io.cdap.cdap.api.spark.AbstractSpark;
 
 /**
- * Testing application for Spark2.
+ *
  */
-public class Spark2TestApp extends AbstractApplication {
+public class PythonSpark2 extends AbstractSpark {
 
   @Override
-  public void configure() {
-    addSpark(new ScalaSparkServiceProgram());
-    addSpark(new PythonSpark2());
+  protected void initialize() throws Exception {
+    getContext().setPySparkScript(getClass().getClassLoader().getResource("testPySpark2.py").toURI());
   }
 }

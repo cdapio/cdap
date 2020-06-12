@@ -15,9 +15,8 @@
 # the License.
 
 import os
-from threading import RLock
-
 from py4j.java_gateway import java_import, JavaGateway
+from threading import RLock
 
 try:
   # The JavaObject is only needed for the Spark 1 hack. Failure to import in future Spark/py4j version is ok.
@@ -157,7 +156,7 @@ class SparkRuntimeContext(object):
   _runtimeContext = None
   _onDemandCallback = False
 
-  def __init__(self, gatewayPort = None, driver = True):
+  def __init__(self, gatewayPort = None, gatewaySecret = None, driver = True):
     # If the gateway port file is there, always use it. This is for distributed mode.
     if os.path.isfile("cdap.py4j.gateway.port.txt"):
       fd = open("cdap.py4j.gateway.port.txt", "r")
@@ -169,21 +168,31 @@ class SparkRuntimeContext(object):
       else:
         raise Exception("Cannot determine Py4j GatewayServer port")
 
-    self.__class__.__ensureGatewayInit(gatewayPort, driver)
+    # Load the gateway secret if available
+    if os.path.isfile("cdap.py4j.gateway.secret.txt"):
+      fd = open("cdap.py4j.gateway.secret.txt", "r")
+      gatewaySecret = fd.read()
+      fd.close()
+    elif gatewaySecret is None:
+      if "PYSPARK_GATEWAY_SECRET" in os.environ:
+        gatewaySecret = os.environ["PYSPARK_GATEWAY_SECRET"]
+
+    self.__class__.__ensureGatewayInit(gatewayPort, gatewaySecret, driver)
     self._allowCallback = driver
     self._gatewayPort = gatewayPort
+    self._gatewaySecret = gatewaySecret
 
   def __getstate__(self):
-    return { "gatewayPort" : self._gatewayPort }
+    return { "gatewayPort" : self._gatewayPort , "gatewaySecret" : self._gatewaySecret}
 
   def __setstate__(self, state):
-    self.__init__(state["gatewayPort"], False)
+    self.__init__(state["gatewayPort"], state["gatewaySecret"], False)
 
   def getSparkRuntimeContext(self):
     return self.__class__._runtimeContext
 
   @classmethod
-  def __ensureGatewayInit(cls, gatewayPort, driver):
+  def __ensureGatewayInit(cls, gatewayPort, gatewaySecret, driver):
     with cls._lock:
       if not cls._gateway:
         # Spark 1.6 and Spark 2 are using later verions of py4j (0.9 and 0.10+ respectively),
@@ -194,7 +203,8 @@ class SparkRuntimeContext(object):
           from py4j.java_gateway import GatewayParameters, CallbackServerParameters
           callbackServerParams = CallbackServerParameters(port = 0, daemonize = True,
                                                           daemonize_connections = True) if driver else None
-          gateway = JavaGateway(gateway_parameters = GatewayParameters(port = gatewayPort, auto_convert = True),
+          gateway = JavaGateway(gateway_parameters = GatewayParameters(port = gatewayPort, auto_convert = True,
+                                                                       auth_token = gatewaySecret),
                                 callback_server_parameters = callbackServerParams)
         except:
           from py4j.java_gateway import CallbackServer, GatewayClient
