@@ -474,6 +474,14 @@ function handlePageLevelError(error) {
   return {errorCode, message};
 }
 
+function extractErrorMessage(errObj) {
+  if (typeof errObj === 'string') {
+    return errObj;
+  }
+
+  return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
+}
+
 function connectWithStore(store, WrappedComponent, ...args) {
   const ConnectedWrappedComponent = connect(...args)(WrappedComponent);
   // eslint-disable-next-line react/display-name
@@ -521,5 +529,6 @@ export {
   isMacro,
   removeEmptyJsonValues,
   handlePageLevelError,
+  extractErrorMessage,
   connectWithStore,
 };
