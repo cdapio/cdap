@@ -147,4 +147,17 @@ public class DataprocProvisionerTest {
 
     DataprocConf.fromProperties(props);
   }
+
+  @Test
+  public void testCustomImageURI() {
+    Map<String, String> props = new HashMap<>();
+    String customURI = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
+    props.put(DataprocConf.CUSTOM_IMAGE_URI,
+        customURI);
+    props.put("accountKey", "key");
+
+    DataprocConf conf = DataprocConf.create(props, null);
+    Assert.assertEquals(customURI, conf.getCustomImageUri());
+  }
+
 }

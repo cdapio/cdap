@@ -398,6 +398,23 @@ final class DataprocClient implements AutoCloseable {
                         Boolean.toString(conf.isStackdriverMonitoringEnabled()));
 
 
+      InstanceGroupConfig.Builder instanceGroupBuilder = InstanceGroupConfig.newBuilder()
+          .setNumInstances(conf.getWorkerNumNodes())
+          .setMachineTypeUri(conf.getWorkerMachineType())
+          .setDiskConfig(DiskConfig.newBuilder()
+              .setBootDiskSizeGb(conf.getWorkerDiskGB())
+              .setNumLocalSsds(0)
+              .build());
+
+      SoftwareConfig.Builder softwareConfigBuilder = SoftwareConfig.newBuilder()
+          .putAllProperties(dataprocProps);
+      //Use image version only if custom Image URI is not specified, otherwise may cause image version conflicts
+      if (conf.getCustomImageUri() == null || conf.getCustomImageUri().isEmpty()) {
+        softwareConfigBuilder.setImageVersion(imageVersion);
+      } else {
+        //If custom Image URI is specified, use that for cluster creation
+        instanceGroupBuilder.setImageUri(conf.getCustomImageUri());
+      }
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
         .setMasterConfig(InstanceGroupConfig.newBuilder()
                            .setNumInstances(conf.getMasterNumNodes())
@@ -407,18 +424,9 @@ final class DataprocClient implements AutoCloseable {
                                             .setNumLocalSsds(0)
                                             .build())
                            .build())
-        .setWorkerConfig(InstanceGroupConfig.newBuilder()
-                           .setNumInstances(conf.getWorkerNumNodes())
-                           .setMachineTypeUri(conf.getWorkerMachineType())
-                           .setDiskConfig(DiskConfig.newBuilder()
-                                            .setBootDiskSizeGb(conf.getWorkerDiskGB())
-                                            .setNumLocalSsds(0)
-                                            .build())
-                           .build())
+        .setWorkerConfig(instanceGroupBuilder.build())
         .setGceClusterConfig(clusterConfig.build())
-        .setSoftwareConfig(SoftwareConfig.newBuilder()
-                             .setImageVersion(imageVersion)
-                             .putAllProperties(dataprocProps));
+        .setSoftwareConfig(softwareConfigBuilder);
 
       //Add any Node Initialization action scripts
       for (String action : conf.getInitActions()) {
