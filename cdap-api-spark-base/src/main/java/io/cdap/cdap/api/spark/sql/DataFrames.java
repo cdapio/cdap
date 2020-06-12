@@ -386,9 +386,8 @@ public final class DataFrames {
       case FLOAT:
       case DOUBLE:
       case STRING:
-        return value;
       case BYTES:
-        return ByteBuffer.wrap((byte[]) value);
+        return value;
       case ARRAY: {
         // Value must be a collection
         @SuppressWarnings("unchecked")
