@@ -52,6 +52,7 @@ final class DataprocConf {
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String COMPONENT_GATEWAY_ENABLED = "componentGatewayEnabled";
   static final String IMAGE_VERSION = "imageVersion";
+  static final String CUSTOM_IMAGE_URI = "customImageUri";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
@@ -65,6 +66,7 @@ final class DataprocConf {
   private final String networkHostProjectID;
   private final String subnet;
   private final String imageVersion;
+  private final String customImageUri;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -105,8 +107,9 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.componentGatewayEnabled, conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags,
-         conf.initActions, conf.runtimeJobManagerEnabled, conf.clusterProperties);
+         conf.componentGatewayEnabled, conf.publicKey, conf.imageVersion, conf.customImageUri,
+         conf.clusterMetaData, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
+         conf.clusterProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -118,6 +121,7 @@ final class DataprocConf {
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable,
                        @Nullable SSHPublicKey publicKey, @Nullable String imageVersion,
+                       @Nullable String customImageUri,
                        @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
                        Map<String, String> clusterProperties) {
@@ -149,6 +153,7 @@ final class DataprocConf {
     this.componentGatewayEnabled = componentGatewayEnable;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
+    this.customImageUri = customImageUri;
     this.clusterMetaData = clusterMetaData;
     this.networkTags = networkTags;
     this.initActions = initActions;
@@ -210,6 +215,11 @@ final class DataprocConf {
   @Nullable
   String getImageVersion() {
     return imageVersion;
+  }
+
+  @Nullable
+  public String getCustomImageUri() {
+    return customImageUri;
   }
 
   long getPollCreateDelay() {
@@ -434,6 +444,7 @@ final class DataprocConf {
     );
 
     String imageVersion = getString(properties, IMAGE_VERSION);
+    String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
@@ -459,7 +470,7 @@ final class DataprocConf {
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, componentGatewayEnabled,
-                            publicKey, imageVersion, clusterMetaData, networkTags, initActions,
+                            publicKey, imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
                             runtimeJobManagerEnabled, clusterProps);
   }
 
