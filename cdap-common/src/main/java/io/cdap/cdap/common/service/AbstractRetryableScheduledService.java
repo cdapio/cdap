@@ -183,4 +183,18 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
       }
     };
   }
+
+  /**
+   * Returns the number of consecutive failure encountered from {@link #runTask()}.
+   */
+  protected int getFailureCount() {
+    return failureCount;
+  }
+
+  /**
+   * Returns the time in milliseconds of the last start time that {@link #runTask()} was not throwing exception.
+   */
+  protected long getNonFailureStartTime() {
+    return nonFailureStartTime;
+  }
 }
