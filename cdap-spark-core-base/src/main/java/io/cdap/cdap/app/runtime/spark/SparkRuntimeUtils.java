@@ -60,6 +60,8 @@ import java.util.zip.ZipOutputStream;
 public final class SparkRuntimeUtils {
 
   public static final String CDAP_SPARK_EXECUTION_SERVICE_URI = "CDAP_SPARK_EXECUTION_SERVICE_URI";
+  public static final String PYSPARK_PORT_FILE_NAME = "cdap.py4j.gateway.port.txt";
+  public static final String PYSPARK_SECRET_FILE_NAME = "cdap.py4j.gateway.secret.txt";
 
   private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeUtils.class);

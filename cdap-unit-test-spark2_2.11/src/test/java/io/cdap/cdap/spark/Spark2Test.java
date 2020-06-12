@@ -35,6 +35,7 @@ import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.DefaultId;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -44,6 +45,7 @@ import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.spark.app.CharCountProgram;
+import io.cdap.cdap.spark.app.PythonSpark2;
 import io.cdap.cdap.spark.app.ScalaCharCountProgram;
 import io.cdap.cdap.spark.app.ScalaCrossNSProgram;
 import io.cdap.cdap.spark.app.ScalaSparkServiceProgram;
@@ -62,7 +64,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -73,6 +77,7 @@ import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -90,6 +95,9 @@ public class Spark2Test extends TestBaseWithSpark2 {
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false);
+
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private static final String TEST_STRING_1 = "persisted data";
   private static final String TEST_STRING_2 = "distributed systems";
@@ -252,6 +260,57 @@ public class Spark2Test extends TestBaseWithSpark2 {
                             SparkAppUsingLocalFiles.JavaSparkUsingLocalFiles.class.getSimpleName(), "java");
     testSparkWithLocalFiles(SparkAppUsingLocalFiles.class,
                             SparkAppUsingLocalFiles.ScalaSparkUsingLocalFiles.class.getSimpleName(), "scala");
+  }
+
+  @Test
+  public void testPySpark() throws Exception {
+    ApplicationManager appManager = deploy(NamespaceId.DEFAULT, Spark2TestApp.class);
+
+    // Write some data to a local file
+    File inputFile = TEMP_FOLDER.newFile();
+    try (BufferedWriter writer = Files.newBufferedWriter(inputFile.toPath(), StandardCharsets.UTF_8)) {
+      for (int i = 0; i < 100; i++) {
+        writer.write("Event " + i);
+        writer.newLine();
+      }
+    }
+
+    File outputDir = new File(TMP_FOLDER.newFolder(), "output");
+    appManager.getSparkManager(PythonSpark2.class.getSimpleName())
+      .startAndWaitForRun(ImmutableMap.of("input.file", inputFile.getAbsolutePath(),
+                                          "output.path", outputDir.getAbsolutePath()),
+                          ProgramRunStatus.COMPLETED, 2, TimeUnit.MINUTES);
+
+    // Verify the result
+    File resultFile = DirUtils.listFiles(outputDir).stream()
+      .filter(f -> !f.getName().endsWith(".crc"))
+      .filter(f -> !f.getName().startsWith("_SUCCESS"))
+      .findFirst()
+      .orElse(null);
+    Assert.assertNotNull(resultFile);
+
+    List<String> lines = Files.readAllLines(resultFile.toPath(), StandardCharsets.UTF_8);
+    Assert.assertFalse(lines.isEmpty());
+
+    // Expected only even number
+    int count = 0;
+    for (String line : lines) {
+      line = line.trim();
+      if (!line.isEmpty()) {
+        Assert.assertEquals("Event " + count, line);
+        count += 2;
+      }
+    }
+
+    Assert.assertEquals(100, count);
+
+    final Map<String, String> tags = ImmutableMap.of(
+      Constants.Metrics.Tag.NAMESPACE, NamespaceId.DEFAULT.getNamespace(),
+      Constants.Metrics.Tag.APP, Spark2TestApp.class.getSimpleName(),
+      Constants.Metrics.Tag.SPARK, PythonSpark2.class.getSimpleName());
+
+    Tasks.waitFor(100L, () ->  getMetricsManager().getTotalMetric(tags, "user.body"),
+                  5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
   }
 
   private void prepareInputData(DataSetManager<ObjectStore<String>> manager) {
