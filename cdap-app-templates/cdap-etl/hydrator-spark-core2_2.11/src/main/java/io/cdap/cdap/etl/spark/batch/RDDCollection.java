@@ -22,12 +22,14 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.join.JoinField;
+import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -63,7 +65,11 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
   @Override
   public SparkCollection<T> join(JoinRequest joinRequest) {
     Map<String, Dataset> collections = new HashMap<>();
-    Dataset<Row> left = toDataset((JavaRDD<StructuredRecord>) rdd, joinRequest.getLeftSchema());
+    String stageName = joinRequest.getStageName();
+    Function<StructuredRecord, StructuredRecord> recordsInCounter =
+      new CountingFunction<>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, sec.getDataTracer(stageName));
+    Dataset<Row> left = toDataset(stageName, ((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter),
+                                  joinRequest.getLeftSchema());
     collections.put(joinRequest.getLeftStage(), left);
 
     List<Column> leftJoinColumns = joinRequest.getLeftKey().stream()
@@ -90,7 +96,7 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     Dataset<Row> joined = left;
     for (JoinCollection toJoin : joinRequest.getToJoin()) {
       RDDCollection<StructuredRecord> data = (RDDCollection<StructuredRecord>) toJoin.getData();
-      Dataset<Row> right = toDataset(data.rdd, toJoin.getSchema());
+      Dataset<Row> right = toDataset(stageName, data.rdd.map(recordsInCounter), toJoin.getSchema());
       collections.put(toJoin.getStage(), right);
 
       List<Column> rightJoinColumns = toJoin.getKey().stream()
@@ -166,13 +172,13 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     Schema outputSchema = joinRequest.getOutputSchema();
     JavaRDD<StructuredRecord> output = joined.javaRDD()
       .map(r -> DataFrames.fromRow(r, outputSchema))
-      .map(new CountingFunction<>(joinRequest.getStageName(), sec.getMetrics(), "records.out",
-                                  sec.getDataTracer(joinRequest.getStageName())));
+      .map(new CountingFunction<>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
+                                  sec.getDataTracer(stageName)));
     return (SparkCollection<T>) wrap(output);
   }
 
 
-  protected Dataset<Row> toDataset(JavaRDD<StructuredRecord> rdd, Schema schema) {
+  protected Dataset<Row> toDataset(String stageName, JavaRDD<StructuredRecord> rdd, Schema schema) {
     StructType sparkSchema = DataFrames.toDataType(schema);
     JavaRDD<Row> rowRDD = rdd.map(record -> DataFrames.toRow(record, sparkSchema));
     return sqlContext.createDataFrame(rowRDD.rdd(), sparkSchema);
