@@ -452,6 +452,13 @@ function removeEmptyJsonValues(obj) {
   return newValues;
 }
 
+function extractErrorMessage(errObj) {
+  if (typeof errObj === 'string') {
+    return errObj;
+  }
+
+  return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
+}
 
 export {
   objectQuery,
@@ -491,4 +498,5 @@ export {
   parseQueryString,
   isMacro,
   removeEmptyJsonValues,
+  extractErrorMessage,
 };
