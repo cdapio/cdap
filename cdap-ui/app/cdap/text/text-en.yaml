@@ -2410,10 +2410,13 @@ features:
       viewNamespace: View pipelines in namespace
     viewPipeline: View Pipeline
   PreviewData:
-    Table:
+    errorHeader: Error fetching preview data. Please try re-running preview.
+    loading: Fetching preview data 
+    runPreview: Run preview to generate preview data.
+    Table: 
+      noPreviewRunning: "{recordType} records have not been generated. Please verify your logic or try sending more data."
       previewNotSupported: Preview data is not supported for condition stages.
       previewRunning: "{recordType} records have not been generated yet. Please check again in a few minutes."
-      noPreviewRunning: "{recordType} records have not been generated. Please verify your logic or try sending more data."
     TableContainer:
       conditionHeader: Input Records and Output Records
       inputHeader: Input Records

@@ -25,6 +25,11 @@ import { messageTextStyle } from 'components/PreviewData/Table';
 import PreviewTableContainer from 'components/PreviewData/TableContainer';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
+import T from 'i18n-react';
+import { extractErrorMessage } from 'services/helpers';
+import classnames from 'classnames';
+
+const I18N_PREFIX = 'features.PreviewData';
 
 const styles = () => {
   return {
@@ -58,26 +63,29 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
 
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<IPreviewData>({});
+  const [error, setError] = useState(null);
 
   const updatePreviewCb = (updatedPreview: IPreviewData) => {
     setPreviewData(updatedPreview);
   };
 
-  useEffect(
-    () => {
-      if (previewId) {
-        fetchPreview(
-          selectedNode,
-          previewId,
-          stages,
-          connections,
-          setPreviewLoading,
-          updatePreviewCb
-        );
-      }
-    },
-    [previewId]
-  );
+  const errorCb = (err: any) => {
+    setError(extractErrorMessage(err));
+  };
+
+  useEffect(() => {
+    if (previewId) {
+      fetchPreview(
+        selectedNode,
+        previewId,
+        stages,
+        connections,
+        setPreviewLoading,
+        updatePreviewCb,
+        errorCb
+      );
+    }
+  }, [previewId]);
 
   const getTableData = () => {
     let inputs = {};
@@ -97,19 +105,34 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
   const tableData: ITableData = getTableData();
 
   const loadingMsg = (cls) => (
-    <div className={classes.headingContainer}>
-      <Heading type={HeadingTypes.h3} label={'Fetching preview data'} className={cls.messageText} />
+    <div className={cls.headingContainer}>
+      <Heading
+        type={HeadingTypes.h3}
+        label={T.translate(`${I18N_PREFIX}.loading`)}
+        className={cls.messageText}
+      />
       <LoadingSVGCentered />
     </div>
   );
 
   const noPreviewDataMsg = (cls) => (
-    <div className={classes.headingContainer}>
+    <div className={cls.headingContainer}>
       <Heading
         type={HeadingTypes.h3}
-        label={'Run preview to generate preview data.'}
+        label={T.translate(`${I18N_PREFIX}.runPreview`)}
         className={cls.messageText}
       />
+    </div>
+  );
+
+  const errorMsg = (cls) => (
+    <div className={classnames('text-danger', cls.headingContainer)}>
+      <Heading
+        type={HeadingTypes.h3}
+        label={T.translate(`${I18N_PREFIX}.errorHeader`)}
+        className={cls.messageText}
+      />
+      <span>{typeof error === 'string' ? error : JSON.stringify(error)}</span>
     </div>
   );
 
@@ -117,6 +140,7 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     <div>
       <If condition={!previewId}>{noPreviewDataMsg(classes)}</If>
       <If condition={previewLoading}>{loadingMsg(classes)}</If>
+      <If condition={error}>{errorMsg(classes)}</If>
 
       <If condition={!previewLoading && previewId && !isEmpty(previewData)}>
         <PreviewTableContainer
