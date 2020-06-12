@@ -17,26 +17,17 @@
 package io.cdap.cdap.internal.app.runtime.monitor.proxy;
 
 import io.cdap.cdap.common.http.Channels;
-import io.cdap.cdap.common.logging.LogSamplers;
-import io.cdap.cdap.common.logging.Loggers;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.util.ReferenceCountUtil;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.SocketAddress;
-import java.util.concurrent.TimeUnit;
 
 /**
  * A {@link RelayChannelHandler} that relay traffic from one {@link Channel} to another.
  */
 public final class SimpleRelayChannelHandler extends ChannelInboundHandlerAdapter implements RelayChannelHandler {
-
-  private static final Logger LOG = LoggerFactory.getLogger(SimpleRelayChannelHandler.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(
-    LOG, LogSamplers.perMessage(() -> LogSamplers.limitRate(TimeUnit.MINUTES.toMillis(1))));
 
   private final Channel outboundChannel;
 
@@ -68,7 +59,6 @@ public final class SimpleRelayChannelHandler extends ChannelInboundHandlerAdapte
   @Override
   public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
     // If there is exception, just close the channel
-    OUTAGE_LOG.warn("Exception raised when relaying messages", cause);
     ctx.close();
   }
 
