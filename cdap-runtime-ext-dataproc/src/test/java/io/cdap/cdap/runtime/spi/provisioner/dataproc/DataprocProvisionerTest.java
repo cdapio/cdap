@@ -129,4 +129,17 @@ public class DataprocProvisionerTest {
     Assert.assertEquals(properties.get(DataprocConf.STACKDRIVER_LOGGING_ENABLED), "true");
     Assert.assertEquals(properties.get(resourceMaxPercentKey), resourceMaxPercentVal);
   }
+
+  @Test
+  public void testCustomImageURI() {
+    Map<String, String> props = new HashMap<>();
+    String customURI = "https://www.googleapis.com/compute/v1/projects/p1/global/images/testimage";
+    props.put(DataprocConf.CUSTOM_IMAGE_URI,
+        customURI);
+    props.put("accountKey", "key");
+
+    DataprocConf conf = DataprocConf.create(props);
+    Assert.assertEquals(customURI, conf.getCustomImageUri());
+  }
+
 }
