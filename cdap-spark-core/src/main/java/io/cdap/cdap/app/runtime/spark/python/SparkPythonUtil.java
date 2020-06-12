@@ -16,21 +16,50 @@
 
 package io.cdap.cdap.app.runtime.spark.python;
 
+import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import py4j.CallbackClient;
 import py4j.GatewayServer;
+import py4j.Py4JNetworkException;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Utility class to provide methods for PySpark integration.
  */
 @SuppressWarnings("unused")
-public final class SparkPythonUtil extends AbstractSparkPythonUtil {
+public final class SparkPythonUtil {
 
   private static final Logger LOG = LoggerFactory.getLogger(SparkPythonUtil.class);
+
+  /**
+   * Starts a Py4j gateway server.
+   *
+   * @param dir the local directory for writing information for the gateway server, such as port and auth token.
+   * @return the gateway server
+   * @throws IOException if failed to start the server or failed to write out the port.
+   */
+  public static GatewayServer startPy4jGateway(Path dir) throws IOException {
+    GatewayServer server = new GatewayServer(null, 0);
+    try {
+      server.start();
+    } catch (Py4JNetworkException e) {
+      throw new IOException(e);
+    }
+
+    // Write the port number in string form to the port file
+    Files.write(dir.resolve(SparkRuntimeUtils.PYSPARK_PORT_FILE_NAME),
+                Integer.toString(server.getListeningPort()).getBytes(StandardCharsets.UTF_8));
+
+    LOG.debug("Py4j Gateway server started at port {}", server.getListeningPort());
+    return server;
+  }
 
   /**
    * Updates the python callback port in the {@link GatewayServer}.
