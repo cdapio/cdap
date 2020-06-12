@@ -363,35 +363,36 @@ class HydratorPlusPlusHydratorService {
   }
 
   getRuntimeArgsForDisplay(currentRuntimeArgs, macrosMap, userRuntimeArgumentsMap) {
-    let runtimeArguments = {};
-    let providedMacros = {};
-
+    const macrosWithIds = {};
+    let runtimeArgsMap = {};
+  
     // holds provided macros in an object here even though we don't need the value,
     // because object hash is faster than Array.indexOf
     if (currentRuntimeArgs.pairs) {
       currentRuntimeArgs.pairs.forEach((currentPair) => {
         let key = currentPair.key;
-        if (currentPair.notDeletable && currentPair.provided) {
-          providedMacros[key] = currentPair.value;
+        runtimeArgsMap[key] = currentPair.value || '';
+        if (currentPair.uniqueId && Object.prototype.hasOwnProperty.call(macrosMap, key)) {
+          macrosWithIds[key] = currentPair.uniqueId;
         }
       });
+      currentRuntimeArgs.pairs = currentRuntimeArgs.pairs.filter((keyValuePair) => {
+        return Object.keys(macrosMap).indexOf(keyValuePair.key) === -1;
+      });
     }
-    let macros = Object.keys(macrosMap).map(macroKey => {
-      let provided = false;
-      if (providedMacros.hasOwnProperty(macroKey)) {
-        provided = true;
-      }
+    let macros = Object.keys(macrosMap).map((macroKey) => {
       return {
         key: macroKey,
-        value: macrosMap[macroKey],
-        uniqueId: 'id-' + this.uuid.v4(),
+        value: runtimeArgsMap[macroKey] || '',
+        showReset: macrosMap[macroKey].showReset,
+        uniqueId: macrosWithIds[macroKey] || 'id-' + this.uuid.v4(),
         notDeletable: true,
-        provided
       };
     });
     let userRuntimeArguments = this.convertMapToKeyValuePairs(userRuntimeArgumentsMap);
-    runtimeArguments.pairs = macros.concat(userRuntimeArguments);
-    return runtimeArguments;
+    // Placing macros in the front so they're displayed at top.
+    currentRuntimeArgs.pairs = macros.concat(userRuntimeArguments);
+    return currentRuntimeArgs;
   }
 
   convertRuntimeArgsToMacros(runtimeArguments) {
