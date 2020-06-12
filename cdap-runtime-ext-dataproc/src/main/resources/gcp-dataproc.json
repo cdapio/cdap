@@ -106,7 +106,16 @@
           "widget-type": "textbox",
           "label": "Image Version",
           "name": "imageVersion",
-          "description": "The Dataproc image version. If none is given, one will automatically be chosen.",
+          "description": "The Dataproc image version. If none is given, one will automatically be chosen. If Custom Image URI is specified, this field will be ignored.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Custom Image URI (Beta)",
+          "name": "customImageUri",
+          "description": "Dataproc Image URI. If the URI is unspecified, it will be inferred from Image Version.",
           "widget-attributes": {
             "size": "medium"
           }
