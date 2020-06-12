@@ -99,6 +99,7 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     SparkConf sparkConf = new SparkConf();
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
+    sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
       sparkConf.set(property.getKey(), property.getValue());
     }
