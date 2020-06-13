@@ -240,7 +240,7 @@ public class DataFramesTest {
     Assert.assertEquals(30f, record.<Float>get("floatField").floatValue(), 0.0001f);
     Assert.assertEquals(40d, record.<Double>get("doubleField").doubleValue(), 0.0001d);
     Assert.assertEquals("String", record.<String>get("stringField"));
-    Assert.assertEquals(ByteBuffer.wrap(new byte[] {1, 2, 3}), record.<ByteBuffer>get("bytesField"));
+    Assert.assertArrayEquals(new byte[] {1, 2, 3}, record.<byte[]>get("bytesField"));
     Assert.assertNull(record.get("nullableField"));
     Assert.assertEquals(Arrays.asList("1", "2", "3"), record.<Collection<String>>get("arrayField"));
     Assert.assertEquals(Collections.singletonMap("k", "v"), record.<Map<String, String>>get("mapField"));
