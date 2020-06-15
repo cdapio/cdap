@@ -70,7 +70,7 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
   // Check whether local changes to widget attributes is saved
   const [localSaved, setLocalSaved] = React.useState(true);
 
-  const widgetType = widgetInfo.get(widgetID).get('widgetType');
+  const widgetType = widgetInfo.get(widgetID) ? widgetInfo.get(widgetID).get('widgetType') : '';
 
   // There are situations when the widgets from imported file do not include
   // all the required 'widget-atttributes'. Therefore, this approach will include

@@ -131,7 +131,7 @@ const WidgetInfoInputView: React.FC<IWidgetInfoInputProps> = ({ classes, widgetI
         </div>
       </If>
     ),
-    [widget]
+    [widgetInfo]
   );
 };
 

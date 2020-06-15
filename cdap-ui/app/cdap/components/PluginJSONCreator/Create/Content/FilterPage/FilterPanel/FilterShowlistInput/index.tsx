@@ -98,7 +98,7 @@ const FilterShowlistInput: React.FC<IFilterShowlistInputProps> = ({ filterID }) 
         })}
       </If>
     ),
-    [existingShowlist, showToInfo]
+    [filterToShowlist, showToInfo]
   );
 };
 

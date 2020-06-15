@@ -148,7 +148,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({ classes, group
         </div>
       </div>
     ),
-    [activeWidgets, openWidgetIndex]
+    [activeWidgets, widgetInfo, widgetToAttributes, openWidgetIndex]
   );
 };
 

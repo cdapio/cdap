@@ -155,7 +155,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({ classe
         </If>
       </If>
     ),
-    [existingCondition, widgetInfo]
+    [filterToCondition, widgetInfo]
   );
 };
 

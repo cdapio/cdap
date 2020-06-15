@@ -40,7 +40,7 @@ const FilterNameInput: React.FC<IFilterNameInputProps> = ({ filterID }) => {
         label={'Filter Name'}
       />
     ),
-    [filterToName.get(filterID)]
+    [filterToName]
   );
 };
 

@@ -113,7 +113,7 @@ const FilterPage = () => {
         <StepButtons nextDisabled={false} />
       </div>
     ),
-    [filters]
+    [filters, filterToName, filterToCondition, filterToShowlist]
   );
 };
 

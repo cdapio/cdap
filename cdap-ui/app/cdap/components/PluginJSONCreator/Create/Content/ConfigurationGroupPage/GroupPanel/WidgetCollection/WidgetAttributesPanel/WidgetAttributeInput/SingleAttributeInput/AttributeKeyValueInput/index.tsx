@@ -82,7 +82,9 @@ const AttributeKeyValueInput = ({
     name: valueField,
   };
 
-  const widgetAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
+  const widgetAttributeValues = localWidgetToAttributes.get(widgetID)
+    ? localWidgetToAttributes.get(widgetID).get(field)
+    : '';
 
   const currentKey = Map.isMap(widgetAttributeValues) ? widgetAttributeValues.get(keyField) : '';
   const currentValue = Map.isMap(widgetAttributeValues)
