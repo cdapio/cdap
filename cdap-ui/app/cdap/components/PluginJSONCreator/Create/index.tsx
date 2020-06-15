@@ -71,8 +71,12 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ groupToWidgets });
   };
 
-  public setWidgetToInfo = (widgetToInfo: any) => {
-    this.setState({ widgetToInfo });
+  public setWidgetInfo = (widgetInfo: any) => {
+    this.setState({ widgetInfo });
+  };
+
+  public setJsonView = (jsonView: boolean) => {
+    this.setState({ jsonView });
   };
 
   public state = {
@@ -85,14 +89,16 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     configurationGroups: [],
     groupToInfo: {},
     groupToWidgets: {},
-    widgetToInfo: {},
+    widgetInfo: {},
+    jsonView: true,
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
     setConfigurationGroups: this.setConfigurationGroups,
     setGroupToInfo: this.setGroupToInfo,
     setGroupToWidgets: this.setGroupToWidgets,
-    setWidgetToInfo: this.setWidgetToInfo,
+    setWidgetInfo: this.setWidgetInfo,
+    setJsonView: this.setJsonView,
   };
 
   public render() {

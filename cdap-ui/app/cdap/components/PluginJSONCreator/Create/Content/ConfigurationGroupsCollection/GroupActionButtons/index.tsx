@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { IconButton } from '@material-ui/core';
+import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
