@@ -25,6 +25,7 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import GroupActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupActionButtons';
 import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection/GroupInfoInput';
+import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection';
 import {
@@ -52,14 +53,21 @@ const styles = (): StyleRules => {
 
 const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
+  pluginName,
+  pluginType,
+  displayName,
+  emitAlerts,
+  emitErrors,
   configurationGroups,
   setConfigurationGroups,
   groupToInfo,
   setGroupToInfo,
   groupToWidgets,
   setGroupToWidgets,
-  widgetToInfo,
-  setWidgetToInfo,
+  widgetInfo,
+  setWidgetInfo,
+  jsonView,
+  setJsonView,
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -67,7 +75,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   );
   const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
-  const [localWidgetToInfo, setLocalWidgetToInfo] = React.useState(widgetToInfo);
+  const [localWidgetInfo, setLocalWidgetInfo] = React.useState(widgetInfo);
 
   function addConfigurationGroup(index: number) {
     return () => {
@@ -118,11 +126,11 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
       setLocalGroupToWidgets(restGroupToWidgets);
 
       // Delete all the widget information that belong to the group
-      const newWidgetToInfo = localWidgetToInfo;
+      const newWidgetInfo = localWidgetInfo;
       widgets.forEach((widget) => {
-        delete newWidgetToInfo[widget];
+        delete newWidgetInfo[widget];
       });
-      setLocalWidgetToInfo(newWidgetToInfo);
+      setLocalWidgetInfo(newWidgetInfo);
     };
   }
 
@@ -138,11 +146,24 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setConfigurationGroups(localConfigurationGroups);
     setGroupToInfo(localGroupToInfo);
     setGroupToWidgets(localGroupToWidgets);
-    setWidgetToInfo(localWidgetToInfo);
+    setWidgetInfo(localWidgetInfo);
   }
 
   return (
     <div>
+      <JsonMenu
+        pluginName={pluginName}
+        pluginType={pluginType}
+        displayName={displayName}
+        emitAlerts={emitAlerts}
+        emitErrors={emitErrors}
+        configurationGroups={localConfigurationGroups}
+        groupToInfo={localGroupToInfo}
+        groupToWidgets={localGroupToWidgets}
+        widgetInfo={localWidgetInfo}
+        jsonView={jsonView}
+        setJsonView={setJsonView}
+      />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />
       <If condition={localConfigurationGroups.length === 0}>
@@ -171,7 +192,6 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
               </ExpansionPanelSummary>
               <ExpansionPanelActions className={classes.groupContent}>
                 <GroupInfoInput
-                  classes={classes}
                   groupID={groupID}
                   groupToInfo={localGroupToInfo}
                   setGroupToInfo={setLocalGroupToInfo}
@@ -180,8 +200,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
                   groupID={groupID}
                   groupToWidgets={localGroupToWidgets}
                   setGroupToWidgets={setLocalGroupToWidgets}
-                  widgetToInfo={localWidgetToInfo}
-                  setWidgetToInfo={setLocalWidgetToInfo}
+                  widgetInfo={localWidgetInfo}
+                  setWidgetInfo={setLocalWidgetInfo}
                 />
               </ExpansionPanelActions>
             </ExpansionPanel>
