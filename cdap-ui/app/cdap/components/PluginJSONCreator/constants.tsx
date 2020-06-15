@@ -14,8 +14,12 @@
  * the License.
  */
 
+import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
 import { GLOBALS } from 'services/global-constants';
 
 export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
   (t) => t !== 'sqljoiner' && t !== 'batchjoiner' && t !== 'errortransform'
 );
+
+export const WIDGET_TYPES = Object.keys(WIDGET_FACTORY);
+export const WIDGET_CATEGORY = ['plugin'];
