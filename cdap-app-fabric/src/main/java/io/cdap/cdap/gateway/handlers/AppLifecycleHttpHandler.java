@@ -20,6 +20,7 @@ package io.cdap.cdap.gateway.handlers;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
+import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -41,6 +42,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.NotImplementedException;
 import io.cdap.cdap.common.ServiceException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -416,9 +418,8 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
                                  @QueryParam("allowSnapshot") boolean allowSnapshot) throws Exception {
     ApplicationId appId = validateApplicationId(validateNamespace(namespaceId), appName);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
-    applicationLifecycleService.upgradeApplication(appId, createProgramTerminator(),
-                                                   allowedArtifactScopes, allowSnapshot);
-    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+    applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
+    ApplicationUpdateDetail updateDetail = new ApplicationUpdateDetail(appId);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(updateDetail));
   }
 
@@ -428,9 +429,9 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * <pre>
    * {@code
    * [
-   *   {"appId":"XYZ"},
-   *   {"appId":"ABC"},
-   *   {"appId":"FOO"},
+   *   {"name":"XYZ"},
+   *   {"name":"ABC"},
+   *   {"name":"FOO"},
    * ]
    * }
    * </pre>
@@ -448,20 +449,19 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
     // TODO: (CDAP-16910) Improve batch API performance as each application upgrade is an event independent of each
     //  other.
 
-    List<ApplicationId> appIds = decodeAndValidateBatchApplication(validateNamespace(namespaceId), request);
+    List<ApplicationId> appIds = decodeAndValidateBatchApplicationRecord(validateNamespace(namespaceId), request);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
     List<ApplicationUpdateDetail> details = new ArrayList<>();
     for (ApplicationId appId : appIds) {
       ApplicationUpdateDetail updateDetail;
       try {
-        applicationLifecycleService.upgradeApplication(appId, createProgramTerminator(), allowedArtifactScopes,
-                                                       allowSnapshot);
-        updateDetail = new ApplicationUpdateDetail(appId, "upgrade successful.");
+        applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
+        updateDetail = new ApplicationUpdateDetail(appId);
       } catch (UnsupportedOperationException e) {
         String errorMessage = String.format("Application %s does not support upgrade.", appId);
-        updateDetail = new ApplicationUpdateDetail(appId, errorMessage);
+        updateDetail = new ApplicationUpdateDetail(appId, new NotImplementedException(errorMessage));
       } catch (InvalidArtifactException | NotFoundException e) {
-        updateDetail = new ApplicationUpdateDetail(appId, e.getMessage());
+        updateDetail = new ApplicationUpdateDetail(appId, e);
       } catch (Exception e) {
         updateDetail =
           new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
@@ -537,6 +537,37 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
         }
       }
       return result;
+    } catch (JsonSyntaxException e) {
+      throw new BadRequestException("Request body is invalid json: " + e.getMessage());
+    }
+  }
+
+  /**
+   * Decodes request coming from the {@link #upgradeApplications(FullHttpRequest, HttpResponder, String, Set, boolean)}
+   * call.
+   */
+  private List<ApplicationId> decodeAndValidateBatchApplicationRecord(NamespaceId namespaceId,
+                                                                      FullHttpRequest request)
+    throws BadRequestException {
+    try {
+      List<ApplicationId> appIds = new ArrayList<>();
+      List<ApplicationRecord> records =
+        DECODE_GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+                             new TypeToken<List<ApplicationRecord>>() { }.getType());
+      if (records == null) {
+        throw new BadRequestException("Request body is invalid json, please check that it is a json array.");
+      }
+      for (ApplicationRecord element : records) {
+        if (element.getName() != null && element.getName().isEmpty()) {
+          throw new BadRequestException("Missing 'name' in the request element for app-id.");
+        }
+        if (element.getAppVersion() == null) {
+          appIds.add(validateApplicationId(namespaceId, element.getName()));
+        } else {
+          appIds.add(validateApplicationVersionId(namespaceId, element.getName(), element.getAppVersion()));
+        }
+      }
+      return appIds;
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
     }

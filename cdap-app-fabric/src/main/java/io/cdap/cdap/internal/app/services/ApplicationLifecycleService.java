@@ -465,8 +465,6 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * Upgrades an existing application by upgrading application artifact versions and plugin artifact versions.
    *
    * @param appId the id of the application to upgrade.
-   * @param programTerminator a program terminator that will stop programs that are removed when updating an app.
-   *                          For example, if an update removes a flow, the terminator defines how to stop that flow.
    * @param allowedArtifactScopes artifact scopes allowed while looking for latest artifacts for upgrade.
    * @param allowSnapshot whether to consider snapshot version of artifacts or not for upgrade.
    * @throws IllegalStateException if something unexpected happened during upgrade.
@@ -478,8 +476,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
    * @throws Exception if there was an exception during the upgrade of application. This exception will often wrap
    *                   the actual exception
    */
-  public void upgradeApplication(ApplicationId appId, ProgramTerminator programTerminator,
-                                 Set<ArtifactScope> allowedArtifactScopes, boolean allowSnapshot)
+  public void upgradeApplication(ApplicationId appId, Set<ArtifactScope> allowedArtifactScopes, boolean allowSnapshot)
     throws Exception {
     // Check if the current user has admin privileges on it before updating.
     authorizationEnforcer.enforce(appId, authenticationContext.getPrincipal(), Action.ADMIN);
@@ -509,7 +506,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     Id.Artifact newArtifact = Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(appId.getParent(), newArtifactId));
     ArtifactDetail newArtifactDetail = artifactRepository.getArtifact(newArtifact);
 
-    updateApplicationInternal(appId, currentSpec.getConfiguration(), programTerminator, newArtifactDetail,
+    updateApplicationInternal(appId, currentSpec.getConfiguration(), programId -> { }, newArtifactDetail,
                               Collections.singletonList(ApplicationConfigUpdateAction.UPGRADE_ARTIFACT),
                               allowedArtifactScopes, allowSnapshot, ownerAdmin.getOwner(appId), false);
   }
