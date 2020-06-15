@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.logging.appender;
 
+import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
 import com.google.common.cache.Cache;
@@ -23,6 +24,7 @@ import com.google.common.cache.CacheBuilder;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.internal.lang.CallerClassSecurityManager;
+import io.cdap.cdap.logging.context.ApplicationLoggingContext;
 
 import java.util.Collections;
 import java.util.Map;
@@ -59,7 +61,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
       if (loggingContext == null) {
         return;
       }
-      addExtraTags(eventObject);
+      addExtraTags(eventObject, loggingContext);
     }
 
     LogMessage logMessage = new LogMessage(eventObject, loggingContext);
@@ -69,7 +71,14 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
   /**
    * Adds extra MDC tags to the given event.
    */
-  private void addExtraTags(ILoggingEvent event) {
+  private void addExtraTags(ILoggingEvent event, LoggingContext loggingContext) {
+    // For error logs, if the logging context is in application scope, tag it as program logs.
+    if (loggingContext.getSystemTagsMap().containsKey(ApplicationLoggingContext.TAG_APPLICATION_ID)
+        && event.getLevel() == Level.ERROR) {
+      event.getMDCPropertyMap().putAll(Collections.singletonMap(ORIGIN_KEY, "program"));
+      return;
+    }
+
     StackTraceElement[] callerData = event.getCallerData();
     if (callerData == null || callerData.length == 0) {
       return;
@@ -80,7 +89,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     Map<String, String> tags = loggerExtraTags.getIfPresent(callerClass);
     Class[] callerClasses = CallerClassSecurityManager.getCallerClasses();
     if (tags == null) {
-      tags = addTagsForClass(callerClass, callerClasses);
+      tags = getTagsForClass(callerClass, callerClasses);
 
       loggerExtraTags.put(callerClass, tags);
     }
@@ -89,7 +98,7 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     if (tags.isEmpty()) {
       tags = loggerExtraTags.getIfPresent(event.getLoggerName());
       if (tags == null) {
-        tags = addTagsForClass(event.getLoggerName(), callerClasses);
+        tags = getTagsForClass(event.getLoggerName(), callerClasses);
         loggerExtraTags.put(event.getLoggerName(), tags);
       }
     }
@@ -98,25 +107,21 @@ public abstract class LogAppender extends AppenderBase<ILoggingEvent> {
     event.getMDCPropertyMap().putAll(tags);
   }
 
-  private Map<String, String> addTagsForClass(String className, Class[] callerClasses) {
-    Map<String, String> tags = Collections.emptyMap();
+  private Map<String, String> getTagsForClass(String className, Class[] callerClasses) {
     for (Class<?> cls : callerClasses) {
       if (cls.getName().equals(className)) {
         String classLoaderName = cls.getClassLoader().getClass().getName();
         switch (classLoaderName) {
           case "io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader":
-            tags = Collections.singletonMap(ORIGIN_KEY, "plugin");
-            break;
+            return Collections.singletonMap(ORIGIN_KEY, "plugin");
           case "io.cdap.cdap.internal.app.runtime.ProgramClassLoader":
-            tags = Collections.singletonMap(ORIGIN_KEY, "program");
-            break;
+            return Collections.singletonMap(ORIGIN_KEY, "program");
           default:
-            tags = Collections.singletonMap(ORIGIN_KEY, "system");
+            return Collections.singletonMap(ORIGIN_KEY, "system");
         }
-        break;
       }
     }
-    return tags;
+    return Collections.emptyMap();
   }
 
   protected abstract void appendEvent(LogMessage logMessage);
