@@ -24,7 +24,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 /**
  * Interface used for managing the preview runs.
  */
-public interface PreviewManager {
+public interface PreviewManager extends PreviewRunnerProvider {
 
   /**
    * Start the preview of an application config provided as an input in a given namespace.
@@ -34,14 +34,6 @@ public interface PreviewManager {
    * @throws Exception if there were any error during starting preview
    */
   ApplicationId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
-
-  /**
-   * Get the {@link PreviewRunner} responsible for managing the given preview.
-   * @param preview the application id of the preview for which {@link PreviewRunner} is to be returned
-   * @return the {@link PreviewRunner} associted with the preview
-   * @throws NotFoundException if the preview application is not found
-   */
-  PreviewRunner getRunner(ApplicationId preview) throws NotFoundException;
 
   /**
    * Returns a {@link LogReader} for reading logs for the given preview.

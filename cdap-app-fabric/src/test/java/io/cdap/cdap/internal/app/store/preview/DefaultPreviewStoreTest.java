@@ -19,8 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
-import io.cdap.cdap.app.preview.PreviewJob;
-import io.cdap.cdap.app.preview.PreviewJobQueueState;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -36,7 +35,6 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,7 +106,7 @@ public class DefaultPreviewStoreTest {
   }
 
   @Test
-  public void testPreviewInfo() throws IOException {
+  public void testPreviewInfo() {
     // test non existing preview
     ApplicationId nonexist = new ApplicationId("ns1", "nonexist");
     Assert.assertNull(store.getProgramRunId(nonexist));
@@ -129,47 +127,41 @@ public class DefaultPreviewStoreTest {
 
   @Test
   public void testPreviewJobQueue() {
-    // no job exists in the queue
-    Assert.assertNull(store.poll("somerunnerid"));
+    Assert.assertEquals(0, store.getAllWaiting().size());
 
-    // add single job
     RunId id1 = RunIds.generate();
     ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
-    AppRequest appRequest = getAppRequest();
-    PreviewJobQueueState queueState = store.add(new PreviewJob(applicationId, appRequest));
-    Assert.assertEquals(queueState.getNumOfPreviewWaiting(), 1);
+    store.addToWaiting(applicationId, getAppRequest());
+    List<PreviewRequest> allWaiting = store.getAllWaiting();
+    Assert.assertEquals(1, allWaiting.size());
 
-    // poll for job
-    PreviewJob previewJob = store.poll("runner1");
-    Assert.assertNotNull(previewJob);
-    Assert.assertEquals(applicationId, previewJob.getApplicationId());
-    Assert.assertNotNull(previewJob.getAppRequest().getPreview());
-    Assert.assertEquals("WordCount", previewJob.getAppRequest().getPreview().getProgramName());
+    AppRequest appRequest = allWaiting.get(0).getAppRequest();
+    Assert.assertNotNull(appRequest);
+    Assert.assertNotNull(appRequest.getPreview());
+    Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
+    store.removeFromWaiting(applicationId);
 
-    // another poll should return null
-    previewJob = store.poll("runner2");
-    Assert.assertNull(previewJob);
+    Assert.assertEquals(0, store.getAllWaiting().size());
 
     // add 2 jobs to queue
     ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
-    queueState = store.add(new PreviewJob(applicationId2, appRequest));
-    Assert.assertEquals(queueState.getNumOfPreviewWaiting(), 1);
+    store.addToWaiting(applicationId2, getAppRequest());
     ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
-    queueState = store.add(new PreviewJob(applicationId3, appRequest));
-    Assert.assertEquals(queueState.getNumOfPreviewWaiting(), 2);
+    store.addToWaiting(applicationId3, getAppRequest());
 
-    // polling should return in the order they were added
-    previewJob = store.poll("runner2");
-    Assert.assertNotNull(previewJob);
-    Assert.assertEquals(applicationId2, previewJob.getApplicationId());
+    allWaiting = store.getAllWaiting();
+    Assert.assertEquals(2, allWaiting.size());
+    Assert.assertEquals(applicationId2, allWaiting.get(0).getProgram().getParent());
+    Assert.assertEquals(applicationId3, allWaiting.get(1).getProgram().getParent());
 
-    previewJob = store.poll("runner2");
-    Assert.assertNotNull(previewJob);
-    Assert.assertEquals(applicationId3, previewJob.getApplicationId());
+    store.removeFromWaiting(applicationId3);
+    allWaiting = store.getAllWaiting();
+    Assert.assertEquals(1, allWaiting.size());
+    Assert.assertEquals(applicationId2, allWaiting.get(0).getProgram().getParent());
 
-    // job queue is empty now
-    previewJob = store.poll("runner2");
-    Assert.assertNull(previewJob);
+    store.removeFromWaiting(applicationId2);
+    allWaiting = store.getAllWaiting();
+    Assert.assertEquals(0, allWaiting.size());
   }
 
   private AppRequest getAppRequest() {
@@ -197,7 +189,7 @@ public class DefaultPreviewStoreTest {
       "  },\n" +
       "  \"preview\" : {\n" +
       "    \"programName\" : \"WordCount\",\n" +
-      "    \"programType\" : \"spark\"\n" +
+      "    \"programType\" : \"Spark\"\n" +
       "    },\n" +
       "  \"principal\" : \"test2\",\n" +
       "  \"app.deploy.update.schedules\":\"false\"\n" +

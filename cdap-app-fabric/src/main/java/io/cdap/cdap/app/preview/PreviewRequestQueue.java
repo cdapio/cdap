@@ -16,24 +16,26 @@
 
 package io.cdap.cdap.app.preview;
 
-import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
- * Interface designed for holding {@link PreviewJob}
+ * Interface designed for holding {@link PreviewRequest}
  */
-public interface PreviewJobQueue {
+public interface PreviewRequestQueue {
   /**
-   * Poll the next available job in the queue.
-   * @param runnerId id of the preview runner which is polling the job
-   * @return {@code PreviewJob} if such job is available in the queue, {@code null} otherwise
+   * Poll the next available request in the queue.
+   * @return {@code PreviewRequest} if such request is available in the queue, {@code null} otherwise
    */
-  @Nullable
-  PreviewJob poll(String runnerId);
+  Optional<PreviewRequest> poll();
 
   /**
-   * Add a preview job in the waiting queue.
-   * @param previewJob the job to be added to the waiting queue
-   * @return state of the job queue after addition of the current job
+   * Add a preview request in the waiting queue.
+   * @param previewRequest the request to be added to the waiting queue
    */
-  PreviewJobQueueState add(PreviewJob previewJob);
+  void add(PreviewRequest previewRequest);
+
+  /**
+   * Get the state of the preview request queue.
+   */
+  PreviewRequestQueueState getState();
 }

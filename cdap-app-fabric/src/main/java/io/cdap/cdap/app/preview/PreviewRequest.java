@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.app.preview;
 
+import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramId;
 
 import javax.annotation.Nullable;
@@ -37,6 +41,10 @@ public class PreviewRequest {
     this.appRequest = appRequest;
   }
 
+  public PreviewRequest(ApplicationId applicationId, AppRequest<?> appRequest) {
+    this(getProgramIdFromRequest(applicationId, appRequest), appRequest);
+  }
+
   public ProgramId getProgram() {
     return program;
   }
@@ -44,5 +52,21 @@ public class PreviewRequest {
   @Nullable
   public AppRequest<?> getAppRequest() {
     return appRequest;
+  }
+
+  private static ProgramId getProgramIdFromRequest(ApplicationId preview, AppRequest request) {
+    PreviewConfig previewConfig = request.getPreview();
+    if (previewConfig == null) {
+      throw new IllegalArgumentException("Preview config cannot be null");
+    }
+
+    String programName = previewConfig.getProgramName();
+    ProgramType programType = previewConfig.getProgramType();
+
+    if (programName == null || programType == null) {
+      throw new IllegalArgumentException("ProgramName or ProgramType cannot be null.");
+    }
+
+    return preview.program(programType, programName);
   }
 }

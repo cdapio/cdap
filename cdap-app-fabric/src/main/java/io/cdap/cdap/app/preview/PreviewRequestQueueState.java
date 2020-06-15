@@ -21,9 +21,9 @@ import com.google.common.base.Objects;
 /**
  * Class representing the state of the preview job queue.
  */
-public class PreviewJobQueueState {
+public class PreviewRequestQueueState {
   private long numOfPreviewWaiting;
-  public PreviewJobQueueState(long numOfPreviewWaiting) {
+  public PreviewRequestQueueState(long numOfPreviewWaiting) {
     this.numOfPreviewWaiting = numOfPreviewWaiting;
   }
 
@@ -39,7 +39,7 @@ public class PreviewJobQueueState {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    PreviewJobQueueState that = (PreviewJobQueueState) o;
+    PreviewRequestQueueState that = (PreviewRequestQueueState) o;
     return numOfPreviewWaiting == that.numOfPreviewWaiting;
   }
 

@@ -212,10 +212,10 @@ public class PreviewManagerTest {
                             ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                             PluginFinderProvider pluginFinderProvider,
                             PreferencesFetcherProvider preferencesFetcherProvider,
-                            @Assisted PreviewRequest previewRequest) {
+                            @Assisted PreviewRequest previewRequest, PreviewManager previewManager) {
       super(readerProvider, artifactStore, authorizerInstantiator, authorizationEnforcer,
             privilegesManager, preferencesService, programRuntimeProviderLoader, pluginFinderProvider,
-            preferencesFetcherProvider, previewRequest);
+            preferencesFetcherProvider, previewRequest, previewManager);
     }
 
     @Override

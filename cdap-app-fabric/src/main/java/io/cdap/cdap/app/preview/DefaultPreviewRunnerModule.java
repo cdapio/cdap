@@ -91,6 +91,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
   private final PluginFinderProvider pluginFinderProvider;
   private final PreferencesFetcherProvider preferencesFetcherProvider;
+  private final PreviewManager previewManager;
 
   @VisibleForTesting
   @Inject
@@ -101,7 +102,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                                     PluginFinderProvider pluginFinderProvider,
                                     PreferencesFetcherProvider preferencesFetcherProvider,
-                                    @Assisted PreviewRequest previewRequest) {
+                                    @Assisted PreviewRequest previewRequest, PreviewManager previewManager) {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -112,6 +113,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.previewRequest = previewRequest;
     this.pluginFinderProvider = pluginFinderProvider;
     this.preferencesFetcherProvider = preferencesFetcherProvider;
+    this.previewManager = previewManager;
   }
 
   @Override
@@ -177,6 +179,13 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(PreviewRunner.class);
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
+
+    bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
+    expose(PreviewRequestQueue.class);
+
+    bind(PreviewRequestPoller.class).to(LocalPreviewRequestPoller.class).in(Scopes.SINGLETON);
+    expose(PreviewRequestPoller.class);
+
     bind(Scheduler.class).to(NoOpScheduler.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
@@ -188,6 +197,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerAdmin.class);
 
     bind(PreviewRequest.class).toInstance(previewRequest);
+    bind(PreviewRunnerProvider.class).toInstance(previewManager);
 
     bind(PluginFinder.class).toProvider(pluginFinderProvider);
     expose(PluginFinder.class);

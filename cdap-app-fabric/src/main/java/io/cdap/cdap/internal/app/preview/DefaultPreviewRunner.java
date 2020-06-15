@@ -26,7 +26,10 @@ import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestPoller;
+import io.cdap.cdap.app.preview.PreviewRequestPollingService;
 import io.cdap.cdap.app.preview.PreviewRunner;
+import io.cdap.cdap.app.preview.PreviewRunnerProvider;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
@@ -106,6 +109,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final StructuredTableRegistry structuredTableRegistry;
   private final PreviewRequest previewRequest;
   private final CompletableFuture<PreviewStatus> completion;
+  private final PreviewRequestPollingService previewRequestPollingService;
 
   private volatile boolean killedByTimer;
   private Timer timer;
@@ -126,7 +130,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
                        StructuredTableRegistry structuredTableRegistry,
-                       PreviewRequest previewRequest) {
+                       PreviewRequest previewRequest, PreviewRequestPoller previewRequestPoller,
+                       PreviewRunnerProvider previewRunnerProvider) {
     this.messagingService = messagingService;
     this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
@@ -145,6 +150,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.structuredTableRegistry = structuredTableRegistry;
     this.previewRequest = previewRequest;
     this.completion = new CompletableFuture<>();
+    this.previewRequestPollingService = new PreviewRequestPollingService(previewRequestPoller, previewRunnerProvider);
   }
 
   @Override
@@ -350,7 +356,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       applicationLifecycleService.start(),
       programRuntimeService.start(),
       metricsCollectionService.start(),
-      programNotificationSubscriberService.start()
+      programNotificationSubscriberService.start(),
+      previewRequestPollingService.start()
     ).get();
   }
 
@@ -381,5 +388,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     logAppenderInitializer.close();
     metricsCollectionService.stopAndWait();
     programNotificationSubscriberService.stopAndWait();
+    previewRequestPollingService.stopAndWait();
   }
 }

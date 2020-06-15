@@ -31,6 +31,7 @@ import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerModuleFactory;
 import io.cdap.cdap.app.preview.PreviewStatus;
@@ -192,6 +193,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
+    PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);
 
     if (state() != State.RUNNING) {
       throw new IllegalStateException("Preview service is not running. Cannot start preview for " + programId);
@@ -204,7 +206,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                                           " concurrent active previews running. Please retry in a minute.");
       }
 
-      PreviewRequest previewRequest = new PreviewRequest(programId, appRequest);
+
       injector = createPreviewInjector(previewRequest);
       appInjectors.put(previewApp, injector);
     }
@@ -213,17 +215,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     if (runner instanceof Service) {
       ((Service) runner).startAndWait();
     }
-    try {
-      runner.startPreview();
-      return previewApp;
-    } catch (Exception e) {
-      if (runner instanceof Service) {
-        stopQuietly((Service) runner);
-      }
-      appInjectors.remove(previewApp);
-      removePreviewDir(programId);
-      throw e;
-    }
+
+    PreviewRequestQueue requestQueue = injector.getInstance(PreviewRequestQueue.class);
+    requestQueue.add(previewRequest);
+    return previewApp;
   }
 
   @Override
