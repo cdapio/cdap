@@ -67,6 +67,14 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ groupToInfo });
   };
 
+  public setGroupToWidgets = (groupToWidgets: any) => {
+    this.setState({ groupToWidgets });
+  };
+
+  public setWidgetToInfo = (widgetToInfo: any) => {
+    this.setState({ widgetToInfo });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
@@ -76,11 +84,15 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     emitErrors: false,
     configurationGroups: [],
     groupToInfo: {},
+    groupToWidgets: {},
+    widgetToInfo: {},
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
     setConfigurationGroups: this.setConfigurationGroups,
     setGroupToInfo: this.setGroupToInfo,
+    setGroupToWidgets: this.setGroupToWidgets,
+    setWidgetToInfo: this.setWidgetToInfo,
   };
 
   public render() {
