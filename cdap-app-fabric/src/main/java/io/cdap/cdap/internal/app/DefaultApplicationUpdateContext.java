@@ -152,7 +152,7 @@ public class DefaultApplicationUpdateContext implements ApplicationUpdateContext
     throws Exception {
     List<ArtifactId> pluginArtifacts = new ArrayList<>();
     NamespaceId pluginArtifactNamespace =
-        ArtifactScope.SYSTEM.equals(pluginScope) ? NamespaceId.SYSTEM : namespaceId;
+      ArtifactScope.SYSTEM.equals(pluginScope) ? NamespaceId.SYSTEM : namespaceId;
 
     Predicate<io.cdap.cdap.proto.id.ArtifactId> predicate = input -> {
       // Check if it is from the scoped namespace and should check if plugin is in given range if provided.

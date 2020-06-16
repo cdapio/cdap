@@ -29,10 +29,10 @@ public class ApplicationUpdateDetail {
   private final String error;
   private final ApplicationId appId;
 
-  public ApplicationUpdateDetail(ApplicationId appId, String error) {
+  public ApplicationUpdateDetail(ApplicationId appId) {
     this.appId = appId;
     this.statusCode = 200;
-    this.error = error;
+    error = null;
   }
 
   public ApplicationUpdateDetail(ApplicationId appId, HttpErrorStatusProvider statusProvider) {
