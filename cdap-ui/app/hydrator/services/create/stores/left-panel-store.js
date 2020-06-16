@@ -31,7 +31,7 @@
   }
 */
 
-let leftpanelactions, _DAGPlusPlusFactory, _GLOBALS, _myHelpers, _filter;
+let leftpanelactions, _DAGPlusPlusFactory, _GLOBALS, _myHelpers, _filter, _hydratorNodeService;
 let popoverTemplate = '/assets/features/hydrator/templates/create/popovers/leftpanel-plugin-popover.html';
 let getInitialState = () => {
   return {
@@ -41,15 +41,6 @@ let getInitialState = () => {
     },
     extensions: []
   };
-};
-
-const getPluginToArtifactMap = (plugins = []) => {
-  let typeMap = {};
-  plugins.forEach( plugin => {
-    typeMap[plugin.name] = typeMap[plugin.name] || [];
-    typeMap[plugin.name].push(plugin);
-  });
-  return typeMap;
 };
 
 const getTemplatesWithAddedInfo = (templates = [], extension = '') => {
@@ -103,21 +94,6 @@ const getPluginsWithAddedInfo = (plugins = [], pluginToArtifactArrayMap = {}, ex
   });
 };
 
-const getDefaultVersionForPlugin = (plugin = {}, defaultVersionMap = {}) => {
-  if ([Object.keys(plugin), Object.keys(defaultVersionMap)].indexOf(0) !== -1) {
-    return {};
-  }
-  let defaultVersionsList = Object.keys(defaultVersionMap);
-  let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
-  let isDefaultVersionExists = defaultVersionsList.indexOf(key) !== -1;
-
-  let isArtifactExistsInBackend = (plugin.allArtifacts || []).filter(plug => angular.equals(plug.artifact, defaultVersionMap[key]));
-  if (!isDefaultVersionExists || !isArtifactExistsInBackend.length) {
-    return plugin.artifact;
-  }
-  return angular.copy(defaultVersionMap[key]);
-};
-
 var plugins = (state = getInitialState().plugins, action = {}) => {
   let stateCopy;
   switch (action.type) {
@@ -125,12 +101,12 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
       stateCopy = Object.assign({}, state);
       const { extension, plugins } = action.payload;
 
-      const pluginToArtifactArrayMap = getPluginToArtifactMap(plugins);
+      const pluginToArtifactArrayMap = _hydratorNodeService.getPluginToArtifactMap(plugins);
       const pluginsWithAddedInfo = getPluginsWithAddedInfo(plugins, pluginToArtifactArrayMap, extension);
 
       stateCopy.pluginTypes[extension] = pluginsWithAddedInfo
         .map( plugin => {
-          plugin.defaultArtifact = getDefaultVersionForPlugin(plugin, state.pluginToVersionMap);
+          plugin.defaultArtifact = _hydratorNodeService.getDefaultVersionForPlugin(plugin, state.pluginToVersionMap);
           return plugin;
         })
         .concat((state.pluginTypes[extension] || []));
@@ -168,7 +144,7 @@ var plugins = (state = getInitialState().plugins, action = {}) => {
           const _plugins = state.pluginTypes[pluginType];
           stateCopy.pluginTypes[pluginType] = _plugins
             .map( plugin => {
-              plugin.defaultArtifact = getDefaultVersionForPlugin(plugin, defaultPluginVersionsMap);
+              plugin.defaultArtifact = _hydratorNodeService.getDefaultVersionForPlugin(plugin, defaultPluginVersionsMap);
               return plugin;
             });
         });
@@ -230,12 +206,13 @@ var extensions = (state = getInitialState().extensions, action = {}) => {
   }
 };
 
-var LeftPanelStore = (LEFTPANELSTORE_ACTIONS, Redux, ReduxThunk, GLOBALS, DAGPlusPlusFactory, myHelpers, $filter) => {
+var LeftPanelStore = (LEFTPANELSTORE_ACTIONS, Redux, ReduxThunk, GLOBALS, DAGPlusPlusFactory, myHelpers, $filter, HydratorPlusPlusNodeService) => {
   leftpanelactions = LEFTPANELSTORE_ACTIONS;
   _GLOBALS = GLOBALS;
   _myHelpers = myHelpers;
   _DAGPlusPlusFactory = DAGPlusPlusFactory;
   _filter = $filter;
+  _hydratorNodeService = HydratorPlusPlusNodeService;
   let {combineReducers, applyMiddleware} = Redux;
 
   let combineReducer = combineReducers({
@@ -246,13 +223,12 @@ var LeftPanelStore = (LEFTPANELSTORE_ACTIONS, Redux, ReduxThunk, GLOBALS, DAGPlu
   return Redux.createStore(
     combineReducer,
     getInitialState(),
-    Redux.compose(
-      applyMiddleware(ReduxThunk.default),
-      window.devToolsExtension ? window.devToolsExtension() : f => f
+    window.CaskCommon.CDAPHelpers.composeEnhancers('LeftPanelStore')(
+      applyMiddleware(ReduxThunk.default)
     )
   );
 };
-LeftPanelStore.$inject = ['LEFTPANELSTORE_ACTIONS', 'Redux', 'ReduxThunk', 'GLOBALS', 'DAGPlusPlusFactory', 'myHelpers', '$filter'];
+LeftPanelStore.$inject = ['LEFTPANELSTORE_ACTIONS', 'Redux', 'ReduxThunk', 'GLOBALS', 'DAGPlusPlusFactory', 'myHelpers', '$filter', 'HydratorPlusPlusNodeService'];
 
 angular.module(`${PKG.name}.feature.hydrator`)
   .constant('LEFTPANELSTORE_ACTIONS', {
