@@ -24,7 +24,7 @@ import { MyAppApi } from 'api/app';
 import { MyReplicatorApi } from 'api/replicator';
 import { Redirect } from 'react-router-dom';
 import If from 'components/If';
-import { extractErrorMessage } from 'components/Replicator/utilities';
+import { extractErrorMessage } from 'services/helpers';
 
 const styles = (theme): StyleRules => {
   return {

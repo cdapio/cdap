@@ -20,7 +20,6 @@ import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
-import { objectQuery } from 'services/helpers';
 
 export function fetchPluginInfo(
   parentArtifact,
@@ -257,12 +256,4 @@ export function constructTablesSelection(tables, columns, dmlBlacklist) {
   });
 
   return tablesArr;
-}
-
-export function extractErrorMessage(errObj) {
-  if (typeof errObj === 'string') {
-    return errObj;
-  }
-
-  return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
 }
