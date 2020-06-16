@@ -34,18 +34,30 @@ public class ETLPlugin {
   private final Map<String, String> properties;
   private final ArtifactSelectorConfig artifact;
 
+  // Only for serialization/deserialization purpose for config upgrade to not lose data set by UI during update.
+  private final String label;
+
   public ETLPlugin(String name, String type, Map<String, String> properties) {
-    this(name, type, properties, null);
+    this(name, type, properties, null, null);
   }
 
   public ETLPlugin(String name,
                    String type,
                    Map<String, String> properties,
                    @Nullable ArtifactSelectorConfig artifact) {
+    this(name, type, properties, artifact, null);
+  }
+
+  public ETLPlugin(String name,
+                   String type,
+                   Map<String, String> properties,
+                   @Nullable ArtifactSelectorConfig artifact,
+                   String label) {
     this.name = name;
     this.type = type;
     this.properties = Collections.unmodifiableMap(properties);
     this.artifact = artifact;
+    this.label = label;
   }
 
   public String getName() {
@@ -54,6 +66,10 @@ public class ETLPlugin {
 
   public String getType() {
     return type;
+  }
+
+  public String getLabel() {
+    return label;
   }
 
   public Map<String, String> getProperties() {
