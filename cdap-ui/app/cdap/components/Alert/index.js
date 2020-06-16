@@ -14,10 +14,10 @@
  * the License.
  */
 
+import IconSVG from 'components/IconSVG';
 import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Modal } from 'reactstrap';
-import IconSVG from 'components/IconSVG';
 
 require('./Alert.scss');
 const SUCCESS_CLOSE_TIMEOUT = 3000;

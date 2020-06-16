@@ -16,6 +16,7 @@
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Content from 'components/PluginJSONCreator/Create/Content';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
 import {
   CreateContext,
@@ -87,6 +88,35 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ outputName });
   };
 
+  public setJSONStatus = (JSONStatus: string) => {
+    this.setState({ JSONStatus });
+  };
+
+  public setPluginState = ({
+    basicPluginInfo,
+    configurationGroups,
+    groupToInfo,
+    groupToWidgets,
+    widgetInfo,
+    widgetToAttributes,
+    outputName,
+  }) => {
+    const { pluginName, pluginType, displayName, emitAlerts, emitErrors } = basicPluginInfo;
+    this.setState({
+      pluginName,
+      pluginType,
+      displayName,
+      emitAlerts,
+      emitErrors,
+      configurationGroups,
+      groupToInfo,
+      groupToWidgets,
+      widgetInfo,
+      widgetToAttributes,
+      outputName,
+    });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
@@ -101,6 +131,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     widgetToAttributes: {},
     jsonView: true,
     outputName: '',
+    JSONStatus: JSONStatusMessage.Normal,
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
@@ -111,6 +142,8 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setWidgetToAttributes: this.setWidgetToAttributes,
     setJsonView: this.setJsonView,
     setOutputName: this.setOutputName,
+    setPluginState: this.setPluginState,
+    setJSONStatus: this.setJSONStatus,
   };
 
   public render() {

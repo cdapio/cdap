@@ -71,6 +71,9 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   jsonView,
   setJsonView,
   outputName,
+  setPluginState,
+  JSONStatus,
+  setJSONStatus,
 }) => {
   const [activeGroupIndex, setActiveGroupIndex] = React.useState(null);
   const [localConfigurationGroups, setLocalConfigurationGroups] = React.useState(
@@ -173,6 +176,9 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         jsonView={jsonView}
         setJsonView={setJsonView}
         outputName={outputName}
+        setPluginState={setPluginState}
+        JSONStatus={JSONStatus}
+        setJSONStatus={setJSONStatus}
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />

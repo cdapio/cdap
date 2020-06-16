@@ -15,42 +15,27 @@
  */
 
 import Button from '@material-ui/core/Button';
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
-import SaveAltIcon from '@material-ui/icons/SaveAlt';
-import {
-  downloadPluginJSON,
-  getJSONConfig,
-} from 'components/PluginJSONCreator/Create/Content/JsonMenu/utilities';
+import GetAppIcon from '@material-ui/icons/GetApp';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJsonImporter';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const JSON_VIEWER_WIDTH = '600px';
-
 const styles = (theme): StyleRules => {
   return {
-    jsonViewer: {
-      zIndex: theme.zIndex.drawer,
-      width: JSON_VIEWER_WIDTH,
-    },
-    jsonViewerPaper: {
-      width: JSON_VIEWER_WIDTH,
-      backgroundColor: theme.palette.white[50],
-    },
-    toolbar: {
-      minHeight: '48px',
-    },
-    mainMenu: {
-      borderTop: `1px solid ${theme.palette.grey['500']}`,
-      paddingTop: theme.Spacing(1),
-      paddingBottom: theme.Spacing(1),
-    },
     jsonActionButtons: {
-      padding: '5px',
+      padding: '0px',
       display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    currentFilename: {
+      position: 'relative',
+      margin: '0 auto',
+      left: '25px',
     },
     closeJSONViewerButon: {
       marginLeft: 'auto',
@@ -65,65 +50,90 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const JsonLiveViewerView: React.FC<ICreateContext & WithStyles<typeof styles>> = (
-  widgetJSONData
-) => {
-  const { classes, pluginName, pluginType, jsonView, setJsonView } = widgetJSONData;
-  const JSONConfig = getJSONConfig(widgetJSONData);
-  const downloadDisabled = pluginName.length === 0 || pluginType.length === 0;
+const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
+  return (
+    <Tooltip
+      title={
+        downloadDisabled
+          ? 'Download is disabled until the required fields are filled'
+          : 'Download Plugin JSON'
+      }
+      classes={{
+        tooltip: classes.jsonViewerTooltip,
+      }}
+    >
+      <div>
+        <Button disabled={downloadDisabled} onClick={onDownloadClick}>
+          <GetAppIcon />
+        </Button>
+      </div>
+    </Tooltip>
+  );
+};
+
+const CollapseJSONViewButton = ({ classes, collapseJSONView }) => {
+  return (
+    <Tooltip
+      classes={{
+        tooltip: classes.jsonViewerTooltip,
+      }}
+      title="Close JSON View"
+    >
+      <Button className={classes.closeJSONViewerButon} onClick={collapseJSONView}>
+        <FullscreenExitIcon />
+      </Button>
+    </Tooltip>
+  );
+};
+
+interface IJsonLiveViewerProps extends WithStyles<typeof styles>, ICreateContext {
+  JSONConfig: any;
+  collapseJSONView: () => void;
+  onDownloadClick: () => void;
+  populateImportResults: (filename: string, fileContent: string) => void;
+  jsonFilename: string;
+  JSONStatus: JSONStatusMessage;
+  setJSONStatus: (JSONStatus: JSONStatusMessage) => void;
+  downloadDisabled: boolean;
+  JSONErrorMessage: string;
+}
+
+const JsonLiveViewerView: React.FC<IJsonLiveViewerProps> = ({
+  classes,
+  JSONConfig,
+  collapseJSONView,
+  onDownloadClick,
+  populateImportResults,
+  jsonFilename,
+  JSONStatus,
+  downloadDisabled,
+}) => {
   return (
     <div>
-      <Drawer
-        open={jsonView}
-        variant="persistent"
-        className={classes.jsonViewer}
-        anchor="right"
-        ModalProps={{
-          keepMounted: true,
-        }}
-        classes={{
-          paper: classes.jsonViewerPaper,
-        }}
-        data-cy="navbar-drawer"
-      >
-        <div className={classes.toolbar} />
-        <List component="nav" dense={true} className={classes.mainMenu}>
-          <div className={classes.jsonActionButtons}>
-            <Tooltip
-              classes={{
-                tooltip: classes.jsonViewerTooltip,
-              }}
-              title={
-                downloadDisabled
-                  ? 'Download is disabled until the required fields are filled in'
-                  : 'Download Plugin JSON'
-              }
-            >
-              <span>
-                <Button
-                  disabled={downloadDisabled}
-                  onClick={() => downloadPluginJSON(widgetJSONData)}
-                >
-                  <SaveAltIcon />
-                </Button>
-              </span>
-            </Tooltip>
-            <Tooltip
-              classes={{
-                tooltip: classes.jsonViewerTooltip,
-              }}
-              title="Close JSON View"
-            >
-              <Button className={classes.closeJSONViewerButon} onClick={() => setJsonView(false)}>
-                <FullscreenExitIcon />
-              </Button>
-            </Tooltip>
-          </div>
-          <div className={classes.jsonLiveCode}>
-            <pre>{JSON.stringify(JSONConfig, undefined, 2)}</pre>
-          </div>
-        </List>
-      </Drawer>
+      <div className={classes.jsonActionButtons}>
+        <Tooltip
+          classes={{
+            tooltip: classes.jsonViewerTooltip,
+          }}
+          title="Import JSON"
+        >
+          <PluginJSONImporter
+            populateImportResults={populateImportResults}
+            JSONStatus={JSONStatus}
+          />
+        </Tooltip>
+        <DownloadJSONButton
+          classes={classes}
+          downloadDisabled={downloadDisabled}
+          onDownloadClick={onDownloadClick}
+        />
+        <pre className={classes.currentFilename}>{jsonFilename}</pre>
+
+        <CollapseJSONViewButton classes={classes} collapseJSONView={collapseJSONView} />
+      </div>
+      <div className={classes.jsonLiveCode}>
+        <pre>{JSON.stringify(JSONConfig, undefined, 2)}</pre>
+      </div>
     </div>
   );
 };
