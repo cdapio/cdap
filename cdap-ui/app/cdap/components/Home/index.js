@@ -30,6 +30,8 @@ import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 require('./Home.scss');
 
+import Playground from 'components/LogViewer/Playground';
+
 const EntityListView = Loadable({
   loader: () => import(/* webpackChunkName: "EntityListView" */ 'components/EntityListView'),
   loading: LoadingSVGCentered,
@@ -185,6 +187,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/replication" component={Replicator} />
           <Route path="/ns/:namespace/lab" component={Lab} />
+          <Route exact path="/ns/:namespace/logs" component={Playground} />
           <Route
             exact
             path="/ns/:namespace/lab-experiment-test"
