@@ -19,7 +19,6 @@ package io.cdap.cdap.etl.proto.v2;
 import io.cdap.cdap.api.app.ApplicationConfigUpdateAction;
 import io.cdap.cdap.api.app.ApplicationUpdateContext;
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
@@ -27,9 +26,7 @@ import io.cdap.cdap.etl.proto.UpgradeContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -46,6 +43,7 @@ public final class ETLStage {
   // Only for serialization/deserialization purpose for config upgrade to not lose data set by UI during update.
   private final Object inputSchema;
   private final Object outputSchema;
+  private final String label;
 
   private static final Logger LOG = LoggerFactory.getLogger(ETLStage.class);
 
@@ -55,15 +53,17 @@ public final class ETLStage {
     this.errorDatasetName = null;
     inputSchema = null;
     outputSchema = null;
+    label = null;
   }
 
   // Used only for upgrade stage purpose.
-  private ETLStage(String name, ETLPlugin plugin, Object inputSchema, Object outputSchema) {
+  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema, Object outputSchema) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = null;
     this.inputSchema = inputSchema;
     this.outputSchema = outputSchema;
+    this.label = label;
   }
 
   public String getName() {
@@ -104,7 +104,7 @@ public final class ETLStage {
     ArtifactSelectorConfig artifactSelectorConfig =
       upgradeContext.getPluginArtifact(plugin.getType(), plugin.getName());
     io.cdap.cdap.etl.proto.v2.ETLPlugin etlPlugin = new io.cdap.cdap.etl.proto.v2.ETLPlugin(
-      plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig);
+      plugin.getName(), plugin.getType(), plugin.getProperties(), artifactSelectorConfig, plugin.getLabel());
     return new io.cdap.cdap.etl.proto.v2.ETLStage(name, etlPlugin);
   }
 
@@ -120,7 +120,7 @@ public final class ETLStage {
     for (ApplicationConfigUpdateAction updateAction: updateContext.getUpdateActions()) {
       switch (updateAction) {
         case UPGRADE_ARTIFACT:
-          return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), inputSchema,
+          return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), label, inputSchema,
                                                         outputSchema);
         default:
           return this;
@@ -146,8 +146,8 @@ public final class ETLStage {
   private ETLPlugin upgradePlugin(ApplicationUpdateContext updateContext) throws Exception {
     // Find the plugin with max version from available candidates.
     Optional<ArtifactId> newPluginCandidate =
-        updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), null).stream()
-          .max(Comparator.comparing(artifactId -> artifactId.getVersion()));
+      updateContext.getPluginArtifacts(plugin.getType(), plugin.getName(), null).stream()
+        .max(Comparator.comparing(artifactId -> artifactId.getVersion()));
     if (!newPluginCandidate.isPresent()) {
       // This should not happen as there should be at least one plugin candidate same as current.
       // TODO: Consider throwing exception here.
@@ -167,7 +167,7 @@ public final class ETLStage {
     io.cdap.cdap.etl.proto.v2.ETLPlugin upgradedEtlPlugin =
       new io.cdap.cdap.etl.proto.v2.ETLPlugin(plugin.getName(), plugin.getType(),
                                               plugin.getProperties(),
-                                              newArtifactSelectorConfig);
+                                              newArtifactSelectorConfig, plugin.getLabel());
     return upgradedEtlPlugin;
   }
 
