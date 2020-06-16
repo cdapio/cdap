@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
@@ -79,7 +78,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
-  private final PreviewRequest previewRequest;
 
   @VisibleForTesting
   @Inject
@@ -87,8 +85,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     AuthorizerInstantiator authorizerInstantiator,
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
-                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                                    @Assisted PreviewRequest previewRequest) {
+                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -96,7 +93,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.previewRequest = previewRequest;
   }
 
   @Override
@@ -160,8 +156,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
-
-    bind(PreviewRequest.class).toInstance(previewRequest);
   }
 
   /**

@@ -32,6 +32,7 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
@@ -138,25 +139,25 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
-    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
+    final PreviewRunner previewRunner = previewManager.getRunner();
 
     // Wait for the preview status go into COMPLETED.
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
       @Override
       public PreviewStatus.Status call() throws Exception {
-        PreviewStatus status = previewRunner.getStatus();
+        PreviewStatus status = previewRunner.getStatus(previewId);
         return status == null ? null : status.getStatus();
       }
     }, 5, TimeUnit.MINUTES);
 
     // Get the data for stage "source" in the PreviewStore, should contain two records.
-    checkPreviewStore(previewRunner, "source", 2);
+    checkPreviewStore(previewRunner, previewId, "source", 2);
 
     // Get the data for stage "transform" in the PreviewStore, should contain two records.
-    checkPreviewStore(previewRunner, "transform", 2);
+    checkPreviewStore(previewRunner, previewId, "transform", 2);
 
     // Get the data for stage "sink" in the PreviewStore, should contain two records.
-    checkPreviewStore(previewRunner, "sink", 2);
+    checkPreviewStore(previewRunner, previewId, "sink", 2);
 
     // Validate the metrics for preview
     validateMetric(2, previewId, "source.records.in", previewRunner);
@@ -170,7 +171,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
-    Assert.assertNotNull(previewRunner.getRunRecord());
+    Assert.assertNotNull(previewRunner.getRunRecord(previewId));
   }
 
   @Test
@@ -272,7 +273,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig, previewConfig);
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
-    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
+    final PreviewRunner previewRunner = previewManager.getRunner();
 
     ingestData(inputSchema1, inputSchema2, inputSchema3, source1MulitJoinInput, source2MultiJoinInput,
                source3MultiJoinInput);
@@ -281,13 +282,13 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
       @Override
       public PreviewStatus.Status call() throws Exception {
-        PreviewStatus status = previewRunner.getStatus();
+        PreviewStatus status = previewRunner.getStatus(previewId);
         return status == null ? null : status.getStatus();
       }
     }, 5, TimeUnit.MINUTES);
 
 
-    checkPreviewStore(previewRunner, sinkName, 3);
+    checkPreviewStore(previewRunner, previewId, sinkName, 3);
     validateMetric(3L, previewId, sinkName + ".records.in", previewRunner);
   }
 
@@ -367,25 +368,25 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
-    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
+    final PreviewRunner previewRunner = previewManager.getRunner();
 
     // Wait for the preview status go into FAILED.
     Tasks.waitFor(PreviewStatus.Status.RUN_FAILED, new Callable<PreviewStatus.Status>() {
       @Override
       public PreviewStatus.Status call() throws Exception {
-        PreviewStatus status = previewRunner.getStatus();
+        PreviewStatus status = previewRunner.getStatus(previewId);
         return status == null ? null : status.getStatus();
       }
     }, 5, TimeUnit.MINUTES);
 
     // Get the data for stage "source" in the PreviewStore.
-    checkPreviewStore(previewRunner, "source", 2);
+    checkPreviewStore(previewRunner, previewId, "source", 2);
 
     // Get the data for stage "transform" in the PreviewStore, should contain one less record than source.
-    checkPreviewStore(previewRunner, "transform", 1);
+    checkPreviewStore(previewRunner, previewId, "transform", 1);
 
     // Get the data for stage "sink" in the PreviewStore, should contain one less record than source.
-    checkPreviewStore(previewRunner, "sink", 1);
+    checkPreviewStore(previewRunner, previewId, "sink", 1);
 
     // Validate the metrics for preview
     validateMetric(2, previewId, "source.records.in", previewRunner);
@@ -401,8 +402,9 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
   }
 
-  private void checkPreviewStore(PreviewRunner previewRunner, String tracerName, int numExpectedRecords) {
-    Map<String, List<JsonElement>> result = previewRunner.getData(tracerName);
+  private void checkPreviewStore(PreviewRunner previewRunner, ApplicationId previewId, String tracerName,
+                                 int numExpectedRecords) throws NotFoundException {
+    Map<String, List<JsonElement>> result = previewRunner.getData(previewId, tracerName);
     List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
     if (data == null) {
       Assert.assertEquals(numExpectedRecords, 0);
