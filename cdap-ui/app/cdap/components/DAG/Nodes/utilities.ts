@@ -1,5 +1,5 @@
 import { StyleRules } from '@material-ui/core/styles/withStyles';
-
+import { bluegrey } from 'components/ThemeWrapper/colors';
 const ENDPOINT_RADIUS = 7;
 
 const nodeStyles = (theme, customNodeStyles = {}): StyleRules => {
@@ -142,7 +142,7 @@ const endpointPaintStyles = {
     lineWidth: 2,
     outlineColor: 'transparent',
     outlineWidth: 4,
-    strokeStyle: '#4e5568',
+    strokeStyle: bluegrey[100],
     strokeWidth: 3,
   },
   fill: 'black',

@@ -70,7 +70,7 @@ export class DAGProvider extends React.Component<any, IDagProviderState> {
   };
   private removeNode = (nodeId: string) => {
     const newNodes = this.state.nodes.delete(
-      this.state.nodes.findIndex((node: INode) => node.get('id') !== nodeId)
+      this.state.nodes.findIndex((node: INode) => node.get('id') === nodeId)
     );
     this.setState({
       nodes: newNodes,
@@ -95,8 +95,8 @@ export class DAGProvider extends React.Component<any, IDagProviderState> {
     const newConnections = this.state.connections.delete(
       this.state.connections.findIndex(
         (connection: IConnection) =>
-          connection.get('from') !== connectionObj.get('from') &&
-          connection.get('to') !== connectionObj.get('to')
+          connection.get('from') === connectionObj.get('from') &&
+          connection.get('to') === connectionObj.get('to')
       )
     );
     this.setState({
