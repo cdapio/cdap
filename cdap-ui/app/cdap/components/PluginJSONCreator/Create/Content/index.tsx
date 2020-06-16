@@ -15,10 +15,14 @@
  */
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import If from 'components/If';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import { STEPS } from 'components/PluginJSONCreator/Create/steps';
 import {
   CreateContext,
   createContextConnect,
+  ICreateContext,
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
@@ -40,24 +44,48 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IContentProps {
-  activeStep: number;
-}
-
-const ContentView: React.FC<IContentProps & WithStyles<typeof styles>> = ({
+const ContentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
   activeStep,
+  JSONStatus,
+  setJSONStatus,
 }) => {
+  const [loading, setLoading] = React.useState(false);
+
+  // When JSON status was successful, show loading view for 500ms
+  // This is in order to force rerender entire component
+  React.useEffect(() => {
+    if (JSONStatus && JSONStatus === JSONStatusMessage.Success) {
+      setLoading(true);
+
+      const timer = setTimeout(() => {
+        setLoading(false);
+        setJSONStatus(JSONStatusMessage.Normal);
+      }, 500);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [JSONStatus]);
+
   if (!STEPS[activeStep] || !STEPS[activeStep].component) {
     return null;
   }
 
   const Comp = STEPS[activeStep].component;
   return (
-    <div className={classes.root}>
-      <div className={classes.content}>
-        <Comp className={classes.comp} />
-      </div>
+    <div>
+      <If condition={loading}>
+        <LoadingSVGCentered />
+      </If>
+      <If condition={!loading}>
+        <div className={classes.root}>
+          <div className={classes.content}>
+            <Comp className={classes.comp} />
+          </div>
+        </div>
+      </If>
     </div>
   );
 };
