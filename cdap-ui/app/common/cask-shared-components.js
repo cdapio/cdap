@@ -26,6 +26,7 @@ var VersionStore = require('../cdap/services/VersionStore').default;
 var VersionActions = require('../cdap/services/VersionStore/VersionActions').default;
 var Version = require('../cdap/services/VersionRange/Version').default;
 var VersionRange = require('../cdap/services/VersionRange').default;
+var VersionUtilities = require('../cdap/services/VersionRange/VersionUtilities');
 var KeyValuePairs = require('../cdap/components/KeyValuePairs').default;
 var KeyValueStore = require('../cdap/components/KeyValuePairs/KeyValueStore').default;
 var KeyValueStoreActions = require('../cdap/components/KeyValuePairs/KeyValueStoreActions').default;
@@ -120,6 +121,7 @@ export {
   VersionActions,
   VersionRange,
   Version,
+  VersionUtilities,
   ResourceCenterButton,
   KeyValuePairs,
   KeyValueStore,

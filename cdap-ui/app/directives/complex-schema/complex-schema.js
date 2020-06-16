@@ -48,6 +48,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
     if (!fields.length) {
       return;
     }
+    /* jshint ignore:start */
     vm.io = new IntersectionObserver(
       (entries) => {
         let lastVisibleElement = vm.windowSize;
@@ -82,6 +83,7 @@ function ComplexSchemaController (avsc, SCHEMA_TYPES, $scope, uuid, $timeout, Sc
         threshold: [0, 1],
       }
     );
+    /* jshint ignore:end */
     $scope.observeFields();
   });
 
