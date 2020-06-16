@@ -79,6 +79,10 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ jsonView });
   };
 
+  public setWidgetToAttributes = (widgetToAttributes: any) => {
+    this.setState({ widgetToAttributes });
+  };
+
   public state = {
     activeStep: 0,
     pluginName: '',
@@ -90,6 +94,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     groupToInfo: {},
     groupToWidgets: {},
     widgetInfo: {},
+    widgetToAttributes: {},
     jsonView: true,
 
     setActiveStep: this.setActiveStep,
@@ -98,6 +103,7 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setGroupToInfo: this.setGroupToInfo,
     setGroupToWidgets: this.setGroupToWidgets,
     setWidgetInfo: this.setWidgetInfo,
+    setWidgetToAttributes: this.setWidgetToAttributes,
     setJsonView: this.setJsonView,
   };
 

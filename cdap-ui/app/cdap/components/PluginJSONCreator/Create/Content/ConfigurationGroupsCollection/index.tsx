@@ -66,6 +66,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   setGroupToWidgets,
   widgetInfo,
   setWidgetInfo,
+  widgetToAttributes,
+  setWidgetToAttributes,
   jsonView,
   setJsonView,
 }) => {
@@ -76,6 +78,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
   const [localGroupToInfo, setLocalGroupToInfo] = React.useState(groupToInfo);
   const [localGroupToWidgets, setLocalGroupToWidgets] = React.useState(groupToWidgets);
   const [localWidgetInfo, setLocalWidgetInfo] = React.useState(widgetInfo);
+  const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
 
   function addConfigurationGroup(index: number) {
     return () => {
@@ -127,10 +130,13 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
 
       // Delete all the widget information that belong to the group
       const newWidgetInfo = localWidgetInfo;
+      const newWidgetToAttributes = localWidgetToAttributes;
       widgets.forEach((widget) => {
         delete newWidgetInfo[widget];
+        delete newWidgetToAttributes[widget];
       });
       setLocalWidgetInfo(newWidgetInfo);
+      setLocalWidgetToAttributes(newWidgetToAttributes);
     };
   }
 
@@ -147,6 +153,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
     setGroupToInfo(localGroupToInfo);
     setGroupToWidgets(localGroupToWidgets);
     setWidgetInfo(localWidgetInfo);
+    setWidgetToAttributes(localWidgetToAttributes);
   }
 
   return (
@@ -161,6 +168,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
         groupToInfo={localGroupToInfo}
         groupToWidgets={localGroupToWidgets}
         widgetInfo={localWidgetInfo}
+        widgetToAttributes={localWidgetToAttributes}
         jsonView={jsonView}
         setJsonView={setJsonView}
       />
@@ -202,6 +210,8 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
                   setGroupToWidgets={setLocalGroupToWidgets}
                   widgetInfo={localWidgetInfo}
                   setWidgetInfo={setLocalWidgetInfo}
+                  widgetToAttributes={localWidgetToAttributes}
+                  setWidgetToAttributes={setLocalWidgetToAttributes}
                 />
               </ExpansionPanelActions>
             </ExpansionPanel>
