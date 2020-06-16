@@ -34,6 +34,7 @@ const JsonMenuView: React.FC<ICreateContext> = ({
   groupToInfo,
   groupToWidgets,
   widgetInfo,
+  widgetToAttributes,
   jsonView,
   setJsonView,
 }) => {
@@ -50,6 +51,7 @@ const JsonMenuView: React.FC<ICreateContext> = ({
           groupToInfo={groupToInfo}
           groupToWidgets={groupToWidgets}
           widgetInfo={widgetInfo}
+          widgetToAttributes={widgetToAttributes}
           jsonView={jsonView}
           setJsonView={setJsonView}
         />
@@ -65,6 +67,7 @@ const JsonMenuView: React.FC<ICreateContext> = ({
           groupToInfo={groupToInfo}
           groupToWidgets={groupToWidgets}
           widgetInfo={widgetInfo}
+          widgetToAttributes={widgetToAttributes}
           jsonView={jsonView}
           setJsonView={setJsonView}
         />
