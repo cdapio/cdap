@@ -99,7 +99,6 @@ public class ETLSpark extends AbstractSpark {
     // value that we are confident is safe.
     sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
-    context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
@@ -115,6 +114,29 @@ public class ETLSpark extends AbstractSpark {
     SparkPreparer preparer = new SparkPreparer(context, context.getMetrics(), evaluator, pipelineRuntime);
     List<Finisher> finishers = preparer.prepare(phaseSpec);
     finisher = new CompositeFinisher(finishers);
+
+    Map<String, Integer> stagePartitions = preparer.getAutoJoinPartitions();
+    Map.Entry<String, Integer> maxPartitions = null;
+    for (Map.Entry<String, Integer> entry : stagePartitions.entrySet()) {
+      if (maxPartitions == null && entry.getValue() != null) {
+        maxPartitions = entry;
+        continue;
+      }
+      if (entry.getValue() == null) {
+        continue;
+      }
+      if (entry.getValue() < maxPartitions.getValue()) {
+        LOG.warn("Joiner stage '{}' set partitions to {}, which is smaller than the {} partitions set by stage '{}'. " +
+                   "Joiner partitions can only be set to a single value for the entire pipeline, " +
+                   "so the larger value of {} will be chosen.",
+                 entry.getKey(), entry.getValue(),
+                 maxPartitions.getValue(), maxPartitions.getKey(), maxPartitions.getValue());
+      }
+    }
+    if (maxPartitions != null) {
+      sparkConf.set("spark.sql.shuffle.partitions", String.valueOf(maxPartitions.getValue()));
+    }
+    context.setSparkConf(sparkConf);
   }
 
   @Override

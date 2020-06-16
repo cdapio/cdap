@@ -53,6 +53,7 @@ import io.cdap.cdap.etl.spark.batch.SparkBatchSourceFactory;
 import org.apache.tephra.TransactionFailureException;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +64,7 @@ import javax.annotation.Nullable;
  */
 public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
   protected Map<String, Integer> stagePartitions;
+  protected Map<String, Integer> autoJoinPartitions;
   protected SparkBatchSourceFactory sourceFactory;
   protected SparkBatchSinkFactory sinkFactory;
 
@@ -82,6 +84,7 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
     throws TransactionFailureException, InstantiationException, IOException {
     stageOperations = new HashMap<>();
     stagePartitions = new HashMap<>();
+    autoJoinPartitions = new HashMap<>();
     sourceFactory = new SparkBatchSourceFactory();
     sinkFactory = new SparkBatchSinkFactory();
     return super.prepare(phaseSpec);
@@ -176,6 +179,7 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
       new JoinerContextProvider(pipelineRuntime, stageSpec, admin);
     return new SubmitterPlugin<>(stageName, transactional, batchJoiner, contextProvider, sparkJoinerContext -> {
       stagePartitions.put(stageName, sparkJoinerContext.getNumPartitions());
+      autoJoinPartitions.put(stageName, sparkJoinerContext.getNumPartitions());
       stageOperations.put(stageName, sparkJoinerContext.getFieldOperations());
     });
   }
@@ -191,5 +195,9 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
   protected SubmitterPlugin createStreamingSource(PipelinePluginInstantiator pluginInstantiator,
                                                   StageSpec stageSpec) throws InstantiationException {
     return null;
+  }
+
+  public Map<String, Integer> getAutoJoinPartitions() {
+    return Collections.unmodifiableMap(autoJoinPartitions);
   }
 }
