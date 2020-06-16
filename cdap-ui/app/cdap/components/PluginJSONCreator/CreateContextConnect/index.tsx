@@ -31,6 +31,7 @@ interface ICreateState {
   widgetInfo: any;
   widgetToAttributes: any;
   jsonView: boolean;
+  outputName: string;
 
   setActiveStep: (step: number) => void;
   setBasicPluginInfo: (basicPluginInfo: IBasicPluginInfo) => void;
@@ -40,6 +41,7 @@ interface ICreateState {
   setWidgetInfo: (widgetInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
   setJsonView: (jsonView: boolean) => void;
+  setOutputName: (outputName: string) => void;
 }
 
 export interface IBasicPluginInfo {

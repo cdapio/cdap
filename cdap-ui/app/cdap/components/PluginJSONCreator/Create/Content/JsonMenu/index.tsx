@@ -37,6 +37,7 @@ const JsonMenuView: React.FC<ICreateContext> = ({
   widgetToAttributes,
   jsonView,
   setJsonView,
+  outputName,
 }) => {
   return (
     <div>
@@ -54,6 +55,7 @@ const JsonMenuView: React.FC<ICreateContext> = ({
           widgetToAttributes={widgetToAttributes}
           jsonView={jsonView}
           setJsonView={setJsonView}
+          outputName={outputName}
         />
       </If>
       <If condition={!jsonView}>
@@ -70,6 +72,7 @@ const JsonMenuView: React.FC<ICreateContext> = ({
           widgetToAttributes={widgetToAttributes}
           jsonView={jsonView}
           setJsonView={setJsonView}
+          outputName={outputName}
         />
       </If>
     </div>
