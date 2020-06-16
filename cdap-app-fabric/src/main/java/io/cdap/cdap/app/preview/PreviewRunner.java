@@ -17,14 +17,15 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.gson.JsonElement;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 
 /**
  * Interface responsible for managing the lifecycle of a single preview application
@@ -33,27 +34,26 @@ import javax.annotation.Nullable;
 public interface PreviewRunner {
 
   /**
-   * Returns the {@link PreviewRequest} for this runner.
-   */
-  PreviewRequest getPreviewRequest();
-
-  /**
    * Start the preview of an application.
-   * @throws Exception if there were any error during starting preview
+   * @param previewRequest request representing preview
+   * @throws Exception when there is error while starting preview
    */
-  void startPreview() throws Exception;
+  void startPreview(PreviewRequest previewRequest) throws Exception;
 
   /**
-   * Get the status of the preview represented by this {@link PreviewRunner}.
-   * @return the status associated with the preview
+   * Get the status of the preview.
+   * @param applicationId id of the preview application for which preview status is to be returned
+   * @return the status of the preview
+   * @throws NotFoundException if preview application is not found
    */
-  PreviewStatus getStatus();
+  PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException;
 
   /**
-   * Stop the preview run represented by this {@link PreviewRunner}.
-   * @throws Exception if there were any error during stopping preview
+   * Stop the preview run represented by this {@link ApplicationId}.
+   * @param applicationId id of the preview
+   * @throws Exception thrown when any error in stopping the preview run
    */
-  void stopPreview() throws Exception;
+  void stopPreview(ApplicationId applicationId) throws Exception;
 
   /**
    * Get list of tracers used in the preview run represented by this {@link PreviewRunner}.
@@ -63,23 +63,18 @@ public interface PreviewRunner {
 
   /**
    * Get the data associated with the preview run represented by this {@link PreviewRunner}.
+   * @param applicationId the id of the preview application
    * @param tracerName the name of the tracer used for preview
    * @return the {@link Map} of properties associated with the tracer for a given preview
    */
-  Map<String, List<JsonElement>> getData(String tracerName);
-
-  /**
-   * Get the run id of the program executed as a part of preview.
-   * @return the {@link ProgramRunId} associated with the preview
-   */
-  ProgramRunId getProgramRunId();
+  Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName);
 
   /**
    * Get the run record of the program executed as a part of preview.
-   * @return the {@link RunRecordDetail} associated with the preview or {@code null} if there is no run record
+   * @param applicationId the id of the preview application
+   * @return the {@link ProgramRunId} associated with the preview or {@code null} if there is no run record
    */
-  @Nullable
-  RunRecordDetail getRunRecord();
+  RunRecordDetail getRunRecord(ApplicationId applicationId) throws Exception;
 
   /**
    * Get the helper object to query for metrics for the preview run.

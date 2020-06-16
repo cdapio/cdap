@@ -15,7 +15,6 @@
  */
 package io.cdap.cdap.app.preview;
 
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -36,19 +35,14 @@ public interface PreviewManager {
   ApplicationId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
 
   /**
-   * Get the {@link PreviewRunner} responsible for managing the given preview.
-   * @param preview the application id of the preview for which {@link PreviewRunner} is to be returned
-   * @return the {@link PreviewRunner} associted with the preview
-   * @throws NotFoundException if the preview application is not found
+   * Get the {@link PreviewRunner} responsible for managing the preview.
+   * @return the {@link PreviewRunner} associated with the preview
    */
-  PreviewRunner getRunner(ApplicationId preview) throws NotFoundException;
+  PreviewRunner getRunner();
 
   /**
    * Returns a {@link LogReader} for reading logs for the given preview.
-   *
-   * @param preview the application id of the preview for which {@link LogReader} is to be returned
    * @return the {@link LogReader} for reading logs for the given preview
-   * @throws NotFoundException if the preview application is not found
    */
-  LogReader getLogReader(ApplicationId preview) throws NotFoundException;
+  LogReader getLogReader();
 }
