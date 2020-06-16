@@ -62,7 +62,8 @@ const ExplicitSchemaDefinerView: React.FC<WithStyles<typeof styles>> = ({ classe
           onChange={onSchemaTypesChange}
           label={'Schema Types'}
           delimiter={SCHEMA_TYPES_DELIMITER}
-          options={SCHEMA_TYPES.types.map((type) => ({ id: type, label: type }))}
+          // options={SCHEMA_TYPES.types.map((type) => ({ id: type, label: type }))}
+          options={SCHEMA_TYPES.types}
           value={schemaTypes}
         />
       </div>
