@@ -22,7 +22,6 @@ import com.google.inject.Inject;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
-import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Manager;
@@ -87,7 +86,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
-  private final PreviewRequest previewRequest;
   private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
   private final PluginFinderProvider pluginFinderProvider;
   private final PreferencesFetcherProvider preferencesFetcherProvider;
@@ -100,8 +98,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                                     PluginFinderProvider pluginFinderProvider,
-                                    PreferencesFetcherProvider preferencesFetcherProvider,
-                                    @Assisted PreviewRequest previewRequest) {
+                                    PreferencesFetcherProvider preferencesFetcherProvider) {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -109,7 +106,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.previewRequest = previewRequest;
     this.pluginFinderProvider = pluginFinderProvider;
     this.preferencesFetcherProvider = preferencesFetcherProvider;
   }
@@ -186,8 +182,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
-
-    bind(PreviewRequest.class).toInstance(previewRequest);
 
     bind(PluginFinder.class).toProvider(pluginFinderProvider);
     expose(PluginFinder.class);

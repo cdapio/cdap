@@ -24,7 +24,6 @@ import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -46,9 +45,6 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.proto.ProgramType;
-import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -65,7 +61,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * Tests for {@link DefaultPreviewManager}.
@@ -133,43 +128,20 @@ public class DefaultPreviewManagerTest {
   public void testInjector() throws Exception {
     DefaultPreviewManager previewManager = (DefaultPreviewManager) getInjector().getInstance(PreviewManager.class);
 
-    ProgramId programId1 = new ProgramId("ns1", "app1", ProgramType.WORKFLOW, "wf1");
-    Injector injector1 = previewManager.createPreviewInjector(new PreviewRequest(programId1));
-    PreviewRunner runner1 = injector1.getInstance(PreviewRunner.class);
-    Assert.assertEquals(programId1, runner1.getPreviewRequest().getProgram());
+    Injector previewInjector = previewManager.createPreviewInjector();
+    PreviewRunner runner1 = previewInjector.getInstance(PreviewRunner.class);
 
-    // Make sure same PreviewManager instance is returned for a same preview
-    Assert.assertEquals(runner1, injector1.getInstance(PreviewRunner.class));
+    // Make sure same PreviewRunner instance is returned for a preview system
+    Assert.assertEquals(runner1, previewInjector.getInstance(PreviewRunner.class));
 
     // Also make sure it can return a LogReader
-    injector1.getInstance(LogReader.class);
-
-    ProgramId programId2 = new ProgramId("ns2", "app2", ProgramType.WORKFLOW, "wf2");
-    Injector injector2 = previewManager.createPreviewInjector(new PreviewRequest(programId2));
-    PreviewRunner runner2 = injector2.getInstance(PreviewRunner.class);
-    Assert.assertEquals(programId2, runner2.getPreviewRequest().getProgram());
-
-    Assert.assertNotEquals(runner1, runner2);
-
-    // since we don't start any preview run, the app injectors should be empty
-    Assert.assertTrue((previewManager.getCache().isEmpty()));
+    previewInjector.getInstance(LogReader.class);
 
     // Have to start and stop the runners so that the leveldb file is closed
     ((DefaultPreviewRunner) runner1).startAndWait();
     ((DefaultPreviewRunner) runner1).stopAndWait();
-    ((DefaultPreviewRunner) runner2).startAndWait();
-    ((DefaultPreviewRunner) runner2).stopAndWait();
-    // After creating 2 preview runners, two folders should get created, and start the preview manager should create
-    // the two injectors based on the fold name
+
     previewManager.startAndWait();
-    try {
-      // There should be only one retained since the PREVIEW_CACHE_SIZE is set to 1
-      Map<ApplicationId, Injector> cacheMap = previewManager.getCache();
-      Assert.assertEquals(1, cacheMap.size());
-      // Only the latest one.
-      Assert.assertTrue(cacheMap.containsKey(programId2.getParent()));
-    } finally {
-      previewManager.stopAndWait();
-    }
+    previewManager.stopAndWait();
   }
 }
