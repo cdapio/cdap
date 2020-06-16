@@ -12,6 +12,7 @@ function getJSONConfig(widgetJSONData) {
     groupToWidgets,
     widgetInfo,
     widgetToAttributes,
+    outputName,
   } = widgetJSONData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
@@ -45,6 +46,11 @@ function getJSONConfig(widgetJSONData) {
     ...(emitAlerts && { 'emit-alerts': emitAlerts }),
     ...(emitErrors && { 'emit-errors': emitErrors }),
     'configuration-groups': configurationGroupsData,
+    outputs: [
+      {
+        name: outputName,
+      },
+    ],
   };
 
   return config;
