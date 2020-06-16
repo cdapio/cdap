@@ -14,32 +14,10 @@
  * the License.
  */
 
-const getPluginToArtifactMap = (plugins = []) => {
-  let typeMap = {};
-  plugins.forEach( plugin => {
-    typeMap[plugin.name] = typeMap[plugin.name] || [];
-    typeMap[plugin.name].push(plugin);
-  });
-  return typeMap;
-};
-
-const getDefaultVersionForPlugin = (plugin = {}, defaultVersionMap = {}) => {
-  let defaultVersionsList = Object.keys(defaultVersionMap);
-  let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
-  let isDefaultVersionExists = defaultVersionsList.indexOf(key) !== -1;
-
-  let isArtifactExistsInBackend = (plugin.allArtifacts || []).filter(plug => angular.equals(plug.artifact, defaultVersionMap[key]));
-  if (!isDefaultVersionExists || !isArtifactExistsInBackend.length) {
-    return plugin.artifact;
-  }
-
-  return angular.copy(defaultVersionMap[key]);
-};
-
 const popoverTemplate = '/assets/features/hydrator/templates/create/popovers/leftpanel-plugin-popover.html';
 
 class PipelineAvailablePluginsActions {
-  constructor(myPipelineApi, GLOBALS, $q, AvailablePluginsStore, AVAILABLE_PLUGINS_ACTIONS, DAGPlusPlusFactory, $filter, myHelpers, LEFTPANELSTORE_ACTIONS, HydratorPlusPlusLeftPanelStore, mySettings) {
+  constructor(myPipelineApi, GLOBALS, $q, AvailablePluginsStore, AVAILABLE_PLUGINS_ACTIONS, DAGPlusPlusFactory, $filter, myHelpers, LEFTPANELSTORE_ACTIONS, HydratorPlusPlusLeftPanelStore, mySettings, HydratorPlusPlusNodeService) {
     this.api = myPipelineApi;
     this.GLOBALS = GLOBALS;
     this.$q = $q;
@@ -51,6 +29,7 @@ class PipelineAvailablePluginsActions {
     this.leftpanelactions = LEFTPANELSTORE_ACTIONS;
     this.leftpanelstore = HydratorPlusPlusLeftPanelStore;
     this.mySettings = mySettings;
+    this.hydratorNodeService = HydratorPlusPlusNodeService;
   }
 
   fetchPlugins(extensionsParams, promise) {
@@ -246,7 +225,10 @@ class PipelineAvailablePluginsActions {
 
     const getArtifact = (_pluginToArtifactArrayMap = {}, plugin = {}) => {
       if(!Object.keys(plugin).length) { return {}; }
-      return this.myHelpers.objectQuery(_pluginToArtifactArrayMap, (plugin.name || plugin.pluginName), 0, 'artifact') || plugin.artifact;
+      const allPluginVersions = _pluginToArtifactArrayMap[plugin.name];
+      const highestVersion = window.CaskCommon.VersionUtilities.findHighestVersion(allPluginVersions.map((plugin) => this.myHelpers.objectQuery(plugin, 'artifact', 'version')), true);
+      const latestPluginVersion = allPluginVersions.find((plugin) => this.myHelpers.objectQuery(plugin, 'artifact', 'version') === highestVersion);
+      return latestPluginVersion.artifact;
     };
 
     return Object.keys(pluginToArtifactArrayMap).map( pluginName => {
@@ -264,14 +246,14 @@ class PipelineAvailablePluginsActions {
     extensions.forEach((ext, i) => {
       let plugins = pluginsList[i];
 
-      let pluginToArtifactArrayMap = getPluginToArtifactMap(plugins);
+      let pluginToArtifactArrayMap = this.hydratorNodeService.getPluginToArtifactMap(plugins);
       let pluginsWithAddedInfo = this._getPluginsWithAddedInfo(plugins, pluginToArtifactArrayMap, ext);
 
       // Fetch default version
       let versionMap = this.leftpanelstore.getState().plugins.pluginToVersionMap;
 
       pluginTypes[ext] = pluginsWithAddedInfo.map((plugin) => {
-        plugin.defaultArtifact = getDefaultVersionForPlugin(plugin, versionMap);
+        plugin.defaultArtifact = this.hydratorNodeService.getDefaultVersionForPlugin(plugin, versionMap);
         return plugin;
       });
     });
