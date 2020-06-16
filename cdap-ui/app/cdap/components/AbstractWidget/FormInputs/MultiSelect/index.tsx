@@ -14,12 +14,12 @@
  * the License.
  */
 
-import React, { useState, useEffect } from 'react';
-import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
 import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import React, { useEffect, useState } from 'react';
+import { objectQuery } from 'services/helpers';
 
 export interface IOption {
   id: string;
@@ -28,7 +28,7 @@ export interface IOption {
 
 interface IMultiSelectWidgetProps {
   delimiter?: string;
-  options: IOption[];
+  options: IOption[] | string[];
   showSelectionCount?: boolean;
 }
 
@@ -42,7 +42,13 @@ export default function MultiSelect({
   dataCy,
 }: IMultiSelectProps) {
   const delimiter = objectQuery(widgetProps, 'delimiter') || ',';
-  const options = objectQuery(widgetProps, 'options') || [];
+
+  let options = objectQuery(widgetProps, 'options') || [];
+  // Convert 'option' to IOption if it is string
+  options = options.map((opt) => {
+    return typeof opt === 'string' ? { id: opt, label: opt } : opt;
+  });
+
   const showSelectionCount = objectQuery(widgetProps, 'showSelectionCount') || false;
 
   const initSelection = value.toString().split(delimiter);
