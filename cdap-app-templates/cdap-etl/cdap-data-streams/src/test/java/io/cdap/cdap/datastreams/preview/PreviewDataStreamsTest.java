@@ -30,6 +30,7 @@ import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.datastreams.DataStreamsApp;
@@ -126,27 +127,27 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
 
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
-    final PreviewRunner previewRunner = previewManager.getRunner(previewId);
+    final PreviewRunner previewRunner = previewManager.getRunner();
 
     // Wait for the preview to be running and wait until the records are processed in the sink.
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        Map<String, List<JsonElement>> data = previewRunner.getData("sink");
+        Map<String, List<JsonElement>> data = previewRunner.getData(previewId, "sink");
         return data != null && data.get(DATA_TRACER_PROPERTY) != null && data.get(DATA_TRACER_PROPERTY).size() == 3;
       }
     }, 1, TimeUnit.MINUTES);
 
     // check data in source and transform
-    checkPreviewStore(previewRunner, "source", 3);
-    checkPreviewStore(previewRunner, "transform", 3);
+    checkPreviewStore(previewRunner, previewId, "source", 3);
+    checkPreviewStore(previewRunner, previewId, "transform", 3);
 
     // Wait for the pipeline to be shutdown by timer.
     TimeUnit.MINUTES.sleep(1);
     Tasks.waitFor(PreviewStatus.Status.KILLED_BY_TIMER, new Callable<PreviewStatus.Status>() {
       @Override
       public PreviewStatus.Status call() throws Exception {
-        return previewRunner.getStatus().getStatus();
+        return previewRunner.getStatus(previewId).getStatus();
       }
     }, 1, TimeUnit.MINUTES);
 
@@ -162,8 +163,9 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
     Assert.assertNull(sinkManager.get());
   }
 
-  private void checkPreviewStore(PreviewRunner previewRunner, String tracerName, int expectedNumber) {
-    Map<String, List<JsonElement>> result = previewRunner.getData(tracerName);
+  private void checkPreviewStore(PreviewRunner previewRunner, ApplicationId previewId, String tracerName,
+                                 int expectedNumber) throws NotFoundException {
+    Map<String, List<JsonElement>> result = previewRunner.getData(previewId, tracerName);
     Assert.assertTrue(!result.isEmpty());
     Assert.assertEquals(expectedNumber, result.get(DATA_TRACER_PROPERTY).size());
   }

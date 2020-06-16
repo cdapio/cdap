@@ -19,9 +19,9 @@ package io.cdap.cdap.app.preview;
 import com.google.inject.Module;
 
 /**
- * A factory for creating guice {@link Module} for a given {@link PreviewRequest}.
+ * A factory for creating guice {@link Module} for preview runner.
  */
 public interface PreviewRunnerModuleFactory {
 
-  PreviewRunnerModule create(PreviewRequest previewRequest);
+  PreviewRunnerModule create();
 }
