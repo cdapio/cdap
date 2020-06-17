@@ -17,12 +17,12 @@ package io.cdap.cdap.app.store.preview;
 
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -91,4 +91,22 @@ public interface PreviewStore {
    */
   @Nullable
   PreviewStatus getPreviewStatus(ApplicationId applicationId);
+
+  /**
+   * Adds the preview request for given application id in waiting state.
+   * @param applicationId the application id corresponding to the request
+   * @param appRequest preview request configuration
+   */
+  void addToWaitingState(ApplicationId applicationId, AppRequest appRequest);
+
+  /**
+   * Removes preview request from the waiting state.
+   * @param applicationId the application id corresponding to the waiting queue
+   */
+  void removeFromWaitingState(ApplicationId applicationId);
+
+  /**
+   * @return list of all waiting requests in waiting state sorted by submit time
+   */
+  List<PreviewRequest> getAllInWaitingState();
 }
