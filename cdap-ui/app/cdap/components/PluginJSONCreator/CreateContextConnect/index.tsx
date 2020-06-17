@@ -31,7 +31,7 @@ interface ICreateState {
   groupToWidgets: any;
   widgetInfo: any;
   widgetToAttributes: any;
-  jsonView: boolean;
+  liveView: boolean;
   outputName: string;
   JSONStatus: JSONStatusMessage;
 
@@ -42,7 +42,7 @@ interface ICreateState {
   setGroupToWidgets: (groupToWidgets: any) => void;
   setWidgetInfo: (widgetInfo: any) => void;
   setWidgetToAttributes: (widgetToAttributes: any) => void;
-  setJsonView: (jsonView: boolean) => void;
+  setLiveView: (liveView: boolean) => void;
   setOutputName: (outputName: string) => void;
   setPluginState: (pluginState: any) => void;
   setJSONStatus: (JSONStatus: JSONStatusMessage) => void;
