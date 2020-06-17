@@ -43,6 +43,7 @@ import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
+import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -174,6 +175,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
     bind(Scheduler.class).to(NoOpScheduler.class);
+
+    bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
