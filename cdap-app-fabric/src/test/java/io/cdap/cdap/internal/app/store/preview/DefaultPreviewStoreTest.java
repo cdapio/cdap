@@ -19,13 +19,19 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
@@ -121,5 +127,48 @@ public class DefaultPreviewStoreTest {
 
     Assert.assertEquals(runId, store.getProgramRunId(applicationId));
     Assert.assertEquals(status, store.getPreviewStatus(applicationId));
+  }
+
+  @Test
+  public void testPreviewWaitingRequests() throws Exception {
+    byte[] pollerInfo = Bytes.toBytes("runner-1");
+
+    PreviewConfig previewConfig = new PreviewConfig("WordCount", ProgramType.WORKFLOW, null, null);
+    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null, previewConfig);
+    Assert.assertEquals(0, store.getAllInWaitingState().size());
+
+    RunId id1 = RunIds.generate();
+    ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
+    store.add(applicationId, testRequest);
+    List<PreviewRequest> allWaiting = store.getAllInWaitingState();
+    Assert.assertEquals(1, allWaiting.size());
+
+    AppRequest appRequest = allWaiting.get(0).getAppRequest();
+    Assert.assertNotNull(appRequest);
+    Assert.assertNotNull(appRequest.getPreview());
+    Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
+    store.setPreviewRequestPollerInfo(applicationId, pollerInfo);
+
+    Assert.assertEquals(0, store.getAllInWaitingState().size());
+
+    // add 2 requests to the queue
+    ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
+    store.add(applicationId2, testRequest);
+    ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
+    store.add(applicationId3, testRequest);
+
+    allWaiting = store.getAllInWaitingState();
+    Assert.assertEquals(2, allWaiting.size());
+    Assert.assertEquals(applicationId2, allWaiting.get(0).getProgram().getParent());
+    Assert.assertEquals(applicationId3, allWaiting.get(1).getProgram().getParent());
+
+    store.setPreviewRequestPollerInfo(applicationId2, pollerInfo);
+    allWaiting = store.getAllInWaitingState();
+    Assert.assertEquals(1, allWaiting.size());
+    Assert.assertEquals(applicationId3, allWaiting.get(0).getProgram().getParent());
+
+    store.setPreviewRequestPollerInfo(applicationId3, pollerInfo);
+    allWaiting = store.getAllInWaitingState();
+    Assert.assertEquals(0, allWaiting.size());
   }
 }

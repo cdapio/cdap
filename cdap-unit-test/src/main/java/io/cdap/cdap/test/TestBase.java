@@ -51,11 +51,15 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -131,6 +135,7 @@ import io.cdap.cdap.test.internal.DefaultArtifactManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -199,6 +204,7 @@ public class TestBase {
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
+  private static PreviewRunnerManager previewRunnerManager;
   private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static MetadataStorage metadataStorage;
@@ -267,7 +273,9 @@ public class TestBase {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
+      new PreviewRunnerManagerModule(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
@@ -376,6 +384,11 @@ public class TestBase {
     }
     programRuntimeService = injector.getInstance(ProgramRuntimeService.class);
     programRuntimeService.startAndWait();
+
+    previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
+    if (previewRunnerManager instanceof Service) {
+      ((Service) previewRunnerManager).startAndWait();
+    }
   }
 
   /**
@@ -498,6 +511,11 @@ public class TestBase {
     }
 
     programRuntimeService.stopAndWait();
+
+    if (previewRunnerManager instanceof Service) {
+      ((Service) previewRunnerManager).stopAndWait();
+    }
+
     if (previewManager instanceof Service) {
       ((Service) previewManager).stopAndWait();
     }

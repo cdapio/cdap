@@ -16,9 +16,13 @@
 
 package io.cdap.cdap;
 
+import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -31,5 +35,13 @@ public class StandaloneMainTest {
   public void testInjector() {
     StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
     Assert.assertNotNull(sdk.getInjector().getInstance(PreviewHttpHandler.class));
+    PreviewManager previewManager = sdk.getInjector().getInstance(PreviewManager.class);
+    PreviewRunnerManager previewRunnerManager = sdk.getInjector().getInstance(PreviewRunnerManager.class);
+    TransactionManager txManager = sdk.getInjector().getInstance(TransactionManager.class);
+    txManager.startAndWait();
+    ((Service) previewManager).startAndWait();
+    ((Service) previewRunnerManager).startAndWait();
+    ((Service) previewRunnerManager).stopAndWait();
+    ((Service) previewManager).stopAndWait();
   }
 }
