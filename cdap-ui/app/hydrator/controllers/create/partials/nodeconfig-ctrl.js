@@ -213,7 +213,6 @@ class HydratorPlusPlusNodeConfigCtrl {
       config: {},
       groupsConfig: {},
 
-      windowMode: 'regular',
 
       isValidPlugin: config.isValidPlugin || false,
       node: angular.copy(config.node) || {},
@@ -419,9 +418,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.EventPipe.emit('schema.export');
   }
 
-  toggleMaximizedView(isExpanded) {
-    this.state.windowMode = (isExpanded) ? 'expand' : 'regular';
-  }
   validateSchema() {
     this.state.errors = [];
 

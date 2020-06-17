@@ -262,7 +262,7 @@ class HydratorPlusPlusLeftPanelCtrl {
         size: 'lg',
         backdrop: 'static',
         keyboard: false,
-        windowTopClass: 'plugin-templates-modal hydrator-modal',
+        windowTopClass: 'plugin-templates-modal hydrator-modal node-config-modal',
         controller: 'PluginTemplatesCreateEditCtrl',
         resolve: {
           rTemplateType: () => templateType

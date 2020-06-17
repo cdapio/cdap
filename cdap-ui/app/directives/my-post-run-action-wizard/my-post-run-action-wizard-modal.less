@@ -47,3 +47,31 @@
     }
   }
 }
+/*
+ * The max-height is 165 we don't set the height of the body element
+ * to be the same as html. We have an extra margin-bottom
+ * from very distant past. This should have been originally
+ * 100% - (65px + 60px) (height of modal - header + footer of postrunactions)
+ * but since the height of the modal doesn't take the height of the body
+ * where it is nested we need to subtract the extra 50px that we
+ * add for margin bottom for the body element.
+ */
+body.theme-cdap.state-hydrator-detail {
+  .modal.hydrator-modal.node-config-modal {
+    &.post-run-actions-modal {
+      .modal-dialog {
+        .modal-content {
+          .modal-body {
+            height: unset;
+            max-height: ~"calc(100% - 165px)";
+            overflow-y: auto;
+          }
+          .modal-footer {
+            padding: 10px;
+            border-top: 1px solid #cccccc;
+          }
+        }
+      }
+    }
+  }
+}
