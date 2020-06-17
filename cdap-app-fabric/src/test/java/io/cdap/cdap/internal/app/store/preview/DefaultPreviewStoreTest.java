@@ -139,6 +139,7 @@ public class DefaultPreviewStoreTest {
 
     RunId id1 = RunIds.generate();
     ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
+
     store.add(applicationId, testRequest);
     List<PreviewRequest> allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(1, allWaiting.size());
@@ -153,6 +154,7 @@ public class DefaultPreviewStoreTest {
 
     // add 2 requests to the queue
     ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
+
     store.add(applicationId2, testRequest);
     ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
     store.add(applicationId3, testRequest);
