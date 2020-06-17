@@ -151,6 +151,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(PreviewStore.class);
     bind(Scheduler.class).to(NoOpScheduler.class);
 
+    bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
+
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
 
