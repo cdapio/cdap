@@ -78,7 +78,6 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] CONFIG = Bytes.toBytes("c");
   private static final byte[] APPID = Bytes.toBytes("a");
 
-
   private final AtomicLong counter = new AtomicLong(0L);
 
   private final LevelDBTableCore table;
