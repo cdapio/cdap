@@ -96,7 +96,17 @@ class HydratorPlusPlusLeftPanelCtrl {
         type: this.LEFTPANELSTORE_ACTIONS.PLUGIN_DEFAULT_VERSION_CHECK_AND_UPDATE
       });
       const defaultVersionMap = this.leftpanelStore.getState().plugins.pluginToVersionMap;
-      this.mySettings.set('plugin-default-version', defaultVersionMap);
+      this.mySettings.get('CURRENT_CDAP_VERSION')
+      .then((defaultCDAPVersion) => {
+        if (this.rVersion.version !== defaultCDAPVersion) {
+          return this.mySettings
+            .set('plugin-default-version', {})
+            .then(() => {
+              this.mySettings.set('CURRENT_CDAP_VERSION', this.rVersion.version);
+            });
+        }
+        this.mySettings.set('plugin-default-version', defaultVersionMap);
+      });
     }, 10000);
 
 

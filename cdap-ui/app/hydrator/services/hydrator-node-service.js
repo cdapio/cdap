@@ -140,6 +140,33 @@ class HydratorPlusPlusNodeService {
 
     return true;
   }
+
+  getPluginToArtifactMap(plugins = []) {
+    let typeMap = {};
+    plugins.forEach( plugin => {
+      typeMap[plugin.name] = typeMap[plugin.name] || [];
+      typeMap[plugin.name].push(plugin);
+    });
+    return typeMap;
+  }
+
+  getDefaultVersionForPlugin(plugin = {}, defaultVersionMap = {}) {
+    if (!Object.keys(plugin).length) {
+      return {};
+    }
+    let defaultVersionsList = Object.keys(defaultVersionMap);
+    let key = `${plugin.name}-${plugin.type}-${plugin.artifact.name}`;
+    let isDefaultVersionExists = defaultVersionsList.indexOf(key) !== -1;
+
+    let isArtifactExistsInBackend = (plugin.allArtifacts || []).filter(plug => angular.equals(plug.artifact, defaultVersionMap[key]));
+    if (!isDefaultVersionExists || !isArtifactExistsInBackend.length) {
+      const highestVersion = window.CaskCommon.VersionUtilities.findHighestVersion(plugin.allArtifacts.map((plugin) => plugin.artifact.version), true);
+      const latestPluginVersion = plugin.allArtifacts.find((plugin) => plugin.artifact.version === highestVersion);
+      return this.myHelpers.objectQuery(latestPluginVersion, 'artifact');
+    }
+
+    return angular.copy(defaultVersionMap[key]);
+  }
 }
 
 angular.module(PKG.name + '.feature.hydrator')
