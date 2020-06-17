@@ -25,7 +25,7 @@ import BtnWithLoading from 'components/BtnWithLoading';
 import PipelineRunTimeArgsCounter from 'components/PipelineDetails/PipelineRuntimeArgsCounter';
 import { connect } from 'react-redux';
 import isEmpty from 'lodash/isEmpty';
-import { convertKeyValuePairsToMap } from 'services/helpers';
+import { convertKeyValuePairsToMap, preventPropagation } from 'services/helpers';
 import Popover from 'components/Popover';
 import T from 'i18n-react';
 require('./RuntimeArgsModeless.scss');
@@ -63,14 +63,18 @@ class RuntimeArgsModeless extends PureComponent {
     });
   };
 
-  saveRuntimeArgs = () => {
+  saveRuntimeArgs = (e) => {
+    preventPropagation(e);
     this.toggleSaving();
     updatePreferences().subscribe(
       () => {
-        this.setState({
-          savedSuccessMessage: 'Runtime arguments saved successfully',
-          saving: false,
-        });
+        this.setState(
+          {
+            savedSuccessMessage: 'Runtime arguments saved successfully',
+            saving: false,
+          },
+          this.props.onClose
+        );
       },
       (err) => {
         this.setState({
