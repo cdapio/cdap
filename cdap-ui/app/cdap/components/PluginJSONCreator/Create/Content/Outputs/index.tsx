@@ -14,8 +14,6 @@
  * the License.
  */
 
-import { WithStyles } from '@material-ui/core/styles/withStyles';
-import { styles } from 'components/AbstractWidget/RadioGroupWidget';
 import Heading, { HeadingTypes } from 'components/Heading';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
@@ -27,8 +25,7 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
-  classes,
+const OutputsView: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
   displayName,
@@ -39,13 +36,13 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   groupToWidgets,
   widgetInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setOutputName,
-  setPluginState,
   JSONStatus,
   setJSONStatus,
+  setPluginState,
 }) => {
   const [localOutputName, setLocalOutputName] = React.useState(outputName);
 
@@ -66,12 +63,12 @@ const OutputsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         groupToWidgets={groupToWidgets}
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
-        outputName={outputName}
-        setPluginState={setPluginState}
+        liveView={liveView}
+        setLiveView={setLiveView}
+        outputName={localOutputName}
         JSONStatus={JSONStatus}
         setJSONStatus={setJSONStatus}
+        setPluginState={setPluginState}
       />
       <Heading type={HeadingTypes.h3} label="Output" />
       <br />

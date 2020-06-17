@@ -20,7 +20,7 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Alert from 'components/Alert';
 import If from 'components/If';
 import ClosedJsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu/ClosedJsonMenu';
-import JsonLiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/JsonLiveViewer';
+import LiveViewer from 'components/PluginJSONCreator/Create/Content/JsonMenu/LiveViewer';
 import {
   downloadPluginJSON,
   getJSONConfig,
@@ -29,7 +29,7 @@ import {
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const JSON_VIEWER_WIDTH = '600px';
+const LIVE_VIEWER_WIDTH = '600px';
 
 const styles = (theme): StyleRules => {
   return {
@@ -48,13 +48,13 @@ const styles = (theme): StyleRules => {
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
       backgroundColor: theme.palette.white[50],
     },
-    jsonViewer: {
+    liveViewer: {
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
-      width: JSON_VIEWER_WIDTH,
+      width: LIVE_VIEWER_WIDTH,
     },
-    jsonViewerPaper: {
+    liveViewerPaper: {
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
-      width: JSON_VIEWER_WIDTH,
+      width: LIVE_VIEWER_WIDTH,
       backgroundColor: theme.palette.white[50],
     },
   };
@@ -71,15 +71,15 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
     classes,
     pluginName,
     pluginType,
-    jsonView,
-    setJsonView,
+    liveView,
+    setLiveView,
     setPluginState,
     JSONStatus,
     setJSONStatus,
   } = widgetJSONProps;
   const [JSONErrorMessage, setJSONErrorMessage] = React.useState('');
 
-  const jsonFilename = `${pluginName ? pluginName : '<PluginName>'}-${
+  const JSONFilename = `${pluginName ? pluginName : '<PluginName>'}-${
     pluginType ? pluginType : '<PluginType>'
   }.json`;
 
@@ -122,12 +122,12 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
     }
   };
 
-  const expandJSONView = () => {
-    setJsonView(true);
+  const expandLiveView = () => {
+    setLiveView(true);
   };
 
-  const collapseJSONView = () => {
-    setJsonView(false);
+  const collapseLiveView = () => {
+    setLiveView(false);
   };
 
   const resetJSONStatus = () => {
@@ -140,34 +140,34 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
       <Drawer
         open={true}
         variant="persistent"
-        className={jsonView ? classes.jsonViewer : classes.closedJsonMenu}
+        className={liveView ? classes.liveViewer : classes.closedJsonMenu}
         anchor="right"
         ModalProps={{
           keepMounted: true,
         }}
         classes={{
-          paperAnchorRight: jsonView ? classes.jsonViewerPaper : classes.closedJsonMenuPaper,
+          paperAnchorRight: liveView ? classes.liveViewerPaper : classes.closedJsonMenuPaper,
         }}
         data-cy="navbar-drawer"
       >
         <div className={classes.toolbar} />
         <List component="nav" dense={true} className={classes.mainMenu}>
-          <If condition={jsonView}>
-            <JsonLiveViewer
+          <If condition={liveView}>
+            <LiveViewer
               JSONConfig={getJSONConfig(widgetJSONProps)}
               downloadDisabled={downloadDisabled}
-              collapseJSONView={collapseJSONView}
+              collapseLiveView={collapseLiveView}
               onDownloadClick={onDownloadClick}
               populateImportResults={populateImportResults}
-              jsonFilename={jsonFilename}
+              JSONFilename={JSONFilename}
               JSONStatus={JSONStatus}
             />
           </If>
-          <If condition={!jsonView}>
+          <If condition={!liveView}>
             <ClosedJsonMenu
               downloadDisabled={downloadDisabled}
               onDownloadClick={onDownloadClick}
-              expandJSONView={expandJSONView}
+              expandLiveView={expandLiveView}
               populateImportResults={populateImportResults}
             />
           </If>

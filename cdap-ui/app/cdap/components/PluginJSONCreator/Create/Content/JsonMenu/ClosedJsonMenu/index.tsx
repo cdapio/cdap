@@ -34,7 +34,7 @@ const styles = (theme): StyleRules => {
     jsonActionButton: {
       margin: '5px',
     },
-    jsonViewerTooltip: {
+    liveViewerTooltip: {
       fontSize: '14px',
       backgroundColor: theme.palette.grey[500],
     },
@@ -50,7 +50,7 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
           : 'Download Plugin JSON'
       }
       classes={{
-        tooltip: classes.jsonViewerTooltip,
+        tooltip: classes.liveViewerTooltip,
       }}
     >
       <div>
@@ -62,15 +62,15 @@ const DownloadJSONButton = ({ classes, downloadDisabled, onDownloadClick }) => {
   );
 };
 
-const ExpandJSONViewButton = ({ classes, expandJSONView }) => {
+const ExpandLiveViewButton = ({ classes, expandLiveView }) => {
   return (
     <Tooltip
       title="Open JSON View"
       classes={{
-        tooltip: classes.jsonViewerTooltip,
+        tooltip: classes.liveViewerTooltip,
       }}
     >
-      <Button onClick={expandJSONView}>
+      <Button onClick={expandLiveView}>
         <CodeIcon />
       </Button>
     </Tooltip>
@@ -78,7 +78,7 @@ const ExpandJSONViewButton = ({ classes, expandJSONView }) => {
 };
 
 interface IClosedJsonMenuProps extends WithStyles<typeof styles>, ICreateContext {
-  expandJSONView: () => void;
+  expandLiveView: () => void;
   onDownloadClick: () => void;
   populateImportResults: (filename: string, fileContent: string) => void;
   JSONStatus: JSONStatusMessage;
@@ -87,7 +87,7 @@ interface IClosedJsonMenuProps extends WithStyles<typeof styles>, ICreateContext
 
 const ClosedJsonMenuView: React.FC<IClosedJsonMenuProps> = ({
   classes,
-  expandJSONView,
+  expandLiveView,
   onDownloadClick,
   populateImportResults,
   JSONStatus,
@@ -97,13 +97,13 @@ const ClosedJsonMenuView: React.FC<IClosedJsonMenuProps> = ({
     <div>
       <div className={classes.jsonActionButtons}>
         <div className={classes.jsonActionButton}>
-          <ExpandJSONViewButton classes={classes} expandJSONView={expandJSONView} />
+          <ExpandLiveViewButton classes={classes} expandLiveView={expandLiveView} />
         </div>
         <Divider />
         <div className={classes.jsonActionButton}>
           <Tooltip
             classes={{
-              tooltip: classes.jsonViewerTooltip,
+              tooltip: classes.liveViewerTooltip,
             }}
             title="Import JSON"
           >

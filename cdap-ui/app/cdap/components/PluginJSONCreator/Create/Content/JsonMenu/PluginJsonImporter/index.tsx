@@ -56,8 +56,8 @@ const PluginJSONImporterView: React.FC<IPluginJSONImporterProps> = ({
     };
   }
 
-  async function renderFileContent(filename, fileContent) {
-    await populateImportResults(filename, fileContent);
+  function renderFileContent(filename, fileContent) {
+    populateImportResults(filename, fileContent);
   }
 
   return (
