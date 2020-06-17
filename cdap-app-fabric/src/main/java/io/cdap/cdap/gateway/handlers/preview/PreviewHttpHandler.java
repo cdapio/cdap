@@ -41,6 +41,7 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -106,7 +107,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                    @PathParam("preview-id") String previewId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    previewManager.getRunner().stopPreview(application);
+    previewManager.stopPreview(application);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -116,7 +117,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                         @PathParam("preview-id") String previewId)  throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner().getStatus(application)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getStatus(application)));
   }
 
   @GET
@@ -133,7 +134,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                       @PathParam("preview-id") String previewId,
                       @PathParam("tracer-id") String tracerId) throws Exception {
     ApplicationId previewAppId = validateAndGetAppId(namespaceId, previewId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner().getData(previewAppId, tracerId)));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getData(previewAppId, tracerId)));
   }
 
   @POST
@@ -160,7 +161,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
     Map<String, Map<String, List<JsonElement>>> result = new HashMap<>();
     for (String tracerName : tracerNames) {
-      result.put(tracerName, previewManager.getRunner().getData(application, tracerName));
+      result.put(tracerName, previewManager.getData(application, tracerName));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
@@ -215,11 +216,10 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
   private void sendLogs(String namespaceId, String previewId, Consumer<LogReaderInfo> logsResponder) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, previewId);
-    RunRecordDetail runRecordDetail = previewManager.getRunner().getRunRecord(applicationId);
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runRecordDetail.getProgramRunId(),
-                                                                                    runRecordDetail.getSystemArgs());
+    ProgramRunId programRunId = previewManager.getRunId(applicationId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
     LogReader logReader = previewManager.getLogReader();
-    logsResponder.accept(new LogReaderInfo(logReader, loggingContext, runRecordDetail));
+    logsResponder.accept(new LogReaderInfo(logReader, loggingContext, null));
   }
 
   @POST
@@ -296,7 +296,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   }
 
   private MetricsQueryHelper getMetricsQueryHelper() {
-    return previewManager.getRunner().getMetricsQueryHelper();
+    return previewManager.getMetricsQueryHelper();
   }
 
   private List<String> overrideTags(List<String> tags, String namespaceId, String previewId) {
@@ -340,7 +340,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   // Validity is verified by checking its status in the store.
   private ApplicationId validateAndGetAppId(String namespace, String preview) throws NotFoundException {
     ApplicationId applicationId = new ApplicationId(namespace, preview);
-    previewManager.getRunner().getStatus(applicationId);
+    previewManager.getStatus(applicationId);
     return applicationId;
   }
 
