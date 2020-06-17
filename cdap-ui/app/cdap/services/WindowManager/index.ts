@@ -41,7 +41,7 @@ class WindowManager {
     ifvisible.on('wakeup', () => {
       this.onFocusHandler();
     });
-    ifvisible.setIdleDuration(30);
+    ifvisible.setIdleDuration(300);
     this.initWorker();
   }
   /**
