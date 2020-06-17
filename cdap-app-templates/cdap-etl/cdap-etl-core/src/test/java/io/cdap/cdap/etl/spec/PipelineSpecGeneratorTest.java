@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.spec;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.api.Resources;
@@ -70,6 +69,7 @@ import javax.annotation.Nullable;
  */
 public class PipelineSpecGeneratorTest {
   private static final Schema SCHEMA_A = Schema.recordOf("a", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
+  private static final Schema SCHEMA_A2 = Schema.recordOf("a2", Schema.Field.of("a", Schema.of(Schema.Type.STRING)));
   private static final Schema SCHEMA_B = Schema.recordOf("b", Schema.Field.of("b", Schema.of(Schema.Type.STRING)));
   private static final Schema SCHEMA_ABC = Schema.recordOf("abc",
                                                            Schema.Field.of("a", Schema.of(Schema.Type.STRING)),
@@ -77,6 +77,7 @@ public class PipelineSpecGeneratorTest {
                                                            Schema.Field.of("c", Schema.of(Schema.Type.INT)));
   private static final Map<String, String> EMPTY_MAP = ImmutableMap.of();
   private static final ETLPlugin MOCK_SOURCE = new ETLPlugin("mocksource", BatchSource.PLUGIN_TYPE, EMPTY_MAP);
+  private static final ETLPlugin MOCK_SOURCE2 = new ETLPlugin("mocksource2", BatchSource.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_TRANSFORM_A = new ETLPlugin("mockA", Transform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_TRANSFORM_B = new ETLPlugin("mockB", Transform.PLUGIN_TYPE, EMPTY_MAP);
   private static final ETLPlugin MOCK_TRANSFORM_ABC = new ETLPlugin("mockABC", Transform.PLUGIN_TYPE, EMPTY_MAP);
@@ -99,6 +100,8 @@ public class PipelineSpecGeneratorTest {
     Set<ArtifactId> artifactIds = ImmutableSet.of(ARTIFACT_ID);
     pluginConfigurer.addMockPlugin(BatchSource.PLUGIN_TYPE, "mocksource",
                                    MockPlugin.builder().setOutputSchema(SCHEMA_A).build(), artifactIds);
+    pluginConfigurer.addMockPlugin(BatchSource.PLUGIN_TYPE, "mocksource2",
+                                   MockPlugin.builder().setOutputSchema(SCHEMA_A2).build(), artifactIds);
     pluginConfigurer.addMockPlugin(Transform.PLUGIN_TYPE, "mockA",
                                    MockPlugin.builder().setOutputSchema(SCHEMA_A).setErrorSchema(SCHEMA_B).build(),
                                    artifactIds);
@@ -121,7 +124,6 @@ public class PipelineSpecGeneratorTest {
                                                    ImmutableSet.of(BatchSink.PLUGIN_TYPE),
                                                    Engine.MAPREDUCE);
   }
-
 
   @Test(expected = IllegalArgumentException.class)
   public void testUniqueStageNames() throws ValidationException {
@@ -290,6 +292,44 @@ public class PipelineSpecGeneratorTest {
       .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
       .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
       .build();
+    Assert.assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testInputSchemasWithDifferentName() {
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .addStage(new ETLStage("s1", MOCK_SOURCE))
+      .addStage(new ETLStage("s2", MOCK_SOURCE2))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("s1", "sink")
+      .addConnection("s2", "sink")
+      .setNumOfRecordsPreview(100)
+      .build();
+
+    Map<String, String> emptyMap = Collections.emptyMap();
+    PipelineSpec expected = BatchPipelineSpec.builder()
+      .addStage(
+        StageSpec.builder("s1", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource", emptyMap, ARTIFACT_ID))
+          .addOutput(SCHEMA_A, "sink")
+          .build())
+      .addStage(
+        StageSpec.builder("s2", new PluginSpec(BatchSource.PLUGIN_TYPE, "mocksource2", emptyMap, ARTIFACT_ID))
+          .addOutput(SCHEMA_A2, "sink")
+          .build())
+      .addStage(
+        StageSpec.builder("sink", new PluginSpec(BatchSink.PLUGIN_TYPE, "mocksink", emptyMap, ARTIFACT_ID))
+          .addInputSchemas(ImmutableMap.of("s1", SCHEMA_A, "s2", SCHEMA_A2))
+          .setErrorSchema(SCHEMA_A)
+          .build())
+      .addConnections(etlConfig.getConnections())
+      .setResources(etlConfig.getResources())
+      .setDriverResources(new Resources(1024, 1))
+      .setClientResources(new Resources(1024, 1))
+      .setStageLoggingEnabled(etlConfig.isStageLoggingEnabled())
+      .setNumOfRecordsPreview(etlConfig.getNumOfRecordsPreview())
+      .build();
+
+    PipelineSpec actual = specGenerator.generateSpec(etlConfig);
     Assert.assertEquals(expected, actual);
   }
 
