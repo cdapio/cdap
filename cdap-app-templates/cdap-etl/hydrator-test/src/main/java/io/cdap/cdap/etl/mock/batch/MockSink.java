@@ -59,6 +59,7 @@ import java.util.stream.Collectors;
 @Name(MockSink.NAME)
 public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   public static final String NAME = "Mock";
+  public static final String INITIALIZED_COUNT_METRIC = "initialized.count";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final byte[] SCHEMA_COL = Bytes.toBytes("s");
   private static final byte[] RECORD_COL = Bytes.toBytes("r");
@@ -103,6 +104,7 @@ public class MockSink extends BatchSink<StructuredRecord, byte[], Put> {
   @Override
   public void initialize(BatchRuntimeContext context) throws Exception {
     super.initialize(context);
+    context.getMetrics().count(INITIALIZED_COUNT_METRIC, 1);
   }
 
   @Override
