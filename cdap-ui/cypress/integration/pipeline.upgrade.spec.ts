@@ -15,6 +15,8 @@
  */
 
 import * as Helpers from '../helpers';
+import { dataCy, generateDraftFromPipeline } from '../helpers';
+
 let headers = {};
 describe('Pipeline Upgrade should work fine', () => {
   // Uses API call to login instead of logging in manually through UI
@@ -68,6 +70,27 @@ describe('Pipeline Upgrade should work fine', () => {
       cy.contains('Find Plugin in Hub').click();
       cy.get('.cdap-modal.cask-market');
       cy.contains('Hub');
+    });
+  });
+
+  it('should upgrade pipelines that are saved in drafts', () => {
+
+    generateDraftFromPipeline('draft_for_upgrade.json').then(({ pipelineDraft, pipelineName }) => {
+      cy.upload_draft_via_api(headers, pipelineDraft);
+      cy.visit('/cdap/ns/default/pipelines/drafts');
+      cy.get(dataCy(`draft-${pipelineName}`)).should('be.visible');
+      cy.get(dataCy(`draft-${pipelineName}`)).click();
+      cy.get(dataCy('upgrade-modal-header')).should('contain', 'Upgrade Pipeline');
+      cy.get(dataCy('upgrade-modal-body')).should(
+        'contain',
+        'Your pipeline has the following issues:'
+      );
+      cy.get(dataCy('import-error-row-0')).should('contain', 'File');
+      cy.get(dataCy('import-error-row-1')).should('contain', 'File2');
+      cy.get(dataCy('fix-all-btn')).click();
+      cy.get('[title="File2"').should('exist');
+      cy.get(dataCy('deploy-pipeline-btn')).click();
+      cy.get(dataCy('Deployed')).should('be.visible');
     });
   });
 });

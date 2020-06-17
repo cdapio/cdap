@@ -126,6 +126,13 @@ declare global {
        */
       close_node_property: () => Chainable<JQuery<HTMLElement>>;
 
+       * Uploads a pipeline json from fixtures to input file element.
+       *
+       * @headers - Any request headers to be passed.
+       * @pipelineJson - pipeline draft that needs to be uploaded.
+      */
+      upload_draft_via_api: (headers: any, pipelineJson: any) => Chainable<Request>; 
+      
       /**
        * Cleans up pipelines once expecuting a specific test. This is to remove state
        *  from individual tests.
