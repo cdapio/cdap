@@ -109,7 +109,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         isSource: this.state.isSource,
         isSink: this.state.isSink,
         isCondition: this.state.isCondition,
-       }
+       };
     }
 
     this.activeTab = 1;
