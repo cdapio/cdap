@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('PipelineUpgradeModalController', function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusLeftPanelStore) {
+  .controller('PipelineUpgradeModalController', function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusLeftPanelStore,rIsImport) {
     let eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     let globalEvents = window.CaskCommon.globalEvents;
 
@@ -31,6 +31,7 @@ angular.module(PKG.name + '.feature.hydrator')
     let allPostActions = [];
     this.problematicPostRunActions = [];
     this.fixAllDisabled = true;
+    this.isImport = rIsImport;
 
     // missing artifacts map
     this.missingArtifactsMap = {};
@@ -154,12 +155,18 @@ angular.module(PKG.name + '.feature.hydrator')
 
       let stages = fix(copyAllStages);
       let postActions = fix(copyPostActions);
+      let draftId;
 
       newConfig.config.stages = stages;
       newConfig.config.postActions = postActions;
 
       if (newConfig.__ui__) {
+        draftId = newConfig.__ui__.draftId;
         delete newConfig.__ui__;
+      }
+
+      if (draftId) {
+        newConfig.__ui__ = { draftId };
       }
 
       HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());

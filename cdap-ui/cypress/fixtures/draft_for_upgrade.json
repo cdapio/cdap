@@ -1,0 +1,97 @@
+{
+  "artifact": {
+    "name": "cdap-data-pipeline",
+    "version": "6.0.0-SNAPSHOT",
+    "scope": "SYSTEM",
+    "label": "Data Pipeline - Batch"
+  },
+  "description": "",
+  "name": "FileToFilePipeline",
+  "config": {
+    "resources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "driverResources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "connections": [
+      {
+        "from": "File",
+        "to": "File2"
+      }
+    ],
+    "comments": [],
+    "postActions": [],
+    "properties": {},
+    "processTimingEnabled": true,
+    "stageLoggingEnabled": true,
+    "stages": [
+      {
+        "name": "File",
+        "plugin": {
+          "name": "File",
+          "type": "batchsource",
+          "label": "File",
+          "artifact": {
+            "name": "core-plugins",
+            "version": "2.2.0-SNAPSHOT",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+            "format": "text",
+            "filenameOnly": "false",
+            "recursive": "false",
+            "ignoreNonExistingFolders": "false",
+            "referenceName": "File1",
+            "path": "path1"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        ]
+      },
+      {
+        "name": "File2",
+        "plugin": {
+          "name": "File",
+          "type": "batchsink",
+          "label": "File2",
+          "artifact": {
+            "name": "core-plugins",
+            "version": "2.2.0-SNAPSHOT",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "suffix": "yyyy-MM-dd-HH-mm",
+            "format": "json",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+            "referenceName": "file2",
+            "path": "path2"
+          }
+        },
+        "outputSchema": [
+          {
+            "name": "etlSchemaBody",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        ],
+        "inputSchema": [
+          {
+            "name": "File",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        ]
+      }
+    ],
+    "schedule": "0 * * * *",
+    "engine": "mapreduce",
+    "numOfRecordsPreview": 100,
+    "maxConcurrentRuns": 1
+  }
+}

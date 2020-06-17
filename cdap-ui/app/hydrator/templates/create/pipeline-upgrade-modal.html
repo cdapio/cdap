@@ -15,7 +15,8 @@
 -->
 
 <div class="modal-header">
-  <h3 class="modal-title pull-left">Import Pipeline</h3>
+  <h3 class="modal-title pull-left" data-cy="upgrade-modal-header">
+    {{ PipelineUpgradeController.isImport ? "Import Pipeline" : "Upgrade Pipeline" }}</h3>
   <div class="btn-group pull-right">
     <a class="btn" ng-click="$close()">
       <span class="fa fa-times"></span>
@@ -26,6 +27,7 @@
 <div
   class="modal-body"
   ng-if="PipelineUpgradeController.loading"
+  data-cy="upgrade-modal-loading"
 >
   <h3 class="text-xs-center">
     <span class="fa fa-spin fa-spinner">
@@ -35,9 +37,10 @@
 <div
   class="modal-body"
   ng-if="!PipelineUpgradeController.loading"
+  data-cy="upgrade-modal-body"
 >
   <h4 ng-if="PipelineUpgradeController.missingArtifactStages.length > 0 || PipelineUpgradeController.problematicStages.length > 0 || PipelineUpgradeController.problematicPostRunActions.length > 0 || PipelineUpgradeController.missingArtifactPostRunActions.length > 0">
-    Your pipeline cannot be imported because of the following issues:
+    {{ PipelineUpgradeController.isImport ? "Your pipeline cannot be imported because of the following issues:" : "Your pipeline has the following issues:" }}
   </h4>
 
   <div
@@ -80,6 +83,7 @@
   <div
     class="row import-error-row"
     ng-repeat="stage in PipelineUpgradeController.canUpgradeStages.concat(PipelineUpgradeController.problematicStages, PipelineUpgradeController.problematicPostRunActions)"
+    data-cy="import-error-row-{{$index}}"
   >
     <div class="col-xs-12">
       <h4 class="stage-title {{ stage.type }} {{ stage.stageInfo.plugin.type }}">
@@ -164,6 +168,7 @@
   <button
     class="btn btn-primary"
     ng-click="PipelineUpgradeController.fixAll()"
+    data-cy="fix-all-btn"
   >
     <span ng-if="!PipelineUpgradeController.fixAllDisabled">Fix All</span>
     <span ng-if="PipelineUpgradeController.fixAllDisabled">Proceed</span>
