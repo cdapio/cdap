@@ -20,6 +20,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.etl.api.join.JoinField;
 
 import java.util.List;
+import javax.annotation.Nullable;
 
 /**
  * Request to join some collection to another collection.
@@ -34,9 +35,11 @@ public class JoinRequest {
   private final List<JoinField> fields;
   private final Schema outputSchema;
   private final List<JoinCollection> toJoin;
+  private final Integer numPartitions;
 
   public JoinRequest(String stageName, String leftStage, List<String> leftKey, Schema leftSchema, boolean leftRequired,
-                     boolean nullSafe, List<JoinField> fields, Schema outputSchema, List<JoinCollection> toJoin) {
+                     boolean nullSafe, List<JoinField> fields, Schema outputSchema, List<JoinCollection> toJoin,
+                     @Nullable Integer numPartitions) {
     this.stageName = stageName;
     this.leftStage = leftStage;
     this.leftKey = leftKey;
@@ -46,6 +49,7 @@ public class JoinRequest {
     this.leftSchema = leftSchema;
     this.outputSchema = outputSchema;
     this.toJoin = toJoin;
+    this.numPartitions = numPartitions;
   }
 
   public String getStageName() {
@@ -82,5 +86,10 @@ public class JoinRequest {
 
   public Schema getOutputSchema() {
     return outputSchema;
+  }
+
+  @Nullable
+  public Integer getNumPartitions() {
+    return numPartitions;
   }
 }
