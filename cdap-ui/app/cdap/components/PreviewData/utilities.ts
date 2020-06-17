@@ -90,7 +90,8 @@ export function fetchPreview(
   stages: IStage[],
   connections: IConnection[],
   loadingPreviewCb: (isLoading: boolean) => void,
-  updatePreviewCb: (previewData: IPreviewData) => void
+  updatePreviewCb: (previewData: IPreviewData) => void,
+  errorCb?: (err: any) => void
 ) {
   loadingPreviewCb(true);
 
@@ -120,10 +121,13 @@ export function fetchPreview(
       loadingPreviewCb(false);
     },
     (err) => {
-      // TO DO: error handling here
+      loadingPreviewCb(false);
+
+      if (errorCb) {
+        errorCb(err);
+      }
       // tslint:disable-next-line: no-console
       console.log('Error loading preview data: ', err);
-      loadingPreviewCb(false);
     }
   );
 }
