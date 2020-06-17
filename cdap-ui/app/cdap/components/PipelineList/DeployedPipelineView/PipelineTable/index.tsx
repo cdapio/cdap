@@ -23,6 +23,7 @@ import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
+import If from 'components/If';
 import './PipelineTable.scss';
 
 interface IProps {
@@ -76,19 +77,20 @@ const PipelineTableView: React.SFC<IProps> = ({
   return (
     <div className="grid-wrapper pipeline-list-table">
       <div className="grid grid-container">
-        <div className="grid-header">
-          <div className="grid-row">
-            <SortableHeader columnName="name" />
-            <strong>{T.translate(`${PREFIX}.type`)}</strong>
-            <strong>{T.translate(`${PREFIX}.status`)}</strong>
-            <strong>{T.translate(`${PREFIX}.lastStartTime`)}</strong>
-            <strong>{T.translate(`${PREFIX}.nextRun`)}</strong>
-            <strong>{T.translate(`${PREFIX}.runs`)}</strong>
-            <strong>{T.translate(`${PREFIX}.tags`)}</strong>
-            <strong />
+        <If condition={pipelines && filteredList && filteredList.length > 0}>
+          <div className="grid-header">
+            <div className="grid-row">
+              <SortableHeader columnName="name" />
+              <strong>{T.translate(`${PREFIX}.type`)}</strong>
+              <strong>{T.translate(`${PREFIX}.status`)}</strong>
+              <strong>{T.translate(`${PREFIX}.lastStartTime`)}</strong>
+              <strong>{T.translate(`${PREFIX}.nextRun`)}</strong>
+              <strong>{T.translate(`${PREFIX}.runs`)}</strong>
+              <strong>{T.translate(`${PREFIX}.tags`)}</strong>
+              <strong />
+            </div>
           </div>
-        </div>
-
+        </If>
         {renderBody()}
       </div>
     </div>
