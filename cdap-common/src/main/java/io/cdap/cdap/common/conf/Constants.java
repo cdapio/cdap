@@ -344,6 +344,7 @@ public final class Constants {
     public static final String CACHE_SIZE = "preview.cache.size";
     public static final String REQUEST_POLL_DELAY_MILLIS = "preview.request.poll.delay.millis";
     public static final String MAX_RUNS = "preview.max.runs";
+    public static final String WAITING_QUEUE_CAPACITY = "preview.waiting.queue.capacity";
   }
 
   /**
