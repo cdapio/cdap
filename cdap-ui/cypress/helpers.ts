@@ -16,6 +16,8 @@ import { INodeIdentifier } from './typings';
  * the License.
  */
 
+const uuidV4 = require('uuid/v4');
+
 const username = Cypress.env('username') || 'admin';
 const password = Cypress.env('password') || 'admin';
 let isAuthEnabled = false;
@@ -145,6 +147,19 @@ function setDefaultOldSchemaEditor() {
   });
 }
 
+function generateDraftFromPipeline(pipeline) {
+  return cy.fixture(pipeline).then(pipeline_for_draft => {
+    const draftId = uuidV4();
+    const pipelineName = `${pipeline_for_draft.name}-${Date.now()}`;
+    pipeline_for_draft['__ui__'] = { draftId, lastSaved: Date.now() };
+    pipeline_for_draft.name = pipelineName;
+    const pipelineDraft = {
+      hydratorDrafts: { default: { [draftId]: pipeline_for_draft } }
+    };
+    return { pipelineDraft, pipelineName };
+  });
+}
+
 export {
   loginIfRequired,
   getArtifactsPoll,
@@ -155,4 +170,5 @@ export {
   dataCy,
   getNodeSelectorFromNodeIndentifier,
   setDefaultOldSchemaEditor,
+  generateDraftFromPipeline
 };
