@@ -56,6 +56,7 @@ final class DataprocConf {
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String IMAGE_VERSION = "imageVersion";
+  static final String CUSTOM_IMAGE_URI = "customImageUri";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -68,6 +69,7 @@ final class DataprocConf {
   private final String networkHostProjectID;
   private final String subnet;
   private final String imageVersion;
+  private final String customImageUri;
 
   private final int masterNumNodes;
   private final int masterCPUs;
@@ -105,8 +107,8 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.publicKey, conf.imageVersion, conf.clusterMetaData, conf.networkTags, conf.initActions,
-         conf.dataprocProperties);
+         conf.publicKey, conf.imageVersion, conf.customImageUri, conf.clusterMetaData,
+         conf.networkTags, conf.initActions, conf.dataprocProperties);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -117,8 +119,9 @@ final class DataprocConf {
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
                        boolean stackdriverMonitoringEnabled, @Nullable SSHPublicKey publicKey,
-                       @Nullable String imageVersion, @Nullable Map<String, String> clusterMetaData,
-                       List<String> networkTags, @Nullable String initActions, Map<String, String> dataprocProperties) {
+                       @Nullable String imageVersion, @Nullable String customImageUri,
+                       @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
+                       @Nullable String initActions, Map<String, String> dataprocProperties) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -146,6 +149,7 @@ final class DataprocConf {
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
+    this.customImageUri = customImageUri;
     this.clusterMetaData = clusterMetaData;
     this.networkTags = networkTags;
     this.initActions = initActions;
@@ -207,6 +211,11 @@ final class DataprocConf {
   @Nullable
   String getImageVersion() {
     return imageVersion;
+  }
+
+  @Nullable
+  public String getCustomImageUri() {
+    return customImageUri;
   }
 
   long getPollCreateDelay() {
@@ -416,6 +425,7 @@ final class DataprocConf {
     );
 
     String imageVersion = getString(properties, IMAGE_VERSION);
+    String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
     String gcpCmekKeyName = getString(properties, "encryptionKeyName");
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
@@ -441,7 +451,8 @@ final class DataprocConf {
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
-                            imageVersion, clusterMetaData, networkTags, initActions, dataprocProps);
+                            imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
+                            dataprocProps);
   }
 
   // the UI never sends nulls, it only sends empty strings.
