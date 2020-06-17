@@ -188,34 +188,23 @@ const resetRuntimeArgToResolvedValue = (index, runtimeArgs, resolvedMacros) => {
 };
 
 const getRuntimeArgsForDisplay = (currentRuntimeArgs, macrosMap) => {
-  let providedMacros = {};
-  let runtimeArgsMap = {};
-
-  // holds provided macros in an object here even though we don't need the value,
-  // because object hash is faster than Array.indexOf
   if (currentRuntimeArgs.pairs) {
-    currentRuntimeArgs.pairs.forEach((currentPair) => {
-      let key = currentPair.key;
-      runtimeArgsMap[key] = currentPair.value || '';
-      if (currentPair.notDeletable && currentPair.provided) {
-        providedMacros[key] = currentPair.value;
-      }
-    });
-    currentRuntimeArgs.pairs = currentRuntimeArgs.pairs.filter((keyValuePair) => {
-      return Object.keys(macrosMap).indexOf(keyValuePair.key) === -1;
-    });
+    currentRuntimeArgs.pairs = currentRuntimeArgs.pairs
+      .map((currentPair) => {
+        const key = currentPair.key;
+        if (Object.prototype.hasOwnProperty.call(macrosMap, key)) {
+          return {
+            key,
+            value: currentPair.value || '',
+            showReset: macrosMap[key].showReset,
+            uniqueId: currentPair.uniqueId || 'id-' + uuidV4(),
+            notDeletable: true,
+          };
+        }
+        return currentPair;
+      })
+      .sort((a, b) => Boolean(b.notDeletable) - Boolean(a.notDeletable));
   }
-  let macros = Object.keys(macrosMap).map((macroKey) => {
-    return {
-      key: macroKey,
-      value: runtimeArgsMap[macroKey] || '',
-      showReset: macrosMap[macroKey].showReset,
-      uniqueId: 'id-' + uuidV4(),
-      notDeletable: true,
-      provided: providedMacros.hasOwnProperty(macroKey),
-    };
-  });
-  currentRuntimeArgs.pairs = macros.concat(currentRuntimeArgs.pairs);
   return currentRuntimeArgs;
 };
 
