@@ -42,6 +42,8 @@ const styles = (theme): StyleRules => ({
     borderRight: `1px solid ${theme.palette.grey[400]}`,
     '& :last-of-type': {
       borderRight: 0,
+      overflowX: 'auto',
+      borderRadius: 0,
     },
   },
   h2Title: {
@@ -82,7 +84,9 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const inputRecords = tableValue.records;
             return (
               <div key={`input-table-${i}`}>
-                <Heading type={HeadingTypes.h3} label={inputs.length > 1 ? tableKey : null} />
+                <If condition={inputs.length > 1}>
+                  <Heading type={HeadingTypes.h3} label={tableKey} />
+                </If>
                 <DataTable
                   headers={inputHeaders}
                   records={inputRecords}
@@ -106,7 +110,9 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const outputRecords = tableValue.records;
             return (
               <div key={`output-table-${j}`}>
-                <Heading type={HeadingTypes.h3} label={outputs.length > 1 ? tableKey : null} />
+                <If condition={inputs.length > 1}>
+                  <Heading type={HeadingTypes.h3} label={tableKey} />
+                </If>
                 <DataTable
                   headers={outputHeaders}
                   records={outputRecords}
