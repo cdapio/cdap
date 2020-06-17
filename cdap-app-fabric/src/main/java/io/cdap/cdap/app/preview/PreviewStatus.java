@@ -29,6 +29,7 @@ public class PreviewStatus {
    * Status for the preview
    */
   public enum Status {
+    WAITING(false),
     INIT(false),
     RUNNING(false),
     COMPLETED(true),
