@@ -50,8 +50,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
   groupToWidgets,
   widgetInfo,
   widgetToAttributes,
-  jsonView,
-  setJsonView,
+  liveView,
+  setLiveView,
   outputName,
   setPluginState,
   JSONStatus,
@@ -89,8 +89,8 @@ const BasicPluginInfoView: React.FC<ICreateContext & WithStyles<typeof styles>> 
         groupToWidgets={groupToWidgets}
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
-        jsonView={jsonView}
-        setJsonView={setJsonView}
+        liveView={liveView}
+        setLiveView={setLiveView}
         outputName={outputName}
         setPluginState={setPluginState}
         JSONStatus={JSONStatus}
