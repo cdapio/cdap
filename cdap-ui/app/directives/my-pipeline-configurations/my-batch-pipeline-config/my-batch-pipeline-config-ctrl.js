@@ -140,9 +140,17 @@ class MyBatchPipelineConfigCtrl {
   }
 
   buttonsAreDisabled() {
+    let runtimeArgsMissingValues = false;
     let customConfigMissingValues = false;
-    customConfigMissingValues = this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(this.customEngineConfig);
-    return customConfigMissingValues;
+    if (this.isDeployed || this.showPreviewConfig) {
+      runtimeArgsMissingValues =
+          this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(
+              this.runtimeArguments);
+    }
+    customConfigMissingValues =
+        this.HydratorPlusPlusHydratorService.keyValuePairsHaveMissingValues(
+            this.customEngineConfig);
+    return runtimeArgsMissingValues || customConfigMissingValues;
   }
 
   onDriverMemoryChange(value) {

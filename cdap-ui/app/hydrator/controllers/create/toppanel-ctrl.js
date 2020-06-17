@@ -480,26 +480,45 @@ class HydratorPlusPlusTopPanelCtrl {
     });
   }
 
-  startOrStopPreview() {
-    if (this.doesPreviewHaveEmptyMacros) {
-      this.doStartOrStopPreview();
-    } else {
-      // Validate and show runtime arguments if there are
-      // un-fulfilled macros.
+  shouldNotifyUserAboutEmptyArgs(keyValues) {
+    // Used to open arguments modal when users click on 'run' button directly.
+    // This is helpful to bring it to users attention that they're about to
+    // run preview with empty values
+    if (keyValues.pairs) {
+      return keyValues.pairs.some((keyValuePair) => {
+        if (keyValuePair.key === '') {
+          // If key and value both are empty, don't notify
+          // If key is empty and value is not, notify
+          return keyValuePair.value === '' ? false : true;
+        } else {
+          // If key is not empty, value is empty, notify
+          return keyValuePair.value === '';
+        }
+      });
+    }
+    return false;
+  }
+
+  notifyOrToggleRun() {
+    if (this.previewRunning) {
+      this.stopPreview();
+    } else if (this.shouldNotifyUserAboutEmptyArgs(this.runtimeArguments)) {
       this.toggleConfig();
+    } else {
+      this.startOrStopPreview();
     }
   }
 
-  doStartOrStopPreview() {
-    this.getRuntimeArguments()
-      .then(() => {
-        if (this.previewRunning) {
-          this.stopPreview();
-        } else {
-          this.onPreviewStart();
-        }
+  startOrStopPreview() {
+    if (this.previewRunning) {
+      this.stopPreview();
+    } else if (this.doesPreviewHaveEmptyMacros) {
+      this.getRuntimeArguments().then(() => {
+        this.onPreviewStart();
       });
+    }
   }
+
 
   toggleScheduler() {
     this.viewScheduler = !this.viewScheduler;
@@ -635,13 +654,17 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewLoading = true;
     this.loadingLabel = 'Stopping';
     this.stopTimer();
-    this.myPipelineApi
-        .stopPreview(params, {})
-        .$promise
-        .then(() => {
-          this.previewLoading = false;
-          this.previewRunning = false;
-        });
+    this.myPipelineApi.stopPreview(params, {})
+        .$promise.then(
+            () => {
+              this.previewLoading = false;
+              this.previewRunning = false;
+            },
+            (err) => {
+              this.previewLoading = false;
+              this.previewRunning = false;
+              this.myAlertOnValium.show({type: 'danger', content: err.data});
+            });
   }
 
   startPollPreviewStatus(previewId) {
