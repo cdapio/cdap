@@ -20,6 +20,7 @@ import { connect } from 'react-redux';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
 import SortableHeader from 'components/PipelineList/DraftPipelineView/DraftTable/SortableHeader';
+import If from 'components/If';
 
 interface IProps {
   drafts: IDraft[];
@@ -51,15 +52,16 @@ const DraftTableView: React.SFC<IProps> = ({ drafts, currentPage, pageLimit }) =
   return (
     <div className="draft-table grid-wrapper">
       <div className="grid grid-container">
-        <div className="grid-header">
-          <div className="grid-row">
-            <SortableHeader columnName="name" />
-            <SortableHeader columnName="type" />
-            <SortableHeader columnName="lastSaved" />
-            <strong />
+        <If condition={drafts && drafts.length > 0}>
+          <div className="grid-header">
+            <div className="grid-row">
+              <SortableHeader columnName="name" />
+              <SortableHeader columnName="type" />
+              <SortableHeader columnName="lastSaved" />
+              <strong />
+            </div>
           </div>
-        </div>
-
+        </If>
         {renderBody()}
       </div>
     </div>
