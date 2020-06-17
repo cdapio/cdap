@@ -17,12 +17,13 @@ package io.cdap.cdap.app.store.preview;
 
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
@@ -91,4 +92,33 @@ public interface PreviewStore {
    */
   @Nullable
   PreviewStatus getPreviewStatus(ApplicationId applicationId);
+
+  /**
+   * Adds the preview request for given application id in the store.
+   * {@code getPreviewStatus} call returns status as WAITING once the request
+   * is added to the store.
+   * @param applicationId the application id corresponding to the request
+   * @param appRequest preview request configuration
+   */
+  void add(ApplicationId applicationId, AppRequest appRequest);
+
+  /**
+   * @return list of all waiting requests in waiting state sorted by submit time
+   */
+  List<PreviewRequest> getAllInWaitingState();
+
+  /**
+   * Sets the information about the poller that has acquired the waiting application for running.
+   * @param applicationId applicationId the application id of preview
+   * @param pollerInfo information about the poller that is going to run the preview
+   * @throws ConflictException exception thrown when preview application for which poller info is to be set is not
+   *                           in WAITING state
+   */
+  void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo) throws ConflictException;
+
+  /**
+   * @return the poller info associated with the application if it exists, otherwise {@code null} is returned
+   */
+  @Nullable
+  byte[] getPreviewRequestPollerInfo(ApplicationId applicationId);
 }

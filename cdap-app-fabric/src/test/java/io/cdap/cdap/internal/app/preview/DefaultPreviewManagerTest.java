@@ -22,11 +22,13 @@ import com.google.inject.Injector;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewRunner;
+import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -102,12 +104,17 @@ public class DefaultPreviewManagerTest {
       new SecureStoreServerModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewHttpModule(),
+      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new ProvisionerModule(),
       new AbstractModule() {
         @Override
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          // bind PreviewRunnerStopper to Mock implementation
+          bind(PreviewRunnerServiceStopper.class).toInstance(runnerId -> {
+
+          });
         }
       }
     );
@@ -129,17 +136,13 @@ public class DefaultPreviewManagerTest {
     DefaultPreviewManager previewManager = (DefaultPreviewManager) getInjector().getInstance(PreviewManager.class);
 
     Injector previewInjector = previewManager.createPreviewInjector();
-    PreviewRunner runner1 = previewInjector.getInstance(PreviewRunner.class);
+    PreviewRequestQueue queue = previewInjector.getInstance(PreviewRequestQueue.class);
 
     // Make sure same PreviewRunner instance is returned for a preview system
-    Assert.assertEquals(runner1, previewInjector.getInstance(PreviewRunner.class));
+    Assert.assertEquals(queue, previewInjector.getInstance(PreviewRequestQueue.class));
 
     // Also make sure it can return a LogReader
     previewInjector.getInstance(LogReader.class);
-
-    // Have to start and stop the runners so that the leveldb file is closed
-    ((DefaultPreviewRunner) runner1).startAndWait();
-    ((DefaultPreviewRunner) runner1).stopAndWait();
 
     previewManager.startAndWait();
     previewManager.stopAndWait();

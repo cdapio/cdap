@@ -3321,6 +3321,47 @@
   </property>
 
   <property>
+    <name>system.preview.store.update.retry.policy.base.delay.ms</name>
+    <value>100</value>
+    <description>
+      The base delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.preview.store.update.retry.policy.max.delay.ms</name>
+    <value>5000</value>
+    <description>
+      The maximum delay between retries in milliseconds
+    </description>
+  </property>
+
+  <property>
+    <name>system.preview.store.update.retry.policy.max.retries</name>
+    <value>1000</value>
+    <description>
+      The maximum number of retries to attempt before aborting
+    </description>
+  </property>
+
+  <property>
+    <name>system.preview.store.update.retry.policy.max.time.secs</name>
+    <value>300</value>
+    <description>
+      The maximum elapsed time in seconds before retries are aborted
+    </description>
+  </property>
+
+  <property>
+    <name>system.preview.store.update.retry.policy.type</name>
+    <value>exponential.backoff</value>
+    <description>
+      The type of retry policy for notification publish or subscription. Allowed options:
+      "none", "fixed.delay", or "exponential.backoff".
+    </description>
+  </property>
+
+  <property>
     <name>system.program.state.retry.policy.base.delay.ms</name>
     <value>1000</value>
     <description>

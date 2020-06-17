@@ -24,13 +24,17 @@ import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.ConflictException;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.BasicThrowable;
+import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -41,10 +45,13 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link PreviewStore} that stores data in a level db table.
@@ -56,6 +63,21 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] VALUE = Bytes.toBytes("v");
   private static final byte[] RUN = Bytes.toBytes("r");
   private static final byte[] STATUS = Bytes.toBytes("s");
+  private static final byte[] POLLERINFO = Bytes.toBytes("i");
+
+  /*
+   * Row storing the preview requests waiting for execution
+   * |------------------------------------|--------------------|-----------------|
+   * |                                    |      a(ID)         |    c(CONFIG)    |
+   * |------------------------------------|--------------------|-----------------|
+   * |<w(WAITING)><submit time><ns><appid>|     APPID JSON     | AppRequest JSON |
+   * |------------------------------------|--------------------|-----------------|
+   */
+
+  private static final byte[] WAITING = Bytes.toBytes("w");
+  private static final byte[] CONFIG = Bytes.toBytes("c");
+  private static final byte[] APPID = Bytes.toBytes("a");
+
 
   private final AtomicLong counter = new AtomicLong(0L);
 
@@ -63,7 +85,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private final LevelDBTableService service;
 
   @Inject
-  DefaultPreviewStore(LevelDBTableService service) {
+  public DefaultPreviewStore(LevelDBTableService service) {
     try {
       this.service = service;
       service.ensureTableExists(PREVIEW_TABLE_ID.getDataset());
@@ -193,6 +215,118 @@ public class DefaultPreviewStore implements PreviewStore {
     }
     if (!row.isEmpty()) {
       return gson.fromJson(Bytes.toString(row.get(STATUS)), PreviewStatus.class);
+    }
+    return null;
+  }
+
+  @Override
+  public void add(ApplicationId applicationId, AppRequest appRequest) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
+    MDSKey mdsKey = new MDSKey.Builder()
+      .add(WAITING)
+      .add(timeInSeconds)
+      .add(applicationId.getNamespace())
+      .add(applicationId.getApplication())
+      .build();
+
+    try {
+      table.put(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)), 1L);
+      table.put(mdsKey.getKey(), CONFIG, Bytes.toBytes(gson.toJson(appRequest)), 1L);
+      setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.WAITING, null, null, null));
+    } catch (IOException e) {
+      String message = String.format("Error while adding preview request with application '%s' in preview store.",
+                                     applicationId);
+      throw new RuntimeException(message, e);
+    }
+  }
+
+  private void removeFromWaitingState(ApplicationId applicationId) {
+    long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
+
+    MDSKey mdsKey = new MDSKey.Builder()
+      .add(WAITING)
+      .add(timeInSeconds)
+      .add(applicationId.getNamespace())
+      .add(applicationId.getApplication())
+      .build();
+
+    try {
+      table.deleteRows(Collections.singleton(mdsKey.getKey()));
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to remove application with id %s from waiting queue.",
+                                               applicationId), e);
+    }
+  }
+
+  @Override
+  public List<PreviewRequest> getAllInWaitingState() {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    byte[] startRowKey = new MDSKey.Builder().add(WAITING).build().getKey();
+    byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
+
+    List<PreviewRequest> result = new ArrayList<>();
+    try (Scanner scanner = table.scan(startRowKey, stopRowKey, null, null, null)) {
+      Row indexRow;
+      while ((indexRow = scanner.next()) != null) {
+        Map<byte[], byte[]> columns = indexRow.getColumns();
+        AppRequest request = gson.fromJson(Bytes.toString(columns.get(CONFIG)), AppRequest.class);
+        ApplicationId applicationId = gson.fromJson(Bytes.toString(columns.get(APPID)), ApplicationId.class);
+        result.add(new PreviewRequest(applicationId, request));
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Error while listing the waiting preview requests.", e);
+    }
+    return result;
+  }
+
+  @Override
+  public void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo)
+    throws ConflictException {
+    if (pollerInfo != null) {
+      setPollerinfo(applicationId, pollerInfo);
+    }
+    removeFromWaitingState(applicationId);
+    PreviewStatus previewStatus = getPreviewStatus(applicationId);
+    if (previewStatus == null || previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
+      throw new ConflictException(String.format("Preview application with id %s does not exist in the " +
+                                                  "waiting state.", applicationId));
+    }
+    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, null, null, null));
+  }
+
+  private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    MDSKey mdsKey = new MDSKey.Builder()
+      .add(applicationId.getNamespace())
+      .add(applicationId.getApplication())
+      .build();
+
+    try {
+      table.put(mdsKey.getKey(), POLLERINFO, pollerInfo, 1L);
+    } catch (IOException e) {
+      String msg = String.format("Error while setting the poller information %s for waiting preview application %s.",
+                                 gson.toJson(pollerInfo), applicationId);
+      throw new RuntimeException(msg, e);
+    }
+  }
+
+  @Override
+  public byte[] getPreviewRequestPollerInfo(ApplicationId applicationId) {
+    MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace()).add(applicationId.getApplication()).build();
+
+    Map<byte[], byte[]> row = null;
+    try {
+      row = table.getRow(mdsKey.getKey(), new byte[][]{POLLERINFO},
+                         null, null, -1, null);
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to get the poller info for preview %s", applicationId), e);
+    }
+    if (!row.isEmpty()) {
+      return row.get(POLLERINFO);
     }
     return null;
   }
