@@ -97,6 +97,15 @@ const DataTableView: React.FC<IDataTableProps> = ({
     return msg;
   };
 
+  // Used to stringify any non-string field values and field names.
+  // TO DO: Might not need to do this for field names, need to test with nested schemas
+  const format = (field: any) => {
+    if (typeof field === 'object') {
+      return JSON.stringify(field);
+    }
+    return field;
+  };
+
   if (isEmpty(records) || isCondition) {
     return (
       <div>
@@ -111,7 +120,9 @@ const DataTableView: React.FC<IDataTableProps> = ({
         <TableHead>
           <TableRow className={classes.row}>
             {headers.map((fieldName, i) => {
-              return <CustomTableCell key={`header-cell-${i}`}>{fieldName}</CustomTableCell>;
+              return (
+                <CustomTableCell key={`header-cell-${i}`}>{format(fieldName)}</CustomTableCell>
+              );
             })}
           </TableRow>
         </TableHead>
@@ -121,7 +132,9 @@ const DataTableView: React.FC<IDataTableProps> = ({
               <TableRow className={classes.row} key={`tr-${j}`}>
                 {headers.map((fieldName, k) => {
                   return (
-                    <CustomTableCell key={`table-cell-${k}`}>{record[fieldName]}</CustomTableCell>
+                    <CustomTableCell key={`table-cell-${k}`}>
+                      {format(record[fieldName])}
+                    </CustomTableCell>
                   );
                 })}
               </TableRow>
