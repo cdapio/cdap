@@ -88,6 +88,9 @@ public final class SystemArguments {
   public static final String PROFILE_PROVISIONER = "system.profile.provisioner";
   public static final String PROFILE_PROPERTIES_PREFIX = "system.profile.properties.";
 
+  // keys for field lineage
+  public static final String FIELD_LINEAGE_ENABLED = "system.field.lineage.enabled";
+
   /**
    * Runtime arguments for program impersonation
    */
@@ -127,6 +130,18 @@ public final class SystemArguments {
   public static boolean isProgramMetricsEnabled(Map<String, String> args, boolean defaultValue) {
     String metricsEnabled = args.get(METRICS_ENABLED);
     return metricsEnabled == null ? defaultValue : Boolean.valueOf(metricsEnabled);
+  }
+
+  /**
+   * If args contains {@link SystemArguments#FIELD_LINEAGE_ENABLED}
+   * we evaluate and return the boolean value, if the key is not preset we by default return true
+   *
+   * @param args runtime arguments
+   * @return true if field lineage is enabled
+   */
+  public static boolean isProgramFieldLineageEnabled(Map<String, String> args) {
+    String fieldLineageEnabled = args.get(FIELD_LINEAGE_ENABLED);
+    return fieldLineageEnabled == null ? true : Boolean.valueOf(fieldLineageEnabled);
   }
 
   /**

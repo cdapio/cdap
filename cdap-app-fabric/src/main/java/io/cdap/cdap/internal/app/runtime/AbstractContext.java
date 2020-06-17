@@ -173,6 +173,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Set<Operation> fieldLineageOperations;
   private final LoggingContext loggingContext;
   private final FieldLineageWriter fieldLineageWriter;
+  private final boolean emitFieldLineage;
   private volatile ClassLoader programInvocationClassLoader;
   protected final DynamicDatasetCache datasetCache;
   protected final RetryStrategy retryStrategy;
@@ -203,6 +204,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
     this.runtimeArguments = Collections.unmodifiableMap(runtimeArgs);
+    this.emitFieldLineage = SystemArguments.isProgramFieldLineageEnabled(runtimeArgs);
 
     this.programMetrics = createProgramMetrics(programRunId, getMetricsService(cConf, metricsService, runtimeArgs),
                                                metricsTags);
@@ -875,11 +877,17 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public synchronized void record(Collection<? extends Operation> operations) {
+    if (!emitFieldLineage) {
+      return;
+    }
     fieldLineageOperations.addAll(operations);
   }
 
   @Override
   public synchronized void flushLineage() {
+    if (!emitFieldLineage) {
+      return;
+    }
     FieldLineageInfo info = new FieldLineageInfo(fieldLineageOperations);
     fieldLineageWriter.write(programRunId, info);
     fieldLineageOperations.clear();
