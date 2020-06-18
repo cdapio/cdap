@@ -26,6 +26,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.app.RunIds;
@@ -62,6 +63,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] VALUE = Bytes.toBytes("v");
   private static final byte[] RUN = Bytes.toBytes("r");
   private static final byte[] STATUS = Bytes.toBytes("s");
+  private static final byte[] POLLERINFO = Bytes.toBytes("i");
 
   /*
    * Row storing the preview requests waiting for execution
@@ -75,6 +77,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private static final byte[] WAITING = Bytes.toBytes("w");
   private static final byte[] CONFIG = Bytes.toBytes("c");
   private static final byte[] APPID = Bytes.toBytes("a");
+
 
   private final AtomicLong counter = new AtomicLong(0L);
 
@@ -236,8 +239,7 @@ public class DefaultPreviewStore implements PreviewStore {
     }
   }
 
-  @Override
-  public void removeFromWaitingState(ApplicationId applicationId) {
+  private void removeFromWaitingState(ApplicationId applicationId) {
     long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
 
     MDSKey mdsKey = new MDSKey.Builder()
@@ -276,6 +278,28 @@ public class DefaultPreviewStore implements PreviewStore {
       throw new RuntimeException("Error while listing the waiting preview requests.", e);
     }
     return result;
+  }
+
+  @Override
+  public void setPreviewRequestPollerInfo(ApplicationId applicationId,
+                                          PreviewRequestPollerInfo previewRequestPollerInfo) {
+    // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    MDSKey mdsKey = new MDSKey.Builder()
+      .add(applicationId.getNamespace())
+      .add(applicationId.getApplication())
+      .build();
+
+    try {
+      table.put(mdsKey.getKey(), POLLERINFO, Bytes.toBytes(gson.toJson(previewRequestPollerInfo)), 1L);
+    } catch (IOException e) {
+      String msg = String.format("Error while setting the poller information %s for waiting preview application %s.",
+                                 gson.toJson(previewRequestPollerInfo), applicationId);
+      throw new RuntimeException(msg, e);
+    }
+
+    removeFromWaitingState(applicationId);
+    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.ACQUIRED, null, null, null));
   }
 
   @VisibleForTesting

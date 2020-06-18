@@ -24,9 +24,10 @@ import java.util.Optional;
 public interface PreviewRequestQueue {
   /**
    * Poll the next available request in the queue.
+   * @param previewRequestPollerInfo information about the poller
    * @return {@code PreviewRequest} if such request is available in the queue
    */
-  Optional<PreviewRequest> poll();
+  Optional<PreviewRequest> poll(PreviewRequestPollerInfo previewRequestPollerInfo);
 
   /**
    * Add a preview request in the queue.

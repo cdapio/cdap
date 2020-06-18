@@ -18,6 +18,7 @@ package io.cdap.cdap.app.store.preview;
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -100,13 +101,14 @@ public interface PreviewStore {
   void addToWaitingState(ApplicationId applicationId, AppRequest appRequest);
 
   /**
-   * Removes preview request from the waiting state.
-   * @param applicationId the application id corresponding to the waiting queue
-   */
-  void removeFromWaitingState(ApplicationId applicationId);
-
-  /**
    * @return list of all waiting requests in waiting state sorted by submit time
    */
   List<PreviewRequest> getAllInWaitingState();
+
+  /**
+   * Sets the information about the poller that has acquired the waiting application for running.
+   * @param applicationId the application id of preview
+   * @param previewRequestPollerInfo information about the poller that is going to run the preview.
+   */
+  void setPreviewRequestPollerInfo(ApplicationId applicationId, PreviewRequestPollerInfo previewRequestPollerInfo);
 }
