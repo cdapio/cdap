@@ -24,7 +24,6 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.assistedinject.Assisted;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
@@ -68,8 +67,8 @@ import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
@@ -170,19 +169,6 @@ public class PreviewManagerTest {
     txManager.stopAndWait();
   }
 
-  @Test(expected = IllegalStateException.class)
-  public void testLimit() throws Exception {
-    PreviewConfig previewConfig = new PreviewConfig("test", ProgramType.WORKFLOW, null, null);
-    previewManager.start(NamespaceId.DEFAULT, new AppRequest<>(new ArtifactSummary("test", "1.0"), null,
-                                                               previewConfig));
-    previewManager.start(NamespaceId.DEFAULT, new AppRequest<>(new ArtifactSummary("test", "1.0"), null,
-                                                               previewConfig));
-
-    // We allow 2 concurrent previews, so running the third one would fail
-    previewManager.start(NamespaceId.DEFAULT, new AppRequest<>(new ArtifactSummary("test", "1.0"), null,
-                                                               previewConfig));
-  }
-
   @Test
   public void testReclaim() throws Exception {
     PreviewConfig previewConfig = new PreviewConfig("test", ProgramType.WORKFLOW, null, null);
@@ -211,11 +197,10 @@ public class PreviewManagerTest {
                             PrivilegesManager privilegesManager, PreferencesService preferencesService,
                             ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                             PluginFinderProvider pluginFinderProvider,
-                            PreferencesFetcherProvider preferencesFetcherProvider,
-                            @Assisted PreviewRequest previewRequest) {
+                            PreferencesFetcherProvider preferencesFetcherProvider) {
       super(readerProvider, artifactStore, authorizerInstantiator, authorizationEnforcer,
             privilegesManager, preferencesService, programRuntimeProviderLoader, pluginFinderProvider,
-            preferencesFetcherProvider, previewRequest);
+            preferencesFetcherProvider);
     }
 
     @Override
@@ -229,31 +214,22 @@ public class PreviewManagerTest {
    */
   private static final class MockPreviewRunner implements PreviewRunner {
 
-    private final PreviewRequest previewRequest;
-
     @Inject
-    MockPreviewRunner(PreviewRequest previewRequest) {
-      this.previewRequest = previewRequest;
-    }
-
-
-    @Override
-    public PreviewRequest getPreviewRequest() {
-      return previewRequest;
+    MockPreviewRunner() {
     }
 
     @Override
-    public void startPreview() {
+    public void startPreview(PreviewRequest previewRequest) {
       // no-op
     }
 
     @Override
-    public PreviewStatus getStatus() {
+    public PreviewStatus getStatus(ApplicationId applicationId) {
       return PREVIEW_STATUS.get();
     }
 
     @Override
-    public void stopPreview() {
+    public void stopPreview(ApplicationId applicationId) {
       // no-op
     }
 
@@ -263,17 +239,12 @@ public class PreviewManagerTest {
     }
 
     @Override
-    public Map<String, List<JsonElement>> getData(String tracerName) {
+    public Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) {
       return null;
     }
 
     @Override
-    public ProgramRunId getProgramRunId() {
-      return null;
-    }
-
-    @Override
-    public RunRecordDetail getRunRecord() {
+    public RunRecordDetail getRunRecord(ApplicationId applicationId) {
       return null;
     }
 
