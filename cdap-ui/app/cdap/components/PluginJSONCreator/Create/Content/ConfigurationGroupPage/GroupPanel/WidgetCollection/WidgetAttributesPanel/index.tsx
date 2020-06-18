@@ -14,19 +14,12 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import CloseIcon from '@material-ui/icons/Close';
 import If from 'components/If';
 import { h2Styles } from 'components/Markdown/MarkdownHeading';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
 import { useWidgetState } from 'components/PluginJSONCreator/Create';
-import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput';
-import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetInfoInput';
+import StandardModal from 'components/StandardModal';
 import { fromJS } from 'immutable';
 import * as React from 'react';
 
@@ -95,7 +88,7 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
   return React.useMemo(
     () => (
       <If condition={widgetAttributesOpen}>
-        <Dialog
+        {/* <Dialog
           open={true}
           onClose={closeWidgetAttributes}
           disableBackdropClick={true}
@@ -140,7 +133,10 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
               Save
             </Button>
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
+        <StandardModal>
+          <div>helllo hekekkekekk</div>
+        </StandardModal>
       </If>
     ),
     [
