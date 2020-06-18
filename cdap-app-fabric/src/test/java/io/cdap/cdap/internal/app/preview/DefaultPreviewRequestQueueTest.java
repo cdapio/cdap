@@ -22,9 +22,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -120,43 +122,45 @@ public class DefaultPreviewRequestQueueTest {
     }
 
     @Override
-    public void removeFromWaitingState(ApplicationId applicationId) {
-
+    public List<PreviewRequest> getAllInWaitingState() {
+      return Collections.emptyList();
     }
 
     @Override
-    public List<PreviewRequest> getAllInWaitingState() {
-      return Collections.emptyList();
+    public void setPreviewRequestPollerInfo(ApplicationId applicationId,
+                                            PreviewRequestPollerInfo previewRequestPollerInfo) {
+
     }
   }
 
   @Test
   public void testPreviewRequestQueue() {
-    Optional<PreviewRequest> requestOptional = previewRequestQueue.poll();
+    PreviewRequestPollerInfo pollerInfo = new PreviewRequestPollerInfo("poller-id");
+    Optional<PreviewRequest> requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertFalse(requestOptional.isPresent());
 
-    ApplicationId app1 = new ApplicationId("default", "app1");
+    ApplicationId app1 = new ApplicationId("default", RunIds.generate().getId());
     PreviewRequest request = new PreviewRequest(app1, getAppRequest());
     previewRequestQueue.add(request);
 
-    requestOptional = previewRequestQueue.poll();
+    requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertTrue(requestOptional.isPresent());
     request = requestOptional.get();
     ProgramId programId1 = new ProgramId(app1, ProgramType.SPARK, "WordCount");
     Assert.assertEquals(programId1, request.getProgram());
 
-    requestOptional = previewRequestQueue.poll();
+    requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertFalse(requestOptional.isPresent());
 
-    ApplicationId app2 = new ApplicationId("default", "app2");
+    ApplicationId app2 = new ApplicationId("default", RunIds.generate().getId());
     request = new PreviewRequest(app2, getAppRequest());
     previewRequestQueue.add(request);
 
-    ApplicationId app3 = new ApplicationId("default", "app3");
+    ApplicationId app3 = new ApplicationId("default", RunIds.generate().getId());
     request = new PreviewRequest(app3, getAppRequest());
     previewRequestQueue.add(request);
 
-    ApplicationId app4 = new ApplicationId("default", "app4");
+    ApplicationId app4 = new ApplicationId("default", RunIds.generate().getId());
     request = new PreviewRequest(app4, getAppRequest());
     boolean exceptionThrown = false;
     try {
@@ -166,19 +170,19 @@ public class DefaultPreviewRequestQueueTest {
     }
     Assert.assertTrue(exceptionThrown);
 
-    requestOptional = previewRequestQueue.poll();
+    requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertTrue(requestOptional.isPresent());
     request = requestOptional.get();
     ProgramId programId2 = new ProgramId(app2, ProgramType.SPARK, "WordCount");
     Assert.assertEquals(programId2, request.getProgram());
 
-    requestOptional = previewRequestQueue.poll();
+    requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertTrue(requestOptional.isPresent());
     request = requestOptional.get();
     ProgramId programId3 = new ProgramId(app3, ProgramType.SPARK, "WordCount");
     Assert.assertEquals(programId3, request.getProgram());
 
-    requestOptional = previewRequestQueue.poll();
+    requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertFalse(requestOptional.isPresent());
   }
 

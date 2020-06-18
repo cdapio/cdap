@@ -20,6 +20,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -140,7 +141,8 @@ public class DefaultPreviewStoreTest {
     Assert.assertNotNull(appRequest);
     Assert.assertNotNull(appRequest.getPreview());
     Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
-    store.removeFromWaitingState(applicationId);
+    PreviewRequestPollerInfo pollerInfo = new PreviewRequestPollerInfo("poller");
+    store.setPreviewRequestPollerInfo(applicationId, pollerInfo);
 
     Assert.assertEquals(0, store.getAllInWaitingState().size());
 
@@ -155,12 +157,12 @@ public class DefaultPreviewStoreTest {
     Assert.assertEquals(applicationId2, allWaiting.get(0).getProgram().getParent());
     Assert.assertEquals(applicationId3, allWaiting.get(1).getProgram().getParent());
 
-    store.removeFromWaitingState(applicationId3);
+    store.setPreviewRequestPollerInfo(applicationId2, pollerInfo);
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(1, allWaiting.size());
-    Assert.assertEquals(applicationId2, allWaiting.get(0).getProgram().getParent());
+    Assert.assertEquals(applicationId3, allWaiting.get(0).getProgram().getParent());
 
-    store.removeFromWaitingState(applicationId2);
+    store.setPreviewRequestPollerInfo(applicationId3, pollerInfo);
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(0, allWaiting.size());
   }
