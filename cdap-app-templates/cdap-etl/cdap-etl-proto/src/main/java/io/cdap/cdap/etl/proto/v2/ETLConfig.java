@@ -59,10 +59,10 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   // For serialization purpose for upgrade compatibility.
   protected List<String> comments;
 
-  protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
-                      Resources resources, Resources driverResources, Resources clientResources,
-                      boolean stageLoggingEnabled, boolean processTimingEnabled,
-                      int numOfRecordsPreview, Map<String, String> properties) {
+  protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections, Resources resources,
+                      Resources driverResources, Resources clientResources,
+                      @Nullable Boolean stageLoggingEnabled, @Nullable Boolean processTimingEnabled,
+                      @Nullable Integer numOfRecordsPreview, Map<String, String> properties) {
     this.description = null;
     this.stages = Collections.unmodifiableSet(stages);
     this.connections = Collections.unmodifiableSet(connections);
@@ -82,8 +82,8 @@ public class ETLConfig extends Config implements UpgradeableConfig {
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, Resources driverResources, Resources clientResources,
-                      boolean stageLoggingEnabled, boolean processTimingEnabled,
-                      int numOfRecordsPreview, Map<String, String> properties, List<String> comments) {
+                      @Nullable Boolean stageLoggingEnabled, @Nullable Boolean processTimingEnabled,
+                      @Nullable Integer numOfRecordsPreview, Map<String, String> properties, List<String> comments) {
     this(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
         numOfRecordsPreview, properties);
     this.comments = comments;
