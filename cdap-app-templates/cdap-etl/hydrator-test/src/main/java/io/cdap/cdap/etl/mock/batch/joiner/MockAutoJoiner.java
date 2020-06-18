@@ -26,6 +26,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 import io.cdap.cdap.api.plugin.PluginPropertyField;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
@@ -54,6 +55,7 @@ import javax.annotation.Nullable;
 @Name(MockAutoJoiner.NAME)
 public class MockAutoJoiner extends BatchAutoJoiner {
   public static final String NAME = "MockAutoJoiner";
+  public static final String PARTITIONS_ARGUMENT = "partitions";
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
   private static final Gson GSON = new Gson();
   private static final Type LIST = new TypeToken<List<String>>() { }.getType();
@@ -116,6 +118,15 @@ public class MockAutoJoiner extends BatchAutoJoiner {
       builder.setOutputSchema(outputSchema);
     }
     return builder.build();
+  }
+
+  @Override
+  public void prepareRun(BatchJoinerContext context) throws Exception {
+    super.prepareRun(context);
+    String partitionsStr = context.getArguments().get(PARTITIONS_ARGUMENT);
+    if (partitionsStr != null) {
+      context.setNumPartitions(Integer.parseInt(partitionsStr));
+    }
   }
 
   /**
