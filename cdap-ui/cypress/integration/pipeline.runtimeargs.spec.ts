@@ -263,7 +263,7 @@ describe('Deploying pipeline with temporary runtime arguments', () => {
     ).click();
     cy.get(
       `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`
-    ).should('not.exist');
+    ).should('not.have.value','test key 3');
     cy.get(dataCy('run-deployed-pipeline-modal-btn')).click();
     cy.get(dataCy('Failed'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
     cy.get('.arrow-btn-container').click();
@@ -288,7 +288,7 @@ describe('Deploying pipeline with temporary runtime arguments', () => {
       `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(
         RUNTIME_ARGS_VALUE_SELECTOR
       )}`
-    ).should('not.exist');
+    ).should('not.have.value', 'runtime_args_value3');
   });
 });
 
@@ -386,7 +386,7 @@ describe('Deploying pipeline with saved runtime arguments', () => {
       `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy(
         RUNTIME_ARGS_VALUE_SELECTOR
       )}`
-    ).should('not.exist');
+    ).should('not.have.value', 'runtime_args_value4');
     cy.assert_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
     cy.assert_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
   });
