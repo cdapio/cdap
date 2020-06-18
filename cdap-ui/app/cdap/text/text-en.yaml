@@ -2083,6 +2083,7 @@ features:
       duplicate: Duplicate
       export: Export
       exportModalTitle: Export pipeline configuration
+      loading: Loading
       run: Run
       schedule: Schedule
       starting: Starting

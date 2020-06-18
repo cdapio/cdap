@@ -24,6 +24,7 @@ import PipelineRuntimeArgsDropdownBtn from 'components/PipelineDetails/PipelineR
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import { convertKeyValuePairsToMap } from 'services/helpers';
 import T from 'i18n-react';
+import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -38,6 +39,7 @@ export default class PipelineRunButton extends Component {
 
   state = {
     showRunOptions: false,
+    showLoading: false,
   };
 
   toggleRunConfigOption = (showRunOptions) => {
@@ -49,11 +51,13 @@ export default class PipelineRunButton extends Component {
     });
   };
 
-  runPipelineOrToggleConfig = () => {
+  runPipelineOrToggleConfig = async () => {
     if (this.props.runButtonLoading) {
       return;
     }
-
+    this.setState({ showLoading: true });
+    await fetchAndUpdateRuntimeArgs().toPromise();
+    this.setState({ showLoading: false });
     if (!this.state.showRunOptions) {
       let { isMissingKeyValues } = PipelineConfigurationsStore.getState();
       if (isMissingKeyValues) {
@@ -102,10 +106,13 @@ export default class PipelineRunButton extends Component {
         disabled={this.props.runButtonLoading}
       >
         <div className="btn-container">
-          {this.props.runButtonLoading ? (
+          {this.props.runButtonLoading || this.state.showLoading ? (
             <span className="text-success">
               <IconSVG name="icon-spinner" className="fa-spin" />
-              <div className="button-label">{T.translate(`${PREFIX}.starting`)}</div>
+              <div className="button-label">
+                {this.props.runButtonLoading ? T.translate(`${PREFIX}.starting`) : null}
+                {this.state.showLoading ? T.translate(`${PREFIX}.loading`) : null}
+              </div>
             </span>
           ) : (
             <span className="text-success">

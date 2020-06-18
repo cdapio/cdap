@@ -351,11 +351,14 @@ class HydratorPlusPlusHydratorService {
   keyValuePairsHaveMissingValues(keyValues) {
     if (keyValues.pairs) {
       return keyValues.pairs.some((keyValuePair) => {
-        if (keyValuePair.notDeletable && keyValuePair.provided) { return false; }
+        if (keyValuePair.notDeletable && keyValuePair.value === '') {
+          return false;
+        }
         let emptyKeyField = (keyValuePair.key.length === 0);
         let emptyValueField = (keyValuePair.value.length === 0);
-        // buttons are disabled when either the key or the value of a pair is empty, but not both
-        return (emptyKeyField && !emptyValueField) || (!emptyKeyField && emptyValueField);
+        // buttons are disabled only when the key of a pair is empty, empty
+        // values are considered provided.
+        return (emptyKeyField && !emptyValueField);
       });
     }
     return false;

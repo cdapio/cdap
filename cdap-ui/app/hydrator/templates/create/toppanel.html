@@ -181,7 +181,7 @@
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning"
           ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading &&
           HydratorPlusPlusTopPanelCtrl.hasNodes &&
-          HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
+          HydratorPlusPlusTopPanelCtrl.notifyOrToggleRun()"
           uib-tooltip="Start building a pipeline before starting preview"
           tooltip-placement="bottom"
           tooltip-class="toppanel-tooltip"
@@ -195,7 +195,7 @@
     </div>
     <div class="btn"
           ng-if="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.previewRunning"
-          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
+          ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && HydratorPlusPlusTopPanelCtrl.notifyOrToggleRun()"
           ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading"
           data-cy="stop-preview-btn">
       <div class="btn-container">
@@ -246,7 +246,7 @@
     runtime-arguments="HydratorPlusPlusTopPanelCtrl.runtimeArguments"
     apply-runtime-arguments="HydratorPlusPlusTopPanelCtrl.applyRuntimeArguments()"
     resolved-macros="HydratorPlusPlusTopPanelCtrl.resolvedMacros"
-    run-pipeline="HydratorPlusPlusTopPanelCtrl.doStartOrStopPreview()"
+    run-pipeline="HydratorPlusPlusTopPanelCtrl.startOrStopPreview()"
     pipeline-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}"
     pipeline-action="Run"
     on-close="HydratorPlusPlusTopPanelCtrl.viewConfig = false"
