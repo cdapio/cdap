@@ -14,6 +14,8 @@
  * the License.
 */
 
+import uuidV4 from 'uuid/v4';
+
 const username = Cypress.env('username') || 'admin';
 const password = Cypress.env('password') || 'admin';
 let isAuthEnabled = false;
@@ -117,4 +119,21 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .then(() => done());
 }
 
-export { loginIfRequired, getArtifactsPoll, deployAndTestPipeline, getSessionToken };
+function dataCy(property) {
+  return `[data-cy="${property}"]`;
+}
+
+function generateDraftFromPipeline(pipeline) {
+  return cy.fixture(pipeline).then(pipeline_for_draft => {
+    const draftId = uuidV4();
+    const pipelineName = `${pipeline_for_draft.name}-${Date.now()}`;
+    pipeline_for_draft['__ui__'] = { draftId, lastSaved: Date.now() };
+    pipeline_for_draft.name = pipelineName;
+    const pipelineDraft = {
+      hydratorDrafts: { default: { [draftId]: pipeline_for_draft } }
+    };
+    return { pipelineDraft, pipelineName };
+  });
+}
+
+export { loginIfRequired, getArtifactsPoll, deployAndTestPipeline, getSessionToken, generateDraftFromPipeline, dataCy };

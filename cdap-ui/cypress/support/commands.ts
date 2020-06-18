@@ -40,6 +40,17 @@ Cypress.Commands.add('upload_pipeline', (fileName, selector) => {
   });
 });
 
+Cypress.Commands.add('upload_draft_via_api', (headers, pipelineJson) => {
+  return cy.request({
+    method: 'PUT',
+    url: `http://${Cypress.env('host')}:11015/v3/configuration/user`,
+    headers,
+    body: pipelineJson
+  }).then(resp => {
+    expect(resp.status).to.be.eq(200);
+  });
+});
+
 Cypress.Commands.add('cleanup_pipelines', (headers, pipelineName) => {
   return cy
     .request({
