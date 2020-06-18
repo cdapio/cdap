@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.preview;
 
-import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -57,7 +56,6 @@ public class DefaultPreviewRequestQueueTest {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
-  private static final Gson GSON = new Gson();
 
   private PreviewRequestQueue previewRequestQueue;
 
@@ -198,4 +196,3 @@ public class DefaultPreviewRequestQueueTest {
     Assert.assertFalse(requestOptional.isPresent());
   }
 }
-
