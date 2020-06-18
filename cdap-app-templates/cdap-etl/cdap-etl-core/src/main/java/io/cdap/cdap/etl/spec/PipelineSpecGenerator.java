@@ -55,6 +55,7 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
+import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.Connection;
@@ -241,7 +242,7 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
             // this check isn't perfect, as we should still error if 2 transforms are inputs,
             // one has null schema and another has non-null schema.
             // todo: fix this cleanly and fully
-            if (outputSchema != null && !outputSchema.equals(schema)) {
+            if (outputSchema != null && !Schemas.equalsIgnoringRecordName(outputSchema, schema)) {
               throw new IllegalArgumentException("Cannot have different input schemas going into stage " + stageName);
             }
             outputSchema = schema;
