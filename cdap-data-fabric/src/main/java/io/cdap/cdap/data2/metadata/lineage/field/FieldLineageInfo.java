@@ -339,11 +339,19 @@ public class FieldLineageInfo {
         if (operationEndPointMap.containsKey(input.getOrigin())) {
           fields.addAll(operationEndPointMap.get(input.getOrigin()));
         } else {
-          fields.addAll(computeIncomingSummaryHelper(operationsMap.get(input.getOrigin()), write,
-                                                     operationEndPointMap));
+          // handle a special case for read -> write
+          // in this case, the write operation has to be one to one relation with the fields in the read operation,
+          // since a write operation can only take a list of input fields that come from the previous stage
+          Operation origin = operationsMap.get(input.getOrigin());
+          if (origin.getType() == OperationType.READ) {
+            fields.add(new EndPointField(((ReadOperation) origin).getSource(), input.getName()));
+            continue;
+          }
+          fields.addAll(computeIncomingSummaryHelper(origin, write, operationEndPointMap));
         }
       }
     }
+
     for (TransformOperation transform : dropTransforms) {
       for (InputField input : transform.getInputs()) {
         Operation previous = operationsMap.get(input.getOrigin());
