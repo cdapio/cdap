@@ -29,6 +29,7 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import org.apache.spark.SparkConf;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -54,6 +55,10 @@ public class ExternalSparkProgram extends AbstractSpark {
 
   @Override
   protected void configure() {
+    setClientResources(phaseSpec.getClientResources());
+    setDriverResources(phaseSpec.getDriverResources());
+    setExecutorResources(phaseSpec.getResources());
+
     // register the plugins at program level so that the program can be failed by the platform early in case of
     // plugin requirements not being meet
     phaseSpec.getPhase().registerPlugins(getConfigurer());
@@ -92,6 +97,15 @@ public class ExternalSparkProgram extends AbstractSpark {
   @Override
   protected void initialize() throws Exception {
     SparkClientContext context = getContext();
+
+    BatchPhaseSpec phaseSpec = GSON.fromJson(getContext().getSpecification().getProperty(Constants.PIPELINEID),
+                                             BatchPhaseSpec.class);
+
+    SparkConf sparkConf = new SparkConf();
+    for (Map.Entry<String, String> pipelineProperty : phaseSpec.getPipelineProperties().entrySet()) {
+      sparkConf.set(pipelineProperty.getKey(), pipelineProperty.getValue());
+    }
+    context.setSparkConf(sparkConf);
 
     String stageName = context.getSpecification().getProperty(STAGE_NAME);
     Class<?> externalProgramClass = context.loadPluginClass(stageName);
