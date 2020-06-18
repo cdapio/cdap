@@ -99,6 +99,7 @@ public class ETLSpark extends AbstractSpark {
     // value that we are confident is safe.
     sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
+    sparkConf.set("spark.network.timeout", "600s");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
