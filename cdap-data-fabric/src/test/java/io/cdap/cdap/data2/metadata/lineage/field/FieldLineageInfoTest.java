@@ -53,6 +53,47 @@ public class FieldLineageInfoTest {
     .create();
 
   @Test
+  public void testDirectReadWrite() {
+    List<Operation> operations = new ArrayList<>();
+
+    ReadOperation read = new ReadOperation("read", "", EndPoint.of("ns1", "endpoint1"), "id", "name");
+    ReadOperation anotherRead = new ReadOperation("anotherRead", "", EndPoint.of("ns1", "endpoint2"),
+                                                  "id1", "name1");
+    WriteOperation write = new WriteOperation("write", "", EndPoint.of("ns1", "endpoint3"),
+                                              InputField.of("read", "id"), InputField.of("read", "name"),
+                                              InputField.of("anotherRead", "id1"),
+                                              InputField.of("anotherRead", "name1"));
+    operations.add(read);
+    operations.add(write);
+    operations.add(anotherRead);
+
+    FieldLineageInfo info = new FieldLineageInfo(operations);
+    Map<EndPointField, Set<EndPointField>> incoming = info.getIncomingSummary();
+    Map<EndPointField, Set<EndPointField>> expected = ImmutableMap.of(
+      new EndPointField(EndPoint.of("ns1", "endpoint3"), "id"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint1"), "id")),
+      new EndPointField(EndPoint.of("ns1", "endpoint3"), "id1"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint2"), "id1")),
+      new EndPointField(EndPoint.of("ns1", "endpoint3"), "name"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint1"), "name")),
+      new EndPointField(EndPoint.of("ns1", "endpoint3"), "name1"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint2"), "name1")));
+    Assert.assertEquals(expected, incoming);
+
+    Map<EndPointField, Set<EndPointField>> outgoing = info.getOutgoingSummary();
+    expected = ImmutableMap.of(
+      new EndPointField(EndPoint.of("ns1", "endpoint1"), "id"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint3"), "id")),
+      new EndPointField(EndPoint.of("ns1", "endpoint2"), "id1"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint3"), "id1")),
+      new EndPointField(EndPoint.of("ns1", "endpoint1"), "name"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint3"), "name")),
+      new EndPointField(EndPoint.of("ns1", "endpoint2"), "name1"),
+      Collections.singleton(new EndPointField(EndPoint.of("ns1", "endpoint3"), "name1")));
+    Assert.assertEquals(expected, outgoing);
+  }
+
+  @Test
   public void testWriteToSameEndpoint() {
     List<Operation> operations = new ArrayList<>();
     ReadOperation read = new ReadOperation("read", "some read", EndPoint.of("ns1", "endpoint1"), "offset", "body");
@@ -929,15 +970,16 @@ public class FieldLineageInfoTest {
     EndPointField ep1fn = new EndPointField(ep1, "first_name");
 
     Map<EndPointField, Set<EndPointField>> expectedOutgoingSummary = new HashMap<>();
-    expectedOutgoingSummary.put(ep1fn, Sets.newHashSet(ep2ln, ep2fn));
-    expectedOutgoingSummary.put(ep1ln, Sets.newHashSet(ep2ln, ep2fn));
+    expectedOutgoingSummary.put(ep1fn, Collections.singleton(ep2fn));
+    expectedOutgoingSummary.put(ep1ln, Collections.singleton(ep2ln));
     expectedOutgoingSummary.put(new EndPointField(ep1, "social"),
         Collections.singleton(FieldLineageInfo.NULL_EPF));
-    Assert.assertEquals(expectedOutgoingSummary, info.getOutgoingSummary());
+    Map<EndPointField, Set<EndPointField>> outgoingSummary = info.getOutgoingSummary();
+    Assert.assertEquals(expectedOutgoingSummary, outgoingSummary);
 
     Map<EndPointField, Set<EndPointField>> expectedIncomingSummary = new HashMap<>();
-    expectedIncomingSummary.put(ep2ln, Sets.newHashSet(ep1fn, ep1ln));
-    expectedIncomingSummary.put(ep2fn, Sets.newHashSet(ep1fn, ep1ln));
+    expectedIncomingSummary.put(ep2ln, Collections.singleton(ep1ln));
+    expectedIncomingSummary.put(ep2fn, Collections.singleton(ep1fn));
     Assert.assertEquals(expectedIncomingSummary, info.getIncomingSummary());
   }
 
