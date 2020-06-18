@@ -41,7 +41,11 @@ public final class SchemaHash implements Serializable {
   private String hashStr;
 
   public SchemaHash(Schema schema) {
-    hash = computeHash(schema);
+    this(schema, true);
+  }
+
+  public SchemaHash(Schema schema, boolean includeRecordName) {
+    hash = computeHash(schema, includeRecordName);
   }
 
   /**
@@ -92,10 +96,10 @@ public final class SchemaHash implements Serializable {
     return str;
   }
 
-  private byte[] computeHash(Schema schema) {
+  private byte[] computeHash(Schema schema, boolean includeRecordName) {
     try {
       Set<String> knownRecords = new HashSet<>();
-      MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), schema, knownRecords);
+      MessageDigest md5 = updateHash(MessageDigest.getInstance("MD5"), schema, knownRecords, includeRecordName);
       return md5.digest();
     } catch (NoSuchAlgorithmException e) {
       throw new RuntimeException(e);
@@ -108,9 +112,11 @@ public final class SchemaHash implements Serializable {
    * @param md5 {@link MessageDigest} to update.
    * @param schema {@link Schema} for updating the md5.
    * @param knownRecords bytes to use for updating the md5 for records that're seen before.
+   * @param includeRecordName whether to include the record name in the hash.
    * @return The same {@link MessageDigest} in the parameter.
    */
-  private MessageDigest updateHash(MessageDigest md5, Schema schema, Set<String> knownRecords) {
+  private MessageDigest updateHash(MessageDigest md5, Schema schema, Set<String> knownRecords,
+                                   boolean includeRecordName) {
     // Don't use enum.ordinal() as ordering in enum could change
     switch (schema.getType()) {
       case NULL:
@@ -145,28 +151,30 @@ public final class SchemaHash implements Serializable {
         break;
       case ARRAY:
         md5.update((byte) 9);
-        updateHash(md5, schema.getComponentSchema(), knownRecords);
+        updateHash(md5, schema.getComponentSchema(), knownRecords, includeRecordName);
         break;
       case MAP:
         md5.update((byte) 10);
-        updateHash(md5, schema.getMapSchema().getKey(), knownRecords);
-        updateHash(md5, schema.getMapSchema().getValue(), knownRecords);
+        updateHash(md5, schema.getMapSchema().getKey(), knownRecords, includeRecordName);
+        updateHash(md5, schema.getMapSchema().getValue(), knownRecords, includeRecordName);
         break;
       case RECORD:
         md5.update((byte) 11);
-        md5.update(UTF_8.encode(schema.getRecordName()));
+        if (includeRecordName) {
+          md5.update(UTF_8.encode(schema.getRecordName()));
+        }
         boolean notKnown = knownRecords.add(schema.getRecordName());
         for (Schema.Field field : schema.getFields()) {
           md5.update(UTF_8.encode(field.getName()));
           if (notKnown) {
-            updateHash(md5, field.getSchema(), knownRecords);
+            updateHash(md5, field.getSchema(), knownRecords, includeRecordName);
           }
         }
         break;
       case UNION:
         md5.update((byte) 12);
         for (Schema unionSchema : schema.getUnionSchemas()) {
-          updateHash(md5, unionSchema, knownRecords);
+          updateHash(md5, unionSchema, knownRecords, includeRecordName);
         }
         break;
     }

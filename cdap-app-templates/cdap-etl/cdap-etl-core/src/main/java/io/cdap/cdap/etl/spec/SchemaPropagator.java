@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
+import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.Map;
@@ -112,9 +113,18 @@ public class SchemaPropagator {
     }
   }
 
-  private boolean hasSameSchema(Map<String, Schema> inputSchemas, Schema inputSchema) {
+  private boolean hasSameSchema(Map<String, Schema> inputSchemas, @Nullable Schema inputSchema) {
     if (!inputSchemas.isEmpty()) {
-      return Objects.equals(inputSchemas.values().iterator().next(), inputSchema);
+      Schema s = inputSchemas.values().iterator().next();
+      if (s == null && inputSchema == null) {
+        return true;
+      } else if (s == null) {
+        return false;
+      } else if (inputSchema == null) {
+        return false;
+      }
+
+      return Schemas.equalsIgnoringRecordName(s, inputSchema);
     }
     return true;
   }

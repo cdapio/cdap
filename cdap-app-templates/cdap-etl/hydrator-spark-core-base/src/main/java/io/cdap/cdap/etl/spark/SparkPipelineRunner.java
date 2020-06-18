@@ -55,6 +55,7 @@ import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
@@ -556,7 +557,7 @@ public abstract class SparkPipelineRunner {
 
         Schema existingSchema = keySchema.get(keyFieldNum);
         if (existingSchema != null && existingSchema.isSimpleOrNullableSimple() &&
-          !existingSchema.equals(keyFieldSchema)) {
+          !Schemas.equalsIgnoringRecordName(existingSchema, keyFieldSchema)) {
           // this is an invalid join definition
           // this condition is normally checked at deployment time,
           // but it will be skipped if the input schema is not known.

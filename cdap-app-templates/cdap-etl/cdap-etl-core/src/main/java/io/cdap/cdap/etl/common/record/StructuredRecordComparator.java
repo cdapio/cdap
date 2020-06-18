@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.common.record;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.common.Schemas;
 
 import java.lang.reflect.Array;
 import java.nio.ByteBuffer;
@@ -153,7 +154,7 @@ public class StructuredRecordComparator implements Comparator<StructuredRecord> 
       case RECORD:
         if (val instanceof StructuredRecord) {
           StructuredRecord s = (StructuredRecord) val;
-          return s.getSchema().equals(schema);
+          return Schemas.equalsIgnoringRecordName(s.getSchema(), schema);
         } else {
           return false;
         }
