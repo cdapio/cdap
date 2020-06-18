@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
+import io.cdap.cdap.etl.spark.plugin.LiteralsBridge;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
@@ -35,6 +36,7 @@ import org.apache.spark.sql.DataFrame;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.functions;
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
@@ -45,7 +47,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
 
 /**
  * Spark1 RDD collection.
@@ -66,7 +67,8 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     String stageName = joinRequest.getStageName();
     Function<StructuredRecord, StructuredRecord> recordsInCounter =
       new CountingFunction<>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, sec.getDataTracer(stageName));
-    DataFrame left = toDataFrame(((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), joinRequest.getLeftSchema());
+    StructType leftSparkSchema = DataFrames.toDataType(joinRequest.getLeftSchema());
+    DataFrame left = toDataFrame(((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), leftSparkSchema);
     collections.put(joinRequest.getLeftStage(), left);
 
     List<Column> leftJoinColumns = joinRequest.getLeftKey().stream()
@@ -89,11 +91,13 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
         Join #2 is a left outer because TMP1 becomes 'required', since it uses required input B.
         Join #3 is an inner join even though it contains 2 optional datasets, because 'B' is still required.
      */
+    Integer joinPartitions = joinRequest.getNumPartitions();
     boolean seenRequired = joinRequest.isLeftRequired();
     DataFrame joined = left;
     for (JoinCollection toJoin : joinRequest.getToJoin()) {
       RDDCollection<StructuredRecord> data = (RDDCollection<StructuredRecord>) toJoin.getData();
-      DataFrame right = toDataFrame(data.rdd.map(recordsInCounter), toJoin.getSchema());
+      StructType sparkSchema = DataFrames.toDataType(toJoin.getSchema());
+      DataFrame right = toDataFrame(data.rdd.map(recordsInCounter), sparkSchema);
       collections.put(toJoin.getStage(), right);
 
       List<Column> rightJoinColumns = toJoin.getKey().stream()
@@ -121,6 +125,19 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
 
       if (toJoin.isBroadcast()) {
         right = functions.broadcast(right);
+      }
+      // repartition on the join keys with the number of partitions specified in the join request.
+      // since they are partitioned on the same thing, spark will not repartition during the join,
+      // which allows us to use a different number of partitions per joiner instead of using the global
+      // spark.sql.shuffle.partitions setting in the spark conf
+      if (joinPartitions != null && !toJoin.isBroadcast()) {
+        right = partitionOnKey(right, toJoin.getKey(), joinRequest.isNullSafe(), sparkSchema, joinPartitions);
+        // only need to repartition the left side if this is the first join,
+        // as intermediate joins will already be partitioned on the key
+        if (joined == left) {
+          joined = partitionOnKey(joined, joinRequest.getLeftKey(), joinRequest.isNullSafe(),
+                                  leftSparkSchema, joinPartitions);
+        }
       }
       joined = joined.join(right, joinOn, joinType);
 
@@ -173,10 +190,31 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     return (SparkCollection<T>) wrap(output);
   }
 
-  private DataFrame toDataFrame(JavaRDD<StructuredRecord> rdd, @Nullable Schema schema) {
-    StructType sparkSchema = DataFrames.toDataType(schema);
+  private DataFrame toDataFrame(JavaRDD<StructuredRecord> rdd, StructType sparkSchema) {
     JavaRDD<Row> rowRDD = rdd.map(record -> DataFrames.toRow(record, sparkSchema));
     return sqlContext.createDataFrame(rowRDD.rdd(), sparkSchema);
+  }
+
+  private DataFrame partitionOnKey(DataFrame df, List<String> key, boolean isNullSafe, StructType sparkSchema,
+                                   int numPartitions) {
+    List<Column> columns = getPartitionColumns(df, key, isNullSafe, sparkSchema);
+    return df.repartition(numPartitions, JavaConversions.asScalaBuffer(columns).toSeq());
+  }
+
+  private List<Column> getPartitionColumns(DataFrame df, List<String> key, boolean isNullSafe, StructType sparkSchema) {
+    if (!isNullSafe) {
+      return key.stream().map(df::col).collect(Collectors.toList());
+    }
+
+    // if a null safe join is happening, spark will partition on coalesce(col, [default val]),
+    // where the default val is dependent on the column type and defined in
+    // org.apache.spark.sql.catalyst.expressions.Literal
+    return key.stream().map(keyCol -> {
+      int fieldIndex = sparkSchema.fieldIndex(keyCol);
+      DataType dataType = sparkSchema.fields()[fieldIndex].dataType();
+      Column defaultCol = new Column(LiteralsBridge.defaultLiteral(dataType));
+      return functions.coalesce(df.col(keyCol), defaultCol);
+    }).collect(Collectors.toList());
   }
 
 }

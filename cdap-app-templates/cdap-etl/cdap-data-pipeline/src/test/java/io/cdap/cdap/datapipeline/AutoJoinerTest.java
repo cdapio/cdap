@@ -309,7 +309,8 @@ public class AutoJoinerTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, purchaseData);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     DataSetManager<Table> outputManager = getDataset(output);
     List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
@@ -318,6 +319,7 @@ public class AutoJoinerTest extends HydratorTestBase {
 
     validateMetric(5, appId, "join.records.in");
     validateMetric(expected.size(), appId, "join.records.out");
+    validateMetric(1, appId, "sink." + MockSink.INITIALIZED_COUNT_METRIC);
   }
 
   @Test
