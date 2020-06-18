@@ -18,6 +18,7 @@ package io.cdap.cdap.app.store.preview;
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.artifact.AppRequest;
