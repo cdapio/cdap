@@ -14,8 +14,9 @@
  * the License.
  */
 
-import { Button, Tooltip } from '@material-ui/core';
+import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import Tooltip from '@material-ui/core/Tooltip';
 import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';

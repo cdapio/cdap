@@ -102,6 +102,11 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
         newWidgetInfo,
         newWidgetToAttributes,
         newOutputName,
+        newFilters,
+        newFilterToName,
+        newFilterToCondition,
+        newFilterToShowList,
+        newShowToInfo,
       } = parsePluginJSON(filename, pluginJSON);
 
       setPluginState({
@@ -112,6 +117,11 @@ const JsonMenuView: React.FC<ICreateContext & WithStyles<typeof styles>> = (widg
         widgetInfo: newWidgetInfo,
         widgetToAttributes: newWidgetToAttributes,
         outputName: newOutputName,
+        filters: newFilters,
+        filterToName: newFilterToName,
+        filterToCondition: newFilterToCondition,
+        filterToShowList: newFilterToShowList,
+        showToInfo: newShowToInfo,
       });
 
       setJSONStatus(JSONStatusMessage.Success);
