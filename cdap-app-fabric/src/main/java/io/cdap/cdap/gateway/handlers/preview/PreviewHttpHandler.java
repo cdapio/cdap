@@ -90,9 +90,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   public void start(FullHttpRequest request, HttpResponder responder,
                     @PathParam("namespace-id") String namespaceId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
-    AppRequest appRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
-      appRequest = GSON.fromJson(reader, AppRequest.class);
+      AppRequest<?> appRequest = GSON.fromJson(reader, AppRequest.class);
       responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewManager.start(namespace, appRequest)));
     } catch (JsonSyntaxException e) {
       throw new BadRequestException("Request body is invalid json: " + e.getMessage());
