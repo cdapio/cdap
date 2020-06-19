@@ -92,6 +92,26 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     this.setState({ JSONStatus });
   };
 
+  public setFilters = (filters: string[]) => {
+    this.setState({ filters });
+  };
+
+  public setFilterToName = (filterToName: any) => {
+    this.setState({ filterToName });
+  };
+
+  public setFilterToCondition = (filterToCondition: any) => {
+    this.setState({ filterToCondition });
+  };
+
+  public setFilterToShowList = (filterToShowList: any) => {
+    this.setState({ filterToShowList });
+  };
+
+  public setShowToInfo = (showToInfo: any) => {
+    this.setState({ showToInfo });
+  };
+
   public setPluginState = ({
     basicPluginInfo,
     configurationGroups,
@@ -100,6 +120,11 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     widgetInfo,
     widgetToAttributes,
     outputName,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
   }) => {
     const { pluginName, pluginType, displayName, emitAlerts, emitErrors } = basicPluginInfo;
     this.setState({
@@ -114,6 +139,11 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
       widgetInfo,
       widgetToAttributes,
       outputName,
+      filters,
+      filterToName,
+      filterToCondition,
+      filterToShowList,
+      showToInfo,
     });
   };
 
@@ -132,6 +162,11 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     liveView: true,
     outputName: '',
     JSONStatus: JSONStatusMessage.Normal,
+    filters: [],
+    filterToName: {},
+    filterToCondition: {},
+    filterToShowList: {},
+    showToInfo: {},
 
     setActiveStep: this.setActiveStep,
     setBasicPluginInfo: this.setBasicPluginInfo,
@@ -144,6 +179,11 @@ class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof 
     setOutputName: this.setOutputName,
     setPluginState: this.setPluginState,
     setJSONStatus: this.setJSONStatus,
+    setFilters: this.setFilters,
+    setFilterToName: this.setFilterToName,
+    setFilterToCondition: this.setFilterToCondition,
+    setFilterToShowList: this.setFilterToShowList,
+    setShowToInfo: this.setShowToInfo,
   };
 
   public render() {

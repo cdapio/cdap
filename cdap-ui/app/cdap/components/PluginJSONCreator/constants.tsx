@@ -15,6 +15,7 @@
  */
 
 import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
+import { CustomOperator, PropertyShowConfigTypeEnums } from 'components/ConfigurationGroup/types';
 import { GLOBALS } from 'services/global-constants';
 
 export const PluginTypes = Object.keys(GLOBALS.pluginTypeToLabel).filter(
@@ -212,3 +213,7 @@ export const CODE_EDITORS = [
 ];
 
 export const SPEC_VERSION = '1.5';
+
+// FILTER PAGE
+export const OPERATOR_VALUES = Object.values(CustomOperator);
+export const SHOW_TYPE_VALUES = Object.values(PropertyShowConfigTypeEnums);

@@ -164,7 +164,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
       <div className={classes.widgetContainer}>
         {activeWidgets.map((widgetID, widgetIndex) => {
           return (
-            <If condition={widgetInfo[widgetID]} key={widgetIndex}>
+            <If key={widgetID} condition={widgetInfo[widgetID]}>
               <div className={classes.eachWidget}>
                 <WidgetInput
                   widgetInfo={widgetInfo}

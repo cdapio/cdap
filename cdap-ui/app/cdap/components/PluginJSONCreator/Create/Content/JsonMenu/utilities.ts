@@ -1,3 +1,4 @@
+import { IPropertyShowConfig } from 'components/ConfigurationGroup/types';
 import { SPEC_VERSION } from 'components/PluginJSONCreator/constants';
 import {
   IBasicPluginInfo,
@@ -17,6 +18,11 @@ function getJSONConfig(widgetJSONData) {
     groupToWidgets,
     widgetInfo,
     widgetToAttributes,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
     outputName,
   } = widgetJSONData;
 
@@ -43,6 +49,28 @@ function getJSONConfig(widgetJSONData) {
     };
   });
 
+  const filtersData = filters.map((filterID) => {
+    const filterToShowListData = filterToShowList[filterID].map((showID) => {
+      let showListData;
+      if (showToInfo[showID].type) {
+        showListData = {
+          name: showToInfo[showID].name,
+          type: showToInfo[showID].type,
+        };
+      } else {
+        showListData = {
+          name: showToInfo[showID].name,
+        };
+      }
+      return showListData;
+    });
+    return {
+      name: filterToName[filterID],
+      condition: filterToCondition[filterID],
+      show: filterToShowListData,
+    };
+  });
+
   const config = {
     metadata: {
       'spec-version': SPEC_VERSION,
@@ -56,6 +84,10 @@ function getJSONConfig(widgetJSONData) {
         name: outputName,
       },
     ],
+    ...(filtersData &&
+      Object.keys(filtersData).length > 0 && {
+        filters: filtersData,
+      }),
   };
 
   return config;
@@ -81,6 +113,11 @@ function parsePluginJSON(filename, pluginJSON) {
   const newGroupToWidgets = {};
   const newWidgetInfo = {};
   const newWidgetToAttributes = {};
+  const newFilters: string[] = [];
+  const newFilterToName = {};
+  const newFilterToCondition = {};
+  const newFilterToShowList = {};
+  const newShowToInfo = {};
 
   pluginJSON['configuration-groups'].forEach((groupObj) => {
     if (!groupObj || Object.keys(groupObj).length === 0) {
@@ -106,14 +143,14 @@ function parsePluginJSON(filename, pluginJSON) {
 
       newGroupToWidgets[newGroupID].push(newWidgetID);
 
-      const widgetInfo = {
+      const info = {
         widgetType: widgetObj['widget-type'],
         label: widgetObj.label,
         name: widgetObj.name,
         ...(widgetObj['widget-category'] && { widgetCategory: widgetObj['widget-category'] }),
       } as IWidgetInfo;
 
-      newWidgetInfo[newWidgetID] = widgetInfo;
+      newWidgetInfo[newWidgetID] = info;
 
       if (
         widgetObj['widget-attributes'] &&
@@ -127,6 +164,37 @@ function parsePluginJSON(filename, pluginJSON) {
   const newOutputName =
     pluginJSON.outputs && pluginJSON.outputs.length > 0 ? pluginJSON.outputs[0].name : '';
 
+  if (pluginJSON.filters) {
+    pluginJSON.filters.forEach((filterObj) => {
+      if (!filterObj || Object.keys(filterObj).length === 0) {
+        return;
+      }
+
+      // generate a unique filter ID
+      const newFilterID = 'Filter_' + uuidV4();
+
+      newFilters.push(newFilterID);
+
+      newFilterToName[newFilterID] = filterObj.name;
+      newFilterToCondition[newFilterID] = filterObj.condition;
+
+      newFilterToShowList[newFilterID] = [];
+
+      if (filterObj.show) {
+        filterObj.show.map((showObj) => {
+          const newShowID = 'Show_' + uuidV4();
+
+          newFilterToShowList[newFilterID].push(newShowID);
+
+          newShowToInfo[newShowID] = {
+            name: showObj.name,
+            ...(showObj.type && { type: showObj.type }),
+          } as IPropertyShowConfig;
+        });
+      }
+    });
+  }
+
   return {
     basicPluginInfo,
     newConfigurationGroups,
@@ -135,6 +203,11 @@ function parsePluginJSON(filename, pluginJSON) {
     newWidgetInfo,
     newWidgetToAttributes,
     newOutputName,
+    newFilters,
+    newFilterToName,
+    newFilterToCondition,
+    newFilterToShowList,
+    newShowToInfo,
   };
 }
 
