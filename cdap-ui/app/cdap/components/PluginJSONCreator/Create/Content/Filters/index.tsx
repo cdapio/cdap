@@ -15,8 +15,8 @@
  */
 
 import Heading, { HeadingTypes } from 'components/Heading';
+import FilterCollection from 'components/PluginJSONCreator/Create/Content/Filters/FilterCollection';
 import JsonMenu from 'components/PluginJSONCreator/Create/Content/JsonMenu';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import {
   CreateContext,
@@ -25,7 +25,7 @@ import {
 } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
-const OutputsView: React.FC<ICreateContext> = ({
+const FiltersView: React.FC<ICreateContext> = ({
   pluginName,
   pluginType,
   displayName,
@@ -36,23 +36,35 @@ const OutputsView: React.FC<ICreateContext> = ({
   groupToWidgets,
   widgetInfo,
   widgetToAttributes,
+  filters,
+  setFilters,
+  filterToName,
+  setFilterToName,
+  filterToCondition,
+  setFilterToCondition,
+  filterToShowList,
+  setFilterToShowList,
+  showToInfo,
+  setShowToInfo,
   liveView,
   setLiveView,
   outputName,
-  setOutputName,
+  setPluginState,
   JSONStatus,
   setJSONStatus,
-  setPluginState,
-  filters,
-  filterToName,
-  filterToCondition,
-  filterToShowList,
-  showToInfo,
 }) => {
-  const [localOutputName, setLocalOutputName] = React.useState(outputName);
+  const [localFilters, setLocalFilters] = React.useState(filters);
+  const [localFilterToName, setLocalFilterToName] = React.useState(filterToName);
+  const [localFilterToCondition, setLocalFilterToCondition] = React.useState(filterToCondition);
+  const [localFilterToShowList, setLocalFilterToShowList] = React.useState(filterToShowList);
+  const [localShowToInfo, setLocalShowToInfo] = React.useState(showToInfo);
 
   function saveAllResults() {
-    setOutputName(localOutputName);
+    setFilters(localFilters);
+    setFilterToName(localFilterToName);
+    setFilterToCondition(localFilterToCondition);
+    setFilterToShowList(localFilterToShowList);
+    setShowToInfo(localShowToInfo);
   }
 
   return (
@@ -68,32 +80,36 @@ const OutputsView: React.FC<ICreateContext> = ({
         groupToWidgets={groupToWidgets}
         widgetInfo={widgetInfo}
         widgetToAttributes={widgetToAttributes}
+        filters={localFilters}
+        filterToName={localFilterToName}
+        filterToCondition={localFilterToCondition}
+        filterToShowList={localFilterToShowList}
+        showToInfo={localShowToInfo}
         liveView={liveView}
         setLiveView={setLiveView}
-        outputName={localOutputName}
+        outputName={outputName}
+        setPluginState={setPluginState}
         JSONStatus={JSONStatus}
         setJSONStatus={setJSONStatus}
-        setPluginState={setPluginState}
-        filters={filters}
-        filterToName={filterToName}
-        filterToCondition={filterToCondition}
-        filterToShowList={filterToShowList}
-        showToInfo={showToInfo}
       />
-      <Heading type={HeadingTypes.h3} label="Output" />
-      <br />
-      <PluginInput
-        widgetType={'textbox'}
-        value={localOutputName}
-        onChange={setLocalOutputName}
-        label={'Output Name'}
-        placeholder={'output name'}
-        required={false}
+      <Heading type={HeadingTypes.h3} label="Filters" />
+      <FilterCollection
+        filters={localFilters}
+        setFilters={setLocalFilters}
+        filterToName={localFilterToName}
+        setFilterToName={setLocalFilterToName}
+        filterToCondition={localFilterToCondition}
+        setFilterToCondition={setLocalFilterToCondition}
+        filterToShowList={localFilterToShowList}
+        setFilterToShowList={setLocalFilterToShowList}
+        showToInfo={localShowToInfo}
+        setShowToInfo={setLocalShowToInfo}
+        widgetInfo={widgetInfo}
       />
       <StepButtons nextDisabled={false} onPrevious={saveAllResults} onNext={saveAllResults} />
     </div>
   );
 };
 
-const Outputs = createContextConnect(CreateContext, OutputsView);
-export default Outputs;
+const Filters = createContextConnect(CreateContext, FiltersView);
+export default Filters;

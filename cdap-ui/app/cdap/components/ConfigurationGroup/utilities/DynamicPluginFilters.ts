@@ -15,27 +15,27 @@
  */
 
 // jexl library to parse js expression specified in widget json
-import jexl from 'jexl';
 import {
-  IConfigurationGroup,
-  IWidgetJson,
-  PluginProperties,
-  IWidgetProperty,
-  IPropertyFilter,
   CustomOperator,
+  IConfigurationGroup,
+  IPropertyFilter,
+  IPropertyTypedValues,
   IPropertyValues,
   IPropertyValueType,
-  IPropertyTypedValues,
+  IWidgetJson,
+  IWidgetProperty,
+  PluginProperties,
   PropertyShowConfigTypeEnums,
 } from 'components/ConfigurationGroup/types';
-import flatten from 'lodash/flatten';
-import difference from 'lodash/difference';
-import { objectQuery, isMacro, removeEmptyJsonValues } from 'services/helpers';
 import {
   IProcessedConfigurationGroups,
   processConfigurationGroups,
 } from 'components/ConfigurationGroup/utilities';
+import jexl from 'jexl';
+import difference from 'lodash/difference';
+import flatten from 'lodash/flatten';
 import isPlainObject from 'lodash/isPlainObject';
+import { isMacro, objectQuery, removeEmptyJsonValues } from 'services/helpers';
 
 export interface IFilteredWidgetProperty extends IWidgetProperty {
   show?: boolean;
