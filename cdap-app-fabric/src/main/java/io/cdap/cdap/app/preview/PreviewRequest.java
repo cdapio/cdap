@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -19,8 +19,6 @@ package io.cdap.cdap.app.preview;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ProgramId;
 
-import javax.annotation.Nullable;
-
 /**
  * Represents the preview application request.
  */
@@ -28,11 +26,7 @@ public class PreviewRequest {
   private final ProgramId program;
   private final AppRequest<?> appRequest;
 
-  public PreviewRequest(ProgramId program) {
-    this(program, null);
-  }
-
-  public PreviewRequest(ProgramId program, @Nullable AppRequest<?> appRequest) {
+  public PreviewRequest(ProgramId program, AppRequest<?> appRequest) {
     this.program = program;
     this.appRequest = appRequest;
   }
@@ -41,7 +35,6 @@ public class PreviewRequest {
     return program;
   }
 
-  @Nullable
   public AppRequest<?> getAppRequest() {
     return appRequest;
   }

@@ -25,7 +25,6 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Interface responsible for managing the lifecycle of a single preview application
@@ -54,12 +53,6 @@ public interface PreviewRunner {
    * @throws Exception thrown when any error in stopping the preview run
    */
   void stopPreview(ApplicationId applicationId) throws Exception;
-
-  /**
-   * Get list of tracers used in the preview run represented by this {@link PreviewRunner}.
-   * @return {@link Set} of tracers used in the preview
-   */
-  Set<String> getTracers();
 
   /**
    * Get the data associated with the preview run represented by this {@link PreviewRunner}.
