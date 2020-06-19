@@ -151,8 +151,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   private static TransactionRunner transactionRunner;
 
   @BeforeClass
-  public static void beforeClass() throws Throwable {
-    AppFabricTestBase.beforeClass();
+  public static void setup() {
     cConf = getInjector().getInstance(CConfiguration.class);
     scheduler = getInjector().getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
@@ -164,8 +163,7 @@ public class CoreSchedulerServiceTest extends AppFabricTestBase {
   }
 
   @AfterClass
-  public static void afterClass() throws Exception {
-    AppFabricTestBase.afterClass();
+  public static void tearDown() {
     if (scheduler instanceof Service) {
       ((Service) scheduler).stopAndWait();
     }
