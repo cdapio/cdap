@@ -72,7 +72,7 @@ public class SqlProgramScheduleStoreDatasetTest extends ProgramScheduleStoreData
   }
 
   @AfterClass
-  public static void afterClass() throws IOException {
+  public static void tearDown() throws IOException {
     pg.close();
   }
 }

@@ -44,8 +44,7 @@ public class TimeSchedulerTest extends AppFabricTestBase {
   private static TimeScheduler timeScheduler;
 
   @BeforeClass
-  public static void beforeClass() throws Throwable {
-    AppFabricTestBase.beforeClass();
+  public static void setup() throws Throwable {
     timeScheduler = getInjector().getInstance(TimeScheduler.class);
     timeScheduler.init();
     timeScheduler.start();
