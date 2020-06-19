@@ -144,7 +144,7 @@ public class MetadataSubscriberServiceTest extends AppFabricTestBase {
     cConfiguration.set(prefix + Constants.Retry.DELAY_BASE_MS, "200");
     cConfiguration.set(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT, "20");
     // use a messaging service that helps reproduce race conditions in metadata consumption
-    initializeAndStartServices(cConfiguration, null, new PrivateModule() {
+    initializeAndStartServices(cConfiguration, new PrivateModule() {
       @Override
       protected void configure() {
         bind(TableFactory.class).to(LevelDBTableFactory.class).in(Scopes.SINGLETON);

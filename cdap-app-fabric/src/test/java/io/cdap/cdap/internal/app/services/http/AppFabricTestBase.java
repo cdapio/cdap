@@ -55,7 +55,6 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
 import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.discovery.URIScheme;
@@ -159,6 +158,7 @@ import javax.ws.rs.core.MediaType;
  * running the handler tests, this also gives the ability to run individual test cases.
  */
 public abstract class AppFabricTestBase {
+
   protected static final Gson GSON = ApplicationSpecificationAdapter.addTypeAdapters(new GsonBuilder())
     .registerTypeAdapterFactory(new CaseInsensitiveEnumTypeAdapterFactory())
     .registerTypeAdapter(Trigger.class, new TriggerCodec())
@@ -169,8 +169,8 @@ public abstract class AppFabricTestBase {
 
   private static final Type BATCH_PROGRAM_RUNS_TYPE = new TypeToken<List<BatchProgramHistory>>() { }.getType();
   private static final Type LIST_JSON_OBJECT_TYPE = new TypeToken<List<JsonObject>>() { }.getType();
-  private static final Type LIST_RUNRECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
-  private static final Type SET_TRING_TYPE = new TypeToken<Set<String>>() { }.getType();
+  private static final Type LIST_RUN_RECORD_TYPE = new TypeToken<List<RunRecord>>() { }.getType();
+  private static final Type SET_STRING_TYPE = new TypeToken<Set<String>>() { }.getType();
   private static final Type LIST_PROFILE = new TypeToken<List<Profile>>() { }.getType();
 
   protected static final Type LIST_MAP_STRING_STRING_TYPE = new TypeToken<List<Map<String, String>>>() { }.getType();
@@ -219,12 +219,11 @@ public abstract class AppFabricTestBase {
 
   @BeforeClass
   public static void beforeClass() throws Throwable {
-    initializeAndStartServices(createBasicCConf(), null);
+    initializeAndStartServices(createBasicCConf());
   }
 
-  protected static void initializeAndStartServices(CConfiguration cConf,
-                                                   @Nullable SConfiguration sConf) throws Exception {
-    initializeAndStartServices(cConf, sConf, new AbstractModule() {
+  protected static void initializeAndStartServices(CConfiguration cConf) throws Exception {
+    initializeAndStartServices(cConf, new AbstractModule() {
       @Override
       protected void configure() {
         // needed because we set Kerberos to true in DefaultNamespaceAdminTest
@@ -234,10 +233,9 @@ public abstract class AppFabricTestBase {
     });
   }
 
-  protected static void initializeAndStartServices(CConfiguration cConf, @Nullable SConfiguration sConf,
-                                                   Module overrides) throws Exception {
+  protected static void initializeAndStartServices(CConfiguration cConf, Module overrides) throws Exception {
     injector = Guice.createInjector(
-      Modules.override(new AppFabricTestModule(cConf, sConf)).with(overrides));
+      Modules.override(new AppFabricTestModule(cConf, null)).with(overrides));
 
     int connectionTimeout = cConf.getInt(Constants.HTTP_CLIENT_CONNECTION_TIMEOUT_MS);
     int readTimeout = cConf.getInt(Constants.HTTP_CLIENT_READ_TIMEOUT_MS);
@@ -295,8 +293,7 @@ public abstract class AppFabricTestBase {
   }
 
   @AfterClass
-  public static void afterClass() throws Exception {
-    deleteNamespaces();
+  public static void afterClass() {
     appFabricServer.stopAndWait();
     metricsCollectionService.stopAndWait();
     datasetService.stopAndWait();
@@ -449,7 +446,7 @@ public abstract class AppFabricTestBase {
    * @param parents parents range of artifact
    * @param pluginClassesJSON JSON representation for plugin classes
    * @return {@link HttpResponse} recieved response
-   * @throws Exception
+   * @throws Exception if failed to add the plugin artifact
    */
   protected HttpResponse addPluginArtifact(Id.Artifact artifactId, Class<?> cls,
                                            Manifest manifest,
@@ -491,18 +488,6 @@ public abstract class AppFabricTestBase {
     }
     builder.withBody(artifactContents);
     return HttpRequests.execute(builder.build(), httpRequestConfig);
-  }
-
-  // add artifact properties and return the response code
-  protected HttpResponse addArtifactProperties(Id.Artifact artifactId,
-                                               Map<String, String> properties) throws Exception {
-    String nonNamespacePath = String.format("artifacts/%s/versions/%s/properties",
-                                            artifactId.getName(), artifactId.getVersion());
-    String path = getVersionedAPIPath(nonNamespacePath, artifactId.getNamespace().getId());
-    HttpRequest request = HttpRequest.put(getEndPoint(path).toURL())
-      .withBody(properties.toString())
-      .build();
-    return HttpRequests.execute(request, httpRequestConfig);
   }
 
   /**
@@ -653,7 +638,7 @@ public abstract class AppFabricTestBase {
                                                       Constants.Gateway.API_VERSION_3_TOKEN, namespace));
     Assert.assertEquals(200, response.getResponseCode());
     Assert.assertEquals("application/json", getFirstHeaderValue(response, HttpHeaderNames.CONTENT_TYPE.toString()));
-    return readResponse(response, SET_TRING_TYPE);
+    return readResponse(response, SET_STRING_TYPE);
   }
 
   protected JsonObject getAppDetails(String namespace, String appName, String appVersion) throws Exception {
@@ -999,18 +984,6 @@ public abstract class AppFabricTestBase {
     Assert.assertEquals(200, response.getResponseCode());
   }
 
-  private static void deleteNamespaces() throws Exception {
-    Tasks.waitFor(200, () ->
-                    doDelete(String.format("%s/unrecoverable/namespaces/%s",
-                                           Constants.Gateway.API_VERSION_3, TEST_NAMESPACE1)).getResponseCode(),
-                  10, TimeUnit.SECONDS);
-
-    Tasks.waitFor(200, () ->
-                    doDelete(String.format("%s/unrecoverable/namespaces/%s",
-                                           Constants.Gateway.API_VERSION_3, TEST_NAMESPACE2)).getResponseCode(),
-                  10, TimeUnit.SECONDS);
-  }
-
   protected String getProgramStatus(Id.Program program) throws Exception {
     return getStatus(programStatus(program));
   }
@@ -1282,7 +1255,7 @@ public abstract class AppFabricTestBase {
                                 program.getType().getCategoryName(), program.getId(), status.name());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespaceId()));
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUNRECORD_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
   protected void verifyProgramRuns(final ProgramId program, ProgramRunStatus status) throws Exception {
@@ -1304,7 +1277,7 @@ public abstract class AppFabricTestBase {
                                 status.toString());
     HttpResponse response = doGet(getVersionedAPIPath(path, program.getNamespace()));
     Assert.assertEquals(200, response.getResponseCode());
-    return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUNRECORD_TYPE);
+    return GSON.fromJson(response.getResponseBodyAsString(), LIST_RUN_RECORD_TYPE);
   }
 
   protected HttpResponse createNamespace(String id) throws Exception {

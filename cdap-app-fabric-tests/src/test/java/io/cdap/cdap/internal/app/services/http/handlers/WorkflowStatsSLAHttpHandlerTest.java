@@ -70,8 +70,7 @@ public class WorkflowStatsSLAHttpHandlerTest extends AppFabricTestBase {
   private int sourceId;
 
   @BeforeClass
-  public static void beforeClass() throws Throwable {
-    AppFabricTestBase.beforeClass();
+  public static void setup() {
     store = getInjector().getInstance(DefaultStore.class);
     metricStore = getInjector().getInstance(MetricStore.class);
   }
