@@ -15,57 +15,80 @@
  */
 
 import React from 'react';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import TableCell from '@material-ui/core/TableCell';
+import Grid from '@material-ui/core/Grid';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import isEmpty from 'lodash/isEmpty';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
 import Heading, { HeadingTypes } from 'components/Heading';
 import ThemeWrapper from 'components/ThemeWrapper';
+import VirtualScroll from 'components/VirtualScroll';
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.Table';
-
-const CustomTableCell = withStyles((theme) => ({
-  head: {
-    backgroundColor: theme.palette.grey['300'],
-    color: theme.palette.common.white,
-    padding: 10,
-    fontSize: 14,
-  },
-  body: {
-    padding: 10,
-    fontSize: 14,
-  },
-}))(TableCell);
 
 export const messageTextStyle = {
   fontSize: '1.3rem !important',
   margin: '10px 0',
 };
-const styles = (theme): StyleRules => ({
+export const styles = (theme): StyleRules => ({
   root: {
-    width: '100%',
     display: 'inline-block',
     height: 'auto',
     marginTop: theme.spacing(1),
     overflowX: 'auto',
     borderRadius: 0,
   },
+  tableContainer: {
+    width: 'fit-content',
+    minWidth: '100%',
+  },
+  recordContainer: {
+    width: '100%',
+  },
   table: {
     width: '100%',
   },
   row: {
     height: 40,
-    '&:nth-of-type(odd)': {
+    '&.oddRow': {
       backgroundColor: theme.palette.grey['600'],
     },
   },
   messageText: messageTextStyle,
+  headerRow: {
+    backgroundColor: theme.palette.grey['300'],
+    fontWeight: 500,
+  },
+  headerCell: {
+    color: theme.palette.common.white,
+    fontSize: 14,
+  },
+  cell: {
+    textAlign: 'center',
+    height: '40px',
+    lineHeight: '40px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  recordCell: {
+    width: '50%',
+    padding: '0px 5px',
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+      fontWeight: 500,
+    },
+  },
+  tableCell: {
+    width: '120px',
+    borderLeft: `1px solid ${theme.palette.grey['500']}`,
+    padding: '0px 5px',
+    flexGrow: 1,
+  },
+  indexCell: {
+    width: '50px',
+  },
 });
 
 interface IDataTableProps extends WithStyles<typeof styles> {
@@ -107,6 +130,39 @@ const DataTableView: React.FC<IDataTableProps> = ({
     }
     return field;
   };
+  const renderList = (visibleNodeCount: number, startNode: number) => {
+    return records.slice(startNode, startNode + visibleNodeCount).map((record, i) => {
+      return (
+        <React.Fragment>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            justify="space-evenly"
+            className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
+            key={`gridrow-${i}`}
+          >
+            <Grid item className={classnames(classes.cell, classes.indexCell)}>
+              {i + 1 + startNode}
+            </Grid>
+            {headers.map((fieldName, k) => {
+              const processedValue = format(record[fieldName]);
+              return (
+                <Grid
+                  item
+                  className={classnames(classes.cell, classes.tableCell)}
+                  key={`table-cell-${k}`}
+                  title={processedValue}
+                >
+                  {processedValue}
+                </Grid>
+              );
+            })}
+          </Grid>
+        </React.Fragment>
+      );
+    });
+  };
 
   if (isEmpty(records) || isCondition) {
     return (
@@ -117,33 +173,45 @@ const DataTableView: React.FC<IDataTableProps> = ({
   }
 
   return (
-    <Paper className={classes.root}>
-      <Table>
-        <TableHead>
-          <TableRow className={classes.row}>
+    <Paper className={classnames(classes.root, classes.tableContainer)}>
+      <Grid container direction="column" wrap="nowrap">
+        <Grid item>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            justify="space-evenly"
+            className={classes.headerRow}
+          >
+            <Grid
+              item
+              className={classnames(classes.headerCell, classes.cell, classes.indexCell)}
+            />
             {headers.map((fieldName, i) => {
+              const processedFieldName = format(fieldName);
               return (
-                <CustomTableCell key={`header-cell-${i}`}>{format(fieldName)}</CustomTableCell>
+                <Grid
+                  item
+                  key={`header-cell-${i}`}
+                  className={classnames(classes.cell, classes.headerCell, classes.tableCell)}
+                  title={processedFieldName}
+                >
+                  {processedFieldName}
+                </Grid>
               );
             })}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {records.map((record, j) => {
-            return (
-              <TableRow className={classes.row} key={`tr-${j}`}>
-                {headers.map((fieldName, k) => {
-                  return (
-                    <CustomTableCell key={`table-cell-${k}`}>
-                      {format(record[fieldName])}
-                    </CustomTableCell>
-                  );
-                })}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+          </Grid>
+        </Grid>
+        <Grid item>
+          <VirtualScroll
+            itemCount={() => records.length}
+            visibleChildCount={25}
+            childHeight={40}
+            renderList={renderList}
+            childrenUnderFold={10}
+          />
+        </Grid>
+      </Grid>
     </Paper>
   );
 };
