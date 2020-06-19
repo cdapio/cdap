@@ -24,19 +24,25 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { messageTextStyle } from 'components/PreviewData/DataView/Table';
 import PreviewTableContainer from 'components/PreviewData/DataView/TableContainer';
 import RecordContainer from 'components/PreviewData/RecordView/RecordContainer';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import T from 'i18n-react';
 import { extractErrorMessage } from 'services/helpers';
+import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData';
 
-const styles = () => {
+const styles = (): StyleRules => {
   return {
     messageText: messageTextStyle,
     headingContainer: {
       paddingLeft: '10px',
+    },
+    recordToggle: {
+      position: 'absolute',
+      top: '8px',
+      right: '35px',
     },
   };
 };
@@ -67,6 +73,12 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewData, setPreviewData] = useState<IPreviewData>({});
   const [error, setError] = useState(null);
+  const [viewMode, setViewMode] = useState('Table');
+
+  const widgetProps = {
+    on: { value: 'Record', label: 'Record' },
+    off: { value: 'Table', label: 'Table' },
+  };
 
   const updatePreviewCb = (updatedPreview: IPreviewData) => {
     setPreviewData(updatedPreview);
@@ -155,14 +167,22 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
       <If condition={previewLoading}>{loadingMsg(classes)}</If>
       <If condition={error}>{errorMsg(classes)}</If>
 
-      <If condition={!previewLoading && previewId && !isEmpty(previewData) && !showRecordView}>
+      <If condition={!previewLoading && previewId && !isEmpty(previewData) && viewMode === 'Table'}>
+        <span className={classes.recordToggle}>
+          <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
+        </span>
         <PreviewTableContainer
           tableData={tableData}
           selectedNode={selectedNode}
           previewStatus={previewStatus}
         />
       </If>
-      <If condition={!previewLoading && previewId && !isEmpty(previewData) && showRecordView}>
+      <If
+        condition={!previewLoading && previewId && !isEmpty(previewData) && viewMode === 'Record'}
+      >
+        <span className={classes.recordToggle}>
+          <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
+        </span>
         <RecordContainer
           tableData={tableData}
           selectedNode={selectedNode}
