@@ -65,10 +65,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
@@ -272,11 +270,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   public void stopPreview(ApplicationId applicationId) throws Exception {
     ProgramRunId programRunId = getRunRecord(applicationId).getProgramRunId();
     programLifecycleService.stop(programRunId.getParent());
-  }
-
-  @Override
-  public Set<String> getTracers() {
-    return new HashSet<>();
   }
 
   @Override
