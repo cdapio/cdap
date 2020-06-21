@@ -74,8 +74,12 @@ public class DataprocJobMain {
                                                                  Constants.Files.TWILL_JAR));
     Arrays.stream(urls).forEach(url -> LOG.debug("Classpath URL: {}", url));
 
-    // create new URL classloader with provided classpath
-    try (URLClassLoader newCL = new URLClassLoader(urls, cl.getParent())) {
+    // Create new URL classloader with provided classpath.
+    // Don't close the classloader since this is the main classloader,
+    // which can be used for shutdown hook execution.
+    // Closing it too early can result in NoClassDefFoundError in shutdown hook execution.
+    URLClassLoader newCL = new URLClassLoader(urls, cl.getParent());
+    try {
       Thread.currentThread().setContextClassLoader(newCL);
 
       // load environment class and create instance of it
