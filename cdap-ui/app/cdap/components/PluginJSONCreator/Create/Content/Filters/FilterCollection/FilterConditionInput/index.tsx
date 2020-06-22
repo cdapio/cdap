@@ -20,7 +20,8 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import { OPERATOR_VALUES } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { ICreateContext, IWidgetInfo } from 'components/PluginJSONCreator/CreateContextConnect';
+import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { List, Map } from 'immutable';
 import isNil from 'lodash/isNil';
 import * as React from 'react';
 
@@ -56,48 +57,53 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
   setFilterToCondition,
   widgetInfo,
 }) => {
-  const existingCondition = filterToCondition[filterID];
+  const existingCondition = filterToCondition.get(filterID);
 
   const [conditionMode, setConditionMode] = React.useState(
-    existingCondition.expression ? FilterConditionMode.Expression : FilterConditionMode.Operator
+    existingCondition.get('expression')
+      ? FilterConditionMode.Expression
+      : FilterConditionMode.Operator
   );
 
   const allWidgetNames = widgetInfo
-    ? Object.values(widgetInfo)
-        .map((info: IWidgetInfo) => info.name)
+    ? widgetInfo
+        .valueSeq()
+        .map((info) => info.get('name'))
         .filter((widgetName) => !isNil(widgetName))
-    : [];
+    : List([]);
 
   React.useEffect(() => {
-    // reset condition data
     if (conditionMode === FilterConditionMode.Expression) {
-      setFilterToCondition((prevObjs) => ({
-        ...prevObjs,
-        [filterID]: { expression: existingCondition.expression },
-      }));
+      setFilterToCondition(
+        filterToCondition.set(
+          filterID,
+          Map({
+            expression: existingCondition.get('expression') || '',
+          })
+        )
+      );
     } else {
-      setFilterToCondition((prevObjs) => ({
-        ...prevObjs,
-        [filterID]: {
-          property: existingCondition.property,
-          operator: existingCondition.operator,
-          value: existingCondition.value,
-        },
-      }));
+      setFilterToCondition(
+        filterToCondition.set(
+          filterID,
+          Map({
+            property: existingCondition.get('property') || '',
+            operator: existingCondition.get('operator') || '',
+            value: existingCondition.get('value') || '',
+          })
+        )
+      );
     }
   }, [conditionMode]);
 
   function setFilterCondition(conditionProperty: string) {
     return (val) => {
-      setFilterToCondition((prevObjs) => ({
-        ...prevObjs,
-        [filterID]: { ...prevObjs[filterID], [conditionProperty]: val },
-      }));
+      setFilterToCondition(filterToCondition.setIn([filterID, conditionProperty], val));
     };
   }
 
   return (
-    <If condition={existingCondition}>
+    <If condition={!isNil(existingCondition)}>
       <Heading type={HeadingTypes.h6} label="Show these widgets by the following condition..." />
       <div className={classes.filterConditionInput}>
         <PluginInput
@@ -113,7 +119,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
         <div className={classes.filterConditionInput}>
           <PluginInput
             widgetType={'textbox'}
-            value={existingCondition.expression ? existingCondition.expression : ''}
+            value={existingCondition.get(FilterConditionProperty.Expression)}
             onChange={setFilterCondition(FilterConditionProperty.Expression)}
             label={FilterConditionProperty.Expression}
             required={false}
@@ -124,7 +130,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
         <div className={classes.filterConditionInput}>
           <PluginInput
             widgetType={'select'}
-            value={existingCondition.property}
+            value={existingCondition.get(FilterConditionProperty.Property)}
             onChange={setFilterCondition(FilterConditionProperty.Property)}
             label={FilterConditionProperty.Property}
             options={allWidgetNames}
@@ -133,28 +139,28 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({
         <div className={classes.filterConditionInput}>
           <PluginInput
             widgetType={'select'}
-            value={existingCondition.operator}
+            value={existingCondition.get(FilterConditionProperty.Operator)}
             onChange={setFilterCondition(FilterConditionProperty.Operator)}
             label={FilterConditionProperty.Operator}
             options={OPERATOR_VALUES}
           />
         </div>
-        <If
-          condition={
-            existingCondition.operator === CustomOperator.EQUALTO ||
-            existingCondition.operator === CustomOperator.NOTEQUALTO
-          }
-        >
-          <div className={classes.filterConditionInput}>
+        <div className={classes.filterConditionInput}>
+          <If
+            condition={
+              existingCondition.get(FilterConditionProperty.Operator) === CustomOperator.EQUALTO ||
+              existingCondition.get(FilterConditionProperty.Operator) === CustomOperator.NOTEQUALTO
+            }
+          >
             <PluginInput
               widgetType={'textbox'}
-              value={existingCondition.value}
+              value={existingCondition.get(FilterConditionProperty.Value)}
               onChange={setFilterCondition(FilterConditionProperty.Value)}
               label={FilterConditionProperty.Value}
               required={false}
             />
-          </div>
-        </If>
+          </If>
+        </div>
       </If>
     </If>
   );

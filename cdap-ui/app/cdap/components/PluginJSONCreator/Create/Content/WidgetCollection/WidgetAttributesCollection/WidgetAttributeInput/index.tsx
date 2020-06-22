@@ -42,10 +42,7 @@ const WidgetAttributeInputView = ({
   widgetType,
 }) => {
   const onAttributeChange = (newVal) => {
-    setWidgetToAttributes((prevObjs) => ({
-      ...prevObjs,
-      [widgetID]: { ...prevObjs[widgetID], [field]: newVal },
-    }));
+    setWidgetToAttributes(widgetToAttributes.setIn([widgetID, field], newVal));
   };
 
   const generateAttributeInput = (fieldType) => {
@@ -69,7 +66,7 @@ const WidgetAttributeInputView = ({
     } else {
       const props = {
         label: field,
-        value: widgetToAttributes[widgetID][field],
+        value: widgetToAttributes.get(widgetID).get(field),
         onChange: onAttributeChange,
         required: fieldInfo.required,
         // Set default widgetType in case fieldType is invalid
@@ -105,7 +102,7 @@ const WidgetAttributeInputView = ({
             required: fieldInfo.required,
             name: 'code-editor',
           }}
-          value={widgetToAttributes[widgetID][field]}
+          value={widgetToAttributes.get(widgetID).get(field)}
           onChange={onAttributeChange}
         />
       );

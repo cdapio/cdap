@@ -19,6 +19,7 @@ import If from 'components/If';
 import KeyValuePairs from 'components/KeyValuePairs';
 import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { fromJS, List, Map } from 'immutable';
 import * as React from 'react';
 
 /*
@@ -146,14 +147,14 @@ const AttributeMultipleValuesInputView = ({
    * and decide what should be 'selectedType' for the component.
    */
   function getInitialType() {
-    const widgetAttributeValues = widgetToAttributes[widgetID][field];
+    const widgetAttributes = fromJS(widgetToAttributes.get(widgetID).get(field));
     let newType;
-    if (!widgetAttributeValues || widgetAttributeValues.length === 0) {
+    if (!widgetAttributes || widgetAttributes.isEmpty()) {
       newType = cleanSupportedTypes[0];
-    } else if (widgetAttributeValues[0].value) {
-      newType = SupportedType.ValueLabelPair;
-    } else if (widgetAttributeValues[0].id) {
-      newType = SupportedType.IDLabelPair;
+    } else if (Map.isMap(widgetAttributes.get(0))) {
+      newType = widgetAttributes.get(0).get('value')
+        ? SupportedType.ValueLabelPair
+        : SupportedType.IDLabelPair;
     } else {
       newType = SupportedType.String;
     }
@@ -184,7 +185,7 @@ const AttributeMultipleValuesInputView = ({
    *     "GET,POST,PUT,DELETE"
    */
   function processAttributeValues() {
-    const widgetAttributeValues = widgetToAttributes[widgetID][field];
+    const widgetAttributeValues = widgetToAttributes.get(widgetID).get(field);
     return widgetAttributeValues ? widgetAttributeValues.join(COMMON_DELIMITER) : '';
   }
 
@@ -194,23 +195,26 @@ const AttributeMultipleValuesInputView = ({
    *    { pairs: [{ key: '', value: '' }] }
    */
   function processKeyValueAttributeValues() {
-    const widgetAttributeValues = widgetToAttributes[widgetID][field];
-    if (widgetAttributeValues && widgetAttributeValues.length > 0) {
-      return {
-        pairs: widgetAttributeValues.map((keyvalue) => {
-          if (keyvalue.id) {
-            return {
-              key: keyvalue.id,
-              value: keyvalue.label,
-            };
-          } else {
-            return {
-              key: keyvalue.value,
-              value: keyvalue.label,
-            };
-          }
-        }),
+    const widgetAttributeValues = widgetToAttributes.get(widgetID).get(field);
+    if (widgetAttributeValues && widgetAttributeValues.size > 0) {
+      const keyvaluePairs = {
+        pairs: widgetAttributeValues
+          .map((keyvalue) => {
+            if (keyvalue.has('id')) {
+              return {
+                key: keyvalue.get('id'),
+                value: keyvalue.get('label'),
+              };
+            } else {
+              return {
+                key: keyvalue.get('value'),
+                value: keyvalue.get('label'),
+              };
+            }
+          })
+          .toJS(),
       };
+      return keyvaluePairs;
     } else {
       return { pairs: [{ key: '', value: '' }] };
     }
@@ -221,38 +225,25 @@ const AttributeMultipleValuesInputView = ({
     setCurrentInput(getCurrentWidgetAttributeValues(newType));
 
     // When user switches the 'selectedType', the value will reset back to an empty array.
-    setWidgetToAttributes((prevObjs) => ({
-      ...prevObjs,
-      [widgetID]: { ...prevObjs[widgetID], [field]: [] },
-    }));
+    setWidgetToAttributes(widgetToAttributes.setIn([widgetID, field], List([])));
   };
 
   const onAttributeChange = (newVal) => {
     setCurrentInput(newVal);
-    setWidgetToAttributes((prevObjs) => ({
-      ...prevObjs,
-      [widgetID]: { ...prevObjs[widgetID], [field]: newVal.split(COMMON_DELIMITER) },
-    }));
+    setWidgetToAttributes(
+      widgetToAttributes.setIn([widgetID, field], List(newVal.split(COMMON_DELIMITER)))
+    );
   };
 
   const onKeyValueAttributeChange = (keyvalue, type: SupportedType) => {
-    if (type === SupportedType.ValueLabelPair) {
-      const keyvaluePairs = keyvalue.pairs.map((pair) => {
+    const keyvaluePairs = keyvalue.pairs.map((pair) => {
+      if (type === SupportedType.ValueLabelPair) {
         return { value: pair.key, label: pair.value };
-      });
-      setWidgetToAttributes((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], [field]: keyvaluePairs },
-      }));
-    } else {
-      const keyvaluePairs = keyvalue.pairs.map((pair) => {
+      } else {
         return { id: pair.key, label: pair.value };
-      });
-      setWidgetToAttributes((prevObjs) => ({
-        ...prevObjs,
-        [widgetID]: { ...prevObjs[widgetID], [field]: keyvaluePairs },
-      }));
-    }
+      }
+    });
+    setWidgetToAttributes(widgetToAttributes.setIn([widgetID, field], Map(keyvaluePairs)));
   };
 
   const renderAttributeMultipleValuesInput = () => {

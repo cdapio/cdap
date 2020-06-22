@@ -40,23 +40,17 @@ const styles = (): StyleRules => {
 export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToInfo }) => {
   function onGroupLabelChange() {
     return (label) => {
-      setGroupToInfo((prevObjs) => ({
-        ...prevObjs,
-        [groupID]: { ...prevObjs[groupID], label },
-      }));
+      setGroupToInfo(groupToInfo.setIn([groupID, 'label'], label));
     };
   }
 
   function onGroupDescriptionChange() {
     return (description) => {
-      setGroupToInfo((prevObjs) => ({
-        ...prevObjs,
-        [groupID]: { ...prevObjs[groupID], description },
-      }));
+      setGroupToInfo(groupToInfo.setIn([groupID, 'description'], description));
     };
   }
 
-  const group = groupToInfo ? groupToInfo[groupID] : null;
+  const group = groupToInfo ? groupToInfo.get(groupID) : null;
 
   return (
     <If condition={group}>
@@ -64,7 +58,7 @@ export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToIn
         <div className={classes.groupInput}>
           <PluginInput
             widgetType={'textbox'}
-            value={group.label}
+            value={group.get('label')}
             onChange={onGroupLabelChange()}
             label={'Label'}
             required={true}
@@ -73,7 +67,7 @@ export const GroupInfoInputView = ({ classes, groupID, groupToInfo, setGroupToIn
         <div className={classes.groupInput}>
           <PluginInput
             widgetType={'textarea'}
-            value={group.description}
+            value={group.get('description')}
             onChange={onGroupDescriptionChange()}
             label={'Description'}
             required={false}
