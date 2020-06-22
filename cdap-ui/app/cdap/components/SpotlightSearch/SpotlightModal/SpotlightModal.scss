@@ -34,8 +34,6 @@ $highlight-color: $grey-06;
     border-radius: 0;
 
     .close-section {
-      width: 325px;
-
       .dropdown {
         display: inline-block;
         margin-right: 26px;
@@ -70,10 +68,18 @@ $highlight-color: $grey-06;
         }
       }
     }
+    .tag-title {
+      width: 100%;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
     .modal-title {
       font-size: 14px;
       font-weight: 500;
       width: 100%;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(auto, auto));
 
       .search-results-total {
         color: $light-grey;
