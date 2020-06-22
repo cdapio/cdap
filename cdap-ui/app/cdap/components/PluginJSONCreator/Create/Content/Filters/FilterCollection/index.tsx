@@ -16,12 +16,12 @@
 
 import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import { IPropertyShowConfig } from 'components/ConfigurationGroup/types';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import If from 'components/If';
 import FilterConditionInput from 'components/PluginJSONCreator/Create/Content/Filters/FilterCollection/FilterConditionInput';
 import FilterShowlistInput from 'components/PluginJSONCreator/Create/Content/Filters/FilterCollection/FilterShowlistInput';
 import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { List, Map } from 'immutable';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 
@@ -48,7 +48,7 @@ const styles = (theme): StyleRules => {
 const FilterNameInput = ({ filterID, filterToName, setFilterToName }) => {
   function setFilterName(filterObjID: string) {
     return (name) => {
-      setFilterToName((prevObjs) => ({ ...prevObjs, [filterObjID]: name }));
+      setFilterToName((prevObjs) => prevObjs.set(filterObjID, name));
     };
   }
 
@@ -65,12 +65,14 @@ const FilterNameInput = ({ filterID, filterToName, setFilterToName }) => {
   };
 
   return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={filterToName[filterID]}
-      onChange={setFilterName(filterID)}
-    />
+    <div>
+      <WidgetWrapper
+        widgetProperty={widget}
+        pluginProperty={property}
+        value={filterToName.get(filterID)}
+        onChange={setFilterName(filterID)}
+      />
+    </div>
   );
 };
 
@@ -91,51 +93,48 @@ const FilterCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
   function addFilter(index: number) {
     const newFilterID = 'Filter_' + uuidV4();
 
-    const newFilters = [...filters];
-
-    if (newFilters.length === 0) {
-      newFilters.splice(0, 0, newFilterID);
+    if (filters.isEmpty()) {
+      setFilters(filters.insert(0, newFilterID));
     } else {
-      newFilters.splice(index + 1, 0, newFilterID);
+      setFilters(filters.insert(index + 1, newFilterID));
     }
 
-    setFilters(newFilters);
-
-    setFilterToName({ ...filterToName, [newFilterID]: '' });
-    setFilterToCondition({ ...filterToCondition, [newFilterID]: {} });
+    setFilterToName(filterToName.set(newFilterID, ''));
+    setFilterToCondition(filterToCondition.set(newFilterID, Map({})));
 
     // put one empty show as a placeholder
     const newShowID = 'Show_' + uuidV4();
-    setFilterToShowList({
-      ...filterToShowList,
-      [newFilterID]: [newShowID],
-    });
-    setShowToInfo({
-      ...showToInfo,
-      [newShowID]: {
-        name: '',
-      } as IPropertyShowConfig,
-    });
+    setFilterToShowList(filterToShowList.set(newFilterID, List([newShowID])));
+    setShowToInfo(
+      showToInfo.set(
+        newShowID,
+        Map({
+          name: '',
+          type: '',
+        })
+      )
+    );
   }
 
   function deleteFilter(index: number) {
-    const newFilters = [...filters];
-    const filterToDelete = newFilters[index];
-    newFilters.splice(index, 1);
+    const filterToDelete = filters.get(index);
+
+    const newFilters = filters.remove(index);
     setFilters(newFilters);
 
-    const { [filterToDelete]: name, ...restFilterToName } = filterToName;
-    setFilterToName(restFilterToName);
+    const newFilterToName = filterToName.delete(filterToDelete);
+    setFilterToName(newFilterToName);
 
-    const { [filterToDelete]: condition, ...restFilterToCondition } = filterToCondition;
-    setFilterToCondition(restFilterToCondition);
+    const newFilterToCondition = filterToCondition.delete(filterToDelete);
+    setFilterToCondition(newFilterToCondition);
 
-    const { [filterToDelete]: showList, ...restFilterToShowList } = filterToShowList;
-    setFilterToShowList(restFilterToShowList);
+    const showlistToDelete = filterToShowList.get(filterToDelete);
+    const newwFilterToShowlist = filterToShowList.delete(filterToDelete);
+    setFilterToShowList(newwFilterToShowlist);
 
-    showList.map((show) => {
-      const { [show]: info, ...rest } = showToInfo;
-      setShowToInfo(rest);
+    showlistToDelete.map((show) => {
+      const newShowToInfo = showToInfo.delete(show);
+      setShowToInfo(newShowToInfo);
     });
   }
 
@@ -186,7 +185,7 @@ const FilterCollectionView: React.FC<ICreateContext & WithStyles<typeof styles>>
           </div>
         );
       })}
-      <If condition={filters.length === 0}>
+      <If condition={filters.isEmpty()}>
         <Button variant="contained" color="primary" onClick={() => addFilter(0)}>
           Add Filter
         </Button>

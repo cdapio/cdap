@@ -71,6 +71,9 @@ const styles = (theme): StyleRules => {
       alignItems: 'center',
       justifyContent: 'center',
     },
+    liveViewLoad: {
+      maxWidth: '50%',
+    },
     jsonLiveCode: {
       padding: '14px',
     },
@@ -132,12 +135,25 @@ const LiveViewerView: React.FC<ILiveViewerProps> = ({
     }
     const newPluginProperties = {};
     config['configuration-groups'].forEach((group) => {
-      return group.properties.forEach((widget) => {
-        const widgetName = widget.name;
+      return group.get('properties').forEach((widget) => {
+        const widgetName = widget.get('name');
         newPluginProperties[widgetName] = { name: widgetName };
       });
     });
     return newPluginProperties;
+  }
+
+  function processForConfigurationGroup(config) {
+    const processed = {
+      ...config,
+      ...(config['configuration-groups'] && {
+        'configuration-groups': config['configuration-groups'].toJS(),
+      }),
+      ...(config.filters && {
+        filters: config.filters.toJS(),
+      }),
+    };
+    return processed;
   }
 
   return (
@@ -182,7 +198,7 @@ const LiveViewerView: React.FC<ILiveViewerProps> = ({
             <If condition={!loading}>
               <ConfigurationGroup
                 pluginProperties={pluginProperties}
-                widgetJson={JSONConfig}
+                widgetJson={processForConfigurationGroup(JSONConfig)}
                 values={values}
               />
             </If>
