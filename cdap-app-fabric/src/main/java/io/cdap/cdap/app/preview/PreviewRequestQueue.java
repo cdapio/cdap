@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.gson.JsonObject;
+
 import java.util.Optional;
 
 /**
@@ -24,10 +26,10 @@ import java.util.Optional;
 public interface PreviewRequestQueue {
   /**
    * Poll the next available request in the queue.
-   * @param previewRequestPollerInfo information about the poller
+   * @param pollerInfo information about the poller in JSON format
    * @return {@code PreviewRequest} if such request is available in the queue
    */
-  Optional<PreviewRequest> poll(PreviewRequestPollerInfo previewRequestPollerInfo);
+  Optional<PreviewRequest> poll(JsonObject pollerInfo);
 
   /**
    * Add a preview request in the queue.
