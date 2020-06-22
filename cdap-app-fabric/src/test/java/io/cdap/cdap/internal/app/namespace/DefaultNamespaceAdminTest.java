@@ -52,7 +52,7 @@ public class DefaultNamespaceAdminTest extends AppFabricTestBase {
     // we enable Kerberos for these unit tests, so we can test namespace group permissions (see testDataDirCreation).
     cConf.set(Constants.Security.KERBEROS_ENABLED, Boolean.toString(true));
     cConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "cdap");
-    initializeAndStartServices(cConf, null);
+    initializeAndStartServices(cConf);
 
     namespaceAdmin = getInjector().getInstance(NamespaceAdmin.class);
     baseLocationFactory = getInjector().getInstance(LocationFactory.class);
