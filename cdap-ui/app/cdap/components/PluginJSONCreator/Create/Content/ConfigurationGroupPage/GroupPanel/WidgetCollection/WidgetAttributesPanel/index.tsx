@@ -14,11 +14,14 @@
  * the License.
  */
 
+import { Button } from '@material-ui/core';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import { h2Styles } from 'components/Markdown/MarkdownHeading';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
 import { useWidgetState } from 'components/PluginJSONCreator/Create';
+import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput';
+import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetInfoInput';
 import StandardModal from 'components/StandardModal';
 import { fromJS } from 'immutable';
 import * as React from 'react';
@@ -88,23 +91,12 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
   return React.useMemo(
     () => (
       <If condition={widgetAttributesOpen}>
-        {/* <Dialog
-          open={true}
-          onClose={closeWidgetAttributes}
-          disableBackdropClick={true}
-          fullWidth={true}
-          maxWidth={'md'}
-          classes={{ paper: classes.attributeDialog }}
+        <StandardModal
+          open={widgetAttributesOpen}
+          toggle={closeWidgetAttributes}
+          headerText={'Widget Attributes'}
         >
-          <DialogTitle disableTypography className={classes.dialogTitle}>
-            <IconButton onClick={closeWidgetAttributes}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent>
-            <div className={classes.widgetAttributesTitle}>
-              <h1 className={classes.h2Title}>Widget Property</h1>
-            </div>
+          <div>
             <WidgetInfoInput widgetID={widgetID} />
             <If condition={attributeFields && attributeFields.length > 0}>
               <div className={classes.widgetAttributesTitle}>
@@ -132,10 +124,7 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
             >
               Save
             </Button>
-          </DialogContent>
-        </Dialog> */}
-        <StandardModal>
-          <div>helllo hekekkekekk</div>
+          </div>
         </StandardModal>
       </If>
     ),

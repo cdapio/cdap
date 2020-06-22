@@ -17,21 +17,48 @@
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import IconSVG from 'components/IconSVG';
-import T from 'i18n-react';
 import React from 'react';
 import { CSSTransition } from 'react-transition-group';
 import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
-import { Theme } from 'services/ThemeHelper';
 
 const styles = (): StyleRules => {
-  return {};
+  return {
+    plusButtonModal: {
+      position: 'relative',
+      overflow: 'hidden',
+    },
+    cdapModal: {},
+    plusModalHeaderText: {
+      verticalAlign: 'top',
+      paddingLeft: '6px',
+    },
+    floatRight: {
+      float: 'right',
+    },
+    floatLeft: {
+      float: 'left',
+    },
+    modalCloseBtn: {
+      height: '30px',
+      cursor: 'pointer',
+    },
+  };
 };
 
 interface IStandardModalProps extends WithStyles<typeof styles> {
-  widgetID: string;
+  open: boolean;
+  toggle: () => void;
+  headerText: string;
+  children: any;
 }
 
-const StandardModalView: React.FC<IStandardModalProps> = ({ classes, children }) => {
+const StandardModalView: React.FC<IStandardModalProps> = ({
+  classes,
+  open,
+  toggle,
+  headerText,
+  children,
+}) => {
   // onError = (error, extendedError) => {
   //   this.setState({
   //     error,
@@ -55,14 +82,11 @@ const StandardModalView: React.FC<IStandardModalProps> = ({ classes, children })
     );
   };
 
-  const market = Theme.featureNames.hub;
-  const resourceCenter = T.translate('commons.resource-center');
-
   return (
     <Modal
-      isOpen={true} // this.props.isOpen}
-      toggle={() => {}} // this.closeHandler.bind(this)}
-      className={classnames('plus-button-modal cdap-modal', {
+      isOpen={open} // this.props.isOpen}
+      toggle={toggle} // this.closeHandler.bind(this)}
+      className={classnames(classes.plusButtonModal, classes.cdapModal, 'cdap-modal', {
         // 'cask-market': this.state.viewMode === 'marketplace',
         // 'add-entity-modal': this.state.viewMode === 'resourcecenter',
       })}
@@ -71,14 +95,11 @@ const StandardModalView: React.FC<IStandardModalProps> = ({ classes, children })
       fade
     >
       <ModalHeader>
-        <span className="float-left">
-          <span className="plus-modal-header-text">
-            {/* {this.state.viewMode === 'resourcecenter' ? resourceCenter : market} */}
-            Hellommmm
-          </span>
+        <span className={classes.floatLeft}>
+          <span className={classes.plusModalHeaderText}>{headerText}</span>
         </span>
-        <div className="float-right">
-          <div className="modal-close-btn" onClick={() => {}}>
+        <div className={classes.floatRight}>
+          <div className={classes.modalCloseBtn} onClick={toggle}>
             <IconSVG name="icon-close" />
           </div>
         </div>
@@ -91,15 +112,7 @@ const StandardModalView: React.FC<IStandardModalProps> = ({ classes, children })
           timeout={5000}
           component="div"
         >
-          <div>
-            hello
-            {/* {this.state.viewMode === 'marketplace' ? (
-            <Market key="1" />
-          ) : (
-            <ResourceCenter key="2" onError={this.onError} />
-          )} */}
-            {children}
-          </div>
+          <div>{children}</div>
         </CSSTransition>
       </ModalBody>
       {renderError()}
