@@ -24,6 +24,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
+import ToggleExperiment from 'components/Lab/ToggleExperiment';
 import VirtualScrollDemo from 'components/VirtualScroll/demo';
 
 require('./Home.scss');
