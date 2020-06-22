@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.preview;
 
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.preview.PreviewRequest;
-import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewRequestQueueState;
 import io.cdap.cdap.app.store.preview.PreviewStore;
@@ -64,7 +64,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   }
 
   @Override
-  public synchronized Optional<PreviewRequest> poll(PreviewRequestPollerInfo previewRequestPollerInfo) {
+  public synchronized Optional<PreviewRequest> poll(JsonObject pollerInfo) {
     while (true) {
       PreviewRequest previewRequest = requestQueue.peek();
       if (previewRequest == null) {
@@ -77,7 +77,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
         continue;
       }
 
-      previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), previewRequestPollerInfo);
+      previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
       requestQueue.poll();
       return Optional.of(previewRequest);
     }

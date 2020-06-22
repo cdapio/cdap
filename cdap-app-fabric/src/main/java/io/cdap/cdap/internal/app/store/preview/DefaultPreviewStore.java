@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -26,7 +27,6 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.app.preview.PreviewRequest;
-import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.app.RunIds;
@@ -281,8 +281,7 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void setPreviewRequestPollerInfo(ApplicationId applicationId,
-                                          PreviewRequestPollerInfo previewRequestPollerInfo) {
+  public void setPreviewRequestPollerInfo(ApplicationId applicationId, JsonObject pollerInfo) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     MDSKey mdsKey = new MDSKey.Builder()
@@ -291,10 +290,10 @@ public class DefaultPreviewStore implements PreviewStore {
       .build();
 
     try {
-      table.put(mdsKey.getKey(), POLLERINFO, Bytes.toBytes(gson.toJson(previewRequestPollerInfo)), 1L);
+      table.put(mdsKey.getKey(), POLLERINFO, Bytes.toBytes(gson.toJson(pollerInfo)), 1L);
     } catch (IOException e) {
       String msg = String.format("Error while setting the poller information %s for waiting preview application %s.",
-                                 gson.toJson(previewRequestPollerInfo), applicationId);
+                                 gson.toJson(pollerInfo), applicationId);
       throw new RuntimeException(msg, e);
     }
 
