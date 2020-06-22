@@ -22,4 +22,11 @@ export default [
     screenshot: null,
     value: false,
   },
+  {
+    name: 'Virtual scroll demo',
+    description: 'This is a demo of the virtual scroll component.',
+    id: 'virtual-scroll-demo',
+    screenshot: null,
+    value: false,
+  },
 ];

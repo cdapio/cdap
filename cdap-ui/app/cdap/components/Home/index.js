@@ -154,6 +154,19 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/lab" component={Lab} />
           <Route
             exact
+            path="/ns/:namespace/vs"
+            render={(props) => {
+              return (
+                <ToggleExperiment
+                  name="virtual-scroll-demo"
+                  defaultComponent={<Page404 {...props} />}
+                  experimentalComponent={<VirtualScrollDemo />}
+                />
+              );
+            }}
+          />
+          <Route
+            exact
             path="/ns/:namespace/lab-experiment-test"
             render={(props) => {
               if (window.CDAP_CONFIG.cdap.mode !== 'development') {
@@ -165,19 +178,6 @@ export default class Home extends Component {
                 loading: LoadingSVGCentered,
               });
               return <LabExperimentTestComp {...props} />;
-            }}
-          />
-          <Route
-            exact
-            path="/ns/:namespace/vs"
-            render={(props) => {
-              return (
-                <ToggleExperiment
-                  name="Virtual Scrolling"
-                  defaultComponent={<Page404 {...props} />}
-                  experimentalComponent={<VirtualScrollDemo />}
-                />
-              );
             }}
           />
           <Route component={Page404} />
