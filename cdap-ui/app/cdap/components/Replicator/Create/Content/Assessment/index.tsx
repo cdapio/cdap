@@ -27,7 +27,7 @@ import ConnectivityAssessment from 'components/Replicator/Create/Content/Assessm
 import FeaturesAssessment from 'components/Replicator/Create/Content/Assessment//FeaturesAssessment';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import Heading, { HeadingTypes } from 'components/Heading';
-import { extractErrorMessage } from 'components/Replicator/utilities';
+import { extractErrorMessage } from 'services/helpers';
 import Button from '@material-ui/core/Button';
 import Refresh from '@material-ui/icons/Refresh';
 

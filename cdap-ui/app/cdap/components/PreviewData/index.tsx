@@ -63,21 +63,18 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     setPreviewData(updatedPreview);
   };
 
-  useEffect(
-    () => {
-      if (previewId) {
-        fetchPreview(
-          selectedNode,
-          previewId,
-          stages,
-          connections,
-          setPreviewLoading,
-          updatePreviewCb
-        );
-      }
-    },
-    [previewId]
-  );
+  useEffect(() => {
+    if (previewId) {
+      fetchPreview(
+        selectedNode,
+        previewId,
+        stages,
+        connections,
+        setPreviewLoading,
+        updatePreviewCb
+      );
+    }
+  }, [previewId]);
 
   const getTableData = () => {
     let inputs = {};

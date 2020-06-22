@@ -472,6 +472,14 @@ function handlePageLevelError(error) {
   return {errorCode, message};
 }
 
+function extractErrorMessage(errObj) {
+  if (typeof errObj === 'string') {
+    return errObj;
+  }
+
+  return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -510,5 +518,6 @@ export {
   parseQueryString,
   isMacro,
   removeEmptyJsonValues,
-  handlePageLevelError
+  handlePageLevelError,
+  extractErrorMessage,
 };
