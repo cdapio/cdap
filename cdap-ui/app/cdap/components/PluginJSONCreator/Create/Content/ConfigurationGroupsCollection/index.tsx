@@ -31,9 +31,9 @@ import WidgetCollection from 'components/PluginJSONCreator/Create/Content/Widget
 import {
   CreateContext,
   createContextConnect,
-  IConfigurationGroupInfo,
   ICreateContext,
 } from 'components/PluginJSONCreator/CreateContextConnect';
+import { List, Map } from 'immutable';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
 
@@ -94,30 +94,32 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
       const newGroupID = 'ConfigGroup_' + uuidV4();
 
       // Add a new group's ID at the specified index
-      const newGroups = [...localConfigurationGroups];
-      if (newGroups.length === 0) {
-        newGroups.splice(0, 0, newGroupID);
+      let newGroups;
+      if (localConfigurationGroups.isEmpty()) {
+        newGroups = localConfigurationGroups.insert(0, newGroupID);
       } else {
-        newGroups.splice(index + 1, 0, newGroupID);
+        newGroups = localConfigurationGroups.insert(index + 1, newGroupID);
       }
       setLocalConfigurationGroups(newGroups);
 
       // Set the activeGroupIndex to the new group's index
-      if (newGroups.length <= 1) {
+      if (newGroups.size <= 1) {
         setActiveGroupIndex(0);
       } else {
         setActiveGroupIndex(index + 1);
       }
 
       // Set the mappings for the newly added group
-      setLocalGroupToInfo({
-        ...localGroupToInfo,
-        [newGroupID]: {
-          label: '',
-          description: '',
-        } as IConfigurationGroupInfo,
-      });
-      setLocalGroupToWidgets({ ...localGroupToWidgets, [newGroupID]: [] });
+      setLocalGroupToInfo(
+        localGroupToInfo.set(
+          newGroupID,
+          Map({
+            label: '',
+            description: '',
+          })
+        )
+      );
+      setLocalGroupToWidgets(localGroupToWidgets.set(newGroupID, List([])));
     };
   }
 
@@ -126,21 +128,23 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
       setActiveGroupIndex(null);
 
       // Delete a group at the specified index
-      const newGroups = [...localConfigurationGroups];
-      const groupToDelete = newGroups[index];
-      newGroups.splice(index, 1);
+      const groupToDelete = localConfigurationGroups.get(index);
+
+      const newGroups = localConfigurationGroups.remove(index);
       setLocalConfigurationGroups(newGroups);
 
       // Delete the corresponding data of the group
-      const { [groupToDelete]: info, ...restGroupToInfo } = localGroupToInfo;
-      const { [groupToDelete]: widgets, ...restGroupToWidgets } = localGroupToWidgets;
-      setLocalGroupToInfo(restGroupToInfo);
-      setLocalGroupToWidgets(restGroupToWidgets);
+      const newGroupToInfo = localGroupToInfo.delete(groupToDelete);
+      setLocalGroupToInfo(newGroupToInfo);
+
+      const widgetsToDelete = localGroupToWidgets.get(groupToDelete);
+      const newGroupToWidgets = localGroupToWidgets.delete(groupToDelete);
+      setLocalGroupToWidgets(newGroupToWidgets);
 
       // Delete all the widget information that belong to the group
       const newWidgetInfo = localWidgetInfo;
       const newWidgetToAttributes = localWidgetToAttributes;
-      widgets.forEach((widget) => {
+      widgetsToDelete.forEach((widget) => {
         delete newWidgetInfo[widget];
         delete newWidgetToAttributes[widget];
       });
@@ -192,7 +196,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
       />
       <Heading type={HeadingTypes.h3} label="Configuration Groups" />
       <br />
-      <If condition={localConfigurationGroups.length === 0}>
+      <If condition={localConfigurationGroups.isEmpty()}>
         <Button variant="contained" color="primary" onClick={addConfigurationGroup(0)}>
           Add Configuration Group
         </Button>
@@ -200,7 +204,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
 
       {localConfigurationGroups.map((groupID, i) => {
         const configurationGroupExpanded = activeGroupIndex === i;
-        const group = localGroupToInfo[groupID];
+        const group = localGroupToInfo.get(groupID);
         return (
           <div key={groupID} className={classes.eachGroup}>
             <ExpansionPanel
@@ -213,7 +217,7 @@ const ConfigurationGroupsCollectionView: React.FC<ICreateContext & WithStyles<ty
                 id="panel1c-header"
               >
                 <If condition={!configurationGroupExpanded}>
-                  <Typography className={classes.heading}>{group.label}</Typography>
+                  <Typography className={classes.heading}>{group.get('label')}</Typography>
                 </If>
               </ExpansionPanelSummary>
               <ExpansionPanelActions className={classes.groupContent}>
