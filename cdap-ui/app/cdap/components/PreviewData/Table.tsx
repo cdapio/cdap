@@ -21,7 +21,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import TableCell from '@material-ui/core/TableCell';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import isEmpty from 'lodash/isEmpty';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
 import Heading, { HeadingTypes } from 'components/Heading';
@@ -47,12 +47,14 @@ export const messageTextStyle = {
   fontSize: '1.3rem !important',
   margin: '10px 0',
 };
-const styles = (theme) => ({
+const styles = (theme): StyleRules => ({
   root: {
     width: '100%',
     display: 'inline-block',
     height: 'auto',
     marginTop: theme.spacing(1),
+    overflowX: 'auto',
+    borderRadius: 0,
   },
   table: {
     width: '100%',
