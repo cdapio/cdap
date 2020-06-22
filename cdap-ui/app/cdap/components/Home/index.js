@@ -195,7 +195,7 @@ export default class Home extends Component {
             render={(props) => {
               return (
                 <ToggleExperiment
-                  name="Virtual Scrolling"
+                  name="virtual-scroll-demo"
                   defaultComponent={<Page404 {...props} />}
                   experimentalComponent={<VirtualScrollDemo />}
                 />
