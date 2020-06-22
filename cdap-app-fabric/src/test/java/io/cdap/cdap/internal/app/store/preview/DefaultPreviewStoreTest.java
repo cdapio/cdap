@@ -17,10 +17,11 @@ package io.cdap.cdap.internal.app.store.preview;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.preview.PreviewRequest;
-import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -129,6 +130,9 @@ public class DefaultPreviewStoreTest {
 
   @Test
   public void testPreviewWaitingRequests() {
+    String json = "{ \"id\": \"runner-1\"}";
+    JsonObject pollerInfo = new JsonParser().parse(json).getAsJsonObject();
+
     Assert.assertEquals(0, store.getAllInWaitingState().size());
 
     RunId id1 = RunIds.generate();
@@ -141,7 +145,6 @@ public class DefaultPreviewStoreTest {
     Assert.assertNotNull(appRequest);
     Assert.assertNotNull(appRequest.getPreview());
     Assert.assertEquals("WordCount", appRequest.getPreview().getProgramName());
-    PreviewRequestPollerInfo pollerInfo = new PreviewRequestPollerInfo("poller");
     store.setPreviewRequestPollerInfo(applicationId, pollerInfo);
 
     Assert.assertEquals(0, store.getAllInWaitingState().size());

@@ -18,11 +18,12 @@ package io.cdap.cdap.internal.app.preview;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.app.preview.PreviewRequest;
-import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
@@ -127,15 +128,15 @@ public class DefaultPreviewRequestQueueTest {
     }
 
     @Override
-    public void setPreviewRequestPollerInfo(ApplicationId applicationId,
-                                            PreviewRequestPollerInfo previewRequestPollerInfo) {
+    public void setPreviewRequestPollerInfo(ApplicationId applicationId, JsonObject pollerInfo) {
 
     }
   }
 
   @Test
   public void testPreviewRequestQueue() {
-    PreviewRequestPollerInfo pollerInfo = new PreviewRequestPollerInfo("poller-id");
+    String json = "{ \"id\": \"runner-1\"}";
+    JsonObject pollerInfo = new JsonParser().parse(json).getAsJsonObject();
     Optional<PreviewRequest> requestOptional = previewRequestQueue.poll(pollerInfo);
     Assert.assertFalse(requestOptional.isPresent());
 

@@ -16,9 +16,9 @@
 package io.cdap.cdap.app.store.preview;
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewRequest;
-import io.cdap.cdap.app.preview.PreviewRequestPollerInfo;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -108,7 +108,7 @@ public interface PreviewStore {
   /**
    * Sets the information about the poller that has acquired the waiting application for running.
    * @param applicationId the application id of preview
-   * @param previewRequestPollerInfo information about the poller that is going to run the preview.
+   * @param pollerInfo information about the poller that is going to run the preview in JSON format
    */
-  void setPreviewRequestPollerInfo(ApplicationId applicationId, PreviewRequestPollerInfo previewRequestPollerInfo);
+  void setPreviewRequestPollerInfo(ApplicationId applicationId, JsonObject pollerInfo);
 }
