@@ -18,13 +18,33 @@ import React from 'react';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
 import Paper from '@material-ui/core/Paper';
 import TableHead from '@material-ui/core/TableHead';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
-import { CustomTableCell, styles } from 'components/PreviewData/DataView/Table';
+import { styles } from 'components/PreviewData/DataView/Table';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
+
+const CustomTableCell = withStyles((theme) => ({
+  head: {
+    backgroundColor: theme.palette.grey['300'],
+    color: theme.palette.common.white,
+    padding: 10,
+    fontSize: 14,
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+    },
+  },
+  body: {
+    padding: 10,
+    fontSize: 14,
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+    },
+  },
+}))(TableCell);
 
 interface IRecordTableProps extends WithStyles<typeof styles> {
   headers: string[];

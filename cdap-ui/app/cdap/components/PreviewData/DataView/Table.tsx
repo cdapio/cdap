@@ -15,47 +15,27 @@
  */
 
 import React from 'react';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
-import TableCell from '@material-ui/core/TableCell';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import Grid from '@material-ui/core/Grid';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import isEmpty from 'lodash/isEmpty';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
 import Heading, { HeadingTypes } from 'components/Heading';
 import ThemeWrapper from 'components/ThemeWrapper';
+import VirtualScroll from 'components/VirtualScroll';
 import T from 'i18n-react';
+import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.DataView.Table';
-
-export const CustomTableCell = withStyles((theme) => ({
-  head: {
-    backgroundColor: theme.palette.grey['300'],
-    color: theme.palette.common.white,
-    padding: 10,
-    fontSize: 14,
-    '&:first-of-type': {
-      borderRight: `1px solid ${theme.palette.grey['500']}`,
-    },
-  },
-  body: {
-    padding: 10,
-    fontSize: 14,
-    '&:first-of-type': {
-      borderRight: `1px solid ${theme.palette.grey['500']}`,
-    },
-  },
-}))(TableCell);
 
 export const messageTextStyle = {
   fontSize: '1.3rem !important',
   margin: '10px 0',
 };
-export const styles = (theme) => ({
+export const styles = (theme): StyleRules => ({
   root: {
-    width: '100%',
+    width: 'fit-content',
+    minWidth: '100%',
     display: 'inline-block',
     height: 'auto',
     marginTop: theme.spacing(1),
@@ -65,11 +45,29 @@ export const styles = (theme) => ({
   },
   row: {
     height: 40,
-    '&:nth-of-type(odd)': {
+    '&.oddRow': {
       backgroundColor: theme.palette.grey['600'],
     },
   },
   messageText: messageTextStyle,
+  headerCell: {
+    backgroundColor: theme.palette.grey['300'],
+    color: theme.palette.common.white,
+    fontSize: 14,
+    '&.indexCell': {
+      width: '40px',
+    },
+  },
+  cell: {
+    width: '100px',
+    textAlign: 'center',
+    height: '40px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+    },
+  },
 });
 
 interface IDataTableProps extends WithStyles<typeof styles> {
@@ -111,6 +109,32 @@ const DataTableView: React.FC<IDataTableProps> = ({
     }
     return field;
   };
+  const renderList = (visibleNodeCount: number, startNode: number) => {
+    return records.slice(startNode, startNode + visibleNodeCount).map((record, i) => {
+      return (
+        <React.Fragment>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
+            key={`tr-${i}`}
+          >
+            <Grid item className={classes.cell}>
+              {i + 1 + startNode}
+            </Grid>
+            {headers.map((fieldName, k) => {
+              return (
+                <Grid item className={classes.cell} key={`table-cell-${k}`}>
+                  {format(record[fieldName])}
+                </Grid>
+              );
+            })}
+          </Grid>
+        </React.Fragment>
+      );
+    });
+  };
 
   if (isEmpty(records) || isCondition) {
     return (
@@ -122,34 +146,36 @@ const DataTableView: React.FC<IDataTableProps> = ({
 
   return (
     <Paper className={classes.root}>
-      <Table>
-        <TableHead>
-          <TableRow className={classes.row}>
-            <CustomTableCell />
+      <Grid container direction="column" wrap="nowrap">
+        <Grid item>
+          <Grid container direction="row" justify="center" alignItems="center">
+            <Grid
+              item
+              className={classnames(classes.headerCell, classes.cell, classes.indexCell)}
+            />
             {headers.map((fieldName, i) => {
               return (
-                <CustomTableCell key={`header-cell-${i}`}>{format(fieldName)}</CustomTableCell>
+                <Grid
+                  item
+                  key={`header-cell-${i}`}
+                  className={classnames(classes.cell, classes.headerCell)}
+                >
+                  {format(fieldName)}
+                </Grid>
               );
             })}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {records.map((record, j) => {
-            return (
-              <TableRow className={classes.row} key={`tr-${j}`}>
-                <CustomTableCell>{j + 1}</CustomTableCell>
-                {headers.map((fieldName, k) => {
-                  return (
-                    <CustomTableCell key={`table-cell-${k}`}>
-                      {format(record[fieldName])}
-                    </CustomTableCell>
-                  );
-                })}
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+          </Grid>
+        </Grid>
+        <Grid item>
+          <VirtualScroll
+            itemCount={() => records.length}
+            visibleChildCount={25}
+            childHeight={40}
+            renderList={renderList}
+            childrenUnderFold={10}
+          />
+        </Grid>
+      </Grid>
     </Paper>
   );
 };
