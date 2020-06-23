@@ -19,6 +19,9 @@ import { IProgram, ILogResponse, LogLevel } from 'components/LogViewer/types';
 import { MyProgramApi } from 'api/program';
 import { Observable } from 'rxjs/Observable';
 
+const PROGRAM_LOGS_FILTER = 'AND .origin=plugin OR .origin=program';
+const MAX_LOGS_PER_FETCH = 50;
+
 class ProgramDataFetcher implements DataFetcher {
   private namespace;
   private application;
@@ -28,19 +31,27 @@ class ProgramDataFetcher implements DataFetcher {
 
   private firstLog;
   private lastLog;
+  private logFilter;
+  private includeSystemLogs = false;
 
-  private logLevel = LogLevel.DEBUG;
+  private logLevel = LogLevel.INFO;
 
-  constructor(programObj: IProgram) {
+  constructor(programObj: IProgram, logsFilter?: string) {
     this.namespace = programObj.namespace;
     this.application = programObj.application;
     this.programType = programObj.programType;
     this.programName = programObj.programName;
     this.runId = programObj.runId;
+
+    this.logFilter = logsFilter ? logsFilter : PROGRAM_LOGS_FILTER;
   }
 
   private getFilter = (): string => {
-    const filter = `loglevel=${this.logLevel}`;
+    let filter = `loglevel=${this.logLevel}`;
+
+    if (!this.includeSystemLogs) {
+      filter = `${filter} ${this.logFilter}`;
+    }
 
     return filter;
   };
@@ -52,7 +63,7 @@ class ProgramDataFetcher implements DataFetcher {
       programType: this.programType,
       programId: this.programName,
       runId: this.runId,
-      max: 10,
+      max: MAX_LOGS_PER_FETCH,
       format: 'json',
       filter: this.getFilter(),
     };
@@ -120,18 +131,58 @@ class ProgramDataFetcher implements DataFetcher {
     });
   };
 
+  public onLogsTrim = (firstLog: ILogResponse, lastLog: ILogResponse) => {
+    this.firstLog = firstLog;
+    this.lastLog = lastLog;
+  };
+
+  public setIncludeSystemLogs = (includeSystemLogs: boolean): Observable<ILogResponse[]> => {
+    this.includeSystemLogs = includeSystemLogs;
+
+    return this.init();
+  };
+
+  public getIncludeSystemLogs = (): boolean => {
+    return this.includeSystemLogs;
+  };
+
   public setLogLevel = (logLevel: LogLevel): Observable<ILogResponse[]> => {
     this.logLevel = logLevel;
 
     return this.init();
   };
 
-  public getDownloadUrl = (): string => {
-    return 'temporary';
+  public getLogLevel = (): LogLevel => {
+    return this.logLevel;
+  };
+
+  public getDownloadFileName = (): string => {
+    const nameComponents = [
+      this.namespace,
+      this.application,
+      this.programType,
+      this.programName,
+      this.runId,
+    ];
+
+    return nameComponents.join('-');
   };
 
   public getRawLogsUrl = (): string => {
-    return 'temporary';
+    const urlComponents = [
+      '/v3',
+      'namespaces',
+      this.namespace,
+      'apps',
+      this.application,
+      this.programType,
+      this.programName,
+      'runs',
+      this.runId,
+      'logs?escape=false',
+    ];
+
+    return urlComponents.join('/');
   };
 }
 

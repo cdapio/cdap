@@ -23,7 +23,11 @@ export default interface IDataFetcher {
   getPrev: () => Observable<ILogResponse[]>;
   getFirst: () => Observable<ILogResponse[]>;
   getLast: () => Observable<ILogResponse[]>;
+  onLogsTrim: (firstLog: ILogResponse, lastLog: ILogResponse) => void;
+  setIncludeSystemLogs: (includeSystemLogs: boolean) => Observable<ILogResponse[]>;
+  getIncludeSystemLogs: () => boolean;
   setLogLevel: (logLevel: LogLevel) => Observable<ILogResponse[]>;
-  getDownloadUrl: () => string;
+  getLogLevel: () => LogLevel;
+  getDownloadFileName: () => string;
   getRawLogsUrl: () => string;
 }
