@@ -23,6 +23,7 @@ import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.store.Store;
@@ -42,6 +43,7 @@ import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
+import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -50,6 +52,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
+import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.pipeline.PipelineFactory;
@@ -70,6 +73,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
+  public static final String GLOBAL_TMS = "globaltms";
 
   private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
@@ -78,6 +82,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
+  private final MessagingService messagingService;
 
   @VisibleForTesting
   @Inject
@@ -85,7 +90,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     AuthorizerInstantiator authorizerInstantiator,
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
-                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
+                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader,
+                                    MessagingService messagingService) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -93,6 +99,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -101,6 +108,10 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(ArtifactRepository.class);
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
+
+    bind(MessagingService.class).annotatedWith(Names.named(GLOBAL_TMS)).toInstance(messagingService);
+    expose(MessagingService.class).annotatedWith(Names.named(GLOBAL_TMS));
+
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
     expose(AuthorizerInstantiator.class);
     bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
@@ -151,10 +162,10 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(PreviewStore.class);
     bind(Scheduler.class).to(NoOpScheduler.class);
 
-    bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
-
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
+
+    bind(PreviewDataPublisher.class).to(MessagingPreviewDataPublisher.class);
 
     bind(OwnerStore.class).to(DefaultOwnerStore.class);
     expose(OwnerStore.class);
