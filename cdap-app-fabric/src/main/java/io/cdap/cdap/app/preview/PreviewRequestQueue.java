@@ -20,7 +20,6 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import net.jcip.annotations.ThreadSafe;
 
 import java.util.Optional;
-import javax.annotation.Nullable;
 
 /**
  * Interface designed for holding {@link PreviewRequest}s that are in WAITING state.
@@ -34,7 +33,7 @@ public interface PreviewRequestQueue {
    * @param pollerInfo information about the poller
    * @return {@code PreviewRequest} if such request is available in the queue
    */
-  Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
+  Optional<PreviewRequest> poll(byte[] pollerInfo);
 
   /**
    * Add a preview request in the queue.
