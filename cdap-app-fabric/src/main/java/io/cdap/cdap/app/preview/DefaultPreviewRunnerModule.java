@@ -44,6 +44,7 @@ import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
+import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -53,6 +54,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
+import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.pipeline.PipelineFactory;
@@ -73,7 +75,6 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
-
   private final ArtifactRepository artifactRepository;
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
@@ -81,6 +82,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
+  private final MessagingService messagingService;
 
   @VisibleForTesting
   @Inject
@@ -88,7 +90,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     AuthorizerInstantiator authorizerInstantiator,
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
-                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
+                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader,
+                                    MessagingService messagingService) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -96,6 +99,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -112,6 +116,12 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
+
+    bind(MessagingService.class)
+      .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
+      .toInstance(messagingService);
+    expose(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS));
+
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
     expose(AuthorizerInstantiator.class);
     bind(AuthorizationEnforcer.class).toInstance(authorizationEnforcer);
@@ -164,6 +174,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
+
+    bind(PreviewDataPublisher.class).to(MessagingPreviewDataPublisher.class);
 
     bind(OwnerStore.class).to(DefaultOwnerStore.class);
     expose(OwnerStore.class);
