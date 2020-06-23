@@ -17,6 +17,9 @@
 package io.cdap.cdap.runtime.spi.runtimejob;
 
 
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.joran.JoranConfigurator;
+import ch.qos.logback.core.joran.spi.JoranException;
 import com.google.common.collect.ImmutableMap;
 import org.apache.hadoop.yarn.conf.YarnConfiguration;
 import org.apache.twill.api.TwillRunner;
@@ -28,12 +31,14 @@ import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.apache.twill.yarn.YarnTwillRunnerService;
+import org.slf4j.ILoggerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.Map;
 
 /**
@@ -61,6 +66,7 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
    * @throws Exception any exception while initializing the environment.
    */
   public void initialize(String sparkCompat) throws Exception {
+    addConsoleAppender();
     System.setProperty(TWILL_ZK_SERVER_LOCALHOST, "false");
     zkServer = InMemoryZKServer.builder().build();
     zkServer.startAndWait();
@@ -116,5 +122,34 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
       return new InetSocketAddress(InetAddress.getLocalHost().getHostName(), bindAddress.getPort());
     }
     return bindAddress;
+  }
+
+  /**
+   * Adds a log appender for writing to stdout. This is for Dataproc job agent to include logs from the job main
+   * in the job output.
+   */
+  private static void addConsoleAppender() {
+    ILoggerFactory loggerFactory = LoggerFactory.getILoggerFactory();
+    if (!(loggerFactory instanceof LoggerContext)) {
+      return;
+    }
+
+    LoggerContext loggerContext = (LoggerContext) loggerFactory;
+
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    URL url = classLoader.getResource("logback-console.xml");
+    if (url == null) {
+      LOG.warn("Cannot find logback-console.xml from classloader");
+      return;
+    }
+
+    try {
+      JoranConfigurator joranConfigurator = new JoranConfigurator();
+      // Configure with the addition logback-console, don't reset the context so that it will add the new appender
+      joranConfigurator.setContext(loggerContext);
+      joranConfigurator.doConfigure(url);
+    } catch (JoranException e) {
+      LOG.warn("Failed to configure log appender, logs will be missing from the Dataproc Job output");
+    }
   }
 }
