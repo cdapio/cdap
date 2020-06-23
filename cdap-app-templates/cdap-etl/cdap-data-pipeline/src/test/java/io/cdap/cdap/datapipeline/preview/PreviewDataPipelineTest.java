@@ -44,6 +44,7 @@ import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.ExceptionTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
+import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.proto.ProgramType;
@@ -67,6 +68,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import javax.annotation.Nullable;
 
 /**
  * Test for preview for data pipeline app
@@ -170,6 +172,85 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
     Assert.assertNotNull(previewManager.getRunId(previewId));
+  }
+
+  @Test
+  public void testPreviewStop() throws Exception {
+    testDataPipelinePreviewStop(Engine.MAPREDUCE, null);
+    testDataPipelinePreviewStop(Engine.SPARK, null);
+    testDataPipelinePreviewStop(Engine.MAPREDUCE, 60000L);
+    testDataPipelinePreviewStop(Engine.SPARK, 60000L);
+  }
+
+  private void testDataPipelinePreviewStop(Engine engine, @Nullable Long sleepInMillis) throws Exception {
+    PreviewManager previewManager = getPreviewManager();
+
+    String sourceTableName = "singleInput";
+    String sinkTableName = "singleOutput";
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING))
+    );
+
+    /*
+     * source --> transform -> sink
+     */
+    ETLPlugin sourcePlugin = sleepInMillis == null ? MockSource.getPlugin(sourceTableName, schema)
+      : MockSource.getPlugin(sourceTableName, schema, sleepInMillis);
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", sourcePlugin))
+      .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableName)))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .setEngine(engine)
+      .setNumOfRecordsPreview(100)
+      .build();
+
+
+    // Construct the preview config with the program name and program type
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+
+    // Create the table for the mock source
+    addDatasetInstance(Table.class.getName(), sourceTableName,
+                       DatasetProperties.of(ImmutableMap.of("schema", schema.toString())));
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel").build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob").build();
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig, previewConfig);
+
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+
+    if (sleepInMillis != null) {
+      // Wait for the preview status go into RUNNING.
+      Tasks.waitFor(PreviewStatus.Status.RUNNING, () -> {
+        PreviewStatus status = previewManager.getStatus(previewId);
+        return status == null ? null : status.getStatus();
+      }, 5, TimeUnit.MINUTES);
+    }
+
+    previewManager.stopPreview(previewId);
+    // Wait for the preview status go into KILLED.
+    Tasks.waitFor(PreviewStatus.Status.KILLED, () -> {
+      PreviewStatus status = previewManager.getStatus(previewId);
+      return status == null ? null : status.getStatus();
+    }, 5, TimeUnit.MINUTES);
+
+    // Check the sink table is not created in the real space.
+    DataSetManager<Table> sinkManager = getDataset(sinkTableName);
+    Assert.assertNull(sinkManager.get());
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+    boolean exceptionThrown = false;
+    try {
+      previewManager.getRunId(previewId);
+    } catch (NotFoundException e) {
+      exceptionThrown = true;
+    }
+    Assert.assertTrue(exceptionThrown || sleepInMillis != null);
   }
 
   @Test
@@ -399,14 +480,19 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
   }
 
   private void checkPreviewStore(PreviewManager previewManager, ApplicationId previewId, String tracerName,
-                                 int numExpectedRecords) throws NotFoundException {
-    Map<String, List<JsonElement>> result = previewManager.getData(previewId, tracerName);
-    List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
-    if (data == null) {
-      Assert.assertEquals(numExpectedRecords, 0);
-    } else {
-      Assert.assertEquals(numExpectedRecords, data.size());
-    }
+                                 int numExpectedRecords) throws Exception {
+    Tasks.waitFor(numExpectedRecords, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        Map<String, List<JsonElement>> result = previewManager.getData(previewId, tracerName);
+        List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
+        if (data == null) {
+          return 0;
+        } else {
+          return data.size();
+        }
+      }
+    }, 60, TimeUnit.SECONDS);
   }
 
   private void validateMetric(long expected, ApplicationId previewId,
