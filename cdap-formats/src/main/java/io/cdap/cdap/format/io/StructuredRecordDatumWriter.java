@@ -66,7 +66,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @param value the value to encode
    * @throws IOException If failed to encode
    */
-  protected final void encode(Encoder encoder, Schema schema, Object value) throws IOException {
+  protected void encode(Encoder encoder, Schema schema, Object value) throws IOException {
     switch (schema.getType()) {
       case NULL:
         encoder.writeNull();
@@ -270,7 +270,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     encode(encoder, schema.getUnionSchema(matchingIdx), value);
   }
 
-  private void encodeArray(Encoder encoder, Schema elementSchema, Object array) throws IOException {
+  protected void encodeArray(Encoder encoder, Schema elementSchema, Object array) throws IOException {
     if (!(array instanceof Collection) && !array.getClass().isArray()) {
       throw new IOException("Expects either Collection or array. Got: " + array.getClass());
     }
@@ -290,7 +290,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     encodeArrayEnd(encoder, elementSchema, size);
   }
 
-  private void encodeMap(Encoder encoder, Schema keySchema, Schema valueSchema, Object map) throws IOException {
+  protected void encodeMap(Encoder encoder, Schema keySchema, Schema valueSchema, Object map) throws IOException {
     if (!(map instanceof Map)) {
       throw new IOException("Expects Map type. Got: " + map.getClass());
     }
@@ -303,7 +303,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     encodeMapEnd(encoder, keySchema, valueSchema, size);
   }
 
-  private void encodeRecord(Encoder encoder, Schema recordSchema, Object record) throws IOException {
+  protected void encodeRecord(Encoder encoder, Schema recordSchema, Object record) throws IOException {
     if (!(record instanceof StructuredRecord)) {
       throw new IOException("Expected StructuredRecord type. Got: " + record.getClass());
     }
@@ -315,7 +315,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     encodeRecordEnd(encoder, recordSchema);
   }
 
-  private int findUnionSchema(Schema unionSchema, @Nullable Object value) throws IOException {
+  protected int findUnionSchema(Schema unionSchema, @Nullable Object value) throws IOException {
     Schema.Type type = getSchemaType(value);
 
     int idx = 0;
@@ -329,7 +329,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
     throw new IOException("Value type " + type + " not valid in union: " + unionSchema);
   }
 
-  private void encodeBytes(Encoder encoder, Object value) throws IOException {
+  protected void encodeBytes(Encoder encoder, Object value) throws IOException {
     if (value instanceof ByteBuffer) {
       encodeBytes(encoder, (ByteBuffer) value);
     } else if (value.getClass().isArray() && value.getClass().getComponentType().equals(byte.class)) {

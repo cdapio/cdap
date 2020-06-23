@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * A {@link StructuredRecordDatumWriter} for encoding {@link StructuredRecord} to json.
  */
-public final class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter {
+public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter {
 
   @Override
   public void encode(StructuredRecord data, Encoder encoder) throws IOException {

@@ -21,6 +21,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
@@ -76,7 +77,8 @@ public class DefaultPreviewStore implements PreviewStore {
   @Override
   public void put(ApplicationId applicationId, String tracerName, String propertyName, Object value) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(StructuredRecord.class, new PreviewDeserializer()).create();
     MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace())
       .add(applicationId.getApplication()).add(tracerName).add(counter.getAndIncrement()).build();
 
@@ -94,7 +96,8 @@ public class DefaultPreviewStore implements PreviewStore {
   @Override
   public Map<String, List<JsonElement>> get(ApplicationId applicationId, String tracerName) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
-    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
+    Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+      .registerTypeAdapter(StructuredRecord.class, new PreviewDeserializer()).create();
     byte[] startRowKey = new MDSKey.Builder().add(applicationId.getNamespace())
       .add(applicationId.getApplication()).add(tracerName).build().getKey();
     byte[] stopRowKey = new MDSKey(Bytes.stopKeyForPrefix(startRowKey)).getKey();
@@ -111,6 +114,7 @@ public class DefaultPreviewStore implements PreviewStore {
           values = new ArrayList<>();
           result.put(propertyName, values);
         }
+
         values.add(value);
       }
     } catch (IOException e) {
