@@ -44,6 +44,7 @@ import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
+import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
@@ -57,6 +58,7 @@ import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
+import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -79,6 +81,7 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
+  public static final String GLOBAL_TMS = "globaltms";
 
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
@@ -89,6 +92,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
   private final PluginFinderProvider pluginFinderProvider;
   private final PreferencesFetcherProvider preferencesFetcherProvider;
+  private final MessagingService messagingService;
 
   @VisibleForTesting
   @Inject
@@ -98,7 +102,8 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                                     PluginFinderProvider pluginFinderProvider,
-                                    PreferencesFetcherProvider preferencesFetcherProvider) {
+                                    PreferencesFetcherProvider preferencesFetcherProvider,
+                                    MessagingService messagingService) {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -108,6 +113,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.pluginFinderProvider = pluginFinderProvider;
     this.preferencesFetcherProvider = preferencesFetcherProvider;
+    this.messagingService = messagingService;
   }
 
   @Override
@@ -126,6 +132,9 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
+
+    bind(MessagingService.class).annotatedWith(Names.named(GLOBAL_TMS)).toInstance(messagingService);
+    expose(MessagingService.class).annotatedWith(Names.named(GLOBAL_TMS));
 
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
     expose(AuthorizerInstantiator.class);
@@ -177,10 +186,10 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(PreviewStore.class);
     bind(Scheduler.class).to(NoOpScheduler.class);
 
-    bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
-
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
+
+    bind(PreviewDataPublisher.class).to(MessagingPreviewDataPublisher.class);
 
     bind(OwnerStore.class).to(DefaultOwnerStore.class);
     expose(OwnerStore.class);

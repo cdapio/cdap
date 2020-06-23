@@ -31,7 +31,6 @@ import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewStatus;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
@@ -399,14 +398,19 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
   }
 
   private void checkPreviewStore(PreviewManager previewManager, ApplicationId previewId, String tracerName,
-                                 int numExpectedRecords) throws NotFoundException {
-    Map<String, List<JsonElement>> result = previewManager.getData(previewId, tracerName);
-    List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
-    if (data == null) {
-      Assert.assertEquals(numExpectedRecords, 0);
-    } else {
-      Assert.assertEquals(numExpectedRecords, data.size());
-    }
+                                 int numExpectedRecords) throws Exception {
+    Tasks.waitFor(numExpectedRecords, new Callable<Integer>() {
+      @Override
+      public Integer call() throws Exception {
+        Map<String, List<JsonElement>> result = previewManager.getData(previewId, tracerName);
+        List<JsonElement> data = result.get(DATA_TRACER_PROPERTY);
+        if (data == null) {
+          return 0;
+        } else {
+          return data.size();
+        }
+      }
+    }, 60, TimeUnit.SECONDS);
   }
 
   private void validateMetric(long expected, ApplicationId previewId,
