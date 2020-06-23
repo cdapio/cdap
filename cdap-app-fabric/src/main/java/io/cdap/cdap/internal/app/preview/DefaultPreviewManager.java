@@ -61,7 +61,6 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
-import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
@@ -150,10 +149,14 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   @Override
   protected synchronized void startUp() throws Exception {
     previewInjector = createPreviewInjector();
+    PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
+    subscriberService.startAndWait();
   }
 
   @Override
-  protected void shutDown() throws Exception {
+  protected synchronized void shutDown() throws Exception {
+    PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
+    stopQuietly(subscriberService);
     previewLevelDBTableService.close();
   }
 
