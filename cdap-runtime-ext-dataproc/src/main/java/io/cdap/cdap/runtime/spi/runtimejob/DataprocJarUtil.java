@@ -18,6 +18,7 @@ package io.cdap.cdap.runtime.spi.runtimejob;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import com.google.common.io.Resources;
 import joptsimple.OptionSpec;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.LocalFile;
@@ -71,7 +72,7 @@ final class DataprocJarUtil {
   static LocalFile getLauncherJar(LocationFactory locationFactory) throws IOException {
     Location location = locationFactory.create("launcher.jar");
     try (JarOutputStream jarOut = new JarOutputStream(location.getOutputStream())) {
-      ClassLoader classLoader = DataprocRuntimeJobManager.class.getClassLoader();
+      ClassLoader classLoader = DataprocJobMain.class.getClassLoader();
       Dependencies.findClassDependencies(classLoader, new ClassAcceptor() {
         @Override
         public boolean accept(String className, URL classUrl, URL classPathUrl) {
@@ -89,6 +90,13 @@ final class DataprocJarUtil {
           return false;
         }
       }, DataprocJobMain.class.getName());
+
+      // Add the logback-console.xml from resources
+      URL logbackURL = classLoader.getResource("logback-console.xml");
+      if (logbackURL != null) {
+        jarOut.putNextEntry(new JarEntry("logback-console.xml"));
+        Resources.copy(logbackURL, jarOut);
+      }
     }
     return createLocalFile(location, false);
   }
