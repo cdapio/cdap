@@ -19,10 +19,8 @@ import com.google.gson.JsonElement;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
