@@ -124,7 +124,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     try {
       previewRunner.stopPreview(request.getProgram());
     } catch (Exception e) {
-      LOG.error("Failed to stop preview for {}", request.getProgram());
+      LOG.error("Failed to stop preview for {}", request.getProgram(), e);
     }
   }
 

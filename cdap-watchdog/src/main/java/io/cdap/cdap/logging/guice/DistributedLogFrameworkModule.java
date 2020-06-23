@@ -17,16 +17,23 @@
 package io.cdap.cdap.logging.guice;
 
 import com.google.inject.PrivateModule;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.Multibinder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.api.logging.AppenderContext;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.gateway.handlers.CommonHandlers;
+import io.cdap.cdap.logging.framework.CustomLogPipelineConfigProvider;
 import io.cdap.cdap.logging.framework.distributed.DistributedAppenderContext;
 import io.cdap.cdap.logging.framework.distributed.DistributedLogFramework;
 import io.cdap.cdap.logging.service.LogSaverStatusService;
 import io.cdap.http.HttpHandler;
+
+import java.io.File;
+import java.util.List;
 
 /**
  * Guice module for the distributed log framework.
@@ -57,5 +64,10 @@ public class DistributedLogFrameworkModule extends PrivateModule {
 
     bind(DistributedLogFramework.class).in(Scopes.SINGLETON);
     expose(DistributedLogFramework.class);
+  }
+
+  @Provides
+  public CustomLogPipelineConfigProvider provideCustomLogConfig(CConfiguration cConf) {
+    return () -> DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
   }
 }

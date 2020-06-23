@@ -43,9 +43,11 @@ public class PreviewRunnerManagerModule extends PrivateModule {
       .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
       .to(RemoteDatasetFramework.class);
     bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
-    bind(PreviewRunnerServiceStopper.class).to(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+
+    bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+    bind(PreviewRunnerServiceStopper.class).to(DefaultPreviewRunnerManager.class);
     expose(PreviewRunnerServiceStopper.class);
-    bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+    bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
     expose(PreviewRunnerManager.class);
   }
 

@@ -42,6 +42,7 @@ public class PreviewConfigModule extends AbstractModule {
   public static final String PREVIEW_HCONF = "previewHConf";
   public static final String PREVIEW_SCONF = "previewSConf";
   public static final String PREVIEW_LEVEL_DB = "previewLevelDB";
+  public static final String GLOBAL_TMS = "globaltms";
 
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
