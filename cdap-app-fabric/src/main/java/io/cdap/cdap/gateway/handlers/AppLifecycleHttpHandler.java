@@ -27,6 +27,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonWriter;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.api.artifact.ArtifactScope;
@@ -71,8 +72,10 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.http.BodyConsumer;
+import io.cdap.http.ChunkResponder;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultHttpHeaders;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -84,10 +87,12 @@ import org.apache.twill.filesystem.Location;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -437,7 +442,7 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
    * </pre>
    * The response will be an array of {@link ApplicationUpdateDetail} object, which either indicates a success (200) or
    * failure for each of the requested application in the same order as the request. The failure also indicates reason
-   * for the error.
+   * for the error. The response will be sent via ChunkResponder to continuously stream upgrade result per application.
    */
   @POST
   @Path("/upgrade")
@@ -451,25 +456,35 @@ public class AppLifecycleHttpHandler extends AbstractAppFabricHttpHandler {
 
     List<ApplicationId> appIds = decodeAndValidateBatchApplicationRecord(validateNamespace(namespaceId), request);
     Set<ArtifactScope> allowedArtifactScopes = getArtifactScopes(artifactScopes);
-    List<ApplicationUpdateDetail> details = new ArrayList<>();
-    for (ApplicationId appId : appIds) {
-      ApplicationUpdateDetail updateDetail;
-      try {
-        applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
-        updateDetail = new ApplicationUpdateDetail(appId);
-      } catch (UnsupportedOperationException e) {
-        String errorMessage = String.format("Application %s does not support upgrade.", appId);
-        updateDetail = new ApplicationUpdateDetail(appId, new NotImplementedException(errorMessage));
-      } catch (InvalidArtifactException | NotFoundException e) {
-        updateDetail = new ApplicationUpdateDetail(appId, e);
-      } catch (Exception e) {
-        updateDetail =
-          new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
-                                      HttpResponseStatus.INTERNAL_SERVER_ERROR));
+    try (ChunkResponder chunkResponder = responder.sendChunkStart(HttpResponseStatus.OK)) {
+      ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+      try (JsonWriter jsonWriter = new JsonWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
+        jsonWriter.beginArray();
+        for (ApplicationId appId : appIds) {
+          ApplicationUpdateDetail updateDetail;
+          try {
+            applicationLifecycleService.upgradeApplication(appId, allowedArtifactScopes, allowSnapshot);
+            updateDetail = new ApplicationUpdateDetail(appId);
+          } catch (UnsupportedOperationException e) {
+            String errorMessage = String.format("Application %s does not support upgrade.", appId);
+            updateDetail = new ApplicationUpdateDetail(appId, new NotImplementedException(errorMessage));
+          } catch (InvalidArtifactException | NotFoundException e) {
+            updateDetail = new ApplicationUpdateDetail(appId, e);
+          } catch (Exception e) {
+            updateDetail =
+                new ApplicationUpdateDetail(appId, new ServiceException("Upgrade failed due to internal error.", null,
+                                            HttpResponseStatus.INTERNAL_SERVER_ERROR));
+          }
+          GSON.toJson(updateDetail, ApplicationUpdateDetail.class, jsonWriter);
+          jsonWriter.flush();
+          chunkResponder.sendChunk(Unpooled.wrappedBuffer(outputStream.toByteArray()));
+          outputStream.reset();
+          chunkResponder.flush();
+        }
+        jsonWriter.endArray();
       }
-      details.add(updateDetail);
+      chunkResponder.sendChunk(Unpooled.wrappedBuffer(outputStream.toByteArray()));
     }
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(details));
   }
 
   /**
