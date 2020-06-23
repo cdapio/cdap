@@ -21,10 +21,12 @@ import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyProgramApi } from 'api/program';
+import If from 'components/If';
+import LogViewer from 'components/LogViewer';
 
 const styles = (): StyleRules => {
   return {
-    root: {
+    padding: {
       padding: '10px 25px',
     },
     floatingButton: {
@@ -33,6 +35,9 @@ const styles = (): StyleRules => {
       right: 0,
       top: '50%',
     },
+    logs: {
+      height: '50vh',
+    },
   };
 };
 
@@ -40,8 +45,6 @@ const LogViewerPlayground: React.FC<WithStyles<typeof styles>> = ({ classes }) =
   const [pipelineName, setPipelineName] = React.useState('');
   const [started, setStarted] = React.useState(false);
   const [dataFetcher, setDataFetcher] = React.useState<ProgramDataFetcher>(null);
-
-  const [logs, setLogs] = React.useState([]);
 
   function startLog() {
     setStarted(true);
@@ -64,44 +67,14 @@ const LogViewerPlayground: React.FC<WithStyles<typeof styles>> = ({ classes }) =
       });
 
       setDataFetcher(dataFetch);
-
-      dataFetch.init().subscribe((logRes) => {
-        setLogs(logRes);
-      });
-    });
-  }
-
-  function previous() {
-    dataFetcher.getPrev().subscribe((res) => {
-      const newLogs = res.concat(logs);
-      setLogs(newLogs);
-    });
-  }
-
-  function next() {
-    dataFetcher.getNext().subscribe((res) => {
-      const newLogs = logs.concat(res);
-      setLogs(newLogs);
-    });
-  }
-
-  function getLast() {
-    dataFetcher.getLast().subscribe((res) => {
-      setLogs(res);
-    });
-  }
-
-  function getFirst() {
-    dataFetcher.getFirst().subscribe((res) => {
-      setLogs(res);
     });
   }
 
   return (
-    <div className={classes.root}>
+    <div>
       <h1>Log Viewer</h1>
 
-      <div className={classes.pipelineInfo}>
+      <div className={classes.padding}>
         <TextField
           label="Pipeline Name"
           value={pipelineName}
@@ -109,6 +82,8 @@ const LogViewerPlayground: React.FC<WithStyles<typeof styles>> = ({ classes }) =
           variant="outlined"
           disabled={started}
         />
+        <br />
+        <br />
         <Button
           variant="contained"
           color="primary"
@@ -124,45 +99,9 @@ const LogViewerPlayground: React.FC<WithStyles<typeof styles>> = ({ classes }) =
       <br />
 
       <div className={classes.logs}>
-        <div>
-          <Button variant="contained" color="primary" onClick={previous}>
-            Previous
-          </Button>
-        </div>
-
-        <div>
-          <pre>
-            {logs.map((logItem, i) => {
-              return (
-                <div key={`${logItem.offset}-${i}`}>
-                  <span>{logItem.log.timestamp}</span>
-                  <span>{` | `}</span>
-                  <span>{logItem.log.message}</span>
-                </div>
-              );
-            })}
-          </pre>
-        </div>
-
-        <div>
-          <Button variant="contained" color="primary" onClick={next}>
-            Next
-          </Button>
-        </div>
-      </div>
-
-      <div className={classes.floatingButton}>
-        <div>
-          <Button variant="contained" color="primary" onClick={getFirst}>
-            Beginning
-          </Button>
-        </div>
-        <br />
-        <div>
-          <Button variant="contained" color="primary" onClick={getLast}>
-            Last
-          </Button>
-        </div>
+        <If condition={!!dataFetcher}>
+          <LogViewer dataFetcher={dataFetcher} />
+        </If>
       </div>
     </div>
   );
