@@ -108,6 +108,9 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
     proxy(constructUrl.bind(null, cdapConfig), {
       parseReqBody: false,
       limit: '500gb',
+      // 30 mins. It is this high to facilitate long running upgrades (running typically ~30mins)
+      // TODO: CDAP-17013 - Tracking to remove timeout when async upgrades are implemented in backend
+      timeout: 1800000,
     })
   );
   app.use(bodyParser.json());
