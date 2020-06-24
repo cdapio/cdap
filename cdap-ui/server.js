@@ -36,6 +36,7 @@ var cdapConfig,
   hostname,
   hostIP = ip.address();
 
+const DEFAULT_SOCKET_TIMEOUT_MILLS = 1800000 * 2;
 /**
  * Configuring the logger. In order to use the logger anywhere
  * in the BE, include the following:
@@ -140,6 +141,7 @@ cdapConfigurator
       server = http.createServer(app);
       port = cdapConfig['dashboard.bind.port'];
     }
+    server.setTimeout(DEFAULT_SOCKET_TIMEOUT_MILLS);
     server.listen(port, cdapConfig['dashboard.bind.address'], function() {
       log.info('CDAP UI listening on port %s', port);
     });
