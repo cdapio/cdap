@@ -15,6 +15,7 @@
  */
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+import { SchemaType } from 'components/PluginJSONCreator/constants';
 import Content from 'components/PluginJSONCreator/Create/Content';
 import JsonMenu, { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
@@ -76,6 +77,14 @@ const widgetsInitialState = {
 const outputInitialState = {
   outputName: '',
   setOutputName: undefined,
+  outputWidgetType: SchemaType.Explicit,
+  setOutputWidgetType: undefined,
+  schemaTypes: [],
+  setSchemaTypes: undefined,
+  schemaDefaultType: '',
+  setSchemaDefaultType: undefined,
+  schema: {},
+  setSchema: undefined,
 };
 
 // Define initial values for states within Filters page
@@ -167,6 +176,14 @@ const CreateView = ({ classes, children }) => {
 
   // Define states related to Output page
   const [outputName, setOutputName] = React.useState(outputInitialState.outputName);
+  const [outputWidgetType, setOutputWidgetType] = React.useState(
+    outputInitialState.outputWidgetType
+  );
+  const [schemaTypes, setSchemaTypes] = React.useState(outputInitialState.schemaTypes);
+  const [schemaDefaultType, setSchemaDefaultType] = React.useState(
+    outputInitialState.schemaDefaultType
+  );
+  const [schema, setSchema] = React.useState(outputInitialState.schema);
 
   // Define states related to Filters page
   const [filters, setFilters] = React.useState(filtersInitialState.filters);
@@ -221,8 +238,16 @@ const CreateView = ({ classes, children }) => {
     () => ({
       outputName,
       setOutputName,
+      outputWidgetType,
+      setOutputWidgetType,
+      schemaTypes,
+      setSchemaTypes,
+      schemaDefaultType,
+      setSchemaDefaultType,
+      schema,
+      setSchema,
     }),
-    [outputName]
+    [outputName, outputWidgetType, schemaTypes, schemaDefaultType, schema]
   );
 
   const filterContextValue = React.useMemo(
@@ -240,6 +265,7 @@ const CreateView = ({ classes, children }) => {
     }),
     [filters, filterToName, filterToCondition, filterToShowList, showToInfo]
   );
+
   const appInternalContextValue = React.useMemo(
     () => ({
       activeStep,

@@ -29,7 +29,7 @@ import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPl
 import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
 import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
-import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
+import OutputPage from 'components/PluginJSONCreator/Create/Content/OutputPage';
 import * as React from 'react';
 
 export const STEPS = [
@@ -116,7 +116,7 @@ const ContentView = ({
       case 2:
         return (
           <OutputContext.Provider value={outputContextValue}>
-            <Outputs />
+            <OutputPage />
           </OutputContext.Provider>
         );
       case 3:
