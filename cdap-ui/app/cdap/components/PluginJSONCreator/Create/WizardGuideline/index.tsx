@@ -18,11 +18,8 @@ import Chip from '@material-ui/core/Chip';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Check from '@material-ui/icons/Check';
 import classnames from 'classnames';
-import { STEPS } from 'components/PluginJSONCreator/Create/steps';
-import {
-  CreateContext,
-  createContextConnect,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { useAppInternalState } from 'components/PluginJSONCreator/Create';
+import { STEPS } from 'components/PluginJSONCreator/Create/Content';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -66,16 +63,9 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IWizardGuidelineProps extends WithStyles<typeof styles> {
-  activeStep: number;
-  setActiveStep: (step: number) => void;
-}
+const WizardGuidelineView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+  const { activeStep, setActiveStep } = useAppInternalState();
 
-const WizardGuidelineView: React.FC<IWizardGuidelineProps> = ({
-  classes,
-  setActiveStep,
-  activeStep,
-}) => {
   function handleStepClick(step) {
     if (step >= activeStep) {
       return;
@@ -107,6 +97,5 @@ const WizardGuidelineView: React.FC<IWizardGuidelineProps> = ({
   );
 };
 
-const StyledWizardGuideline = withStyles(styles)(WizardGuidelineView);
-const WizardGuideline = createContextConnect(CreateContext, StyledWizardGuideline);
+const WizardGuideline = withStyles(styles)(WizardGuidelineView);
 export default WizardGuideline;

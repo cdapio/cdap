@@ -14,17 +14,38 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
-import { STEPS } from 'components/PluginJSONCreator/Create/steps';
 import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+  ConfigurationGroupContext,
+  FilterContext,
+  OutputContext,
+  PluginInfoContext,
+  useAppInternalState,
+  WidgetContext,
+} from 'components/PluginJSONCreator/Create';
+import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
+import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
+import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import Outputs from 'components/PluginJSONCreator/Create/Content/Outputs';
 import * as React from 'react';
+
+export const STEPS = [
+  {
+    label: 'Basic Plugin Information',
+  },
+  {
+    label: 'Configuration Groups',
+  },
+  {
+    label: 'Output',
+  },
+  {
+    label: 'Filters',
+  },
+];
 
 const styles = (theme): StyleRules => {
   return {
@@ -44,12 +65,15 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const ContentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
+const ContentView = ({
   classes,
-  activeStep,
-  JSONStatus,
-  setJSONStatus,
+  pluginInfoContextValue,
+  configuratioGroupContextValue,
+  widgetContextValue,
+  outputContextValue,
+  filterContextValue,
 }) => {
+  const { activeStep, JSONStatus, setJSONStatus } = useAppInternalState();
   const [loading, setLoading] = React.useState(false);
 
   // When JSON status was successful, show loading view for 500ms
@@ -69,11 +93,43 @@ const ContentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
     }
   }, [JSONStatus]);
 
-  if (!STEPS[activeStep] || !STEPS[activeStep].component) {
+  if (!STEPS[activeStep]) {
     return null;
   }
 
-  const Comp = STEPS[activeStep].component;
+  const renderContentPage = () => {
+    switch (activeStep) {
+      case 0:
+        return (
+          <PluginInfoContext.Provider value={pluginInfoContextValue}>
+            <BasicPluginInfo />
+          </PluginInfoContext.Provider>
+        );
+      case 1:
+        return (
+          <ConfigurationGroupContext.Provider value={configuratioGroupContextValue}>
+            <WidgetContext.Provider value={widgetContextValue}>
+              <ConfigurationGroupsCollection />
+            </WidgetContext.Provider>
+          </ConfigurationGroupContext.Provider>
+        );
+      case 2:
+        return (
+          <OutputContext.Provider value={outputContextValue}>
+            <Outputs />
+          </OutputContext.Provider>
+        );
+      case 3:
+        return (
+          <FilterContext.Provider value={filterContextValue}>
+            <Filters />
+          </FilterContext.Provider>
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <div>
       <If condition={loading}>
@@ -81,15 +137,12 @@ const ContentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
       </If>
       <If condition={!loading}>
         <div className={classes.root}>
-          <div className={classes.content}>
-            <Comp className={classes.comp} />
-          </div>
+          <div className={classes.content}>{renderContentPage()}</div>
         </div>
       </If>
     </div>
   );
 };
 
-const StyledContentView = withStyles(styles)(ContentView);
-const Content = createContextConnect(CreateContext, StyledContentView);
+const Content = withStyles(styles)(ContentView);
 export default Content;

@@ -18,10 +18,8 @@ import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetActionButtons';
-import WidgetAttributesCollection from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection';
-import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
+import WidgetPanel from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetPanel';
 import { List, Map } from 'immutable';
 import * as React from 'react';
 import uuidV4 from 'uuid/v4';
@@ -68,22 +66,23 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IWidgetCollectionProps extends WithStyles<typeof styles>, ICreateContext {
+interface IWidgetCollectionProps extends WithStyles<typeof styles> {
   groupID: string;
 }
 
-const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
-  classes,
-  groupID,
-  widgetInfo,
-  groupToWidgets,
-  setWidgetInfo,
-  setGroupToWidgets,
-  widgetToAttributes,
-  setWidgetToAttributes,
-}) => {
-  const activeWidgets = groupID ? groupToWidgets.get(groupID) : List([]);
+const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({ classes, groupID }) => {
+  const {
+    groupToWidgets,
+    setGroupToWidgets,
+    widgetInfo,
+    setWidgetInfo,
+    widgetToAttributes,
+    setWidgetToAttributes,
+  } = useWidgetState();
+
   const [openWidgetIndex, setOpenWidgetIndex] = React.useState(null);
+
+  const activeWidgets = groupID ? groupToWidgets.get(groupID) : List([]);
 
   function addWidgetToGroup(index: number) {
     return () => {
@@ -116,7 +115,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
 
   function deleteWidgetFromGroup(widgetIndex) {
     return () => {
-      // Grab the widget ID to delete
+      // // Grab the widget ID to delete
       const widgetToDelete = activeWidgets.get(widgetIndex);
 
       const newWidgets = activeWidgets.delete(widgetIndex);
@@ -130,70 +129,40 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({
     };
   }
 
-  function openWidgetAttributes(widgetIndex) {
-    return () => {
-      setOpenWidgetIndex(widgetIndex);
-    };
-  }
-
-  function closeWidgetAttributes() {
-    setOpenWidgetIndex(null);
-  }
-
-  return (
-    <div className={classes.nestedWidgets} data-cy="widget-wrapper-container">
-      <div className={classes.addWidgetLabel}>
-        Add Widgets
-        <span className={classes.required}>*</span>
-      </div>
-      <div className={classes.widgetContainer}>
-        {activeWidgets.map((widgetID, widgetIndex) => {
-          return (
-            <If key={widgetID} condition={widgetInfo.has(widgetID)}>
-              <div className={classes.eachWidget}>
-                <WidgetInput
-                  widgetInfo={widgetInfo}
+  return React.useMemo(
+    () => (
+      <div className={classes.nestedWidgets}>
+        <div className={classes.addWidgetLabel}>
+          Add Widgets
+          <span className={classes.required}>*</span>
+        </div>
+        <div className={classes.widgetContainer}>
+          {activeWidgets.map((widgetID, widgetIndex) => {
+            return (
+              <div key={widgetID}>
+                <WidgetPanel
                   widgetID={widgetID}
-                  setWidgetInfo={setWidgetInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
+                  widgetIndex={widgetIndex}
+                  openWidgetIndex={openWidgetIndex}
+                  setOpenWidgetIndex={setOpenWidgetIndex}
+                  addWidgetToGroup={addWidgetToGroup(widgetIndex)}
+                  deleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
                 />
-                <WidgetActionButtons
-                  onAddWidgetToGroup={addWidgetToGroup(widgetIndex)}
-                  onDeleteWidgetFromGroup={deleteWidgetFromGroup(widgetIndex)}
-                />
-
-                <WidgetAttributesCollection
-                  widgetAttributesOpen={openWidgetIndex === widgetIndex}
-                  onWidgetAttributesClose={closeWidgetAttributes}
-                  widgetID={widgetID}
-                  widgetInfo={widgetInfo}
-                  setWidgetInfo={setWidgetInfo}
-                  widgetToAttributes={widgetToAttributes}
-                  setWidgetToAttributes={setWidgetToAttributes}
-                />
+                <If condition={activeWidgets && widgetIndex < activeWidgets.size - 1}>
+                  <Divider className={classes.widgetDivider} />
+                </If>
               </div>
-              <Button
-                variant="contained"
-                color="primary"
-                component="span"
-                onClick={openWidgetAttributes(widgetIndex)}
-              >
-                Attributes
-              </Button>
-              <If condition={activeWidgets && widgetIndex < activeWidgets.size - 1}>
-                <Divider className={classes.widgetDivider} />
-              </If>
-            </If>
-          );
-        })}
-        <If condition={activeWidgets.isEmpty()}>
-          <Button variant="contained" color="primary" onClick={addWidgetToGroup(0)}>
-            Add Properties
-          </Button>
-        </If>
+            );
+          })}
+          <If condition={activeWidgets.size === 0}>
+            <Button variant="contained" color="primary" onClick={addWidgetToGroup(0)}>
+              Add Properties
+            </Button>
+          </If>
+        </div>
       </div>
-    </div>
+    ),
+    [activeWidgets, widgetInfo, widgetToAttributes, openWidgetIndex]
   );
 };
 

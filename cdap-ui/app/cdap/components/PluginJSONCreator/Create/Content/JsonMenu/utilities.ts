@@ -1,10 +1,9 @@
 import { SPEC_VERSION } from 'components/PluginJSONCreator/constants';
-import { IBasicPluginInfo } from 'components/PluginJSONCreator/CreateContextConnect';
 import { fromJS, List, Map } from 'immutable';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
 
-function getJSONConfig(widgetJSONData) {
+function getJSONOutput(widgetData) {
   const {
     displayName,
     emitAlerts,
@@ -20,11 +19,11 @@ function getJSONConfig(widgetJSONData) {
     filterToShowList,
     showToInfo,
     outputName,
-  } = widgetJSONData;
+  } = widgetData;
 
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
-    const groupLabel = groupToInfo.get(groupID).get('label');
-    const widgetData = groupToWidgets.get(groupID).map((widgetID: string) => {
+    const label = groupToInfo.get(groupID).get('label');
+    const properties = groupToWidgets.get(groupID).map((widgetID: string) => {
       const info = widgetInfo.get(widgetID);
       const widgetAttributes = widgetToAttributes.get(widgetID);
 
@@ -42,10 +41,14 @@ function getJSONConfig(widgetJSONData) {
       });
     });
     return Map({
-      label: groupLabel,
-      properties: widgetData,
+      label,
+      properties,
     });
   });
+
+  const outputsData = {
+    ...(outputName && { name: outputName }),
+  };
 
   const filtersData = filters.map((filterID) => {
     const filterToShowListData = filterToShowList.get(filterID).map((showID) => {
@@ -88,28 +91,25 @@ function getJSONConfig(widgetJSONData) {
 function parsePluginJSON(filename, pluginJSON) {
   // Parse filename in order to set pluginName and pluginType
   // Currently the filename is designed to be <pluginName>-<pluginType>.json
-  const [pluginName, pluginType] = filename.split('-');
+  const pluginName = filename.split('-')[0] || '';
+  const pluginType = filename.split('-')[1] || '';
 
   // Parse file data in order to populate the rest of properties
-  const basicPluginInfo = {
-    // If the string fields are undefined, set them to empty string
-    displayName: pluginJSON['display-name'] ? pluginJSON['display-name'] : '',
-    pluginName: pluginName ? pluginName : '',
-    pluginType: pluginType ? pluginType : '',
-    emitAlerts: pluginJSON['emit-alerts'],
-    emitErrors: pluginJSON['emit-errors'],
-  } as IBasicPluginInfo;
+  // If the string fields are undefined, set them to empty string
+  const displayName = pluginJSON['display-name'] ? pluginJSON['display-name'] : '';
+  const emitAlerts = pluginJSON['emit-alerts'];
+  const emitErrors = pluginJSON['emit-errors'];
 
-  let newConfigurationGroups = List<string>([]);
-  let newGroupToInfo = Map<string, Map<string, string>>({});
-  let newGroupToWidgets = Map<string, List<string>>({});
-  let newWidgetInfo = Map<string, Map<string, string>>({});
-  let newWidgetToAttributes = Map<string, Map<string, any>>({});
-  let newFilters = List<string>([]);
-  let newFilterToName = Map<string, string>({});
-  let newFilterToCondition = Map<string, Map<string, string>>({});
-  let newFilterToShowList = Map<string, List<string>>({});
-  let newShowToInfo = Map<string, Map<string, string>>({});
+  let configurationGroups = List<string>([]);
+  let groupToInfo = Map<string, Map<string, string>>({});
+  let groupToWidgets = Map<string, List<string>>({});
+  let widgetInfo = Map<string, Map<string, string>>({});
+  let widgetToAttributes = Map<string, Map<string, any>>({});
+  let filters = List<string>([]);
+  let filterToName = Map<string, string>({});
+  let filterToCondition = Map<string, Map<string, string>>({});
+  let filterToShowList = Map<string, List<string>>({});
+  let showToInfo = Map<string, Map<string, string>>({});
 
   pluginJSON['configuration-groups'].forEach((groupObj) => {
     if (!groupObj || Object.keys(groupObj).length === 0) {
@@ -120,27 +120,25 @@ function parsePluginJSON(filename, pluginJSON) {
     // generate a unique group ID
     const newGroupID = 'ConfigGroup_' + uuidV4();
 
-    newConfigurationGroups = newConfigurationGroups.push(newGroupID);
+    configurationGroups = configurationGroups.push(newGroupID);
 
-    newGroupToInfo = newGroupToInfo.set(
+    groupToInfo = groupToInfo.set(
       newGroupID,
       Map({
         label: groupLabel,
       })
     );
 
-    newGroupToWidgets = newGroupToWidgets.set(newGroupID, List([]));
+    groupToWidgets = groupToWidgets.set(newGroupID, List([]));
 
     const groupWidgets = groupObj.properties;
     groupWidgets.forEach((widgetObj) => {
       // generate a unique widget ID
       const newWidgetID = 'Widget_' + uuidV4();
 
-      newGroupToWidgets = newGroupToWidgets.update(newGroupID, (widgets) =>
-        widgets.push(newWidgetID)
-      );
+      groupToWidgets = groupToWidgets.update(newGroupID, (widgets) => widgets.push(newWidgetID));
 
-      newWidgetInfo = newWidgetInfo.set(
+      widgetInfo = widgetInfo.set(
         newWidgetID,
         Map({
           widgetType: widgetObj['widget-type'],
@@ -154,7 +152,7 @@ function parsePluginJSON(filename, pluginJSON) {
         widgetObj['widget-attributes'] &&
         Object.keys(widgetObj['widget-attributes']).length > 0
       ) {
-        newWidgetToAttributes = newWidgetToAttributes.set(
+        widgetToAttributes = widgetToAttributes.set(
           newWidgetID,
           fromJS(widgetObj['widget-attributes'])
         );
@@ -162,7 +160,7 @@ function parsePluginJSON(filename, pluginJSON) {
     });
   });
 
-  const newOutputName =
+  const outputName =
     pluginJSON.outputs && pluginJSON.outputs.length > 0 ? pluginJSON.outputs[0].name : '';
 
   if (pluginJSON.filters) {
@@ -174,22 +172,22 @@ function parsePluginJSON(filename, pluginJSON) {
       // generate a unique filter ID
       const newFilterID = 'Filter_' + uuidV4();
 
-      newFilters = newFilters.push(newFilterID);
+      filters = filters.push(newFilterID);
 
-      newFilterToName = newFilterToName.set(newFilterID, filterObj.name);
-      newFilterToCondition = newFilterToCondition.set(newFilterID, Map(filterObj.condition));
+      filterToName = filterToName.set(newFilterID, filterObj.name);
+      filterToCondition = filterToCondition.set(newFilterID, Map(filterObj.condition));
 
-      newFilterToShowList = newFilterToShowList.set(newFilterID, List([]));
+      filterToShowList = filterToShowList.set(newFilterID, List([]));
 
       if (filterObj.show) {
         filterObj.show.map((showObj) => {
           const newShowID = 'Show_' + uuidV4();
 
-          newFilterToShowList = newFilterToShowList.update(newFilterID, (showlist) =>
+          filterToShowList = filterToShowList.update(newFilterID, (showlist) =>
             showlist.push(newShowID)
           );
 
-          newShowToInfo = newShowToInfo.set(
+          showToInfo = showToInfo.set(
             newShowID,
             Map({
               name: showObj.name,
@@ -202,25 +200,29 @@ function parsePluginJSON(filename, pluginJSON) {
   }
 
   return {
-    basicPluginInfo,
-    newConfigurationGroups,
-    newGroupToInfo,
-    newGroupToWidgets,
-    newWidgetInfo,
-    newWidgetToAttributes,
-    newOutputName,
-    newFilters,
-    newFilterToName,
-    newFilterToCondition,
-    newFilterToShowList,
-    newShowToInfo,
+    pluginName,
+    pluginType,
+    displayName,
+    emitAlerts,
+    emitErrors,
+    configurationGroups,
+    groupToInfo,
+    groupToWidgets,
+    widgetInfo,
+    widgetToAttributes,
+    outputName,
+    filters,
+    filterToName,
+    filterToCondition,
+    filterToShowList,
+    showToInfo,
   };
 }
 
-function downloadPluginJSON(widgetJSONData) {
-  const JSONConfig = getJSONConfig(widgetJSONData);
-  const { pluginName, pluginType } = widgetJSONData;
-  fileDownload(JSON.stringify(JSONConfig, undefined, 4), `${pluginName}-${pluginType}.json`);
+function downloadPluginJSON(widgetData) {
+  const JSONOutput = getJSONOutput(widgetData);
+  const { pluginName, pluginType } = widgetData;
+  fileDownload(JSON.stringify(JSONOutput, undefined, 4), `${pluginName}-${pluginType}.json`);
 }
 
-export { getJSONConfig, parsePluginJSON, downloadPluginJSON };
+export { getJSONOutput, parsePluginJSON, downloadPluginJSON };
