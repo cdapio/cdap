@@ -15,16 +15,14 @@
  */
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import If from 'components/If';
 import {
   WIDGET_CATEGORY,
   WIDGET_TYPES,
   WIDGET_TYPE_TO_ATTRIBUTES,
 } from 'components/PluginJSONCreator/constants';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import { Map } from 'immutable';
-import isNil from 'lodash/isNil';
 import * as React from 'react';
 
 const styles = (): StyleRules => {
@@ -42,37 +40,32 @@ const styles = (): StyleRules => {
   };
 };
 
-interface IWidgetInputProps extends WithStyles<typeof styles>, ICreateContext {
+interface IWidgetInfoInputProps extends WithStyles<typeof styles> {
   widgetID: string;
 }
 
-const WidgetInputView: React.FC<IWidgetInputProps> = ({
-  classes,
-  widgetID,
-  widgetInfo,
-  setWidgetInfo,
-  widgetToAttributes,
-  setWidgetToAttributes,
-}) => {
-  function onNameChange(id) {
+const WidgetInfoInputView: React.FC<IWidgetInfoInputProps> = ({ classes, widgetID }) => {
+  const { widgetInfo, setWidgetInfo, widgetToAttributes, setWidgetToAttributes } = useWidgetState();
+
+  function onWidgetNameChange() {
     return (name) => {
-      setWidgetInfo(widgetInfo.setIn([id, 'name'], name));
+      setWidgetInfo(widgetInfo.setIn([widgetID, 'name'], name));
     };
   }
 
-  function onLabelChange(id) {
+  function onWidgetLabelChange() {
     return (label) => {
-      setWidgetInfo(widgetInfo.setIn([id, 'label'], label));
+      setWidgetInfo(widgetInfo.setIn([widgetID, 'label'], label));
     };
   }
 
-  function onWidgetTypeChange(id) {
+  function onWidgetTypeChange() {
     return (widgetType) => {
-      setWidgetInfo(widgetInfo.setIn([id, 'widgetType'], widgetType));
+      setWidgetInfo(widgetInfo.setIn([widgetID, 'widgetType'], widgetType));
 
       setWidgetToAttributes(
         widgetToAttributes.set(
-          id,
+          widgetID,
           Map(
             Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
               acc[curr] = '';
@@ -84,22 +77,21 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
     };
   }
 
-  function onWidgetCategoryChange(id) {
+  function onWidgetCategoryChange() {
     return (widgetCategory) => {
-      setWidgetInfo(widgetInfo.setIn([id, 'widgetCategory'], widgetCategory));
+      setWidgetInfo(widgetInfo.setIn([widgetID, 'widgetCategory'], widgetCategory));
     };
   }
 
-  const info = widgetInfo.get(widgetID);
-
-  return (
-    <If condition={!isNil(info)}>
+  const widget = widgetInfo.get(widgetID);
+  return React.useMemo(
+    () => (
       <div className={classes.widgetInput}>
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'textbox'}
-            value={info.get('name')}
-            onChange={onNameChange(widgetID)}
+            value={widget.get('name')}
+            onChange={onWidgetNameChange()}
             label={'Name'}
             placeholder={'Name a Widget'}
             required={false}
@@ -108,8 +100,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'textbox'}
-            value={info.get('label')}
-            onChange={onLabelChange(widgetID)}
+            value={widget.get('label')}
+            onChange={onWidgetLabelChange()}
             label={'Label'}
             placeholder={'Label a Widget'}
             required={false}
@@ -118,8 +110,8 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'select'}
-            value={info.get('widgetCategory')}
-            onChange={onWidgetCategoryChange(widgetID)}
+            value={widget.get('widgetCategory')}
+            onChange={onWidgetCategoryChange()}
             label={'Category'}
             options={WIDGET_CATEGORY}
             required={false}
@@ -128,17 +120,18 @@ const WidgetInputView: React.FC<IWidgetInputProps> = ({
         <div className={classes.widgetField}>
           <PluginInput
             widgetType={'select'}
-            value={info.get('widgetType')}
-            onChange={onWidgetTypeChange(widgetID)}
+            value={widget.get('widgetType')}
+            onChange={onWidgetTypeChange()}
             label={'Widget Type'}
             options={WIDGET_TYPES}
             required={true}
           />
         </div>
       </div>
-    </If>
+    ),
+    [widgetInfo]
   );
 };
 
-const WidgetInput = withStyles(styles)(WidgetInputView);
-export default WidgetInput;
+const WidgetInfoInput = withStyles(styles)(WidgetInfoInputView);
+export default WidgetInfoInput;

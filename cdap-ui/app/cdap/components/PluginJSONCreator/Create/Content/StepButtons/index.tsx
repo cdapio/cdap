@@ -17,12 +17,8 @@
 import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import { STEPS } from 'components/PluginJSONCreator/Create/steps';
-import {
-  CreateContext,
-  createContextConnect,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
+import { useAppInternalState } from 'components/PluginJSONCreator/Create';
+import { STEPS } from 'components/PluginJSONCreator/Create/Content';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -38,7 +34,7 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IStepButtonProps extends WithStyles<typeof styles>, ICreateContext {
+interface IStepButtonProps extends WithStyles<typeof styles> {
   nextDisabled?: boolean;
   onNext?: () => void;
   onComplete?: () => void;
@@ -47,14 +43,13 @@ interface IStepButtonProps extends WithStyles<typeof styles>, ICreateContext {
 }
 
 const StepButtonsView: React.FC<IStepButtonProps> = ({
-  activeStep,
-  setActiveStep,
   nextDisabled,
   onNext,
   onPrevious,
   classes,
   onComplete,
 }) => {
+  const { activeStep, setActiveStep } = useAppInternalState();
   function handlePreviousClick() {
     if (activeStep === 0) {
       return;
@@ -100,6 +95,5 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   );
 };
 
-const StyledStepButtons = withStyles(styles)(StepButtonsView);
-const StepButtons = createContextConnect(CreateContext, StyledStepButtons);
+const StepButtons = withStyles(styles)(StepButtonsView);
 export default StepButtons;

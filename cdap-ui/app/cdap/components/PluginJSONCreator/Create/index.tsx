@@ -14,15 +14,10 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import Content from 'components/PluginJSONCreator/Create/Content';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import JsonMenu, { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
-import {
-  CreateContext,
-  IBasicPluginInfo,
-  ICreateContext,
-} from 'components/PluginJSONCreator/CreateContextConnect';
 import { List, Map } from 'immutable';
 import * as React from 'react';
 
@@ -45,161 +40,245 @@ const styles = (): StyleRules => {
   };
 };
 
-class CreateView extends React.PureComponent<ICreateContext & WithStyles<typeof styles>> {
-  public setActiveStep = (activeStep: number) => {
-    this.setState({ activeStep });
-  };
+// Define initial values for states within Basic Plugin Information page
+const pluginInfoInitialState = {
+  pluginName: '',
+  setPluginName: undefined,
+  pluginType: '',
+  setPluginType: undefined,
+  displayName: '',
+  setDisplayName: undefined,
+  emitAlerts: false,
+  setEmitAlerts: undefined,
+  emitErrors: false,
+  setEmitErrors: undefined,
+};
 
-  public setBasicPluginInfo = (basicPluginInfo: IBasicPluginInfo) => {
-    const { pluginName, pluginType, displayName, emitAlerts, emitErrors } = basicPluginInfo;
-    this.setState({
+// Define initial values for states within Configuraiton Groups page
+const configurationGroupsInitialState = {
+  configurationGroups: List<string>(),
+  setConfigurationGroups: undefined,
+  groupToInfo: Map<string, Map<string, string>>(),
+  setGroupToInfo: undefined,
+};
+
+// Define initial values for 'widgets' states within Configuraiton Groups page
+const widgetsInitialState = {
+  groupToWidgets: Map<string, List<string>>(),
+  setGroupToWidgets: undefined,
+  widgetInfo: Map<string, Map<string, string>>(),
+  setWidgetInfo: undefined,
+  widgetToAttributes: Map<string, Map<string, any>>(),
+  setWidgetToAttributes: undefined,
+};
+
+// Define initial values for states within Outputs page
+const outputInitialState = {
+  outputName: '',
+  setOutputName: undefined,
+};
+
+// Define initial values for states within Filters page
+const filtersInitialState = {
+  filters: List<string>(),
+  setFilters: undefined,
+  filterToName: Map<string, string>(),
+  setFilterToName: undefined,
+  filterToCondition: Map<string, Map<string, string>>(),
+  setFilterToCondition: undefined,
+  filterToShowList: Map<string, List<string>>(),
+  setFilterToShowList: undefined,
+  showToInfo: Map<string, Map<string, string>>(),
+  setShowToInfo: undefined,
+};
+
+// Define initial values for internal states within the entire page
+const appInternalInitialState = {
+  activeStep: 0,
+  setActiveStep: undefined,
+  liveView: false,
+  setLiveView: undefined,
+  JSONStatus: JSONStatusMessage.Normal,
+  setJSONStatus: undefined,
+};
+
+export const PluginInfoContext = React.createContext(pluginInfoInitialState);
+export const ConfigurationGroupContext = React.createContext(configurationGroupsInitialState);
+export const WidgetContext = React.createContext(widgetsInitialState);
+export const OutputContext = React.createContext(outputInitialState);
+export const FilterContext = React.createContext(filtersInitialState);
+export const AppInternalContext = React.createContext(appInternalInitialState);
+
+// Components within pluginJSONCreator will be able to use only the contexts that they choose.
+// This will prevent unnecessary re-renderings of the UI.
+export const usePluginInfoState = () => React.useContext(PluginInfoContext);
+export const useConfigurationGroupState = () => React.useContext(ConfigurationGroupContext);
+export const useWidgetState = () => React.useContext(WidgetContext);
+export const useOutputState = () => React.useContext(OutputContext);
+export const useFilterState = () => React.useContext(FilterContext);
+export const useAppInternalState = () => React.useContext(AppInternalContext);
+
+const GlobalStateProvider = ({
+  children,
+  pluginInfoContextValue,
+  configuratioGroupContextValue,
+  widgetContextValue,
+  outputContextValue,
+  filterContextValue,
+  appInternalContextValue,
+}) => {
+  return (
+    <PluginInfoContext.Provider value={pluginInfoContextValue}>
+      <ConfigurationGroupContext.Provider value={configuratioGroupContextValue}>
+        <WidgetContext.Provider value={widgetContextValue}>
+          <OutputContext.Provider value={outputContextValue}>
+            <FilterContext.Provider value={filterContextValue}>
+              <AppInternalContext.Provider value={appInternalContextValue}>
+                {children}
+              </AppInternalContext.Provider>
+            </FilterContext.Provider>
+          </OutputContext.Provider>
+        </WidgetContext.Provider>
+      </ConfigurationGroupContext.Provider>
+    </PluginInfoContext.Provider>
+  );
+};
+
+const CreateView = ({ classes, children }) => {
+  // Define states related to Basic Plugin Information page
+  const [pluginName, setPluginName] = React.useState(pluginInfoInitialState.pluginName);
+  const [pluginType, setPluginType] = React.useState(pluginInfoInitialState.pluginType);
+  const [displayName, setDisplayName] = React.useState(pluginInfoInitialState.displayName);
+  const [emitAlerts, setEmitAlerts] = React.useState(pluginInfoInitialState.emitAlerts);
+  const [emitErrors, setEmitErrors] = React.useState(pluginInfoInitialState.emitErrors);
+
+  // Define states related to Configuration Groups page
+  const [configurationGroups, setConfigurationGroups] = React.useState(
+    configurationGroupsInitialState.configurationGroups
+  );
+  const [groupToInfo, setGroupToInfo] = React.useState(configurationGroupsInitialState.groupToInfo);
+
+  // Define states related to widgets in Configuraiton Groups page
+  const [groupToWidgets, setGroupToWidgets] = React.useState(widgetsInitialState.groupToWidgets);
+  const [widgetInfo, setWidgetInfo] = React.useState(widgetsInitialState.widgetInfo);
+  const [widgetToAttributes, setWidgetToAttributes] = React.useState(
+    widgetsInitialState.widgetToAttributes
+  );
+
+  // Define states related to Output page
+  const [outputName, setOutputName] = React.useState(outputInitialState.outputName);
+
+  // Define states related to Filters page
+  const [filters, setFilters] = React.useState(filtersInitialState.filters);
+  const [filterToName, setFilterToName] = React.useState(filtersInitialState.filterToName);
+  const [filterToCondition, setFilterToCondition] = React.useState(
+    filtersInitialState.filterToCondition
+  );
+  const [filterToShowList, setFilterToShowList] = React.useState(
+    filtersInitialState.filterToShowList
+  );
+  const [showToInfo, setShowToInfo] = React.useState(filtersInitialState.showToInfo);
+
+  // Define internal application states to manage pluginJSONCreator
+  const [activeStep, setActiveStep] = React.useState(appInternalInitialState.activeStep);
+  const [liveView, setLiveView] = React.useState(appInternalInitialState.liveView);
+  const [JSONStatus, setJSONStatus] = React.useState(appInternalInitialState.JSONStatus);
+
+  const pluginInfoContextValue = React.useMemo(
+    () => ({
       pluginName,
+      setPluginName,
       pluginType,
+      setPluginType,
       displayName,
+      setDisplayName,
       emitAlerts,
+      setEmitAlerts,
       emitErrors,
-    });
-  };
+      setEmitErrors,
+    }),
+    [pluginName, pluginType, displayName, emitAlerts, emitErrors]
+  );
 
-  public setConfigurationGroups = (configurationGroups: List<string>) => {
-    this.setState({ configurationGroups });
-  };
+  const configuratioGroupContextValue = React.useMemo(
+    () => ({ configurationGroups, setConfigurationGroups, groupToInfo, setGroupToInfo }),
+    [configurationGroups, groupToInfo]
+  );
 
-  public setGroupToInfo = (groupToInfo: Map<string, Map<string, string>>) => {
-    this.setState({ groupToInfo });
-  };
-
-  public setGroupToWidgets = (groupToWidgets: Map<string, List<string>>) => {
-    this.setState({ groupToWidgets });
-  };
-
-  public setWidgetInfo = (widgetInfo: any) => {
-    this.setState({ widgetInfo });
-  };
-
-  public setLiveView = (liveView: boolean) => {
-    this.setState({ liveView });
-  };
-
-  public setWidgetToAttributes = (widgetToAttributes: any) => {
-    this.setState({ widgetToAttributes });
-  };
-
-  public setOutputName = (outputName: string) => {
-    this.setState({ outputName });
-  };
-
-  public setJSONStatus = (JSONStatus: string) => {
-    this.setState({ JSONStatus });
-  };
-
-  public setFilters = (filters: string[]) => {
-    this.setState({ filters });
-  };
-
-  public setFilterToName = (filterToName: Map<string, string>) => {
-    this.setState({ filterToName });
-  };
-
-  public setFilterToCondition = (filterToCondition: Map<string, Map<string, string>>) => {
-    this.setState({ filterToCondition });
-  };
-
-  public setFilterToShowList = (filterToShowList: Map<string, List<string>>) => {
-    this.setState({ filterToShowList });
-  };
-
-  public setShowToInfo = (showToInfo: Map<string, Map<string, string>>) => {
-    this.setState({ showToInfo });
-  };
-
-  public setPluginState = ({
-    basicPluginInfo,
-    configurationGroups,
-    groupToInfo,
-    groupToWidgets,
-    widgetInfo,
-    widgetToAttributes,
-    outputName,
-    filters,
-    filterToName,
-    filterToCondition,
-    filterToShowList,
-    showToInfo,
-  }) => {
-    const { pluginName, pluginType, displayName, emitAlerts, emitErrors } = basicPluginInfo;
-    this.setState({
-      pluginName,
-      pluginType,
-      displayName,
-      emitAlerts,
-      emitErrors,
-      configurationGroups,
-      groupToInfo,
+  const widgetContextValue = React.useMemo(
+    () => ({
       groupToWidgets,
+      setGroupToWidgets,
       widgetInfo,
+      setWidgetInfo,
       widgetToAttributes,
+      setWidgetToAttributes,
+    }),
+    [groupToWidgets, widgetInfo, widgetToAttributes]
+  );
+
+  const outputContextValue = React.useMemo(
+    () => ({
       outputName,
+      setOutputName,
+    }),
+    [outputName]
+  );
+
+  const filterContextValue = React.useMemo(
+    () => ({
       filters,
+      setFilters,
       filterToName,
+      setFilterToName,
       filterToCondition,
+      setFilterToCondition,
       filterToShowList,
+      setFilterToShowList,
       showToInfo,
-    });
-  };
+      setShowToInfo,
+    }),
+    [filters, filterToName, filterToCondition, filterToShowList, showToInfo]
+  );
+  const appInternalContextValue = React.useMemo(
+    () => ({
+      activeStep,
+      setActiveStep,
+      liveView,
+      setLiveView,
+      JSONStatus,
+      setJSONStatus,
+    }),
+    [activeStep, liveView, JSONStatus]
+  );
 
-  public state = {
-    activeStep: 0,
-    pluginName: '',
-    pluginType: '',
-    displayName: '',
-    emitAlerts: false,
-    emitErrors: false,
-    configurationGroups: List<string>(),
-    groupToInfo: Map<string, Map<string, string>>(),
-    groupToWidgets: Map<string, List<string>>(),
-    widgetInfo: Map<string, Map<string, string>>(),
-    widgetToAttributes: Map<string, Map<string, any>>(),
-    liveView: true,
-    outputName: '',
-    JSONStatus: JSONStatusMessage.Normal,
-    filters: List(),
-    filterToName: Map({}),
-    filterToCondition: Map<string, Map<string, string>>(),
-    filterToShowList: Map<string, List<string>>(),
-    showToInfo: Map<string, Map<string, string>>(),
-
-    setActiveStep: this.setActiveStep,
-    setBasicPluginInfo: this.setBasicPluginInfo,
-    setConfigurationGroups: this.setConfigurationGroups,
-    setGroupToInfo: this.setGroupToInfo,
-    setGroupToWidgets: this.setGroupToWidgets,
-    setWidgetInfo: this.setWidgetInfo,
-    setWidgetToAttributes: this.setWidgetToAttributes,
-    setLiveView: this.setLiveView,
-    setOutputName: this.setOutputName,
-    setPluginState: this.setPluginState,
-    setJSONStatus: this.setJSONStatus,
-    setFilters: this.setFilters,
-    setFilterToName: this.setFilterToName,
-    setFilterToCondition: this.setFilterToCondition,
-    setFilterToShowList: this.setFilterToShowList,
-    setShowToInfo: this.setShowToInfo,
-  };
-
-  public render() {
-    return (
-      <CreateContext.Provider value={this.state}>
-        <div className={this.props.classes.root}>
-          <div className={this.props.classes.content}>
-            <WizardGuideline />
-            <Content />
-          </div>
-        </div>
-      </CreateContext.Provider>
-    );
-  }
-}
+  return (
+    <div className={classes.root}>
+      <GlobalStateProvider
+        pluginInfoContextValue={pluginInfoContextValue}
+        configuratioGroupContextValue={configuratioGroupContextValue}
+        widgetContextValue={widgetContextValue}
+        outputContextValue={outputContextValue}
+        filterContextValue={filterContextValue}
+        appInternalContextValue={appInternalContextValue}
+      >
+        <JsonMenu />
+      </GlobalStateProvider>
+      <div className={classes.content}>
+        <AppInternalContext.Provider value={appInternalContextValue}>
+          <WizardGuideline />
+          <Content
+            pluginInfoContextValue={pluginInfoContextValue}
+            configuratioGroupContextValue={configuratioGroupContextValue}
+            widgetContextValue={widgetContextValue}
+            outputContextValue={outputContextValue}
+            filterContextValue={filterContextValue}
+          />
+        </AppInternalContext.Provider>
+      </div>
+    </div>
+  );
+};
 
 const Create = withStyles(styles)(CreateView);
 export default Create;

@@ -14,6 +14,7 @@
  * the License.
  */
 
+import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -23,10 +24,9 @@ import CloseIcon from '@material-ui/icons/Close';
 import If from 'components/If';
 import { h2Styles } from 'components/Markdown/MarkdownHeading';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
 import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetAttributesCollection/WidgetAttributeInput';
-import WidgetInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInput';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
-import { List } from 'immutable';
+import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/WidgetCollection/WidgetInfoInput';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -42,79 +42,116 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface IWidgetAttributesCollectionProps extends WithStyles<typeof styles>, ICreateContext {
-  widgetAttributesOpen: boolean;
-  onWidgetAttributesClose: () => void;
+interface IWidgetAttributesCollectionProps extends WithStyles<typeof styles> {
   widgetID: string;
+  widgetAttributesOpen: boolean;
+  closeWidgetAttributes: () => void;
 }
 
 const WidgetAttributesCollectionView: React.FC<IWidgetAttributesCollectionProps> = ({
   classes,
-  widgetAttributesOpen,
-  onWidgetAttributesClose,
   widgetID,
-  widgetInfo,
-  setWidgetInfo,
-  widgetToAttributes,
-  setWidgetToAttributes,
+  widgetAttributesOpen,
+  closeWidgetAttributes,
 }) => {
-  const widget = widgetInfo.get(widgetID);
-  const widgetType = widget.get('widgetType');
-  const attributeFields =
-    widgetToAttributes && widgetToAttributes.get(widgetID)
-      ? List(widgetToAttributes.get(widgetID).keys())
-      : List([]);
+  const { widgetInfo, widgetToAttributes, setWidgetToAttributes } = useWidgetState();
 
-  return (
-    <div>
-      <Dialog
-        open={widgetAttributesOpen}
-        onClose={onWidgetAttributesClose}
-        disableBackdropClick={true}
-        fullWidth={true}
-        maxWidth={'md'}
-        classes={{ paper: classes.attributeDialog }}
-      >
-        <DialogTitle disableTypography className={classes.dialogTitle}>
-          <IconButton onClick={onWidgetAttributesClose}>
-            <CloseIcon />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent>
-          <div className={classes.widgetAttributesTitle}>
-            <h1 className={classes.h2Title}>Widget Property</h1>
-          </div>
-          <WidgetInput
-            widgetInfo={widgetInfo}
-            widgetID={widgetID}
-            setWidgetInfo={setWidgetInfo}
-            widgetToAttributes={widgetToAttributes}
-            setWidgetToAttributes={setWidgetToAttributes}
-          />
-          <If condition={attributeFields && attributeFields.size > 0}>
+  // Keep local states of 'widgetToAttributes'.
+  // 'widgetToAttributes' will only be changed when user clicks on 'save' button or closes the dialog.
+  const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
+
+  // If 'widgetToAttributes' changes, local values should also be updated.
+  // For instance, if user changes the widgetType.
+  React.useEffect(() => {
+    setLocalWidgetToAttributes(widgetToAttributes);
+  }, [widgetToAttributes]);
+
+  // Check whether local changes to widget attributes is saved
+  const [localSaved, setLocalSaved] = React.useState(true);
+
+  const widgetType = widgetInfo.get(widgetID).get('widgetType') || '';
+
+  // There are situations when the widgets from imported file do not include
+  // all the required 'widget-atttributes'. Therefore, this approach will include
+  // those missing fields.
+  const attributeFields = WIDGET_TYPE_TO_ATTRIBUTES[widgetType]
+    ? Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType])
+    : [];
+
+  // When local changes to widget attributes happen
+  React.useEffect(() => {
+    setLocalSaved(false);
+  }, [localWidgetToAttributes]);
+
+  function saveWidgetToAttributes() {
+    return () => {
+      const localAttributeValues = localWidgetToAttributes.get(widgetID);
+      setWidgetToAttributes(widgetToAttributes.set(widgetID, localAttributeValues));
+      setLocalSaved(true);
+    };
+  }
+
+  return React.useMemo(
+    () => (
+      <If condition={widgetAttributesOpen}>
+        <Dialog
+          open={true}
+          onClose={closeWidgetAttributes}
+          disableBackdropClick={true}
+          fullWidth={true}
+          maxWidth={'md'}
+          classes={{ paper: classes.attributeDialog }}
+        >
+          <DialogTitle disableTypography className={classes.dialogTitle}>
+            <IconButton onClick={closeWidgetAttributes}>
+              <CloseIcon />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
             <div className={classes.widgetAttributesTitle}>
-              <h2 className={classes.h2Title}>Configure Widget</h2>
+              <h1 className={classes.h2Title}>Widget Property</h1>
             </div>
-          </If>
-          {attributeFields.map((field, fieldIndex) => {
-            const fieldInfo = WIDGET_TYPE_TO_ATTRIBUTES[widgetType]
-              ? WIDGET_TYPE_TO_ATTRIBUTES[widgetType][field]
-              : {};
-            return (
-              <WidgetAttributeInput
-                key={fieldIndex}
-                widgetType={widgetType}
-                field={field}
-                fieldInfo={fieldInfo}
-                widgetToAttributes={widgetToAttributes}
-                setWidgetToAttributes={setWidgetToAttributes}
-                widgetID={widgetID}
-              />
-            );
-          })}
-        </DialogContent>
-      </Dialog>
-    </div>
+            <WidgetInfoInput widgetID={widgetID} />
+            <If condition={attributeFields && attributeFields.length > 0}>
+              <div className={classes.widgetAttributesTitle}>
+                <h2 className={classes.h2Title}>Configure Widget</h2>
+              </div>
+            </If>
+            {attributeFields.map((field, fieldIndex) => {
+              const fieldInfo = WIDGET_TYPE_TO_ATTRIBUTES[widgetType]
+                ? WIDGET_TYPE_TO_ATTRIBUTES[widgetType][field]
+                : {};
+              return (
+                <WidgetAttributeInput
+                  key={fieldIndex}
+                  widgetType={widgetType}
+                  field={field}
+                  fieldInfo={fieldInfo}
+                  widgetID={widgetID}
+                  localWidgetToAttributes={localWidgetToAttributes}
+                  setLocalWidgetToAttributes={setLocalWidgetToAttributes}
+                />
+              );
+            })}
+
+            <Button
+              variant="contained"
+              color="primary"
+              disabled={localSaved}
+              onClick={saveWidgetToAttributes()}
+            >
+              Save
+            </Button>
+          </DialogContent>
+        </Dialog>
+      </If>
+    ),
+    [
+      widgetAttributesOpen,
+      widgetInfo.get(widgetID),
+      widgetToAttributes.get(widgetID),
+      localWidgetToAttributes.get(widgetID),
+    ]
   );
 };
 

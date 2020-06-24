@@ -22,7 +22,6 @@ import CodeIcon from '@material-ui/icons/Code';
 import GetAppIcon from '@material-ui/icons/GetApp';
 import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
 import PluginJSONImporter from 'components/PluginJSONCreator/Create/Content/JsonMenu/PluginJsonImporter';
-import { ICreateContext } from 'components/PluginJSONCreator/CreateContextConnect';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -77,7 +76,7 @@ const ExpandLiveViewButton = ({ classes, expandLiveView }) => {
   );
 };
 
-interface IClosedJsonMenuProps extends WithStyles<typeof styles>, ICreateContext {
+interface IClosedJsonMenuProps extends WithStyles<typeof styles> {
   expandLiveView: () => void;
   onDownloadClick: () => void;
   populateImportResults: (filename: string, fileContent: string) => void;
