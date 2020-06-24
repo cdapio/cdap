@@ -217,3 +217,9 @@ export const SPEC_VERSION = '1.5';
 // FILTER PAGE
 export const OPERATOR_VALUES = Object.values(CustomOperator);
 export const SHOW_TYPE_VALUES = Object.values(PropertyShowConfigTypeEnums);
+
+// OUTPUT PAGE
+export enum SchemaType {
+  Explicit = 'schema',
+  Implicit = 'non-editable-schema-editor',
+}

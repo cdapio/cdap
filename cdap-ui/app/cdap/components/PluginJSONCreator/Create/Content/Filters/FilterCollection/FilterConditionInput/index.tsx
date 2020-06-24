@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { StyleRules, withStyles, WithStyles } from '@material-ui/core/styles';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import { CustomOperator } from 'components/ConfigurationGroup/types';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';

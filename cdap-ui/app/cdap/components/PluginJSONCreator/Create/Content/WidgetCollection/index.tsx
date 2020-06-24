@@ -115,7 +115,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({ classes, group
 
   function deleteWidgetFromGroup(widgetIndex) {
     return () => {
-      // // Grab the widget ID to delete
+      // Grab the widget ID to delete
       const widgetToDelete = activeWidgets.get(widgetIndex);
 
       const newWidgets = activeWidgets.delete(widgetIndex);
