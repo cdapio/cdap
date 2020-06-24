@@ -21,8 +21,9 @@ import If from 'components/If';
 import isEmpty from 'lodash/isEmpty';
 import Heading, { HeadingTypes } from 'components/Heading';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { messageTextStyle } from 'components/PreviewData/Table';
-import PreviewTableContainer from 'components/PreviewData/TableContainer';
+import { messageTextStyle } from 'components/PreviewData/DataView/Table';
+import PreviewTableContainer from 'components/PreviewData/DataView/TableContainer';
+import RecordContainer from 'components/PreviewData/RecordView/RecordContainer';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import T from 'i18n-react';
@@ -48,8 +49,10 @@ interface IPreviewDataViewProps extends WithStyles<typeof styles> {
 }
 
 export interface ITableData {
-  inputs: { [key: string]: IRecords };
-  outputs: { [key: string]: IRecords };
+  inputs: Array<[string, IRecords]>;
+  outputs: Array<[string, IRecords]>;
+  inputFieldCount: number;
+  outputFieldCount: number;
 }
 
 const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
@@ -88,18 +91,26 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
   }, [previewId]);
 
   const getTableData = () => {
-    let inputs = {};
-    let outputs = {};
+    let inputs = [];
+    let outputs = [];
 
     if (!isEmpty(previewData)) {
       if (!isEmpty(previewData.input) && !selectedNode.isSource) {
-        inputs = previewData.input;
+        inputs = Object.entries(previewData.input);
       }
       if (!isEmpty(previewData.output) && !selectedNode.isSink) {
-        outputs = previewData.output;
+        outputs = Object.entries(previewData.output);
       }
     }
-    return { inputs, outputs };
+
+    const fieldCountReducer = (maxCount: number, [tableName, tableInfo]) => {
+      const fieldCount = tableInfo.schemaFields.length;
+      return fieldCount > maxCount ? fieldCount : maxCount;
+    };
+    const inputFieldCount = !isEmpty(inputs) ? inputs.reduce(fieldCountReducer, 0) : 0;
+    const outputFieldCount = !isEmpty(outputs) ? outputs.reduce(fieldCountReducer, 0) : 0;
+
+    return { inputs, outputs, inputFieldCount, outputFieldCount };
   };
 
   const tableData: ITableData = getTableData();
@@ -136,14 +147,23 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     </div>
   );
 
+  const showRecordView = tableData.inputFieldCount >= 100 || tableData.outputFieldCount >= 100;
+
   return (
     <div>
       <If condition={!previewId}>{noPreviewDataMsg(classes)}</If>
       <If condition={previewLoading}>{loadingMsg(classes)}</If>
       <If condition={error}>{errorMsg(classes)}</If>
 
-      <If condition={!previewLoading && previewId && !isEmpty(previewData)}>
+      <If condition={!previewLoading && previewId && !isEmpty(previewData) && !showRecordView}>
         <PreviewTableContainer
+          tableData={tableData}
+          selectedNode={selectedNode}
+          previewStatus={previewStatus}
+        />
+      </If>
+      <If condition={!previewLoading && previewId && !isEmpty(previewData) && showRecordView}>
+        <RecordContainer
           tableData={tableData}
           selectedNode={selectedNode}
           previewStatus={previewStatus}
@@ -152,6 +172,7 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     </div>
   );
 };
+
 const PreviewDataViewStyled = withStyles(styles)(PreviewDataViewBase);
 function PreviewDataView(props) {
   return (
