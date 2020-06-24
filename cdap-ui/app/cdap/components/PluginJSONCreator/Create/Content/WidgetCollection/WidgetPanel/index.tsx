@@ -40,10 +40,6 @@ export const WidgetPanelView = ({
   setOpenWidgetIndex,
   addWidgetToGroup,
   deleteWidgetFromGroup,
-  onWidgetNameChange,
-  onWidgetLabelChange,
-  onWidgetTypeChange,
-  onWidgetCategoryChange,
 }) => {
   function openWidgetAttributes(index: number) {
     return () => {

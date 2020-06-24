@@ -103,7 +103,18 @@ const JsonMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     setWidgetToAttributes,
   } = useWidgetState();
 
-  const { outputName, setOutputName } = useOutputState();
+  const {
+    outputName,
+    setOutputName,
+    outputWidgetType,
+    setOutputWidgetType,
+    schemaTypes,
+    setSchemaTypes,
+    schemaDefaultType,
+    setSchemaDefaultType,
+    schema,
+    setSchema,
+  } = useOutputState();
 
   const {
     filters,
@@ -135,6 +146,10 @@ const JsonMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     widgetInfo,
     widgetToAttributes,
     outputName,
+    outputWidgetType,
+    schemaTypes,
+    schemaDefaultType,
+    schema,
     filters,
     filterToName,
     filterToCondition,
@@ -154,6 +169,10 @@ const JsonMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     setWidgetInfo(newWidgetData.widgetInfo);
     setWidgetToAttributes(newWidgetData.widgetToAttributes);
     setOutputName(newWidgetData.outputName);
+    setOutputWidgetType(newWidgetData.outputWidgetType);
+    setSchemaTypes(newWidgetData.schemaTypes);
+    setSchemaDefaultType(newWidgetData.schemaDefaultType);
+    setSchema(newWidgetData.schema);
     setFilters(newWidgetData.filters);
     setFilterToName(newWidgetData.filterToName);
     setFilterToCondition(newWidgetData.filterToCondition);
