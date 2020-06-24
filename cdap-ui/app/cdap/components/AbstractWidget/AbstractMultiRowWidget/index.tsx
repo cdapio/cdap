@@ -14,11 +14,11 @@
  * the License.
  */
 
-import * as React from 'react';
-import uuidV4 from 'uuid/v4';
-import MultiRowContainer from 'components/AbstractWidget/AbstractMultiRowWidget/Container';
 import { IWidgetProps } from 'components/AbstractWidget';
+import MultiRowContainer from 'components/AbstractWidget/AbstractMultiRowWidget/Container';
+import * as React from 'react';
 import { objectQuery } from 'services/helpers';
+import uuidV4 from 'uuid/v4';
 
 export interface IMultiRowWidgetProps {
   delimiter?: string;
