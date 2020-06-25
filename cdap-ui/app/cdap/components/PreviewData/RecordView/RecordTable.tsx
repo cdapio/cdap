@@ -15,36 +15,34 @@
  */
 
 import React from 'react';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
+import VirtualScroll from 'components/VirtualScroll';
 import Paper from '@material-ui/core/Paper';
-import TableHead from '@material-ui/core/TableHead';
+import Grid from '@material-ui/core/Grid';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import { styles } from 'components/PreviewData/DataView/Table';
+import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
 
-const CustomTableCell = withStyles((theme) => ({
-  head: {
-    backgroundColor: theme.palette.grey['300'],
-    color: theme.palette.common.white,
-    padding: 10,
-    fontSize: 14,
-    '&:first-of-type': {
-      borderRight: `1px solid ${theme.palette.grey['500']}`,
-    },
-  },
-  body: {
-    padding: 10,
-    fontSize: 14,
-    '&:first-of-type': {
-      borderRight: `1px solid ${theme.palette.grey['500']}`,
-    },
-  },
-}))(TableCell);
+// const CustomTableCell = withStyles((theme) => ({
+//   head: {
+//     backgroundColor: theme.palette.grey['300'],
+//     color: theme.palette.common.white,
+//     padding: 10,
+//     fontSize: 14,
+//     '&:first-of-type': {
+//       borderRight: `1px solid ${theme.palette.grey['500']}`,
+//     },
+//   },
+//   body: {
+//     padding: 10,
+//     fontSize: 14,
+//     '&:first-of-type': {
+//       borderRight: `1px solid ${theme.palette.grey['500']}`,
+//     },
+//   },
+// }))(TableCell);
 
 interface IRecordTableProps extends WithStyles<typeof styles> {
   headers: string[];
@@ -62,26 +60,60 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
     return field;
   };
 
+  const renderList = (visibleNodeCount: number, startNode: number) => {
+    return headers.slice(startNode, startNode + visibleNodeCount).map((fieldName, i) => {
+      return (
+        <React.Fragment>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
+            key={`gridrow-${i}`}
+          >
+            <Grid item className={classes.cell}>
+              {format(fieldName)}
+            </Grid>
+            <Grid item className={classes.cell}>
+              {format(record[fieldName])}
+            </Grid>
+          </Grid>
+        </React.Fragment>
+      );
+    });
+  };
+
   return (
     <Paper className={classes.root}>
-      <Table>
-        <TableHead>
-          <TableRow className={classes.row}>
-            <CustomTableCell>Field</CustomTableCell>
-            <CustomTableCell>Value</CustomTableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {headers.map((fieldName, i) => {
+      <Grid container direction="column" wrap="nowrap">
+        <Grid item>
+          <Grid container direction="row" justify="center" alignItems="center">
+            <Grid item className={classnames(classes.headerCell, classes.cell)}>
+              Field
+            </Grid>
+            <Grid item className={classnames(classes.headerCell, classes.cell)}>
+              Value
+            </Grid>
+          </Grid>
+        </Grid>
+        <Grid item>
+          <VirtualScroll
+            itemCount={() => headers.length}
+            visibleChildCount={25}
+            childHeight={40}
+            renderList={renderList}
+            childrenUnderFold={10}
+          />
+          {/* {headers.map((fieldName, i) => {
             return (
               <TableRow className={classes.row} key={`tr-${i}}`}>
                 <CustomTableCell>{format(fieldName)}</CustomTableCell>
                 <CustomTableCell>{format(record[fieldName])}</CustomTableCell>
               </TableRow>
             );
-          })}
-        </TableBody>
-      </Table>
+          })} */}
+        </Grid>
+      </Grid>
     </Paper>
   );
 };
