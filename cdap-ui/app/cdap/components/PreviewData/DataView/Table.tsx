@@ -63,15 +63,17 @@ export const styles = (theme): StyleRules => ({
     lineHeight: '40px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+  },
+  recordCell: {
+    width: '50%',
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
     },
   },
-  recordCell: {
-    width: '50%',
-  },
   tableCell: {
     width: '120px',
+    borderLeft: `1px solid ${theme.palette.grey['500']}`,
+    padding: '0px 5px',
   },
   indexCell: {
     width: '50px',
@@ -125,7 +127,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
             container
             direction="row"
             wrap="nowrap"
-            justify="space-between"
+            justify="space-evenly"
             className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
             key={`gridrow-${i}`}
           >
@@ -165,7 +167,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
             container
             direction="row"
             wrap="nowrap"
-            justify="space-between"
+            justify="space-evenly"
             className={classes.headerRow}
           >
             <Grid
