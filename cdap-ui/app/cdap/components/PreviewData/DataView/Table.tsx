@@ -34,11 +34,16 @@ export const messageTextStyle = {
 };
 export const styles = (theme): StyleRules => ({
   root: {
-    width: 'fit-content',
-    minWidth: '100%',
     display: 'inline-block',
     height: 'auto',
     marginTop: theme.spacing(1),
+  },
+  tableContainer: {
+    width: 'fit-content',
+    minWidth: '100%',
+  },
+  recordContainer: {
+    width: '100%',
   },
   table: {
     width: '100%',
@@ -67,6 +72,7 @@ export const styles = (theme): StyleRules => ({
   },
   recordCell: {
     width: '50%',
+    padding: '0px 5px',
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
       fontWeight: 500,
@@ -76,6 +82,7 @@ export const styles = (theme): StyleRules => ({
     width: '120px',
     borderLeft: `1px solid ${theme.palette.grey['500']}`,
     padding: '0px 5px',
+    flexGrow: 1,
   },
   indexCell: {
     width: '50px',
@@ -137,13 +144,15 @@ const DataTableView: React.FC<IDataTableProps> = ({
               {i + 1 + startNode}
             </Grid>
             {headers.map((fieldName, k) => {
+              const processedValue = format(record[fieldName]);
               return (
                 <Grid
                   item
                   className={classnames(classes.cell, classes.tableCell)}
                   key={`table-cell-${k}`}
+                  title={processedValue}
                 >
-                  {format(record[fieldName])}
+                  {processedValue}
                 </Grid>
               );
             })}
@@ -162,7 +171,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
   }
 
   return (
-    <Paper className={classes.root}>
+    <Paper className={classnames(classes.root, classes.tableContainer)}>
       <Grid container direction="column" wrap="nowrap">
         <Grid item>
           <Grid
@@ -177,13 +186,15 @@ const DataTableView: React.FC<IDataTableProps> = ({
               className={classnames(classes.headerCell, classes.cell, classes.indexCell)}
             />
             {headers.map((fieldName, i) => {
+              const processedFieldName = format(fieldName);
               return (
                 <Grid
                   item
                   key={`header-cell-${i}`}
                   className={classnames(classes.cell, classes.headerCell, classes.tableCell)}
+                  title={processedFieldName}
                 >
-                  {format(fieldName)}
+                  {processedFieldName}
                 </Grid>
               );
             })}

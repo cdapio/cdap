@@ -19,6 +19,7 @@ import ConfigurableTab from 'components/ConfigurableTab';
 import { ITableData } from 'components/PreviewData';
 import RecordNavigator from 'components/PreviewData/RecordView/Navigator';
 import RecordTable from 'components/PreviewData/RecordView/RecordTable';
+import { messageTextStyle } from 'components/PreviewData/DataView/Table';
 import { INode } from 'components/PreviewData/utilities';
 import If from 'components/If';
 import { styles as tableStyles } from 'components/PreviewData/DataView/TableContainer';
@@ -30,6 +31,7 @@ const I18N_PREFIX = 'features.PreviewData.RecordView.RecordContainer';
 
 const styles = (theme): StyleRules => ({
   ...tableStyles(theme),
+  messageText: messageTextStyle,
 });
 
 interface IRecordViewContainerProps extends WithStyles<typeof styles> {
@@ -42,6 +44,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
   classes,
   tableData,
   selectedNode,
+  previewStatus,
 }) => {
   const [selectedRecord, setRecord] = useState(1);
   const [activeTab, setActiveTab] = useState(null);
@@ -63,14 +66,20 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
     setActiveTab(id);
   };
 
-  const getTabConfig = (stagesInfo, recordNum: number) => {
+  const getTabConfig = (stagesInfo, recordNum: number, isInput: boolean) => {
     const recordIndex = recordNum - 1;
     const tabs = stagesInfo.map(([stageName, recordInfo], index) => {
       return {
         id: index + 1,
         name: stageName,
         content: (
-          <RecordTable headers={recordInfo.schemaFields} record={recordInfo.records[recordIndex]} />
+          <RecordTable
+            headers={recordInfo.schemaFields}
+            record={recordInfo.records[recordIndex]}
+            selectedRecord={selectedRecord}
+            isInput={isInput}
+            previewStatus={previewStatus}
+          />
         ),
         paneClassName: 'record-pane',
       };
@@ -88,13 +97,15 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
 
   return (
     <div>
-      <RecordNavigator
-        selectedRecord={selectedRecord}
-        numRecords={numRecords}
-        updateRecord={updateRecord}
-        prevOperation={() => setRecord(selectedRecord - 1)}
-        nextOperation={() => setRecord(selectedRecord + 1)}
-      />
+      <If condition={!selectedNode.isCondition}>
+        <RecordNavigator
+          selectedRecord={selectedRecord}
+          numRecords={numRecords}
+          updateRecord={updateRecord}
+          prevOperation={() => setRecord(selectedRecord - 1)}
+          nextOperation={() => setRecord(selectedRecord + 1)}
+        />
+      </If>
       <div className={classes.outerContainer}>
         <If condition={!selectedNode.isSource && !selectedNode.isCondition}>
           <div
@@ -104,12 +115,15 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
           >
             <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.inputHeader`)}</h2>
             {showInputTabs
-              ? getTabs(getTabConfig(inputs, selectedRecord))
+              ? getTabs(getTabConfig(inputs, selectedRecord, true))
               : inputs.map(([stageName, stageInfo]) => {
                   return (
                     <RecordTable
                       headers={stageInfo.schemaFields}
                       record={stageInfo.records[selectedRecord - 1]}
+                      selectedRecord={selectedRecord}
+                      isInput={true}
+                      previewStatus={previewStatus}
                     />
                   );
                 })}
@@ -123,15 +137,26 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
           >
             <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.outputHeader`)}</h2>
             {showOutputTabs
-              ? getTabs(getTabConfig(outputs, selectedRecord))
+              ? getTabs(getTabConfig(outputs, selectedRecord, false))
               : outputs.map(([stageName, stageInfo]) => {
                   return (
                     <RecordTable
                       headers={stageInfo.schemaFields}
                       record={stageInfo.records[selectedRecord - 1]}
+                      selectedRecord={selectedRecord}
+                      isInput={false}
+                      previewStatus={previewStatus}
                     />
                   );
                 })}
+          </div>
+        </If>
+        <If condition={selectedNode.isCondition}>
+          <div className={classes.innerContainer}>
+            <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.conditionHeader`)}</h2>
+            <div>
+              <RecordTable isCondition={true} />
+            </div>
           </div>
         </If>
       </div>
