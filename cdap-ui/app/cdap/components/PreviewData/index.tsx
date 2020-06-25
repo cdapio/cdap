@@ -163,8 +163,6 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     </div>
   );
 
-  const showRecordView = tableData.inputFieldCount > 100 || tableData.outputFieldCount > 100;
-
   return (
     <div>
       <If condition={!previewId}>{noPreviewDataMsg(classes)}</If>
