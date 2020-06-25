@@ -50,8 +50,10 @@ export const styles = (theme): StyleRules => ({
     },
   },
   messageText: messageTextStyle,
-  headerCell: {
+  headerRow: {
     backgroundColor: theme.palette.grey['300'],
+  },
+  headerCell: {
     color: theme.palette.common.white,
     fontSize: 14,
   },
@@ -69,7 +71,7 @@ export const styles = (theme): StyleRules => ({
     width: '50%',
   },
   tableCell: {
-    width: '100px',
+    width: '120px',
   },
   indexCell: {
     width: '50px',
@@ -123,6 +125,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
             container
             direction="row"
             wrap="nowrap"
+            justify="space-between"
             className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
             key={`gridrow-${i}`}
           >
@@ -158,7 +161,13 @@ const DataTableView: React.FC<IDataTableProps> = ({
     <Paper className={classes.root}>
       <Grid container direction="column" wrap="nowrap">
         <Grid item>
-          <Grid container direction="row" justify="center" alignItems="center">
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            justify="space-between"
+            className={classes.headerRow}
+          >
             <Grid
               item
               className={classnames(classes.headerCell, classes.cell, classes.indexCell)}
