@@ -22,6 +22,7 @@ import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import { styles } from 'components/PreviewData/DataView/Table';
 import classnames from 'classnames';
+import T from 'i18n-react';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
 
@@ -77,10 +78,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
             className={classes.headerRow}
           >
             <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
-              Field
+              {T.translate(`${I18N_PREFIX}.fieldName`)}
             </Grid>
             <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
-              Value
+              {T.translate(`${I18N_PREFIX}.value`)}
             </Grid>
           </Grid>
         </Grid>

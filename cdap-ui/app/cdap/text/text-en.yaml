@@ -2425,6 +2425,9 @@ features:
       RecordContainer:
         inputHeader: Input Records
         outputHeader: Output Records
+      RecordTable:
+        fieldName: Field Name
+        value: Value
     runPreview: Run preview to generate preview data.
   PropertiesEditor:
     AddProperty:
