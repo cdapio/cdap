@@ -52,6 +52,7 @@ export const styles = (theme): StyleRules => ({
   messageText: messageTextStyle,
   headerRow: {
     backgroundColor: theme.palette.grey['300'],
+    fontWeight: 500,
   },
   headerCell: {
     color: theme.palette.common.white,
@@ -68,6 +69,7 @@ export const styles = (theme): StyleRules => ({
     width: '50%',
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
+      fontWeight: 500,
     },
   },
   tableCell: {
