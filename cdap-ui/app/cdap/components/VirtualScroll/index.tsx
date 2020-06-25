@@ -87,7 +87,7 @@ const VirtualScroll = ({
         setPromise(p);
       }
     }
-  }, [startNode, visibleNodeCount]);
+  }, [startNode, visibleNodeCount, renderList]);
 
   useEffect(() => {
     if (!promise) {
@@ -98,8 +98,11 @@ const VirtualScroll = ({
       setPromise(null);
     });
   }, [promise]);
+
+  const containerHeight =
+    itmCount > visibleChildCount ? visibleChildCount * childHeight : itmCount * childHeight;
   return (
-    <div style={{ height: visibleChildCount * childHeight }} className={classes.root} ref={ref}>
+    <div style={{ height: containerHeight }} className={classes.root} ref={ref}>
       <div
         style={{
           height: totalHeight,
