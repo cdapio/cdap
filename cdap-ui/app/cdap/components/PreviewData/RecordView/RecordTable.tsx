@@ -69,7 +69,13 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
     <Paper className={classes.root}>
       <Grid container direction="column" wrap="nowrap">
         <Grid item>
-          <Grid container direction="row" justify="center" alignItems="center">
+          <Grid
+            container
+            direction="row"
+            justify="center"
+            alignItems="center"
+            className={classes.headerRow}
+          >
             <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
               Field
             </Grid>
