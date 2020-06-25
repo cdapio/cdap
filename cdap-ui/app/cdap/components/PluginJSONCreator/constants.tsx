@@ -60,7 +60,7 @@ export const WIDGET_TYPE_TO_ATTRIBUTES = {
     */
   },
   dlp: {
-    transforms: { type: 'ITransformProp[]', required: true },
+    // transforms: { type: 'ITransformProp[]', required: true },
     filters: { type: 'FilterOption[]', required: true },
     delimiter: { type: 'string', required: false },
   },
@@ -202,7 +202,9 @@ export const WIDGET_TYPE_TO_ATTRIBUTES = {
   },
 };
 
+// Delimiter that will be used throughout keyvalue inputs in Plugin JSON Creator
 export const COMMON_DELIMITER = ',';
+export const COMMON_KV_DELIMITER = ';';
 
 export const CODE_EDITORS = [
   'javascript-editor',
@@ -222,4 +224,10 @@ export const SHOW_TYPE_VALUES = Object.values(PropertyShowConfigTypeEnums);
 export enum SchemaType {
   Explicit = 'schema',
   Implicit = 'non-editable-schema-editor',
+}
+
+export enum JSONStatusMessage {
+  Normal = '',
+  Success = 'SUCCESS',
+  Fail = 'FAILURE',
 }

@@ -15,10 +15,10 @@
  */
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import { SchemaType } from 'components/PluginJSONCreator/constants';
+import { JSONStatusMessage, SchemaType } from 'components/PluginJSONCreator/constants';
 import Content from 'components/PluginJSONCreator/Create/Content';
-import JsonMenu, { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
-import WizardGuideline from 'components/PluginJSONCreator/Create/WizardGuideline';
+import PluginJSONMenu from 'components/PluginJSONCreator/Create/PluginJSONMenu';
+import StepsGuidelineMenu from 'components/PluginJSONCreator/Create/StepsGuidelineMenu';
 import { List, Map } from 'immutable';
 import * as React from 'react';
 
@@ -41,7 +41,7 @@ const styles = (): StyleRules => {
   };
 };
 
-// Define initial values for states within Basic Plugin Information page
+// Define initial values for states within Plugin Information page
 const pluginInfoInitialState = {
   pluginName: '',
   setPluginName: undefined,
@@ -87,7 +87,7 @@ const outputInitialState = {
   setSchema: undefined,
 };
 
-// Define initial values for states within Filters page
+// Define initial values for states within Filter Page
 const filtersInitialState = {
   filters: List<string>(),
   setFilters: undefined,
@@ -95,8 +95,8 @@ const filtersInitialState = {
   setFilterToName: undefined,
   filterToCondition: Map<string, Map<string, string>>(),
   setFilterToCondition: undefined,
-  filterToShowList: Map<string, List<string>>(),
-  setFilterToShowList: undefined,
+  filterToShowlist: Map<string, List<string>>(),
+  setFilterToShowlist: undefined,
   showToInfo: Map<string, Map<string, string>>(),
   setShowToInfo: undefined,
 };
@@ -105,8 +105,6 @@ const filtersInitialState = {
 const appInternalInitialState = {
   activeStep: 0,
   setActiveStep: undefined,
-  liveView: false,
-  setLiveView: undefined,
   JSONStatus: JSONStatusMessage.Normal,
   setJSONStatus: undefined,
 };
@@ -185,20 +183,19 @@ const CreateView = ({ classes, children }) => {
   );
   const [schema, setSchema] = React.useState(outputInitialState.schema);
 
-  // Define states related to Filters page
+  // Define states related to Filter page
   const [filters, setFilters] = React.useState(filtersInitialState.filters);
   const [filterToName, setFilterToName] = React.useState(filtersInitialState.filterToName);
   const [filterToCondition, setFilterToCondition] = React.useState(
     filtersInitialState.filterToCondition
   );
-  const [filterToShowList, setFilterToShowList] = React.useState(
-    filtersInitialState.filterToShowList
+  const [filterToShowlist, setFilterToShowlist] = React.useState(
+    filtersInitialState.filterToShowlist
   );
   const [showToInfo, setShowToInfo] = React.useState(filtersInitialState.showToInfo);
 
   // Define internal application states to manage pluginJSONCreator
   const [activeStep, setActiveStep] = React.useState(appInternalInitialState.activeStep);
-  const [liveView, setLiveView] = React.useState(appInternalInitialState.liveView);
   const [JSONStatus, setJSONStatus] = React.useState(appInternalInitialState.JSONStatus);
 
   const pluginInfoContextValue = React.useMemo(
@@ -258,24 +255,22 @@ const CreateView = ({ classes, children }) => {
       setFilterToName,
       filterToCondition,
       setFilterToCondition,
-      filterToShowList,
-      setFilterToShowList,
+      filterToShowlist,
+      setFilterToShowlist,
       showToInfo,
       setShowToInfo,
     }),
-    [filters, filterToName, filterToCondition, filterToShowList, showToInfo]
+    [filters, filterToName, filterToCondition, filterToShowlist, showToInfo]
   );
 
   const appInternalContextValue = React.useMemo(
     () => ({
       activeStep,
       setActiveStep,
-      liveView,
-      setLiveView,
       JSONStatus,
       setJSONStatus,
     }),
-    [activeStep, liveView, JSONStatus]
+    [activeStep, setActiveStep, JSONStatus, setJSONStatus]
   );
 
   return (
@@ -288,11 +283,11 @@ const CreateView = ({ classes, children }) => {
         filterContextValue={filterContextValue}
         appInternalContextValue={appInternalContextValue}
       >
-        <JsonMenu />
+        <PluginJSONMenu />
       </GlobalStateProvider>
       <div className={classes.content}>
         <AppInternalContext.Provider value={appInternalContextValue}>
-          <WizardGuideline />
+          <StepsGuidelineMenu />
           <Content
             pluginInfoContextValue={pluginInfoContextValue}
             configuratioGroupContextValue={configuratioGroupContextValue}
