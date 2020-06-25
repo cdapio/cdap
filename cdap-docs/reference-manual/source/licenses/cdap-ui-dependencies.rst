@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2020 Cask Data, Inc.
-    :version: 6.1.2
+    :version: 6.1.3
 
 =================================================
 Cask Data Application Platform |version|
@@ -72,6 +72,7 @@ Cask Data Application Platform UI Dependencies
    "font-awesome","4.6.3","bower","`MIT License <http://opensource.org/licenses/MIT>`__","http://fontawesome.io"
    "frameguard","3.1.0","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/helmetjs/helmet/master/LICENSE"
    "fuse.js","2.5.0","npm","`Apache License, Version 2.0 <http://www.apache.org/licenses/LICENSE-2.0.html>`__","https://raw.githubusercontent.com/krisk/Fuse/master/LICENSE"
+   "global","4.4.0","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://github.com/Raynos/global/blob/master/LICENSE"
    "graphql","14.4.0","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/graphql/graphql-js/master/LICENSE"
    "graphql-import","0.7.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/ardatan/graphql-import/master/LICENSE"
    "helmet-csp","2.7.1","npm","`MIT License <http://opensource.org/licenses/MIT>`__","https://raw.githubusercontent.com/helmetjs/csp/master/LICENSE"
