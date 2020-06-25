@@ -54,19 +54,25 @@ export const styles = (theme): StyleRules => ({
     backgroundColor: theme.palette.grey['300'],
     color: theme.palette.common.white,
     fontSize: 14,
-    '&.indexCell': {
-      width: '40px',
-    },
   },
   cell: {
-    width: '100px',
     textAlign: 'center',
     height: '40px',
+    lineHeight: '40px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
     },
+  },
+  recordCell: {
+    width: '50%',
+  },
+  tableCell: {
+    width: '100px',
+  },
+  indexCell: {
+    width: '50px',
   },
 });
 
@@ -120,12 +126,16 @@ const DataTableView: React.FC<IDataTableProps> = ({
             className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
             key={`gridrow-${i}`}
           >
-            <Grid item className={classes.cell}>
+            <Grid item className={classnames(classes.cell, classes.indexCell)}>
               {i + 1 + startNode}
             </Grid>
             {headers.map((fieldName, k) => {
               return (
-                <Grid item className={classes.cell} key={`table-cell-${k}`}>
+                <Grid
+                  item
+                  className={classnames(classes.cell, classes.tableCell)}
+                  key={`table-cell-${k}`}
+                >
                   {format(record[fieldName])}
                 </Grid>
               );
@@ -158,7 +168,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
                 <Grid
                   item
                   key={`header-cell-${i}`}
-                  className={classnames(classes.cell, classes.headerCell)}
+                  className={classnames(classes.cell, classes.headerCell, classes.tableCell)}
                 >
                   {format(fieldName)}
                 </Grid>
