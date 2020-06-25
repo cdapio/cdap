@@ -17,6 +17,7 @@
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/constants';
 import {
   ConfigurationGroupContext,
   FilterContext,
@@ -25,11 +26,10 @@ import {
   useAppInternalState,
   WidgetContext,
 } from 'components/PluginJSONCreator/Create';
-import BasicPluginInfo from 'components/PluginJSONCreator/Create/Content/BasicPluginInfo';
-import ConfigurationGroupsCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupsCollection';
-import Filters from 'components/PluginJSONCreator/Create/Content/Filters';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/Create/Content/JsonMenu';
+import ConfigurationGroupPage from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage';
+import FilterPage from 'components/PluginJSONCreator/Create/Content/FilterPage';
 import OutputPage from 'components/PluginJSONCreator/Create/Content/OutputPage';
+import PluginInfoPage from 'components/PluginJSONCreator/Create/Content/PluginInfoPage';
 import * as React from 'react';
 
 export const STEPS = [
@@ -56,11 +56,6 @@ const styles = (theme): StyleRules => {
       width: '50%',
       maxWidth: '1000px',
       minWidth: '600px',
-    },
-    comp: {
-      borderRight: `1px solid ${theme.palette.grey[400]}`,
-      width: '60%',
-      color: `${theme.palette.grey[400]}`,
     },
   };
 };
@@ -102,14 +97,14 @@ const ContentView = ({
       case 0:
         return (
           <PluginInfoContext.Provider value={pluginInfoContextValue}>
-            <BasicPluginInfo />
+            <PluginInfoPage />
           </PluginInfoContext.Provider>
         );
       case 1:
         return (
           <ConfigurationGroupContext.Provider value={configuratioGroupContextValue}>
             <WidgetContext.Provider value={widgetContextValue}>
-              <ConfigurationGroupsCollection />
+              <ConfigurationGroupPage />
             </WidgetContext.Provider>
           </ConfigurationGroupContext.Provider>
         );
@@ -122,7 +117,9 @@ const ContentView = ({
       case 3:
         return (
           <FilterContext.Provider value={filterContextValue}>
-            <Filters />
+            <WidgetContext.Provider value={widgetContextValue}>
+              <FilterPage />
+            </WidgetContext.Provider>
           </FilterContext.Provider>
         );
       default:
