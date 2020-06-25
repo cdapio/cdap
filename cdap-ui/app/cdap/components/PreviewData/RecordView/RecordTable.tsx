@@ -25,25 +25,6 @@ import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
 
-// const CustomTableCell = withStyles((theme) => ({
-//   head: {
-//     backgroundColor: theme.palette.grey['300'],
-//     color: theme.palette.common.white,
-//     padding: 10,
-//     fontSize: 14,
-//     '&:first-of-type': {
-//       borderRight: `1px solid ${theme.palette.grey['500']}`,
-//     },
-//   },
-//   body: {
-//     padding: 10,
-//     fontSize: 14,
-//     '&:first-of-type': {
-//       borderRight: `1px solid ${theme.palette.grey['500']}`,
-//     },
-//   },
-// }))(TableCell);
-
 interface IRecordTableProps extends WithStyles<typeof styles> {
   headers: string[];
   record: any;
@@ -53,6 +34,7 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
   // Used to stringify any non-string field values and field names.
   // TO DO: Might not need to do this for field names, need to test with nested schemas.
   // TO DO: Move to utilities, since we also use this in data view
+
   const format = (field: any) => {
     if (typeof field === 'object') {
       return JSON.stringify(field);
@@ -71,10 +53,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
             className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
             key={`gridrow-${i}`}
           >
-            <Grid item className={classes.cell}>
+            <Grid item className={classnames(classes.cell, classes.recordCell)}>
               {format(fieldName)}
             </Grid>
-            <Grid item className={classes.cell}>
+            <Grid item className={classnames(classes.cell, classes.recordCell)}>
               {format(record[fieldName])}
             </Grid>
           </Grid>
@@ -88,10 +70,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
       <Grid container direction="column" wrap="nowrap">
         <Grid item>
           <Grid container direction="row" justify="center" alignItems="center">
-            <Grid item className={classnames(classes.headerCell, classes.cell)}>
+            <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
               Field
             </Grid>
-            <Grid item className={classnames(classes.headerCell, classes.cell)}>
+            <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
               Value
             </Grid>
           </Grid>
@@ -104,14 +86,6 @@ const RecordTableView: React.FC<IRecordTableProps> = ({ classes, headers, record
             renderList={renderList}
             childrenUnderFold={10}
           />
-          {/* {headers.map((fieldName, i) => {
-            return (
-              <TableRow className={classes.row} key={`tr-${i}}`}>
-                <CustomTableCell>{format(fieldName)}</CustomTableCell>
-                <CustomTableCell>{format(record[fieldName])}</CustomTableCell>
-              </TableRow>
-            );
-          })} */}
         </Grid>
       </Grid>
     </Paper>
