@@ -56,9 +56,11 @@ public class LogPipelineLoader {
   private static final String SYSTEM_LOG_PIPELINE_NAME = "cdap";
 
   private final CConfiguration cConf;
+  private final CustomLogPipelineConfigProvider provider;
 
-  public LogPipelineLoader(CConfiguration cConf) {
+  public LogPipelineLoader(CConfiguration cConf, CustomLogPipelineConfigProvider provider) {
     this.cConf = cConf;
+    this.provider = provider;
   }
 
   /**
@@ -160,7 +162,9 @@ public class LogPipelineLoader {
     Preconditions.checkState(systemPipeline != null, "Missing cdap system pipeline configuration");
 
     List<File> files = DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
-    return Stream.concat(Stream.of(systemPipeline), files.stream().map(this::toURL).filter(Objects::nonNull))::iterator;
+
+    return Stream.concat(Stream.of(systemPipeline), provider.getPipelineConfigFiles().stream().map(this::toURL)
+        .filter(Objects::nonNull))::iterator;
   }
 
   /**
