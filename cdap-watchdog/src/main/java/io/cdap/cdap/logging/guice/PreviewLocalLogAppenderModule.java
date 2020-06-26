@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,11 +27,14 @@ import io.cdap.cdap.logging.framework.CustomLogPipelineConfigProvider;
 import io.cdap.cdap.logging.framework.local.LocalLogAppender;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * A Guice module to provide binding for {@link LogAppender} that writes log entries locally.
+ * A Guice module used for local mode of preview to provide binding for {@link LogAppender} that writes log entries
+ * locally.
  */
-public class LocalLogAppenderModule extends AbstractModule {
+public class PreviewLocalLogAppenderModule extends AbstractModule {
 
   @Override
   protected void configure() {
@@ -40,6 +43,7 @@ public class LocalLogAppenderModule extends AbstractModule {
 
   @Provides
   public CustomLogPipelineConfigProvider provideCustomLogConfig(CConfiguration cConf) {
-    return () -> DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
+    // Return empty list for preview mode.
+    return Collections::emptyList;
   }
 }

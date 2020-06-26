@@ -65,6 +65,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
+import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -243,6 +244,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       new PreviewDiscoveryRuntimeModule(discoveryService),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new DataSetServiceModules().getStandaloneModules(),
+      new PreviewLocalLogAppenderModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
@@ -251,7 +253,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
           bind(MetadataServiceClient.class).to(NoOpMetadataServiceClient.class);
         }
       }),
-      new LocalLogAppenderModule(),
       new PrivateModule() {
         @Override
         protected void configure() {

@@ -38,13 +38,8 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -57,9 +52,11 @@ public class LogPipelineLoader {
   private static final String SYSTEM_LOG_PIPELINE_NAME = "cdap";
 
   private final CConfiguration cConf;
+  private final CustomLogPipelineConfigProvider provider;
 
-  public LogPipelineLoader(CConfiguration cConf) {
+  public LogPipelineLoader(CConfiguration cConf, CustomLogPipelineConfigProvider provider) {
     this.cConf = cConf;
+    this.provider = provider;
   }
 
   /**
@@ -159,22 +156,22 @@ public class LogPipelineLoader {
     URL systemPipeline = getClass().getClassLoader().getResource(SYSTEM_LOG_PIPELINE_CONFIG);
     // This shouldn't happen since the cdap pipeline is packaged in the jar.
     Preconditions.checkState(systemPipeline != null, "Missing cdap system pipeline configuration");
+    return Stream.concat(Stream.of(systemPipeline), provider.getPipelineConfigFiles().stream().map(this::toURL)
+        .filter(Objects::nonNull))::iterator;
+  }
 
-    List<File> files = DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
-    return Iterables.concat(Collections.singleton(systemPipeline),
-                            Iterables.filter(Iterables.transform(files, new Function<File, URL>() {
-      @Nullable
-      @Override
-      public URL apply(File file) {
-        try {
-          return file.toURI().toURL();
-        } catch (MalformedURLException e) {
-          // This shouldn't happen
-          LOG.warn("Ignoring log pipeline config file {} due to {}", file, e.getMessage());
-          return null;
-        }
-      }
-    }), Predicates.notNull()));
+  /**
+   * Returns an {@link URL} representing the given file or {@code null} if failed to represent it as URL.
+   */
+  @Nullable
+  private URL toURL(File file) {
+    try {
+      return file.toURI().toURL();
+    } catch (MalformedURLException e) {
+      // This shouldn't happen
+      LOG.warn("Ignoring log pipeline config file {} due to {}", file, e.getMessage());
+      return null;
+    }
   }
 
   /**

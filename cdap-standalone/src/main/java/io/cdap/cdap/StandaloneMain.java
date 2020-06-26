@@ -71,6 +71,7 @@ import io.cdap.cdap.gateway.router.RouterModules;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
+import io.cdap.cdap.logging.framework.CustomLogPipelineConfigProvider;
 import io.cdap.cdap.logging.framework.LogPipelineLoader;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogQueryServerModule;
@@ -266,7 +267,9 @@ public class StandaloneMain {
 
     // Validate the logging pipeline configuration.
     // Do it explicitly as Standalone doesn't have a separate master check phase as the distributed does.
-    new LogPipelineLoader(cConf).validate();
+    CustomLogPipelineConfigProvider pipelineConfigProvider
+      = injector.getInstance(CustomLogPipelineConfigProvider.class);
+    new LogPipelineLoader(cConf, pipelineConfigProvider).validate();
     // It is recommended to initialize log appender after datasetService is started,
     // since log appender instantiates a dataset.
     logAppenderInitializer.initialize();
