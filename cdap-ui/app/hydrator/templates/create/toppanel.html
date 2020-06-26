@@ -242,7 +242,8 @@
     </div>
     <div class="btn log-viewer"
          ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewLogs}"
-         ng-click="HydratorPlusPlusTopPanelCtrl.viewLogs = !HydratorPlusPlusTopPanelCtrl.viewLogs">
+         ng-click="HydratorPlusPlusTopPanelCtrl.currentPreviewId ? HydratorPlusPlusTopPanelCtrl.viewLogs = !HydratorPlusPlusTopPanelCtrl.viewLogs : false"
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.currentPreviewId">
       <div class="btn-container">
         <span class="fa fa-file-text-o"></span>
         <div class="button-label">Logs</div>
@@ -286,12 +287,15 @@
     on-close="HydratorPlusPlusTopPanelCtrl.viewScheduler = false">
   </my-pipeline-scheduler>
 </div>
-<div class="pipeline-settings pipeline-logs-section" ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs">
-  <my-log-viewer-preview
-    namespace-id="{{HydratorPlusPlusTopPanelCtrl.$state.params.namespace}}"
-    preview-id="{{HydratorPlusPlusTopPanelCtrl.currentPreviewId}}"
-    entity-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}">
-  </my-log-viewer-preview>
+<div
+  class="pipeline-settings pipeline-logs-section"
+  ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs"
+>
+  <preview-logs
+    namespace="HydratorPlusPlusTopPanelCtrl.$state.params.namespace"
+    preview-id="HydratorPlusPlusTopPanelCtrl.currentPreviewId"
+    stop-poll="!HydratorPlusPlusTopPanelCtrl.previewRunning">
+  </preview-logs>
 </div>
 
 <my-file-select class="sr-only"
