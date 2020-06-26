@@ -23,10 +23,10 @@ export default [
     value: false,
   },
   {
-    name: 'Data Ingestion',
-    description: `Easily transfer data between a source and a sink.`,
-    id: 'data-ingestion',
-    screenshot: '/cdap_assets/img/ingest-tile.svg',
+    name: 'Virtual scroll demo',
+    description: 'This is a demo of the virtual scroll component.',
+    id: 'virtual-scroll-demo',
+    screenshot: null,
     value: false,
   },
 ];
