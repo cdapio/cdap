@@ -18,15 +18,24 @@ import React from 'react';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { GLOBALS } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
 import Popover from 'components/Popover';
 import T from 'i18n-react';
+import ThemeWrapper from 'components/ThemeWrapper';
+import LogsPortal from 'components/PipelineDetails/RunLevelInfo/PipelineLogViewer/LogsPortal';
+import PipelineLogViewer from 'components/PipelineDetails/RunLevelInfo/PipelineLogViewer';
+import If from 'components/If';
+import classnames from 'classnames';
 
 const PREFIX = 'features.PipelineDetails.RunLevel';
 
-const RunLogs = ({ currentRun, runs, appId, artifactName }) => {
+const RunLogs = ({ currentRun, runs }) => {
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsOpen(false);
+  }, [objectQuery(currentRun, 'runid')]);
+
   const LogsBtnComp = () => (
     <div className="run-logs-btn">
       <IconSVG name="icon-file-text-o" />
@@ -47,35 +56,38 @@ const RunLogs = ({ currentRun, runs, appId, artifactName }) => {
     );
   }
 
-  let namespace = getCurrentNamespace(),
-    programType = GLOBALS.programType[artifactName],
-    programId = GLOBALS.programId[artifactName],
-    runId = objectQuery(currentRun, 'runid');
-
-  let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
+  function toggleLogs() {
+    setIsOpen(!isOpen);
+  }
 
   return (
-    <a href={path} target="_blank" rel="noopener noreferrer">
-      <div className="run-info-container run-logs-container">
-        <LogsBtnComp />
-      </div>
-    </a>
+    <ThemeWrapper>
+      <span>
+        <div
+          className={classnames('run-info-container run-logs-container', { active: isOpen })}
+          onClick={toggleLogs}
+        >
+          <LogsBtnComp />
+        </div>
+        <LogsPortal>
+          <If condition={isOpen}>
+            <PipelineLogViewer toggleLogViewer={toggleLogs} />
+          </If>
+        </LogsPortal>
+      </span>
+    </ThemeWrapper>
   );
 };
 
 RunLogs.propTypes = {
   currentRun: PropTypes.object,
   runs: PropTypes.array,
-  appId: PropTypes.string,
-  artifactName: PropTypes.string,
 };
 
 const mapStateToProps = (state) => {
   return {
     currentRun: state.currentRun,
     runs: state.runs,
-    appId: state.name,
-    artifactName: state.artifact.name,
   };
 };
 
