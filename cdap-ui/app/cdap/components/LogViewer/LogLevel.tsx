@@ -39,6 +39,8 @@ const styles = (theme): StyleRules => {
     },
     target: {
       cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
     },
     levelRow: {
       fontSize: '13px',
