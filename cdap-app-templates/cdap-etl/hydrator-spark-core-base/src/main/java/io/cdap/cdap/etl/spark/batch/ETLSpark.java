@@ -100,6 +100,9 @@ public class ETLSpark extends AbstractSpark {
     sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     sparkConf.set("spark.network.timeout", "600s");
+    // to make sure fields that are the same but different casing are treated as different fields in auto-joins
+    // see CDAP-17024
+    sparkConf.set("spark.sql.caseSensitive", "true");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();

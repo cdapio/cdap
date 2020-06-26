@@ -116,6 +116,98 @@ public class AutoJoinerTest extends HydratorTestBase {
     getMetricsManager().resetAll();
   }
 
+  @Test
+  public void testCaseSensitivity() throws Exception {
+    Schema weird1 = Schema.recordOf(
+      "weird1",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("ID", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("Id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
+    Schema weird2 = Schema.recordOf(
+      "weird2",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("ID", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("val", Schema.of(Schema.Type.STRING)));
+
+    String input1 = UUID.randomUUID().toString();
+    String input2 = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("i1", MockSource.getPlugin(input1, weird1)))
+      .addStage(new ETLStage("i2", MockSource.getPlugin(input2, weird2)))
+      .addStage(new ETLStage("join", MockAutoJoiner.getPlugin(Arrays.asList("i1", "i2"),
+                                                              Arrays.asList("id", "ID"),
+                                                              Arrays.asList("i1", "i2"), Collections.emptyList(),
+                                                              Collections.emptyList(), true)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("i1", "join")
+      .addConnection("i2", "join")
+      .addConnection("join", "sink")
+      .setEngine(Engine.SPARK)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    List<StructuredRecord> input1Data = new ArrayList<>();
+    input1Data.add(StructuredRecord.builder(weird1)
+                     .set("id", 0)
+                     .set("ID", 99L)
+                     .set("Id", 0)
+                     .set("name", "zero").build());
+    input1Data.add(StructuredRecord.builder(weird1)
+                     .set("id", 1)
+                     .set("ID", 0L)
+                     .set("Id", 0)
+                     .set("name", "one").build());
+    DataSetManager<Table> inputManager = getDataset(input1);
+    MockSource.writeInput(inputManager, input1Data);
+
+    List<StructuredRecord> input2Data = new ArrayList<>();
+    input2Data.add(StructuredRecord.builder(weird2)
+                     .set("id", 0)
+                     .set("ID", 99L)
+                     .set("val", "0").build());
+    input2Data.add(StructuredRecord.builder(weird2)
+                     .set("id", 1)
+                     .set("ID", 99L)
+                     .set("val", "1").build());
+    input2Data.add(StructuredRecord.builder(weird2)
+                     .set("id", 0)
+                     .set("ID", 0L)
+                     .set("val", "2").build());
+    inputManager = getDataset(input2);
+    MockSource.writeInput(inputManager, input2Data);
+
+    Schema expectedSchema = Schema.recordOf(
+      "i1.i2",
+      Schema.Field.of("i1_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("i1_ID", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("i1_Id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("i1_name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("i2_id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("i2_ID", Schema.of(Schema.Type.LONG)),
+      Schema.Field.of("i2_val", Schema.of(Schema.Type.STRING)));
+    StructuredRecord expected = StructuredRecord.builder(expectedSchema)
+      .set("i1_id", 0)
+      .set("i1_ID", 99L)
+      .set("i1_Id", 0)
+      .set("i1_name", "zero")
+      .set("i2_id", 0)
+      .set("i2_ID", 99L)
+      .set("i2_val", "0").build();
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    Map<String, String> args = Collections.singletonMap(MockAutoJoiner.PARTITIONS_ARGUMENT, "1");
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> actual = MockSink.readOutput(outputManager);
+    Assert.assertEquals(Collections.singletonList(expected), actual);
+  }
 
   @Test
   public void testBroadcastJoin() throws Exception {
