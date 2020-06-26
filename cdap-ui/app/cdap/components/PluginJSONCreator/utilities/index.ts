@@ -30,6 +30,8 @@ export function getJSONOutput(widgetData) {
     schema,
   } = widgetData;
 
+  debugger;
+
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
     const label = groupToInfo.get(groupID).get('label');
     const properties = groupToWidgets.get(groupID).map((widgetID: string) => {
