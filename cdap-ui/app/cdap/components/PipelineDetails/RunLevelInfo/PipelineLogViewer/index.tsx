@@ -21,6 +21,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { GLOBALS } from 'services/global-constants';
 import ProgramDataFetcher from 'components/LogViewer/DataFetcher/ProgramDataFetcher';
 import LogViewer from 'components/LogViewer';
+import { PIPELINE_LOGS_FILTER } from 'services/global-constants';
 
 const PIPELINE_TOP_PANEL_OFFSET = '160px';
 const FOOTER_HEIGHT = '54px';
@@ -71,7 +72,7 @@ const LogViewerContainer: React.FC<ILogViewerProps> = ({
         programName: GLOBALS.programId[artifactName],
         runId: currentRun.runid,
       },
-      true
+      PIPELINE_LOGS_FILTER
     )
   );
 
