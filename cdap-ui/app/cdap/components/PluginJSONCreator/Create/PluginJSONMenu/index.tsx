@@ -34,7 +34,7 @@ import {
   downloadPluginJSON,
   getJSONOutput,
   parsePluginJSON,
-} from 'components/PluginJSONCreator/Create/PluginJSONMenu/utilities';
+} from 'components/PluginJSONCreator/utilities';
 import * as React from 'react';
 
 const LIVE_VIEWER_WIDTH = '600px';
