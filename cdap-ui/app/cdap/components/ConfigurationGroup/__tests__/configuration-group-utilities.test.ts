@@ -15,9 +15,10 @@
  */
 
 import {
-  processConfigurationGroups,
   constructErrors,
+  processConfigurationGroups,
 } from 'components/ConfigurationGroup/utilities';
+jest.disableAutomock();
 
 const pluginProperties = {
   nonRequiredProperty: {

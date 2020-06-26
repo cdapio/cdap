@@ -13,8 +13,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+// jest.mock('components/PluginJSONCreator/utilities');
+// import { getJSONOutput, parsePluginJSON } from 'components/PluginJSONCreator/utilities';
 import { getJSONOutput, parsePluginJSON } from 'components/PluginJSONCreator/utilities';
 import { List, Map } from 'immutable';
+// = jest.requireActual(
+//   'components/PluginJSONCreator/utilities'
+// );
+// jest.mock('components/PluginJSONCreator/utilities/index.ts');
 
 const mockStateProperties = {
   pluginName: 'test',

@@ -248,6 +248,7 @@
     "node": ">= 10.12.2"
   },
   "jest": {
+    "automock": true,
     "preset": "ts-jest/presets/js-with-babel",
     "testEnvironment": "jsdom",
     "roots": [

@@ -14,41 +14,41 @@
  * the License.
  */
 
-import * as React from 'react';
-import { objectQuery } from 'services/helpers';
 import CodeEditorWidget from 'components/AbstractWidget/CodeEditorWidget';
+import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
 import CSVWidget from 'components/AbstractWidget/CSVWidget';
 import DatasetSelector from 'components/AbstractWidget/DatasetSelectorWidget';
 import DateRangeWidget from 'components/AbstractWidget/DateRangeWidget';
 import DateTimeWidget from 'components/AbstractWidget/DateTimeWidget';
-import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropdownAliasWidget';
 import DLPCustomWidget from 'components/AbstractWidget/DLPCustomWidget';
-import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
-import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
-import JoinTypeWidget from 'components/AbstractWidget/JoinTypeWidget';
-import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
-import KeyValueDropdownWidget from 'components/AbstractWidget/KeyValueDropdownWidget';
-import KeyValueEncodedWidget from 'components/AbstractWidget/KeyValueWidget/KeyValueEncodedWidget';
-import KeyValueWidget from 'components/AbstractWidget/KeyValueWidget';
-import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
-import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
-import MultipleValuesWidget from 'components/AbstractWidget/MultipleValuesWidget';
 import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
 import NumberWidget from 'components/AbstractWidget/FormInputs/Number';
 import PasswordWidget from 'components/AbstractWidget/FormInputs/Password';
-import PluginConnectionBrowser from 'components/DataPrepConnections/PluginConnectionBrowser';
+import Select from 'components/AbstractWidget/FormInputs/Select';
+import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
+import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropdownAliasWidget';
+import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
+import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
+import JoinTypeWidget from 'components/AbstractWidget/JoinTypeWidget';
+import KeyValueDropdownWidget from 'components/AbstractWidget/KeyValueDropdownWidget';
+import KeyValueWidget from 'components/AbstractWidget/KeyValueWidget';
+import KeyValueEncodedWidget from 'components/AbstractWidget/KeyValueWidget/KeyValueEncodedWidget';
+import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
+import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
+import MultipleValuesWidget from 'components/AbstractWidget/MultipleValuesWidget';
 import PluginListWidget from 'components/AbstractWidget/PluginListWidget';
 import RadioGroupWidget from 'components/AbstractWidget/RadioGroupWidget';
 import RulesEngineEditor from 'components/AbstractWidget/RulesEngineEditor';
 import SecureKeyPassword from 'components/AbstractWidget/SecureKey/SecureKeyPassword';
 import SecureKeyText from 'components/AbstractWidget/SecureKey/SecureKeyText';
 import SecureKeyTextarea from 'components/AbstractWidget/SecureKey/SecureKeyTextarea';
-import Select from 'components/AbstractWidget/FormInputs/Select';
 import SqlConditionsWidget from 'components/AbstractWidget/SqlConditionsWidget';
 import SqlSelectorWidget from 'components/AbstractWidget/SqlSelectorWidget';
-import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
+import PluginConnectionBrowser from 'components/DataPrepConnections/PluginConnectionBrowser';
+import * as React from 'react';
+import { objectQuery } from 'services/helpers';
 
 /**
  * Please maintain alphabetical order of the widget factory.
