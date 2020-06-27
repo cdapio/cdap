@@ -14,60 +14,62 @@
  * the License.
  */
 
-import { getJSONOutput, parsePluginJSON } from 'components/PluginJSONCreator/utilities';
+const { getJSONOutput, parsePluginJSON } = jest.requireActual(
+  'components/PluginJSONCreator/utilities'
+);
 import { List, Map } from 'immutable';
+jest.unmock('immutable');
 
 const mockStateProperties = {
-  pluginName: 'test',
-  pluginType: 'batchsource',
+  displayName: 'test',
   configurationGroups: List([
     'ConfigGroup_a65136b3-9eef-4acd-b3af-ba315b314da6',
     'ConfigGroup_749496f0-ebd9-4334-a348-1a53ff7d1250',
   ]),
-  groupToInfo: Map<string, Map<string, string>>({
-    'ConfigGroup_a65136b3-9eef-4acd-b3af-ba315b314da6': {
+  groupToInfo: Map({
+    'ConfigGroup_a65136b3-9eef-4acd-b3af-ba315b314da6': Map({
       label: 'Required',
-    },
-    'ConfigGroup_749496f0-ebd9-4334-a348-1a53ff7d1250': {
+    }),
+    'ConfigGroup_749496f0-ebd9-4334-a348-1a53ff7d1250': Map({
       label: 'Non Required',
-    },
+    }),
   }),
-  groupToWidgets: Map<string, List<string>>({
-    'ConfigGroup_a65136b3-9eef-4acd-b3af-ba315b314da6': [
+  groupToWidgets: Map({
+    'ConfigGroup_a65136b3-9eef-4acd-b3af-ba315b314da6': List([
       'Widget_6a652bd3-d0e3-4177-b50f-f2af44af8aaa',
-    ],
-    'ConfigGroup_749496f0-ebd9-4334-a348-1a53ff7d1250': [
+    ]),
+    'ConfigGroup_749496f0-ebd9-4334-a348-1a53ff7d1250': List([
       'Widget_10a04a46-2b1c-4357-b350-4402e4a72287',
       'Widget_1fed5e89-338e-4416-a211-e85d7244b95a',
-    ],
+    ]),
   }),
-  widgetInfo: Map<string, Map<string, string>>({
-    'Widget_6a652bd3-d0e3-4177-b50f-f2af44af8aaa': {
+  widgetInfo: Map({
+    'Widget_6a652bd3-d0e3-4177-b50f-f2af44af8aaa': Map({
       widgetType: 'textbox',
       label: 'Required Property',
       name: 'requiredProperty',
-    },
-    'Widget_10a04a46-2b1c-4357-b350-4402e4a72287': {
+    }),
+    'Widget_10a04a46-2b1c-4357-b350-4402e4a72287': Map({
       widgetType: 'csv',
       label: 'Non Required Property',
       name: 'nonRequiredProperty',
-    },
-    'Widget_1fed5e89-338e-4416-a211-e85d7244b95a': {
+    }),
+    'Widget_1fed5e89-338e-4416-a211-e85d7244b95a': Map({
       widgetType: 'textarea',
       label: 'Non existing property',
       name: 'nonExistingProperty',
-    },
+    }),
   }),
-  widgetToAttributes: Map<string, Map<string, any>>({
-    'Widget_6a652bd3-d0e3-4177-b50f-f2af44af8aaa': {
+  widgetToAttributes: Map({
+    'Widget_6a652bd3-d0e3-4177-b50f-f2af44af8aaa': Map({
       default: 'required property default value',
-    },
-    'Widget_10a04a46-2b1c-4357-b350-4402e4a72287': {
+    }),
+    'Widget_10a04a46-2b1c-4357-b350-4402e4a72287': Map({
       default: 'non required property default value',
-    },
-    'Widget_1fed5e89-338e-4416-a211-e85d7244b95a': {
+    }),
+    'Widget_1fed5e89-338e-4416-a211-e85d7244b95a': Map({
       default: 'this default value should not exist',
-    },
+    }),
   }),
   outputName: 'schema',
   outputWidgetType: 'schema',
@@ -86,30 +88,30 @@ const mockStateProperties = {
   ],
   schemaDefaultType: 'string',
   filters: List(['Filter_e8545fce-da5e-4551-945b-0ba8ab1eae17']),
-  filterToName: Map<string, string>({
+  filterToName: Map({
     'Filter_e8545fce-da5e-4551-945b-0ba8ab1eae17': 'Hide Properties',
   }),
-  filterToCondition: Map<string, Map<string, string>>({
-    'Filter_e8545fce-da5e-4551-945b-0ba8ab1eae17': {
+  filterToCondition: Map({
+    'Filter_e8545fce-da5e-4551-945b-0ba8ab1eae17': Map({
       property: 'requiredProperty',
       operator: 'exists',
-    },
+    }),
   }),
-  filterToShowlist: Map<string, List<string>>({
-    'Filter_e8545fce-da5e-4551-945b-0ba8ab1eae17': [
+  filterToShowlist: Map({
+    'Filter_e8545fce-da5e-4551-945b-0ba8ab1eae17': List([
       'Show_f47eaa52-c09a-4a1f-b3fa-c0568e1298ff',
       'Show_b0aef571-e0ac-4055-82ff-a068c3f7c8b7',
-    ],
+    ]),
   }),
-  showToInfo: Map<string, Map<string, string>>({
-    'Show_f47eaa52-c09a-4a1f-b3fa-c0568e1298ff': {
+  showToInfo: Map({
+    'Show_f47eaa52-c09a-4a1f-b3fa-c0568e1298ff': Map({
       name: 'nonRequiredProperty',
       type: 'property',
-    },
-    'Show_b0aef571-e0ac-4055-82ff-a068c3f7c8b7': {
+    }),
+    'Show_b0aef571-e0ac-4055-82ff-a068c3f7c8b7': Map({
       name: 'nonExistingProperty',
       type: 'property',
-    },
+    }),
   }),
 };
 
@@ -204,8 +206,7 @@ describe('Plugin JSON Parser', () => {
     const pluginJSONData = getJSONOutput(mockStateProperties);
 
     const {
-      pluginName,
-      pluginType,
+      displayName,
       configurationGroups,
       groupToInfo,
       groupToWidgets,
@@ -223,25 +224,26 @@ describe('Plugin JSON Parser', () => {
     } = mockStateProperties;
 
     // Check whether it correctly converted plugin infromation state
-    expect(pluginJSONData['plugin-name']).toBe(pluginName);
-    expect(pluginJSONData['plugin-type']).toBe(pluginType);
+    expect(pluginJSONData['display-name']).toBe(displayName);
 
     // Check whether it correctly converted configuration groups state
     const configurationGroupsData = pluginJSONData['configuration-groups'];
-    expect(configurationGroupsData.length).toBe(configurationGroups.size);
+    expect(configurationGroupsData.size).toBe(configurationGroups.size);
     configurationGroupsData.forEach((groupData, groupIndex) => {
       const groupID = configurationGroups.get(groupIndex);
-      expect(groupData.label).toBe(groupToInfo.get(groupID).get('label'));
-      expect(groupData.properties.length).toBe(groupToWidgets.get(groupID).size);
+      expect(groupData.get('label')).toBe(groupToInfo.get(groupID).get('label'));
 
-      const widgetsData = configurationGroupsData[groupIndex].properties;
+      const widgetsData = configurationGroupsData.get(groupIndex).get('properties');
+      expect(widgetsData.size).toBe(groupToWidgets.get(groupID).size);
       widgetsData.forEach((widgetData, widgetIndex) => {
         const widgetID = groupToWidgets.get(groupID).get(widgetIndex);
-        expect(widgetData.name).toBe(widgetInfo.get(widgetID).get('name'));
-        expect(widgetData.label).toBe(widgetInfo.get(widgetID).get('label'));
-        expect(widgetData['widget-type']).toBe(widgetInfo.get(widgetID).get('widgetType'));
-        expect(widgetData['widget-category']).toBe(widgetInfo.get(widgetID).get('widgetCategory'));
-        expect(widgetData['widget-attributes']).toBe(widgetToAttributes.get(widgetID).toJS());
+        expect(widgetData.get('name')).toBe(widgetInfo.get(widgetID).get('name'));
+        expect(widgetData.get('label')).toBe(widgetInfo.get(widgetID).get('label'));
+        expect(widgetData.get('widget-type')).toBe(widgetInfo.get(widgetID).get('widgetType'));
+        expect(widgetData.get('widget-category')).toBe(
+          widgetInfo.get(widgetID).get('widgetCategory')
+        );
+        expect(widgetData.get('widget-attributes')).toMatchObject(widgetToAttributes.get(widgetID));
       });
     });
 
@@ -257,12 +259,12 @@ describe('Plugin JSON Parser', () => {
     filterData.forEach((filter, filterIndex) => {
       const filterID = filters.get(filterIndex);
 
-      expect(filter.name).toBe(filterToName.get(filterID));
-      expect(filter.condition).toBe(filterToCondition.get(filterID).toJS());
-      expect(filter.show.length).toBe(filterToShowlist.get(filterID).size);
-      filter.show.forEach((showData, showIndex) => {
+      expect(filter.get('name')).toBe(filterToName.get(filterID));
+      expect(filter.get('condition')).toBe(filterToCondition.get(filterID));
+      expect(filter.get('show').size).toBe(filterToShowlist.get(filterID).size);
+      filter.get('show').forEach((showData, showIndex) => {
         const showID = filterToShowlist.get(filterID).get(showIndex);
-        expect(showData).toBe(showToInfo.get(showID).toJS());
+        expect(showData).toMatchObject(showToInfo.get(showID));
       });
     });
   });
@@ -302,9 +304,15 @@ describe('Plugin JSON Parser', () => {
     expect(pluginType).toBe(mockPluginType);
 
     // Check whether it correctly parsed content for PluginInfoPage
-    expect(displayName).toBe(mockPluginJSONData['display-name']);
-    expect(emitAlerts).toBe(mockPluginJSONData['emit-alerts']);
-    expect(emitErrors).toBe(mockPluginJSONData['emit-errors']);
+    if (mockPluginJSONData['display-name']) {
+      expect(displayName).toBe(mockPluginJSONData['display-name']);
+    }
+    if (mockPluginJSONData['emit-alerts']) {
+      expect(emitAlerts).toBe(mockPluginJSONData['emit-alerts']);
+    }
+    if (mockPluginJSONData['emit-errors']) {
+      expect(emitErrors).toBe(mockPluginJSONData['emit-errors']);
+    }
 
     // Check whether it correctly parsed content for ConfigurationGroupPage
     const configurationGroupsData = mockPluginJSONData['configuration-groups'];
@@ -327,9 +335,11 @@ describe('Plugin JSON Parser', () => {
         expect(widgetInfoState.get('widgetCategory')).toBe(widgetData['widget-category']);
 
         const widgetAttributesState = widgetToAttributes.get(widgetID);
-        Object.keys(widgetAttributesState).forEach((field) => {
-          const widgetAttributeValuesState = widgetAttributesState.get(field);
-          expect(widgetAttributeValuesState.toJS()).toBe(widgetData['widget-attributes']);
+        List(widgetAttributesState.keySeq()).forEach((fieldName: string) => {
+          const widgetAttributeValuesState = widgetAttributesState.get(fieldName);
+          expect(widgetAttributeValuesState).toBe(
+            (widgetData['widget-attributes'] as any)[fieldName]
+          );
         });
       });
     });
@@ -351,13 +361,13 @@ describe('Plugin JSON Parser', () => {
       expect(filterNameState).toBe(filterData.name);
 
       const filterConditionState = filterToCondition.get(filterID);
-      expect(filterConditionState.toJS()).toBe(filterData.condition);
+      expect(filterConditionState.toJS()).toMatchObject(filterData.condition);
 
       // Check whether showlist data are correctly converted
       const shows = filterToShowlist.get(filterID);
       expect(shows.size).toBe(filterData.show.length);
       shows.forEach((showID, showIndex) => {
-        const showData = filterData[showIndex];
+        const showData = filterData.show[showIndex];
 
         const showInfoState = showToInfo.get(showID);
         expect(showInfoState.get('name')).toBe(showData.name);

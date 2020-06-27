@@ -16,6 +16,7 @@
 
 import VersionRange from 'services/VersionRange';
 import Version from 'services/VersionRange/Version';
+jest.disableAutomock();
 
 describe('Version Range Class', () => {
   const EXCLUSIVE_RANGE = new VersionRange('[1.0.0, 1.1.0)');

@@ -14,7 +14,8 @@
  * the License.
  */
 
-import {parseMetadata} from 'services/metadata-parser';
+import { parseMetadata } from 'services/metadata-parser';
+jest.disableAutomock();
 
 const applicationMetadata = {
   entity: {

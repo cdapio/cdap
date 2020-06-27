@@ -40,14 +40,12 @@ const JSONImportButtonView: React.FC<IJSONImportButtonProps> = ({
       const files = e.target.files;
       if (files.length > 0) {
         const filename = files[0].name;
-        const filenameWithoutExtension =
-          filename.substring(0, filename.lastIndexOf('.')) || filename;
         const reader = new FileReader();
         reader.readAsText(files[0]);
         let fileContent;
         reader.onload = (r) => {
           fileContent = r.target.result;
-          renderFileContent(filenameWithoutExtension, fileContent);
+          renderFileContent(filename, fileContent);
         };
       }
     };

@@ -1,7 +1,9 @@
-import { SchemaType, SPEC_VERSION } from 'components/PluginJSONCreator/constants';
+// import { SchemaType, SPEC_VERSION } from 'components/PluginJSONCreator/constants';
 import { fromJS, List, Map } from 'immutable';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
+jest.unmock('uuid/v4');
+jest.unmock('immutable');
 
 /**
  * Convert state properties into plugin JSON file data.
@@ -30,8 +32,6 @@ export function getJSONOutput(widgetData) {
     schema,
   } = widgetData;
 
-  debugger;
-
   const configurationGroupsData = configurationGroups.map((groupID: string) => {
     const label = groupToInfo.get(groupID).get('label');
     const properties = groupToWidgets.get(groupID).map((widgetID: string) => {
@@ -58,7 +58,8 @@ export function getJSONOutput(widgetData) {
   });
 
   let outputData;
-  if (outputWidgetType === SchemaType.Explicit) {
+  // if (outputWidgetType === 'SchemaType.Explicit') {
+  if (outputWidgetType === 'schema') {
     outputData = {
       name: outputName || '',
       'widget-type': outputWidgetType,
@@ -92,7 +93,8 @@ export function getJSONOutput(widgetData) {
 
   const config = {
     metadata: {
-      'spec-version': SPEC_VERSION,
+      // 'spec-version': SPEC_VERSION,
+      'spec-version': '1.5',
     },
     ...(displayName && { 'display-name': displayName }),
     ...(emitAlerts && { 'emit-alerts': emitAlerts }),
@@ -118,10 +120,12 @@ export function getJSONOutput(widgetData) {
  * @param pluginJSON Incoming JSON file data
  */
 export function parsePluginJSON(filename, pluginJSON) {
+  const filenameWithoutExtension = filename.substring(0, filename.lastIndexOf('.')) || filename;
+
   // Parse filename in order to set pluginName and pluginType
   // Currently the filename is designed to be <pluginName>-<pluginType>.json
-  const pluginName = filename.split('-')[0] || '';
-  const pluginType = filename.split('-')[1] || '';
+  const pluginName = filenameWithoutExtension.split('-')[0] || '';
+  const pluginType = filenameWithoutExtension.split('-')[1] || '';
 
   // Parse file data in order to populate the rest of properties
   // If the string fields are undefined, set them to empty string

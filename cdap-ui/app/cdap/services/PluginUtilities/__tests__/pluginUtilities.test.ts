@@ -15,6 +15,7 @@
  */
 
 import { bucketPlugins } from 'services/PluginUtilities';
+jest.disableAutomock();
 
 const pluginsResponse = [
   {

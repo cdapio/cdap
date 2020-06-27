@@ -14,10 +14,8 @@
  * the License.
  */
 
-import {
-  findHighestVersion,
-  findLowestVersion
-} from 'services/VersionRange/VersionUtilities';
+import { findHighestVersion, findLowestVersion } from 'services/VersionRange/VersionUtilities';
+jest.disableAutomock();
 
 describe('Version Utilities', () => {
   const versionsArray = [
