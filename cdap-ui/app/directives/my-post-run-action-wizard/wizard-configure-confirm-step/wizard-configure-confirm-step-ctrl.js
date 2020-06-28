@@ -25,6 +25,7 @@ class WizardConfigureConfirmStepCtrl {
     this.requiredPropertyError = GLOBALS.en.hydrator.studio.error['GENERIC-MISSING-REQUIRED-FIELDS'];
 
     this.onChangeHandler = this.onChangeHandler.bind(this);
+    this.validating = null;
 
     if (this.action && !Object.keys(this.action._backendProperties || {}).length) {
       this.pluginFetch(this.action)
@@ -78,9 +79,16 @@ class WizardConfigureConfirmStepCtrl {
   }
 
   addAction(isClose) {
+    if (this.validating) {
+      return;
+    }
+    this.validating = true;
+    const callback = () => {
+      this.validating = false;
+    };
     var fn = this.onActionConfigure();
     if ('undefined' !== typeof fn) {
-      fn.call(null, (isClose ? null : this.action));
+      fn.call(null, (isClose ? null : this.action), callback);
     }
   }
   gotoPreviousStep() {
@@ -88,24 +96,6 @@ class WizardConfigureConfirmStepCtrl {
     if ('undefined' !== typeof fn) {
       fn.call(null);
     }
-  }
-  isValid() {
-    this.errorInConfig = false;
-    let validateProperties = (action) => {
-      let valid = true;
-      angular.forEach(action._backendProperties, (value, key) => {
-        if (value.required && !action.properties[key]) {
-          valid = false;
-        }
-      });
-      return valid;
-    };
-
-    if (!validateProperties(this.action)) {
-      this.errorInConfig = true;
-      return false;
-    }
-    return true;
   }
   onItemClicked(event, action) {
     event.stopPropagation();
