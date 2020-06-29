@@ -219,8 +219,7 @@ describe('Creating a pipeline', () => {
     cy.get('[data-testid=close-modeless]').click();
   });
 
-  it.only(
-      'opening pipeline with unknown workspace should still render the studio',
+  it('opening pipeline with unknown workspace should still render the studio',
       () => {
         cy.visit(
             'pipelines/ns/default/studio?artifactType=cdap-data-pipeline&workspaceId=ebdbb6a7-8a8c-47b5-913f-9b75b1a0');
@@ -228,5 +227,88 @@ describe('Creating a pipeline', () => {
         cy.get(dataCy('navbar-toolbar')).should('be.visible');
         cy.get(dataCy('navbar-hamburger-icon')).click();
         cy.get(dataCy('navbar-home-link')).should('be.visible');
-      })
+      });
+
+  describe('Pipeline with missing plugins', () => {
+    const pipelineName = `test-missing-artifact-${Date.now()}`;
+    after(() => {
+      cy.cleanup_pipelines(headers, pipelineName);
+    });
+    
+    beforeEach(() => {
+      cy.delete_artifact_via_api(headers, 'pdf-extractor-transform', '2.0.0');
+    });
+
+    it('should be rendered properly in the studio.',
+       () => {
+         cy.visit('pipelines/ns/default/studio');
+         cy.upload_pipeline(
+               'missing-artifact-pipeline.json',
+               '#pipeline-import-config-link > input[type="file"]')
+             .then((subject) => {
+               expect(subject.length).to.be.eq(1);
+               cy.get(dataCy('fix-all-btn')).click();
+               cy.get('.pipeline-name').click();
+               cy.get('#pipeline-name-input')
+                   .clear()
+                   .type(pipelineName)
+                   .type('{enter}');
+             });
+         cy.get('[title="PDFExtractor"]').should('exist');
+         cy.get(`[title="File"] ~ ${dataCy('node-properties-btn')}`)
+             .should('not.be.disabled');
+         cy.get(`[title="File"] ~ ${dataCy('node-properties-btn')}`).click({
+           force: true
+         });
+         cy.get(`#File ${dataCy('node-badge')}`).should('not.be.visible');
+         cy.get(dataCy('plugin-properties-validate-btn')).should('be.visible');
+         cy.get('[data-testid=close-config-popover]').click();
+         cy.get(dataCy('plugin-properties-validate-btn'))
+             .should('not.be.visible');
+         cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
+             .should('be.disabled');
+         cy.get(`#PDFExtractor ${dataCy('node-badge')}`).should('be.visible');
+         cy.get(`#PDFExtractor ${dataCy('node-badge')}`).should('contain', '1');
+         cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
+             .click({force: true});
+         cy.get(dataCy('plugin-properties-validate-btn'))
+             .should('not.be.visible');
+         cy.get(`#PDFExtractor ${dataCy('node-badge')}`).click();
+         cy.get(dataCy('plugin-properties-validate-btn'))
+             .should('not.be.visible');
+         cy.get(dataCy('pipeline-draft-save-btn')).click();
+         cy.get(dataCy('deploy-pipeline-btn')).click();
+         cy.get(dataCy('valium-banner-hydrator')).should('be.visible');
+         cy.get(dataCy('valium-banner-hydrator'))
+             .should('contain', 'Artifact PDFExtractor is not available.');
+         cy.get(dataCy('banner-dismiss-btn')).click();
+         cy.get('#navbar-hub').click();
+         cy.get('.search-input').type('Pdf');
+         cy.get('.package-metadata-container').click();
+         cy.get(dataCy('one_step_deploy_plugin-btn')).click();
+         cy.get(dataCy('wizard-finish-btn')).click();
+         cy.get(dataCy('wizard-result-icon-close-btn')).click();
+         cy.get(dataCy('hub-close-btn')).click();
+         cy.get(dataCy('pipeline-draft-save-btn')).click();
+         cy.reload();
+         cy.get('[title="PDFExtractor"]').should('exist');
+         cy.get(`#PDFExtractor ${dataCy('node-badge')}`)
+             .should('not.be.visible');
+         cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
+             .should('not.be.disabled');
+         cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
+             .click({force: true});
+         cy.get(dataCy('plugin-properties-validate-btn')).should('be.visible');
+         cy.get('[data-testid=close-config-popover]').click();
+       });
+
+    it('should be rendered properly in deployed view.', () => {
+      cy.visit(`pipelines/ns/default/view/test-missing-artifact-1593413361598`);
+      cy.get('[title="PDFExtractor"]').should('exist');
+      cy.get(`[title="File"] ~ ${dataCy('node-properties-btn')}`)
+          .should('not.be.disabled');
+      cy.get(`[title="PDFExtractor"] ~ ${dataCy('node-properties-btn')}`)
+          .should('be.disabled');
+    });
+  });
 });

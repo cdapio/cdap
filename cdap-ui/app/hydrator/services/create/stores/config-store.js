@@ -659,7 +659,10 @@ class HydratorPlusPlusConfigStore {
                 });
               });
           },
-          (err) => console.log('ERROR fetching backend properties for nodes', err)
+          ((err) => {
+            console.log('ERROR fetching backend properties for nodes', err);
+            this.validateState();
+          }).bind(this)
         );
     }
   }
@@ -781,7 +784,12 @@ class HydratorPlusPlusConfigStore {
     ];
     let nodes = this.state.__ui__.nodes;
     let connections = angular.copy(this.state.config.connections);
-    nodes.forEach( node => { node.errorCount = 0;});
+    //resetting any existing errors or warnings
+    nodes.forEach(node => {
+      node.errorCount = 0;
+      delete node.warning;
+      delete node.error;
+    });
     let errors = [];
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let setErrorWarningFlagOnNode = (node) => {
@@ -830,9 +838,26 @@ class HydratorPlusPlusConfigStore {
         });
       }
     });
+    errorFactory.hasNoBackendProperties(nodes, errorNodes => {
+      if (errorNodes) {
+        isStateValid = false;
+        errorNodes.forEach(node => {
+          node.error = true;
+          node.errorCount += 1;
+          setErrorWarningFlagOnNode(node);
+        });
+        errors.push({
+          type: "NO-BACKEND-PROPS",
+          payload: {
+            nodes: errorNodes.map(node => node.name || node.plugin.name)
+          }
+        });
+      }
+    });
     errorFactory.isRequiredFieldsFilled(nodes, (err, node, unFilledRequiredFields) => {
       if (err) {
         isStateValid = false;
+        node.warning = true;
         node.errorCount += unFilledRequiredFields;
         setErrorWarningFlagOnNode(node);
       }

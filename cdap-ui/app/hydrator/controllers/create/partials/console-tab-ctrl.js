@@ -48,6 +48,9 @@ class HydratorPlusPlusConsoleTabService {
         case 'INVALID-CONNECTIONS':
           errorMessage.push(message.payload.connections.join(', ') + ' - invalid connection');
           break;
+        case 'NO-BACKEND-PROPS':
+          errorMessage.push(`Artifact${message.payload.nodes.length > 1 ? 's': ''} ${message.payload.nodes.join(', ')} ${message.payload.nodes.length > 1 ? 'are': 'is'} not available.`);
+          break;
         case 'success':
           successMessage.push(message.content);
           break;

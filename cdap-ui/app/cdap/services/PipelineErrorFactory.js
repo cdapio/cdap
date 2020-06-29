@@ -76,6 +76,13 @@ let isUniqueNodeNames = (nodes, cb) => {
   return isRuleValid;
 };
 
+let hasNoBackendProperties = (nodes, cb) => {
+  const badNodes = nodes ? nodes.filter(node => !node._backendProperties) : [];
+  if(badNodes.length){
+    cb(badNodes);
+  }
+};
+
 let hasAtleastOneSource = (nodes, cb) => {
   let error;
   let countSource = 0;
@@ -365,6 +372,7 @@ export {
   hasValidClientResources,
   hasAtleastOneSource,
   hasAtLeastOneSink,
+  hasNoBackendProperties,
   isNodeNameUnique,
   allNodesConnected,
   allConnectionsValid,

@@ -129,12 +129,14 @@ class PipelineAvailablePluginsActions {
     this.api.fetchAllPluginsProperties({ namespace }, reqBody)
       .$promise
       .then((res) => {
-        res.forEach((plugin, index) => {
+        res.forEach((plugin) => {
           let pluginProperties = Object.keys(plugin.properties);
           if (pluginProperties.length === 0) { return; }
 
           let pluginKey = pluginProperties[0].split('.')[1];
-          let key = plugins[index].key;
+          const { key } = plugins.find(pl =>
+            pl.key.includes(pluginKey)
+          );
 
           availablePluginsMap[key].doc = plugin.properties[`doc.${pluginKey}`];
 

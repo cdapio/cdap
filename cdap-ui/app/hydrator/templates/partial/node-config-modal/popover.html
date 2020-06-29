@@ -37,6 +37,7 @@
   </span>
   <div class="btn-group pull-right">
     <button class="btn btn-primary validate-btn" type="button"
+            data-cy="plugin-properties-validate-btn"
             ng-if="!isDisabled"
             ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.validating}"
             ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()">
@@ -95,6 +96,11 @@
         <div class="bottompanel-body"
              ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
              ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl">
+        </div>
+        <div class="bottompanel-body"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && !HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
+        ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl">
+        <span>Plugin artifact is not available.</span>
         </div>
         <div class="bottompanel-body"
              ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 2"

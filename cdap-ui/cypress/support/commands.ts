@@ -279,3 +279,16 @@ Cypress.Commands.add('start_wrangler', (headers) => {
     }
   });
 });
+
+Cypress.Commands.add('delete_artifact_via_api', (headers, artifactName, version) => {
+  return cy.request({
+    method: 'DELETE',
+    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/artifacts/${artifactName}/versions/${version}`,
+    headers,
+    failOnStatusCode: false
+  }).then(resp => {
+    // 404 if the artifact is already deleted.
+    expect(resp.status).to.be.oneOf([200, 404]);
+  });
+});
+
