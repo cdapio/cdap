@@ -18,6 +18,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Modal } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
+import { ALERT_STATUS } from 'services/AlertStatus';
 
 require('./Alert.scss');
 const CLOSE_TIMEOUT = 3000;
@@ -62,7 +63,7 @@ export default class Alert extends Component {
   }
 
   resetTimeout = () => {
-    if (this.state.type === 'success' || this.state.type === 'info') {
+    if (this.state.type === ALERT_STATUS.Success || this.state.type === ALERT_STATUS.Info) {
       clearTimeout(this.alertTimeout);
       this.alertTimeout = setTimeout(this.onClose, CLOSE_TIMEOUT);
     }

@@ -14,16 +14,11 @@
  * the License.
  */
 
-enum PREVIEW_STATUS {
-  WAITING = 'WAITING',
-  ACQUIRED = 'ACQUIRED',
-  INIT = 'INIT',
-  RUNNING = 'RUNNING',
-  COMPLETED = 'COMPLETED',
-  DEPLOY_FAILED = 'DEPLOY_FAILED',
-  RUN_FAILED = 'RUN_FAILED',
-  KILLED = 'KILLED',
-  KILLED_BY_TIMER = 'KILLED_BY_TIMER',
+// TO-DO(CDAP-17088): Move this to Alert component once it has been converted to TS
+enum ALERT_STATUS {
+  Success = 'success',
+  Error = 'error',
+  Info = 'info',
 }
 
-export { PREVIEW_STATUS };
+export { ALERT_STATUS };

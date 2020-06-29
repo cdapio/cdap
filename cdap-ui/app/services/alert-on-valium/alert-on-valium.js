@@ -26,7 +26,7 @@ angular.module(PKG.name + '.services')
         alertObj.hide();
       }
 
-      obj.duration = obj.type === 'success' || obj.type === 'info' ? SUCCESS_ALERT_DURATION : false;
+      obj.duration = obj.type === window.CaskCommon.ALERT_STATUS.Success || obj.type === window.CaskCommon.ALERT_STATUS.Info ? SUCCESS_ALERT_DURATION : false;
       alertObj = $alert(obj);
       if (obj.templateUrl) {
         alertObj.$scope.templateScope = obj.templateScope;
