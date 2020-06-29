@@ -662,17 +662,17 @@ class HydratorPlusPlusTopPanelCtrl {
         });
       }
       const {
-        RUNNING,
-        STARTED,
+        WAITING,
+        ACQUIRED,
         INIT,
+        RUNNING,
         COMPLETED,
-        KILLED_BY_TIMER,
-        KILLED,
-        FAILED,
+        DEPLOY_FAILED,
         RUN_FAILED,
-        STOPPED,
+        KILLED,
+        KILLED_BY_TIMER,
       } = window.CaskCommon.PREVIEW_STATUS;
-      if ([RUNNING, STARTED, INIT].indexOf(res.status) === -1) {
+      if ([RUNNING, INIT].indexOf(res.status) === -1) {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
@@ -686,12 +686,12 @@ class HydratorPlusPlusTopPanelCtrl {
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (res.status === STOPPED || res.status === KILLED) {
+        } else if (res.status === KILLED) {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} was stopped.`
           });
-        } else if (res.status === FAILED || res.status === RUN_FAILED) {
+        } else if (res.status === DEPLOY_FAILED || res.status === RUN_FAILED) {
           this.myAlertOnValium.show({
             type: 'danger',
             content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
