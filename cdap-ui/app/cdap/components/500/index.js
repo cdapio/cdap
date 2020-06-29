@@ -59,5 +59,5 @@ export default function Page500({ message, stack }) {
 }
 Page500.propTypes = {
   message: PropTypes.string,
-  stack: PropTypes.object,
+  stack: PropTypes.object || PropTypes.array,
 };

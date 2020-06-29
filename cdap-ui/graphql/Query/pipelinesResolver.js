@@ -27,11 +27,11 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
 async function queryTypePipelinesResolver(parent, args, context) {
   const namespace = args.namespace;
   const options = resolversCommon.getGETRequestOptions();
+  options.errorOrigin = 'pipelinesList';
 
   const pipelineArtifacts = ['cdap-data-pipeline', 'cdap-data-streams'];
 
   let path = `/v3/namespaces/${namespace}/apps?artifactName=${pipelineArtifacts.join(',')}`;
-
   options.url = urlHelper.constructUrl(cdapConfig, path);
   context.namespace = namespace;
 

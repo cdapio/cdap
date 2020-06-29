@@ -37,18 +37,21 @@ function requestPromiseWrapper(options, token, bodyModifiersFn) {
       Authorization: token,
     };
   }
-
+  // If there is no affinity specified, we default it to being a generic error.
+  const { errorOrigin = 'generic' } = options;
   return new Promise((resolve, reject) => {
     request(options, (err, response, body) => {
       if (err) {
-        const error =  new ApolloError(err, '500');
+        const error = new ApolloError(err, '500', { errorOrigin });
         return reject(error);
       }
 
       const statusCode = response.statusCode;
 
       if (typeof statusCode === 'undefined' || statusCode != 200) {
-        const error = new ApolloError(body, statusCode.toString());
+        const error = new ApolloError(body, statusCode.toString(), {
+          errorOrigin
+        });
         return reject(error);
       }
 

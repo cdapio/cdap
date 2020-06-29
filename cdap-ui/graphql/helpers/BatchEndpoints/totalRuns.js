@@ -29,6 +29,7 @@ async function batchTotalRuns(req, auth) {
   const namespace = req[0].namespace;
   const options = resolversCommon.getPOSTRequestOptions();
   options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
+  options.errorOrigin = 'totalRuns';
   const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   const chunkedBody = chunk(body, 100);
 

@@ -28,6 +28,7 @@ async function batchProgramRuns(req, auth) {
   const options = resolversCommon.getPOSTRequestOptions();
   options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
   options.body = req.slice(0, 25).map((reqObj) => reqObj.program);
+  options.errorOrigin = 'programRuns';
 
   const runInfo = await resolversCommon.requestPromiseWrapper(options, auth);
 

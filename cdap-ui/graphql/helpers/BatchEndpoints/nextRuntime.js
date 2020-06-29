@@ -27,6 +27,7 @@ async function batchNextRuntime(req, auth) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/nextruntime`);
+  options.errorOrigin ='nextRuntime';
   const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   options.body = body;
 
