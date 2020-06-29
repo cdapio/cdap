@@ -126,6 +126,7 @@ var PreviewDataView = require('../cdap/components/PreviewData').default;
 var PreviewLogs = require('../cdap/components/PreviewLogs').default;
 var SchemaEditor = require('../cdap/components/AbstractWidget/SchemaEditor').SchemaEditor;
 var PluginSchemaEditor = require('../cdap/components/PluginSchemaEditor').PluginSchemaEditor;
+var ALERT_STATUS = require('../cdap/services/AlertStatus').ALERT_STATUS;
 
 export {
   Store,
@@ -226,4 +227,5 @@ export {
   PreviewLogs,
   SchemaEditor,
   PluginSchemaEditor,
+  ALERT_STATUS,
 };

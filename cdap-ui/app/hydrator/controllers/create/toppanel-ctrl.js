@@ -104,7 +104,9 @@ class HydratorPlusPlusTopPanelCtrl {
             },
           });
 
-          if (statusRes.status === window.CaskCommon.PREVIEW_STATUS.RUNNING) {
+          const { WAITING, ACQUIRED, INIT, RUNNING } = window.CaskCommon.PREVIEW_STATUS; 
+          this.updateTimerLabelAndTitle(statusRes);
+          if ([WAITING, ACQUIRED, INIT, RUNNING].includes(statusRes.status)) {
             this.previewRunning = true;
             this.startTimer();
             this.startPollPreviewStatus(this.currentPreviewId);
@@ -158,10 +160,8 @@ class HydratorPlusPlusTopPanelCtrl {
 
   setDefault() {
     this.previewStartTime = null;
-    this.displayDuration = {
-      minutes: '--',
-      seconds: '--'
-    };
+    this.setDisplayDuration();
+    this.updateTimerLabelAndTitle();
     this.previewTimerInterval = null;
     this.previewLoading = false;
     this.previewRunning = false;
@@ -270,14 +270,24 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   // PREVIEW
+  setStartTime() {
+    let startTime = new Date();
+    this.previewStartTime = startTime;
+    this.previewStore.dispatch(
+      this.previewActions.setPreviewStartTime(startTime)
+    );
+  }
+
   startTimer() {
     this.previewTimerInterval = this.$interval(() => {
       this.calculateDuration();
     }, 500);
   }
+
   stopTimer() {
     this.$interval.cancel(this.previewTimerInterval);
   }
+
   calculateDuration(endTime) {
     if (!endTime) {
       endTime = new Date();
@@ -290,6 +300,10 @@ class HydratorPlusPlusTopPanelCtrl {
     seconds = seconds < 10 ? '0' + seconds : seconds;
     minutes = minutes < 10 ? '0' + minutes : minutes;
 
+    this.setDisplayDuration(minutes, seconds);
+  }
+
+  setDisplayDuration(minutes, seconds) {
     this.displayDuration = {
       minutes: minutes || '--',
       seconds: seconds || '--',
@@ -550,10 +564,8 @@ class HydratorPlusPlusTopPanelCtrl {
     this.loadingLabel = 'Starting';
     this.viewConfig = false;
 
-    this.displayDuration = {
-      minutes: '--',
-      seconds: '--'
-    };
+    this.setDisplayDuration();
+    this.updateTimerLabelAndTitle();
 
     this.currentPreviewId = null;
     this.previewStore.dispatch(
@@ -622,21 +634,18 @@ class HydratorPlusPlusTopPanelCtrl {
         this.previewStore.dispatch(
           this.previewActions.setPreviewId(res.application)
         );
-        let startTime = new Date();
-        this.previewStartTime = startTime;
+        this.setStartTime();
         this.startTimer();
-        this.previewStore.dispatch(
-          this.previewActions.setPreviewStartTime(startTime)
-        );
         this.currentPreviewId = res.application;
         this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
         this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
+        let errMsg = this.myHelpers.extractErrorMessage(err);
         this.myAlertOnValium.show({
           type: 'danger',
-          content: err.data
+          content: errMsg,
         });
       });
   }
@@ -653,6 +662,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.previewLoading = true;
     this.loadingLabel = 'Stopping';
     this.stopTimer();
+    this.updateTimerLabelAndTitle();
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
@@ -678,17 +688,18 @@ class HydratorPlusPlusTopPanelCtrl {
         });
       }
       const {
-        RUNNING,
-        STARTED,
+        WAITING,
+        ACQUIRED,
         INIT,
+        RUNNING,
         COMPLETED,
-        KILLED_BY_TIMER,
-        KILLED,
-        FAILED,
+        DEPLOY_FAILED,
         RUN_FAILED,
-        STOPPED,
+        KILLED,
+        KILLED_BY_TIMER,
       } = window.CaskCommon.PREVIEW_STATUS;
-      if ([RUNNING, STARTED, INIT].indexOf(res.status) === -1) {
+      this.updateTimerLabelAndTitle(res);
+      if ([RUNNING, INIT, ACQUIRED, WAITING].indexOf(res.status) === -1) {
         this.stopTimer();
         this.previewRunning = false;
         this.dataSrc.stopPoll(res.__pollId__);
@@ -702,12 +713,12 @@ class HydratorPlusPlusTopPanelCtrl {
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (res.status === STOPPED || res.status === KILLED) {
+        } else if (res.status === KILLED) {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} was stopped.`
           });
-        } else if (res.status === FAILED || res.status === RUN_FAILED) {
+        } else if (res.status === DEPLOY_FAILED || res.status === RUN_FAILED) {
           this.myAlertOnValium.show({
             type: 'danger',
             content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
@@ -716,12 +727,7 @@ class HydratorPlusPlusTopPanelCtrl {
       }
     }, (err) => {
       this.stopTimer();
-
-      let errorMsg = this.myHelpers.objectQuery(err, 'data') || this.myHelpers.objectQuery(err, 'response') || err;
-      if (typeof errorMsg !== 'string') {
-        errorMsg = JSON.stringify(errorMsg);
-      }
-
+      let errorMsg = this.myHelpers.extractErrorMessage(err);
       this.myAlertOnValium.show({
         type: 'danger',
         content: 'Pipeline preview failed : ' + errorMsg,
