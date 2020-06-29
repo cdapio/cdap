@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.gson.JsonObject;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.Optional;
 
@@ -42,4 +43,11 @@ public interface PreviewRequestQueue {
    * Get the state of the preview request queue.
    */
   PreviewRequestQueueState getState();
+
+  /**
+   * Find the position of request with specified application id in the queue.
+   * @param applicationId application id
+   * @return -1 if application id does not exist
+   */
+  int positionOf(ApplicationId applicationId);
 }

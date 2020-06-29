@@ -26,47 +26,49 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.ApplicationId;
+import net.jcip.annotations.ThreadSafe;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Thread-safe implementation of {@link PreviewRequestQueue} backed by {@link PreviewStore}.
- * {@code poll} method is {@code synchronized} to avoid multiple pollers getting the same preview
- * request back. Similarly {@code add} method is {@link synchronized} to make sure elements in the queue
- * do not exceeds the capacity.
- *
  */
+@ThreadSafe
 public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRequestQueue.class);
   private final PreviewStore previewStore;
-  private final Queue<PreviewRequest> requestQueue;
+  private final ConcurrentLinkedDeque<PreviewRequest> requestQueue;
   private final int capacity;
   private final long waitTimeOut;
+  private final AtomicInteger queueSize;
 
   @Inject
   DefaultPreviewRequestQueue(CConfiguration cConf, PreviewStore previewStore) {
     this.previewStore = previewStore;
     this.capacity = cConf.getInt(Constants.Preview.WAITING_QUEUE_CAPACITY, 50);
     this.waitTimeOut = cConf.getLong(Constants.Preview.WAITING_QUEUE_TIMEOUT_SECONDS, 60);
-    this.requestQueue = new ConcurrentLinkedQueue<>();
+    this.requestQueue = new ConcurrentLinkedDeque<>();
+    this.queueSize = new AtomicInteger();
     List<PreviewRequest> allInWaitingState = previewStore.getAllInWaitingState();
     for (PreviewRequest request : allInWaitingState) {
-      if (!isTimedOut(request)) {
-        requestQueue.add(request);
+      if (isTimedOut(request)) {
+        continue;
       }
+      requestQueue.add(request);
+      queueSize.incrementAndGet();
     }
   }
 
   @Override
-  public synchronized Optional<PreviewRequest> poll(JsonObject pollerInfo) {
+  public Optional<PreviewRequest> poll(JsonObject pollerInfo) {
     while (true) {
-      PreviewRequest previewRequest = requestQueue.peek();
+      PreviewRequest previewRequest = requestQueue.poll();
       if (previewRequest == null) {
         return Optional.empty();
       }
@@ -77,25 +79,50 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
         continue;
       }
 
-      previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
-      requestQueue.poll();
+      try {
+        previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
+      } catch (IllegalArgumentException e) {
+        LOG.warn("Error while setting the poller info for preview request with application id {}. Ignoring the preview",
+                 previewRequest.getProgram().getParent(), e);
+        continue;
+      } catch (Exception e) {
+        LOG.warn("Error while setting the poller info for preview request with application id {}. Trying again",
+                 previewRequest.getProgram().getParent(), e);
+        requestQueue.addFirst(previewRequest);
+        continue;
+      }
+
+      queueSize.decrementAndGet();
       return Optional.of(previewRequest);
     }
   }
 
   @Override
-  public synchronized void add(PreviewRequest previewRequest) {
-    int size = requestQueue.size();
-    if (size >= capacity) {
-      throw new IllegalStateException(String.format("Preview request waiting queue is full with %d requests.", size));
+  public void add(PreviewRequest previewRequest) {
+    if (queueSize.intValue() >= capacity) {
+      throw new IllegalStateException(String.format("Preview request waiting queue is full with %d requests.",
+                                                    queueSize.intValue()));
     }
     previewStore.addToWaitingState(previewRequest.getProgram().getParent(), previewRequest.getAppRequest());
     requestQueue.add(previewRequest);
+    queueSize.incrementAndGet();
   }
 
   @Override
   public PreviewRequestQueueState getState() {
-    return new PreviewRequestQueueState(requestQueue.size());
+    return new PreviewRequestQueueState(queueSize.get());
+  }
+
+  @Override
+  public int positionOf(ApplicationId applicationId) {
+    int position = 0;
+    for (PreviewRequest request : requestQueue) {
+      if (request.getProgram().getParent().equals(applicationId)) {
+        return position;
+      }
+      position++;
+    }
+    return -1;
   }
 
   private boolean isTimedOut(PreviewRequest request) {
