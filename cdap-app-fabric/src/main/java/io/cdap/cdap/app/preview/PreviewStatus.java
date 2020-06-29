@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.common.base.Objects;
 import io.cdap.cdap.proto.BasicThrowable;
 
-import java.util.Objects;
 import javax.annotation.Nullable;
 
 /**
@@ -54,13 +54,20 @@ public class PreviewStatus {
   private final BasicThrowable throwable;
   private final Long startTime;
   private final Long endTime;
+  private final Integer positionInWaitingQueue;
 
   public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
                        @Nullable Long endTime) {
+    this(status, throwable, startTime, endTime, null);
+  }
+
+  public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
+                       @Nullable Long endTime, @Nullable Integer positionInWaitingQueue) {
     this.status = status;
     this.throwable = throwable;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.positionInWaitingQueue = positionInWaitingQueue;
   }
 
   public Status getStatus() {
@@ -85,6 +92,11 @@ public class PreviewStatus {
     return endTime;
   }
 
+  @Nullable
+  public Integer getPositionInWaitingQueue() {
+    return positionInWaitingQueue;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("PreviewStatus{");
@@ -99,19 +111,19 @@ public class PreviewStatus {
     if (this == o) {
       return true;
     }
-
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-
-    PreviewStatus that = (PreviewStatus) o;
-
-    return Objects.equals(this.status, that.status) &&
-      Objects.equals(this.throwable, that.throwable);
+    PreviewStatus status1 = (PreviewStatus) o;
+    return status == status1.status &&
+      Objects.equal(throwable, status1.throwable) &&
+      Objects.equal(startTime, status1.startTime) &&
+      Objects.equal(endTime, status1.endTime) &&
+      Objects.equal(positionInWaitingQueue, status1.positionInWaitingQueue);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(status, throwable);
+    return Objects.hashCode(status, throwable, startTime, endTime, positionInWaitingQueue);
   }
 }

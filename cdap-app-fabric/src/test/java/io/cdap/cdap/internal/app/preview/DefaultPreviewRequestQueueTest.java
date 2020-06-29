@@ -156,10 +156,12 @@ public class DefaultPreviewRequestQueueTest {
     ApplicationId app2 = new ApplicationId("default", RunIds.generate().getId());
     request = new PreviewRequest(app2, getAppRequest());
     previewRequestQueue.add(request);
+    Assert.assertEquals(0, previewRequestQueue.positionOf(app2));
 
     ApplicationId app3 = new ApplicationId("default", RunIds.generate().getId());
     request = new PreviewRequest(app3, getAppRequest());
     previewRequestQueue.add(request);
+    Assert.assertEquals(1, previewRequestQueue.positionOf(app3));
 
     ApplicationId app4 = new ApplicationId("default", RunIds.generate().getId());
     request = new PreviewRequest(app4, getAppRequest());

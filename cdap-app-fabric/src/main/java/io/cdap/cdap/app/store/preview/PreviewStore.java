@@ -106,9 +106,16 @@ public interface PreviewStore {
   List<PreviewRequest> getAllInWaitingState();
 
   /**
-   * Sets the information about the poller that has acquired the waiting application for running.
+   *
    * @param applicationId the application id of preview
    * @param pollerInfo information about the poller that is going to run the preview in JSON format
+   */
+
+  /**
+   * Sets the information about the poller that has acquired the waiting application for running.
+   * @param applicationId applicationId the application id of preview
+   * @param pollerInfo information about the poller that is going to run the preview in JSON format
+   * @throws IllegalArgumentException exception thrown when the application id is not present in a WAITING state
    */
   void setPreviewRequestPollerInfo(ApplicationId applicationId, JsonObject pollerInfo);
 }

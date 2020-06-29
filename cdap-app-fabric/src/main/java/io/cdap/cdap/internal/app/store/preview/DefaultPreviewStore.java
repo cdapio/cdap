@@ -253,7 +253,6 @@ public class DefaultPreviewStore implements PreviewStore {
 
     try {
       table.deleteRows(Collections.singleton(mdsKey.getKey()));
-      setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, null, null, null));
     } catch (IOException e) {
       throw new RuntimeException(String.format("Failed to remove application with id %s from waiting queue.",
                                                applicationId), e);
@@ -300,6 +299,11 @@ public class DefaultPreviewStore implements PreviewStore {
     }
 
     removeFromWaitingState(applicationId);
+    PreviewStatus previewStatus = getPreviewStatus(applicationId);
+    if (previewStatus == null || previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
+      throw new IllegalArgumentException(String.format("Preview application with id %s does not exist in the " +
+                                                         "waiting state.", applicationId));
+    }
     setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.ACQUIRED, null, null, null));
   }
 
