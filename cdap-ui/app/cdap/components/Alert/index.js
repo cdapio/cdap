@@ -41,7 +41,7 @@ export default class Alert extends Component {
   alertTimeout = null;
 
   componentDidMount() {
-    resetTimeout();
+    this.resetTimeout();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -58,7 +58,7 @@ export default class Alert extends Component {
         element,
       });
     }
-    resetTimeout();
+    this.resetTimeout();
   }
 
   resetTimeout = () => {
