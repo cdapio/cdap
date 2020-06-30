@@ -126,6 +126,19 @@ class PipelineAvailablePluginsActions {
   _fetchInfo(availablePluginsMap, namespace, plugins) {
     const reqBody = plugins.map((plugin) => plugin.info);
 
+    const getKeyFromPluginProps = pluginProperties => {
+      return pluginProperties[0].split('.')[1];
+    };
+
+    const pluginsByKey = new Map();
+    plugins.forEach(plugin => {
+      const pluginProperties = this.myHelpers.objectQuery(plugin, 'info', 'properties');
+      if (pluginProperties.length > 0) {
+        const key = getKeyFromPluginProps(pluginProperties);
+        pluginsByKey.set(key, plugin);
+      }
+    });
+
     this.api.fetchAllPluginsProperties({ namespace }, reqBody)
       .$promise
       .then((res) => {
@@ -133,10 +146,8 @@ class PipelineAvailablePluginsActions {
           let pluginProperties = Object.keys(plugin.properties);
           if (pluginProperties.length === 0) { return; }
 
-          let pluginKey = pluginProperties[0].split('.')[1];
-          const { key } = plugins.find(pl =>
-            pl.key.includes(pluginKey)
-          );
+          let pluginKey = getKeyFromPluginProps(pluginProperties);
+          const { key } = pluginsByKey.get(pluginKey);
 
           availablePluginsMap[key].doc = plugin.properties[`doc.${pluginKey}`];
 

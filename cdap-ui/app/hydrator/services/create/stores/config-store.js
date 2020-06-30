@@ -847,7 +847,7 @@ class HydratorPlusPlusConfigStore {
           setErrorWarningFlagOnNode(node);
         });
         errors.push({
-          type: "NO-BACKEND-PROPS",
+          type: 'NO-BACKEND-PROPS',
           payload: {
             nodes: errorNodes.map(node => node.name || node.plugin.name)
           }
