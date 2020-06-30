@@ -537,7 +537,7 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   runPreview() {
-    // Before we have submitted preview job or gotten any status
+    // Before we have submitted preview job or gotten preview status
     this.previewLoading = true;
     this.loadingLabel = 'Waiting';
     this.viewConfig = false;
@@ -621,9 +621,18 @@ class HydratorPlusPlusTopPanelCtrl {
         this.startPollPreviewStatus(res.application);
       }, (err) => {
         this.previewLoading = false;
+        let errorMsg = this.myHelpers.objectQuery(err, 'data') || this.myHelpers.objectQuery(err, 'response') || err;
+        // need to update with correct status code and capacity!
+        if (err.statusCode === 503) {
+          let capacity = err.capacity || '';
+          errorMsg = `This instance has reached the limit of ${capacity} concurrent runs. Please try running preview again in a few minutes.`
+        } else if (typeof errorMsg !== 'string') {
+          errorMsg = JSON.stringify(errorMsg);
+        }
+
         this.myAlertOnValium.show({
           type: 'danger',
-          content: err.data
+          content: errorMsg
         });
       });
   }
