@@ -249,6 +249,7 @@ export default class AddToHydratorModal extends Component {
         isOpen={true}
         toggle={this.props.toggle}
         size="lg"
+        zIndex={1061}
         className="add-to-pipeline-dataprep-modal cdap-modal"
       >
         <ModalHeader>
