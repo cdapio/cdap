@@ -16,6 +16,7 @@
 
 const request = require('request');
 const { ApolloError } = require('apollo-server');
+const GENERIC_ERROR_ORIGIN = 'generic';
 
 function getGETRequestOptions() {
   return {
@@ -38,7 +39,7 @@ function requestPromiseWrapper(options, token, bodyModifiersFn) {
     };
   }
   // If there is no affinity specified, we default it to being a generic error.
-  const { errorOrigin = 'generic' } = options;
+  const { errorOrigin = GENERIC_ERROR_ORIGIN } = options;
   return new Promise((resolve, reject) => {
     request(options, (err, response, body) => {
       if (err) {

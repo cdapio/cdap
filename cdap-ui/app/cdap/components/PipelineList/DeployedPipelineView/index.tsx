@@ -35,9 +35,12 @@ import If from 'components/If';
 
 import './DeployedPipelineView.scss';
 import { objectQuery } from 'services/helpers';
+import T from 'i18n-react';
 
-// For errors of this type coming from graphQl, we show a 500 error instead of a banner.
+// For errors of these types coming from graphQl for pipeline list page, we show a 500 error instead of a banner.
 const HIGH_PRIORITY_ERRORS = new Set(['pipelinesList']);
+const GENERIC_ERROR_ORIGIN = 'generic';
+const I18N_PREFIX = 'features.PipelineList.DeployedPipelineView';
 
 interface IErrorForDisplay {
   message: string;
@@ -107,13 +110,13 @@ const DeployedPipeline: React.FC = () => {
       errorForDisplay = {
         message: error.message.replace(prefix, '').trim(),
         stack: {},
-        errorOrigin: 'generic',
+        errorOrigin: GENERIC_ERROR_ORIGIN,
       };
     } else {
       // Categorizing errors by their origin.
       allErrors.forEach((eachError: IErrorForDisplay) => {
         if (!eachError.errorOrigin) {
-          eachError.errorOrigin = 'generic';
+          eachError.errorOrigin = GENERIC_ERROR_ORIGIN;
         }
         if (errorsByOrigin.hasOwnProperty(eachError.errorOrigin)) {
           errorsByOrigin[eachError.errorOrigin].push(eachError);
@@ -134,8 +137,9 @@ const DeployedPipeline: React.FC = () => {
         // When more than one service is down i.e different error types, consider it high priority.
         hasHighPriorityError = true;
         errorForDisplay = allErrors[0];
-        errorForDisplay.message =
-          'Multiple services ran into issues when trying to retrieve list of pipelines. Please try again later.';
+        errorForDisplay.message = T.translate(
+          `${I18N_PREFIX}.graphQLMultipleServicesDown`
+        ).toString();
       } else {
         // Pick the first error to display to the user.
         errorForDisplay = allErrors[0];
@@ -161,7 +165,7 @@ const DeployedPipeline: React.FC = () => {
               } occured.`
             : ''
         }`
-      : 'Error occured while trying to retrieve information required for list of pipelines.';
+      : T.translate(`${I18N_PREFIX}.graphQLErrorBannerMessage`).toString();
   }
   setFilteredPipelines(data.pipelines);
 
