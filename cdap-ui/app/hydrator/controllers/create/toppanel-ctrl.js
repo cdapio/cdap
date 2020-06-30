@@ -274,6 +274,15 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   // PREVIEW
+  initializeTimer() {
+    let startTime = new Date();
+    this.previewStartTime = startTime;
+    this.startTimer();
+    this.previewStore.dispatch(
+      this.previewActions.setPreviewStartTime(startTime)
+    );
+  }
+
   startTimer() {
     this.previewTimerInterval = this.$interval(() => {
       this.calculateDuration();
@@ -528,8 +537,9 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   runPreview() {
+    // Before we have submitted preview job or gotten any status
     this.previewLoading = true;
-    this.loadingLabel = 'Starting';
+    this.loadingLabel = 'Waiting';
     this.viewConfig = false;
 
     this.displayDuration = {
@@ -604,12 +614,7 @@ class HydratorPlusPlusTopPanelCtrl {
         this.previewStore.dispatch(
           this.previewActions.setPreviewId(res.application)
         );
-        let startTime = new Date();
-        this.previewStartTime = startTime;
-        this.startTimer();
-        this.previewStore.dispatch(
-          this.previewActions.setPreviewStartTime(startTime)
-        );
+        
         this.currentPreviewId = res.application;
         this.$window.localStorage.setItem('LastDraftId', this.HydratorPlusPlusConfigStore.getDraftId());
         this.$window.localStorage.setItem('LastPreviewId', this.currentPreviewId);
@@ -645,8 +650,8 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   startPollPreviewStatus(previewId) {
-    this.previewLoading = false;
-    this.previewRunning = true;
+    this.previewLoading = true;
+
     let poll = this.dataSrc.poll({
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 1000
@@ -672,9 +677,22 @@ class HydratorPlusPlusTopPanelCtrl {
         KILLED,
         KILLED_BY_TIMER,
       } = window.CaskCommon.PREVIEW_STATUS;
-      if ([RUNNING, INIT].indexOf(res.status) === -1) {
+      if (res.status === WAITING) {
+        const runsAheadInQueue = res.positionInWaitingQueue;
+        this.myAlertOnValium.show({
+          type: 'info',
+          content: `${pipelinePreviewPlaceholder} has been successfully queued. There are ${runsAheadInQueue} preview runs ahead of this pipeline.`
+        });
+      } else if (res.status === ACQUIRED) {
+        this.loadingLabel = 'Starting'; // Do we need this label change? Maybe it can just be waiting and the logic here is unnecessary
+      } else if ((res.status === INIT || res.status === RUNNING) && this.previewLoading) {
+        this.initializeTimer();
+        this.previewLoading = false;
+        this.previewRunning = true;
+      } else if ([RUNNING, INIT, WAITING, ACQUIRED].indexOf(res.status) === -1) {
         this.stopTimer();
         this.previewRunning = false;
+        this.previewLoading = false;
         this.dataSrc.stopPoll(res.__pollId__);
         let pipelinePreviewPlaceholder = 'The preview of the pipeline';
         let pipelineName = this.HydratorPlusPlusConfigStore.getName();
@@ -700,6 +718,8 @@ class HydratorPlusPlusTopPanelCtrl {
       }
     }, (err) => {
       this.stopTimer();
+      this.previewRunning = false;
+      this.previewLoading = false;
 
       let errorMsg = this.myHelpers.objectQuery(err, 'data') || this.myHelpers.objectQuery(err, 'response') || err;
       if (typeof errorMsg !== 'string') {
@@ -710,7 +730,6 @@ class HydratorPlusPlusTopPanelCtrl {
         type: 'danger',
         content: 'Pipeline preview failed : ' + errorMsg,
       });
-      this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);
     });
   }
