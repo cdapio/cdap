@@ -59,6 +59,7 @@ $toppanel-border-bottom-color: $grey-05;
         color: $grey-01;
         overflow: hidden;
         text-overflow: ellipsis;
+        white-space: nowrap;
 
         /* to leave some space for the pipeline type icon and pipeline version */
         max-width: calc(100% - 180px);
