@@ -28,6 +28,7 @@ import io.cdap.cdap.api.dataset.table.Scanner;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.data2.dataset2.lib.table.MDSKey;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableCore;
@@ -220,7 +221,7 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void addToWaitingState(ApplicationId applicationId, AppRequest appRequest) {
+  public void add(ApplicationId applicationId, AppRequest appRequest) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     long timeInSeconds = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
@@ -283,20 +284,21 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable JsonObject pollerInfo) {
+  public void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo)
+    throws ConflictException {
     if (pollerInfo != null) {
       setPollerinfo(applicationId, pollerInfo);
     }
     removeFromWaitingState(applicationId);
     PreviewStatus previewStatus = getPreviewStatus(applicationId);
     if (previewStatus == null || previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
-      throw new IllegalArgumentException(String.format("Preview application with id %s does not exist in the " +
-                                                         "waiting state.", applicationId));
+      throw new ConflictException(String.format("Preview application with id %s does not exist in the " +
+                                                  "waiting state.", applicationId));
     }
     setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.ACQUIRED, null, null, null));
   }
 
-  private void setPollerinfo(ApplicationId applicationId, JsonObject pollerInfo) {
+  private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     MDSKey mdsKey = new MDSKey.Builder()
@@ -305,7 +307,7 @@ public class DefaultPreviewStore implements PreviewStore {
       .build();
 
     try {
-      table.put(mdsKey.getKey(), POLLERINFO, Bytes.toBytes(gson.toJson(pollerInfo)), 1L);
+      table.put(mdsKey.getKey(), POLLERINFO, pollerInfo, 1L);
     } catch (IOException e) {
       String msg = String.format("Error while setting the poller information %s for waiting preview application %s.",
                                  gson.toJson(pollerInfo), applicationId);

@@ -16,12 +16,12 @@
 
 package io.cdap.cdap.internal.app.preview;
 
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewRequestQueueState;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -66,7 +66,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   }
 
   @Override
-  public Optional<PreviewRequest> poll(JsonObject pollerInfo) {
+  public Optional<PreviewRequest> poll(byte[] pollerInfo) {
     while (true) {
       PreviewRequest previewRequest = requestQueue.poll();
       if (previewRequest == null) {
@@ -81,9 +81,9 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
 
       try {
         previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
-      } catch (IllegalArgumentException e) {
-        LOG.warn("Error while setting the poller info for preview request with application id {}. Ignoring the preview",
-                 previewRequest.getProgram().getParent(), e);
+      } catch (ConflictException e) {
+        LOG.debug("Preview application with id {} is not present in WAITING state. Ignoring the preview.",
+                  previewRequest.getProgram().getParent());
         continue;
       } catch (Exception e) {
         LOG.warn("Error while setting the poller info for preview request with application id {}. Trying again",
@@ -103,7 +103,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
       throw new IllegalStateException(String.format("Preview request waiting queue is full with %d requests.",
                                                     queueSize.intValue()));
     }
-    previewStore.addToWaitingState(previewRequest.getProgram().getParent(), previewRequest.getAppRequest());
+    previewStore.add(previewRequest.getProgram().getParent(), previewRequest.getAppRequest());
     requestQueue.add(previewRequest);
     queueSize.incrementAndGet();
   }
