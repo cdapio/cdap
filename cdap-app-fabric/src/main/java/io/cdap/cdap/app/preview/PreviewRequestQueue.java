@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Interface designed for holding {@link PreviewRequest}s that are in WAITING state.
@@ -30,7 +31,7 @@ public interface PreviewRequestQueue {
    * @param pollerInfo information about the poller in JSON format
    * @return {@code PreviewRequest} if such request is available in the queue
    */
-  Optional<PreviewRequest> poll(JsonObject pollerInfo);
+  Optional<PreviewRequest> poll(@Nullable JsonObject pollerInfo);
 
   /**
    * Add a preview request in the queue.

@@ -117,5 +117,5 @@ public interface PreviewStore {
    * @param pollerInfo information about the poller that is going to run the preview in JSON format
    * @throws IllegalArgumentException exception thrown when the application id is not present in a WAITING state
    */
-  void setPreviewRequestPollerInfo(ApplicationId applicationId, JsonObject pollerInfo);
+  void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable JsonObject pollerInfo);
 }
