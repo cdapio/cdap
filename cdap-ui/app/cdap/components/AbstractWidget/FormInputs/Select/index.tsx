@@ -21,17 +21,36 @@ import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import withStyles from '@material-ui/core/styles/withStyles';
-
+import { blue } from 'components/ThemeWrapper/colors';
 const CustomizedInput = withStyles(() => {
   return {
     input: {
       padding: '7px 18px 7px 12px',
       '&:focus': {
         backgroundColor: 'transparent',
+        outline: `1px solid ${blue[100]}`,
       },
     },
   };
 })(InputBase);
+
+const DenseMenuItem = withStyles(() => {
+  return {
+    root: {
+      minHeight: 'unset',
+      paddingTop: '3px',
+      paddingBottom: '3px',
+    },
+  };
+})(MenuItem);
+
+const InlineSelect = withStyles(() => {
+  return {
+    root: {
+      display: 'inline-block',
+    },
+  };
+})(Select);
 
 interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
@@ -40,9 +59,13 @@ interface ISelectOptions {
 
 interface ISelectWidgetProps {
   options: ISelectOptions[] | string[] | number[];
+  dense?: boolean;
+  inline?: boolean;
 }
 
-interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {}
+interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {
+  inputRef?: (ref: React.ReactNode) => void;
+}
 
 const CustomSelect: React.FC<ISelectProps> = ({
   value,
@@ -50,6 +73,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
   widgetProps,
   disabled,
   dataCy,
+  inputRef,
 }: ISelectProps) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const v = event.target.value;
@@ -59,12 +83,16 @@ const CustomSelect: React.FC<ISelectProps> = ({
   };
 
   const options = objectQuery(widgetProps, 'options') || objectQuery(widgetProps, 'values') || [];
+  const dense = objectQuery(widgetProps, 'dense') || false;
+  const inline = objectQuery(widgetProps, 'inline') || false;
+  const OptionItem = dense ? DenseMenuItem : MenuItem;
+  const SelectComponent = inline ? InlineSelect : Select;
   const optionValues = options.map((opt) => {
     return ['string', 'number'].indexOf(typeof opt) !== -1 ? { value: opt, label: opt } : opt;
   });
 
   return (
-    <Select
+    <SelectComponent
       fullWidth
       value={value}
       onChange={onChangeHandler}
@@ -73,13 +101,21 @@ const CustomSelect: React.FC<ISelectProps> = ({
       inputProps={{
         'data-cy': dataCy,
       }}
+      MenuProps={{
+        getContentAnchorEl: null,
+        anchorOrigin: {
+          vertical: 'bottom',
+          horizontal: 'left',
+        },
+      }}
+      inputRef={inputRef}
     >
       {optionValues.map((opt) => (
-        <MenuItem value={opt.value} key={opt.value} disabled={opt.disabled}>
+        <OptionItem value={opt.value} key={opt.value}>
           {opt.label}
-        </MenuItem>
+        </OptionItem>
       ))}
-    </Select>
+    </SelectComponent>
   );
 };
 

@@ -29,4 +29,12 @@ export default [
     screenshot: null,
     value: false,
   },
+  {
+    name: 'Schema Editor',
+    description:
+      'Demo for new SchemaEditor. Includes complete rewrite in React + perf improvements',
+    id: 'schema-editor',
+    screenshot: null,
+    value: false,
+  },
 ];

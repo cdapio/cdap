@@ -490,6 +490,16 @@ function connectWithStore(store, WrappedComponent, ...args) {
   };
 }
 
+function dumbestClone(jsonObj) {
+  let result;
+  try {
+    result = JSON.parse(JSON.stringify(jsonObj));
+  } catch (e) {
+    return jsonObj;
+  }
+  return result;
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -531,4 +541,5 @@ export {
   handlePageLevelError,
   extractErrorMessage,
   connectWithStore,
+  dumbestClone,
 };
