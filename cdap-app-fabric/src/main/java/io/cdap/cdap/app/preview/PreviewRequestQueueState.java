@@ -22,14 +22,14 @@ import com.google.common.base.Objects;
  * Class representing the state of the preview job queue.
  */
 public class PreviewRequestQueueState {
-  private long numOfPreviewWaiting;
+  private final int pendingRequests;
 
-  public PreviewRequestQueueState(long numOfPreviewWaiting) {
-    this.numOfPreviewWaiting = numOfPreviewWaiting;
+  public PreviewRequestQueueState(int pendingRequests) {
+    this.pendingRequests = pendingRequests;
   }
 
-  public long getNumOfPreviewWaiting() {
-    return numOfPreviewWaiting;
+  public int getNumOfPreviewWaiting() {
+    return pendingRequests;
   }
 
   @Override
@@ -41,11 +41,11 @@ public class PreviewRequestQueueState {
       return false;
     }
     PreviewRequestQueueState that = (PreviewRequestQueueState) o;
-    return numOfPreviewWaiting == that.numOfPreviewWaiting;
+    return pendingRequests == that.pendingRequests;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(numOfPreviewWaiting);
+    return Objects.hashCode(pendingRequests);
   }
 }
