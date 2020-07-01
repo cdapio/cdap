@@ -16,10 +16,10 @@
 package io.cdap.cdap.app.store.preview;
 
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -94,11 +94,13 @@ public interface PreviewStore {
   PreviewStatus getPreviewStatus(ApplicationId applicationId);
 
   /**
-   * Adds the preview request for given application id in waiting state.
+   * Adds the preview request for given application id in the store.
+   * {@code getPreviewStatus} call returns status as WAITING once the request
+   * is added to the store.
    * @param applicationId the application id corresponding to the request
    * @param appRequest preview request configuration
    */
-  void addToWaitingState(ApplicationId applicationId, AppRequest appRequest);
+  void add(ApplicationId applicationId, AppRequest appRequest);
 
   /**
    * @return list of all waiting requests in waiting state sorted by submit time
@@ -106,16 +108,11 @@ public interface PreviewStore {
   List<PreviewRequest> getAllInWaitingState();
 
   /**
-   *
-   * @param applicationId the application id of preview
-   * @param pollerInfo information about the poller that is going to run the preview in JSON format
-   */
-
-  /**
    * Sets the information about the poller that has acquired the waiting application for running.
    * @param applicationId applicationId the application id of preview
-   * @param pollerInfo information about the poller that is going to run the preview in JSON format
-   * @throws IllegalArgumentException exception thrown when the application id is not present in a WAITING state
+   * @param pollerInfo information about the poller that is going to run the preview
+   * @throws ConflictException exception thrown when preview application for which poller info is to be set is not
+   *                           in WAITING state
    */
-  void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable JsonObject pollerInfo);
+  void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo) throws ConflictException;
 }

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.preview;
 
-import com.google.gson.JsonObject;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.Optional;
@@ -24,14 +23,16 @@ import javax.annotation.Nullable;
 
 /**
  * Interface designed for holding {@link PreviewRequest}s that are in WAITING state.
+ * This queue provides thread safety. {@code poll} and {@code add} methods can be
+ * called by multiple threads concurrently.
  */
 public interface PreviewRequestQueue {
   /**
    * Poll the next available request in the queue.
-   * @param pollerInfo information about the poller in JSON format
+   * @param pollerInfo information about the poller
    * @return {@code PreviewRequest} if such request is available in the queue
    */
-  Optional<PreviewRequest> poll(@Nullable JsonObject pollerInfo);
+  Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
 
   /**
    * Add a preview request in the queue.
@@ -47,6 +48,8 @@ public interface PreviewRequestQueue {
 
   /**
    * Find the position of request with specified application id in the queue.
+   * When used in multi-threaded environment, return value depends on the snapshot
+   * of the queue taken when this method is called.
    * @param applicationId application id
    * @return -1 if application id does not exist
    */

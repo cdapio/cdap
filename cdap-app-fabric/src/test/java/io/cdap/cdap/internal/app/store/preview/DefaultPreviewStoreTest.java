@@ -17,10 +17,10 @@ package io.cdap.cdap.internal.app.store.preview;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Injector;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
@@ -28,6 +28,7 @@ import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.RunId;
@@ -129,15 +130,16 @@ public class DefaultPreviewStoreTest {
   }
 
   @Test
-  public void testPreviewWaitingRequests() {
-    String json = "{ \"id\": \"runner-1\"}";
-    JsonObject pollerInfo = new JsonParser().parse(json).getAsJsonObject();
+  public void testPreviewWaitingRequests() throws Exception {
+    byte[] pollerInfo = Bytes.toBytes("runner-1");
 
+    PreviewConfig previewConfig = new PreviewConfig("WordCount", ProgramType.WORKFLOW, null, null);
+    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null, previewConfig);
     Assert.assertEquals(0, store.getAllInWaitingState().size());
 
     RunId id1 = RunIds.generate();
     ApplicationId applicationId = new ApplicationId("ns1", id1.getId());
-    store.addToWaitingState(applicationId, getAppRequest());
+    store.add(applicationId, testRequest);
     List<PreviewRequest> allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(1, allWaiting.size());
 
@@ -151,9 +153,9 @@ public class DefaultPreviewStoreTest {
 
     // add 2 requests to the queue
     ApplicationId applicationId2 = new ApplicationId("ns1", RunIds.generate().getId());
-    store.addToWaitingState(applicationId2, getAppRequest());
+    store.add(applicationId2, testRequest);
     ApplicationId applicationId3 = new ApplicationId("ns1", RunIds.generate().getId());
-    store.addToWaitingState(applicationId3, getAppRequest());
+    store.add(applicationId3, testRequest);
 
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(2, allWaiting.size());
@@ -168,39 +170,5 @@ public class DefaultPreviewStoreTest {
     store.setPreviewRequestPollerInfo(applicationId3, pollerInfo);
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(0, allWaiting.size());
-  }
-
-  private AppRequest getAppRequest() {
-    String appRequestWithSchedules = "{\n" +
-      "  \"artifact\": {\n" +
-      "     \"name\": \"cdap-notifiable-workflow\",\n" +
-      "     \"version\": \"1.0.0\",\n" +
-      "     \"scope\": \"system\"\n" +
-      "  },\n" +
-      "  \"config\": {\n" +
-      "     \"plugin\": {\n" +
-      "        \"name\": \"WordCount\",\n" +
-      "        \"type\": \"sparkprogram\",\n" +
-      "        \"artifact\": {\n" +
-      "           \"name\": \"word-count-program\",\n" +
-      "           \"scope\": \"user\",\n" +
-      "           \"version\": \"1.0.0\"\n" +
-      "        }\n" +
-      "     },\n" +
-      "\n" +
-      "     \"notificationEmailSender\": \"sender@example.domain.com\",\n" +
-      "     \"notificationEmailIds\": [\"recipient@example.domain.com\"],\n" +
-      "     \"notificationEmailSubject\": \"[Critical] Workflow execution failed.\",\n" +
-      "     \"notificationEmailBody\": \"Execution of Workflow running the WordCount program failed.\"\n" +
-      "  },\n" +
-      "  \"preview\" : {\n" +
-      "    \"programName\" : \"WordCount\",\n" +
-      "    \"programType\" : \"Spark\"\n" +
-      "    },\n" +
-      "  \"principal\" : \"test2\",\n" +
-      "  \"app.deploy.update.schedules\":\"false\"\n" +
-      "}";
-
-    return GSON.fromJson(appRequestWithSchedules, AppRequest.class);
   }
 }
