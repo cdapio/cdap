@@ -21,7 +21,7 @@ import If from 'components/If';
 import SecureKeyDelete from 'components/SecureKeys/SecureKeyDelete';
 import SecureKeyEdit from 'components/SecureKeys/SecureKeyEdit';
 import SecureKeyList from 'components/SecureKeys/SecureKeyList';
-import { fromJS, List } from 'immutable';
+import { fromJS, List, Map } from 'immutable';
 import * as React from 'react';
 import { BehaviorSubject } from 'rxjs';
 import { forkJoin } from 'rxjs/observable/forkJoin';
@@ -38,11 +38,6 @@ interface ISecureKeyState {
   name: string;
   properties: Record<string, string>;
   data: string;
-}
-
-export enum SecureKeysPageMode {
-  List = 'LIST',
-  Details = 'DETAILS',
 }
 
 export enum SecureKeyStatus {
@@ -63,6 +58,7 @@ interface ISecureKeysProps extends WithStyles<typeof styles> {}
 
 const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
   const [secureKeys, setSecureKeys] = React.useState(List([]));
+  const [visibility, setVisibility] = React.useState(Map<string, boolean>({}));
 
   const [loading, setLoading] = React.useState(true);
   const [secureKeyStatus, setSecureKeyStatus] = React.useState(SecureKeyStatus.Normal);
@@ -116,6 +112,17 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
       setLoading(true);
       // Populate the table with matched secure keys
       setSecureKeys(fromJS(keys));
+      const newVisibility = {};
+      keys.forEach(({ name }) => {
+        // If the secure key alrady exists, do not override visibility.
+        // Otherwise, initialize it to 'false'
+        if (visibility.has(name)) {
+          newVisibility[name] = visibility.get(name);
+        } else {
+          newVisibility[name] = false;
+        }
+      });
+      setVisibility(Map(newVisibility));
       setLoading(false);
     });
 
@@ -157,6 +164,8 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
           setActiveKeyIndex={setActiveKeyIndex}
           setEditMode={setEditMode}
           setDeleteMode={setDeleteMode}
+          visibility={visibility}
+          setVisibility={setVisibility}
           loading={loading}
         />
       </div>

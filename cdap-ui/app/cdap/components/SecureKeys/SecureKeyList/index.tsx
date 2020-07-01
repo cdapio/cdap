@@ -27,7 +27,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { SecureKeyStatus } from 'components/SecureKeys';
 import SecureKeyCreate from 'components/SecureKeys/SecureKeyCreate';
 import SecureKeyActionButtons from 'components/SecureKeys/SecureKeyList/SecureKeyActionButtons';
-import { List } from 'immutable';
+import { List, Map } from 'immutable';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -76,6 +76,8 @@ interface ISecureKeyListProps extends WithStyles<typeof styles> {
   secureKeys: List<any>;
   setSecureKeyStatus: (status: SecureKeyStatus) => void;
   setActiveKeyIndex: (index: number) => void;
+  visibility: Map<string, boolean>;
+  setVisibility: (visibility: Map<string, boolean>) => void;
   setEditMode: (mode: boolean) => void;
   setDeleteMode: (mode: boolean) => void;
   loading: boolean;
@@ -86,6 +88,8 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
   secureKeys,
   setSecureKeyStatus,
   setActiveKeyIndex,
+  visibility,
+  setVisibility,
   setEditMode,
   setDeleteMode,
   loading,
@@ -146,12 +150,19 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
                     <TableCell className={classes.descriptionCell}>
                       {keyMetadata.get('description')}
                     </TableCell>
-                    <TableCell className={classes.dataCell}>{keyMetadata.get('data')}</TableCell>
+                    <TableCell className={classes.dataCell}>
+                      <If condition={!visibility.get(keyID)}>
+                        <input id="password" value="password" disabled type="password"></input>
+                      </If>
+                      <If condition={visibility.get(keyID)}>{keyMetadata.get('data')}</If>
+                    </TableCell>
                     <TableCell className={classes.actionButtonsCell}>
                       <SecureKeyActionButtons
                         keyIndex={keyIndex}
                         keyID={keyID}
+                        visibility={visibility}
                         setActiveKeyIndex={setActiveKeyIndex}
+                        setVisibility={setVisibility}
                         setEditMode={setEditMode}
                         setDeleteMode={setDeleteMode}
                       />

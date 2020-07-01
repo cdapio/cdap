@@ -19,8 +19,12 @@ import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import IconButton from '@material-ui/core/IconButton';
+import InputAdornment from '@material-ui/core/InputAdornment';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import TextField from '@material-ui/core/TextField';
+import Visibility from '@material-ui/icons/Visibility';
+import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import { MySecureKeyApi } from 'api/securekey';
 import classnames from 'classnames';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
@@ -159,6 +163,17 @@ const SecureKeyEditView: React.FC<ISecureKeyEditProps> = ({
             onChange={onLocalDataChange}
             InputProps={{
               className: classes.textField,
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={() => setShowData(!showData)}
+                    edge="end"
+                  >
+                    {showData ? <Visibility /> : <VisibilityOff />}
+                  </IconButton>
+                </InputAdornment>
+              ),
             }}
           />
         </div>
