@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,9 +24,9 @@ import SecureKeyEdit from 'components/SecureKeys/SecureKeyEdit';
 import SecureKeyList from 'components/SecureKeys/SecureKeyList';
 import { fromJS, List, Map } from 'immutable';
 import * as React from 'react';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { forkJoin } from 'rxjs/observable/forkJoin';
-import { flatMap, mergeMap } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, flatMap, mergeMap } from 'rxjs/operators';
 import { map } from 'rxjs/operators/map';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 
@@ -72,6 +72,7 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
   const [editMode, setEditMode] = React.useState(false);
   const [deleteMode, setDeleteMode] = React.useState(false);
   const [activeKeyIndex, setActiveKeyIndex] = React.useState(null);
+  const [searchText, setSearchText] = React.useState('');
 
   const fetchSecureKeys = () => {
     const namespace = getCurrentNamespace();
@@ -92,6 +93,15 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
     );
   };
 
+  // Observe `searchText` with `useEffect` and forward the value to `searchText$`
+  const searchTextSubject = React.useRef(new BehaviorSubject(searchText));
+  React.useEffect(() => {
+    searchTextSubject.current.next(searchText);
+  }, [searchText]);
+  const searchText$ = React.useMemo(() => searchTextSubject.current.asObservable(), [
+    searchTextSubject,
+  ]);
+
   // Observe `secureKeyStatus` with `useEffect` and forward the value to `secureKeyStatus$`
   const secureKeyStatusSubject = React.useRef(new BehaviorSubject(secureKeyStatus));
   React.useEffect(() => {
@@ -101,13 +111,28 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
     secureKeyStatusSubject,
   ]);
 
-  // When a user creates/edits/deletes secure keys,
+  // When a user filters secure keys or create/edit/delete secure keys,
   // fetch new secure keys
-  const keyResults$ = secureKeyStatus$.pipe(
-    flatMap((status: SecureKeyStatus) => {
+  const keyResults$ = Observable.combineLatest(
+    searchText$.pipe(debounceTime(500), distinctUntilChanged()),
+    secureKeyStatus$
+  ).pipe(
+    map(([searchtext, status]: [string, SecureKeyStatus]) => {
+      return {
+        searchtext,
+        status,
+      };
+    }),
+    flatMap((res) => {
+      const { searchtext, status } = res;
       return fetchSecureKeys().pipe(
         map((keys: any[]) => {
-          return keys;
+          if (!keys) {
+            return [];
+          }
+          return keys.filter(
+            (key) => key.name.includes(searchtext) || key.description.includes(searchtext)
+          );
         })
       );
     })
@@ -117,8 +142,13 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
   React.useEffect(() => {
     const subscription = keyResults$.subscribe((keys: ISecureKeyState[]) => {
       setLoading(true);
+      if (!keys) {
+        return;
+      }
+
       // Populate the table with matched secure keys
       setSecureKeys(fromJS(keys));
+
       const newVisibility = {};
       keys.forEach(({ name }) => {
         // If the secure key alrady exists, do not override visibility.
@@ -149,6 +179,10 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
     setSecureKeyStatus(SecureKeyStatus.Normal);
   };
 
+  const handleSearchTextChange = (text: string) => {
+    setSearchText(text);
+  };
+
   return (
     <div className="container">
       <Alert
@@ -173,6 +207,8 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
             visibility={visibility}
             setVisibility={setVisibility}
             setPageMode={setPageMode}
+            searchText={searchText}
+            handleSearchTextChange={handleSearchTextChange}
             setEditMode={setEditMode}
             setDeleteMode={setDeleteMode}
             loading={loading}

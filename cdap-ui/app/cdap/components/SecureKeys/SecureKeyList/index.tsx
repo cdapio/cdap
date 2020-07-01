@@ -28,6 +28,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { SecureKeysPageMode, SecureKeyStatus } from 'components/SecureKeys';
 import SecureKeyCreate from 'components/SecureKeys/SecureKeyCreate';
 import SecureKeyActionButtons from 'components/SecureKeys/SecureKeyList/SecureKeyActionButtons';
+import SecureKeySearch from 'components/SecureKeys/SecureKeySearch';
 import { List, Map } from 'immutable';
 import * as React from 'react';
 
@@ -47,6 +48,10 @@ const styles = (theme): StyleRules => {
     addSecureKeyButton: {
       gridRow: '1',
       gridColumnStart: '1',
+    },
+    secureKeySearch: {
+      gridRow: '1',
+      gridColumnStart: '7',
     },
     securityKeyRow: {
       cursor: 'pointer',
@@ -83,6 +88,8 @@ interface ISecureKeyListProps extends WithStyles<typeof styles> {
   visibility: Map<string, boolean>;
   setVisibility: (visibility: Map<string, boolean>) => void;
   setPageMode: (pageMode: SecureKeysPageMode) => void;
+  searchText: string;
+  handleSearchTextChange: (searchText: string) => void;
   setEditMode: (mode: boolean) => void;
   setDeleteMode: (mode: boolean) => void;
   loading: boolean;
@@ -96,6 +103,8 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
   visibility,
   setVisibility,
   setPageMode,
+  searchText,
+  handleSearchTextChange,
   setEditMode,
   setDeleteMode,
   loading,
@@ -123,6 +132,12 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
           >
             Add Secure Key
           </Button>
+        </div>
+        <div className={classes.secureKeySearch}>
+          <SecureKeySearch
+            searchText={searchText}
+            handleSearchTextChange={handleSearchTextChange}
+          />
         </div>
       </div>
 
