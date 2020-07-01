@@ -21,7 +21,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import { MySecureKeyApi } from 'api/securekey';
 import If from 'components/If';
-import { SecureKeyStatus } from 'components/SecureKeys';
+import { SecureKeysPageMode, SecureKeyStatus } from 'components/SecureKeys';
 import { List } from 'immutable';
 import React from 'react';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -32,6 +32,7 @@ interface ISecureKeyDeleteProps {
   secureKeys: List<any>;
   activeKeyIndex: number;
   setActiveKeyIndex: (index: number) => void;
+  setPageMode: (mode: SecureKeysPageMode) => void;
   setSecureKeyStatus: (status: SecureKeyStatus) => void;
 }
 
@@ -41,6 +42,7 @@ const SecureKeyDelete: React.FC<ISecureKeyDeleteProps> = ({
   handleClose,
   activeKeyIndex,
   setActiveKeyIndex,
+  setPageMode,
   setSecureKeyStatus,
 }) => {
   const deleteSecureKey = () => {
@@ -54,6 +56,7 @@ const SecureKeyDelete: React.FC<ISecureKeyDeleteProps> = ({
 
     MySecureKeyApi.delete(params).subscribe(() => {
       handleClose();
+      setPageMode(SecureKeysPageMode.List);
       setActiveKeyIndex(null);
       setSecureKeyStatus(SecureKeyStatus.Success);
     });

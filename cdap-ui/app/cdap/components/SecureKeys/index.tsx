@@ -19,6 +19,7 @@ import { MySecureKeyApi } from 'api/securekey';
 import Alert from 'components/Alert';
 import If from 'components/If';
 import SecureKeyDelete from 'components/SecureKeys/SecureKeyDelete';
+import SecureKeyDetails from 'components/SecureKeys/SecureKeyDetails';
 import SecureKeyEdit from 'components/SecureKeys/SecureKeyEdit';
 import SecureKeyList from 'components/SecureKeys/SecureKeyList';
 import { fromJS, List, Map } from 'immutable';
@@ -38,6 +39,11 @@ interface ISecureKeyState {
   name: string;
   properties: Record<string, string>;
   data: string;
+}
+
+export enum SecureKeysPageMode {
+  List = 'LIST',
+  Details = 'DETAILS',
 }
 
 export enum SecureKeyStatus {
@@ -62,6 +68,7 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
 
   const [loading, setLoading] = React.useState(true);
   const [secureKeyStatus, setSecureKeyStatus] = React.useState(SecureKeyStatus.Normal);
+  const [pageMode, setPageMode] = React.useState(SecureKeysPageMode.List);
   const [editMode, setEditMode] = React.useState(false);
   const [deleteMode, setDeleteMode] = React.useState(false);
   const [activeKeyIndex, setActiveKeyIndex] = React.useState(null);
@@ -94,9 +101,9 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
     secureKeyStatusSubject,
   ]);
 
-  // When a user filters secure keys or create/edit/delete secure keys,
+  // When a user creates/edits/deletes secure keys,
   // fetch new secure keys
-  const searchResults$ = secureKeyStatus$.pipe(
+  const keyResults$ = secureKeyStatus$.pipe(
     flatMap((status: SecureKeyStatus) => {
       return fetchSecureKeys().pipe(
         map((keys: any[]) => {
@@ -108,7 +115,7 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
 
   // Update the states with incoming secure keys
   React.useEffect(() => {
-    const subscription = searchResults$.subscribe((keys: ISecureKeyState[]) => {
+    const subscription = keyResults$.subscribe((keys: ISecureKeyState[]) => {
       setLoading(true);
       // Populate the table with matched secure keys
       setSecureKeys(fromJS(keys));
@@ -158,16 +165,29 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
       />
 
       <div className={classes.content}>
-        <SecureKeyList
-          secureKeys={secureKeys}
-          setSecureKeyStatus={setSecureKeyStatus}
-          setActiveKeyIndex={setActiveKeyIndex}
-          setEditMode={setEditMode}
-          setDeleteMode={setDeleteMode}
-          visibility={visibility}
-          setVisibility={setVisibility}
-          loading={loading}
-        />
+        <If condition={pageMode === SecureKeysPageMode.List}>
+          <SecureKeyList
+            secureKeys={secureKeys}
+            setSecureKeyStatus={setSecureKeyStatus}
+            setActiveKeyIndex={setActiveKeyIndex}
+            visibility={visibility}
+            setVisibility={setVisibility}
+            setPageMode={setPageMode}
+            setEditMode={setEditMode}
+            setDeleteMode={setDeleteMode}
+            loading={loading}
+          />
+        </If>
+        <If condition={pageMode === SecureKeysPageMode.Details}>
+          <SecureKeyDetails
+            activeKeyIndex={activeKeyIndex}
+            secureKeys={secureKeys}
+            setActiveKeyIndex={setActiveKeyIndex}
+            setPageMode={setPageMode}
+            setEditMode={setEditMode}
+            setDeleteMode={setDeleteMode}
+          />
+        </If>
       </div>
 
       <If condition={editMode}>
@@ -185,6 +205,7 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
           secureKeys={secureKeys}
           activeKeyIndex={activeKeyIndex}
           setActiveKeyIndex={setActiveKeyIndex}
+          setPageMode={setPageMode}
           setSecureKeyStatus={setSecureKeyStatus}
         />
       </If>

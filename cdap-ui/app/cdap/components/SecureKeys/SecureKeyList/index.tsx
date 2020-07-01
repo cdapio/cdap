@@ -15,6 +15,7 @@
  */
 
 import Button from '@material-ui/core/Button';
+import Divider from '@material-ui/core/Divider';
 import Paper from '@material-ui/core/Paper';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import Table from '@material-ui/core/Table';
@@ -24,7 +25,7 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { SecureKeyStatus } from 'components/SecureKeys';
+import { SecureKeysPageMode, SecureKeyStatus } from 'components/SecureKeys';
 import SecureKeyCreate from 'components/SecureKeys/SecureKeyCreate';
 import SecureKeyActionButtons from 'components/SecureKeys/SecureKeyList/SecureKeyActionButtons';
 import { List, Map } from 'immutable';
@@ -32,6 +33,9 @@ import * as React from 'react';
 
 const styles = (theme): StyleRules => {
   return {
+    divider: {
+      width: '100vw',
+    },
     secureKeysTitle: {
       paddingTop: theme.spacing(1),
     },
@@ -78,6 +82,7 @@ interface ISecureKeyListProps extends WithStyles<typeof styles> {
   setActiveKeyIndex: (index: number) => void;
   visibility: Map<string, boolean>;
   setVisibility: (visibility: Map<string, boolean>) => void;
+  setPageMode: (pageMode: SecureKeysPageMode) => void;
   setEditMode: (mode: boolean) => void;
   setDeleteMode: (mode: boolean) => void;
   loading: boolean;
@@ -90,6 +95,7 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
   setActiveKeyIndex,
   visibility,
   setVisibility,
+  setPageMode,
   setEditMode,
   setDeleteMode,
   loading,
@@ -98,6 +104,7 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
 
   const onSecureKeyClick = (keyIndex) => {
     return () => {
+      setPageMode(SecureKeysPageMode.Details);
       setActiveKeyIndex(keyIndex);
     };
   };
@@ -105,6 +112,7 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
   return (
     <div>
       <h1 className={classes.secureKeysTitle}>Secure keys</h1>
+      <Divider className={classes.divider} />
       <div className={classes.secureKeyManager}>
         <div className={classes.addSecureKeyButton}>
           <Button
