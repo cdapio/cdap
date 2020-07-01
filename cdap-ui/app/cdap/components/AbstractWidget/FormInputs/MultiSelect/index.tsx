@@ -17,6 +17,8 @@
 import React, { useState, useEffect } from 'react';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import Checkbox from '@material-ui/core/Checkbox';
+import ListItemText from '@material-ui/core/ListItemText';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
@@ -84,7 +86,7 @@ export default function MultiSelect({
     }
     return `${selectionLabel} ${additionalSelectionCount}`;
   }
-
+  const selectionsSet = new Set(selections);
   return (
     <Select
       multiple
@@ -98,7 +100,8 @@ export default function MultiSelect({
     >
       {options.map((opt) => (
         <MenuItem value={opt.id} key={opt.id}>
-          {opt.label}
+          <Checkbox checked={selectionsSet.has(opt.id)} color="primary" />
+          <ListItemText primary={opt.label} />
         </MenuItem>
       ))}
     </Select>
