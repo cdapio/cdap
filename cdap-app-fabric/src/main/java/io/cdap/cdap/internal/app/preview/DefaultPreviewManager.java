@@ -119,7 +119,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.secureStore = secureStore;
     this.transactionSystemClient = transactionSystemClient;
     this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
-    this.maxPreviews = cConf.getInt(Constants.Preview.PREVIEW_CACHE_SIZE, 10);
+    this.maxPreviews = cConf.getInt(Constants.Preview.CACHE_SIZE, 10);
     this.previewRunnerModuleFactory = previewRunnerModuleFactory;
   }
 
