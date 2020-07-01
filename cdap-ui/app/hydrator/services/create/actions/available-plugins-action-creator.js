@@ -127,7 +127,8 @@ class PipelineAvailablePluginsActions {
     const reqBody = plugins.map((plugin) => plugin.info);
 
     const getKeyFromPluginProps = pluginProperties => {
-      return pluginProperties[0].split('.')[1];
+      const key = this.myHelpers.objectQuery(pluginProperties, '0');
+      return key ? key.split('.')[1] : '';
     };
 
     const pluginsByKey = new Map();
