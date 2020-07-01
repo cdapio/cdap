@@ -52,6 +52,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.annotation.Nullable;
 
 /**
  * Default implementation of the {@link PreviewStore} that stores data in a level db table.
@@ -280,7 +281,20 @@ public class DefaultPreviewStore implements PreviewStore {
   }
 
   @Override
-  public void setPreviewRequestPollerInfo(ApplicationId applicationId, JsonObject pollerInfo) {
+  public void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable JsonObject pollerInfo) {
+    if (pollerInfo != null) {
+      setPollerinfo(applicationId, pollerInfo);
+    }
+    removeFromWaitingState(applicationId);
+    PreviewStatus previewStatus = getPreviewStatus(applicationId);
+    if (previewStatus == null || previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
+      throw new IllegalArgumentException(String.format("Preview application with id %s does not exist in the " +
+                                                         "waiting state.", applicationId));
+    }
+    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.ACQUIRED, null, null, null));
+  }
+
+  private void setPollerinfo(ApplicationId applicationId, JsonObject pollerInfo) {
     // PreviewStore is a singleton and we have to create gson for each operation since gson is not thread safe.
     Gson gson = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
     MDSKey mdsKey = new MDSKey.Builder()
@@ -295,14 +309,6 @@ public class DefaultPreviewStore implements PreviewStore {
                                  gson.toJson(pollerInfo), applicationId);
       throw new RuntimeException(msg, e);
     }
-
-    removeFromWaitingState(applicationId);
-    PreviewStatus previewStatus = getPreviewStatus(applicationId);
-    if (previewStatus == null || previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
-      throw new IllegalArgumentException(String.format("Preview application with id %s does not exist in the " +
-                                                         "waiting state.", applicationId));
-    }
-    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.ACQUIRED, null, null, null));
   }
 
   @VisibleForTesting

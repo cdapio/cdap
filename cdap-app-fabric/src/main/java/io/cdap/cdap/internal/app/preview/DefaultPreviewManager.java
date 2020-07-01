@@ -33,6 +33,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
+import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerModuleFactory;
 import io.cdap.cdap.common.BadRequestException;
@@ -83,7 +84,9 @@ import java.net.InetSocketAddress;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.StreamSupport;
 
 /**
@@ -96,7 +99,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final CConfiguration cConf;
   private final Configuration hConf;
   private final SConfiguration sConf;
-  private final int maxPreviews;
+  private final int maxConcurrentPreviews;
   private final DiscoveryService discoveryService;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
@@ -104,6 +107,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final Path previewDataDir;
   private final PreviewRunnerModuleFactory previewRunnerModuleFactory;
   private Injector previewInjector;
+  private final Set<Service> previewPollers;
 
   @Inject
   DefaultPreviewManager(CConfiguration cConf, Configuration hConf,
@@ -119,13 +123,20 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.secureStore = secureStore;
     this.transactionSystemClient = transactionSystemClient;
     this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
-    this.maxPreviews = cConf.getInt(Constants.Preview.CACHE_SIZE, 10);
+    this.maxConcurrentPreviews = cConf.getInt(Constants.Preview.CACHE_SIZE, 10);
     this.previewRunnerModuleFactory = previewRunnerModuleFactory;
+    this.previewPollers = new HashSet<>();
   }
 
   @Override
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
+    // Create and start the preview poller services.
+    for (int i = 0; i < maxConcurrentPreviews; i++) {
+      Service pollerService = previewInjector.getInstance(PreviewRunnerService.class);
+      pollerService.startAndWait();
+      previewPollers.add(pollerService);
+    }
     PreviewRunner runner = previewInjector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
       ((Service) runner).startAndWait();
@@ -137,6 +148,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     PreviewRunner runner = previewInjector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
       stopQuietly((Service) runner);
+    }
+
+    for (Service pollerService : previewPollers) {
+      stopQuietly(pollerService);
     }
   }
 
@@ -151,8 +166,9 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       throw new IllegalStateException("Preview service is not running. Cannot start preview for " + programId);
     }
 
-    PreviewRunner runner = previewInjector.getInstance(PreviewRunner.class);
-    runner.startPreview(previewRequest);
+    PreviewRequestQueue queue = previewInjector.getInstance(PreviewRequestQueue.class);
+    queue.add(previewRequest);
+
     return previewApp;
   }
 
