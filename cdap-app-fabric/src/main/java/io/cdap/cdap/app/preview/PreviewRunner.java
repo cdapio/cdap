@@ -25,6 +25,7 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 
 /**
  * Interface responsible for managing the lifecycle of a single preview application
@@ -33,11 +34,12 @@ import java.util.Map;
 public interface PreviewRunner {
 
   /**
-   * Start the preview of an application.
+   * Start the preview of an application. The returned {@link Future} will be completed when the preview completed.
+   *
    * @param previewRequest request representing preview
    * @throws Exception when there is error while starting preview
    */
-  void startPreview(PreviewRequest previewRequest) throws Exception;
+  Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception;
 
   /**
    * Get the status of the preview.
