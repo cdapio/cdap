@@ -88,7 +88,8 @@ import org.junit.rules.TemporaryFolder;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -107,7 +108,7 @@ public class PreviewManagerTest {
   public void init() throws Exception {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(Constants.Preview.PREVIEW_CACHE_SIZE, 2);
+    cConf.setInt(Constants.Preview.CACHE_SIZE, 2);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf, new Configuration()),
@@ -219,8 +220,8 @@ public class PreviewManagerTest {
     }
 
     @Override
-    public void startPreview(PreviewRequest previewRequest) {
-      // no-op
+    public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) {
+      return CompletableFuture.completedFuture(previewRequest);
     }
 
     @Override
@@ -231,11 +232,6 @@ public class PreviewManagerTest {
     @Override
     public void stopPreview(ApplicationId applicationId) {
       // no-op
-    }
-
-    @Override
-    public Set<String> getTracers() {
-      return null;
     }
 
     @Override
