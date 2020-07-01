@@ -45,6 +45,8 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
+import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
@@ -177,6 +179,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     bind(Scheduler.class).to(NoOpScheduler.class);
 
     bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
+    expose(PreviewRequestQueue.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
     expose(DataTracerFactory.class);
@@ -191,6 +194,9 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
     expose(PreferencesFetcher.class);
+
+    bind(PreviewRequestFetcher.class).to(DirectPreviewRequestFetcher.class);
+    expose(PreviewRequestFetcher.class);
   }
 
   /**
