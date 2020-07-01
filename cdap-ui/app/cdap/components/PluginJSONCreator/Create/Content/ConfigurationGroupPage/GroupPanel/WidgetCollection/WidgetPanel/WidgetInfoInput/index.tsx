@@ -47,7 +47,6 @@ const WidgetInfoInputView: React.FC<IWidgetInfoInputProps> = ({ classes, widgetI
 
   function onNameChange() {
     return (name) => {
-      console.log('name', name);
       setWidgetInfo(widgetInfo.setIn([widgetID, 'name'], name));
     };
   }
