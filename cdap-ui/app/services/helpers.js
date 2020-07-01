@@ -219,6 +219,14 @@ angular.module(PKG.name+'.services')
     return {errorCode, message};
   }
 
+  function extractErrorMessage(errObj) {
+    let  errorMsg = objectQuery(errObj, 'data') || objectQuery(errObj, 'response') || err;
+    if (typeof errorMsg !== 'string') {
+      errorMsg = JSON.stringify(errorMsg);
+    }
+    return errorMsg;
+  }
+
   /* ----------------------------------------------------------------------- */
   function validNamespaceResolver(stateParams) {
     const { namespace } = stateParams;
@@ -247,6 +255,7 @@ angular.module(PKG.name+'.services')
     getAbsUIUrl: $window.getAbsUIUrl,
     isNumeric: isNumeric,
     handlePageLevelError: handlePageLevelError,
+    extractErrorMessage: extractErrorMessage,
     objHasMissingValues: objHasMissingValues,
     validNamespaceResolver: validNamespaceResolver
   };
