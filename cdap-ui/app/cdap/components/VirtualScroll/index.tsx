@@ -27,6 +27,7 @@ interface IVirtualScrollProps extends WithStyles<typeof styles> {
   visibleChildCount: number;
   childHeight: number;
   childrenUnderFold: number;
+  childrenUnderFoldOnScroll?: number;
   LoadingElement?: React.ReactNode;
 }
 const styles = (): StyleRules => {
@@ -60,6 +61,7 @@ const VirtualScroll = ({
   visibleChildCount,
   childHeight,
   childrenUnderFold,
+  childrenUnderFoldOnScroll = 50,
   classes,
   LoadingElement = () => 'Loading...',
 }: IVirtualScrollProps) => {
@@ -68,29 +70,33 @@ const VirtualScroll = ({
   const totalHeight = itmCount * childHeight;
   const [list, setList] = useState<React.ReactNode>([]);
   const [promise, setPromise] = useState(null);
+  const [scrollingChildrenUnderFold, setScrollingChildrenUnderFold] = useState(childrenUnderFold);
 
-  let startNode = Math.floor(scrollTop / childHeight) - childrenUnderFold;
+  let startNode = Math.floor(scrollTop / childHeight) - scrollingChildrenUnderFold;
   startNode = Math.max(0, startNode);
 
-  const visibleNodeCount = visibleChildCount + 2 * childrenUnderFold;
+  const visibleNodeCount = visibleChildCount + 2 * scrollingChildrenUnderFold;
 
   const offsetY = startNode * childHeight;
 
-  useMemo(
-    () => {
-      const newList = renderList(visibleNodeCount, startNode);
-      if (Array.isArray(newList)) {
-        setList(newList);
+  useMemo(() => {
+    if (scrollingChildrenUnderFold === childrenUnderFold && startNode > childrenUnderFold) {
+      setScrollingChildrenUnderFold(childrenUnderFold + childrenUnderFoldOnScroll);
+    }
+    if (Array.isArray(list) && startNode + visibleNodeCount < list.length) {
+      return;
+    }
+    const newList = renderList(visibleNodeCount, startNode);
+    if (Array.isArray(newList)) {
+      setList(newList);
+    }
+    if (Array.isArray(newList) && newList.length < visibleNodeCount) {
+      const p = renderList(visibleChildCount, startNode);
+      if (p instanceof Promise && Array.isArray(list)) {
+        setPromise(p);
       }
-      if (Array.isArray(newList) && newList.length < visibleNodeCount) {
-        const p = renderList(visibleChildCount, startNode);
-        if (p instanceof Promise && Array.isArray(list)) {
-          setPromise(p);
-        }
-      }
-    },
-    [startNode, visibleNodeCount, renderList]
-  );
+    }
+  }, [startNode, visibleNodeCount, itemCount]);
 
   useEffect(
     () => {

@@ -460,6 +460,16 @@ function extractErrorMessage(errObj) {
   return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
 }
 
+function dumbestClone(jsonObj) {
+  let result;
+  try {
+    result = JSON.parse(JSON.stringify(jsonObj));
+  } catch (e) {
+    return jsonObj;
+  }
+  return result;
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -499,4 +509,5 @@ export {
   isMacro,
   removeEmptyJsonValues,
   extractErrorMessage,
+  dumbestClone,
 };

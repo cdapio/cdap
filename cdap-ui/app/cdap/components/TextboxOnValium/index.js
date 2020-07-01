@@ -96,12 +96,19 @@ export default class TextboxOnValium extends Component {
     return (
       <input
         className={this.props.className}
-        ref={(ref) => (this.textboxRef = ref)}
+        placeholder={this.props.placeholder}
+        ref={
+          this.props.inputRef
+            ? this.props.inputRef
+            : (ref) => {
+                this.textboxRef = ref;
+              }
+        }
         onBlur={this.onBlur}
         onChange={this.updateTextValue}
         value={this.state.textValue}
         onKeyPress={this.handleKeyPress}
-        onKeyUp={this.handleKeyPress}
+        onKeyUp={!this.props.onKeyUp ? this.handleKeyPress : this.props.onKeyUp}
       />
     );
   }
@@ -114,7 +121,10 @@ TextboxOnValium.defaultProps = {
 
 TextboxOnValium.propTypes = {
   onChange: PropTypes.func,
+  placeholder: PropTypes.string,
+  inputRef: PropTypes.func,
   value: PropTypes.string,
+  onKeyUp: PropTypes.func,
   onWarning: PropTypes.func,
   className: PropTypes.string,
   allowSpace: PropTypes.bool,

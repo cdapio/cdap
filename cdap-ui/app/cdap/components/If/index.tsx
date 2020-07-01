@@ -14,15 +14,35 @@
  * the License.
 */
 import * as React from 'react';
+import Box from '@material-ui/core/Box';
+import withStyles from '@material-ui/core/styles/withStyles';
+import { StyleRules } from '@material-ui/core/styles';
 
 interface IIfComponentProps {
   condition: boolean;
   children: React.ReactElement<any>;
+  invisible?: boolean;
+  HiddenContainer?: React.ReactNode;
 }
 
-const If: React.SFC<IIfComponentProps> = ({ condition, children }) => {
+const If: React.FC<IIfComponentProps> = ({
+  condition,
+  children,
+  invisible = false,
+  HiddenContainer,
+}) => {
   if (!condition) {
-    return null;
+    if (!invisible) {
+      return null;
+    }
+    const InvisibleBox = withStyles((): StyleRules => {
+      return {
+        root: {
+          visibility: 'hidden',
+        },
+      };
+    })(!HiddenContainer ? Box : (HiddenContainer as React.ComponentType<any>));
+    return <InvisibleBox>{children}</InvisibleBox>;
   }
 
   return children;
