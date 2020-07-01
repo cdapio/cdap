@@ -64,7 +64,8 @@ public final class LevelDBTableFactory implements TableFactory {
   private final String payloadTableName;
   private final ConcurrentMap<File, DB> levelDBs;
 
-  private LevelDBMetadataTable metadataTable;
+  private volatile LevelDBMetadataTable metadataTable;
+  private volatile boolean closed;
 
   @VisibleForTesting
   @Inject
@@ -89,6 +90,10 @@ public final class LevelDBTableFactory implements TableFactory {
 
   @Override
   public synchronized MetadataTable createMetadataTable() throws IOException {
+    if (closed) {
+      throw new IOException("The LevelDBTableFactory is already closed");
+    }
+
     if (metadataTable != null) {
       return metadataTable;
     }
@@ -113,6 +118,7 @@ public final class LevelDBTableFactory implements TableFactory {
   public void close() {
     LevelDBMetadataTable metadataTable;
     synchronized (this) {
+      closed = true;
       metadataTable = this.metadataTable;
       this.metadataTable = null;
     }
@@ -136,6 +142,9 @@ public final class LevelDBTableFactory implements TableFactory {
     }
 
     synchronized (this) {
+      if (closed) {
+        throw new IOException("The LevelDBTableFactory is already closed");
+      }
       // Check again to make sure no new instance was being created while this thread is acquiring the lock
       db = levelDBs.get(dbPath);
       if (db != null) {
@@ -171,8 +180,12 @@ public final class LevelDBTableFactory implements TableFactory {
 
     @Override
     public void run() {
-      if (metadataTable == null) {
-        return;
+      LevelDBMetadataTable metadataTable;
+      synchronized (LevelDBTableFactory.this) {
+        if (closed) {
+          return;
+        }
+        metadataTable = LevelDBTableFactory.this.metadataTable;
       }
 
       long now = System.currentTimeMillis();
