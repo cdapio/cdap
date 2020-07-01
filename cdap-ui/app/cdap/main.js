@@ -66,6 +66,7 @@ import If from 'components/If';
 import Page500 from 'components/500';
 import LoadingSVG from 'components/LoadingSVG';
 import { handlePageLevelError } from 'services/helpers';
+import ToggleExperiment from 'components/Lab/ToggleExperiment';
 
 const cookie = new Cookies();
 
@@ -202,7 +203,6 @@ class CDAP extends Component {
     });
     if (!VersionStore.getState().version) {
       MyCDAPVersionApi.get().subscribe((res) => {
-        this.setState({ version: res.version });
         VersionStore.dispatch({
           type: VersionActions.updateVersion,
           payload: {

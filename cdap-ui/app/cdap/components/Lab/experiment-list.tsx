@@ -29,4 +29,12 @@ export default [
     screenshot: '/cdap_assets/img/ingest-tile.svg',
     value: false,
   },
+  {
+    name: 'Schema Editor',
+    description:
+      'Demo for new SchemaEditor. Includes complete rewrite in React + perf improvements',
+    id: 'schema-editor',
+    screenshot: null,
+    value: false,
+  },
 ];

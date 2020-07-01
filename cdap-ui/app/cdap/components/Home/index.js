@@ -25,7 +25,6 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
 import ToggleExperiment from 'components/Lab/ToggleExperiment';
-
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 require('./Home.scss');
@@ -185,6 +184,26 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/replication" component={Replicator} />
+          <Route
+            exact
+            path="/ns/:namespace/vs"
+            render={(props) => {
+              const VirtualScrollDemo = Loadable({
+                loader: () =>
+                  import(
+                    /* webpackChunkName: "VirtualScrollDemo" */ 'components/VirtualScroll/demo'
+                  ),
+                loading: LoadingSVGCentered,
+              });
+              return (
+                <ToggleExperiment
+                  name="virtual-scroll-demo"
+                  defaultComponent={<Page404 {...props} />}
+                  experimentalComponent={<VirtualScrollDemo />}
+                />
+              );
+            }}
+          />
           <Route
             exact
             path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"
