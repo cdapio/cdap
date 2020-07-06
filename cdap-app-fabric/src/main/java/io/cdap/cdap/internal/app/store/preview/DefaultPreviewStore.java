@@ -295,7 +295,7 @@ public class DefaultPreviewStore implements PreviewStore {
       throw new ConflictException(String.format("Preview application with id %s does not exist in the " +
                                                   "waiting state.", applicationId));
     }
-    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.ACQUIRED, null, null, null));
+    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, null, null, null));
   }
 
   private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {
