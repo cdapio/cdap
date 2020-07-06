@@ -23,6 +23,8 @@ const HttpExecutorActions = {
   setRequestTab: 'HTTP_SET_REQUEST_TAB',
   setHeaders: 'HTTP_SET_REQUEST_HEADERS',
   reset: 'HTTP_RESET',
+  setRequestHistoryView: 'HTTP_SET_REQUEST_HISTORY_VIEW',
+  notifyIncomingRequestHistory: 'HTTP_NOTIFY_INCOMING_REQUEST_HISTORY',
 };
 
 export default HttpExecutorActions;

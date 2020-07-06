@@ -14,8 +14,8 @@
  * the License.
  */
 
-import { combineReducers, createStore } from 'redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
+import { combineReducers, createStore } from 'redux';
 import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
@@ -40,6 +40,7 @@ const defaultInitialState = {
   statusCode: 0,
   loading: false,
   activeTab: 0,
+  requestHistoryIsIncoming: false,
 };
 
 const http = (state = defaultInitialState, action = defaultAction) => {
@@ -84,6 +85,23 @@ const http = (state = defaultInitialState, action = defaultAction) => {
       };
     case HttpExecutorActions.reset:
       return defaultInitialState;
+    case HttpExecutorActions.setRequestHistoryView:
+      return {
+        ...state,
+        method: action.payload.method,
+        activeTab: ['GET', 'DELETE'].indexOf(action.payload.method) !== -1 ? 0 : 1,
+        path: action.payload.path,
+        response: action.payload.response,
+        statusCode: action.payload.statusCode,
+        body: action.payload.body,
+        activeTab: action.payload.activeTab,
+        headers: action.payload.headers,
+      };
+    case HttpExecutorActions.notifyIncomingRequestHistory:
+      return {
+        ...state,
+        requestHistoryIsIncoming: true,
+      };
     default:
       return state;
   }

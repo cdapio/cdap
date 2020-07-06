@@ -14,9 +14,9 @@
  * the License.
  */
 
+import { MyBlankPathApi } from 'api/blankpath';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
-import { MyBlankPathApi } from 'api/blankpath';
 
 export function execute() {
   let state = HttpExecutorStore.getState().http;
@@ -70,6 +70,10 @@ export function execute() {
           statusCode: 200,
         },
       });
+
+      HttpExecutorStore.dispatch({
+        type: HttpExecutorActions.notifyIncomingRequestHistory,
+      });
     },
     (err) => {
       HttpExecutorStore.dispatch({
@@ -78,6 +82,10 @@ export function execute() {
           response: err.data || err.response,
           statusCode: err.statusCode,
         },
+      });
+
+      HttpExecutorStore.dispatch({
+        type: HttpExecutorActions.notifyIncomingRequestHistory,
       });
     }
   );
