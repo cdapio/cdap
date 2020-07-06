@@ -640,6 +640,7 @@ public final class Constants {
     public static final String TWILL_INSTANCE_ID = "metrics.twill.instance.id";
 
     public static final String METRICS_WRITER_EXTENSIONS_DIR = "metrics.writer.extensions.dir";
+    public static final String METRICS_WRITER_PREFIX = "metrics.writer.";
 
     public static final Map<String, String> METRICS_PROCESSOR_CONTEXT =
       ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace(),
