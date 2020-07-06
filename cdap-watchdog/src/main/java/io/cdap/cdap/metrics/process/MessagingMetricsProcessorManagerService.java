@@ -25,6 +25,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.metrics.MetricsWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Metrics;
 import io.cdap.cdap.internal.io.DatumReaderFactory;
 import io.cdap.cdap.internal.io.SchemaGenerator;
 import io.cdap.cdap.messaging.MessagingService;
@@ -101,13 +102,17 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
   @Override
   protected void startUp() throws Exception {
     MetricStoreMetricsWriter metricsWriter = new MetricStoreMetricsWriter(metricStore);
-    metricsWriter.initialize(metricsContext);
+    DefaultMetricsWriterContext context = new DefaultMetricsWriterContext(metricsContext,
+      cConf, metricsWriter.getID());
+    metricsWriter.initialize(context);
     this.metricsWriters.add(metricsWriter);
 
     for (Map.Entry<String, MetricsWriter> metricsWriterEntry : metricsWriterProvider.loadMetricsWriters().entrySet()) {
       MetricsWriter writer = metricsWriterEntry.getValue();
       this.metricsWriters.add(writer);
-      writer.initialize(metricsContext);
+      DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
+        cConf, metricsWriter.getID());
+      writer.initialize(metricsWriterContext);
     }
 
     for (MetricsWriter metricsExtension : this.metricsWriters) {

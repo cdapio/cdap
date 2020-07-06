@@ -35,9 +35,9 @@ public interface MetricsWriter extends Closeable {
   /**
    * Init method to setup configurations for this MetricsWriter
    *
-   * @param metricsContext metricsContext to be used for the MetricsWriter
+   * @param metricsWriterContext metricsWriterContext to be used for the MetricsWriter
    */
-  void initialize(MetricsContext metricsContext);
+  void initialize(MetricsWriterContext metricsWriterContext);
 
   /**
    * Getter for the unique ID of this MetricsWriter
