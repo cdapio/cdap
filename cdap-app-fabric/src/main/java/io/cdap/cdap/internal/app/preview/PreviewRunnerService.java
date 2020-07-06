@@ -25,11 +25,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -93,14 +95,14 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
         }
 
         runs++;
-        Future<PreviewRequest> future = previewRunner.startPreview(request);
+        Map.Entry<Future<PreviewRequest>, ProgramRunId> futureProgramRunIdEntry = previewRunner.startPreview(request);
 
         // If the cancelPreview was not null, this means the triggerShutdown was called while the
         // startPreview was call. If that's the case, stop the preview.
-        if (cancelPreview.compareAndSet(null, () -> stopPreview(request))) {
-          waitForCompletion(request, future);
+        if (cancelPreview.compareAndSet(null, () -> stopPreview(futureProgramRunIdEntry.getValue()))) {
+          waitForCompletion(request, futureProgramRunIdEntry.getKey());
         } else {
-          stopPreview(request);
+          stopPreview(futureProgramRunIdEntry.getValue());
           terminated = true;
         }
       } catch (Exception e) {
@@ -120,11 +122,11 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     return Retries.callWithRetries(requestFetcher::fetch, retryStrategy).orElse(null);
   }
 
-  private void stopPreview(PreviewRequest request) {
+  private void stopPreview(ProgramRunId programRunId) {
     try {
-      previewRunner.stopPreview(request.getProgram().getParent());
+      previewRunner.stopPreview(programRunId);
     } catch (Exception e) {
-      LOG.error("Failed to stop preview for {}", request.getProgram());
+      LOG.error("Failed to stop preview for {}", programRunId);
     }
   }
 
