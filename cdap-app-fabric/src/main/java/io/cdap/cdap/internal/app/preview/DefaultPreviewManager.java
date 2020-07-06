@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.preview;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
+import com.google.gson.JsonElement;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
@@ -34,7 +35,10 @@ import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewRunnerModuleFactory;
+import io.cdap.cdap.app.preview.PreviewStatus;
+import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -58,12 +62,14 @@ import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
 import org.apache.hadoop.conf.Configuration;
@@ -81,6 +87,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.StreamSupport;
@@ -169,8 +176,39 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public PreviewRunner getRunner() {
-    return previewInjector.getInstance(PreviewRunner.class);
+  public PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException {
+    PreviewStore store = previewInjector.getInstance(PreviewStore.class);
+    PreviewStatus status = store.getPreviewStatus(applicationId);
+    if (status == null) {
+      throw new NotFoundException(applicationId);
+    }
+    return status;
+  }
+
+  @Override
+  public void stopPreview(ApplicationId applicationId) throws Exception {
+
+  }
+
+  @Override
+  public Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) {
+    PreviewStore store = previewInjector.getInstance(PreviewStore.class);
+    return store.get(applicationId, tracerName);
+  }
+
+  @Override
+  public ProgramRunId getRunRecord(ApplicationId applicationId) throws Exception {
+    PreviewStore store = previewInjector.getInstance(PreviewStore.class);
+    ProgramRunId programRunId = store.getProgramRunId(applicationId);
+    if (programRunId == null) {
+      throw new NotFoundException(applicationId);
+    }
+    return programRunId;
+  }
+
+  @Override
+  public MetricsQueryHelper getMetricsQueryHelper() {
+    return previewInjector.getInstance(MetricsQueryHelper.class);
   }
 
   @Override
