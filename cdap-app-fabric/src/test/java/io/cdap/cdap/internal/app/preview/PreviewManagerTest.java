@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.util.concurrent.Service;
-import com.google.gson.JsonElement;
 import com.google.inject.AbstractModule;
 import com.google.inject.Binder;
 import com.google.inject.Guice;
@@ -53,7 +52,6 @@ import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
-import io.cdap.cdap.internal.app.store.RunRecordMeta;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
@@ -61,12 +59,11 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
-import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
@@ -84,7 +81,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.util.List;
+import java.util.AbstractMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -215,33 +212,15 @@ public class PreviewManagerTest {
     }
 
     @Override
-    public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) {
-      return CompletableFuture.completedFuture(previewRequest);
+    public Map.Entry<Future<PreviewRequest>, ProgramRunId> startPreview(PreviewRequest previewRequest) {
+      return new AbstractMap.SimpleEntry<>(CompletableFuture.completedFuture(previewRequest),
+                                           new ProgramRunId("test1", "app1", ProgramType.MAPREDUCE, "program1",
+                                                            "runid1"));
     }
 
     @Override
-    public PreviewStatus getStatus(ApplicationId applicationId) {
-      return PREVIEW_STATUS.get();
-    }
-
-    @Override
-    public void stopPreview(ApplicationId applicationId) {
+    public void stopPreview(ProgramRunId programRunId) {
       // no-op
-    }
-
-    @Override
-    public Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) {
-      return null;
-    }
-
-    @Override
-    public RunRecordMeta getRunRecord(ApplicationId applicationId) {
-      return null;
-    }
-
-    @Override
-    public MetricsQueryHelper getMetricsQueryHelper() {
-      return null;
     }
   }
 }

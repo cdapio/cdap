@@ -150,6 +150,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(PreviewRunner.class);
 
     bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
+    expose(PreviewStore.class);
     bind(Scheduler.class).to(NoOpScheduler.class);
 
     bind(PreviewRequestQueue.class).to(DefaultPreviewRequestQueue.class).in(Scopes.SINGLETON);
