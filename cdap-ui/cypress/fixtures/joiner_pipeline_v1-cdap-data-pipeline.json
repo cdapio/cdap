@@ -1,0 +1,162 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "[6.1.1, 6.3.0-SNAPSHOT]",
+        "scope": "SYSTEM",
+        "label": "Data Pipeline - Batch"
+    },
+    "description": "",
+    "name": "joiner_pipeline",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "File",
+                "to": "Joiner"
+            },
+            {
+                "from": "Joiner",
+                "to": "Avro Time Partitioned Dataset"
+            },
+            {
+                "from": "File2",
+                "to": "Joiner"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": true,
+        "stages": [
+            {
+                "name": "File",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsource",
+                    "label": "File",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "format": "text",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "ignoreNonExistingFolders": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "referenceName": "File1",
+                        "path": "/tmp/cdap-ui-integration-fixtures/purchase_bad.csv"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ]
+            },
+            {
+                "name": "Joiner",
+                "plugin": {
+                    "name": "Joiner",
+                    "type": "batchjoiner",
+                    "label": "Joiner",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset1\",\"type\":[\"long\",\"null\"]},{\"name\":\"body1\",\"type\":[\"string\",\"null\"]},{\"name\":\"offset\",\"type\":[\"long\",\"null\"]},{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}",
+                        "joinKeys": "File.offset = File2.offset",
+                        "selectedFields": "File.offset as offset1,File.body as body1,File2.offset as offset,File2.body as body"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset1\",\"type\":[\"long\",\"null\"]},{\"name\":\"body1\",\"type\":[\"string\",\"null\"]},{\"name\":\"offset\",\"type\":[\"long\",\"null\"]},{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "File",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    },
+                    {
+                        "name": "File2",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ]
+            },
+            {
+                "name": "Avro Time Partitioned Dataset",
+                "plugin": {
+                    "name": "TPFSAvro",
+                    "type": "batchsink",
+                    "label": "Avro Time Partitioned Dataset",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "compressionCodec": "None",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset1\",\"type\":[\"long\",\"null\"]},{\"name\":\"body1\",\"type\":[\"string\",\"null\"]},{\"name\":\"offset\",\"type\":[\"long\",\"null\"]},{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}",
+                        "name": "Avro_sink"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset1\",\"type\":[\"long\",\"null\"]},{\"name\":\"body1\",\"type\":[\"string\",\"null\"]},{\"name\":\"offset\",\"type\":[\"long\",\"null\"]},{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}",
+                "inputSchema": [
+                    {
+                        "name": "Joiner",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset1\",\"type\":[\"long\",\"null\"]},{\"name\":\"body1\",\"type\":[\"string\",\"null\"]},{\"name\":\"offset\",\"type\":[\"long\",\"null\"]},{\"name\":\"body\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ]
+            },
+            {
+                "name": "File2",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsource",
+                    "label": "File2",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "format": "text",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "ignoreNonExistingFolders": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}",
+                        "referenceName": "File1",
+                        "path": "/tmp/cdap-ui-integration-fixtures/purchase_bad.csv"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ]
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "mapreduce",
+        "numOfRecordsPreview": 100,
+        "maxConcurrentRuns": 1
+    }
+}

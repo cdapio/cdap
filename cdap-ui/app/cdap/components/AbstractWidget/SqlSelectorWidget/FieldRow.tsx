@@ -120,6 +120,7 @@ const FieldRow: React.FC<IFieldRowProps> = ({
                 value={field.selected}
                 color="primary"
                 onClick={selectedChange}
+                data-cy={`${field.name}-field-selector-checkbox`}
               />
             </span>
             <TextField
