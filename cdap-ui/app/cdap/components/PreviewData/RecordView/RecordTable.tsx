@@ -19,14 +19,38 @@ import VirtualScroll from 'components/VirtualScroll';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
-import { styles } from 'components/PreviewData/DataView/Table';
+import { styles as tableStyles } from 'components/PreviewData/DataView/Table';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import Heading, { HeadingTypes } from 'components/Heading';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
+
+// Info about rows in record table
+// Max number of visible rows
+const visibleChildCount = 25;
+// Height of row in px
+const childHeight = 40;
+// number of rows in dom but not in viewport
+const childrenUnderFold = 10;
+
+const styles = (theme): StyleRules => ({
+  ...tableStyles(theme),
+  recordCell: {
+    width: '50%',
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+      fontWeight: 500,
+    },
+  },
+  recordContainer: {
+    width: '100%',
+    padding: '10px',
+    marginTop: 'unset',
+  },
+});
 
 interface IRecordTableProps extends WithStyles<typeof styles> {
   headers?: string[];
@@ -99,6 +123,7 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
               item
               className={classnames(classes.cell, classes.recordCell)}
               title={processedFieldName}
+              data-cy={`fieldname-${processedFieldName}`}
             >
               {processedFieldName}
             </Grid>
@@ -106,6 +131,7 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
               item
               className={classnames(classes.cell, classes.recordCell)}
               title={processedValue}
+              data-cy={`value-${processedValue}`}
             >
               {processedValue}
             </Grid>
@@ -131,10 +157,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
             alignItems="center"
             className={classes.headerRow}
           >
-            <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
+            <Grid item className={classnames(classes.cell, classes.recordCell)}>
               {T.translate(`${I18N_PREFIX}.fieldName`)}
             </Grid>
-            <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
+            <Grid item className={classnames(classes.cell, classes.recordCell)}>
               {T.translate(`${I18N_PREFIX}.value`)}
             </Grid>
           </Grid>
@@ -142,10 +168,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
         <Grid item>
           <VirtualScroll
             itemCount={() => headers.length}
-            visibleChildCount={25}
-            childHeight={40}
+            visibleChildCount={visibleChildCount}
+            childHeight={childHeight}
             renderList={renderList}
-            childrenUnderFold={10}
+            childrenUnderFold={childrenUnderFold}
           />
         </Grid>
       </Grid>
