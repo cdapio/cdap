@@ -20,7 +20,6 @@ import { INode, fetchPreview, IRecords, IPreviewData } from 'components/PreviewD
 import If from 'components/If';
 import isEmpty from 'lodash/isEmpty';
 import Heading, { HeadingTypes } from 'components/Heading';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { messageTextStyle } from 'components/PreviewData/DataView/Table';
 import PreviewTableContainer from 'components/PreviewData/DataView/TableContainer';
 import RecordContainer from 'components/PreviewData/RecordView/RecordContainer';
@@ -40,7 +39,10 @@ const styles = (): StyleRules => {
   return {
     messageText: messageTextStyle,
     headingContainer: {
-      paddingLeft: '10px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      paddingTop: '50px',
     },
     recordToggle: {
       position: 'absolute',
