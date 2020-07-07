@@ -49,7 +49,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   private final AtomicInteger queueSize;
 
   @Inject
-  DefaultPreviewRequestQueue(CConfiguration cConf, PreviewStore previewStore) {
+  public DefaultPreviewRequestQueue(CConfiguration cConf, PreviewStore previewStore) {
     this.previewStore = previewStore;
     this.capacity = cConf.getInt(Constants.Preview.WAITING_QUEUE_CAPACITY, 50);
     this.waitTimeOut = cConf.getLong(Constants.Preview.WAITING_QUEUE_TIMEOUT_SECONDS, 60);

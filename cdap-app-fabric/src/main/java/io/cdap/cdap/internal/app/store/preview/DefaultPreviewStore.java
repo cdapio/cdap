@@ -86,7 +86,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private final LevelDBTableService service;
 
   @Inject
-  DefaultPreviewStore(LevelDBTableService service) {
+  public DefaultPreviewStore(LevelDBTableService service) {
     try {
       this.service = service;
       service.ensureTableExists(PREVIEW_TABLE_ID.getDataset());
