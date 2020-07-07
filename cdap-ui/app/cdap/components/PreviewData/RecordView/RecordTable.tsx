@@ -28,6 +28,14 @@ import Heading, { HeadingTypes } from 'components/Heading';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
 
+// Info about rows in record table
+// Max number of visible rows
+const visibleChildCount = 25;
+// Height of row in px
+const childHeight = 40;
+// number of rows in dom but not in viewport
+const childrenUnderFold = 10;
+
 interface IRecordTableProps extends WithStyles<typeof styles> {
   headers?: string[];
   record?: any;
@@ -142,10 +150,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
         <Grid item>
           <VirtualScroll
             itemCount={() => headers.length}
-            visibleChildCount={25}
-            childHeight={40}
+            visibleChildCount={visibleChildCount}
+            childHeight={childHeight}
             renderList={renderList}
-            childrenUnderFold={10}
+            childrenUnderFold={childrenUnderFold}
           />
         </Grid>
       </Grid>

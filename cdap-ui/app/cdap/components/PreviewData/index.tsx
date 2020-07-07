@@ -30,8 +30,11 @@ import T from 'i18n-react';
 import { extractErrorMessage } from 'services/helpers';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import classnames from 'classnames';
+import LoadingSVG from 'components/LoadingSVG';
 
 const I18N_PREFIX = 'features.PreviewData';
+// If number of schema fields > maxSchemaSize, show Record view by default
+const maxSchemaSize = 100;
 
 const styles = (): StyleRules => {
   return {
@@ -54,6 +57,11 @@ interface IPreviewDataViewProps extends WithStyles<typeof styles> {
   previewStatus: string;
 }
 
+enum PreviewMode {
+  Record = 'Record',
+  Table = 'Table',
+}
+
 export interface ITableData {
   inputs?: Array<[string, IRecords]>;
   outputs?: Array<[string, IRecords]>;
@@ -74,11 +82,11 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
   const [previewData, setPreviewData] = useState<IPreviewData>({});
   const [tableData, setTableData] = useState<ITableData>({});
   const [error, setError] = useState(null);
-  const [viewMode, setViewMode] = useState('Table');
+  const [viewMode, setViewMode] = useState(PreviewMode.Table);
 
   const widgetProps = {
-    on: { value: 'Record', label: 'Record' },
-    off: { value: 'Table', label: 'Table' },
+    on: { value: PreviewMode.Record, label: PreviewMode.Record },
+    off: { value: PreviewMode.Table, label: PreviewMode.Table },
   };
 
   const updatePreviewCb = (updatedPreview: IPreviewData) => {
@@ -86,7 +94,9 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     const parsedData = getTableData(updatedPreview);
     setTableData(parsedData);
     setViewMode(
-      parsedData.inputFieldCount > 100 || parsedData.outputFieldCount > 100 ? 'Record' : 'Table'
+      parsedData.inputFieldCount > maxSchemaSize || parsedData.outputFieldCount > maxSchemaSize
+        ? PreviewMode.Record
+        : PreviewMode.Table
     );
   };
 
@@ -138,7 +148,7 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
         label={T.translate(`${I18N_PREFIX}.loading`)}
         className={cls.messageText}
       />
-      <LoadingSVGCentered />
+      <LoadingSVG />
     </div>
   );
 
@@ -169,7 +179,11 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
       <If condition={previewLoading}>{loadingMsg(classes)}</If>
       <If condition={error}>{errorMsg(classes)}</If>
 
-      <If condition={!previewLoading && previewId && !isEmpty(previewData) && viewMode === 'Table'}>
+      <If
+        condition={
+          !previewLoading && previewId && !isEmpty(previewData) && viewMode === PreviewMode.Table
+        }
+      >
         <span className={classes.recordToggle}>
           <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
         </span>
@@ -180,7 +194,9 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
         />
       </If>
       <If
-        condition={!previewLoading && previewId && !isEmpty(previewData) && viewMode === 'Record'}
+        condition={
+          !previewLoading && previewId && !isEmpty(previewData) && viewMode === PreviewMode.Record
+        }
       >
         <span className={classes.recordToggle}>
           <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
