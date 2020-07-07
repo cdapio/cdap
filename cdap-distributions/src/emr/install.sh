@@ -24,9 +24,9 @@ CDAP_BRANCH=${CDAP_BRANCH:-release/6.1}
 # Optional tag to checkout - All released versions of this script should set this
 # like this: CDAP_TAG=${CDAP_TAG:+tag} as this allows setting tag to empty/null
 # otherwise, it should be CDAP_TAG=''. This should be the next version to released from this branch.
-CDAP_TAG=${CDAP_TAG:+v6.1.3}
+CDAP_TAG=${CDAP_TAG:+v6.1.4}
 # The CDAP package version passed to Chef. This should be next version to be released from this branch.
-CDAP_VERSION=${CDAP_VERSION:-6.1.3-1}
+CDAP_VERSION=${CDAP_VERSION:-6.1.4-1}
 # The version of Chef to install
 CHEF_VERSION=${CHEF_VERSION:-13.8.5}
 # cdap-site.xml configuration parameters
