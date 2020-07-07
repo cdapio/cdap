@@ -24,9 +24,9 @@ import SecureKeyEdit from 'components/SecureKeys/SecureKeyEdit';
 import SecureKeyList from 'components/SecureKeys/SecureKeyList';
 import { fromJS, List, Map } from 'immutable';
 import * as React from 'react';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
 import { forkJoin } from 'rxjs/observable/forkJoin';
-import { debounceTime, distinctUntilChanged, flatMap, mergeMap } from 'rxjs/operators';
+import { distinctUntilChanged, flatMap, mergeMap } from 'rxjs/operators';
 import { map } from 'rxjs/operators/map';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 
@@ -74,24 +74,7 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
   const [activeKeyIndex, setActiveKeyIndex] = React.useState(null);
   const [searchText, setSearchText] = React.useState('');
 
-  const fetchSecureKeys = () => {
-    const namespace = getCurrentNamespace();
-
-    return MySecureKeyApi.list({ namespace }).pipe(
-      mergeMap((keys: ISecureKeyState[]) => {
-        return forkJoin(
-          keys.map((k) =>
-            MySecureKeyApi.getSecureData({ namespace, key: k.name }).pipe(
-              map((data: string) => {
-                k.data = data;
-                return k;
-              })
-            )
-          )
-        );
-      })
-    );
-  };
+  const namespace = getCurrentNamespace();
 
   // Observe `searchText` with `useEffect` and forward the value to `searchText$`
   const searchTextSubject = React.useRef(new BehaviorSubject(searchText));
@@ -111,36 +94,51 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
     secureKeyStatusSubject,
   ]);
 
-  // When a user filters secure keys or create/edit/delete secure keys,
-  // fetch new secure keys
-  const keyResults$ = Observable.combineLatest(
-    searchText$.pipe(debounceTime(500), distinctUntilChanged()),
-    secureKeyStatus$
-  ).pipe(
-    map(([searchtext, status]: [string, SecureKeyStatus]) => {
-      return {
-        searchtext,
-        status,
-      };
-    }),
-    flatMap((res) => {
-      const { searchtext, status } = res;
-      return fetchSecureKeys().pipe(
-        map((keys: any[]) => {
-          if (!keys) {
-            return [];
-          }
-          return keys.filter(
-            (key) => key.name.includes(searchtext) || key.description.includes(searchtext)
-          );
-        })
-      );
-    })
-  );
-
   // Update the states with incoming secure keys
   React.useEffect(() => {
-    const subscription = keyResults$.subscribe((keys: ISecureKeyState[]) => {
+    // Whenever user adds/edits/deletes a secure key, securekeyStatus$ emits a new value.
+    // In such case, re-call MySecureKeyApi.list to reflect the changes
+    const secureKeys$ = secureKeyStatus$
+      .pipe(
+        distinctUntilChanged(),
+        flatMap((status) => {
+          return MySecureKeyApi.list({ namespace }).pipe(
+            mergeMap((keys: ISecureKeyState[]) => {
+              return forkJoin(
+                keys.map((k) =>
+                  MySecureKeyApi.getSecureData({ namespace, key: k.name }).pipe(
+                    map((data: string) => {
+                      k.data = data;
+                      return k;
+                    })
+                  )
+                )
+              );
+            })
+          );
+        })
+      )
+      .publishReplay(1)
+      .refCount();
+
+    // When a user searches for specific secure keys, filter them down
+    const filteredKeys$ = searchText$.pipe(
+      distinctUntilChanged(),
+      flatMap((searchtext) => {
+        return secureKeys$.pipe(
+          map((keys: any[]) => {
+            if (!keys) {
+              return [];
+            }
+            return keys.filter(
+              (key) => key.name.includes(searchtext) || key.description.includes(searchtext)
+            );
+          })
+        );
+      })
+    );
+
+    const subscription = filteredKeys$.subscribe((keys: ISecureKeyState[]) => {
       setLoading(true);
       if (!keys) {
         return;
