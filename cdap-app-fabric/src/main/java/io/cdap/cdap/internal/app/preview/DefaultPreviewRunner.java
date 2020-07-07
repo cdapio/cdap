@@ -53,7 +53,6 @@ import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
@@ -61,9 +60,7 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.AbstractMap;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -136,7 +133,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public Map.Entry<Future<PreviewRequest>, ProgramRunId> startPreview(PreviewRequest previewRequest) throws Exception {
+  public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception {
     ProgramId programId = previewRequest.getProgram();
 
     // Set the status to INIT to prepare for preview run.
@@ -234,13 +231,12 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
-    ProgramRunId programRunId = controller.getProgramRunId();
-    trackPreviewTimeout(programRunId, previewRequest, timeout, resultFuture);
-    previewStore.setProgramId(programRunId);
-    return new AbstractMap.SimpleEntry<>(resultFuture, programRunId);
+    trackPreviewTimeout(previewRequest, timeout, resultFuture);
+    previewStore.setProgramId(controller.getProgramRunId());
+    return resultFuture;
   }
 
-  private void trackPreviewTimeout(ProgramRunId programRunId, PreviewRequest previewRequest, AtomicBoolean timeout,
+  private void trackPreviewTimeout(PreviewRequest previewRequest, AtomicBoolean timeout,
                                    CompletableFuture<PreviewRequest> resultFuture) {
     ProgramId programId = previewRequest.getProgram();
     long timeoutMins = Optional.ofNullable(previewRequest.getAppRequest().getPreview())
@@ -255,7 +251,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
         // Timeout, kill the preview
         timeout.set(true);
         try {
-          stopPreview(programRunId);
+          stopPreview(programId);
         } catch (Exception ex) {
           LOG.warn("Failed to stop preview upon timeout of {} minutes", timeoutMins, ex);
         }
@@ -270,8 +266,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public void stopPreview(ProgramRunId programRunId) throws Exception {
-    programLifecycleService.stop(programRunId.getParent());
+  public void stopPreview(ProgramId programId) throws Exception {
+    programLifecycleService.stop(programId);
   }
 
   @Override
