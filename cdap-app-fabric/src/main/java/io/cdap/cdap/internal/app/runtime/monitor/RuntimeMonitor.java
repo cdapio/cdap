@@ -32,6 +32,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteProcessController;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteRuntimeTable;
@@ -138,6 +139,20 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected void doShutdown() {
+    // Make sure the remote process is gone.
+    // Give 10 seconds for the remote process to shutdown. After 10 seconds, issues a kill.
+    RetryStrategy retryStrategy = RetryStrategies.timeLimit(10, TimeUnit.SECONDS, getRetryStrategy());
+    try {
+      Retries.runWithRetries(remoteProcessController::isRunning, retryStrategy, Exception.class::isInstance);
+    } catch (Exception e) {
+      LOG.info("Force termination of remote process for program run {}", programRunId);
+      try {
+        remoteProcessController.kill();
+      } catch (Exception ex) {
+        LOG.warn("Failed to force terminate remote process for program run {}", programRunId);
+      }
+    }
+
     for (Service service : Lists.reverse(extraServices)) {
       try {
         service.stopAndWait();
