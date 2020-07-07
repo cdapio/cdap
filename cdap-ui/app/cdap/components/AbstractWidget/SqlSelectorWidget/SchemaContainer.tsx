@@ -242,6 +242,7 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
                       size="small"
                       variant="outlined"
                       onClick={this.handleMenuOpen}
+                      data-cy="schema-select-btn"
                     >
                       <span>{T.translate(`${I18N_PREFIX_TABLE}.checkboxHeader`)}</span>
                       <IconSVG name="icon-caret-down" className={classes.tableHeaderSelectIcon} />
@@ -251,10 +252,16 @@ class SchemaContainer extends React.Component<ISchemaContainerProps, ISchemaCont
                       open={Boolean(this.state.menuAnchor)}
                       onClose={this.handleMenuClose}
                     >
-                      <MenuItem onClick={() => this.handleMenuClose('All')}>
+                      <MenuItem
+                        onClick={() => this.handleMenuClose('All')}
+                        data-cy="select-all-option"
+                      >
                         {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.all`)}
                       </MenuItem>
-                      <MenuItem onClick={() => this.handleMenuClose('None')}>
+                      <MenuItem
+                        onClick={() => this.handleMenuClose('None')}
+                        data-cy="select-none-option"
+                      >
                         {T.translate(`${I18N_PREFIX_TABLE}.selectMenuItems.none`)}
                       </MenuItem>
                     </Menu>
