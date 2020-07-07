@@ -30,7 +30,7 @@ public class DirectPreviewRequestFetcher implements PreviewRequestFetcher {
   private final PreviewRequestQueue requestQueue;
 
   @Inject
-  DirectPreviewRequestFetcher(PreviewRequestQueue requestQueue) {
+  public DirectPreviewRequestFetcher(PreviewRequestQueue requestQueue) {
     this.requestQueue = requestQueue;
   }
 

@@ -31,13 +31,17 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -143,6 +147,7 @@ public class StandaloneMain {
   private final LevelDBTableService levelDBTableService;
   private final SecureStoreService secureStoreService;
   private final PreviewHttpServer previewHttpServer;
+  private final PreviewRunnerManager previewRunnerManager;
   private final MetadataStorage metadataStorage;
 
   private ExternalAuthenticationServer externalAuthenticationServer;
@@ -172,6 +177,7 @@ public class StandaloneMain {
                                                                      Constants.AppFabric.RemoteExecution.class));
     metadataSubscriberService = injector.getInstance(MetadataSubscriberService.class);
     previewHttpServer = injector.getInstance(PreviewHttpServer.class);
+    previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
     metadataStorage = injector.getInstance(MetadataStorage.class);
 
     if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
@@ -271,6 +277,10 @@ public class StandaloneMain {
     }
 
     previewHttpServer.startAndWait();
+    if (previewRunnerManager instanceof Service) {
+      ((Service) previewRunnerManager).startAndWait();
+    }
+
     metricsQueryService.startAndWait();
     logQueryService.startAndWait();
     router.startAndWait();
@@ -327,6 +337,9 @@ public class StandaloneMain {
       metadataService.stopAndWait();
       remoteExecutionTwillRunnerService.stop();
       serviceStore.stopAndWait();
+      if (previewRunnerManager instanceof Service) {
+        ((Service) previewRunnerManager).stopAndWait();
+      }
       previewHttpServer.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
@@ -517,7 +530,9 @@ public class StandaloneMain {
       new AuditModule(),
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
+      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
+      new PreviewRunnerManagerModule(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),

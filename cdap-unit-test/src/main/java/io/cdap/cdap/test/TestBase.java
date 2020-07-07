@@ -51,13 +51,19 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewRequestQueue;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
-import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
+import io.cdap.cdap.common.discovery.RandomEndpointStrate
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
@@ -73,12 +79,15 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.data2.datafabric.dataset.service.DatasetService;
 import io.cdap.cdap.data2.datafabric.dataset.service.executor.DatasetOpExecutorService;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
+import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
+import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisionerModule;
 import io.cdap.cdap.internal.provision.ProvisioningService;
@@ -131,6 +140,7 @@ import io.cdap.cdap.test.internal.DefaultArtifactManager;
 import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.tephra.inmemory.InMemoryTxSystemClient;
@@ -151,12 +161,16 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.stream.StreamSupport;
 
 /**
  * Base class to inherit from for unit-test.
@@ -178,6 +192,7 @@ public class TestBase {
 
   static Injector injector;
   private static CConfiguration cConf;
+  private static CConfiguration previewCConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
   private static MetricsCollectionService metricsCollectionService;
@@ -199,6 +214,7 @@ public class TestBase {
   private static MessagingContext messagingContext;
   private static PreviewManager previewManager;
   private static ProvisioningService provisioningService;
+  private static PreviewRunnerManager previewRunnerManager;
   private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
   private static MetadataStorage metadataStorage;
@@ -218,6 +234,13 @@ public class TestBase {
     File localDataDir = TMP_FOLDER.newFolder();
 
     cConf = createCConf(localDataDir);
+
+    previewCConf = createPreviewConf(cConf);
+    LevelDBTableService previewLevelDBTableService = new LevelDBTableService();
+    previewLevelDBTableService.setConfiguration(previewCConf);
+
+    PreviewStore previewStore = new DefaultPreviewStore(previewLevelDBTableService);
+    PreviewRequestQueue previewRequestQueue = new DefaultPreviewRequestQueue(previewCConf, previewStore);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -267,7 +290,9 @@ public class TestBase {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
+      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
+      new PreviewRunnerManagerModule(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
@@ -336,6 +361,7 @@ public class TestBase {
       ((Service) programScheduler).startAndWait();
     }
 
+
     testManager = injector.getInstance(UnitTestManager.class);
     metricsManager = injector.getInstance(MetricsManager.class);
     authorizerInstantiator = injector.getInstance(AuthorizerInstantiator.class);
@@ -374,8 +400,14 @@ public class TestBase {
     if (previewManager instanceof Service) {
       ((Service) previewManager).startAndWait();
     }
+
     programRuntimeService = injector.getInstance(ProgramRuntimeService.class);
     programRuntimeService.startAndWait();
+
+    previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
+    if (previewRunnerManager instanceof Service) {
+      ((Service) previewRunnerManager).startAndWait();
+    }
   }
 
   /**
@@ -498,6 +530,10 @@ public class TestBase {
     }
 
     programRuntimeService.stopAndWait();
+    if (previewRunnerManager instanceof Service) {
+      ((Service) previewRunnerManager).stopAndWait();
+    }
+
     if (previewManager instanceof Service) {
       ((Service) previewManager).stopAndWait();
     }
@@ -1017,5 +1053,26 @@ public class TestBase {
    */
   protected final HttpResponse executeHttp(HttpRequest request) throws IOException {
     return HttpRequests.execute(request, new DefaultHttpRequestConfig(false));
+  }
+
+  private static CConfiguration createPreviewConf(CConfiguration cConf) {
+    CConfiguration previewCConf = CConfiguration.copy(cConf);
+
+    // Change all services bind address to local host
+    String localhost = InetAddress.getLoopbackAddress().getHostName();
+    StreamSupport.stream(previewCConf.spliterator(), false)
+      .map(Map.Entry::getKey)
+      .filter(s -> s.endsWith(".bind.address"))
+      .forEach(key -> previewCConf.set(key, localhost));
+
+    Path previewDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
+
+    previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
+    previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
+    previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
+    // Use No-SQL store for preview data
+    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+
+    return previewCConf;
   }
 }

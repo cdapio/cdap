@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.app.preview;
 
-import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.id.ProgramId;
 
-import java.util.Map;
 import java.util.concurrent.Future;
 
 /**
@@ -33,12 +32,12 @@ public interface PreviewRunner {
    * @param previewRequest request representing preview
    * @throws Exception when there is error while starting preview
    */
-  Map.Entry<Future<PreviewRequest>, ProgramRunId> startPreview(PreviewRequest previewRequest) throws Exception;
+  Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception;
 
   /**
-   * Stop the preview run represented by this {@link ProgramRunId}.
-   * @param programRunId id of the preview program run to be stopped
+   * Stop the preview run represented by this {@link ProgramId}.
+   * @param programId id of the preview program to be stopped
    * @throws Exception thrown when any error in stopping the preview run
    */
-  void stopPreview(ProgramRunId programRunId) throws Exception;
+  void stopPreview(ProgramId programId) throws Exception;
 }
