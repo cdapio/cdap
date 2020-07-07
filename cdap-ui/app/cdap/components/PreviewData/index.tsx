@@ -141,6 +141,22 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     return { inputs, outputs, inputFieldCount, outputFieldCount };
   };
 
+  const getContent = () => {
+    // preview has not been run yet
+    if (!previewId) {
+      return noPreviewDataMsg(classes);
+    } else if (previewLoading) {
+      // preview data available and getting fetched
+      return loadingMsg(classes);
+    } else if (error) {
+      // i.e. if current preview got overwritten by a more recent preview run
+      return errorMsg(classes);
+    } else if (!isEmpty(previewData)) {
+      // return either table or record container depending on schema size
+      return getContainer();
+    }
+  };
+
   const loadingMsg = (cls) => (
     <div className={cls.headingContainer}>
       <Heading
@@ -173,42 +189,31 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     </div>
   );
 
-  return (
-    <div>
-      <If condition={!previewId}>{noPreviewDataMsg(classes)}</If>
-      <If condition={previewLoading}>{loadingMsg(classes)}</If>
-      <If condition={error}>{errorMsg(classes)}</If>
+  const getContainer = () => {
+    return (
+      <React.Fragment>
+        <span className={classes.recordToggle}>
+          <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
+        </span>
+        <If condition={viewMode === PreviewMode.Table}>
+          <PreviewTableContainer
+            tableData={tableData}
+            selectedNode={selectedNode}
+            previewStatus={previewStatus}
+          />
+        </If>
+        <If condition={viewMode === PreviewMode.Record}>
+          <RecordContainer
+            tableData={tableData}
+            selectedNode={selectedNode}
+            previewStatus={previewStatus}
+          />
+        </If>
+      </React.Fragment>
+    );
+  };
 
-      <If
-        condition={
-          !previewLoading && previewId && !isEmpty(previewData) && viewMode === PreviewMode.Table
-        }
-      >
-        <span className={classes.recordToggle}>
-          <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
-        </span>
-        <PreviewTableContainer
-          tableData={tableData}
-          selectedNode={selectedNode}
-          previewStatus={previewStatus}
-        />
-      </If>
-      <If
-        condition={
-          !previewLoading && previewId && !isEmpty(previewData) && viewMode === PreviewMode.Record
-        }
-      >
-        <span className={classes.recordToggle}>
-          <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
-        </span>
-        <RecordContainer
-          tableData={tableData}
-          selectedNode={selectedNode}
-          previewStatus={previewStatus}
-        />
-      </If>
-    </div>
-  );
+  return <div>{getContent()}</div>;
 };
 
 const PreviewDataViewStyled = withStyles(styles)(PreviewDataViewBase);
