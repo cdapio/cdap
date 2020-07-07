@@ -97,7 +97,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
 
   return (
     <div>
-      <If condition={!selectedNode.isCondition}>
+      <If condition={!selectedNode.isCondition && numRecords > 0}>
         <RecordNavigator
           selectedRecord={selectedRecord}
           numRecords={numRecords}

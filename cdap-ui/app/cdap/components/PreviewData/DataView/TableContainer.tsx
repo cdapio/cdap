@@ -29,6 +29,9 @@ const I18N_PREFIX = 'features.PreviewData.DataView.TableContainer';
 export const styles = (theme): StyleRules => ({
   outerContainer: {
     display: 'flex',
+    '& :last-of-type': {
+      borderRight: 0,
+    },
   },
   innerContainer: {
     overflow: 'scroll',
@@ -41,9 +44,6 @@ export const styles = (theme): StyleRules => ({
     borderBottom: `1px solid ${theme.palette.grey[400]}`,
     padding: '10px',
     borderRight: `1px solid ${theme.palette.grey[400]}`,
-    '& :last-of-type': {
-      borderRight: 0,
-    },
     '& .record-pane': { width: '100%' },
     '& .cask-tab-headers': { overflowX: 'scroll' },
   },
@@ -85,7 +85,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const inputRecords = tableValue.records;
             return (
               <div key={`input-table-${i}`}>
-                <Heading type={HeadingTypes.h3} label={inputs.length > 1 ? tableKey : null} />
+                {inputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={inputHeaders}
                   records={inputRecords}
@@ -109,7 +109,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const outputRecords = tableValue.records;
             return (
               <div key={`output-table-${j}`}>
-                <Heading type={HeadingTypes.h3} label={outputs.length > 1 ? tableKey : null} />
+                {outputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={outputHeaders}
                   records={outputRecords}
