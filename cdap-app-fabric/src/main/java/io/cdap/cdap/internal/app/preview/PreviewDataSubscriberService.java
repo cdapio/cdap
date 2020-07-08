@@ -25,6 +25,7 @@ import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.DefaultPreviewRunnerModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
@@ -73,7 +74,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
    */
   @Inject
   PreviewDataSubscriberService(CConfiguration cConf,
-                               @Named(DefaultPreviewRunnerModule.GLOBAL_TMS) MessagingService messagingService,
+                               @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService,
                                MetricsCollectionService metricsCollectionService, PreviewStore previewStore,
                                TransactionRunner transactionRunner) {
     super(

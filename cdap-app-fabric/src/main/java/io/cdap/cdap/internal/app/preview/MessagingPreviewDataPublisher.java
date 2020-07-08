@@ -19,7 +19,7 @@ package io.cdap.cdap.internal.app.preview;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import io.cdap.cdap.app.preview.DefaultPreviewRunnerModule;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewDataPublisher;
 import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -46,7 +46,7 @@ public class MessagingPreviewDataPublisher implements PreviewDataPublisher {
 
   @Inject
   MessagingPreviewDataPublisher(CConfiguration cConf,
-                                @Named(DefaultPreviewRunnerModule.GLOBAL_TMS) MessagingService messagingService) {
+                                @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService) {
     this.topic = NamespaceId.SYSTEM.topic(cConf.get(Constants.Preview.MESSAGING_TOPIC));
     this.messagingService = messagingService;
     //TODO using system.metadata properties
