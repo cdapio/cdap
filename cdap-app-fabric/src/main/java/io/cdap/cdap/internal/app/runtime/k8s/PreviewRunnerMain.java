@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.runtime.k8s;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.master.environment.k8s.AbstractServiceMain;
 import io.cdap.cdap.master.environment.k8s.EnvironmentOptions;
@@ -53,7 +54,7 @@ public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources, MasterEnvironment masterEnv,
                              MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
-
+    services.add(((Service) injector.getInstance(PreviewRunnerManager.class)));
   }
 
   @Nullable

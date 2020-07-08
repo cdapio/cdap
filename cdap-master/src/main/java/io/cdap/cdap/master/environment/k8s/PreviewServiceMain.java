@@ -28,6 +28,8 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.UnsupportedExploreClient;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -69,6 +71,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new PreviewHttpModule(),
+      new PreviewRunnerManagerModule(),
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
