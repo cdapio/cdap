@@ -45,6 +45,7 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
 import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
@@ -81,8 +82,6 @@ import io.cdap.cdap.store.DefaultOwnerStore;
  * Provides bindings required to create injector for running preview.
  */
 public class DefaultPreviewRunnerModule extends PrivateModule implements PreviewRunnerModule {
-  public static final String GLOBAL_TMS = "globaltms";
-
   private final ArtifactStore artifactStore;
   private final AuthorizerInstantiator authorizerInstantiator;
   private final AuthorizationEnforcer authorizationEnforcer;
@@ -133,8 +132,10 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
 
-    bind(MessagingService.class).annotatedWith(Names.named(GLOBAL_TMS)).toInstance(messagingService);
-    expose(MessagingService.class).annotatedWith(Names.named(GLOBAL_TMS));
+    bind(MessagingService.class)
+      .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
+      .toInstance(messagingService);
+    expose(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS));
 
     bind(AuthorizerInstantiator.class).toInstance(authorizerInstantiator);
     expose(AuthorizerInstantiator.class);
