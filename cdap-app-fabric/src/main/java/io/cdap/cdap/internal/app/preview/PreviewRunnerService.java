@@ -54,10 +54,10 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private final CountDownLatch stopLatch;
   private final AtomicReference<Cancellable> cancelPreview;
 
-  @Inject
-  PreviewRunnerService(CConfiguration cConf, PreviewRunner previewRunner, PreviewRequestFetcher requestFetcher) {
+  public PreviewRunnerService(CConfiguration cConf, PreviewRunner previewRunner,
+                              PreviewRequestFetcher previewRequestFetcher) {
     this.previewRunner = previewRunner;
-    this.requestFetcher = requestFetcher;
+    this.requestFetcher = previewRequestFetcher;
     this.pollDelayMillis = cConf.getLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS);
     this.maxRuns = cConf.getInt(Constants.Preview.MAX_RUNS);
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.preview.");

@@ -91,6 +91,7 @@ import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.store.DefaultOwnerStore;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.yarn.webapp.hamlet.Hamlet;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -119,6 +120,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final LevelDBTableService previewLevelDBTableService;
   private final PreviewRequestQueue previewRequestQueue;
   private final PreviewStore previewStore;
+  private final PreviewRunnerServiceStopper previewRunnerServiceStopper;
   private Injector previewInjector;
 
   @Inject
@@ -130,7 +132,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
                         @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
                         @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
-                        PreviewRequestQueue previewRequestQueue) {
+                        PreviewRequestQueue previewRequestQueue,
+                        PreviewRunnerServiceStopper previewRunnerServiceStopper) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -142,6 +145,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestQueue = previewRequestQueue;
     this.previewStore = new DefaultPreviewStore(previewLevelDBTableService);
+    this.previewRunnerServiceStopper = previewRunnerServiceStopper;
   }
 
   @Override
@@ -180,8 +184,21 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   @Override
   public void stopPreview(ApplicationId applicationId) throws Exception {
-    ProgramLifecycleService programLifecycleService = previewInjector.getInstance(ProgramLifecycleService.class);
-    programLifecycleService.stop(getRunRecord(applicationId).getParent());
+    PreviewStatus status = getStatus(applicationId);
+    if (status.getStatus().isEndState()) {
+      throw new BadRequestException(String.format("Preview run cannot be stopped. It is already in %s state.",
+                                                  status.getStatus().name()));
+    }
+    if (status.getStatus() == PreviewStatus.Status.WAITING) {
+      previewStore.setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.KILLED, null, null, null));
+      return;
+    }
+    byte[] previewRequestPollerInfo = previewStore.getPreviewRequestPollerInfo(applicationId);
+    if (previewRequestPollerInfo == null) {
+      // should not happen
+      throw new IllegalStateException("Preview cannot be stopped. Please try stopping again or run the new preview.");
+    }
+    previewRunnerServiceStopper.stop(previewRequestPollerInfo);
   }
 
   @Override

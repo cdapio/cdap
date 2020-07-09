@@ -26,6 +26,7 @@ import com.google.inject.Injector;
 import com.google.inject.Provides;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -44,6 +45,7 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
@@ -53,8 +55,6 @@ import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
-import org.apache.hadoop.mapreduce.MRConfig;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
@@ -63,13 +63,9 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.StreamSupport;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Service for managing {@link PreviewRunnerService}.
@@ -77,40 +73,42 @@ import java.util.stream.StreamSupport;
 public class DefaultPreviewRunnerManager extends AbstractIdleService implements PreviewRunnerManager {
   private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewRunnerManager.class);
 
-  private final CConfiguration cConf;
-  private final Configuration hConf;
-  private final SConfiguration sConf;
+  private final CConfiguration previewCConf;
+  private final Configuration previewHConf;
+  private final SConfiguration previewSConf;
   private final int maxConcurrentPreviews;
   private final DiscoveryService discoveryService;
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
-  private final Path previewDataDir;
   private Injector previewInjector;
   private final PreviewRunnerModule previewRunnerModule;
-  private final Set<Service> previewPollers;
+  private final Map<String, PreviewRunnerService> previewPollers;
   private final LevelDBTableService previewLevelDBTableService;
+  private final PreviewRequestFetcherFactory previewRequestFetcherFactory;
 
   @Inject
   DefaultPreviewRunnerManager(
-    CConfiguration cConf, Configuration hConf,
-    SConfiguration sConf, SecureStore secureStore, DiscoveryService discoveryService,
+    @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
+    @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
+    @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
+    SecureStore secureStore, DiscoveryService discoveryService,
     @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
     TransactionSystemClient transactionSystemClient,
     @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-    PreviewRunnerModule previewRunnerModule) {
-    this.cConf = cConf;
-    this.hConf = hConf;
-    this.sConf = sConf;
+    PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory) {
+    this.previewCConf = previewCConf;
+    this.previewHConf = previewHConf;
+    this.previewSConf = previewSConf;
     this.datasetFramework = datasetFramework;
     this.secureStore = secureStore;
     this.discoveryService = discoveryService;
     this.transactionSystemClient = transactionSystemClient;
-    this.previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
-    this.maxConcurrentPreviews = cConf.getInt(Constants.Preview.CACHE_SIZE, 10);
-    this.previewPollers = new HashSet<>();
+    this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.CACHE_SIZE, 10);
+    this.previewPollers = new ConcurrentHashMap<>();
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBTableService;
+    this.previewRequestFetcherFactory = previewRequestFetcherFactory;
   }
 
   @Override
@@ -118,9 +116,14 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     previewInjector = createPreviewInjector();
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
-      Service pollerService = previewInjector.getInstance(PreviewRunnerService.class);
+      String pollerInfo = UUID.randomUUID().toString();
+
+      PreviewRunnerService pollerService = new PreviewRunnerService(
+        previewCConf, previewInjector.getInstance(PreviewRunner.class),
+        previewRequestFetcherFactory.create(Bytes.toBytes(pollerInfo)));
+
       pollerService.startAndWait();
-      previewPollers.add(pollerService);
+      previewPollers.put(pollerInfo, pollerService);
     }
     PreviewRunner runner = previewInjector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
@@ -135,7 +138,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       stopQuietly((Service) runner);
     }
 
-    for (Service pollerService : previewPollers) {
+    for (Service pollerService : previewPollers.values()) {
       stopQuietly(pollerService);
     }
   }
@@ -148,35 +151,27 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     }
   }
 
+  @Override
+  public void stop(byte[] runnerId) throws Exception {
+    PreviewRunnerService service = previewPollers.get(Bytes.toString(runnerId));
+    if (service == null) {
+      String msg = "Preview run cannot be stopped. Please try stopping again or start new preview run.";
+      throw new Exception(msg);
+    }
+    service.stopAndWait();
+    String newRunnerId = UUID.randomUUID().toString();
+    PreviewRunnerService newService = new PreviewRunnerService(
+      previewCConf, previewInjector.getInstance(PreviewRunner.class),
+      previewRequestFetcherFactory.create(Bytes.toBytes(newRunnerId)));
+    newService.startAndWait();
+    previewPollers.put(newRunnerId, newService);
+  }
+
   /**
    * Create injector for the given application id.
    */
   @VisibleForTesting
   Injector createPreviewInjector() throws IOException {
-    CConfiguration previewCConf = CConfiguration.copy(cConf);
-
-    // Change all services bind address to local host
-    String localhost = InetAddress.getLoopbackAddress().getHostName();
-    StreamSupport.stream(previewCConf.spliterator(), false)
-      .map(Map.Entry::getKey)
-      .filter(s -> s.endsWith(".bind.address"))
-      .forEach(key -> previewCConf.set(key, localhost));
-
-    Path previewDir = Files.createDirectories(previewDataDir);
-
-    previewCConf.set(Constants.CFG_LOCAL_DATA_DIR, previewDir.toString());
-    previewCConf.setIfUnset(Constants.CFG_DATA_LEVELDB_DIR, previewDir.toString());
-    previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
-    // Use No-SQL store for preview data
-    previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
-
-    // Setup Hadoop configuration
-    Configuration previewHConf = new Configuration(hConf);
-    previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
-    previewHConf.set(CommonConfigurationKeysPublic.FS_DEFAULT_NAME_KEY,
-                     previewDir.resolve("fs").toUri().toString());
-
-    SConfiguration previewSConf = SConfiguration.copy(sConf);
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new IOModule(),

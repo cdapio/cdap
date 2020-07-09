@@ -42,7 +42,6 @@ import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
-import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
@@ -79,7 +78,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final PrivilegesManager privilegesManager;
   private final PreferencesService preferencesService;
   private final ProgramRuntimeProviderLoader programRuntimeProviderLoader;
-  private final PreviewRequestFetcher previewRequestFetcher;
 
   @VisibleForTesting
   @Inject
@@ -87,8 +85,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     AuthorizerInstantiator authorizerInstantiator,
                                     AuthorizationEnforcer authorizationEnforcer,
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
-                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader,
-                                    PreviewRequestFetcher previewRequestFetcher) {
+                                    ProgramRuntimeProviderLoader programRuntimeProviderLoader) {
     this.artifactRepository = artifactRepository;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -96,7 +93,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.privilegesManager = privilegesManager;
     this.preferencesService = preferencesService;
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
-    this.previewRequestFetcher = previewRequestFetcher;
   }
 
   @Override
@@ -162,9 +158,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     expose(OwnerStore.class);
     bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
     expose(OwnerAdmin.class);
-
-    bind(PreviewRequestFetcher.class).toInstance(previewRequestFetcher);
-    expose(PreviewRequestFetcher.class);
   }
 
   /**
