@@ -22,6 +22,9 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
@@ -114,6 +117,29 @@ class RemoteExecutionTwillController implements TwillController {
   public void complete() {
     terminateOnServiceStop = true;
     executionService.stop();
+
+    try {
+      RetryStrategy retryStrategy = RetryStrategies.timeLimit(
+        5, TimeUnit.SECONDS, RetryStrategies.exponentialDelay(500, 2000, TimeUnit.MILLISECONDS));
+
+      // Make sure the remote execution is completed
+      // Give 5 seconds for the remote process to shutdown. After 5 seconds, issues a kill.
+      long startTime = System.currentTimeMillis();
+      while (Retries.callWithRetries(remoteProcessController::isRunning, retryStrategy, Exception.class::isInstance)) {
+        if (System.currentTimeMillis() - startTime >= 5000) {
+          throw new IllegalStateException("Remote process for " + programRunId + " is still running");
+        }
+        TimeUnit.SECONDS.sleep(1);
+      }
+    } catch (Exception e) {
+      // If there is exception, use the remote execution controller to try killing the remote process
+      try {
+        LOG.debug("Force termination of remote process for program run {}", programRunId);
+        remoteProcessController.kill();
+      } catch (Exception ex) {
+        LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
+      }
+    }
   }
 
   @Override
@@ -137,7 +163,7 @@ class RemoteExecutionTwillController implements TwillController {
                 completion.complete(RemoteExecutionTwillController.this);
                 return;
               }
-              // If the process is still running, kills it if it reaches the kille time.
+              // If the process is still running, kills it if it reaches the kill time.
               if (System.currentTimeMillis() >= killTimeMillis) {
                 remoteProcessController.kill();
                 completion.complete(RemoteExecutionTwillController.this);
