@@ -36,21 +36,19 @@ const styles = (theme): StyleRules => {
 };
 
 interface ISecureKeySearchProps extends WithStyles<typeof styles> {
-  searchText: string;
-  handleSearchTextChange: (searchText: string) => void;
+  state: any;
+  dispatch: React.Dispatch<any>;
 }
 
-const SecureKeySearchView: React.FC<ISecureKeySearchProps> = ({
-  classes,
-  searchText,
-  handleSearchTextChange,
-}) => {
+const SecureKeySearchView: React.FC<ISecureKeySearchProps> = ({ classes, state, dispatch }) => {
+  const { searchText } = state;
+
   return (
     <FormControl className={classnames(classes.margin, classes.textField)} variant="outlined">
       <TextField
         className={classes.margin}
         value={searchText}
-        onChange={(e) => handleSearchTextChange(e.target.value)}
+        onChange={(e) => dispatch({ type: 'SET_SEARCH_TEXT', searchText: e.target.value })}
         placeholder={'Search secure keys'}
         InputProps={{
           startAdornment: (
@@ -62,7 +60,7 @@ const SecureKeySearchView: React.FC<ISecureKeySearchProps> = ({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={() => handleSearchTextChange('')}>
+              <IconButton onClick={() => dispatch({ type: 'SET_SEARCH_TEXT', searchText: '' })}>
                 <CloseIcon />
               </IconButton>
             </InputAdornment>

@@ -28,7 +28,6 @@ import Visibility from '@material-ui/icons/Visibility';
 import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import classnames from 'classnames';
 import { SecureKeysPageMode } from 'components/SecureKeys';
-import { List } from 'immutable';
 import * as React from 'react';
 import { copyToClipBoard } from 'services/Clipboard';
 
@@ -73,31 +72,19 @@ const styles = (theme): StyleRules => {
 };
 
 interface ISecureKeysDetailsProps extends WithStyles<typeof styles> {
-  secureKeys: List<any>;
-  activeKeyIndex: number;
-  setActiveKeyIndex: (index: number) => void;
-  setPageMode: (pageMode: SecureKeysPageMode) => void;
-  deleteKey: (index: number) => void;
-  setEditMode: (mode: boolean) => void;
-  setDeleteMode: (mode: boolean) => void;
+  state: any;
+  dispatch: React.Dispatch<any>;
 }
 
-const SecureKeysDetailsView: React.FC<ISecureKeysDetailsProps> = ({
-  classes,
-  activeKeyIndex,
-  secureKeys,
-  setActiveKeyIndex,
-  setPageMode,
-  setEditMode,
-  setDeleteMode,
-}) => {
+const SecureKeysDetailsView: React.FC<ISecureKeysDetailsProps> = ({ classes, state, dispatch }) => {
+  const { secureKeys, activeKeyIndex } = state;
   const [showData, setShowData] = React.useState(false);
 
   const keyMetadata = secureKeys.get(activeKeyIndex);
 
   const handleBackButtonClick = () => {
-    setPageMode(SecureKeysPageMode.List);
-    setActiveKeyIndex(null);
+    dispatch({ type: 'SET_PAGE_MODE', pageMode: SecureKeysPageMode.List });
+    dispatch({ type: 'SET_ACTIVE_KEY_INDEX', activeKeyIndex: null });
   };
 
   return (
@@ -171,7 +158,7 @@ const SecureKeysDetailsView: React.FC<ISecureKeysDetailsProps> = ({
             variant="outlined"
             color="primary"
             size="medium"
-            onClick={() => setDeleteMode(true)}
+            onClick={() => dispatch({ type: 'SET_DELETE_MODE', deleteMode: true })}
           >
             Delete
           </Button>
@@ -180,7 +167,7 @@ const SecureKeysDetailsView: React.FC<ISecureKeysDetailsProps> = ({
             variant="outlined"
             color="primary"
             size="medium"
-            onClick={() => setEditMode(true)}
+            onClick={() => dispatch({ type: 'SET_EDIT_MODE', editMode: true })}
           >
             Edit
           </Button>

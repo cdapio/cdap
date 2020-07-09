@@ -50,25 +50,27 @@ const styles = (theme): StyleRules => {
 };
 
 interface ISecureKeyEditProps extends WithStyles<typeof styles> {
-  keyMetadata: any;
-  setSecureKeyStatus: (status: SecureKeyStatus) => void;
+  state: any;
+  dispatch: React.Dispatch<any>;
   open: boolean;
   handleClose: () => void;
 }
 
 const SecureKeyEditView: React.FC<ISecureKeyEditProps> = ({
   classes,
+  state,
+  dispatch,
   open,
   handleClose,
-  keyMetadata,
-  setSecureKeyStatus,
 }) => {
+  const { secureKeys, activeKeyIndex } = state;
+
+  const keyMetadata = secureKeys.get(activeKeyIndex);
   const keyID = keyMetadata ? keyMetadata.get('name') : '';
   const [localDescription, setLocalDescription] = React.useState(
     keyMetadata ? keyMetadata.get('description') : ''
   );
   const [localData, setLocalData] = React.useState(keyMetadata ? keyMetadata.get('data') : '');
-
   // since 'properties' are in key-value form, keep a separate state in string form
   const properties = keyMetadata ? keyMetadata.get('properties') : '';
   const [localPropertiesInString, setLocalPropertiesInString] = React.useState('');
@@ -134,7 +136,7 @@ const SecureKeyEditView: React.FC<ISecureKeyEditProps> = ({
       setLocalDescription('');
       setLocalData('');
       setLocalPropertiesInString('');
-      setSecureKeyStatus(SecureKeyStatus.Success);
+      dispatch({ type: 'SET_SECURE_KEY_STATUS', secureKeyStatus: SecureKeyStatus.Success });
       handleClose();
     });
   };

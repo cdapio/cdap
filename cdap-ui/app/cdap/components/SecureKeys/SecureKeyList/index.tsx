@@ -24,12 +24,10 @@ import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import If from 'components/If';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { SecureKeysPageMode, SecureKeyStatus } from 'components/SecureKeys';
+import { SecureKeysPageMode } from 'components/SecureKeys';
 import SecureKeyCreate from 'components/SecureKeys/SecureKeyCreate';
 import SecureKeyActionButtons from 'components/SecureKeys/SecureKeyList/SecureKeyActionButtons';
 import SecureKeySearch from 'components/SecureKeys/SecureKeySearch';
-import { List, Map } from 'immutable';
 import * as React from 'react';
 
 const styles = (theme): StyleRules => {
@@ -71,50 +69,23 @@ const styles = (theme): StyleRules => {
     actionButtonsCell: {
       width: '10%',
     },
-    loadingBox: {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
   };
 };
 
 interface ISecureKeyListProps extends WithStyles<typeof styles> {
-  secureKeys: List<any>;
-  setSecureKeyStatus: (status: SecureKeyStatus) => void;
-  setActiveKeyIndex: (index: number) => void;
-  visibility: Map<string, boolean>;
-  setVisibility: (visibility: Map<string, boolean>) => void;
-  setPageMode: (pageMode: SecureKeysPageMode) => void;
-  searchText: string;
-  handleSearchTextChange: (searchText: string) => void;
-  setEditMode: (mode: boolean) => void;
-  setDeleteMode: (mode: boolean) => void;
-  loading: boolean;
+  state: any;
+  dispatch: React.Dispatch<any>;
 }
 
-const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
-  classes,
-  secureKeys,
-  setSecureKeyStatus,
-  setActiveKeyIndex,
-  visibility,
-  setVisibility,
-  setPageMode,
-  searchText,
-  handleSearchTextChange,
-  setEditMode,
-  setDeleteMode,
-  loading,
-}) => {
+const SecureKeyListView: React.FC<ISecureKeyListProps> = ({ classes, state, dispatch }) => {
+  const { secureKeys, visibilities } = state;
+
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
 
   const onSecureKeyClick = (keyIndex) => {
     return () => {
-      setPageMode(SecureKeysPageMode.Details);
-      setActiveKeyIndex(keyIndex);
+      dispatch({ type: 'SET_PAGE_MODE', pageMode: SecureKeysPageMode.Details });
+      dispatch({ type: 'SET_ACTIVE_KEY_INDEX', activeKeyIndex: keyIndex });
     };
   };
 
@@ -134,73 +105,59 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
           </Button>
         </div>
         <div className={classes.secureKeySearch}>
-          <SecureKeySearch
-            searchText={searchText}
-            handleSearchTextChange={handleSearchTextChange}
-          />
+          <SecureKeySearch state={state} dispatch={dispatch} />
         </div>
       </div>
 
-      <If condition={loading}>
-        <div className={classes.loadingBox}>
-          <LoadingSVGCentered />
-        </div>
-      </If>
-
-      <If condition={!loading}>
-        <Paper>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Key</TableCell>
-                <TableCell>Description</TableCell>
-                <TableCell>Data</TableCell>
-                <TableCell />
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {secureKeys.map((keyMetadata, keyIndex) => {
-                const keyID = keyMetadata.get('name');
-                return (
-                  <TableRow
-                    key={keyMetadata.get('name')}
-                    hover
-                    selected
-                    className={classes.securityKeyRow}
-                    onClick={onSecureKeyClick(keyIndex)}
-                  >
-                    <TableCell className={classes.nameCell}>{keyID}</TableCell>
-                    <TableCell className={classes.descriptionCell}>
-                      {keyMetadata.get('description')}
-                    </TableCell>
-                    <TableCell className={classes.dataCell}>
-                      <If condition={!visibility.get(keyID)}>
-                        <input id="password" value="password" disabled type="password"></input>
-                      </If>
-                      <If condition={visibility.get(keyID)}>{keyMetadata.get('data')}</If>
-                    </TableCell>
-                    <TableCell className={classes.actionButtonsCell}>
-                      <SecureKeyActionButtons
-                        keyIndex={keyIndex}
-                        keyID={keyID}
-                        visibility={visibility}
-                        setActiveKeyIndex={setActiveKeyIndex}
-                        setVisibility={setVisibility}
-                        setEditMode={setEditMode}
-                        setDeleteMode={setDeleteMode}
-                      />
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </Paper>
-      </If>
+      <Paper>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Key</TableCell>
+              <TableCell>Description</TableCell>
+              <TableCell>Data</TableCell>
+              <TableCell />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {secureKeys.map((keyMetadata, keyIndex) => {
+              const keyID = keyMetadata.get('name');
+              return (
+                <TableRow
+                  key={keyMetadata.get('name')}
+                  hover
+                  selected
+                  className={classes.securityKeyRow}
+                  onClick={onSecureKeyClick(keyIndex)}
+                >
+                  <TableCell className={classes.nameCell}>{keyID}</TableCell>
+                  <TableCell className={classes.descriptionCell}>
+                    {keyMetadata.get('description')}
+                  </TableCell>
+                  <TableCell className={classes.dataCell}>
+                    <If condition={!visibilities.get(keyID)}>
+                      <input id="password" value="password" disabled type="password"></input>
+                    </If>
+                    <If condition={visibilities.get(keyID)}>{keyMetadata.get('data')}</If>
+                  </TableCell>
+                  <TableCell className={classes.actionButtonsCell}>
+                    <SecureKeyActionButtons
+                      state={state}
+                      dispatch={dispatch}
+                      keyIndex={keyIndex}
+                      keyID={keyID}
+                    />
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </Paper>
 
       <SecureKeyCreate
-        setSecureKeyStatus={setSecureKeyStatus}
-        secureKeys={secureKeys}
+        state={state}
+        dispatch={dispatch}
         open={createDialogOpen}
         handleClose={() => setCreateDialogOpen(false)}
       />
