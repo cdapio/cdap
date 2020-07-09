@@ -68,7 +68,6 @@ final class SSHRemoteExecutionService extends RemoteExecutionService {
 
   @Override
   protected void doShutdown() {
-    super.doShutdown();
     Closeables.closeQuietly(sshSession);
     LOG.debug("Stopped ssh service for run {}", getProgramRunId());
   }

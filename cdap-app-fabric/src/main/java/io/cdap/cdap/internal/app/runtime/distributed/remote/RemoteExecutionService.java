@@ -24,9 +24,7 @@ import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
-import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.twill.common.Cancellable;
@@ -71,23 +69,6 @@ class RemoteExecutionService extends AbstractRetryableScheduledService {
    */
   void doRunTask() throws Exception {
     // no-op
-  }
-
-  @Override
-  protected void doShutdown() {
-    // Make sure the remote process is gone.
-    // Give 10 seconds for the remote process to shutdown. After 10 seconds, issue a kill.
-    RetryStrategy retryStrategy = RetryStrategies.timeLimit(10, TimeUnit.SECONDS, getRetryStrategy());
-    try {
-      Retries.runWithRetries(processController::isRunning, retryStrategy, Exception.class::isInstance);
-    } catch (Exception e) {
-      LOG.info("Force termination of remote process for program run {}", getProgramRunId());
-      try {
-        processController.kill();
-      } catch (Exception ex) {
-        LOG.warn("Failed to force terminate remote process for program run {}", getProgramRunId());
-      }
-    }
   }
 
   final ProgramRunId getProgramRunId() {
