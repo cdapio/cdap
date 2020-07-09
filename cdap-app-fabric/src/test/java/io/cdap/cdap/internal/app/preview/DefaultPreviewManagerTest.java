@@ -111,6 +111,10 @@ public class DefaultPreviewManagerTest {
         protected void configure() {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
+          // bind PreviewRunnerStopper to Mock implementation
+          bind(PreviewRunnerServiceStopper.class).toInstance(runnerId -> {
+
+          });
         }
       }
     );

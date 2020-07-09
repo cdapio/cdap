@@ -14,12 +14,16 @@
  * the License.
  */
 
-package io.cdap.cdap.app.preview;
-
-import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
+package io.cdap.cdap.internal.app.preview;
 
 /**
- * It is just a tagging interface for guice binding of {@link DefaultPreviewRunnerManager}.
+ * Factory for creating {@link PreviewRequestFetcher}.
  */
-public interface PreviewRunnerManager extends PreviewRunnerServiceStopper {
+public interface PreviewRequestFetcherFactory {
+  /**
+   * Creates an instance of {@link PreviewRequestFetcher}
+   * @param pollerInfo information about poller service
+   * @return an instance of {@link PreviewRequestFetcher}
+   */
+  PreviewRequestFetcher create(byte[] pollerInfo);
 }

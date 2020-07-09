@@ -33,7 +33,6 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
 import io.cdap.cdap.data.security.DefaultSecretStore;
-import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.explore.client.MockExploreClient;
 import io.cdap.cdap.internal.app.deploy.pipeline.AppDeploymentInfo;
@@ -44,10 +43,7 @@ import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.preview.DefaultDataTracerFactory;
-import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.preview.DefaultPreviewRunner;
-import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
-import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepositoryReader;
@@ -93,7 +89,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   private final ArtifactRepositoryReaderProvider artifactRepositoryReaderProvider;
   private final PluginFinderProvider pluginFinderProvider;
   private final PreferencesFetcherProvider preferencesFetcherProvider;
-  private final PreviewRequestFetcher previewRequestFetcher;
 
   @VisibleForTesting
   @Inject
@@ -103,8 +98,7 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
                                     PrivilegesManager privilegesManager, PreferencesService preferencesService,
                                     ProgramRuntimeProviderLoader programRuntimeProviderLoader,
                                     PluginFinderProvider pluginFinderProvider,
-                                    PreferencesFetcherProvider preferencesFetcherProvider,
-                                    PreviewRequestFetcher previewRequestFetcher) {
+                                    PreferencesFetcherProvider preferencesFetcherProvider) {
     this.artifactRepositoryReaderProvider = readerProvider;
     this.artifactStore = artifactStore;
     this.authorizerInstantiator = authorizerInstantiator;
@@ -114,7 +108,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     this.programRuntimeProviderLoader = programRuntimeProviderLoader;
     this.pluginFinderProvider = pluginFinderProvider;
     this.preferencesFetcherProvider = preferencesFetcherProvider;
-    this.previewRequestFetcher = previewRequestFetcher;
   }
 
   @Override
@@ -197,9 +190,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
 
     bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
     expose(PreferencesFetcher.class);
-
-    bind(PreviewRequestFetcher.class).toInstance(previewRequestFetcher);
-    expose(PreviewRequestFetcher.class);
   }
 
   /**

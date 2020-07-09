@@ -26,8 +26,9 @@ import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
-import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcherFactory;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
 
 /**
  *
@@ -42,13 +43,15 @@ public class PreviewRunnerManagerModule extends PrivateModule {
       .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
       .to(RemoteDatasetFramework.class);
     bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
-    bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
+    bind(PreviewRunnerServiceStopper.class).to(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+    expose(PreviewRunnerServiceStopper.class);
+    bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
     expose(PreviewRunnerManager.class);
   }
 
   @Provides
   @Singleton
-  PreviewRequestFetcher getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
-    return new DirectPreviewRequestFetcher(previewRequestQueue);
+  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
+    return new DirectPreviewRequestFetcherFactory(previewRequestQueue);
   }
 }

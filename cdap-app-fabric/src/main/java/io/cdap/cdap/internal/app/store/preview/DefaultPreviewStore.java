@@ -19,7 +19,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -313,6 +312,23 @@ public class DefaultPreviewStore implements PreviewStore {
                                  gson.toJson(pollerInfo), applicationId);
       throw new RuntimeException(msg, e);
     }
+  }
+
+  @Override
+  public byte[] getPreviewRequestPollerInfo(ApplicationId applicationId) {
+    MDSKey mdsKey = new MDSKey.Builder().add(applicationId.getNamespace()).add(applicationId.getApplication()).build();
+
+    Map<byte[], byte[]> row = null;
+    try {
+      row = table.getRow(mdsKey.getKey(), new byte[][]{POLLERINFO},
+                         null, null, -1, null);
+    } catch (IOException e) {
+      throw new RuntimeException(String.format("Failed to get the poller info for preview %s", applicationId), e);
+    }
+    if (!row.isEmpty()) {
+      return row.get(POLLERINFO);
+    }
+    return null;
   }
 
   @VisibleForTesting

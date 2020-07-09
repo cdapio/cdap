@@ -115,4 +115,10 @@ public interface PreviewStore {
    *                           in WAITING state
    */
   void setPreviewRequestPollerInfo(ApplicationId applicationId, @Nullable byte[] pollerInfo) throws ConflictException;
+
+  /**
+   * @return the poller info associated with the application if it exists, otherwise {@code null} is returned
+   */
+  @Nullable
+  byte[] getPreviewRequestPollerInfo(ApplicationId applicationId);
 }
