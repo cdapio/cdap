@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.discovery;
 
+import com.google.api.client.util.ExponentialBackOff;
 import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -266,15 +268,42 @@ public class KubeDiscoveryService implements DiscoveryService, DiscoveryServiceC
 
     service.setSpec(spec);
 
-    try {
-      api.createNamespacedService(namespace, service, null, null, null);
-      LOG.info("Service created in kubernetes with name {} and port {}", serviceName, port.getPort());
-    } catch (ApiException e) {
-      // It means the service already exists. In this case we update the port if it is not the same.
-      if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
-        return false;
+    // Maximum elapse-able time currently set to 10 minutes
+    ExponentialBackOff backoffGenerator
+        = new ExponentialBackOff.Builder().setMaxElapsedTimeMillis(600000).build();
+    boolean serviceCreatedSuccessfully = false;
+    long backoffDuration = ExponentialBackOff.DEFAULT_INITIAL_INTERVAL_MILLIS;
+
+    while (!serviceCreatedSuccessfully) {
+      try {
+        api.createNamespacedService(namespace, service, null, null, null);
+        LOG.info("Service created in kubernetes with name {} and port {}", serviceName, port.getPort());
+        serviceCreatedSuccessfully = true;
+      } catch (ApiException e) {
+        // It means the service already exists. In this case we update the port if it is not the same.
+        if (e.getCode() == HttpURLConnection.HTTP_CONFLICT) {
+          return false;
+        } else {
+          if (e.getCause() instanceof SocketTimeoutException) {
+            LOG.warn("Service creation in kubernetes with name {} and port {} encountered exception: {}",
+                     serviceName,
+                     port.getPort(),
+                     e);
+            try {
+              Thread.sleep(backoffDuration);
+              backoffDuration = backoffGenerator.nextBackOffMillis();
+            } catch (Exception f) {
+              LOG.warn("Encountered exception during k8s service creation backoff: " + f);
+            }
+          } else {
+            throw e;
+          }
+
+          if (backoffDuration == ExponentialBackOff.STOP) {
+            throw e;
+          }
+        }
       }
-      throw e;
     }
 
     return true;

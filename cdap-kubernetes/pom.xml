@@ -33,6 +33,7 @@
     <!-- Needs to define the gson and guava versions to override the one from dependency management in cdap pom.xml -->
     <gson.version>2.6.2</gson.version>
     <guava.version>25.1-jre</guava.version>
+    <google.api.client.version>1.35.0</google.api.client.version>
   </properties>
 
   <dependencies>
@@ -61,6 +62,11 @@
       <groupId>io.kubernetes</groupId>
       <artifactId>client-java</artifactId>
       <version>${k8s.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.http-client</groupId>
+      <artifactId>google-http-client</artifactId>
+      <version>${google.api.client.version}</version>
     </dependency>
     <dependency>
       <groupId>junit</groupId>
