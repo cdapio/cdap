@@ -17,25 +17,22 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.inject.Inject;
-import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 
-import java.io.IOException;
-import java.util.Optional;
-
 /**
- * {@link PreviewRequestFetcher} that fetches the requests directly from the {@link PreviewRequestQueue}.
+ * Factory for creating {@link PreviewRequestFetcher} that fetches the requests directly from the
+ * {@link PreviewRequestQueue}.
  */
-public class DirectPreviewRequestFetcher implements PreviewRequestFetcher {
+public class DirectPreviewRequestFetcherFactory implements PreviewRequestFetcherFactory {
   private final PreviewRequestQueue requestQueue;
 
   @Inject
-  public DirectPreviewRequestFetcher(PreviewRequestQueue requestQueue) {
+  public DirectPreviewRequestFetcherFactory(PreviewRequestQueue requestQueue) {
     this.requestQueue = requestQueue;
   }
 
   @Override
-  public Optional<PreviewRequest> fetch() throws IOException {
-    return requestQueue.poll(null);
+  public PreviewRequestFetcher create(byte[] pollerInfo) {
+    return () -> requestQueue.poll(pollerInfo);
   }
 }

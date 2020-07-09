@@ -132,6 +132,12 @@ public class DefaultPreviewRequestQueueTest {
     public void setPreviewRequestPollerInfo(ApplicationId applicationId, byte[] pollerInfo) {
 
     }
+
+    @Nullable
+    @Override
+    public byte[] getPreviewRequestPollerInfo(ApplicationId applicationId) {
+      return new byte[0];
+    }
   }
 
   @Test
