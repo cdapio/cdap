@@ -25,3 +25,4 @@ server_dist/
 cypress/screenshots
 cypress/snapshots/actual/
 cypress/snapshots/diff/
+storybook-static/

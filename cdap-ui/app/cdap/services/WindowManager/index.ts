@@ -24,7 +24,7 @@ class WindowManager {
   public eventemitter = ee(ee);
   private worker = null;
   private initWorker = () => {
-    if (window.CDAP_CONFIG.cdap.proxyBaseUrl) {
+    if (window && window.CDAP_CONFIG && window.CDAP_CONFIG.cdap && window.CDAP_CONFIG.cdap.proxyBaseUrl) {
       this.worker = new Worker(`/cdap_assets/web-workers/Heartbeat-web-worker.js?q=${Date.now()}`);
       this.worker.onmessage = () => {
         this.reloadImage();
