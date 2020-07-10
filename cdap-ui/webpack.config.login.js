@@ -176,7 +176,11 @@ var webpackConfig = {
     modules: false,
   },
   optimization: {
-    splitChunks: false,
+    splitChunks: false, //{
+      //cacheGroups: {
+        //commons: { test: /[\\/]node_modules[\\/]/, name: "common", chunks: "all" }
+      //}
+    //}
   },
   output: {
     filename: '[name].js',

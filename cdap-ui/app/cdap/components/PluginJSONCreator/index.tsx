@@ -14,17 +14,17 @@
  * the License.
  */
 
-import * as React from 'react';
-import { Redirect, Route, Switch } from 'react-router-dom';
-import Helmet from 'react-helmet';
 import Create from 'components/PluginJSONCreator/Create';
+import * as React from 'react';
+import Helmet from 'react-helmet';
+import { Redirect, Route, Switch } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { Theme } from 'services/ThemeHelper';
 
 export const basepath = '/ns/:namespace/plugincreation';
 
 const PluginJSONCreator: React.FC = () => {
-  const pageTitle = `${Theme.productName} | Plugin JSON`;
+  const pageTitle = `${Theme.productName} | Plugin json 8`;
 
   return (
     <React.Fragment>

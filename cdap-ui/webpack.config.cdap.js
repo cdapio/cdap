@@ -26,6 +26,7 @@ var TerserPlugin = require('terser-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
 
 // the clean options to use
 let cleanOptions = {
@@ -159,6 +160,7 @@ var rules = [
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
+          experimentalWatchApi: true
         },
       },
     ],
@@ -212,6 +214,7 @@ if (mode === 'development') {
         '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
     })
   );
+  plugins.push(new WebpackBundleAnalyzer.BundleAnalyzerPlugin());
 }
 
 var webpackConfig = {
@@ -242,7 +245,40 @@ var webpackConfig = {
   plugins: plugins,
   // TODO: Need to investigate this more.
   optimization: {
-    splitChunks: false,
+    splitChunks: {// { // false
+      chunks: 'all',
+      cacheGroups: {
+        // / node_modules /,
+        // / bower_components /,
+        // / packaged\/ public\/dist/,
+        // /packaged\/public\/c/,
+        // /packaged\/public\/common_dist/,
+        // /lib/,
+        // commons: {
+        //   test: /[\\/]node_modules[\\/]/,
+        //   name: 'common',
+        //   chunks: 'all',
+        //   reuseExistingChunk: true,
+        // },
+        materialui: {
+          test: /[\\/]node_modules[\\/](@material-ui)[\\/]/,
+          name: 'materialui',
+          chunks: 'all',
+          reuseExistingChunk: true,
+        },
+        react: {
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          name: 'react',
+          chunks: 'all',
+          reuseExistingChunk: true,
+        },
+        bower: { test: /[\\/]bower_components[\\/]/, name: "bower", chunks: "all", reuseExistingChunk: true },
+        dist: { test: /[\\/]packaged[\\/]public[\\/]dist[\\/]/, name: "dist", chunks: "all", reuseExistingChunk: true },
+        cdap_dist: { test: /[\\/]packaged[\\/]public[\\/]cdap_dist[\\/]/, name: "cdap_dist", chunks: "all", reuseExistingChunk: true },
+        common_dist: { test: /[\\/]packaged[\\/]public[\\/]common_dist[\\/]/, name: "common_dist", chunks: "all", reuseExistingChunk: true },
+        lib: { test: /[\\/]lib[\\/]/, name: "lib", chunks: "all", reuseExistingChunk: true },
+      }
+    },
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.scss'],

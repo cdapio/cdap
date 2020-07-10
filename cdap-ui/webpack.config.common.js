@@ -134,9 +134,20 @@ var webpackConfig = {
   mode: isModeProduction(mode) ? 'production' : 'development',
   context: __dirname + '/app/common',
   optimization: {
-    splitChunks: {
-      minChunks: Infinity,
-    },
+    splitChunks: false,//{
+      //cacheGroups: {
+        /*
+        /packaged\/public\/dist/,
+        /packaged\/public\/cdap_dist/,
+        /packaged\/public\/common_dist/,
+        /lib/,
+        */
+        // commons: { test: /[\\/]node_modules[\\/]/, name: "common", chunks: "all" },
+        // commons: { test: /[\\/]bower_components[\\/]/, name: "common", chunks: "all" },
+        // commons: { test: /[\\/]lib[\\/]/, name: "common", chunks: "all" },
+        // commons: { test: /[\\/]node_modules[\\/]/, name: "common", chunks: "all" },
+      //}
+    //},
   },
   entry: {
     'common-new': ['./cask-shared-components.js'],
