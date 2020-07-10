@@ -21,6 +21,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyMetadataApi } from 'api/metadata';
 import { Theme } from 'services/ThemeHelper';
 import { IContextState, ITimeType } from 'components/FieldLevelLineage/v2/Context/FllContext';
+import T from 'i18n-react';
 
 // types for backend response
 interface IFllEntity {
@@ -268,12 +269,20 @@ export function getTimeRangeFromUrl() {
   return { selection, range: TIME_OPTIONS_MAP[selection] };
 }
 
+// Currently we are just measuring the size of the response. This will be updated once
+// there is proper pagination for the FLL response from backend. This limit is approximately
+// 1500 fields going into 1500 fields
+function isFLLResponseTooLarge(response) {
+  const CHARACTER_LIMIT = 50000;
+  const stringifiedResponse = JSON.stringify(response);
+  return stringifiedResponse.length > CHARACTER_LIMIT;
+}
+
 export function getFieldLineage(
   namespace: string,
   dataset: string,
   qParams: IQueryParams | null,
-  timeParams: ITimeParams,
-  cb: (lineage: IContextState) => void
+  timeParams: ITimeParams
 ) {
   let fieldname: string;
   let activeField: IField;
@@ -300,7 +309,11 @@ export function getFieldLineage(
     end,
   };
 
-  MyMetadataApi.getAllFieldLineage(params).subscribe((res) => {
+  return MyMetadataApi.getAllFieldLineage(params).map((res) => {
+    if (isFLLResponseTooLarge(res)) {
+      throw new Error(T.translate('features.FieldLevelLineage.Error.lineageTooLarge').toString());
+    }
+
     const parsedRes = getFieldsAndLinks(res);
     const targetInfo: IContextState = {
       target: res.entityId.dataset,
@@ -317,7 +330,8 @@ export function getFieldLineage(
       activeOpsIndex: 0,
       loadingOps: false,
     };
-    cb(targetInfo);
+
+    return targetInfo;
   });
 }
 
