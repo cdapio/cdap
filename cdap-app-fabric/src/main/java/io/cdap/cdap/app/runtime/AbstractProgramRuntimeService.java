@@ -85,7 +85,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -456,7 +458,9 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   protected void startUp() throws Exception {
-    executor = Executors.newCachedThreadPool(new ThreadFactoryBuilder().setNameFormat("program-start-%d").build());
+    int poolSize = cConf.getInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS);
+    executor = new ThreadPoolExecutor(0, poolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+                                      new ThreadFactoryBuilder().setNameFormat("program-start-%d").build());
   }
 
   @Override

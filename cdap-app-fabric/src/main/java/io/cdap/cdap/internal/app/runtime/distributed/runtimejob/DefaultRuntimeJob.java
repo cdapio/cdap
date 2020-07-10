@@ -381,14 +381,15 @@ public class DefaultRuntimeJob implements RuntimeJob {
 
     services.add(injector.getInstance(LogAppenderLoaderService.class));
 
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    services.add(metricsCollectionService);
-
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);
     }
     services.add(injector.getInstance(MessagingHttpService.class));
+
+    // Metrics need TMS, hence start it after TMS.
+    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
+    services.add(metricsCollectionService);
 
     // Starts the traffic relay if monitoring is done through SSH tunnel
     if (injector.getInstance(RuntimeMonitorType.class) == RuntimeMonitorType.SSH) {
