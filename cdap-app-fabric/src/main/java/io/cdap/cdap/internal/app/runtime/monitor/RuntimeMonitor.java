@@ -139,20 +139,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   @Override
   protected void doShutdown() {
-    // Make sure the remote process is gone.
-    // Give 10 seconds for the remote process to shutdown. After 10 seconds, issues a kill.
-    RetryStrategy retryStrategy = RetryStrategies.timeLimit(10, TimeUnit.SECONDS, getRetryStrategy());
-    try {
-      Retries.runWithRetries(remoteProcessController::isRunning, retryStrategy, Exception.class::isInstance);
-    } catch (Exception e) {
-      LOG.info("Force termination of remote process for program run {}", programRunId);
-      try {
-        remoteProcessController.kill();
-      } catch (Exception ex) {
-        LOG.warn("Failed to force terminate remote process for program run {}", programRunId);
-      }
-    }
-
     for (Service service : Lists.reverse(extraServices)) {
       try {
         service.stopAndWait();
@@ -406,6 +392,29 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
   private void triggerRuntimeShutdown() {
     LOG.debug("Program run {} completed at {}, shutting down remote runtime.", programRunId, programFinishTime);
 
+    // Request remote runtime to shutdown
+    try {
+      monitorClient.requestShutdown();
+
+      // Make sure the remote process is gone.
+      // Give 10 seconds for the remote process to shutdown. After 10 seconds, issues a kill.
+      RetryStrategy retryStrategy = RetryStrategies.timeLimit(10, TimeUnit.SECONDS,
+                                                              RetryStrategies.fixDelay(1, TimeUnit.SECONDS));
+      Retries.runWithRetries(() -> {
+        if (remoteProcessController.isRunning()) {
+          throw new IllegalStateException("Remote process for " + programRunId + " is still running");
+        }
+      }, retryStrategy, Exception.class::isInstance);
+    } catch (Exception e) {
+      // If there is exception, use the remote execution controller to try killing the remote process
+      try {
+        LOG.debug("Force termination of remote process for program run {}", programRunId);
+        remoteProcessController.kill();
+      } catch (Exception ex) {
+        LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
+      }
+    }
+
     // Publish all cached program state messages
     if (!lastProgramStateMessages.isEmpty()) {
       String topicConfig = Constants.AppFabric.PROGRAM_STATUS_EVENT_TOPIC;
@@ -416,18 +425,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
         AppMetadataStore store = AppMetadataStore.create(context);
         publish(topicConfig, topic, lastProgramStateMessages, store);
       }), getRetryStrategy());
-    }
-
-    // Request remote runtime to shutdown
-    try {
-      monitorClient.requestShutdown();
-    } catch (Exception e) {
-      // If there is exception, use the remote execution controller to try killing the remote process
-      try {
-        remoteProcessController.kill();
-      } catch (Exception ex) {
-        LOG.warn("Failed to terminate remote process for program run {}", programRunId, ex);
-      }
     }
   }
 

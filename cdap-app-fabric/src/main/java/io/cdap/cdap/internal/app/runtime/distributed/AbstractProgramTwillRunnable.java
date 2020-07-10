@@ -506,9 +506,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
   private Deque<Service> createCoreServices(Injector injector, ProgramOptions programOptions) {
     Deque<Service> services = new LinkedList<>();
 
-    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
-    services.add(metricsCollectionService);
     services.add(injector.getInstance(LogAppenderLoaderService.class));
+
+    MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
 
     switch (ProgramRunners.getClusterMode(programOptions)) {
       case ON_PREMISE:
@@ -520,6 +520,9 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
       default:
         // This shouldn't happen. Just do nothing.
     }
+
+    // Starts the metrics after TMS is started since metrics are published to TMS
+    services.add(metricsCollectionService);
 
     return services;
   }
