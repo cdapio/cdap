@@ -15,7 +15,7 @@
  */
 
 import React from 'react';
-import { objectQuery, parseQueryString } from 'services/helpers';
+import { objectQuery, parseQueryString, extractErrorMessage } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import {
   fetchUnrelatedFields,
@@ -37,6 +37,7 @@ import {
   getOperations,
   IOperationSummary,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
+import T from 'i18n-react';
 
 const defaultContext: IContextState = {
   target: '',
@@ -52,6 +53,7 @@ const defaultContext: IContextState = {
   activeOpsIndex: 0,
   loadingOps: false,
   loadingLineage: true,
+  error: null,
 };
 
 export const FllContext = React.createContext<IContextState>(defaultContext);
@@ -86,6 +88,7 @@ export interface IContextState {
   firstCause?: number;
   firstImpact?: number;
   firstField?: number;
+  error?: string;
   setTimeRange?: (range: string) => void;
   setCustomTimeRange?: ({ start, end }) => void;
   toggleOperations?: (direction?: string) => void;
@@ -193,26 +196,62 @@ export class Provider extends React.Component<{ children }, IContextState> {
   private fetchFieldLineage(qParams, timeParams, dataset = this.state.target) {
     this.setState({ loadingLineage: true });
     const namespace = getCurrentNamespace();
-    const updateState = (newState: IContextState) => {
-      // If no field selected, grab the first field with lineage
-      if (!newState.activeField.id && newState.targetFields.fields.length > 0) {
-        newState.activeField = {
-          id: newState.targetFields.fields[0].id,
-          name: newState.targetFields.fields[0].name,
-        };
+
+    let isFetched = false;
+    let timeout;
+
+    const fetching$ = getFieldLineage(namespace, dataset, qParams, timeParams).subscribe(
+      (newState: IContextState) => {
+        isFetched = true;
+        clearTimeout(timeout);
+
+        // If no field selected, grab the first field with lineage
+        if (!newState.activeField.id && newState.targetFields.fields.length > 0) {
+          newState.activeField = {
+            id: newState.targetFields.fields[0].id,
+            name: newState.targetFields.fields[0].name,
+          };
+        }
+
+        const activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
+        const activeSets = this.getActiveSets(activeLinks);
+
+        newState.activeLinks = activeLinks;
+        newState.activeCauseSets = activeSets.activeCauseSets;
+        newState.activeImpactSets = activeSets.activeImpactSets;
+        newState.loadingLineage = false;
+        newState.error = null;
+
+        this.setState(newState);
+      },
+      (err) => {
+        isFetched = true;
+        clearTimeout(timeout);
+
+        const errorMessage =
+          err instanceof Error ? err.message : JSON.stringify(extractErrorMessage(err));
+        this.setState({
+          error: errorMessage,
+          target: dataset,
+          loadingLineage: false,
+        });
+      }
+    );
+
+    const MAX_FLL_FETCH_TIME = 20000;
+
+    timeout = setTimeout(() => {
+      if (isFetched) {
+        return;
       }
 
-      const activeLinks = this.getActiveLinks(newState.activeField.id, newState.links);
-      const activeSets = this.getActiveSets(activeLinks);
-
-      newState.activeLinks = activeLinks;
-      newState.activeCauseSets = activeSets.activeCauseSets;
-      newState.activeImpactSets = activeSets.activeImpactSets;
-
-      newState.loadingLineage = false;
-      this.setState(newState);
-    };
-    getFieldLineage(namespace, dataset, qParams, timeParams, updateState);
+      fetching$.unsubscribe();
+      this.setState({
+        error: T.translate('features.FieldLevelLineage.Error.lineageTooLarge').toString(),
+        target: dataset,
+        loadingLineage: false,
+      });
+    }, MAX_FLL_FETCH_TIME);
   }
 
   private updateLineageFromRange(selection: string, start: ITimeType, end: ITimeType) {
@@ -358,6 +397,7 @@ export class Provider extends React.Component<{ children }, IContextState> {
     firstField: 1,
     showOperations: false,
     activeOpsIndex: 0,
+    error: null,
     handleFieldClick: this.handleFieldClick,
     handleViewCauseImpact: this.handleViewCauseImpact,
     handleReset: this.handleReset,
