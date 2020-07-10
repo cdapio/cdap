@@ -185,6 +185,10 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     if (status == null) {
       throw new NotFoundException(applicationId);
     }
+    if (status.getStatus() == PreviewStatus.Status.WAITING) {
+      status = new PreviewStatus(status.getStatus(), status.getThrowable(), status.getStartTime(),
+                                 status.getEndTime(), status.getPositionInWaitingQueue());
+    }
     return status;
   }
 
