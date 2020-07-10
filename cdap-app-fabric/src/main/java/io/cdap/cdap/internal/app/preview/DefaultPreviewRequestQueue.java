@@ -72,6 +72,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
       if (previewRequest == null) {
         return Optional.empty();
       }
+      queueSize.decrementAndGet();
 
       if (isTimedOut(previewRequest)) {
         LOG.warn("Preview request wth application id {} is timed out. Ignoring it.",
@@ -82,26 +83,25 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
       try {
         previewStore.setPreviewRequestPollerInfo(previewRequest.getProgram().getParent(), pollerInfo);
       } catch (ConflictException e) {
-        LOG.debug("Preview application with id {} is not present in WAITING state. Ignoring the preview.",
-                  previewRequest.getProgram().getParent());
+        LOG.debug("Not running the preview. {}", e.getMessage());
         continue;
       } catch (Exception e) {
         LOG.warn("Error while setting the poller info for preview request with application id {}. Trying again",
                  previewRequest.getProgram().getParent(), e);
         requestQueue.addFirst(previewRequest);
+        queueSize.incrementAndGet();
         continue;
       }
 
-      queueSize.decrementAndGet();
       return Optional.of(previewRequest);
     }
   }
 
   @Override
-  public void add(PreviewRequest previewRequest) {
+  public synchronized void add(PreviewRequest previewRequest) {
     if (queueSize.intValue() >= capacity) {
-      throw new IllegalStateException(String.format("Preview request waiting queue is full with %d requests.",
-                                                    queueSize.intValue()));
+      throw new IllegalStateException(String.format("Preview request queue is full with %d requests. " +
+                                                      "Please try again later.", queueSize.intValue()));
     }
     previewStore.add(previewRequest.getProgram().getParent(), previewRequest.getAppRequest());
     requestQueue.add(previewRequest);

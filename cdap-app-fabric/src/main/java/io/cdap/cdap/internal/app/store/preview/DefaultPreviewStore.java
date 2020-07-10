@@ -288,9 +288,13 @@ public class DefaultPreviewStore implements PreviewStore {
     }
     removeFromWaitingState(applicationId);
     PreviewStatus previewStatus = getPreviewStatus(applicationId);
-    if (previewStatus == null || previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
+    if (previewStatus == null) {
+      throw new ConflictException(String.format("Preview application with id %s does not exist.", applicationId));
+    }
+    if (previewStatus.getStatus() != PreviewStatus.Status.WAITING) {
       throw new ConflictException(String.format("Preview application with id %s does not exist in the " +
-                                                  "waiting state.", applicationId));
+                                                  "waiting state. Its current state is %s", applicationId,
+                                                previewStatus.getStatus().name()));
     }
     setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, null, null, null));
   }

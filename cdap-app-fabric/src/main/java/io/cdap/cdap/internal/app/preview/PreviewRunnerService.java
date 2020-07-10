@@ -67,6 +67,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
 
   @Override
   protected void triggerShutdown() {
+    LOG.debug("Shutting down preview runner service");
     Cancellable cancellable = cancelPreview.getAndSet(DUMMY_CANCELLABLE);
     stopLatch.countDown();
     if (cancellable != null) {
@@ -124,7 +125,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     try {
       previewRunner.stopPreview(request.getProgram());
     } catch (Exception e) {
-      LOG.error("Failed to stop preview for {}", request.getProgram());
+      LOG.error("Failed to stop preview for {}", request.getProgram(), e);
     }
   }
 
