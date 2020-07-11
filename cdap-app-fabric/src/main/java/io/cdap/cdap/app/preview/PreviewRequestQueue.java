@@ -51,7 +51,7 @@ public interface PreviewRequestQueue {
    * When used in multi-threaded environment, return value depends on the snapshot
    * of the queue taken when this method is called.
    * @param applicationId application id
-   * @return -1 if application id does not exist
+   * @return 0 if application id does not exist
    */
   int positionOf(ApplicationId applicationId);
 }
