@@ -14,16 +14,16 @@
  * the License.
  */
 
-import * as React from 'react';
+import EmptyMessageContainer from 'components/EmptyMessageContainer';
+import If from 'components/If';
 import PipelineTableRow from 'components/PipelineList/DeployedPipelineView/PipelineTable/PipelineTableRow';
-import { connect } from 'react-redux';
-import T from 'i18n-react';
+import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
+import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 import EmptyList, { VIEW_TYPES } from 'components/PipelineList/EmptyList';
-import { Actions } from 'components/PipelineList/DeployedPipelineView/store';
-import EmptyMessageContainer from 'components/EmptyMessageContainer';
-import SortableHeader from 'components/PipelineList/DeployedPipelineView/PipelineTable/SortableHeader';
-import If from 'components/If';
+import T from 'i18n-react';
+import * as React from 'react';
+import { connect } from 'react-redux';
 import './PipelineTable.scss';
 
 interface IProps {

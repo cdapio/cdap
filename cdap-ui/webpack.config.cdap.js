@@ -249,7 +249,7 @@ var webpackConfig = {
     runtimeChunk: {
       name: "manifest",
     },
-    splitChunks: {// { // false
+    splitChunks: {
       cacheGroups: {
         vendor: {
           name: "node_vendors", // part of the bundle name and
