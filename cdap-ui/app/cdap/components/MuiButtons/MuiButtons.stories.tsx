@@ -32,7 +32,8 @@ storiesOf('Material Buttons', module)
     })(() => (
       <PrimaryButton
         aria-label={ text('Aria Label', 'aria label for button') }
-        disabled={ boolean('Disabled', false) }>
+        disabled={ boolean('Disabled', false) }
+        onClick={ action('clicked') }>
         { text('Label', 'Primary action button') }
       </PrimaryButton>
     ))
