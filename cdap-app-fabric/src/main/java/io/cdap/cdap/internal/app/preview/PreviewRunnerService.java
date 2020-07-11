@@ -53,6 +53,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private final RetryStrategy retryStrategy;
   private final CountDownLatch stopLatch;
   private final AtomicReference<Cancellable> cancelPreview;
+  private volatile boolean triggerredShutDown;
 
   public PreviewRunnerService(CConfiguration cConf, PreviewRunner previewRunner,
                               PreviewRequestFetcher previewRequestFetcher) {
@@ -68,7 +69,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   @Override
   protected void triggerShutdown() {
     LOG.debug("Shutting down preview runner service");
-    Cancellable cancellable = cancelPreview.getAndSet(DUMMY_CANCELLABLE);
+    triggerredShutDown = true;
+    Cancellable cancellable = cancelPreview.get();
     stopLatch.countDown();
     if (cancellable != null) {
       cancellable.cancel();
@@ -96,9 +98,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
         runs++;
         Future<PreviewRequest> future = previewRunner.startPreview(request);
 
-        // If the cancelPreview was not null, this means the triggerShutdown was called while the
-        // startPreview was call. If that's the case, stop the preview.
-        if (cancelPreview.compareAndSet(null, () -> stopPreview(request))) {
+        if (!triggerredShutDown) {
+          cancelPreview.set(() -> stopPreview(request));
           waitForCompletion(request, future);
         } else {
           stopPreview(request);
