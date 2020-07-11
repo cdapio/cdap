@@ -245,39 +245,85 @@ var webpackConfig = {
   plugins: plugins,
   // TODO: Need to investigate this more.
   optimization: {
+    moduleIds: "hashed",
+    runtimeChunk: {
+      name: "manifest",
+    },
     splitChunks: {// { // false
-      chunks: 'all',
       cacheGroups: {
-        // / node_modules /,
-        // / bower_components /,
-        // / packaged\/ public\/dist/,
-        // /packaged\/public\/c/,
-        // /packaged\/public\/common_dist/,
-        // /lib/,
-        // commons: {
-        //   test: /[\\/]node_modules[\\/]/,
-        //   name: 'common',
-        //   chunks: 'all',
-        //   reuseExistingChunk: true,
-        // },
-        materialui: {
-          test: /[\\/]node_modules[\\/](@material-ui)[\\/]/,
-          name: 'materialui',
-          chunks: 'all',
-          reuseExistingChunk: true,
+        vendor: {
+          name: "node_vendors", // part of the bundle name and
+          // can be used in chunks array of HtmlWebpackPlugin
+          test: /[\\/]node_modules[\\/]/,
+          chunks: "all",
         },
-        react: {
-          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-          name: 'react',
-          chunks: 'all',
-          reuseExistingChunk: true,
-        },
-        bower: { test: /[\\/]bower_components[\\/]/, name: "bower", chunks: "all", reuseExistingChunk: true },
-        dist: { test: /[\\/]packaged[\\/]public[\\/]dist[\\/]/, name: "dist", chunks: "all", reuseExistingChunk: true },
-        cdap_dist: { test: /[\\/]packaged[\\/]public[\\/]cdap_dist[\\/]/, name: "cdap_dist", chunks: "all", reuseExistingChunk: true },
-        common_dist: { test: /[\\/]packaged[\\/]public[\\/]common_dist[\\/]/, name: "common_dist", chunks: "all", reuseExistingChunk: true },
-        lib: { test: /[\\/]lib[\\/]/, name: "lib", chunks: "all", reuseExistingChunk: true },
       }
+      // cacheGroups: {
+      //   // / node_modules /,
+      //   // / bower_components /,
+      //   // / packaged\/ public\/dist/,
+      //   // /packaged\/public\/c/,
+      //   // /packaged\/public\/common_dist/,
+      //   // /lib/,
+      //   // commons: {
+      //   //   test: /[\\/]node_modules[\\/]/,
+      //   //   name: 'common',
+      //   //   chunks: 'all',
+      //   //   reuseExistingChunk: true,
+      //   // },
+      //   materialui: {
+      //     test: /[\\/]node_modules[\\/](@material-ui)[\\/]/,
+      //     name: 'materialui',
+      //     chunks: 'all',
+      //     reuseExistingChunk: true,
+      //   },
+      //   react: {
+      //     test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+      //     name: 'react',
+      //     chunks: 'all',
+      //     reuseExistingChunk: true,
+      //   },
+      //   // common: {
+      //   //   test: / [\\/](*)[\\/]components[\\/]/,
+      //   //   chunks: "all",
+      //   //   minSize: 0,
+      //   // },
+      //   components: {
+      //     test: /[\\/]app[\\/]cdap[\\/]components[\\/]/,
+      //     name: 'components',
+      //     chunks: 'all',
+      //   },
+      //   services: {
+      //     test: /[\\/]app[\\/]cdap[\\/]services[\\/]/,
+      //     name: 'services',
+      //     chunks: 'all',
+      //   },
+      //   api: {
+      //     test: /[\\/]app[\\/]cdap[\\/]api[\\/]/,
+      //     name: 'api',
+      //     chunks: 'all',
+      //   },
+      //   wrangler: {
+      //     test: /[\\/]app[\\/]cdap[\\/]wrangler[\\/]/,
+      //     name: 'wrangler',
+      //     chunks: 'all',
+      //   },
+      //   styles: {
+      //     test: /[\\/]app[\\/]cdap[\\/]styles[\\/]/,
+      //     name: 'styles',
+      //     chunks: 'all',
+      //   },
+      //   // components: __dirname + '/app/cdap/components',
+      //   // services: __dirname + '/app/cdap/services',
+      //   // api: __dirname + '/app/cdap/api',
+      //   // wrangler: __dirname + '/app/wrangler',
+      //   // styles: __dirname + '/app/cdap/styles',
+      //   bower: { test: /[\\/]bower_components[\\/]/, name: "bower", chunks: "all", reuseExistingChunk: true },
+      //   dist: { test: /[\\/]packaged[\\/]public[\\/]dist[\\/]/, name: "dist", chunks: "all", reuseExistingChunk: true },
+      //   //cdap_dist: { test: /[\\/]packaged[\\/]public[\\/]cdap_dist[\\/]/, name: "cdap_dist", chunks: "all", reuseExistingChunk: true },
+      //   common_dist: { test: /[\\/]packaged[\\/]public[\\/]common_dist[\\/]/, name: "common_dist", chunks: "all", reuseExistingChunk: true },
+      //   lib: { test: /[\\/]lib[\\/]/, name: "lib", chunks: "all", reuseExistingChunk: true },
+      // }
     },
   },
   resolve: {
