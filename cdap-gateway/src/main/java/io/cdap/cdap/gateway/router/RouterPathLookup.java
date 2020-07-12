@@ -17,13 +17,14 @@
 package io.cdap.cdap.gateway.router;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.http.AbstractHttpHandler;
 import io.netty.handler.codec.http.HttpRequest;
-import org.apache.commons.lang.StringUtils;
 
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 
 /**
@@ -63,7 +64,9 @@ public final class RouterPathLookup extends AbstractHttpHandler {
     try {
       String method = httpRequest.method().name();
       AllowedMethod requestMethod = AllowedMethod.valueOf(method);
-      String[] uriParts = StringUtils.split(requestPath, '/');
+      String[] uriParts = StreamSupport
+        .stream(Splitter.on('/').omitEmptyStrings().split(requestPath).spliterator(), false)
+        .toArray(String[]::new);
 
       if (uriParts[0].equals(Constants.Gateway.API_VERSION_3_TOKEN)) {
         return getV3RoutingService(uriParts, requestMethod);

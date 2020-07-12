@@ -93,6 +93,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>

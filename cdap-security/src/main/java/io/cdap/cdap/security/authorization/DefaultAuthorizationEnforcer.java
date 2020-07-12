@@ -28,13 +28,13 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
-import org.apache.commons.lang.time.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -84,16 +84,12 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
 
     Set<? extends EntityId> difference = Sets.difference(entityIds, visibleEntities);
     LOG.trace("Checking visibility of {} for principal {}.", difference, principal);
-    // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
-    // singleton we don't want the stopwatch instance to get re-used across multiple calls.
-    StopWatch watch = new StopWatch();
-    watch.start();
     Set<? extends EntityId> moreVisibleEntities;
+    long startTime = System.nanoTime();
     try {
       moreVisibleEntities = authorizerInstantiator.get().isVisible(difference, principal);
     } finally {
-      watch.stop();
-      long timeTaken = watch.getTime();
+      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       String logLine = "Checked visibility of {} for principal {}. Time spent in visibility check was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
         LOG.warn(logLine,  difference, principal, timeTaken);
@@ -112,20 +108,16 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
       return;
     }
     LOG.trace("Enforcing actions {} on {} for principal {}.", actions, entity, principal);
-    // create new stopwatch instance every time enforce is called since the DefaultAuthorizationEnforcer is binded as
-    // singleton we don't want the stopwatch instance to get re-used across multiple calls.
-    StopWatch watch = new StopWatch();
-    watch.start();
+    long startTime = System.nanoTime();
     try {
       authorizerInstantiator.get().enforce(entity, principal, actions);
     } finally {
-      watch.stop();
-      long timeTaken = watch.getTime();
+      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
       String logLine = "Enforced actions {} on {} for principal {}. Time spent in enforcement was {} ms.";
       if (timeTaken > logTimeTakenAsWarn) {
-        LOG.warn(logLine, actions, entity, principal, watch.getTime());
+        LOG.warn(logLine, actions, entity, principal, timeTaken);
       } else {
-        LOG.trace(logLine, actions, entity, principal, watch.getTime());
+        LOG.trace(logLine, actions, entity, principal, timeTaken);
       }
     }
   }

@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.server;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
@@ -27,7 +28,6 @@ import io.cdap.cdap.common.conf.Configuration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.ResolvingDiscoverable;
-import org.apache.commons.lang.StringUtils;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -165,7 +165,7 @@ public class ExternalAuthenticationServer extends AbstractIdleService {
       }
 
       String trustStorePath = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PATH);
-      if (StringUtils.isNotEmpty(trustStorePath)) {
+      if (!Strings.isNullOrEmpty(trustStorePath)) {
         String trustStorePassword =
           cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_PASSWORD);
         String trustStoreType = cConfiguration.get(Constants.Security.AuthenticationServer.SSL_TRUSTSTORE_TYPE,

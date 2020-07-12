@@ -25,7 +25,7 @@ import io.cdap.cdap.api.dataset.DatasetProperties;
 import io.cdap.cdap.api.dataset.DatasetSpecification;
 import io.cdap.cdap.api.dataset.IncompatibleUpdateException;
 import io.cdap.cdap.common.BadRequestException;
-import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.DatasetTypeMeta;
 import io.cdap.cdap.proto.id.DatasetId;
@@ -36,7 +36,6 @@ import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,27 +66,19 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/admin/exists")
   public void exists(HttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String instanceName) {
+                     @PathParam("name") String instanceName) throws Exception {
     propagateUserId(request);
     NamespaceId namespace = new NamespaceId(namespaceId);
-    try {
-      DatasetId instanceId = namespace.dataset(instanceName);
-      responder.sendJson(HttpResponseStatus.OK,
-                         GSON.toJson(new DatasetAdminOpResponse(datasetAdminService.exists(instanceId), null)));
-    } catch (NotFoundException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
-    } catch (Exception e) {
-      LOG.error(getAdminOpErrorMessage("exists", instanceName), e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("exists", instanceName));
-    }
+    DatasetId instanceId = namespace.dataset(instanceName);
+    responder.sendJson(HttpResponseStatus.OK,
+                       GSON.toJson(new DatasetAdminOpResponse(datasetAdminService.exists(instanceId), null)));
   }
 
   @POST
   @Path("/data/datasets/{name}/admin/create")
   public void create(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) {
+                     @PathParam("name") String name) throws Exception {
     propagateUserId(request);
     InternalDatasetCreationParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                          InternalDatasetCreationParams.class);
@@ -101,10 +92,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
       DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetCreationResponse response = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, null);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
-    } catch (BadRequestException | IllegalArgumentException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    } catch (IllegalArgumentException e) {
+      throw new BadRequestException(e.getMessage());
     }
   }
 
@@ -112,7 +101,7 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
   @Path("/data/datasets/{name}/admin/update")
   public void update(FullHttpRequest request, HttpResponder responder,
                      @PathParam("namespace-id") String namespaceId,
-                     @PathParam("name") String name) {
+                     @PathParam("name") String name) throws Exception {
     propagateUserId(request);
     InternalDatasetUpdateParams params = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
                                                        InternalDatasetUpdateParams.class);
@@ -128,15 +117,8 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
       DatasetId instanceId = new DatasetId(namespaceId, name);
       DatasetCreationResponse response = datasetAdminService.createOrUpdate(instanceId, typeMeta, props, existing);
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(response));
-    } catch (NotFoundException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
-    } catch (BadRequestException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
     } catch (IncompatibleUpdateException e) {
-      responder.sendString(HttpResponseStatus.CONFLICT, e.getMessage());
-    } catch (Exception e) {
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+      throw new ConflictException(e.getMessage());
     }
   }
 
@@ -154,54 +136,30 @@ public class DatasetAdminOpHTTPHandler extends AbstractHttpHandler {
     DatasetSpecification spec = params.getInstanceSpec();
     DatasetTypeMeta typeMeta = params.getTypeMeta();
 
-    try {
-      datasetAdminService.drop(new DatasetId(namespaceId, instanceName), typeMeta, spec);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
-    } catch (BadRequestException e) {
-      responder.sendString(HttpResponseStatus.BAD_REQUEST, e.getMessage());
-    }
+    datasetAdminService.drop(new DatasetId(namespaceId, instanceName), typeMeta, spec);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(spec));
   }
 
   @POST
   @Path("/data/datasets/{name}/admin/truncate")
   public void truncate(HttpRequest request, HttpResponder responder,
                        @PathParam("namespace-id") String namespaceId,
-                       @PathParam("name") String instanceName) {
+                       @PathParam("name") String instanceName) throws Exception {
     propagateUserId(request);
-    try {
-      DatasetId instanceId = new DatasetId(namespaceId, instanceName);
-      datasetAdminService.truncate(instanceId);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
-    } catch (NotFoundException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
-    } catch (Exception e) {
-      LOG.error(getAdminOpErrorMessage("truncate", instanceName), e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("truncate", instanceName));
-    }
+    DatasetId instanceId = new DatasetId(namespaceId, instanceName);
+    datasetAdminService.truncate(instanceId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
   }
 
   @POST
   @Path("/data/datasets/{name}/admin/upgrade")
   public void upgrade(HttpRequest request, HttpResponder responder,
                       @PathParam("namespace-id") String namespaceId,
-                      @PathParam("name") String instanceName) {
+                      @PathParam("name") String instanceName) throws Exception {
     propagateUserId(request);
-    try {
-      DatasetId instanceId = new DatasetId(namespaceId, instanceName);
-      datasetAdminService.upgrade(instanceId);
-      responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
-    } catch (NotFoundException e) {
-      LOG.debug("Got handler exception", e);
-      responder.sendString(HttpResponseStatus.NOT_FOUND, StringUtils.defaultIfEmpty(e.getMessage(), ""));
-    } catch (Exception e) {
-      LOG.error(getAdminOpErrorMessage("upgrade", instanceName), e);
-      responder.sendString(HttpResponseStatus.INTERNAL_SERVER_ERROR, getAdminOpErrorMessage("upgrade", instanceName));
-    }
-  }
-
-  private String getAdminOpErrorMessage(String opName, String instanceName) {
-    return String.format("Error executing admin operation %s for dataset instance %s", opName, instanceName);
+    DatasetId instanceId = new DatasetId(namespaceId, instanceName);
+    datasetAdminService.upgrade(instanceId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(new DatasetAdminOpResponse(null, null)));
   }
 
   // propagate user id from the HTTP Request in the current thread

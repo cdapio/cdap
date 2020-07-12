@@ -26,11 +26,11 @@ import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenIdentifier;
 import io.cdap.cdap.security.auth.TokenManager;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -133,7 +133,7 @@ public class GrantAccessToken {
 
     // Set response body
     JsonObject json = new JsonObject();
-    byte[] encodedIdentifier = Base64.encodeBase64(tokenCodec.encode(token));
+    byte[] encodedIdentifier = Base64.getEncoder().encode(tokenCodec.encode(token));
     json.addProperty(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN,
                      new String(encodedIdentifier, Charsets.UTF_8));
     json.addProperty(ExternalAuthenticationServer.ResponseFields.TOKEN_TYPE,
