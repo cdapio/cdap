@@ -25,8 +25,8 @@ import org.junit.rules.TemporaryFolder;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Type;
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -130,7 +130,7 @@ public class LogPipelineCheckTest {
     ClassReader cr = new ClassReader(cls.getName());
     ClassWriter cw = new ClassWriter(0);
     final String oldTypeName = Type.getInternalName(cls);
-    cr.accept(new RemappingClassAdapter(cw, new Remapper() {
+    cr.accept(new ClassRemapper(cw, new Remapper() {
       @Override
       public String mapType(String type) {
         return oldTypeName.equals(type) ? newClassName : type;
