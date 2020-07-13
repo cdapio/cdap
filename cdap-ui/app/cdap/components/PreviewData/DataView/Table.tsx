@@ -42,12 +42,6 @@ export const styles = (theme): StyleRules => ({
     width: 'fit-content',
     minWidth: '100%',
   },
-  recordContainer: {
-    width: '100%',
-  },
-  table: {
-    width: '100%',
-  },
   row: {
     height: 40,
     '&.oddRow': {
@@ -58,30 +52,22 @@ export const styles = (theme): StyleRules => ({
   headerRow: {
     backgroundColor: theme.palette.grey['300'],
     fontWeight: 500,
-  },
-  headerCell: {
     color: theme.palette.common.white,
     fontSize: 14,
   },
   cell: {
-    textAlign: 'center',
+    textAlign: 'left',
     height: '40px',
     lineHeight: '40px',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    padding: '0px 10px',
   },
-  recordCell: {
-    width: '50%',
-    padding: '0px 5px',
-    '&:first-of-type': {
-      borderRight: `1px solid ${theme.palette.grey['500']}`,
-      fontWeight: 500,
-    },
-  },
+
+  // TO DO: Currently the width is fixed. Future plan is to let users vary the column widths
   tableCell: {
     width: '120px',
     borderLeft: `1px solid ${theme.palette.grey['500']}`,
-    padding: '0px 5px',
     flexGrow: 1,
   },
   indexCell: {
@@ -181,17 +167,14 @@ const DataTableView: React.FC<IDataTableProps> = ({
             justify="space-evenly"
             className={classes.headerRow}
           >
-            <Grid
-              item
-              className={classnames(classes.headerCell, classes.cell, classes.indexCell)}
-            />
+            <Grid item className={classnames(classes.cell, classes.indexCell)} />
             {headers.map((fieldName, i) => {
               const processedFieldName = format(fieldName);
               return (
                 <Grid
                   item
                   key={`header-cell-${i}`}
-                  className={classnames(classes.cell, classes.headerCell, classes.tableCell)}
+                  className={classnames(classes.cell, classes.tableCell)}
                   title={processedFieldName}
                 >
                   {processedFieldName}

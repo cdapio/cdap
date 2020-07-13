@@ -19,20 +19,14 @@ import ConfigurableTab from 'components/ConfigurableTab';
 import { ITableData } from 'components/PreviewData';
 import RecordNavigator from 'components/PreviewData/RecordView/Navigator';
 import RecordTable from 'components/PreviewData/RecordView/RecordTable';
-import { messageTextStyle } from 'components/PreviewData/DataView/Table';
 import { INode } from 'components/PreviewData/utilities';
 import If from 'components/If';
-import { styles as tableStyles } from 'components/PreviewData/DataView/TableContainer';
+import { styles } from 'components/PreviewData/DataView/TableContainer';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordContainer';
-
-const styles = (theme): StyleRules => ({
-  ...tableStyles(theme),
-  messageText: messageTextStyle,
-});
 
 interface IRecordViewContainerProps extends WithStyles<typeof styles> {
   tableData: ITableData;

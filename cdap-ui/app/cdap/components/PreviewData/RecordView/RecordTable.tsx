@@ -19,9 +19,9 @@ import VirtualScroll from 'components/VirtualScroll';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
 import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
-import { styles } from 'components/PreviewData/DataView/Table';
+import { styles as tableStyles } from 'components/PreviewData/DataView/Table';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import Heading, { HeadingTypes } from 'components/Heading';
@@ -35,6 +35,20 @@ const visibleChildCount = 25;
 const childHeight = 40;
 // number of rows in dom but not in viewport
 const childrenUnderFold = 10;
+
+const styles = (theme): StyleRules => ({
+  ...tableStyles(theme),
+  recordCell: {
+    width: '50%',
+    '&:first-of-type': {
+      borderRight: `1px solid ${theme.palette.grey['500']}`,
+      fontWeight: 500,
+    },
+  },
+  recordContainer: {
+    width: '100%',
+  },
+});
 
 interface IRecordTableProps extends WithStyles<typeof styles> {
   headers?: string[];
@@ -139,10 +153,10 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
             alignItems="center"
             className={classes.headerRow}
           >
-            <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
+            <Grid item className={classnames(classes.cell, classes.recordCell)}>
               {T.translate(`${I18N_PREFIX}.fieldName`)}
             </Grid>
-            <Grid item className={classnames(classes.headerCell, classes.cell, classes.recordCell)}>
+            <Grid item className={classnames(classes.cell, classes.recordCell)}>
               {T.translate(`${I18N_PREFIX}.value`)}
             </Grid>
           </Grid>
