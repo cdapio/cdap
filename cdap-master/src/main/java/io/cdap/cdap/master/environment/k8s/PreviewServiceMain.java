@@ -38,6 +38,8 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
+import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -70,7 +72,14 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new PreviewHttpModule(),
-      new PreviewRunnerManagerModule(),
+      new PreviewRunnerManagerModule().getDistributedModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(PreviewRunStopper.class).toInstance(runnerId -> {
+          });
+        }
+      },
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
@@ -92,6 +101,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
             new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
           bind(TwillRunner.class).to(TwillRunnerService.class);
           bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+          bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> new byte[0]);
         }
       }
     );

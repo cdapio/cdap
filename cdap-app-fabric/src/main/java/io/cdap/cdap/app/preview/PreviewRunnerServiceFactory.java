@@ -16,10 +16,16 @@
 
 package io.cdap.cdap.app.preview;
 
-import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 
 /**
- * It is just a tagging interface for guice binding of {@link DefaultPreviewRunnerManager}.
+ * Factory for creating {@link PreviewRunnerService} instances.
  */
-public interface PreviewRunnerManager extends PreviewRunStopper {
+public interface PreviewRunnerServiceFactory {
+  /**
+   * Creates an instance of {@link PreviewRunnerService}.
+   * @param runner runner used by service to run preview
+   * @return an instance of {@link PreviewRunnerService}
+   */
+  PreviewRunnerService create(PreviewRunner runner);
 }

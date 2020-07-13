@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Log appender that publishes log messages to TMS.
  */
-public final class TMSLogAppender extends LogAppender {
+public class TMSLogAppender extends LogAppender {
 
   private static final String APPENDER_NAME = "TMSLogAppender";
 

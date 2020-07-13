@@ -18,6 +18,8 @@ package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.util.concurrent.AbstractExecutionThreadService;
 import com.google.common.util.concurrent.Uninterruptibles;
+import com.google.inject.Inject;
+import com.google.inject.assistedinject.Assisted;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -25,11 +27,13 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.proto.id.ApplicationId;
 import org.apache.twill.common.Cancellable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -52,9 +56,11 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private final RetryStrategy retryStrategy;
   private final CountDownLatch stopLatch;
   private final AtomicReference<Cancellable> cancelPreview;
+  private ApplicationId previewApp;
 
-  public PreviewRunnerService(CConfiguration cConf, PreviewRunner previewRunner,
-                              PreviewRequestFetcher previewRequestFetcher) {
+  @Inject
+  PreviewRunnerService(CConfiguration cConf, PreviewRequestFetcher previewRequestFetcher,
+                       @Assisted PreviewRunner previewRunner) {
     this.previewRunner = previewRunner;
     this.requestFetcher = previewRequestFetcher;
     this.pollDelayMillis = cConf.getLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS);
@@ -91,6 +97,8 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
           continue;
         }
 
+        previewApp = request.getProgram().getParent();
+
         runs++;
         Future<PreviewRequest> future = previewRunner.startPreview(request);
 
@@ -100,6 +108,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
           if (!future.isDone()) {
             stopPreview(request);
           }
+          previewApp = null;
         };
         if (this.cancelPreview.compareAndSet(null, cancelPreview)) {
           waitForCompletion(request, future, cancelPreview);
@@ -110,6 +119,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
       } catch (Exception e) {
         // This is a system error not caused by the app, hence log an error
         LOG.error("Failed to execute preview", e);
+        previewApp = null;
       }
     }
   }
@@ -140,6 +150,14 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
       LOG.debug("Preview for {} failed", request.getProgram(), e.getCause());
     } finally {
       this.cancelPreview.compareAndSet(cancelPreview, null);
+      previewApp = null;
     }
+  }
+
+  /**
+   * Optionally return the application id of the preview if it is currently being run by this service.
+   */
+  public Optional<ApplicationId> getPreviewApplication() {
+    return Optional.ofNullable(previewApp);
   }
 }

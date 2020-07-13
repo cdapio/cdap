@@ -24,9 +24,9 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.common.NotFoundException;
@@ -46,26 +46,28 @@ import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
-import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
-import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.tms.PreviewTMSLogAppender;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.guice.preview.PreviewSecureStoreModule;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
+import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -83,9 +85,9 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
   private final PreviewRunnerModule previewRunnerModule;
-  private final Map<String, PreviewRunnerService> previewPollers;
+  private final Set<PreviewRunnerService> previewRunnerServices;
   private final LevelDBTableService previewLevelDBTableService;
-  private final PreviewRequestFetcherFactory previewRequestFetcherFactory;
+  private final PreviewRunnerServiceFactory previewRunnerServiceFactory;
   private PreviewRunner runner;
 
   @Inject
@@ -97,7 +99,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
     TransactionSystemClient transactionSystemClient,
     @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-    PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory) {
+    PreviewRunnerModule previewRunnerModule, PreviewRunnerServiceFactory previewRunnerServiceFactory) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -106,16 +108,15 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.discoveryService = discoveryService;
     this.transactionSystemClient = transactionSystemClient;
     this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.CACHE_SIZE, 10);
-    this.previewPollers = new ConcurrentHashMap<>();
+    this.previewRunnerServices = ConcurrentHashMap.newKeySet();
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBTableService;
-    this.previewRequestFetcherFactory = previewRequestFetcherFactory;
+    this.previewRunnerServiceFactory = previewRunnerServiceFactory;
   }
 
   @Override
   protected void startUp() throws Exception {
     Injector previewInjector = createPreviewInjector();
-
     // Starts common services
     runner = previewInjector.getInstance(PreviewRunner.class);
     if (runner instanceof Service) {
@@ -124,21 +125,32 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
 
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
-      String pollerInfo = UUID.randomUUID().toString();
+      PreviewRunnerService pollerService = previewRunnerServiceFactory.create(runner);
 
-      PreviewRunnerService pollerService = new PreviewRunnerService(
-        previewCConf, previewInjector.getInstance(PreviewRunner.class),
-        previewRequestFetcherFactory.create(Bytes.toBytes(pollerInfo)));
+      pollerService.addListener(new ServiceListenerAdapter() {
+        @Override
+        public void terminated(State from) {
+          previewRunnerServices.remove(pollerService);
+          if (previewRunnerServices.isEmpty()) {
+            try {
+              stop();
+            } catch (Exception e) {
+              // should not happen
+              LOG.error("Failed to shutdown the preview runner manager service.", e);
+            }
+          }
+        }
+      }, Threads.SAME_THREAD_EXECUTOR);
 
       pollerService.startAndWait();
-      previewPollers.put(pollerInfo, pollerService);
+      previewRunnerServices.add(pollerService);
     }
   }
 
   @Override
   protected void shutDown() throws Exception {
     // Should stop the polling service, hence individual preview runs, before stopping the top level preview runner.
-    for (Service pollerService : previewPollers.values()) {
+    for (Service pollerService : previewRunnerServices) {
       stopQuietly(pollerService);
     }
 
@@ -156,17 +168,18 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   }
 
   @Override
-  public void stop(byte[] runnerId) throws Exception {
-    PreviewRunnerService service = previewPollers.get(Bytes.toString(runnerId));
-    if (service == null) {
-      throw new NotFoundException("Preview run cannot be stopped. Please try stopping again or start new preview run.");
+  public void stop(ApplicationId preview) throws Exception {
+    for (PreviewRunnerService previewRunnerService : previewRunnerServices) {
+      if (!preview.equals(previewRunnerService.getPreviewApplication().orElse(null))) {
+        continue;
+      }
+      PreviewRunnerService newService = previewRunnerServiceFactory.create(runner);
+      previewRunnerServices.add(newService);
+      previewRunnerService.stopAndWait();
+      newService.startAndWait();
+      return;
     }
-    service.stopAndWait();
-    String newRunnerId = UUID.randomUUID().toString();
-    PreviewRunnerService newService = new PreviewRunnerService(
-      previewCConf, runner, previewRequestFetcherFactory.create(Bytes.toBytes(newRunnerId)));
-    newService.startAndWait();
-    previewPollers.put(newRunnerId, newService);
+    throw new NotFoundException("Preview run cannot be stopped. Please try stopping again or start new preview run.");
   }
 
   /**
@@ -190,8 +203,13 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
       // save threads for reading metrics from TMS, as there won't be metrics in TMS.
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new LocalLogAppenderModule(),
-      new MessagingServerRuntimeModule().getInMemoryModules(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
+        }
+      },
+    new MessagingServerRuntimeModule().getInMemoryModules(),
       Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {
