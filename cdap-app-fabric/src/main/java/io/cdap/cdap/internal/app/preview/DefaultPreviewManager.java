@@ -30,6 +30,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
@@ -46,6 +47,8 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.Networks;
@@ -63,8 +66,11 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
+import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
+import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
@@ -90,7 +96,10 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.DefaultOwnerStore;
+import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
@@ -101,6 +110,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Class responsible for creating the injector for preview and starting it.
@@ -120,10 +131,13 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final LevelDBTableService previewLevelDBTableService;
   private final PreviewRequestQueue previewRequestQueue;
   private final PreviewStore previewStore;
-  private final PreviewRunnerServiceStopper previewRunnerServiceStopper;
+  private final PreviewRunStopper previewRunStopper;
   private final MessagingService messagingService;
   private Injector previewInjector;
-  private PreviewDataSubscriberService subscriberService;
+  private PreviewDataSubscriberService dataSubscriberService;
+  private PreviewTMSLogSubscriber logSubscriberService;
+  private LogAppender logAppender;
+  private MetricsCollectionService metricsCollectionService;
 
   @Inject
   DefaultPreviewManager(DiscoveryService discoveryService,
@@ -135,7 +149,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
                         @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
                         PreviewRequestQueue previewRequestQueue,
-                        PreviewRunnerServiceStopper previewRunnerServiceStopper, MessagingService messagingService) {
+                        PreviewRunStopper previewRunStopper, MessagingService messagingService) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -147,20 +161,34 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestQueue = previewRequestQueue;
     this.previewStore = new DefaultPreviewStore(previewLevelDBTableService);
-    this.previewRunnerServiceStopper = previewRunnerServiceStopper;
+    this.previewRunStopper = previewRunStopper;
     this.messagingService = messagingService;
   }
 
   @Override
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
-    subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
-    subscriberService.startAndWait();
+    StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class),
+                                    previewInjector.getInstance(StructuredTableRegistry.class), false);
+    metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.start();
+    logAppender = previewInjector.getInstance(LogAppender.class);
+    logAppender.start();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.PREVIEW_HTTP));
+    logSubscriberService = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
+    logSubscriberService.startAndWait();
+    dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
+    dataSubscriberService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
-    stopQuietly(subscriberService);
+    stopQuietly(dataSubscriberService);
+    stopQuietly(logSubscriberService);
+    logAppender.stop();
+    stopQuietly(metricsCollectionService);
     previewLevelDBTableService.close();
   }
 
@@ -208,12 +236,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
       previewStore.setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.KILLED, null, null, null));
       return;
     }
-    byte[] previewRequestPollerInfo = previewStore.getPreviewRequestPollerInfo(applicationId);
-    if (previewRequestPollerInfo == null) {
-      // should not happen
-      throw new IllegalStateException("Preview cannot be stopped. Please try stopping again or run the new preview.");
-    }
-    previewRunnerServiceStopper.stop(previewRequestPollerInfo);
+    previewRunStopper.stop(applicationId);
   }
 
   @Override
@@ -240,12 +263,16 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     return previewInjector.getInstance(LogReader.class);
   }
 
+  @Override
+  public Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo) {
+    return previewInjector.getInstance(PreviewRequestQueue.class).poll(pollerInfo);
+  }
+
   /**
    * Create injector for the given application id.
    */
   @VisibleForTesting
   Injector createPreviewInjector() {
-
     return Guice.createInjector(
       new ConfigModule(previewCConf, previewHConf, previewSConf),
       new PreviewDataModules().getDataFabricModule(transactionSystemClient, previewLevelDBTableService),
@@ -312,6 +339,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         @Override
         protected void configure() {
           bind(LevelDBTableService.class).toInstance(previewLevelDBTableService);
+          bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
         }
 
         @Provides
