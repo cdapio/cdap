@@ -14,16 +14,15 @@
  * the License.
  */
 
+
 package io.cdap.cdap.internal.app.preview;
 
 /**
- * Interface to kill the preview runner service.
+ * Interface that provides poller info used for polling the preview requests.
  */
-public interface PreviewRunnerServiceStopper {
+public interface PreviewRequestPollerInfoProvider {
   /**
-   * Stops the {@link PreviewRunnerService} identified by the runner id.
-   * @param runnerId id of the preview runner service to be stopped
-   * @throws Exception if any error while stopping
+   * @return the poller info in generic byte array
    */
-  void stop(byte[] runnerId) throws Exception;
+  byte[] get();
 }

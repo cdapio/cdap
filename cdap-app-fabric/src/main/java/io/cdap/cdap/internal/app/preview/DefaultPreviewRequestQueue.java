@@ -38,6 +38,7 @@ import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 
 /**
  * Thread-safe implementation of {@link PreviewRequestQueue} backed by {@link PreviewStore}.
@@ -63,7 +64,7 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   }
 
   @Override
-  public Optional<PreviewRequest> poll(byte[] pollerInfo) {
+  public Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo) {
     while (true) {
       PreviewRequest previewRequest = requestQueue.poll();
       if (previewRequest == null) {

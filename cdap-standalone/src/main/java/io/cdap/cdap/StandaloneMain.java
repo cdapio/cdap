@@ -538,7 +538,7 @@ public class StandaloneMain {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
-      new PreviewRunnerManagerModule(),
+      new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),
