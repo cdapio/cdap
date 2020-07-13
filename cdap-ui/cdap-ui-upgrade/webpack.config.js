@@ -32,6 +32,8 @@ var webpackConfig = {
   },
   plugins: [
     new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
       uglifyOptions: {
         ie8: false,
         compress: {

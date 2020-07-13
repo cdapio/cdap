@@ -5,10 +5,10 @@
   "license": "Apache-2.0",
   "scripts": {
     "prestart": "yarn run build-server",
-    "start": "NODE_ENV=development node ./packaged/server_dist/index.js",
+    "start": "NODE_ENV=development node ./packaged/server_dist/index.js --display-modules",
     "cdap-prod-build": "NODE_ENV=production parallel-webpack",
     "cdap-dev-build": "NODE_ENV=development parallel-webpack --config=webpack.config.js -d",
-    "cdap-dev-build-w": "NODE_ENV=development parallel-webpack --watch -d ",
+    "cdap-dev-build-w": "NODE_ENV=development webpack --watch -d --live-reload=true --optimize-minimize --display-modules",
     "cdap-full-build": "run-p cdap-prod-build distribute",
     "cdap-non-optimized-full-build": "NODE_ENV=non-optimized-production webpack --config=webpack.config.js",
     "clean-node-modules": "modclean -P -r --patterns=\"default:safe\" --additional-patterns=\"*.xls?x,*.ppt?x,*.rtf,*.png,*.jpg,*.jpeg,*.txt\" --ignore=\"validate-npm-license,readme*\"",
@@ -140,10 +140,11 @@
     "tslint": "5.20.1",
     "tslint-config-prettier": "1.18.0",
     "tslint-plugin-prettier": "2.1.0",
+    "uglifyjs-webpack-plugin": "^1.0.1",
     "url-loader": "3.0.0",
     "webpack": "4.41.2",
     "webpack-bundle-analyzer": "^3.8.0",
-    "webpack-cli": "3.3.10",
+    "webpack-cli": "^3.3.12",
     "webpack-livereload-plugin": "2.2.0"
   },
   "dependencies": {

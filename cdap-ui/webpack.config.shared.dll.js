@@ -19,6 +19,7 @@ var path = require('path');
 var TerserPlugin = require('terser-webpack-plugin');
 var mode = process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 const processEnv = {
   NODE_ENV: JSON.stringify(isModeProduction(mode) ? 'production' : 'development'),
@@ -114,6 +115,25 @@ if (isModeProduction(mode)) {
       },
     }),
   ];
+} else {
+  webpackConfig.optimization.minimizer = [
+    new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
+      uglifyOptions: {
+        compress: true,
+        ecma: 6,
+        mangle: true,
+        ie8: false,
+        warnings: false,
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      },
+      // sourceMap: true
+    })
+  ]
 }
 
 module.exports = webpackConfig;

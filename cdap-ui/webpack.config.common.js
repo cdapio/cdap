@@ -89,13 +89,13 @@ var rules = [
   },
   {
     test: /\.js$/,
-    use: 'babel-loader',
+    use: 'babel-loader?cacheDirectory=true',
     exclude: loaderExclude,
   },
   {
     test: /\.tsx?$/,
     use: [
-      'babel-loader',
+      'babel-loader?cacheDirectory=true',
       {
         loader: 'ts-loader',
         options: {

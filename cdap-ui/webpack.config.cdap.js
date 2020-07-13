@@ -27,6 +27,9 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+
+const CrudeTimingPlugin = require('./crude-timing-plugin');
 
 // the clean options to use
 let cleanOptions = {
@@ -114,6 +117,9 @@ var plugins = [
     inject: false,
     hashId: uuidV4(),
     mode: isModeProduction(mode) ? '' : 'development.',
+    minify: {
+      collapseWhitespace: true
+    },
   }),
 ];
 if (!isModeProduction(mode)) {
@@ -148,14 +154,14 @@ var rules = [
   },
   {
     test: /\.js$/,
-    use: ['babel-loader'],
+    use: ['babel-loader?cacheDirectory=true'],
     exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.tsx?$/,
     use: [
-      'babel-loader',
+      'babel-loader?cacheDirectory=true',
       {
         loader: 'ts-loader',
         options: {
@@ -209,12 +215,14 @@ if (mode === 'development') {
     new LiveReloadPlugin({
       port: 35728,
       appendScriptTag: true,
-      delay: 500,
+      //delay: 500,
       ignore:
         '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
     })
   );
   plugins.push(new WebpackBundleAnalyzer.BundleAnalyzerPlugin());
+  plugins.push(new CrudeTimingPlugin());
+  // plugins.push(new UglifyJsPlugin());
 }
 
 var webpackConfig = {
@@ -235,7 +243,7 @@ var webpackConfig = {
   },
   stats: {
     assets: false,
-    children: false,
+    children: true,
     chunkGroups: false,
     chunkModules: false,
     chunkOrigins: false,
@@ -251,12 +259,30 @@ var webpackConfig = {
     },
     splitChunks: {
       cacheGroups: {
-        vendor: {
-          name: "node_vendors", // part of the bundle name and
-          // can be used in chunks array of HtmlWebpackPlugin
-          test: /[\\/]node_modules[\\/]/,
-          chunks: "all",
+        // vendor: {
+        //   name: "node_vendors", // part of the bundle name and
+        //   // can be used in chunks array of HtmlWebpackPlugin
+        //   test: /[\\/]node_modules[\\/]/,
+        //   chunks: "all",
+        //   reuseExistingChunk: true,
+        // },
+        materialui: {
+          test: /[\\/]node_modules[\\/](@material-ui)[\\/]/,
+          name: 'materialui',
+          chunks: 'all',
+          reuseExistingChunk: true,
         },
+        react: {
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          name: 'react',
+          chunks: 'all',
+          reuseExistingChunk: true,
+        },
+        // bower: { test: /[\\/]bower_components[\\/]/, name: "bower", chunks: "all", reuseExistingChunk: true },
+        // dist: { test: /[\\/]packaged[\\/]public[\\/]dist[\\/]/, name: "dist", chunks: "all", reuseExistingChunk: true },
+        // cdap_dist: { test: /[\\/]packaged[\\/]public[\\/]cdap_dist[\\/]/, name: "cdap_dist", chunks: "all", reuseExistingChunk: true },
+        // common_dist: { test: /[\\/]packaged[\\/]public[\\/]common_dist[\\/]/, name: "common_dist", chunks: "all", reuseExistingChunk: true },
+        // lib: { test: /[\\/]lib[\\/]/, name: "lib", chunks: "all", reuseExistingChunk: true },
       }
       // cacheGroups: {
       //   // / node_modules /,
@@ -325,6 +351,7 @@ var webpackConfig = {
       //   lib: { test: /[\\/]lib[\\/]/, name: "lib", chunks: "all", reuseExistingChunk: true },
       // }
     },
+    //minimizer: [new UglifyJsPlugin()],
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.scss'],
@@ -358,6 +385,25 @@ if (isModeProduction(mode)) {
       },
     }),
   ];
+} else {
+  webpackConfig.optimization.minimizer = [
+    new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
+      uglifyOptions: {
+        compress: true,
+        ecma: 6,
+        mangle: true,
+        ie8: false,
+        warnings: false,
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      },
+      //sourceMap: true
+    })
+  ]
 }
 
 module.exports = webpackConfig;

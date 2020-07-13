@@ -24,6 +24,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 var TerserPlugin = require('terser-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 // the clean options to use
 let cleanOptions = {
@@ -124,13 +125,13 @@ var rules = [
   },
   {
     test: /\.js$/,
-    use: 'babel-loader',
+    use: 'babel-loader?cacheDirectory=true',
     exclude: loaderExclude,
   },
   {
     test: /\.tsx?$/,
     use: [
-      'babel-loader',
+      'babel-loader?cacheDirectory=true',
       {
         loader: 'ts-loader',
         options: {
@@ -228,6 +229,25 @@ if (isModeProduction(mode)) {
       },
     }),
   ];
+} else {
+  webpackConfig.optimization.minimizer = [
+    new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
+      uglifyOptions: {
+        compress: true,
+        ecma: 6,
+        mangle: true,
+        ie8: false,
+        warnings: false,
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      },
+      //sourceMap: true
+    })
+  ]
 }
 
 module.exports = webpackConfig;
