@@ -52,7 +52,8 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   public DefaultPreviewRequestQueue(CConfiguration cConf, PreviewStore previewStore) {
     this.previewStore = previewStore;
     this.capacity = cConf.getInt(Constants.Preview.WAITING_QUEUE_CAPACITY, 50);
-    this.waitTimeOut = cConf.getLong(Constants.Preview.WAITING_QUEUE_TIMEOUT_SECONDS, 60);
+    LOG.info("Setting wait timeout default to 300s");
+    this.waitTimeOut = cConf.getLong(Constants.Preview.WAITING_QUEUE_TIMEOUT_SECONDS, 300);
     this.requestQueue = new ConcurrentLinkedDeque<>();
     this.queueSize = new AtomicInteger();
     List<PreviewRequest> allInWaitingState = previewStore.getAllInWaitingState();
