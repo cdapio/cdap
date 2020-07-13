@@ -116,7 +116,7 @@
     <etl.realtime.plugin.name>ETLRealtime</etl.realtime.plugin.name>
 
     <apache.jdbm1.version>2.0.0-M2</apache.jdbm1.version>
-    <asm.version>5.0.3</asm.version>
+    <asm.version>7.1</asm.version>
     <async.http.version>1.7.18</async.http.version>
     <avro.version>1.6.2</avro.version>
     <bouncycastle.version>1.60</bouncycastle.version>
@@ -169,7 +169,7 @@
     <tephra.version>0.15.0-incubating</tephra.version>
     <tez.version>0.8.4</tez.version>
     <thrift.version>0.9.3</thrift.version>
-    <twill.version>0.13.0</twill.version>
+    <twill.version>0.14.0</twill.version>
     <unboundid.version>2.3.6</unboundid.version>
     <zookeeper.version>3.4.5</zookeeper.version>
     <opentable.version>0.13.1</opentable.version>
@@ -439,7 +439,7 @@
       </dependency>
       <dependency>
         <groupId>org.ow2.asm</groupId>
-        <artifactId>asm-all</artifactId>
+        <artifactId>asm-commons</artifactId>
         <version>${asm.version}</version>
       </dependency>
       <dependency>
@@ -492,6 +492,10 @@
           <exclusion>
             <groupId>net.jpountz.lz4</groupId>
             <artifactId>lz4</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>org.slf4j</groupId>
+            <artifactId>log4j-over-slf4j</artifactId>
           </exclusion>
         </exclusions>
       </dependency>
@@ -1473,6 +1477,12 @@
         <groupId>io.cdap.common</groupId>
         <artifactId>common-io</artifactId>
         <version>${cdap.common.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-all</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.apache.hadoop</groupId>

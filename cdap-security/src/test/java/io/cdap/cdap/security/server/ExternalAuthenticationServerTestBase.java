@@ -37,7 +37,6 @@ import io.cdap.cdap.security.auth.AccessToken;
 import io.cdap.cdap.security.auth.AccessTokenCodec;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.netty.handler.codec.http.HttpHeaderNames;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -53,6 +52,7 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.SocketAddress;
 import java.net.URL;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -200,7 +200,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
       // Test that the server passes back an AccessToken object which can be decoded correctly.
       String encodedToken = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
-      AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
+      AccessToken token = tokenCodec.decode(Base64.getDecoder().decode(encodedToken));
       Assert.assertEquals(getAuthenticatedUserName(), token.getIdentifier().getUsername());
       LOG.info("AccessToken got from ExternalAuthenticationServer is: " + encodedToken);
     } finally {
@@ -274,7 +274,7 @@ public abstract class ExternalAuthenticationServerTestBase {
 
       // Test that the server passes back an AccessToken object which can be decoded correctly.
       String encodedToken = responseJson.get(ExternalAuthenticationServer.ResponseFields.ACCESS_TOKEN).getAsString();
-      AccessToken token = tokenCodec.decode(Base64.decodeBase64(encodedToken));
+      AccessToken token = tokenCodec.decode(Base64.getDecoder().decode(encodedToken));
       Assert.assertEquals(getAuthenticatedUserName(), token.getIdentifier().getUsername());
       LOG.info("AccessToken got from ExternalAuthenticationServer is: " + encodedToken);
     } finally {

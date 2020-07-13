@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.security.server;
 
-import org.apache.commons.lang.StringUtils;
+import com.google.common.base.Strings;
 import org.eclipse.jetty.security.Authenticator;
 import org.eclipse.jetty.security.DefaultIdentityService;
 import org.eclipse.jetty.security.IdentityService;
@@ -47,15 +47,15 @@ public class CertificateAuthenticationHandler extends AbstractAuthenticationHand
     String trustStorePassword = handlerProps.get(AUTH_SSL_CONFIG_BASE.concat("truststore.password"));
     String trustStoreType = handlerProps.get(AUTH_SSL_CONFIG_BASE.concat("truststore.type"));
 
-    if (StringUtils.isNotEmpty(trustStorePath)) {
+    if (!Strings.isNullOrEmpty(trustStorePath)) {
       clientCertAuthenticator.setTrustStore(trustStorePath);
     }
 
-    if (StringUtils.isNotEmpty(trustStorePassword)) {
+    if (!Strings.isNullOrEmpty(trustStorePassword)) {
       clientCertAuthenticator.setTrustStorePassword(trustStorePassword);
     }
     
-    if (StringUtils.isNotEmpty(trustStoreType)) {
+    if (!Strings.isNullOrEmpty(trustStoreType)) {
       clientCertAuthenticator.setTrustStoreType(trustStoreType);
     }
     clientCertAuthenticator.setValidateCerts(true);

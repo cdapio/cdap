@@ -111,7 +111,6 @@ import io.cdap.cdap.proto.id.NamespacedEntityId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.apache.derby.iapi.services.i18n.MessageService;
 import org.apache.tephra.RetryStrategies;
 import org.apache.tephra.TransactionConflictException;
 import org.apache.tephra.TransactionFailureException;
@@ -742,7 +741,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   }
 
   /**
-   * Returns the {@link MessageService} for interacting with TMS directly.
+   * Returns the {@link MessagingService} for interacting with TMS directly.
    */
   public MessagingService getMessagingService() {
     return messagingService;

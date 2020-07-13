@@ -18,9 +18,9 @@ package io.cdap.cdap.security.auth;
 
 import com.google.inject.Inject;
 import io.cdap.cdap.common.io.Codec;
-import org.apache.commons.codec.binary.Base64;
 
 import java.io.IOException;
+import java.util.Base64;
 
 /**
  * It takes the access token and transforms it to Access Token Identifier.
@@ -43,11 +43,11 @@ public class AccessTokenTransformer {
    * @throws IOException
    */
   public AccessTokenIdentifierPair transform(String accessToken) throws IOException {
-    byte[] decodedAccessToken = Base64.decodeBase64(accessToken);
+    byte[] decodedAccessToken = Base64.getDecoder().decode(accessToken);
     AccessToken accessTokenObj = accessTokenCodec.decode(decodedAccessToken);
     AccessTokenIdentifier accessTokenIdentifierObj = accessTokenObj.getIdentifier();
     byte[] encodedAccessTokenIdentifier = accessTokenIdentifierCodec.encode(accessTokenIdentifierObj);
-    return new AccessTokenIdentifierPair(Base64.encodeBase64String(encodedAccessTokenIdentifier).trim(),
+    return new AccessTokenIdentifierPair(Base64.getEncoder().encodeToString(encodedAccessTokenIdentifier).trim(),
                                          accessTokenIdentifierObj);
   }
 

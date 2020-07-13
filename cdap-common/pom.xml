@@ -93,6 +93,10 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>javax.ws.rs</groupId>
+      <artifactId>javax.ws.rs-api</artifactId>
+    </dependency>
+    <dependency>
       <groupId>io.cdap.http</groupId>
       <artifactId>netty-http</artifactId>
     </dependency>
@@ -114,7 +118,7 @@
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
-      <artifactId>asm-all</artifactId>
+      <artifactId>asm-commons</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.thrift</groupId>

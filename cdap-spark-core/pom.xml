@@ -67,7 +67,7 @@
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
-      <artifactId>asm-all</artifactId>
+      <artifactId>asm-commons</artifactId>
       <!-- Currently comes from cdap-app-fabric -->
       <scope>provided</scope>
     </dependency>

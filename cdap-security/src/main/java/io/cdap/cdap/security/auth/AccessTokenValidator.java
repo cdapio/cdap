@@ -19,11 +19,11 @@ package io.cdap.cdap.security.auth;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.io.Codec;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Base64;
 
 /**
  * This class validates the accessToken and returns the different states
@@ -58,7 +58,7 @@ public class AccessTokenValidator extends AbstractIdleService implements TokenVa
       LOG.debug("Token is missing");
       return TokenState.MISSING;
     }
-    byte[] decodedToken = Base64.decodeBase64(token);
+    byte[] decodedToken = Base64.getDecoder().decode(token);
 
     try {
       accessToken = accessTokenCodec.decode(decodedToken);
