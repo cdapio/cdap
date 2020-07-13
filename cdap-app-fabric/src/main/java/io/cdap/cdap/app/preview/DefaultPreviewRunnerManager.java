@@ -24,6 +24,7 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.common.Bytes;
@@ -49,7 +50,10 @@ import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
-import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
+import io.cdap.cdap.logging.appender.LogAppender;
+import io.cdap.cdap.logging.appender.tms.PreviewTMSLogAppender;
+import io.cdap.cdap.logging.framework.CustomLogPipelineConfigProvider;
+import io.cdap.cdap.logging.framework.local.LocalLogAppender;
 import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
@@ -65,6 +69,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -189,8 +194,26 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
       // save threads for reading metrics from TMS, as there won't be metrics in TMS.
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      new PreviewLocalLogAppenderModule(),
-      new MessagingServerRuntimeModule().getInMemoryModules(),
+      /*
+      Modules.override(new PreviewLocalLogAppenderModule()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
+        }
+      }),*/
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
+        }
+
+        @Provides
+        public CustomLogPipelineConfigProvider provideCustomLogConfig(CConfiguration cConf) {
+          // Return empty list for preview mode.
+          return Collections::emptyList;
+        }
+      },
+    new MessagingServerRuntimeModule().getInMemoryModules(),
       Modules.override(new MetadataReaderWriterModules().getInMemoryModules()).with(new AbstractModule() {
         @Override
         protected void configure() {

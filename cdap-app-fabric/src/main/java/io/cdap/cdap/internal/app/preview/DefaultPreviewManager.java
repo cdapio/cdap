@@ -30,6 +30,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
@@ -46,6 +47,8 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.Networks;
@@ -63,8 +66,11 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
+import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
+import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
@@ -101,6 +107,8 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Class responsible for creating the injector for preview and starting it.
@@ -155,12 +163,27 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     previewInjector = createPreviewInjector();
     PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     subscriberService.startAndWait();
+    PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
+    logSubscriber.startAndWait();
+    LogAppender logAppender = previewInjector.getInstance(LogAppender.class);
+    logAppender.start();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.PREVIEW_HTTP));
+    MetricsCollectionService metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.start();
   }
 
   @Override
   protected void shutDown() throws Exception {
     PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     stopQuietly(subscriberService);
+    PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
+    stopQuietly(logSubscriber);
+    LogAppender logAppender = previewInjector.getInstance(LogAppender.class);
+    logAppender.stop();
+    MetricsCollectionService metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
+    stopQuietly(metricsCollectionService);
     previewLevelDBTableService.close();
   }
 
@@ -240,6 +263,11 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     return previewInjector.getInstance(LogReader.class);
   }
 
+  @Override
+  public Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo) {
+    return previewInjector.getInstance(PreviewRequestQueue.class).poll(pollerInfo);
+  }
+
   /**
    * Create injector for the given application id.
    */
@@ -312,6 +340,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         @Override
         protected void configure() {
           bind(LevelDBTableService.class).toInstance(previewLevelDBTableService);
+          bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
         }
 
         @Provides
