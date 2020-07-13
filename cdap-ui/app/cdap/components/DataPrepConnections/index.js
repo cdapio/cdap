@@ -13,49 +13,49 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import PropTypes from 'prop-types';
-import React, { Component } from 'react';
-import IconSVG from 'components/IconSVG';
-import classnames from 'classnames';
-import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
-import {
-  setFileSystemAsActiveBrowser,
-  setActiveBrowser,
-  setS3AsActiveBrowser,
-  setDatabaseAsActiveBrowser,
-  setKafkaAsActiveBrowser,
-  setGCSAsActiveBrowser,
-  setBigQueryAsActiveBrowser,
-  setSpannerAsActiveBrowser,
-  setAdlsAsActiveBrowser,
-  reset as resetDataPrepBrowserStore,
-} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
-import { Route, Switch, Redirect } from 'react-router-dom';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
-import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
-import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
-import AddConnection from 'components/DataPrepConnections/AddConnection';
-import isNil from 'lodash/isNil';
-import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
-import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
-import DataPrepStore from 'components/DataPrep/store';
-import { objectQuery, preventPropagation, isNilOrEmpty } from 'services/helpers';
-import Helmet from 'react-helmet';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import queryString from 'query-string';
-import Version from 'services/VersionRange/Version';
+import classnames from 'classnames';
 import { MIN_DATAPREP_VERSION } from 'components/DataPrep';
-import NavLinkWrapper from 'components/NavLinkWrapper';
-import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
-import find from 'lodash/find';
-import If from 'components/If';
-import NoDefaultConnection from 'components/DataPrepConnections/NoDefaultConnection';
-import isObject from 'lodash/isObject';
+import DataPrepBrowser from 'components/DataPrep/DataPrepBrowser';
 import DataPrepBrowserStore from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore';
-import { Theme } from 'services/ThemeHelper';
+import {
+  reset as resetDataPrepBrowserStore,
+  setActiveBrowser,
+  setAdlsAsActiveBrowser,
+  setBigQueryAsActiveBrowser,
+  setDatabaseAsActiveBrowser,
+  setFileSystemAsActiveBrowser,
+  setGCSAsActiveBrowser,
+  setKafkaAsActiveBrowser,
+  setS3AsActiveBrowser,
+  setSpannerAsActiveBrowser,
+} from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
+import DataPrepStore from 'components/DataPrep/store';
+import AddConnection from 'components/DataPrepConnections/AddConnection';
+import ConnectionPopover from 'components/DataPrepConnections/ConnectionPopover';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
+import NoDefaultConnection from 'components/DataPrepConnections/NoDefaultConnection';
+import ConnectionsUpload from 'components/DataPrepConnections/UploadFile';
+import IconSVG from 'components/IconSVG';
+import If from 'components/If';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import NavLinkWrapper from 'components/NavLinkWrapper';
+import ExpandableMenu from 'components/UncontrolledComponents/ExpandableMenu';
+import T from 'i18n-react';
+import find from 'lodash/find';
+import isNil from 'lodash/isNil';
+import isObject from 'lodash/isObject';
+import PropTypes from 'prop-types';
+import queryString from 'query-string';
+import React, { Component } from 'react';
+import Helmet from 'react-helmet';
+import { Redirect, Route, Switch } from 'react-router-dom';
+import { isNilOrEmpty, objectQuery, preventPropagation } from 'services/helpers';
 import history from 'services/history';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Theme } from 'services/ThemeHelper';
+import Version from 'services/VersionRange/Version';
 
 require('./DataPrepConnections.scss');
 const PREFIX = 'features.DataPrepConnections';
@@ -795,9 +795,7 @@ export default class DataPrepConnections extends Component {
                 <span className="fa fa-fw">
                   <IconSVG name="icon-kafka" />
                 </span>
-                <span>
-                  {T.translate(`${PREFIX}.kafka`, { count: this.state.kafkaList.length })}
-                </span>
+                <span>{'hell hio'}</span>
               </div>
               {this.renderKafkaDetail()}
             </ExpandableMenu>

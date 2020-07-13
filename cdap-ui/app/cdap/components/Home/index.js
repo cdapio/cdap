@@ -13,24 +13,23 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
-import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
-import Loadable from 'react-loadable';
-import NamespaceStore, { isValidNamespace } from 'services/NamespaceStore';
-import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
 import ToggleExperiment from 'components/Lab/ToggleExperiment';
-import VirtualScrollDemo from 'components/VirtualScroll/demo';
-import globalEvents from 'services/global-events';
-import ee from 'event-emitter';
-require('./Home.scss');
-
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import Playground from 'components/LogViewer/Playground';
+import VirtualScrollDemo from 'components/VirtualScroll/demo';
+import ee from 'event-emitter';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import Loadable from 'react-loadable';
+import { Route, Switch } from 'react-router-dom';
+import globalEvents from 'services/global-events';
+import NamespaceStore, { isValidNamespace } from 'services/NamespaceStore';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+
+require('./Home.scss');
 
 const EntityListView = Loadable({
   loader: () => import(/* webpackChunkName: "EntityListView" */ 'components/EntityListView'),

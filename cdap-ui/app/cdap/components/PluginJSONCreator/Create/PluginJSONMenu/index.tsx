@@ -255,7 +255,7 @@ const PluginJSONMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
               onDownloadClick={onDownloadClick}
               collapseLiveView={collapseLiveView}
               populateImportResults={populateImportResults}
-              JSONFilename={JSONFilename}
+              JSONFilename={'.json'}
             />
           </If>
           <If condition={!isLiveView}>

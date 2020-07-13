@@ -14,27 +14,32 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
-import DataPrep, { MIN_DATAPREP_VERSION } from 'components/DataPrep';
-import DataPrepStore from 'components/DataPrep/store';
-import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-import Helmet from 'react-helmet';
-import T from 'i18n-react';
 import MyDataPrepApi from 'api/dataprep';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { Redirect } from 'react-router-dom';
-import orderBy from 'lodash/orderBy';
+import { MIN_DATAPREP_VERSION } from 'components/DataPrep';
 import DataPrepServiceControl from 'components/DataPrep/DataPrepServiceControl';
-import DataPrepConnections from 'components/DataPrepConnections';
-import { objectQuery } from 'services/helpers';
-import isNil from 'lodash/isNil';
-import ee from 'event-emitter';
-import Version from 'services/VersionRange/Version';
-import { Theme } from 'services/ThemeHelper';
+import DataPrepStore from 'components/DataPrep/store';
 import { setWorkspace } from 'components/DataPrep/store/DataPrepActionCreator';
+import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
+import DataPrepConnections from 'components/DataPrepConnections';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import ee from 'event-emitter';
+import T from 'i18n-react';
+import isNil from 'lodash/isNil';
+import orderBy from 'lodash/orderBy';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import Helmet from 'react-helmet';
+import Loadable from 'react-loadable';
+import { Redirect } from 'react-router-dom';
+import { objectQuery } from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { Theme } from 'services/ThemeHelper';
+import Version from 'services/VersionRange/Version';
+
+const DataPrep = Loadable({
+  loader: () => import(/* webpackChunkName: "DataPrep" */ 'components/DataPrep'),
+  loading: LoadingSVGCentered,
+});
 
 require('./DataPrepHome.scss');
 /**

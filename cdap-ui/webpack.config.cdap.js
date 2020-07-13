@@ -249,13 +249,54 @@ var webpackConfig = {
     runtimeChunk: {
       name: "manifest",
     },
+    minimize: true,
     splitChunks: {
       cacheGroups: {
-        vendor: {
-          name: "node_vendors", // part of the bundle name and
-          // can be used in chunks array of HtmlWebpackPlugin
-          test: /[\\/]node_modules[\\/]/,
-          chunks: "all",
+        // vendor: {
+        //   name: "node_vendors", // part of the bundle name and
+        //   // can be used in chunks array of HtmlWebpackPlugin
+        //   test: /[\\/]node_modules[\\/]/,
+        //   chunks: "all",
+        // },
+        react: {
+          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+          name: 'react',
+          chunks: 'all',
+        },
+        material_ui: {
+          test: /[\\/]node_modules[\\/]@material-ui[\\/]/,
+          name: 'material-ui',
+          chunks: 'all',
+        },
+        cask_datavoyager: {
+          test: /[\\/]node_modules[\\/]datavoyager[\\/]/,
+          name: 'cask-datavoyager',
+          chunks: 'all',
+        },
+        immutable: {
+          test: /[\\/]node_modules[\\/]immutable[\\/]/,
+          name: 'immutable',
+          chunks: 'all',
+        },
+        lodash: {
+          test: /[\\/]node_modules[\\/]lodash[\\/]/,
+          name: 'lodash',
+          chunks: 'all',
+        },
+        jsplumb: {
+          test: /[\\/]node_modules[\\/]jsplumb[\\/]/,
+          name: 'jsplumb',
+          chunks: 'all',
+        },
+        moment_timezone: {
+          test: /[\\/]node_modules[\\/]moment-timezone[\\/]/,
+          name: 'moment-timezone',
+          chunks: 'all',
+        },
+        ace_builds: {
+          test: /[\\/]node_modules[\\/]ace-builds[\\/]/,
+          name: 'ace-builds',
+          chunks: 'all',
         },
       }
       // cacheGroups: {

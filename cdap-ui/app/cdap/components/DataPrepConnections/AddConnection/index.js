@@ -14,22 +14,22 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
-import IconSVG from 'components/IconSVG';
-import Popover from 'components/Popover';
+import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
+import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
+import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import DatabaseConnection from 'components/DataPrepConnections/DatabaseConnection';
+import GCSConnection from 'components/DataPrepConnections/GCSConnection';
 import KafkaConnection from 'components/DataPrepConnections/KafkaConnection';
 import S3Connection from 'components/DataPrepConnections/S3Connection';
-import GCSConnection from 'components/DataPrepConnections/GCSConnection';
-import BigQueryConnection from 'components/DataPrepConnections/BigQueryConnection';
 import SpannerConnection from 'components/DataPrepConnections/SpannerConnection';
-import ADLSConnection from 'components/DataPrepConnections/ADLSConnection';
+import IconSVG from 'components/IconSVG';
+import Popover from 'components/Popover';
+import ee from 'event-emitter';
 import T from 'i18n-react';
 import find from 'lodash/find';
-import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
-import ee from 'event-emitter';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+
 require('./AddConnection.scss');
 
 const PREFIX = 'features.DataPrepConnections.AddConnections';
@@ -183,7 +183,7 @@ export default class AddConnection extends Component {
                   <IconSVG name={connection.icon} />
                 </span>
 
-                <span className="connection-name">{connection.label}</span>
+                <span className="connection-name">hello 2{connection.label}</span>
               </div>
             );
           })}

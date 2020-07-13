@@ -14,16 +14,17 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { IWidgetProps } from '..';
-import CodeEditor from 'components/CodeEditor';
 import Button from '@material-ui/core/Button';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import CodeEditor from 'components/CodeEditor';
 import IconSVG from 'components/IconSVG';
 import If from 'components/If';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import * as React from 'react';
+import Loadable from 'react-loadable';
 import { Modal, ModalBody } from 'reactstrap';
-import RulesEngineHome from 'components/RulesEngineHome';
 import { objectQuery } from 'services/helpers';
+import { IWidgetProps } from '..';
 import './rules-engine-modal.scss';
 
 const styles = (theme): StyleRules => {
@@ -53,6 +54,11 @@ const styles = (theme): StyleRules => {
     },
   };
 };
+
+const RulesEngineHome = Loadable({
+  loader: () => import(/* webpackChunkName: "RulesEngineHome" */ 'components/RulesEngineHome'),
+  loading: LoadingSVGCentered,
+});
 
 interface IRulesEngineProps extends IWidgetProps<null>, WithStyles<typeof styles> {}
 
