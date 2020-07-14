@@ -243,7 +243,7 @@ var webpackConfig = {
   },
   stats: {
     assets: false,
-    children: true,
+    children: false,
     chunkGroups: false,
     chunkModules: false,
     chunkOrigins: false,
@@ -254,9 +254,8 @@ var webpackConfig = {
   // TODO: Need to investigate this more.
   optimization: {
     moduleIds: "hashed",
-    runtimeChunk: {
-      name: "manifest",
-    },
+    runtimeChunk: 'single',
+    mangleWasmImports: true,
     splitChunks: {
       cacheGroups: {
         // vendor: {
@@ -272,9 +271,27 @@ var webpackConfig = {
           chunks: 'all',
           reuseExistingChunk: true,
         },
-        react: {
-          test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-          name: 'react',
+        acebuilds: {
+          test: /[\\/]node_modules[\\/]ace-builds[\\/]/,
+          name: 'acebuilds',
+          chunks: 'all',
+          reuseExistingChunk: true,
+        },
+        lodash: {
+          test: /[\\/]node_modules[\\/]lodash[\\/]/,
+          name: 'lodash',
+          chunks: 'all',
+          reuseExistingChunk: true,
+        },
+        // babel: {
+        //   test: /[\\/]node_modules[\\/]@babel[\\/]/,
+        //   name: 'babel',
+        //   chunks: 'all',
+        //   reuseExistingChunk: true,
+        // },
+        rxjs: {
+          test: /[\\/]node_modules[\\/]rxjs[\\/]/,
+          name: 'rxjs',
           chunks: 'all',
           reuseExistingChunk: true,
         },
@@ -387,22 +404,36 @@ if (isModeProduction(mode)) {
   ];
 } else {
   webpackConfig.optimization.minimizer = [
-    new UglifyJsPlugin({
+    new TerserPlugin({
       cache: true,
       parallel: true,
-      uglifyOptions: {
-        compress: true,
-        ecma: 6,
-        mangle: true,
-        ie8: false,
-        warnings: false,
-        output: {
-          comments: false,
-          beautify: false,
-        }
-      },
-      //sourceMap: true
-    })
+      sourceMap: true, // Must be set to true if using source-maps in production
+      extractComments: true,
+      // output: {
+      //comments: false,
+      //},
+      ///ie8: false,
+      //safari10: false,
+      // terserOptions: {
+      //   // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
+      // }
+    }),
+    // new UglifyJsPlugin({
+    //   cache: true,
+    //   parallel: true,
+    //   uglifyOptions: {
+    //     compress: true,
+    //     ecma: 6,
+    //     mangle: true,
+    //     ie8: false,
+    //     warnings: false,
+    //     output: {
+    //       comments: false,
+    //       beautify: false,
+    //     }
+    //   },
+    //   //sourceMap: true
+    // })
   ]
 }
 
