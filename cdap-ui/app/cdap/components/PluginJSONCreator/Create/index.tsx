@@ -15,12 +15,14 @@
  */
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+import classnames from 'classnames';
 import { JSONStatusMessage, SchemaType } from 'components/PluginJSONCreator/constants';
 import Content from 'components/PluginJSONCreator/Create/Content';
 import PluginJSONMenu from 'components/PluginJSONCreator/Create/PluginJSONMenu';
 import StepsGuidelineMenu from 'components/PluginJSONCreator/Create/StepsGuidelineMenu';
 import { List, Map } from 'immutable';
 import * as React from 'react';
+import Dropzone from 'react-dropzone';
 
 export const LEFT_PANEL_WIDTH = 250;
 
@@ -37,6 +39,13 @@ const styles = (): StyleRules => {
       '& > div': {
         overflowY: 'auto',
       },
+    },
+    overlayScreen: {
+      position: 'fixed',
+      padding: 0,
+      margin: 0,
+      width: '100%',
+      color: 'rgba(0, 0, 0, 0.5)',
     },
   };
 };
@@ -273,31 +282,63 @@ const CreateView = ({ classes, children }) => {
     [activeStep, setActiveStep, JSONStatus, setJSONStatus]
   );
 
+  const [uploadedFile, setUploadedFile] = React.useState(null);
+
+  // In the user drag-and-drops a file, it should process the uploaded file.
+  const uploadFile = (acceptedFiles) => {
+    const file = acceptedFiles[0];
+    const filename = file.name;
+    const filenameWithoutExtension = filename.substring(0, filename.lastIndexOf('.')) || filename;
+    const reader = new FileReader();
+    reader.readAsText(file);
+    let fileContent;
+    reader.onload = (r) => {
+      fileContent = r.target.result;
+      setUploadedFile({
+        filename: filenameWithoutExtension,
+        fileContent,
+      });
+    };
+  };
+
   return (
-    <div className={classes.root}>
-      <GlobalStateProvider
-        pluginInfoContextValue={pluginInfoContextValue}
-        configuratioGroupContextValue={configuratioGroupContextValue}
-        widgetContextValue={widgetContextValue}
-        outputContextValue={outputContextValue}
-        filterContextValue={filterContextValue}
-        appInternalContextValue={appInternalContextValue}
-      >
-        <PluginJSONMenu />
-      </GlobalStateProvider>
-      <div className={classes.content}>
-        <AppInternalContext.Provider value={appInternalContextValue}>
-          <StepsGuidelineMenu />
-          <Content
-            pluginInfoContextValue={pluginInfoContextValue}
-            configuratioGroupContextValue={configuratioGroupContextValue}
-            widgetContextValue={widgetContextValue}
-            outputContextValue={outputContextValue}
-            filterContextValue={filterContextValue}
-          />
-        </AppInternalContext.Provider>
-      </div>
-    </div>
+    <Dropzone multiple={false} noClick onDropAccepted={uploadFile}>
+      {({ getRootProps, getInputProps, isDragActive }) => (
+        <div
+          className={classnames({
+            [classes.overlayScreen]: isDragActive,
+          })}
+        >
+          <section>
+            <div {...getRootProps()}>
+              <input {...getInputProps()} />
+              <GlobalStateProvider
+                pluginInfoContextValue={pluginInfoContextValue}
+                configuratioGroupContextValue={configuratioGroupContextValue}
+                widgetContextValue={widgetContextValue}
+                outputContextValue={outputContextValue}
+                filterContextValue={filterContextValue}
+                appInternalContextValue={appInternalContextValue}
+              >
+                <PluginJSONMenu uploadedFile={uploadedFile} />
+              </GlobalStateProvider>
+              <div className={classes.content}>
+                <AppInternalContext.Provider value={appInternalContextValue}>
+                  <StepsGuidelineMenu />
+                  <Content
+                    pluginInfoContextValue={pluginInfoContextValue}
+                    configuratioGroupContextValue={configuratioGroupContextValue}
+                    widgetContextValue={widgetContextValue}
+                    outputContextValue={outputContextValue}
+                    filterContextValue={filterContextValue}
+                  />
+                </AppInternalContext.Provider>
+              </div>
+            </div>
+          </section>
+        </div>
+      )}
+    </Dropzone>
   );
 };
 

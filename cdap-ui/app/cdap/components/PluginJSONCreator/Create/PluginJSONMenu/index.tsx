@@ -70,7 +70,11 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const PluginJSONMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+interface IPluginJSONMenuProps extends WithStyles<typeof styles> {
+  uploadedFile: { filename: string; fileContent: string };
+}
+
+const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedFile }) => {
   const {
     pluginName,
     setPluginName,
@@ -129,6 +133,13 @@ const PluginJSONMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
   const { JSONStatus, setJSONStatus } = useAppInternalState();
 
   const [isLiveView, setIsLiveView] = React.useState(false);
+
+  // In the user drag-and-drops a file, it should populate the UI with the file content.
+  React.useEffect(() => {
+    if (uploadedFile) {
+      populateImportResults(uploadedFile.filename, uploadedFile.fileContent);
+    }
+  }, [uploadedFile]);
 
   // Compilation of all the data that goes into JSON.
   const widgetData = {
