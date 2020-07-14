@@ -117,9 +117,6 @@ var plugins = [
     inject: false,
     hashId: uuidV4(),
     mode: isModeProduction(mode) ? '' : 'development.',
-    minify: {
-      collapseWhitespace: true
-    },
   }),
 ];
 if (!isModeProduction(mode)) {
@@ -215,7 +212,7 @@ if (mode === 'development') {
     new LiveReloadPlugin({
       port: 35728,
       appendScriptTag: true,
-      //delay: 500,
+      delay: 500,
       ignore:
         '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
     })
@@ -243,7 +240,7 @@ var webpackConfig = {
   },
   stats: {
     assets: false,
-    children: true,
+    children: false,
     chunkGroups: false,
     chunkModules: false,
     chunkOrigins: false,
@@ -393,15 +390,9 @@ if (isModeProduction(mode)) {
       uglifyOptions: {
         compress: true,
         ecma: 6,
-        mangle: true,
-        ie8: false,
-        warnings: false,
-        output: {
-          comments: false,
-          beautify: false,
-        }
+        mangle: true
       },
-      //sourceMap: true
+      sourceMap: true
     })
   ]
 }

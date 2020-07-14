@@ -245,7 +245,7 @@ if (isModeProduction(mode)) {
           beautify: false,
         }
       },
-      //sourceMap: true
+      //false
     })
   ]
 }
