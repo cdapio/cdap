@@ -24,7 +24,7 @@ import { Theme } from 'services/ThemeHelper';
 export const basepath = '/ns/:namespace/plugincreation';
 
 const PluginJSONCreator: React.FC = () => {
-  const pageTitle = `${Theme.productName} | Plugin JSON 2`;
+  const pageTitle = `${Theme.productName} | Plugin JSON 1`;
 
   return (
     <React.Fragment>

@@ -28,6 +28,7 @@ var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+var WebpackDevServer = require('webpack-dev-server');
 
 const CrudeTimingPlugin = require('./crude-timing-plugin');
 
@@ -255,7 +256,6 @@ var webpackConfig = {
   optimization: {
     moduleIds: "hashed",
     runtimeChunk: 'single',
-    mangleWasmImports: true,
     splitChunks: {
       cacheGroups: {
         // vendor: {
@@ -380,10 +380,32 @@ var webpackConfig = {
       styles: __dirname + '/app/cdap/styles',
     },
   },
+  // mode: "development",
+  // devtool: 'eval-source-map',
+  // devServer: {
+  //   contentBase: path.join(__dirname, 'cdap_assets'),
+  //   open: true,
+  //   host: 'localhost',
+  //   port: '3000',
+  //   inline: true,
+  //   compress: true,
+  // },
+  // mode: 'development',
+  // devtool: 'source-map',
+  // devServer: {
+  //   //contentBase: path.join(__dirname, "cdap_assets"),
+  //   contentBase: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
+  //   port: 8080,
+  //   stats: "minimal",
+  //   watchContentBase: true,
+  //   historyApiFallback: true,
+  //   open: true,
+  //   hot: false
+  // }
 };
 
 if (!isModeProduction(mode)) {
-  webpackConfig.devtool = 'source-maps';
+  //webpackConfig.devtool = 'source-maps';
 }
 
 if (isModeProduction(mode)) {
@@ -404,36 +426,22 @@ if (isModeProduction(mode)) {
   ];
 } else {
   webpackConfig.optimization.minimizer = [
-    new TerserPlugin({
+    new UglifyJsPlugin({
       cache: true,
       parallel: true,
-      sourceMap: true, // Must be set to true if using source-maps in production
-      extractComments: true,
-      // output: {
-      //comments: false,
-      //},
-      ///ie8: false,
-      //safari10: false,
-      // terserOptions: {
-      //   // https://github.com/webpack-contrib/terser-webpack-plugin#terseroptions
-      // }
-    }),
-    // new UglifyJsPlugin({
-    //   cache: true,
-    //   parallel: true,
-    //   uglifyOptions: {
-    //     compress: true,
-    //     ecma: 6,
-    //     mangle: true,
-    //     ie8: false,
-    //     warnings: false,
-    //     output: {
-    //       comments: false,
-    //       beautify: false,
-    //     }
-    //   },
-    //   //sourceMap: true
-    // })
+      uglifyOptions: {
+        compress: true,
+        ecma: 6,
+        mangle: true,
+        ie8: false,
+        warnings: false,
+        output: {
+          comments: false,
+          beautify: false,
+        }
+      },
+      //sourceMap: true
+    })
   ]
 }
 

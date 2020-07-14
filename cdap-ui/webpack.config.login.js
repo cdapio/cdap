@@ -197,6 +197,22 @@ var webpackConfig = {
       styles: __dirname + '/app/cdap/styles',
     },
   },
+  devServer: {
+
+    // Serve index.html as the base
+    //contentBase: './login.js',
+
+    // Enable compression
+    compress: true,
+
+    // Enable hot reloading
+    hot: true,
+
+    port: 3000,
+
+    // Public path is root of content base
+    publicPath: '/',
+  },
 };
 
 if (isModeProduction(mode)) {
