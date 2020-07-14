@@ -47,14 +47,10 @@ const JSONImportButtonView: React.FC<IJSONImportButtonProps> = ({
         let fileContent;
         reader.onload = (r) => {
           fileContent = r.target.result;
-          renderFileContent(filenameWithoutExtension, fileContent);
+          populateImportResults(filenameWithoutExtension, fileContent);
         };
       }
     };
-  }
-
-  function renderFileContent(filename, fileContent) {
-    populateImportResults(filename, fileContent);
   }
 
   return (

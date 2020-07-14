@@ -25,6 +25,7 @@ import * as React from 'react';
 const styles = (theme): StyleRules => {
   return {
     root: {
+      height: 'calc(100vh - 53px)', // height excluding footer
       borderRight: `1px solid ${theme.palette.grey[300]}`,
     },
     row: {
