@@ -544,6 +544,9 @@ public class AppMetadataStore {
       return null;
     }
 
+    // Delete the old run record
+    delete(existing);
+
     List<Field<?>> key = getProgramRunInvertedTimeKey(TYPE_RUN_RECORD_ACTIVE, programRunId, existing.getStartTs());
     ProgramRunCluster cluster = new ProgramRunCluster(ProgramRunClusterStatus.PROVISIONED, null, numNodes);
     RunRecordDetail meta = RunRecordDetail.builder(existing)
