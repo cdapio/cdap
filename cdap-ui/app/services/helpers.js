@@ -233,9 +233,10 @@ angular.module(PKG.name+'.services')
     return window.CaskCommon.IsValidNS(namespace)
       .then(validNamespace => {
         if (!validNamespace) {
+          // Match error.data to NotFoundException from backend
           const error = {
             statusCode: 404,
-            data: `Namespace '${namespace}' does not exist.`
+            data: `'namespace:${namespace}' was not found.`
           };
           window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
         }

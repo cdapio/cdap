@@ -49,7 +49,7 @@ export default class RouteToNamespace extends Component {
     if (!isvalid) {
       this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
         statusCode: 404,
-        data: `Namespace '${selectedNamespace}' does not exist.`,
+        data: `'namespace:${selectedNamespace}' was not found.`,
       });
     }
     localStorage.setItem('DefaultNamespace', selectedNamespace);

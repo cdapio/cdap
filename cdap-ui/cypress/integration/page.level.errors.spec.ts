@@ -18,25 +18,29 @@ import * as Helpers from '../helpers';
 
 let headers = {};
 const FAKE_NAMESPACE = 'fakeNamespace';
-const NO_NAMESPACE_MSG = `Namespace '${FAKE_NAMESPACE}' does not exist.`;
+const NO_NAMESPACE_MSG = `\'namespace:${FAKE_NAMESPACE}' was not found.`;
 const SELECTOR_404_MSG = '[data-cy="page-404-error-msg"]';
 const SELECTOR_404_DEFAULT_MSG = '[data-cy="page-404-default-msg"]';
-const DEFAULT_404_MSG =
-    'Sorry, we are not able to find the page you are looking for.';
+const DEFAULT_404_MSG = 'Sorry, we are not able to find the page you are looking for.';
 
 describe('Page level error because of ', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
     Helpers.loginIfRequired().then(() => {
-      cy.getCookie('CDAP_Auth_Token').then((cookie) => {
-        if (!cookie) {
-          return;
-        }
-        headers = {
-          Authorization: 'Bearer ' + cookie.value,
-        };
-      }).then(Helpers.getSessionToken)
-        .then(sessionToken => headers = Object.assign({}, headers, {'Session-Token': sessionToken}))
+      cy.getCookie('CDAP_Auth_Token')
+        .then((cookie) => {
+          if (!cookie) {
+            return;
+          }
+          headers = {
+            Authorization: 'Bearer ' + cookie.value,
+          };
+        })
+        .then(Helpers.getSessionToken)
+        .then(
+          (sessionToken) =>
+            (headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
+        )
         .then(() => {
           cy.start_wrangler(headers);
         });
@@ -56,8 +60,7 @@ describe('Page level error because of ', () => {
   it('no namespace in pipeline studio page should show 404', () => {
     // Go to Pipelines studio
     cy.visit(`/pipelines/ns/${FAKE_NAMESPACE}/studio`);
-    cy.get(SELECTOR_404_MSG)
-        .should('have.text', '\'namespace:fakeNamespace\' was not found.');
+    cy.get(SELECTOR_404_MSG).should('have.text', NO_NAMESPACE_MSG);
   });
 
   it('no namespace in pipeline list page should show 404', () => {
@@ -87,9 +90,10 @@ describe('Page level error because of ', () => {
   it('no workspace in wrangler should show 404', () => {
     // Go to wrangler workspace
     cy.visit('/cdap/ns/default/wrangler/invalid-workspace-id');
-    cy.get(SELECTOR_404_MSG)
-        .should(
-            'have.text', 'Workspace \'invalid-workspace-id\' does not exist.');
+    cy.get(SELECTOR_404_MSG).should(
+      'have.text',
+      "Workspace 'invalid-workspace-id' does not exist."
+    );
   });
 
   it('no namespace in metadata page should show 404', () => {
@@ -119,10 +123,10 @@ describe('Page level error because of ', () => {
   it('no valid pipeline should show 404 in pipeline details', () => {
     // Go to pipeline details page of invalid pipeline
     cy.visit(`/pipelines/ns/default/view/invalidPipelineName`);
-    cy.get(SELECTOR_404_MSG)
-        .should(
-            'have.text',
-            `'application:default.invalidPipelineName.-SNAPSHOT' was not found.`);
+    cy.get(SELECTOR_404_MSG).should(
+      'have.text',
+      `'application:default.invalidPipelineName.-SNAPSHOT' was not found.`
+    );
   });
 
   it('no valid path should show 404 in metadata page', () => {

@@ -140,7 +140,7 @@ export default class Home extends Component {
         if (!isValid) {
           this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
             statusCode: 404,
-            data: `Namespace '${namespace}' does not exist.`,
+            data: `'namespace:${namespace}' was not found.`,
           });
         }
       })
