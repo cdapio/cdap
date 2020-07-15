@@ -20,6 +20,7 @@ import { detailContextConnect, IDetailContext } from 'components/Replicator/Deta
 import IconSVG from 'components/IconSVG';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { PROGRAM_INFO } from 'components/Replicator/constants';
+import { getLogViewerPageUrl } from 'components/LogViewer/LogViewerPage';
 
 const styles = (theme): StyleRules => {
   return {
@@ -51,7 +52,7 @@ const LogsButtonView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
   const programType = PROGRAM_INFO.programType;
   const programId = PROGRAM_INFO.programId;
 
-  const logViewerPath = `/logviewer/view?namespace=${namespace}&appId=${name}&programType=${programType}&programId=${programId}&runId=${runId}`;
+  const logViewerPath = getLogViewerPageUrl(namespace, name, programType, programId, runId);
 
   return (
     <a className={classes.root} href={logViewerPath} target="_blank" rel="noopener noreferrer">
