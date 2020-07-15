@@ -118,6 +118,7 @@
     "is-color": "1.0.2",
     "jest": "24.9.0",
     "jest-cli": "24.9.0",
+    "jest-css-modules-transform": "4.0.1",
     "jest-dom": "4.0.0",
     "jshint": "2.11.0-rc1",
     "lodash-webpack-plugin": "0.11.5",
@@ -253,7 +254,7 @@
     "node": ">= 10.12.2"
   },
   "jest": {
-    "automock": true,
+    "automock": false,
     "preset": "ts-jest/presets/js-with-babel",
     "testEnvironment": "jsdom",
     "roots": [
@@ -262,9 +263,20 @@
     "modulePaths": [
       "./app/cdap/"
     ],
+    "modulePathIgnorePatterns": [
+      "./app/cdap/components/AbstractWidget/SchemaEditor/Context/__tests__/schemas.js",
+      "./app/cdap/components/AbstractWidget/SchemaEditor/Context/__tests__/data"
+    ],
+    "transform": {
+      ".+\\.(css|styl|less|sass|scss)$": "<rootDir>/node_modules/jest-css-modules-transform"
+    },
+    "transformIgnorePatterns": [
+      "<rootDir>/node_modules/?!(@material)/"
+    ],
     "moduleNameMapper": {
       "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
       ".scss$": "<rootDir>/__mocks__/styleMocks.js",
+      ".css$": "<rootDir>/__mocks__/styleMocks.js",
       "/^components/": "<rootDir>/app/cdap/components",
       "/^services/": "<rootDir>/app/cdap/services",
       "/^api/": "<rootDir>/app/cdap/api",

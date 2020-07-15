@@ -1,0 +1,3730 @@
+{
+  "name": "etlSchemaBody",
+  "schema": {
+    "type": "record",
+    "name": "Root",
+    "fields": [
+      {
+        "name": "C1jtrcec124",
+        "type": [
+          {
+            "type": "record",
+            "name": "C1jtrcec124",
+            "fields": [
+              {
+                "name": "RecordType",
+                "type": "string"
+              },
+              {
+                "name": "RecordTypeSeq",
+                "type": "long"
+              },
+              {
+                "name": "ApplClaimId",
+                "type": "string"
+              },
+              {
+                "name": "ApplClaimIdSegNo",
+                "type": "string"
+              },
+              {
+                "name": "ProcessDt",
+                "type": "string"
+              },
+              {
+                "name": "ConstituentCd",
+                "type": "string"
+              },
+              {
+                "name": "PayeeTypeCd",
+                "type": "string"
+              },
+              {
+                "name": "ClStatusKey",
+                "type": "string"
+              },
+              {
+                "name": "ApplicationCd",
+                "type": "string"
+              },
+              {
+                "name": "C10CborProdcatCd",
+                "type": "string"
+              },
+              {
+                "name": "ClKey",
+                "type": [
+                  {
+                    "type": "record",
+                    "name": "ClKey",
+                    "fields": [
+                      {
+                        "name": "ClPzId",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClCiId",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClRecId",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClKey1",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClKey1",
+                            "fields": [
+                              {
+                                "name": "ClPaKey1",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClPaKey1",
+                                    "fields": [
+                                      {
+                                        "name": "ClMeKey1",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMeKey1",
+                                            "fields": [
+                                              {
+                                                "name": "ClPaGroup",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaId",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClPaRelName",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClPaRelName",
+                                            "fields": [
+                                              {
+                                                "name": "ClPaRel",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaIdName",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClSysId",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClClKey1",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClClKey1",
+                                    "fields": [
+                                      {
+                                        "name": "ClClId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClClGenX",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClClGenX",
+                                            "fields": [
+                                              {
+                                                "name": "ClClGen",
+                                                "type": "long"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClKeyFil",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "null"
+                ]
+              },
+              {
+                "name": "ClaimData",
+                "type": [
+                  {
+                    "type": "record",
+                    "name": "ClaimData",
+                    "fields": [
+                      {
+                        "name": "ClaimAcasData",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClaimAcasData",
+                            "fields": [
+                              {
+                                "name": "ClOdoCtrs",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClOdoCtrs",
+                                    "fields": [
+                                      {
+                                        "name": "ClCOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClNfdOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClCeExtOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClLeOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClHospOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClOvrdOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClDisallowOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClFillOdoCtr",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClCustOdoCtr",
+                                        "type": "long"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClLastUpdDt",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClLastUpdDt",
+                                    "fields": [
+                                      {
+                                        "name": "ClLastUpdDtCc",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClLastUpdDtYy",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClLastUpdDtFill1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClLastUpdDtMm",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClLastUpdDtFill2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClLastUpdDtDd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClLastUpdRel",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClLastUpdRelLvl",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClUserFieldG",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClUserFieldG",
+                                    "fields": [
+                                      {
+                                        "name": "ClUserField",
+                                        "type": {
+                                          "type": "array",
+                                          "items": "string"
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClStatus",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClClSegNext",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClClSegPrev",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClOverrideData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClOverrideData",
+                                    "fields": [
+                                      {
+                                        "name": "ClOrCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClOrInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClOrInd2",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClCiOptions",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClCiOptions",
+                                    "fields": [
+                                      {
+                                        "name": "ClCiGroupOpt4",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClPiId",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPiCov",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPiOptions",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClPiOptions",
+                                    "fields": [
+                                      {
+                                        "name": "ClPiChkOpt",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClPiChkVersion",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPcId",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPpp",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClEligEvent",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClEligCov",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClCobraInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSite",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPoId",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPoSubId",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClPoSubId",
+                                    "fields": [
+                                      {
+                                        "name": "ClPoSubId16",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClFeeSchedId",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClPoType",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPrefixes",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClPrefixes",
+                                    "fields": [
+                                      {
+                                        "name": "ClBcKey1",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClBcKey1",
+                                            "fields": [
+                                              {
+                                                "name": "ClBcPfx",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClBcCov",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClAiPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClDePfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMsPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMcPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPoPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPyPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClUtPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRtPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClTpPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRaPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClIaPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClEaPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClImPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClSpPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClArPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClCbPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClDupPfx",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClUsdata",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClUsdata",
+                                    "fields": [
+                                      {
+                                        "name": "ClUsIdOriginalEntry",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClUsIdPend",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClUsIdAccept",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClUsIdPyRelease",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMePaData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMePaData",
+                                    "fields": [
+                                      {
+                                        "name": "ClPaAcctNo",
+                                        "type": {
+                                          "type": "array",
+                                          "items": "string"
+                                        }
+                                      },
+                                      {
+                                        "name": "ClPaAge",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 3,
+                                          "scale": 0
+                                        }
+                                      },
+                                      {
+                                        "name": "ClPaSex",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClFbId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClAccumSuf",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeDept",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeLoc",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeGfMeId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeGfGroup",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeGfDiv",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClCtData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClCtData",
+                                    "fields": [
+                                      {
+                                        "name": "ClCtCsId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClCobOtherPaid",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClTfData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClTfData",
+                                    "fields": [
+                                      {
+                                        "name": "ClTfRfId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClTfRefAuditCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClTfRefPrId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClTfRfSegX",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClTfRfSegX",
+                                            "fields": [
+                                              {
+                                                "name": "ClTfRfSeg",
+                                                "type": "long"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMmData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMmData",
+                                    "fields": [
+                                      {
+                                        "name": "ClMmAuthNo",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMmAuthAuditCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMmAuthPrId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMmAuthSegX",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMmAuthSegX",
+                                            "fields": [
+                                              {
+                                                "name": "ClMmAuthSeg",
+                                                "type": "long"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMmInterfaceInd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClDates",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClDates",
+                                    "fields": [
+                                      {
+                                        "name": "ClInputDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClInputDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClInputDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClInputDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClInputDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClInputDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClInputDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClInputDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClPaidDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClPaidDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClPaidDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaidDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaidDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaidDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaidDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClPaidDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClNextRevDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClNextRevDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClNextRevDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClNextRevDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClNextRevDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClNextRevDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClNextRevDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClNextRevDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClOvrdDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClOvrdDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClOvrdDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMemo",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMemo",
+                                    "fields": [
+                                      {
+                                        "name": "ClMemoId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMemoText",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClCobData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClCobData",
+                                    "fields": [
+                                      {
+                                        "name": "ClCobType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClCobCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClCobAllowMax",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClCobSavings",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClCobCopDed",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClAcdData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClAcdData",
+                                    "fields": [
+                                      {
+                                        "name": "ClAcdType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClAcdAmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClAcdDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClAcdDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClAcdDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClAcdDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClAcdDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClAcdDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClAcdDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClAcdDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMiscMedDenData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMiscMedDenData",
+                                    "fields": [
+                                      {
+                                        "name": "ClPyStatus",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPyExpl",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClDragDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClDragDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClDragDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClDragDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClDragDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClDragDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClDragDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClDragDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClAltCovInd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClEdiTradePart",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClLMax",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 3,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClCMax",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 3,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClCodesG",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClCodesG",
+                                    "fields": [
+                                      {
+                                        "name": "ClSourceCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPaidCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClOriginalSourceCode",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClBatchOnlyFields",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClBatchOnlyFields",
+                                    "fields": [
+                                      {
+                                        "name": "ClBatchActionCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClBatchAdjudErrReasons",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClBatchAdjudPendReason",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClTfCapitatedClaimSw",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSuppressEobsInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSupAcdDisX",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClSupAcdDisX",
+                                    "fields": [
+                                      {
+                                        "name": "ClSupAcdDis",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClCInfoG",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClCInfoG",
+                                    "fields": [
+                                      {
+                                        "name": "ClCInfo",
+                                        "type": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "record",
+                                            "name": "ClCInfo",
+                                            "fields": [
+                                              {
+                                                "name": "ClCStatus",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClCPayee",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClCPayeeName",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClCComputed",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCAccumulated",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCCobAdj",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCAdjAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCAdjExpl",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClCSysAdjAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCSegAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCCombClId",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClCChkAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCRecAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCCombRecAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCWithholdAmt",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 11,
+                                                  "scale": 2
+                                                }
+                                              },
+                                              {
+                                                "name": "ClCType",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClCCombNo",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMedMiscNonFixed",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMedMiscNonFixed",
+                                    "fields": [
+                                      {
+                                        "name": "ClMedSysInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedCurIllDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedCurIllDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedCurIllDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedCurIllDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedCurIllDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedCurIllDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedCurIllDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedCurIllDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMedSimIllDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedSimIllDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedSimIllDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedSimIllDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedSimIllDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedSimIllDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedSimIllDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedSimIllDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMedHrelFrDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedHrelFrDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedHrelFrDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelFrDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelFrDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelFrDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelFrDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelFrDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMedHrelToDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedHrelToDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedHrelToDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelToDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelToDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelToDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelToDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedHrelToDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClDenMiscNonFixed",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClDenMiscNonFixed",
+                                    "fields": [
+                                      {
+                                        "name": "ClDenPrKey1",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClDenPrKey1",
+                                            "fields": [
+                                              {
+                                                "name": "ClDenPrId",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClDenPrId",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClDenPrSsn",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClDenPrSuf",
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClDenPrTypeInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClDenPayee",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClDenPrSpecCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClDenOrPAmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClDen835Type",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClLeEntry",
+                                "type": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "record",
+                                    "name": "ClLeEntry",
+                                    "fields": [
+                                      {
+                                        "name": "ClLeCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClLeId",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  }
+                                }
+                              },
+                              {
+                                "name": "ClHospAreaG",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClHospAreaG",
+                                    "fields": [
+                                      {
+                                        "name": "ClMedAdmitPr",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedIpG",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedIpG",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedIpId",
+                                                "type": {
+                                                  "type": "array",
+                                                  "items": "string"
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMedProcId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedDcStat",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedDcStatType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedPreAuthoDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedPreAuthoDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedPreAuthoDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedPreAuthoDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedPreAuthoDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedPreAuthoDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedPreAuthoDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMedPreAuthoDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMedRcKey1",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedRcKey1",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedRcId",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClMedRcId",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClMedCiOlOpt3",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClMedCauseCode",
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClMedDrgCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedCalcInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedUpBypassInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedUpCatOvr",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMedUpDaysOvrX",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMedUpDaysOvrX",
+                                            "fields": [
+                                              {
+                                                "name": "ClMedUpDaysOvr",
+                                                "type": {
+                                                  "type": "bytes",
+                                                  "logicalType": "decimal",
+                                                  "precision": 3,
+                                                  "scale": 0
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClHospBillType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClHospDscDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClHospDscDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClHospDscDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospDscDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospDscDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospDscDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospDscDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospDscDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClHospProcDt",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClHospProcDt",
+                                            "fields": [
+                                              {
+                                                "name": "ClHospProcDtCc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospProcDtYy",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospProcDtFill1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospProcDtMm",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospProcDtFill2",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClHospProcDtDd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClHospMinMaxInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClHospUbUsedSw",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClHospUbData",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClHospUbData",
+                                            "fields": [
+                                              {
+                                                "name": "ClUbStmFrDt",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbStmFrDt",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbStmFrDtCc",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmFrDtYy",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmFrDtFill1",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmFrDtMm",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmFrDtFill2",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmFrDtDd",
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbStmToDt",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbStmToDt",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbStmToDtCc",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmToDtYy",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmToDtFill1",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmToDtMm",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmToDtFill2",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbStmToDtDd",
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbMedRecNo",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClUbCondCodeG",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbCondCodeG",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbCondCode",
+                                                        "type": {
+                                                          "type": "array",
+                                                          "items": "string"
+                                                        }
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbOccurEntryG",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbOccurEntryG",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbOccurEntry",
+                                                        "type": {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "record",
+                                                            "name": "ClUbOccurEntry",
+                                                            "fields": [
+                                                              {
+                                                                "name": "ClUbOccurCode",
+                                                                "type": "string"
+                                                              }
+                                                            ]
+                                                          }
+                                                        }
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbOccurFrDt",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbOccurFrDt",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbOccurFrDtCc",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurFrDtYy",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurFrDtFill1",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurFrDtMm",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurFrDtFill2",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurFrDtDd",
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbOccurToDt",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbOccurToDt",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbOccurToDtCc",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurToDtYy",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurToDtFill1",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurToDtMm",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurToDtFill2",
+                                                        "type": "string"
+                                                      },
+                                                      {
+                                                        "name": "ClUbOccurToDtDd",
+                                                        "type": "string"
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbOthrProcEntryG",
+                                                "type": [
+                                                  {
+                                                    "type": "record",
+                                                    "name": "ClUbOthrProcEntryG",
+                                                    "fields": [
+                                                      {
+                                                        "name": "ClUbOthrProcEntry",
+                                                        "type": {
+                                                          "type": "array",
+                                                          "items": {
+                                                            "type": "record",
+                                                            "name": "ClUbOthrProcEntry",
+                                                            "fields": [
+                                                              {
+                                                                "name": "ClUbOthrProc",
+                                                                "type": "string"
+                                                              }
+                                                            ]
+                                                          }
+                                                        }
+                                                      }
+                                                    ]
+                                                  },
+                                                  "null"
+                                                ]
+                                              },
+                                              {
+                                                "name": "ClUbOthrPhys1",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClUbOthrPhys2",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClOvrdAreaG",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClOvrdAreaG",
+                                    "fields": [
+                                      {
+                                        "name": "ClOvrdEntry",
+                                        "type": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "record",
+                                            "name": "ClOvrdEntry",
+                                            "fields": [
+                                              {
+                                                "name": "ClOvrdInd",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdAmt",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClOvrdExpl",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClTmsData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClTmsData",
+                                    "fields": [
+                                      {
+                                        "name": "ClTmsBankId",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 9,
+                                          "scale": 0
+                                        }
+                                      },
+                                      {
+                                        "name": "ClTmsDraftAccount",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 5,
+                                          "scale": 0
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClComments",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClComments",
+                                    "fields": [
+                                      {
+                                        "name": "ClEobCommentsLine1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClEobCommentsLine2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClEobCommentsLine3",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClEobCommentsLine4",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClaimProdDsgnnData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClaimProdDsgnnData",
+                                    "fields": [
+                                      {
+                                        "name": "ClXAdjProvDsgnnCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPlanDsgnCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXProvSpctyCd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClXClaimData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClXClaimData",
+                                    "fields": [
+                                      {
+                                        "name": "ClXSuffixModifier",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXMedUnit",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClXPlanSummary",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXRecontractedProvInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXAltLocatnCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXNtadvNtwk",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPharmBchNo",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPharmBchSfx",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClXCntlBalFields",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClXCntlBalFields",
+                                            "fields": [
+                                              {
+                                                "name": "ClXAdjTimestamp",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClXDlyprTmstamp",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClXDlyprCtInd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClXSubmitterId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPiGen",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXEpayInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXElecIcn",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXSecCarePhys",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "ClXEciDate",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXTcnKey",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClXTcnKey",
+                                            "fields": [
+                                              {
+                                                "name": "ClXTcnOfficeKey",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClXTcnJulianYyddd",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClXTcnSeqNumber",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClXAcctTypeCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXFacClmId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXMemSearchInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPhyClmId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPcpPcdInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXSmartSuspenseSw",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXOrigFeeCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXClmWithholdPercent",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 3,
+                                          "scale": 0
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXClmSubTypeInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPcdId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXDxPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXDaPfx",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXOffVisitCopAmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXCollectedCopAmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXLeEnrollDate",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmDuId",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmMultFlagInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmTotalDiagtool",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmProvTotalPrCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXSplitClaimInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXNapPotentialInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmCsSeg",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmCsQrCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcfaAdmitType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXAdmReimCode",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXCoinsuranceClause",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXFirstClInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUck",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXAhfProduct",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraOption",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraProvInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraSrchgClApplInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraDetApplInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraStPymtIssueDt",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraSrchgRate",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 6,
+                                          "scale": 5
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXHcraPnltyRate",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 6,
+                                          "scale": 5
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXHcraPepRate",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 6,
+                                          "scale": 5
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXHcraNonSrchgPd",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXHcraTotSrchgPd",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXHcraTotPnltyPd",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXHcraTotPepPd",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClXCobMthdCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXAdpmtApplInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXAdpmtPdInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXContStCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXMdcrEffDt",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXMdcrTrmDt",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXTgCucCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXHcraPinSuf",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXPostAdjRevInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmCsSegNext",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmCsSegPrev",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMemberData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMemberData",
+                                    "fields": [
+                                      {
+                                        "name": "ClMePcpPin",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 10,
+                                          "scale": 0
+                                        }
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClProvData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClProvData",
+                                    "fields": [
+                                      {
+                                        "name": "ClSrvProvPrType",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClSrvProvSpecialtyCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClSrvProvPin",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClPlanData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClPlanData",
+                                    "fields": [
+                                      {
+                                        "name": "ClPlSbdFamLmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClPlSbdPatLmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClPlSbcFamLmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClPlSbcPatLmt",
+                                        "type": {
+                                          "type": "bytes",
+                                          "logicalType": "decimal",
+                                          "precision": 11,
+                                          "scale": 2
+                                        }
+                                      },
+                                      {
+                                        "name": "ClPlAiCob",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlAiCobMedicare",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlAiGovExclInd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlAiCobDental",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlEobPlanBoxData",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClPlEobPlanBoxData",
+                                            "fields": [
+                                              {
+                                                "name": "ClPlBoxLineDisplay",
+                                                "type": {
+                                                  "type": "array",
+                                                  "items": "string"
+                                                }
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      },
+                                      {
+                                        "name": "ClProfitCenterOnPiRec",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlEffDt",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPlStopDt",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClUmdcsData",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClUmdcsData",
+                                    "fields": [
+                                      {
+                                        "name": "ClXUmCsRmrkCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClXUmCsResubInd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClCobOther",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "PrcssrUnit",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClaimAcasDataFillerGroup",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClaimAcasDataFillerGroup",
+                                    "fields": [
+                                      {
+                                        "name": "ClaimAcasDataFiller",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClaimMciData",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClaimMciData",
+                            "fields": [
+                              {
+                                "name": "ClRecDt",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClRecDt",
+                                    "fields": [
+                                      {
+                                        "name": "ClRecDtCc",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRecDtYy",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRecDtFill1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRecDtMm",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRecDtFill2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClRecDtDd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "Cl277Status",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMedIdId",
+                                "type": {
+                                  "type": "array",
+                                  "items": "string"
+                                }
+                              },
+                              {
+                                "name": "ClMedPreAuthoDays",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 4,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClMeBirthDt",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMeBirthDt",
+                                    "fields": [
+                                      {
+                                        "name": "ClMeBirthDtCc",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeBirthDtYy",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeBirthDtFill1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeBirthDtMm",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeBirthDtFill2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeBirthDtDd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "PaBirthDt",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "PaBirthDt",
+                                    "fields": [
+                                      {
+                                        "name": "PaBirthDtCc",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "PaBirthDtYy",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "PaBirthDtFill1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "PaBirthDtMm",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "PaBirthDtFill2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "PaBirthDtDd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClXControlNum",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ClXSuffix",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ClXAccount",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ClMeLastName",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPatientLastName",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMeFirstName",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMeMidInit",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMePatientName",
+                                "type": "string"
+                              },
+                              {
+                                "name": "CumbRoleCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "MbrCumbId",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "MbrCumbIdSeqNo",
+                                "type": "long"
+                              },
+                              {
+                                "name": "SubCumbId",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "SubCumbIdSeqNo",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ClMeSsn",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClaimantNumber",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ProductCode",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ProductAbreviation",
+                                "type": "string"
+                              },
+                              {
+                                "name": "LpcMestinitAmt",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "LpcPestinitAmt",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "LpcHestinitAmt",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "LpcMovrpmtAmt",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "LpcPovrpmtAmt",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "LpcHovrpmtAmt",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 13,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "ClaimMciDataFiller",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClaimEwmData",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClaimEwmData",
+                            "fields": [
+                              {
+                                "name": "DrgBilled",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 4,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClaimEwmDataFiller",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClaimDerivedData",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClaimDerivedData",
+                            "fields": [
+                              {
+                                "name": "ClNytaxProvider",
+                                "type": "string"
+                              },
+                              {
+                                "name": "AetnaNormalBenefit",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "ClCrrClaimLevelStatus",
+                                "type": "string"
+                              },
+                              {
+                                "name": "CobType",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClTmsAltFundInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClmIcn",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClmIcn",
+                                    "fields": [
+                                      {
+                                        "name": "ClmIcnNumber",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClmIcnLetter",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ParInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ActivityTransactionCode",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 5,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClAcasMemberStateCode",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPlDeCalOrPlanYr",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPlBnftYrCymd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPlPiMedicareInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPlPiPolicyHolderName",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPlPiPolicyHolderState",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClXUnderOverpayInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "MinPremAscInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "TypeOfExpCob",
+                                "type": "string"
+                              },
+                              {
+                                "name": "TypeOfExpMdcrInt",
+                                "type": "string"
+                              },
+                              {
+                                "name": "TypeOfExpMaternity",
+                                "type": "string"
+                              },
+                              {
+                                "name": "CustSegmentCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "DxRecordId",
+                                "type": "string"
+                              },
+                              {
+                                "name": "TotalPaid",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "OverpayReduction",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "TotalCoveredExpenses",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "TotalExpensesPayable",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "TotalExpensesNotCovered",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "TotalSubmittedExpenses",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 11,
+                                  "scale": 2
+                                }
+                              },
+                              {
+                                "name": "NumberOfExpenseLines",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 4,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClaimDerivedDataFiller",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClaimEpdbData",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClaimEpdbData",
+                            "fields": [
+                              {
+                                "name": "ClSrvProvBillAddrLn1",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvBillAddrNo",
+                                "type": {
+                                  "type": "bytes",
+                                  "logicalType": "decimal",
+                                  "precision": 7,
+                                  "scale": 0
+                                }
+                              },
+                              {
+                                "name": "ClSrvProvBillCity",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvBillState",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvBillZipCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvBillZipPlus4",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvBillCntry",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvNetworkName",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClSrvProvNetworkName",
+                                    "fields": [
+                                      {
+                                        "name": "NtwkIdNo",
+                                        "type": "long"
+                                      },
+                                      {
+                                        "name": "NtwkNm",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClSrvProvTinFmtCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvTin",
+                                "type": "int"
+                              },
+                              {
+                                "name": "ClSrvProvName",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClSrvProvName",
+                                    "fields": [
+                                      {
+                                        "name": "ClSrvProvLastName",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClSrvProvFirstName",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClSrvProvMiddleName",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "SrvProvAddrLn1",
+                                "type": "string"
+                              },
+                              {
+                                "name": "SrvProvCity",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClServiceLocationState",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClServiceLocationZip",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClaimProvServZip",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ServLocationCntry",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClHcraPoolTin",
+                                "type": "int"
+                              },
+                              {
+                                "name": "ClHcraPoolTinName",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClHcraPoolTinName",
+                                    "fields": [
+                                      {
+                                        "name": "ClHcraPoolTinLastName",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClHcraPoolTinFirstName",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClHcraPoolTinMidInit",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClHcraPoolAddrLn1",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClHcraPoolAddrNo",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ClHcraPoolCity",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClHcraPoolState",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClHcraPoolZipCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClHcraPoolZipPlus4",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPcdProvAddrLn1",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPcdProvCity",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPcdProvState",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPcdProvZipCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClPcdProvExtZipCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClXGeoareaId",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ProvMea",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvRank",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvSalutation",
+                                "type": "string"
+                              },
+                              {
+                                "name": "GenericProvCode",
+                                "type": "string"
+                              },
+                              {
+                                "name": "SrvProvNetworkType",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClHcraPoolNameType",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvNameType",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClServiceLocation",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ProvQualifier",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvNetworkId",
+                                "type": "long"
+                              },
+                              {
+                                "name": "ClPcdProvName",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClPcdProvName",
+                                    "fields": [
+                                      {
+                                        "name": "ClPcdProvLastName",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPcdProvFirstName",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClPcdProvMidInit",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ProvMea2",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClSrvProvDegree",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClaimEpdbDataFiller",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClaimDmData",
+                        "type": [
+                          {
+                            "type": "record",
+                            "name": "ClaimDmData",
+                            "fields": [
+                              {
+                                "name": "ClMeAltpayAddress",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMeAltpayAddress",
+                                    "fields": [
+                                      {
+                                        "name": "ClMeAltpayAddrln1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAltpayAddrln2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAltpayCityNm",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAltpayStCd",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAltpayZipCd",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMeAltpayName",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMeAltpayName",
+                                    "fields": [
+                                      {
+                                        "name": "ClMeAltpayFrstNm",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAltpayMidInit",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAltpayLastNm",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMeMembersAddress",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "ClMeMembersAddress",
+                                    "fields": [
+                                      {
+                                        "name": "ClMeAddrLn1",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeAddrLn2",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeCity",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeStateAbbr",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "ClMeZipCd",
+                                        "type": [
+                                          {
+                                            "type": "record",
+                                            "name": "ClMeZipCd",
+                                            "fields": [
+                                              {
+                                                "name": "ClMeZip",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "name": "ClMeExtZipCd",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "null"
+                                        ]
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "ClMeEftInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMeWorkLocZipCode",
+                                "type": "string"
+                              },
+                              {
+                                "name": "DepIdNo",
+                                "type": "string"
+                              },
+                              {
+                                "name": "EobInfoG",
+                                "type": [
+                                  {
+                                    "type": "record",
+                                    "name": "EobInfoG",
+                                    "fields": [
+                                      {
+                                        "name": "EobCity",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "EobState",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "EobStreet",
+                                        "type": "string"
+                                      },
+                                      {
+                                        "name": "EobZip",
+                                        "type": "string"
+                                      }
+                                    ]
+                                  },
+                                  "null"
+                                ]
+                              },
+                              {
+                                "name": "SubsStCdNum",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMeNetworkId",
+                                "type": "long"
+                              },
+                              {
+                                "name": "CapOffCd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMeLangInd",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClMeSex",
+                                "type": "string"
+                              },
+                              {
+                                "name": "ClaimDmDataFiller",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "null"
+                        ]
+                      },
+                      {
+                        "name": "ClSrvProvTinName",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClXAhfOfdCd",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClXFsaStreamlinedInd",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClZeroedClaim",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClCsStatusCd",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ProcOfficeKey",
+                        "type": "string"
+                      },
+                      {
+                        "name": "EcSbmtridCd",
+                        "type": "string"
+                      },
+                      {
+                        "name": "ClaimDataFiller",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "null"
+                ]
+              }
+            ]
+          },
+          "null"
+        ]
+      }
+    ]
+  }
+}

@@ -15,12 +15,26 @@
  */
 
 import { List, Map } from 'immutable';
-const { getJSONOutput, parsePluginJSON } = jest.requireActual(
-  'components/PluginJSONCreator/utilities'
-);
-jest.unmock('uuid/v4');
-jest.unmock('immutable');
-
+import { getJSONOutput, parsePluginJSON } from 'components/PluginJSONCreator/utilities';
+/**
+ * We no longer automock all the modules. So this forces us to mock only those
+ * modules we need to mock to run unit tests.
+ *
+ * Ideally we shouldn't test a module that includes DOM, but the given the nature of
+ * configuration-groups and its dependency on material-ui I am adding specific mocks
+ * for test.
+ */
+jest.mock('@material-ui/core/Box', () => {
+  return {};
+});
+jest.mock('../../DataPrepConnections/PluginConnectionBrowser', () => {
+  return {};
+});
+jest.mock('../../AbstractWidget/AbstractWidgetFactory', () => {
+  return {
+    WIDGET_FACTORY: {},
+  };
+});
 const mockStateProperties = {
   displayName: 'test',
   configurationGroups: List([
