@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, LogViewerStore, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService, HydratorPlusPlusPreviewActions, myAlertOnValium) {
+  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService, HydratorPlusPlusPreviewActions, myAlertOnValium) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -38,7 +38,6 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.HydratorPlusPlusOrderingFactory = HydratorPlusPlusOrderingFactory;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.avsc = avsc;
-    this.LogViewerStore = LogViewerStore;
     this.PipelineMetricsStore = window.CaskCommon.PipelineMetricsStore;
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
@@ -104,7 +103,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     if (rIsStudioMode && this.isPreviewMode && this.previewId) {
       this.previewData = null;
       this.updatePreviewStatus();
-      this.selectedNode = { 
+      this.selectedNode = {
         plugin: this.state.node.plugin,
         isSource: this.state.isSource,
         isSink: this.state.isSink,
@@ -531,10 +530,9 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   updatePreviewStatus() {
-    const logViewerState = this.LogViewerStore.getState();
-    // TODO: Move preview status state info HydratorPlusPlusPreviewStore, then get from there
-    if (logViewerState.statusInfo) {
-      this.previewStatus = logViewerState.statusInfo.status;
+    const previewState = this.previewStore.getState().preview;
+    if (previewState.status) {
+      this.previewStatus = previewState.status;
     }
   }
 
