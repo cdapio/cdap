@@ -1,7 +1,7 @@
 .. meta::
     :author: Cask Data, Inc.
     :copyright: Copyright © 2020 Cask Data, Inc.
-    :version: 6.1.2
+    :version: 6.1.3
 
 =================================================
 Cask Data Application Platform |version|
@@ -96,6 +96,7 @@ Cask Data Application Platform Level 1 Dependencies
    "io.cdap.common","common-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.cdap.common","common-io","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.cdap.http","netty-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "io.kubernetes","client-java","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-all","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-buffer","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "io.netty","netty-codec-http","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
