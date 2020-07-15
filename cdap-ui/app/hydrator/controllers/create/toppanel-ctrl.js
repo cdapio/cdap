@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts, $window, LogViewerStore, LOGVIEWERSTORE_ACTIONS, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid, HydratorUpgradeService) {
+  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts, $window, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid, HydratorUpgradeService) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
@@ -30,8 +30,6 @@ class HydratorPlusPlusTopPanelCtrl {
     this.PREVIEWSTORE_ACTIONS = PREVIEWSTORE_ACTIONS;
     this.previewStore = HydratorPlusPlusPreviewStore;
     this.previewActions = HydratorPlusPlusPreviewActions;
-    this.LOGVIEWERSTORE_ACTIONS = LOGVIEWERSTORE_ACTIONS;
-    this.LogViewerStore = LogViewerStore;
     this.$interval = $interval;
     this.myPipelineApi = myPipelineApi;
     this.myPreviewLogsApi = myPreviewLogsApi;
@@ -97,16 +95,12 @@ class HydratorPlusPlusTopPanelCtrl {
           this.previewStartTime = statusRes.startTime;
           this.previewLoading = false;
 
-          // TODO: Just realized it makes more sense to have preview status be in previewStore (HydratorPlusPlusPreviewStore),
-          // instead of LogViewerStore. Will migrate later, as I don't want to introduce breaking changes right now.
-          this.LogViewerStore.dispatch({
-            type: this.LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+          this.previewStore.dispatch({
+            type: this.PREVIEWSTORE_ACTIONS.SET_PREVIEW_STATUS,
             payload: {
               status: statusRes.status,
-              startTime: statusRes.startTime,
-              endTime: statusRes.endTime
-            }
-          });
+            },
+          })
 
           if (statusRes.status === window.CaskCommon.PREVIEW_STATUS.RUNNING) {
             this.previewRunning = true;
@@ -651,14 +645,12 @@ class HydratorPlusPlusTopPanelCtrl {
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 1000
     }, (res) => {
-      if (this.LogViewerStore) {
-        this.LogViewerStore.dispatch({
-          type: this.LOGVIEWERSTORE_ACTIONS.SET_STATUS,
+      if (this.previewStore) {
+        this.previewStore.dispatch({
+          type: this.PREVIEWSTORE_ACTIONS.SET_PREVIEW_STATUS,
           payload: {
             status: res.status,
-            startTime: res.startTime,
-            endTime: res.endTime
-          }
+          },
         });
       }
       const {
