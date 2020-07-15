@@ -20,6 +20,7 @@ import NamespaceStore, { isValidNamespace, getValidNamespace } from 'services/Na
 import { Redirect } from 'react-router-dom';
 import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
+import { GLOBALS } from 'services/global-constants';
 
 export default class RouteToNamespace extends Component {
   constructor(props) {
@@ -49,7 +50,7 @@ export default class RouteToNamespace extends Component {
     if (!isvalid) {
       this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
         statusCode: 404,
-        data: `'namespace:${selectedNamespace}' was not found.`,
+        data: GLOBALS.pageLevelErrors['INVALID-NAMESPACE'](selectedNamespace),
       });
     }
     localStorage.setItem('DefaultNamespace', selectedNamespace);

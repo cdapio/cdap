@@ -18,7 +18,7 @@
  * various utility functions
  */
 angular.module(PKG.name+'.services')
-  .factory('myHelpers', function(myCdapUrl, $window){
+  .factory('myHelpers', function(myCdapUrl, $window, GLOBALS){
 
    /**
     * set a property deep in an object
@@ -236,7 +236,7 @@ angular.module(PKG.name+'.services')
           // Match error.data to NotFoundException from backend
           const error = {
             statusCode: 404,
-            data: `'namespace:${namespace}' was not found.`
+            data: GLOBALS.pageLevelErrors['INVALID-NAMESPACE'](namespace)
           };
           window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
         }
