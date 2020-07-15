@@ -14,7 +14,8 @@
  * the License.
 */
 
-import {getArtifactNameAndVersion} from 'services/helpers';
+import { getArtifactNameAndVersion } from 'services/helpers';
+jest.disableAutomock();
 
 describe('Unit Tests for Helpers: "getArtifactNameAndVersion"', () => {
 

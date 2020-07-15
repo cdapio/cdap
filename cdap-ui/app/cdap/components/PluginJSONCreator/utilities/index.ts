@@ -3,7 +3,12 @@ import { fromJS, List, Map } from 'immutable';
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
 
-function getJSONOutput(widgetData) {
+/**
+ * Convert state properties into plugin JSON file data.
+ *
+ * @param widgetData State properties for plugin JSON
+ */
+export function getJSONOutput(widgetData) {
   const {
     displayName,
     emitAlerts,
@@ -104,11 +109,19 @@ function getJSONOutput(widgetData) {
   return config;
 }
 
-function parsePluginJSON(filename, pluginJSON) {
+/**
+ * Parse the plugin JSON file into the state properties.
+ *
+ * @param filename Incoming filename
+ * @param pluginJSON Incoming JSON file data
+ */
+export function parsePluginJSON(filename, pluginJSON) {
+  const filenameWithoutExtension = filename.substring(0, filename.lastIndexOf('.')) || filename;
+
   // Parse filename in order to set pluginName and pluginType
   // Currently the filename is designed to be <pluginName>-<pluginType>.json
-  const pluginName = filename.split('-')[0] || '';
-  const pluginType = filename.split('-')[1] || '';
+  const pluginName = filenameWithoutExtension.split('-')[0] || '';
+  const pluginType = filenameWithoutExtension.split('-')[1] || '';
 
   // Parse file data in order to populate the rest of properties
   // If the string fields are undefined, set them to empty string
@@ -260,10 +273,13 @@ function parsePluginJSON(filename, pluginJSON) {
   };
 }
 
-function downloadPluginJSON(widgetData) {
+/**
+ * Download the live JSON output.
+ *
+ * @param widgetData State properties for plugin JSON
+ */
+export function downloadPluginJSON(widgetData) {
   const JSONOutput = getJSONOutput(widgetData);
   const { pluginName, pluginType } = widgetData;
   fileDownload(JSON.stringify(JSONOutput, undefined, 4), `${pluginName}-${pluginType}.json`);
 }
-
-export { getJSONOutput, parsePluginJSON, downloadPluginJSON };

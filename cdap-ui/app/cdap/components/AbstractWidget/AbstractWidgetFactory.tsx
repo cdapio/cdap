@@ -15,14 +15,14 @@
  */
 
 import * as React from 'react';
-import { objectQuery } from 'services/helpers';
-import CodeEditorWidget from 'components/AbstractWidget/CodeEditorWidget';
+
 import CSVWidget from 'components/AbstractWidget/CSVWidget';
+import CodeEditorWidget from 'components/AbstractWidget/CodeEditorWidget';
+import DLPCustomWidget from 'components/AbstractWidget/DLPCustomWidget';
 import DatasetSelector from 'components/AbstractWidget/DatasetSelectorWidget';
 import DateRangeWidget from 'components/AbstractWidget/DateRangeWidget';
 import DateTimeWidget from 'components/AbstractWidget/DateTimeWidget';
 import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropdownAliasWidget';
-import DLPCustomWidget from 'components/AbstractWidget/DLPCustomWidget';
 import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
 import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
 import JoinTypeWidget from 'components/AbstractWidget/JoinTypeWidget';
@@ -32,8 +32,8 @@ import KeyValueEncodedWidget from 'components/AbstractWidget/KeyValueWidget/KeyV
 import KeyValueWidget from 'components/AbstractWidget/KeyValueWidget';
 import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
 import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
-import MultipleValuesWidget from 'components/AbstractWidget/MultipleValuesWidget';
 import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
+import MultipleValuesWidget from 'components/AbstractWidget/MultipleValuesWidget';
 import NumberWidget from 'components/AbstractWidget/FormInputs/Number';
 import PasswordWidget from 'components/AbstractWidget/FormInputs/Password';
 import PluginConnectionBrowser from 'components/DataPrepConnections/PluginConnectionBrowser';
@@ -49,6 +49,7 @@ import SqlSelectorWidget from 'components/AbstractWidget/SqlSelectorWidget';
 import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
+import { objectQuery } from 'services/helpers';
 
 /**
  * Please maintain alphabetical order of the widget factory.
