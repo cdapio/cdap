@@ -15,6 +15,7 @@
  */
 
 import Version from 'services/VersionRange/Version';
+jest.disableAutomock();
 
 describe('Version Class', () => {
   const SNAPSHOT_VERSION = '1.0.0-SNAPSHOT';

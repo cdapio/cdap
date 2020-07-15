@@ -15,16 +15,17 @@
  */
 
 import {
-  filterByCondition,
-  IFilteredWidgetProperty,
-} from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
-import {
-  PropertyShowConfigTypeEnums,
   CustomOperator,
   IWidgetJson,
   IWidgetProperty,
+  PropertyShowConfigTypeEnums,
 } from 'components/ConfigurationGroup/types';
 import { processConfigurationGroups } from 'components/ConfigurationGroup/utilities';
+import {
+  filterByCondition,
+  IFilteredWidgetProperty,
+} from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
+jest.disableAutomock();
 
 const pluginProperties = {
   property1: {

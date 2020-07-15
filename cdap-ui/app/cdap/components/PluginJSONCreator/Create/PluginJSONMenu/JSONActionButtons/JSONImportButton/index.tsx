@@ -14,8 +14,9 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+import Button from '@material-ui/core/Button';
 import InsertDriveFileIcon from '@material-ui/icons/InsertDriveFile';
 import React from 'react';
 
@@ -40,14 +41,12 @@ const JSONImportButtonView: React.FC<IJSONImportButtonProps> = ({
       const files = e.target.files;
       if (files.length > 0) {
         const filename = files[0].name;
-        const filenameWithoutExtension =
-          filename.substring(0, filename.lastIndexOf('.')) || filename;
         const reader = new FileReader();
         reader.readAsText(files[0]);
         let fileContent;
         reader.onload = (r) => {
           fileContent = r.target.result;
-          populateImportResults(filenameWithoutExtension, fileContent);
+          populateImportResults(filename, fileContent);
         };
       }
     };
