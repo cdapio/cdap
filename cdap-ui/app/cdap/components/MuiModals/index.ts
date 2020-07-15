@@ -14,7 +14,10 @@
  * the License.
  */
 
- import Modal from './Modal';
- import Wizard from './Wizard';
+import ConfirmationDialog from './ConfirmationDialog';
+import FormDialog from './FormDialog';
+import InformationDialog from './InformationDialog';
+import StyledModal from './StyledModal';
+import Wizard from './Wizard';
 
- export { Modal, Wizard };
+export { ConfirmationDialog, FormDialog, InformationDialog, StyledModal, Wizard };
