@@ -69,19 +69,22 @@ storiesOf('Material Alerts', module)
     'System Notification',
     withInfo({
       text: 'Enable and use the system notification'
-    })(() => (
-      <React.Fragment>
+    })(() => {
+      const alertTitle = text('Title', 'System notification!');
+      const alertBody = text('Body', 'Lorem ipsum blah blah');
+      return <React.Fragment>
         <NotificationPermission />
         <div>
           <PrimaryButton
             onClick={
-              () => { new Notification("System notification!", {
-                body: "Lorem ipsum blah blah"
+              () => { new Notification(alertTitle, {
+                body: alertBody,
+                icon: '/img/favicon.png'
               }) }
             }>
             Show notification
           </PrimaryButton>
         </div>
       </React.Fragment>
-    ))
+    })
   );

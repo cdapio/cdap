@@ -25,7 +25,7 @@
     "jest-w": "jest --watch",
     "karma-test": "node ./node_modules/karma/bin/karma start test/karma-conf.js",
     "karma-test-single-run": "node ./node_modules/karma/bin/karma start test/karma-conf.js --no-auto-watch --single-run",
-    "storybook": "NODE_ENV=development start-storybook -p 6006",
+    "storybook": "NODE_ENV=development start-storybook -s ./app/styles -p 6006",
     "build-storybook": "NODE_ENV=development build-storybook",
     "precypress-open": "node cypress/pre-startup.js",
     "precypress": "node cypress/pre-startup.js",
