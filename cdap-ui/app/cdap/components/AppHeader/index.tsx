@@ -35,6 +35,8 @@ import { NamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext'
 import ThemeWrapper from 'components/ThemeWrapper';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { loadDefaultExperiments } from 'components/Lab';
+import SystemServicesDelay from 'components/SystemServicesDelay';
+import ExperimentalFeature from 'components/Lab/ExperimentalFeature';
 
 require('styles/bootstrap_4_patch.scss');
 
@@ -133,7 +135,14 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
       !this.state.currentNamespace ||
       (typeof this.state.currentNamespace === 'string' && !this.state.currentNamespace.length)
     ) {
-      return <LoadingSVGCentered showFullPage />;
+      return (
+        <React.Fragment>
+          <LoadingSVGCentered showFullPage />
+          <ExperimentalFeature experimentId="system-delay-notification">
+            <SystemServicesDelay />
+          </ExperimentalFeature>
+        </React.Fragment>
+      );
     }
     return (
       <AppBar
@@ -148,6 +157,9 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
             onClose={this.toggleDrawer}
             componentDidNavigate={this.componentDidNavigate}
           />
+          <ExperimentalFeature experimentId="system-delay-notification">
+            <SystemServicesDelay />
+          </ExperimentalFeature>
         </NamespaceLinkContext.Provider>
       </AppBar>
     );

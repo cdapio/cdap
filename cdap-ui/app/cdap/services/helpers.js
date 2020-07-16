@@ -470,6 +470,14 @@ function dumbestClone(jsonObj) {
   return result;
 }
 
+function getExperimentValue(experimentID) {
+  return window.localStorage.getItem(`${experimentID}-value`);
+}
+
+function isExperimentEnabled(experimentID) {
+  return window.localStorage.getItem(`${experimentID}`) === 'true';
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -510,4 +518,6 @@ export {
   removeEmptyJsonValues,
   extractErrorMessage,
   dumbestClone,
+  getExperimentValue,
+  isExperimentEnabled,
 };
