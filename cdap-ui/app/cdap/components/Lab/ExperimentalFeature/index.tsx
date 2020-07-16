@@ -15,20 +15,16 @@
  */
 
 import * as React from 'react';
+import If from 'components/If';
 
-interface IToggleFeatureProps {
-  defaultComponent: React.ReactElement<any>;
-  experimentalComponent: React.ReactElement<any>;
+interface IExperimentWrapperProps {
+  children: React.ReactNode;
   experimentId: string;
 }
 
-const ToggleFeature: React.SFC<IToggleFeatureProps> = ({
-  defaultComponent,
-  experimentalComponent,
-  experimentId,
-}) => {
+const ExperimentWrapper: React.FC<IExperimentWrapperProps> = ({ children, experimentId }) => {
   const featureAvailable = window.localStorage.getItem(experimentId) === 'true';
-  return featureAvailable ? experimentalComponent : defaultComponent;
+  return <If condition={featureAvailable}>{children}</If>;
 };
 
-export default ToggleFeature;
+export default ExperimentWrapper;

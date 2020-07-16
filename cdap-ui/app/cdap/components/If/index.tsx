@@ -20,7 +20,7 @@ import { StyleRules } from '@material-ui/core/styles';
 
 interface IIfComponentProps {
   condition: boolean;
-  children: React.ReactElement<any>;
+  children: React.ReactNode;
   invisible?: boolean;
   HiddenContainer?: React.ReactNode;
 }
