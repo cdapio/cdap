@@ -32,6 +32,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import { SCOPES } from 'services/global-constants';
+import If from 'components/If';
 
 export const PREFERENCES_LEVEL = {
   SYSTEM: SCOPES.SYSTEM,
@@ -185,6 +186,7 @@ export default class SetPreferenceModal extends Component {
         },
         (error) => {
           this.setState({
+            saving: false,
             error: isObject(error) ? error.response : error,
           });
         }
@@ -258,6 +260,7 @@ export default class SetPreferenceModal extends Component {
     event.preventDefault();
     this.setState({
       showResetMessage: true,
+      error: null,
     });
     this.getSpecifiedPreferences();
     setTimeout(() => {
@@ -447,7 +450,8 @@ export default class SetPreferenceModal extends Component {
                   <button
                     className="btn btn-primary float-left not-saving"
                     onClick={this.setPreferences}
-                    disabled={this.oneFieldMissing() || this.state.error ? 'disabled' : null}
+                    disabled={this.oneFieldMissing()}
+                    data-cy="save-prefs-btn"
                   >
                     <span>{saveAndCloseLabel}</span>
                   </button>
@@ -455,9 +459,9 @@ export default class SetPreferenceModal extends Component {
                 <span className="float-left reset">
                   <a onClick={this.resetFields}>{resetLink}</a>
                 </span>
-                {this.state.showResetMessage ? (
+                <If condition={this.state.showResetMessage}>
                   <span className="float-left text-success reset-success">Reset Successful</span>
-                ) : null}
+                </If>
                 {this.state.keyValues.pairs ? (
                   <span className="float-right num-rows">
                     {this.state.keyValues.pairs.length === 1 ? (
@@ -469,12 +473,14 @@ export default class SetPreferenceModal extends Component {
                 ) : null}
               </div>
               <div className="preferences-error">
-                {this.state.error ? (
-                  <div className="bg-danger text-white">{this.state.error}</div>
-                ) : null}
+                <If condition={this.state.error}>
+                  <div className="text-danger">{this.state.error}</div>
+                </If>
               </div>
             </div>
-            {!this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM ? <hr /> : null}
+            <If condition={!this.props.setAtLevel === PREFERENCES_LEVEL.SYSTEM}>
+              <hr />
+            </If>
             <div className="inherited-preferences-container">
               {this.renderInheritedPreferences()}
             </div>
