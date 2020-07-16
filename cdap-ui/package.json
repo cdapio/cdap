@@ -140,6 +140,7 @@
     "tslint": "5.20.1",
     "tslint-config-prettier": "1.18.0",
     "tslint-plugin-prettier": "2.1.0",
+    "uglifyjs-webpack-plugin": "1.0.1",
     "url-loader": "3.0.0",
     "webpack": "4.41.2",
     "webpack-bundle-analyzer": "^3.8.0",

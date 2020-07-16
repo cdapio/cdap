@@ -124,17 +124,18 @@ var rules = [
   },
   {
     test: /\.js$/,
-    use: 'babel-loader',
+    use: 'babel-loader?cacheDirectory',
     exclude: loaderExclude,
   },
   {
     test: /\.tsx?$/,
     use: [
-      'babel-loader',
+      'babel-loader?cacheDirectory',
       {
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
+          experimentalWatchApi: true,
         },
       },
     ],

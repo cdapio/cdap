@@ -27,11 +27,13 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 
 // the clean options to use
 let cleanOptions = {
   verbose: true,
   dry: false,
+  // cleanStaleWebpackAssets: false,
 };
 
 const loaderExclude = [
@@ -43,7 +45,7 @@ const loaderExclude = [
   /lib/,
 ];
 
-var mode = process.env.NODE_ENV || 'production';
+var mode = 'development'; // process.env.NODE_ENV || 'production';
 const isModeProduction = (mode) => mode === 'production' || mode === 'non-optimized-production';
 const getWebpackDllPlugins = (mode) => {
   var sharedDllManifestFileName = 'shared-vendor-manifest.json';
@@ -148,18 +150,19 @@ var rules = [
   },
   {
     test: /\.js$/,
-    use: ['babel-loader'],
+    use: ['babel-loader?cacheDirectory'],
     exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
   },
   {
     test: /\.tsx?$/,
     use: [
-      'babel-loader',
+      'babel-loader?cacheDirectory',
       {
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
+          experimentalWatchApi: true,
         },
       },
     ],
@@ -231,6 +234,7 @@ var webpackConfig = {
     chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
+    pathinfo: false,
   },
   stats: {
     assets: false,
@@ -244,7 +248,20 @@ var webpackConfig = {
   plugins: plugins,
   // TODO: Need to investigate this more.
   optimization: {
-    splitChunks: false,
+    moduleIds: "hashed",
+    runtimeChunk: {
+      name: "manifest",
+    },
+    splitChunks: {
+      cacheGroups: {
+        vendor: {
+          name: "node_vedors",
+          test: /[\\/]node_modules[\\/]/,
+          chunks: "all",
+        }
+      }
+    },
+    minimize: true,
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx', '.scss'],
@@ -259,7 +276,7 @@ var webpackConfig = {
 };
 
 if (!isModeProduction(mode)) {
-  webpackConfig.devtool = 'source-maps';
+  webpackConfig.devtool = 'source-map';
 }
 
 if (isModeProduction(mode)) {
@@ -278,6 +295,13 @@ if (isModeProduction(mode)) {
       },
     }),
   ];
+} else {
+  webpackConfig.optimization.minimizer = [
+    new UglifyJsPlugin({
+      cache: true,
+      parallel: true,
+    }),
+  ]
 }
 
 module.exports = webpackConfig;
