@@ -26,6 +26,7 @@ var TerserPlugin = require('terser-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
+const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
 
 // the clean options to use
 let cleanOptions = {
@@ -212,6 +213,7 @@ if (mode === 'development') {
         '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
     })
   );
+  plugins.push(new WebpackBundleAnalyzer.BundleAnalyzerPlugin());
 }
 
 var webpackConfig = {

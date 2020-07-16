@@ -15,16 +15,18 @@
  */
 
 import * as React from 'react';
+
 import { Redirect, Route, Switch } from 'react-router-dom';
-import Helmet from 'react-helmet';
+
 import Create from 'components/PluginJSONCreator/Create';
-import { getCurrentNamespace } from 'services/NamespaceStore';
+import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 export const basepath = '/ns/:namespace/plugincreation';
 
 const PluginJSONCreator: React.FC = () => {
-  const pageTitle = `${Theme.productName} | Plugin JSON`;
+  const pageTitle = `${Theme.productName} | Plugin JSON 1`;
 
   return (
     <React.Fragment>
