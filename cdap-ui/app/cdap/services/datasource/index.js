@@ -35,6 +35,9 @@ import 'rxjs/add/operator/debounceTime';
 import WindowManager, { WINDOW_ON_BLUR, WINDOW_ON_FOCUS } from 'services/WindowManager';
 import { objectQuery } from 'services/helpers';
 import ifvisible from 'ifvisible.js';
+import SystemDelayStore from 'services/SystemDelayStore';
+import SystemDelayActions from 'services/SystemDelayStore/SystemDelayActions';
+import cloneDeep from 'lodash/cloneDeep';
 
 const CDAP_API_VERSION = 'v3';
 // FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
@@ -42,10 +45,9 @@ const REQUEST_ORIGIN_ROUTER = 'ROUTER';
 
 export default class Datasource {
   constructor(genericResponseHandlers = [() => true]) {
-    this.eventEmitter = ee(ee);
+  this.eventEmitter = ee(ee);
     let socketData = Socket.getObservable();
     this.bindings = {};
-
     this.socketSubscription = socketData.subscribe((data) => {
       let hash = data.resource.id;
       if (!this.bindings[hash]) {
@@ -89,6 +91,11 @@ export default class Datasource {
         delete this.bindings[hash];
       } else {
         if (this.bindings[hash] && this.bindings[hash].type === 'POLL') {
+          // Clearing timestamp as we wait for next poll to happen
+          // If we don't do this and a health check happens, this request would
+          // be considered delayed because the timestamp is from last
+          // request-poll which does not matter anymore.
+          this.bindings[hash].resource.requestTime = null;
           this.bindings[hash].resource.interval = this.startClientPoll(hash);
         }
       }
@@ -115,9 +122,26 @@ export default class Datasource {
     });
     this.eventEmitter.on(WINDOW_ON_FOCUS, this.resumePoll.bind(this));
     this.eventEmitter.on(WINDOW_ON_BLUR, this.pausePoll.bind(this));
+      SystemDelayStore.dispatch({
+        type: SystemDelayActions.registerDataSource,
+        payload: this,
+      });
+  }
+
+  getBindingsForHealthCheck() {
+    const bindingsWithTime = {};
+    Object.values(this.bindings).forEach(binding => {
+      if (!binding.excludeFromHealthCheck) {
+        const id = objectQuery(binding, 'resource', 'id');
+        const requestTime = objectQuery(binding, 'resource', 'requestTime');
+        bindingsWithTime[id] = requestTime;
+      }
+    });
+    return bindingsWithTime;
   }
 
   socketSend(actionType, resource) {
+    resource.requestTime = Date.now();
     Socket.send({
       action: actionType,
       resource: resource,
@@ -125,6 +149,7 @@ export default class Datasource {
   }
 
   request(resource = {}) {
+    const excludeFromHealthCheck = !!resource.excludeFromHealthCheck;
     let generatedResource = {
       id: resource.id || uuidV4(),
       json: resource.json === false ? false : true,
@@ -168,6 +193,7 @@ export default class Datasource {
         rx: subject,
         resource: generatedResource,
         type: 'REQUEST',
+        excludeFromHealthCheck,
       };
     }
 
@@ -177,6 +203,7 @@ export default class Datasource {
   }
 
   poll(resource = {}) {
+    const excludeFromHealthCheck = !!resource.excludeFromHealthCheck;
     const id = uuidV4();
     const intervalTime = resource.interval || 10000;
     let generatedResource = {
@@ -242,6 +269,7 @@ export default class Datasource {
       rx: subject,
       resource: generatedResource,
       type: 'POLL',
+      excludeFromHealthCheck,
     };
 
     this.socketSend('request', generatedResource);
