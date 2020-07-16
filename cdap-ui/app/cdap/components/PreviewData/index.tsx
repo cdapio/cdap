@@ -195,7 +195,12 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     return (
       <React.Fragment>
         <span className={classes.recordToggle}>
-          <ToggleSwitchWidget onChange={setViewMode} value={viewMode} widgetProps={widgetProps} />
+          <ToggleSwitchWidget
+            onChange={setViewMode}
+            value={viewMode}
+            widgetProps={widgetProps}
+            disabled={selectedNode.isCondition}
+          />
         </span>
         <If condition={viewMode === PreviewMode.Table}>
           <PreviewTableContainer
