@@ -84,6 +84,7 @@ public class LocalLogAppender extends LogAppender {
   @Override
   public void start() {
     // Load and starts all configured log processing pipelines
+    addInfo("starting log appender in local mode");
     LogPipelineLoader pipelineLoader = new LogPipelineLoader(cConf, customLogPipelineConfigProvider);
     Map<String, LogPipelineSpecification<AppenderContext>> specs =
       pipelineLoader.load(() -> new LocalAppenderContext(transactionRunner, locationFactory, metricsCollectionService));

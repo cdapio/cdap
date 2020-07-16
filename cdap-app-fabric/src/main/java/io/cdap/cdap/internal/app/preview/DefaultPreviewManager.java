@@ -30,6 +30,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequest;
@@ -63,8 +64,11 @@ import io.cdap.cdap.internal.app.namespace.LocalStorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.namespace.NamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.NoopNamespaceResourceDeleter;
 import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
+import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
+import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
+import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
 import io.cdap.cdap.logging.read.LogReader;
@@ -155,12 +159,24 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     previewInjector = createPreviewInjector();
     PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     subscriberService.startAndWait();
+    PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
+    logSubscriber.startAndWait();
+    LogAppenderInitializer logAppenderInitializer = previewInjector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.initialize();
+    MetricsCollectionService metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
+    metricsCollectionService.start();
   }
 
   @Override
   protected synchronized void shutDown() throws Exception {
     PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     stopQuietly(subscriberService);
+    PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
+    stopQuietly(logSubscriber);
+    LogAppenderInitializer logAppenderInitializer = previewInjector.getInstance(LogAppenderInitializer.class);
+    logAppenderInitializer.close();
+    MetricsCollectionService metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
+    stopQuietly(metricsCollectionService);
     previewLevelDBTableService.close();
   }
 
@@ -312,6 +328,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         @Override
         protected void configure() {
           bind(LevelDBTableService.class).toInstance(previewLevelDBTableService);
+          bind(RemoteExecutionLogProcessor.class).to(LogAppenderLogProcessor.class).in(Scopes.SINGLETON);
         }
 
         @Provides

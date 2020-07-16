@@ -73,6 +73,9 @@ public class PreviewConfigModule extends AbstractModule {
     // Use No-SQL store for preview data
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
 
+    previewCConf.set(Constants.Logging.TMS_TOPIC_PREFIX, "previewlog");
+    previewCConf.setInt(Constants.Logging.NUM_PARTITIONS, 1);
+    
     // Setup Hadoop configuration
     previewHConf = new Configuration(hConf);
     previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);

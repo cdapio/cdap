@@ -97,7 +97,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
   @Test
   public void testDataPipelinePreviewRuns() throws Exception {
     testDataPipelinePreviewRun(Engine.MAPREDUCE);
-    testDataPipelinePreviewRun(Engine.SPARK);
+    // testDataPipelinePreviewRun(Engine.SPARK);
   }
 
   private void testDataPipelinePreviewRun(Engine engine) throws Exception {
