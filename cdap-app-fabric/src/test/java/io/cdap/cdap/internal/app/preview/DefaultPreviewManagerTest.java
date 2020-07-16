@@ -40,8 +40,8 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
-import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
+import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
@@ -92,7 +92,7 @@ public class DefaultPreviewManagerTest {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new NonCustomLocationUnitTestModule(),
-      new LocalLogAppenderModule(),
+      new PreviewLocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
