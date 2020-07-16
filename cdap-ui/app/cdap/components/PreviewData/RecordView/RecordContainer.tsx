@@ -21,12 +21,19 @@ import RecordNavigator from 'components/PreviewData/RecordView/Navigator';
 import RecordTable from 'components/PreviewData/RecordView/RecordTable';
 import { INode } from 'components/PreviewData/utilities';
 import If from 'components/If';
-import { styles } from 'components/PreviewData/DataView/TableContainer';
+import { styles as tableStyles } from 'components/PreviewData/DataView/TableContainer';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import T from 'i18n-react';
 import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordContainer';
+
+const styles = (theme): StyleRules => ({
+  ...tableStyles(theme),
+  recordMargin: {
+    marginBottom: '35px', // from tab height
+  },
+});
 
 interface IRecordViewContainerProps extends WithStyles<typeof styles> {
   tableData: ITableData;
@@ -107,7 +114,13 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
               [classes.split]: !selectedNode.isSource && !selectedNode.isSink,
             })}
           >
-            <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.inputHeader`)}</h2>
+            <h2
+              className={classnames(classes.h2Title, {
+                [classes.recordMargin]: !showInputTabs && showOutputTabs,
+              })}
+            >
+              {T.translate(`${I18N_PREFIX}.inputHeader`)}
+            </h2>
             {showInputTabs
               ? getTabs(getTabConfig(inputs, selectedRecord, true))
               : inputs.map(([stageName, stageInfo]) => {
@@ -129,7 +142,13 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
               [classes.split]: !selectedNode.isSource && !selectedNode.isSink,
             })}
           >
-            <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.outputHeader`)}</h2>
+            <h2
+              className={classnames(classes.h2Title, {
+                [classes.recordMargin]: !showOutputTabs && showInputTabs,
+              })}
+            >
+              {T.translate(`${I18N_PREFIX}.outputHeader`)}
+            </h2>
             {showOutputTabs
               ? getTabs(getTabConfig(outputs, selectedRecord, false))
               : outputs.map(([stageName, stageInfo]) => {
