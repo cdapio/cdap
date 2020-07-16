@@ -126,6 +126,7 @@ public abstract class SparkPipelineRunner {
 
     Collection<Runnable> sinkRunnables = new ArrayList<>();
     for (String stageName : pipelinePhase.getDag().getTopologicalOrder()) {
+
       StageSpec stageSpec = pipelinePhase.getStage(stageName);
       //noinspection ConstantConditions
       String pluginType = stageSpec.getPluginType();
