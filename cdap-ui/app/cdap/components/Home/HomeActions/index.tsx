@@ -53,7 +53,7 @@ const HomeActionsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             }
 
             return action.experiment ? (
-              <ExperimentalFeature key={action.title} name={action.experiment}>
+              <ExperimentalFeature key={action.title} experimentId={action.experiment}>
                 <ActionCard key={action.title} config={action} />
               </ExperimentalFeature>
             ) : (

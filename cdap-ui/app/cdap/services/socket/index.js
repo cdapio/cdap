@@ -60,6 +60,7 @@ class Socket {
         let data = JSON.parse(event.data);
         if (window.CDAP_CONFIG.cdap.uiDebugEnabled) {
           console.groupCollapsed('response: ' + data.resource.url);
+          console.log(`response took ${Date.now() - data.resource.requestTime} ms`);
           console.log(data.resource);
           console.log(data.response);
           console.groupEnd();

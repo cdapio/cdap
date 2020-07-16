@@ -207,7 +207,7 @@ export default class Home extends Component {
               });
               return (
                 <ToggleExperiment
-                  name="virtual-scroll-demo"
+                  experimentId="virtual-scroll-demo"
                   defaultComponent={<Page404 {...props} />}
                   experimentalComponent={<VirtualScrollDemo />}
                 />
@@ -241,7 +241,7 @@ export default class Home extends Component {
             render={(props) => {
               return (
                 <ToggleExperiment
-                  name="data-ingestion"
+                  experimentId="data-ingestion"
                   defaultComponent={<Page404 {...props} />}
                   experimentalComponent={<Ingestion />}
                 />

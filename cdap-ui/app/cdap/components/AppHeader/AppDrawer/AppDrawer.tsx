@@ -140,7 +140,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             id="navbar-home"
             isActive={location.pathname === `/cdap/${nsurl}`}
           />
-          <ExperimentalFeature name={'data-ingestion'}>
+          <ExperimentalFeature experimentId="data-ingestion">
             <DrawerFeatureLink
               featureName="Ingest"
               featureUrl={`/${nsurl}/ingestion`}
