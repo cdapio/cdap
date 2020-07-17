@@ -70,7 +70,15 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
   const inputs = tableData.inputs;
   const outputs = tableData.outputs;
 
-  const numRecords = Math.max(tableData.inputFieldCount, tableData.outputFieldCount);
+  const recordCountReducer = (maxRecordCount: number, [stageName, stageInfo]) => {
+    const recordCount = stageInfo.records.length;
+    return Math.max(recordCount, maxRecordCount);
+  };
+
+  const numRecords = Math.max(
+    inputs.reduce(recordCountReducer, 0),
+    outputs.reduce(recordCountReducer, 0)
+  );
 
   const updateRecord = (newVal: string) => {
     const recordNum = parseInt(newVal.split(' ')[1], 10);
