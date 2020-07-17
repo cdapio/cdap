@@ -111,12 +111,6 @@ public class PreviewTMSLogSubscriber extends AbstractMessagingSubscriberService<
       ImmutablePair<String, Iterator<byte[]>> next = messages.next();
       String messageId = next.getFirst();
       Iterator<byte[]> message = next.getSecond();
-      // List<byte[]> todelete = ImmutableList.copyOf(message);
-      // LOG.info("XXX TC: {}, {} before", todelete.size(), message.hasNext());
-      // for (byte[] arr : todelete) {
-      //  LOG.info("XXX: {}", Bytes.toString(arr));
-      // }
-      // LOG.info("XXX TC: {}, {}", todelete.size(), message.hasNext());
       try {
         logProcessor.process(message);
       } catch (Exception e) {

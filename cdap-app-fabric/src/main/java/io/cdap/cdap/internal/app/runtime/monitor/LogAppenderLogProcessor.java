@@ -47,6 +47,7 @@ public class LogAppenderLogProcessor implements RemoteExecutionLogProcessor {
 
   @Override
   public void process(Iterator<byte[]> loggingEventBytes) {
+
     LoggingEventSerializer serializer = LOGGING_EVENT_SERIALIZER.get();
     loggingEventBytes.forEachRemaining(bytes -> {
       try {
