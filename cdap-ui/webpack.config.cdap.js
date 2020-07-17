@@ -31,6 +31,9 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin'); // added
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin'); // added
 const safePostCssParser = require('postcss-safe-parser');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+
+const smp = new SpeedMeasurePlugin();
 
 // the clean options to use
 let cleanOptions = {
@@ -231,7 +234,6 @@ if (mode === 'development') {
         '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
     })
   );
-  plugins.push(new WebpackBundleAnalyzer.BundleAnalyzerPlugin());
 }
 
 var webpackConfig = {
@@ -275,6 +277,11 @@ var webpackConfig = {
           name: "node_vedors",
           test: /[\\/]node_modules[\\/]/,
           chunks: "all",
+        },
+        fonts: {
+          name: "fonts",
+          test: /[\\/]app[\\/]cdap[\\/]styles[\\/]fonts[\\/]/,
+          chunks: "all",
         }
       }
     },
@@ -313,11 +320,13 @@ if (isModeProduction(mode)) {
     }),
   ];
 } else {
+  const v8 = require('v8');
+  console.log("hello", v8.getHeapStatistics().total_available_size / 1024 / 1024);
   webpackConfig.optimization.minimizer = [ // added
-    new UglifyJsPlugin({
-      cache: true,
-      parallel: true,
-    }),
+    // new UglifyJsPlugin({
+    //   cache: true,
+    //   parallel: true,
+    // }),
     // new OptimizeCSSAssetsPlugin(), // doesn't seem to reduce
       // cssProcessorOptions: {
       //   parser: safePostCssParser,
@@ -330,4 +339,4 @@ if (isModeProduction(mode)) {
   ]
 }
 
-module.exports = webpackConfig;
+module.exports = smp.wrap(webpackConfig);
