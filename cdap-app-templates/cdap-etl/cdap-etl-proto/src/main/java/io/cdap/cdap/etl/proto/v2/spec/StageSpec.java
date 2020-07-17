@@ -41,6 +41,8 @@ public class StageSpec implements Serializable {
   private final PluginSpec plugin;
   private final Map<String, Schema> inputSchemas;
   private final Map<String, Port> outputPorts;
+  // CDAP-17097 - DO NOT REMOVE! This is used by the UI in the validate stage call to get port schemas
+  private final Map<String, Schema> portSchemas;
   private final Schema outputSchema;
   private final Schema errorSchema;
   private final boolean stageLoggingEnabled;
@@ -52,7 +54,7 @@ public class StageSpec implements Serializable {
   private transient Map<String, Schema> fullInputSchemas;
 
   private StageSpec(String name, PluginSpec plugin, Map<String, Schema> inputSchemas, @Nullable Schema outputSchema,
-                    Schema errorSchema, Map<String, Port> outputPorts,
+                    Schema errorSchema, Map<String, Schema> portSchemas, Map<String, Port> outputPorts,
                     boolean stageLoggingEnabled, boolean processTimingEnabled, int maxPreviewRecords) {
     this.name = name;
     this.plugin = plugin;
@@ -62,6 +64,7 @@ public class StageSpec implements Serializable {
     this.processTimingEnabled = processTimingEnabled;
     this.outputSchema = outputSchema;
     this.outputPorts = Collections.unmodifiableMap(outputPorts);
+    this.portSchemas = Collections.unmodifiableMap(portSchemas);
     this.maxPreviewRecords = maxPreviewRecords;
     this.inputStages = inputSchemas.keySet();
   }
@@ -178,6 +181,7 @@ public class StageSpec implements Serializable {
     private final PluginSpec plugin;
     private final boolean isSplitter;
     private Map<String, Schema> inputSchemas;
+    private Map<String, Schema> portSchemas;
     private Map<String, Port> outputs;
     private Schema outputSchema;
     private Schema errorSchema;
@@ -190,6 +194,7 @@ public class StageSpec implements Serializable {
       this.plugin = plugin;
       this.inputSchemas = new HashMap<>();
       this.outputs = new HashMap<>();
+      this.portSchemas = new HashMap<>();
       this.stageLoggingEnabled = true;
       this.processTimingEnabled = true;
       this.isSplitter = plugin.getType().equals(SplitterTransform.PLUGIN_TYPE);
@@ -218,11 +223,20 @@ public class StageSpec implements Serializable {
       if (!isSplitter) {
         this.outputSchema = outputSchema;
       }
+      if (port != null) {
+        this.portSchemas.put(port, outputSchema);
+      }
       return this;
     }
 
     public Builder setOutputSchema(@Nullable Schema outputSchema) {
       this.outputSchema = outputSchema;
+      return this;
+    }
+
+    public Builder setPortSchemas(Map<String, Schema> portSchemas) {
+      this.portSchemas.clear();
+      this.portSchemas.putAll(portSchemas);
       return this;
     }
 
@@ -247,7 +261,7 @@ public class StageSpec implements Serializable {
     }
 
     public StageSpec build() {
-      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, outputs,
+      return new StageSpec(name, plugin, inputSchemas, outputSchema, errorSchema, portSchemas, outputs,
                            stageLoggingEnabled, processTimingEnabled, maxPreviewRecords);
     }
 
