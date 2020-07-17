@@ -78,12 +78,11 @@ const RecordNavigatorBase: React.FC<IRecordNavigatorProps> = ({
       >
         <ArrowLeftIcon fontSize="large" />
       </IconButton>
-      <span className={classes.select}>
+      <span className={classes.select} data-cy="record-dropdown">
         <Select
           value={`Record ${selectedRecord}`}
           onChange={(e) => updateRecord(e)}
           widgetProps={{ options: selectOptions }}
-          data-cy="record-dropdown"
         />
       </span>
       <IconButton

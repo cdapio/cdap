@@ -323,7 +323,7 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
       cy.get(dataCy(`${sinkNode.nodeName}-preview-data-btn`)).click();
     });
     // Should be able to navigate records and toggle view
-    cy.get(dataCy('toggle-Record'), { timeout: 10000 }).should('exist');
+    cy.get(dataCy('toggle-Record'), { timeout: 15000 }).should('exist');
     cy.get(dataCy('fieldname-field')).should('be.visible');
 
     cy.get(dataCy('record-dropdown')).click();
