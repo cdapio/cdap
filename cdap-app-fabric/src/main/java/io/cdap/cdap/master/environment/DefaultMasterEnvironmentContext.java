@@ -19,18 +19,28 @@ package io.cdap.cdap.master.environment;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
+import javax.inject.Inject;
 
 /**
  * Default implementation of {@link MasterEnvironmentContext} that reflects the actual master runtime environment.
  */
 public class DefaultMasterEnvironmentContext implements MasterEnvironmentContext {
 
+  private final LocationFactory locationFactory;
   private final Map<String, String> configuration;
 
-  public DefaultMasterEnvironmentContext(CConfiguration cConf) {
+  @Inject
+  DefaultMasterEnvironmentContext(LocationFactory locationFactory, CConfiguration cConf) {
+    this.locationFactory = locationFactory;
     this.configuration = CConfigurationUtil.asMap(cConf);
+  }
+
+  @Override
+  public LocationFactory getLocationFactory() {
+    return locationFactory;
   }
 
   @Override

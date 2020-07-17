@@ -32,6 +32,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -92,7 +93,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    * @param <T> type of the master main class
    * @throws Exception if execution failed
    */
-  protected static <T extends AbstractServiceMain> void main(Class<T> mainClass, String[] args) throws Exception {
+  protected static <E extends EnvironmentOptions, T extends AbstractServiceMain<E>>
+  void main(Class<T> mainClass, String[] args) throws Exception {
     ClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
       LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
@@ -153,7 +155,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
                                            + options.getEnvProvider());
     }
 
-    MasterEnvironmentContext masterEnvContext = new DefaultMasterEnvironmentContext(cConf);
+    MasterEnvironmentContext masterEnvContext = createMasterEnvironmentContext(cConf, hConf);
     try {
       masterEnv.initialize(masterEnvContext);
     } catch (Exception e) {
@@ -330,5 +332,21 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     public T get() {
       return supplier.get();
     }
+  }
+
+  /**
+   * Creates a new {@link MasterEnvironmentContext} from the given configurations.
+   */
+  private MasterEnvironmentContext createMasterEnvironmentContext(CConfiguration cConf, Configuration hConf) {
+    Injector injector = Guice.createInjector(
+      new ConfigModule(cConf, hConf),
+      new DFSLocationModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(MasterEnvironmentContext.class).to(DefaultMasterEnvironmentContext.class);
+        }
+      });
+    return injector.getInstance(MasterEnvironmentContext.class);
   }
 }

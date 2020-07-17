@@ -16,12 +16,19 @@
 
 package io.cdap.cdap.master.spi.environment;
 
+import org.apache.twill.filesystem.LocationFactory;
+
 import java.util.Map;
 
 /**
  * Context object available to {@link MasterEnvironment} for access to CDAP resources.
  */
 public interface MasterEnvironmentContext {
+
+  /**
+   * Returns the {@link LocationFactory} used by the CDAP.
+   */
+  LocationFactory getLocationFactory();
 
   /**
    * Returns a {@link Map} that contains all CDAP configurations.
