@@ -341,7 +341,9 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       .addInputSchemas(pipelineConfigurer.getStageConfigurer().getInputSchemas())
       .setErrorSchema(stageConfigurer.getErrorSchema());
 
-    if (!type.equals(SplitterTransform.PLUGIN_TYPE)) {
+    if (type.equals(SplitterTransform.PLUGIN_TYPE)) {
+      specBuilder.setPortSchemas(stageConfigurer.getOutputPortSchemas());
+    } else {
       specBuilder.setOutputSchema(stageConfigurer.getOutputSchema());
     }
     return specBuilder;
