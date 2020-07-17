@@ -131,7 +131,7 @@ describe('Output Schema', () => {
       });
   });
 
-  it.only('Should create and deploy pipeline when output schema is a macro', () => {
+  it('Should work if the output schema is a macro', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.create_simple_pipeline().then(({ sourceNodeId, transformNodeId, sinkNodeId }) => {
       const sourceProperties = {

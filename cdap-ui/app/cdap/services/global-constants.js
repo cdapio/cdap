@@ -258,6 +258,7 @@ const GLOBALS = {
             'INVALID-STAGES': "Found 'stages' property outside of config specification.",
             'INVALID-CONNECTIONS': "Found 'connections' property outside of config specification.",
             'INVALID-SYNTAX': 'Syntax Error. Ill-formed pipeline configuration',
+            'NO-BACKEND-PROPS': 'Plugin artifact is missing.'
           },
           PREVIEW: {
             'NO-SOURCE-SINK': 'Please add a source and sink to the pipeline',

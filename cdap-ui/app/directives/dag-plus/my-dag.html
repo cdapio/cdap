@@ -173,8 +173,8 @@
                   data-cy="plugin-endpoint-{{node.plugin.name}}-{{node.type}}-false">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
-            <div ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
-              <div class="error-node-notification" ng-if="node.errorCount > 0">
+            <div ng-click="node.isPluginAvailable && !disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
+              <div class="error-node-notification" ng-if="node.errorCount > 0" data-cy="node-badge">
                 <span class="badge" ng-class="{'badge-warning': !node.error, 'badge-danger': node.error}">
                   <span>{{node.errorCount}}</span>
                 </span>
