@@ -164,6 +164,7 @@
   <button
     class="btn btn-primary"
     ng-click="PipelineUpgradeController.fixAll()"
+    data-cy="fix-all-btn"
   >
     <span ng-if="!PipelineUpgradeController.fixAllDisabled">Fix All</span>
     <span ng-if="PipelineUpgradeController.fixAllDisabled">Proceed</span>

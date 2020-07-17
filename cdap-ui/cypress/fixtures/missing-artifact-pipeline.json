@@ -1,0 +1,153 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "[6.1.0-SNAPSHOT, 6.3.0-SNAPSHOT]",
+        "scope": "SYSTEM"
+    },
+    "description": "Data Pipeline Application",
+    "name": "missing-artifact",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "File",
+                "to": "Wrangler"
+            },
+            {
+                "from": "Wrangler",
+                "to": "PDFExtractor"
+            },
+            {
+                "from": "PDFExtractor",
+                "to": "File2"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {},
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "File",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsource",
+                    "label": "File",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.3.6-SNAPSHOT, 2.5.1-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "format": "text",
+                        "skipHeader": "false",
+                        "filenameOnly": "false",
+                        "recursive": "false",
+                        "ignoreNonExistingFolders": "false",
+                        "referenceName": "invalid",
+                        "path": "testpath",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+            },
+            {
+                "name": "Wrangler",
+                "plugin": {
+                    "name": "Wrangler",
+                    "type": "transform",
+                    "label": "Wrangler",
+                    "artifact": {
+                        "name": "wrangler-transform",
+                        "version": "[4.1.7-SNAPSHOT, 4.3.1-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "field": "*",
+                        "precondition": "false",
+                        "threshold": "1",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":[\"bytes\",\"null\"]}]}",
+                        "workspaceId": "b6d9b1a7-bf7d-4ed2-8b12-2a1130742a0c",
+                        "directives": "set-type :body bytes"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":[\"bytes\",\"null\"]}]}",
+                "inputSchema": [
+                    {
+                        "name": "File",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"offset\",\"type\":\"long\"},{\"name\":\"body\",\"type\":\"string\"}]}"
+                    }
+                ]
+            },
+            {
+                "name": "PDFExtractor",
+                "plugin": {
+                    "name": "PDFExtractor",
+                    "type": "transform",
+                    "label": "PDFExtractor",
+                    "artifact": {
+                        "name": "pdf-extractor-transform",
+                        "version": "2.0.0",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "continueOnError": "false",
+                        "sourceFieldName": "body"
+                    }
+                },
+                "outputSchema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"raw_pdf_data\",\"type\":[\"bytes\",\"null\"]},{\"name\":\"text\",\"type\":[\"string\",\"null\"]},{\"name\":\"page_count\",\"type\":[\"int\",\"null\"]},{\"name\":\"title\",\"type\":[\"string\",\"null\"]},{\"name\":\"author\",\"type\":[\"string\",\"null\"]},{\"name\":\"subject\",\"type\":[\"string\",\"null\"]},{\"name\":\"keywords\",\"type\":[\"string\",\"null\"]},{\"name\":\"creator\",\"type\":[\"string\",\"null\"]},{\"name\":\"producer\",\"type\":[\"string\",\"null\"]},{\"name\":\"creation_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"modification_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"trapped\",\"type\":[\"string\",\"null\"]}]}",
+                "inputSchema": [
+                    {
+                        "name": "Wrangler",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":[\"bytes\",\"null\"]}]}"
+                    }
+                ]
+            },
+            {
+                "name": "File2",
+                "plugin": {
+                    "name": "File",
+                    "type": "batchsink",
+                    "label": "File2",
+                    "artifact": {
+                        "name": "core-plugins",
+                        "version": "[2.3.6-SNAPSHOT, 2.5.1-SNAPSHOT)",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "suffix": "yyyy-MM-dd-HH-mm",
+                        "format": "json",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"raw_pdf_data\",\"type\":[\"bytes\",\"null\"]},{\"name\":\"text\",\"type\":[\"string\",\"null\"]},{\"name\":\"page_count\",\"type\":[\"int\",\"null\"]},{\"name\":\"title\",\"type\":[\"string\",\"null\"]},{\"name\":\"author\",\"type\":[\"string\",\"null\"]},{\"name\":\"subject\",\"type\":[\"string\",\"null\"]},{\"name\":\"keywords\",\"type\":[\"string\",\"null\"]},{\"name\":\"creator\",\"type\":[\"string\",\"null\"]},{\"name\":\"producer\",\"type\":[\"string\",\"null\"]},{\"name\":\"creation_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"modification_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"trapped\",\"type\":[\"string\",\"null\"]}]}",
+                        "referenceName": "test_name_ref",
+                        "path": "tes/path"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"raw_pdf_data\",\"type\":[\"bytes\",\"null\"]},{\"name\":\"text\",\"type\":[\"string\",\"null\"]},{\"name\":\"page_count\",\"type\":[\"int\",\"null\"]},{\"name\":\"title\",\"type\":[\"string\",\"null\"]},{\"name\":\"author\",\"type\":[\"string\",\"null\"]},{\"name\":\"subject\",\"type\":[\"string\",\"null\"]},{\"name\":\"keywords\",\"type\":[\"string\",\"null\"]},{\"name\":\"creator\",\"type\":[\"string\",\"null\"]},{\"name\":\"producer\",\"type\":[\"string\",\"null\"]},{\"name\":\"creation_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"modification_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"trapped\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "PDFExtractor",
+                        "schema": "{\"name\":\"etlSchemaBody\",\"type\":\"record\",\"fields\":[{\"name\":\"raw_pdf_data\",\"type\":[\"bytes\",\"null\"]},{\"name\":\"text\",\"type\":[\"string\",\"null\"]},{\"name\":\"page_count\",\"type\":[\"int\",\"null\"]},{\"name\":\"title\",\"type\":[\"string\",\"null\"]},{\"name\":\"author\",\"type\":[\"string\",\"null\"]},{\"name\":\"subject\",\"type\":[\"string\",\"null\"]},{\"name\":\"keywords\",\"type\":[\"string\",\"null\"]},{\"name\":\"creator\",\"type\":[\"string\",\"null\"]},{\"name\":\"producer\",\"type\":[\"string\",\"null\"]},{\"name\":\"creation_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"modification_date\",\"type\":[\"long\",\"null\"]},{\"name\":\"trapped\",\"type\":[\"string\",\"null\"]}]}"
+                    }
+                ]
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}
