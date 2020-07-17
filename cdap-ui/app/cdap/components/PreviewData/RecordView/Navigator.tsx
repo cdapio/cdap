@@ -31,6 +31,7 @@ const styles = (theme): StyleRules => ({
   select: {
     display: 'flex',
     alignItems: 'center',
+    width: '120px',
   },
 });
 
