@@ -111,7 +111,7 @@ public class MessagingMetricsProcessorManagerService extends AbstractIdleService
       MetricsWriter writer = metricsWriterEntry.getValue();
       this.metricsWriters.add(writer);
       DefaultMetricsWriterContext metricsWriterContext = new DefaultMetricsWriterContext(metricsContext,
-        cConf, metricsWriter.getID());
+        cConf, writer.getID());
       writer.initialize(metricsWriterContext);
     }
 
