@@ -36,7 +36,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 let cleanOptions = {
   verbose: true,
   dry: false,
-  cleanStaleWebpackAssets: false,
+  cleanStaleWebpackAssets: false, // reduces down from 2.7seconds to 2.2seconds
 };
 
 const loaderExclude = [
@@ -121,10 +121,10 @@ var plugins = [
     mode: isModeProduction(mode) ? '' : 'development.',
   }),
   // new MiniCssExtractPlugin(),
-  new MiniCssExtractPlugin({
-    filename: '[name].css',
-    chunkFilename: '[id].css'
-  })
+  // new MiniCssExtractPlugin({
+  //   filename: '[name].css',
+  //   chunkFilename: '[id].css'
+  // })
 ];
 if (!isModeProduction(mode)) {
   plugins.push(
@@ -249,7 +249,7 @@ var webpackConfig = {
     chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
-    pathinfo: false, // added
+    pathinfo: false, // added. reduces 0.2~0.3 seconds
   },
   stats: {
     assets: false,
@@ -318,7 +318,7 @@ if (isModeProduction(mode)) {
       cache: true,
       parallel: true,
     }),
-    new OptimizeCSSAssetsPlugin(),
+    // new OptimizeCSSAssetsPlugin(), // doesn't seem to reduce
       // cssProcessorOptions: {
       //   parser: safePostCssParser,
       //   map: {
