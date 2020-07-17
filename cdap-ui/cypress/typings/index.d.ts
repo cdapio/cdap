@@ -85,6 +85,19 @@ declare global {
        */
 
       create_SPANNER_connection: (connectionId: string, projectId?: string, serviceAccountPath?: string) => void;
+      /**
+       * Assertion to validate a runtime argument row
+       */
+      assert_runtime_args_row: (row: number, key: string, value: string, macro?: boolean) => void;
+      compareSnapshot: (s: string) => any;
+      /** 
+       *  Deletes specified artifact via REST API
+       *  @headers - Any request headers to be passed.
+       *  @artifactName - Name of artifact to be deleted.
+       *  @version - Version of the artifact to be deleted.
+       */
+
+      delete_artifact_via_api: (headers: any, artifactName: string, version: string) => Chainable<Request>;
     }
     // tslint:disable-next-line: interface-name
     interface Window {

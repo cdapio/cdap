@@ -39,7 +39,8 @@
     <button class="btn btn-primary validate-btn" type="button"
             ng-if="!isDisabled"
             ng-class="{'disabled': HydratorPlusPlusNodeConfigCtrl.validating}"
-            ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()">
+            ng-click="!HydratorPlusPlusNodeConfigCtrl.validating && HydratorPlusPlusNodeConfigCtrl.validatePluginProperties()"
+            data-cy="plugin-properties-validate-btn">
       <span ng-if="HydratorPlusPlusNodeConfigCtrl.validating">
         <span class="fa fa-spinner fa-spin"></span>
       </span>
@@ -95,6 +96,11 @@
         <div class="bottompanel-body"
              ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
              ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl">
+        </div>
+        <div class="bottompanel-body"
+        ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 1 && !HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin"
+        ng-include="HydratorPlusPlusNodeConfigCtrl.tabs[0].templateUrl">
+        <span>Plugin artifact is not available.</span>
         </div>
         <div class="bottompanel-body"
              ng-if="HydratorPlusPlusNodeConfigCtrl.activeTab === 2"

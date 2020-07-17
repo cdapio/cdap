@@ -267,6 +267,7 @@ export default class Wizard extends Component {
             ? 'disabled'
             : null
         }
+        data-cy="wizard-finish-btn"
       >
         <span>{T.translate('features.Wizard.NavigationButtons.finish')}</span>
       </button>
@@ -360,7 +361,11 @@ export default class Wizard extends Component {
     let callToActionInfo = this.state.callToActionInfo;
     return (
       <div>
-        <div className="close-section float-right" onClick={this.props.onClose.bind(null, true)}>
+        <div
+          className="close-section float-right"
+          onClick={this.props.onClose.bind(null, true)}
+          data-cy="wizard-result-icon-close-btn"
+        >
           <IconSVG name="icon-close" />
         </div>
         <div className="result-container">
