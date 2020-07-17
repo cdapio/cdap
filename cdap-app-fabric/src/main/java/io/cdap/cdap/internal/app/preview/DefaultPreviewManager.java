@@ -47,6 +47,8 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.guice.preview.PreviewDiscoveryRuntimeModule;
+import io.cdap.cdap.common.logging.LoggingContextAccessor;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.utils.Networks;
@@ -68,6 +70,7 @@ import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
+import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
@@ -161,8 +164,11 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     subscriberService.startAndWait();
     PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
     logSubscriber.startAndWait();
-    LogAppenderInitializer logAppenderInitializer = previewInjector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.initialize();
+    LogAppender logAppender = previewInjector.getInstance(LogAppender.class);
+    logAppender.start();
+    LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                                                       Constants.Logging.COMPONENT_NAME,
+                                                                       Constants.Service.PREVIEW_HTTP));
     MetricsCollectionService metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.start();
   }
@@ -173,8 +179,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     stopQuietly(subscriberService);
     PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);
     stopQuietly(logSubscriber);
-    LogAppenderInitializer logAppenderInitializer = previewInjector.getInstance(LogAppenderInitializer.class);
-    logAppenderInitializer.close();
+    LogAppender logAppender = previewInjector.getInstance(LogAppender.class);
+    logAppender.stop();
     MetricsCollectionService metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
     stopQuietly(metricsCollectionService);
     previewLevelDBTableService.close();
