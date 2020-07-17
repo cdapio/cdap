@@ -16,10 +16,10 @@
 
 import React, { useEffect, useState } from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import AbstractWidget from 'components/AbstractWidget';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
 import ArrowLeftIcon from '@material-ui/icons/ArrowLeft';
 import IconButton from '@material-ui/core/IconButton';
+import Select from 'components/AbstractWidget/FormInputs/Select';
 
 const styles = (theme): StyleRules => ({
   root: {
@@ -31,6 +31,7 @@ const styles = (theme): StyleRules => ({
   select: {
     display: 'flex',
     alignItems: 'center',
+    width: '120px',
   },
 });
 
@@ -78,11 +79,10 @@ const RecordNavigatorBase: React.FC<IRecordNavigatorProps> = ({
         <ArrowLeftIcon fontSize="large" />
       </IconButton>
       <span className={classes.select} data-cy="record-dropdown">
-        <AbstractWidget
+        <Select
           value={`Record ${selectedRecord}`}
-          type="select"
-          widgetProps={{ options: selectOptions }}
           onChange={(e) => updateRecord(e)}
+          widgetProps={{ options: selectOptions }}
         />
       </span>
       <IconButton
