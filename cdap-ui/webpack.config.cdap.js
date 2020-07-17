@@ -27,13 +27,16 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
 const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin'); // added
+const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin'); // added
+const safePostCssParser = require('postcss-safe-parser');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 // the clean options to use
 let cleanOptions = {
   verbose: true,
   dry: false,
-  // cleanStaleWebpackAssets: false,
+  cleanStaleWebpackAssets: false,
 };
 
 const loaderExclude = [
@@ -104,10 +107,10 @@ var plugins = [
       copyUnmodified: true,
     }
   ),
-  new StyleLintPlugin({
-    syntax: 'scss',
-    files: ['**/*.scss'],
-  }),
+  // new StyleLintPlugin({
+  //   syntax: 'scss',
+  //   files: ['**/*.scss'],
+  // }),
   new HtmlWebpackPlugin({
     title: 'CDAP',
     template: './cdap.html',
@@ -117,6 +120,11 @@ var plugins = [
     hashId: uuidV4(),
     mode: isModeProduction(mode) ? '' : 'development.',
   }),
+  // new MiniCssExtractPlugin(),
+  new MiniCssExtractPlugin({
+    filename: '[name].css',
+    chunkFilename: '[id].css'
+  })
 ];
 if (!isModeProduction(mode)) {
   plugins.push(
@@ -133,7 +141,14 @@ if (!isModeProduction(mode)) {
 var rules = [
   {
     test: /\.s?css$/,
+    //use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
     use: ['style-loader', 'css-loader', 'postcss-loader', 'sass-loader'],
+      // {
+      //   loader: MiniCssExtractPlugin.loader,
+      //   options: {
+      //     hmr: !isModeProduction // since u know this is dev env
+      //   }
+      // },
   },
   {
     test: /\.ya?ml$/,
@@ -162,7 +177,7 @@ var rules = [
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
-          experimentalWatchApi: true,
+          experimentalWatchApi: true, // added
         },
       },
     ],
@@ -234,7 +249,7 @@ var webpackConfig = {
     chunkFilename: '[name].[chunkhash].js',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
-    pathinfo: false,
+    pathinfo: false, // added
   },
   stats: {
     assets: false,
@@ -247,11 +262,13 @@ var webpackConfig = {
   },
   plugins: plugins,
   // TODO: Need to investigate this more.
-  optimization: {
+  optimization: { // added
     moduleIds: "hashed",
     runtimeChunk: {
       name: "manifest",
     },
+    removeAvailableModules: false,
+    removeEmptyChunks: false,
     splitChunks: {
       cacheGroups: {
         vendor: {
@@ -276,7 +293,7 @@ var webpackConfig = {
 };
 
 if (!isModeProduction(mode)) {
-  webpackConfig.devtool = 'source-map';
+  webpackConfig.devtool = 'source-map'; // fixed
 }
 
 if (isModeProduction(mode)) {
@@ -296,11 +313,20 @@ if (isModeProduction(mode)) {
     }),
   ];
 } else {
-  webpackConfig.optimization.minimizer = [
+  webpackConfig.optimization.minimizer = [ // added
     new UglifyJsPlugin({
       cache: true,
       parallel: true,
     }),
+    new OptimizeCSSAssetsPlugin(),
+      // cssProcessorOptions: {
+      //   parser: safePostCssParser,
+      //   map: {
+      //     inline: false,
+      //     annotation: true
+      //   }
+      // }
+    // )
   ]
 }
 

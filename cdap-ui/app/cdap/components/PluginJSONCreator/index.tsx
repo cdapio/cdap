@@ -26,7 +26,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 export const basepath = '/ns/:namespace/plugincreation';
 
 const PluginJSONCreator: React.FC = () => {
-  const pageTitle = `${Theme.productName} | Plugin JSON 3`;
+  const pageTitle = `${Theme.productName} | Plugin JSON 1`;
 
   return (
     <React.Fragment>
