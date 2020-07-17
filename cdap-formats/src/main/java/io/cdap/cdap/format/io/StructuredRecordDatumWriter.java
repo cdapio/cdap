@@ -66,7 +66,7 @@ public class StructuredRecordDatumWriter implements DatumWriter<StructuredRecord
    * @param value the value to encode
    * @throws IOException If failed to encode
    */
-  protected final void encode(Encoder encoder, Schema schema, Object value) throws IOException {
+  protected void encode(Encoder encoder, Schema schema, Object value) throws IOException {
     switch (schema.getType()) {
       case NULL:
         encoder.writeNull();
