@@ -47,6 +47,8 @@ const styles = (theme): StyleRules => ({
   },
   recordContainer: {
     width: '100%',
+    padding: '10px',
+    marginTop: 'unset',
   },
 });
 

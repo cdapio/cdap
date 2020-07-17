@@ -44,8 +44,6 @@ export const styles = (theme): StyleRules => ({
     borderBottom: `1px solid ${theme.palette.grey[400]}`,
     padding: '10px',
     borderRight: `1px solid ${theme.palette.grey[400]}`,
-    '& .record-pane': { width: '100%' },
-    '& .cask-tab-headers': { overflowX: 'scroll' },
   },
   h2Title: {
     fontSize: '1.4rem !important',

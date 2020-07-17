@@ -33,6 +33,22 @@ const styles = (theme): StyleRules => ({
   recordMargin: {
     marginBottom: '35px', // from tab height
   },
+  recordInnerContainer: {
+    overflow: 'scroll',
+    width: '100%',
+    height: '100%',
+  },
+  recordSplit: {
+    maxWidth: '50%',
+    borderBottom: `1px solid ${theme.palette.grey[400]}`,
+    borderRight: `1px solid ${theme.palette.grey[400]}`,
+    '& .record-pane': { width: '100%' },
+    '& .cask-tab-headers': { overflowX: 'scroll' },
+  },
+  recordHeader: {
+    paddingTop: '10px',
+    paddingLeft: '20px',
+  },
 });
 
 interface IRecordViewContainerProps extends WithStyles<typeof styles> {
@@ -110,12 +126,12 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
       <div className={classes.outerContainer}>
         <If condition={!selectedNode.isSource && !selectedNode.isCondition}>
           <div
-            className={classnames(classes.innerContainer, {
-              [classes.split]: !selectedNode.isSource && !selectedNode.isSink,
+            className={classnames(classes.recordInnerContainer, {
+              [classes.recordSplit]: !selectedNode.isSource && !selectedNode.isSink,
             })}
           >
             <h2
-              className={classnames(classes.h2Title, {
+              className={classnames(classes.h2Title, classes.recordHeader, {
                 [classes.recordMargin]: !showInputTabs && showOutputTabs,
               })}
             >
@@ -138,12 +154,12 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
         </If>
         <If condition={!selectedNode.isSink && !selectedNode.isCondition}>
           <div
-            className={classnames(classes.innerContainer, {
-              [classes.split]: !selectedNode.isSource && !selectedNode.isSink,
+            className={classnames(classes.recordInnerContainer, {
+              [classes.recordSplit]: !selectedNode.isSource && !selectedNode.isSink,
             })}
           >
             <h2
-              className={classnames(classes.h2Title, {
+              className={classnames(classes.h2Title, classes.recordHeader, {
                 [classes.recordMargin]: !showOutputTabs && showInputTabs,
               })}
             >
@@ -165,7 +181,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
           </div>
         </If>
         <If condition={selectedNode.isCondition}>
-          <div className={classes.innerContainer}>
+          <div className={classes.recordInnerContainer}>
             <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.conditionHeader`)}</h2>
             <div>
               <RecordTable isCondition={true} />
