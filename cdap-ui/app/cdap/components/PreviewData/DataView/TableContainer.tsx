@@ -44,6 +44,7 @@ export const styles = (theme): StyleRules => ({
     borderBottom: `1px solid ${theme.palette.grey[400]}`,
     padding: '10px',
     borderRight: `1px solid ${theme.palette.grey[400]}`,
+    height: 'inherit',
   },
   h2Title: {
     fontSize: '1.4rem !important',

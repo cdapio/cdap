@@ -42,6 +42,7 @@ const styles = (theme): StyleRules => ({
     maxWidth: '50%',
     borderBottom: `1px solid ${theme.palette.grey[400]}`,
     borderRight: `1px solid ${theme.palette.grey[400]}`,
+    height: 'inherit',
     '& .record-pane': { width: '100%' },
     '& .cask-tab-headers': { overflowX: 'scroll' },
   },

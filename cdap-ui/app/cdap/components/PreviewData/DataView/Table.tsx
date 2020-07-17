@@ -30,7 +30,8 @@ const I18N_PREFIX = 'features.PreviewData.DataView.Table';
 
 export const messageTextStyle = {
   fontSize: '1.3rem !important',
-  margin: '10px 0',
+  margin: 'unset',
+  padding: '10px 5px',
 };
 export const styles = (theme): StyleRules => ({
   root: {
