@@ -15,14 +15,15 @@
  */
 
 import React, { Component } from 'react';
+
+import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
+import HttpResponse from 'components/HttpExecutor/HttpResponse';
+import InputPath from 'components/HttpExecutor/InputPath';
 import MethodSelector from 'components/HttpExecutor/MethodSelector';
 import { Provider } from 'react-redux';
-import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
-import InputPath from 'components/HttpExecutor/InputPath';
-import StatusCode from 'components/HttpExecutor/StatusCode';
-import HttpResponse from 'components/HttpExecutor/HttpResponse';
-import SendButton from 'components/HttpExecutor/SendButton';
 import RequestMetadata from 'components/HttpExecutor/RequestMetadata';
+import SendButton from 'components/HttpExecutor/SendButton';
+import StatusCode from 'components/HttpExecutor/StatusCode';
 import T from 'i18n-react';
 
 const PREFIX = 'features.HttpExecutor';
