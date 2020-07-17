@@ -15,7 +15,6 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import classnames from 'classnames';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import AbstractWidget from 'components/AbstractWidget';
 import ArrowRightIcon from '@material-ui/icons/ArrowRight';
@@ -70,11 +69,15 @@ const RecordNavigatorBase: React.FC<IRecordNavigatorProps> = ({
   }, []);
 
   return (
-    <div className={classes.root}>
-      <IconButton onClick={!prevDisabled ? prevOperation : undefined} disabled={prevDisabled}>
+    <div className={classes.root} data-cy="record-navigator">
+      <IconButton
+        onClick={!prevDisabled ? prevOperation : undefined}
+        disabled={prevDisabled}
+        data-cy="previous-record-btn"
+      >
         <ArrowLeftIcon fontSize="large" />
       </IconButton>
-      <span className={classes.select}>
+      <span className={classes.select} data-cy="record-dropdown">
         <AbstractWidget
           value={`Record ${selectedRecord}`}
           type="select"
@@ -82,7 +85,11 @@ const RecordNavigatorBase: React.FC<IRecordNavigatorProps> = ({
           onChange={(e) => updateRecord(e)}
         />
       </span>
-      <IconButton onClick={!nextDisabled ? nextOperation : undefined} disabled={nextDisabled}>
+      <IconButton
+        onClick={!nextDisabled ? nextOperation : undefined}
+        disabled={nextDisabled}
+        data-cy="next-record-btn"
+      >
         <ArrowRightIcon fontSize="large" />
       </IconButton>
     </div>
