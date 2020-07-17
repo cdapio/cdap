@@ -20,6 +20,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import org.apache.twill.api.TwillRunnerService;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -50,6 +51,12 @@ public class MockMasterEnvironment implements MasterEnvironment {
   public void destroy() {
     discoveryService.close();
     zkClient.stopAndWait();
+  }
+
+  @Override
+  public MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
+                                                  Class<? extends MasterEnvironmentRunnable> cls) throws Exception {
+    return cls.newInstance();
   }
 
   @Override

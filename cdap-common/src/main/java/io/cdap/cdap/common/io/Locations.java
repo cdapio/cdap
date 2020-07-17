@@ -15,13 +15,19 @@
  */
 package io.cdap.cdap.common.io;
 
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.base.Throwables;
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import com.google.common.io.InputSupplier;
 import com.google.common.io.OutputSupplier;
 import io.cdap.cdap.common.lang.FunctionWithException;
+import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.utils.DirUtils;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileContext;
@@ -52,6 +58,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.zip.GZIPInputStream;
 import javax.annotation.Nullable;
 
 /**
@@ -149,13 +156,8 @@ public final class Locations {
             }
 
             // This shouldn't happen
-            return new DFSSeekableInputStream(dataInput, new StreamSizeProvider() {
-              @Override
-              public long size() throws IOException {
-                // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
-                return location.length();
-              }
-            });
+            // Assumption is if the FS is not a HDFS fs, the location length tells the stream size
+            return new DFSSeekableInputStream(dataInput, location::length);
           }
 
           throw new IOException("Failed to create SeekableInputStream from location " + location);
@@ -242,6 +244,81 @@ public final class Locations {
   }
 
   /**
+   * Unpack a {@link Location} that represents a archive file into the given target directory.
+   *
+   * @param archive an archive file. Only .zip, .jar, .tar.gz, .tgz, and .tar are supported
+   * @param targetDir the target directory to have the archive file unpacked into
+   * @throws IOException if failed to unpack the archive file
+   */
+  public static void unpack(Location archive, File targetDir) throws IOException {
+    DirUtils.mkdirs(targetDir);
+
+    String extension = com.google.common.io.Files.getFileExtension(archive.getName()).toLowerCase();
+    switch (extension) {
+      case "zip":
+      case "jar":
+        BundleJarUtil.unJar(archive, targetDir);
+        break;
+      case "gz":
+        // gz is not recommended for archiving multiple files together. So we only support .tar.gz
+        Preconditions.checkArgument(archive.getName().endsWith(".tar.gz"), "'.gz' format is not supported for " +
+          "archiving multiple files. Please use 'zip', 'jar', '.tar.gz', 'tgz' or 'tar'.");
+        try (InputStream is = archive.getInputStream()) {
+          expandTgz(is, targetDir);
+        }
+        break;
+      case "tgz":
+        try (InputStream is = archive.getInputStream()) {
+          expandTgz(is, targetDir);
+        }
+        break;
+      case "tar":
+        try (InputStream is = archive.getInputStream()) {
+          expandTar(is, targetDir);
+        }
+        break;
+      default:
+        throw new IOException(String.format("Unsupported compression type '%s'. Only 'zip', 'jar', " +
+                                              "'tar.gz', 'tgz' and 'tar'  are supported.", extension));
+    }
+  }
+
+  /**
+   * Unpacks a tar input stream to the given target directory.
+   */
+  private static void expandTar(InputStream archiveStream, File targetDir) throws IOException {
+    try (TarArchiveInputStream tis = new TarArchiveInputStream(archiveStream)) {
+      expandTarStream(tis, targetDir);
+    }
+  }
+
+  /**
+   * Unpacks a tar gz input stream to the given target directory.
+   */
+  private static void expandTgz(InputStream archiveStream, File targetDir) throws IOException {
+    try (TarArchiveInputStream tis = new TarArchiveInputStream(new GZIPInputStream(archiveStream))) {
+      expandTarStream(tis, targetDir);
+    }
+  }
+
+  /**
+   * Unpacks a tar input stream to the given target directory.
+   */
+  private static void expandTarStream(TarArchiveInputStream tis, File targetDir) throws IOException {
+    TarArchiveEntry entry = tis.getNextTarEntry();
+    while (entry != null) {
+      File output = new File(targetDir, new File(entry.getName()).getName());
+      if (entry.isDirectory()) {
+        DirUtils.mkdirs(output);
+      } else {
+        DirUtils.mkdirs(output.getParentFile());
+        ByteStreams.copy(tis, com.google.common.io.Files.newOutputStreamSupplier(output));
+      }
+      entry = tis.getNextTarEntry();
+    }
+  }
+
+  /**
    * Returns a {@link LocationStatus} describing the status of the given {@link Location}.
    */
   private static LocationStatus getLocationStatus(Location location) throws IOException {
@@ -272,12 +349,12 @@ public final class Locations {
   private static <E> RemoteIterator<E> asRemoteIterator(final Iterator<? extends E> itor) {
     return new RemoteIterator<E>() {
       @Override
-      public boolean hasNext() throws IOException {
+      public boolean hasNext() {
         return itor.hasNext();
       }
 
       @Override
-      public E next() throws IOException {
+      public E next() {
         return itor.next();
       }
     };
@@ -308,12 +385,7 @@ public final class Locations {
    * @return A {@link OutputSupplier}.
    */
   public static OutputSupplier<? extends OutputStream> newOutputSupplier(final Location location) {
-    return new OutputSupplier<OutputStream>() {
-      @Override
-      public OutputStream getOutput() throws IOException {
-        return location.getOutputStream();
-      }
-    };
+    return location::getOutputStream;
   }
 
   /**

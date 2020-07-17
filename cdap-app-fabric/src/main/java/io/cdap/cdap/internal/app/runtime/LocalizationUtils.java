@@ -16,25 +16,18 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import com.google.common.base.Preconditions;
-import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.Resources;
 import io.cdap.cdap.common.io.Locations;
-import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.internal.app.runtime.distributed.LocalizeResource;
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Paths;
-import java.util.zip.GZIPInputStream;
 
 /**
  * Utilities for file localization.
@@ -56,7 +49,7 @@ public final class LocalizationUtils {
     File input = getFileToLocalize(resource, targetDir);
     if (resource.isArchive()) {
       LOG.debug("Decompress file {} to {}", input, localizedResource);
-      unpack(input, localizedResource);
+      Locations.unpack(Locations.toLocation(input), localizedResource);
     } else {
       try {
         LOG.debug("Hard link file from {} to {}", input, localizedResource);
@@ -107,64 +100,6 @@ public final class LocalizationUtils {
       localizedName = idx >= 0 ? path.substring(idx + 1) : path;
     }
     return localizedName;
-  }
-
-  private static void unpack(File archive, File targetDir) throws IOException {
-    if (!targetDir.exists()) {
-      //noinspection ResultOfMethodCallIgnored
-      targetDir.mkdir();
-    }
-    String extension = Files.getFileExtension(archive.getPath()).toLowerCase();
-    switch (extension) {
-      case "zip":
-      case "jar":
-        BundleJarUtil.unJar(Locations.toLocation(archive), targetDir);
-        break;
-      case "gz":
-        // gz is not recommended for archiving multiple files together. So we only support .tar.gz
-        Preconditions.checkArgument(archive.getName().endsWith(".tar.gz"), "'.gz' format is not supported for " +
-          "archiving multiple files. Please use 'zip', 'jar', '.tar.gz', 'tgz' or 'tar'.");
-        untargz(archive, targetDir);
-        break;
-      case "tgz":
-        untargz(archive, targetDir);
-        break;
-      case "tar":
-        untar(archive, targetDir);
-        break;
-      default:
-        throw new IllegalArgumentException(String.format("Unsupported compression type '%s'. Only 'zip', 'jar', " +
-                                                           "'tar.gz', 'tgz' and 'tar'  are supported.",
-                                                         extension));
-    }
-  }
-
-  private static void untar(File tarFile, File targetDir) throws IOException {
-    try (TarArchiveInputStream tis = new TarArchiveInputStream(new FileInputStream(tarFile))) {
-      extractTar(tis, targetDir);
-    }
-  }
-
-  private static void untargz(File tarGzFile, File targetDir) throws IOException {
-    try (TarArchiveInputStream tis = new TarArchiveInputStream(new GZIPInputStream(new FileInputStream(tarGzFile)))) {
-      extractTar(tis, targetDir);
-    }
-  }
-
-  private static void extractTar(final TarArchiveInputStream tis, File targetDir) throws IOException {
-    TarArchiveEntry entry = tis.getNextTarEntry();
-    while (entry != null) {
-      File output = new File(targetDir, new File(entry.getName()).getName());
-      if (entry.isDirectory()) {
-        //noinspection ResultOfMethodCallIgnored
-        output.mkdirs();
-      } else {
-        //noinspection ResultOfMethodCallIgnored
-        output.getParentFile().mkdirs();
-        ByteStreams.copy(tis, Files.newOutputStreamSupplier(output));
-      }
-      entry = tis.getNextTarEntry();
-    }
   }
 
   private LocalizationUtils() {

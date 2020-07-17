@@ -56,8 +56,6 @@ import io.cdap.cdap.common.logging.LogSamplers;
 import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
-import io.cdap.cdap.common.namespace.NamespacePathLocator;
-import io.cdap.cdap.common.namespace.NoLookupNamespacePathLocator;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -345,9 +343,6 @@ public class DefaultRuntimeJob implements RuntimeJob {
       protected void configure() {
         bind(ClusterMode.class).toInstance(ClusterMode.ISOLATED);
         bind(UGIProvider.class).to(CurrentUGIProvider.class).in(Scopes.SINGLETON);
-
-        // In isolated mode, ignore the namespace mapping
-        bind(NamespacePathLocator.class).to(NoLookupNamespacePathLocator.class);
 
         // Bindings from the environment
         bind(TwillRunner.class).annotatedWith(Constants.AppFabric.ProgramRunner.class)

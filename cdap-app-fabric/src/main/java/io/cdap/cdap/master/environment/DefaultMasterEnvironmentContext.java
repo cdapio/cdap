@@ -16,25 +16,55 @@
 
 package io.cdap.cdap.master.environment;
 
+import com.google.inject.name.Named;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.CConfigurationUtil;
+import io.cdap.cdap.master.environment.k8s.MasterEnvironmentMain;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import org.apache.twill.filesystem.LocationFactory;
 
+import java.util.Arrays;
 import java.util.Map;
+import java.util.stream.Stream;
+import javax.inject.Inject;
 
 /**
  * Default implementation of {@link MasterEnvironmentContext} that reflects the actual master runtime environment.
  */
 public class DefaultMasterEnvironmentContext implements MasterEnvironmentContext {
 
+  static final String MASTER_ENV_NAME = "masterEnvName";
+
+  private final String masterEnvName;
+  private final LocationFactory locationFactory;
   private final Map<String, String> configuration;
 
-  public DefaultMasterEnvironmentContext(CConfiguration cConf) {
+  @Inject
+  DefaultMasterEnvironmentContext(CConfiguration cConf, LocationFactory locationFactory,
+                                  @Named(MASTER_ENV_NAME) String masterEnvName) {
+    this.masterEnvName = masterEnvName;
+    this.locationFactory = locationFactory;
     this.configuration = CConfigurationUtil.asMap(cConf);
+  }
+
+  @Override
+  public LocationFactory getLocationFactory() {
+    return locationFactory;
   }
 
   @Override
   public Map<String, String> getConfigurations() {
     return configuration;
+  }
+
+  @Override
+  public String[] getRunnableArguments(Class<? extends MasterEnvironmentRunnable> runnableClass,
+                                       String... runnableArgs) {
+    return Stream.concat(
+      Stream.of(MasterEnvironmentMain.class.getName(),
+                "--env=" + masterEnvName, "--runnableClass=" + runnableClass.getName()),
+      Arrays.stream(runnableArgs)
+    ).toArray(String[]::new);
   }
 }
