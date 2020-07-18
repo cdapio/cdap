@@ -17,7 +17,7 @@
 var webpack = require('webpack');
 var CopyWebpackPlugin = require('copy-webpack-plugin');
 var path = require('path');
-var LiveReloadPlugin = require('webpack-livereload-plugin');
+//var LiveReloadPlugin = require('webpack-livereload-plugin');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
@@ -225,15 +225,15 @@ if (isModeProduction(mode)) {
 }
 
 if (mode === 'development') {
-  plugins.push(
-    new LiveReloadPlugin({
-      port: 35728,
-      appendScriptTag: true,
-      delay: 500,
-      ignore:
-        '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
-    })
-  );
+  // plugins.push(
+  //   new LiveReloadPlugin({
+  //     port: 35728,
+  //     appendScriptTag: true,
+  //     delay: 500,
+  //     ignore:
+  //       '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
+  //   })
+  // );
 }
 
 var webpackConfig = {
@@ -247,8 +247,8 @@ var webpackConfig = {
     rules,
   },
   output: {
-    filename: '[name].[chunkhash].js',
-    chunkFilename: '[name].[chunkhash].js',
+    filename: '[name].[hash].js',
+    chunkFilename: '[name].[hash].js',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
     pathinfo: false, // added. reduces 0.2~0.3 seconds
@@ -297,6 +297,15 @@ var webpackConfig = {
       styles: __dirname + '/app/cdap/styles',
     },
   },
+  devServer: {
+    index: 'cdap.html',
+    contentBase: path.join(__dirname, '/packaged/public/cdap_dist/cdap_assets/'),
+    compress: true,
+    hot: true,
+    port: 9000,
+    open: 'chrome',
+    writeToDisk: true,
+  }
 };
 
 if (!isModeProduction(mode)) {
