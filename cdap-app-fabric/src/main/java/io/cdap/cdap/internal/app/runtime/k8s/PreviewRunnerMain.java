@@ -17,15 +17,36 @@
 package io.cdap.cdap.internal.app.runtime.k8s;
 
 import com.google.common.util.concurrent.Service;
+import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
+import io.cdap.cdap.app.guice.AuthorizationModule;
+import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
+import io.cdap.cdap.app.guice.UnsupportedExploreClient;
+import io.cdap.cdap.app.preview.PreviewRunnerManager;
+import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
+import io.cdap.cdap.common.logging.ServiceLoggingContext;
+import io.cdap.cdap.data.runtime.DataSetServiceModules;
+import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data2.audit.AuditModule;
+import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.master.environment.k8s.AbstractServiceMain;
 import io.cdap.cdap.master.environment.k8s.EnvironmentOptions;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.messaging.guice.MessagingClientModule;
+import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.MetadataServiceModule;
+import io.cdap.cdap.metrics.guice.MetricsStoreModule;
+import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
+import io.cdap.cdap.security.guice.SecureStoreClientModule;
 
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -39,14 +60,34 @@ public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
    * Main entry point
    */
   public static void main(String[] args) throws Exception {
-    System.out.println("In the preview runner main");
-    Thread.sleep(120000);
-    System.out.println("Preview runner main done");
+    main(PreviewRunnerMain.class, args);
   }
 
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
-    return Collections.emptyList();
+    return Arrays.asList(
+      new PreviewRunnerManagerModule(),
+      new DataSetServiceModules().getStandaloneModules(),
+      new DataSetsModules().getStandaloneModules(),
+      new AppFabricServiceRuntimeModule().getStandaloneModules(),
+      new ProgramRunnerRuntimeModule().getStandaloneModules(),
+      new MetricsStoreModule(),
+      new MessagingClientModule(),
+      new AuditModule(),
+      new SecureStoreClientModule(),
+      new MetadataReaderWriterModules().getStandaloneModules(),
+      getDataFabricModule(),
+      new DFSLocationModule(),
+      new MetadataServiceModule(),
+      new AuthorizationModule(),
+      new AuthorizationEnforcementModule().getMasterModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+        }
+      }
+    );
   }
 
   @Override
@@ -59,6 +100,8 @@ public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
   @Nullable
   @Override
   protected LoggingContext getLoggingContext(EnvironmentOptions options) {
-    return null;
+    return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
+                                     Constants.Logging.COMPONENT_NAME,
+                                     Constants.Service.PREVIEW_HTTP);
   }
 }

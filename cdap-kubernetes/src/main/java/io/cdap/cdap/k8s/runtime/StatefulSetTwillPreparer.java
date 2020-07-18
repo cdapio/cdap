@@ -20,21 +20,20 @@ import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.custom.Quantity;
 import io.kubernetes.client.models.V1Container;
+import io.kubernetes.client.models.V1DownwardAPIVolumeFile;
+import io.kubernetes.client.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1LabelSelector;
+import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ObjectMetaBuilder;
-import io.kubernetes.client.models.V1OwnerReference;
 import io.kubernetes.client.models.V1PersistentVolumeClaim;
 import io.kubernetes.client.models.V1PersistentVolumeClaimSpec;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodTemplateSpec;
 import io.kubernetes.client.models.V1ResourceRequirements;
-import io.kubernetes.client.models.V1Service;
-import io.kubernetes.client.models.V1ServiceSpec;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1StatefulSetSpec;
 import io.kubernetes.client.models.V1Volume;
@@ -61,14 +60,23 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(DeploymentTwillPreparer.class);
   private static final String PVC_NAME = "preview-runner-data";
   private static final String CONTAINER_NAME = "cdap-preview-container";
+  private static final String PREVIEW_RUNNERS_COUNT = "preview.runners.count";
+  private static final String PREVIEW_RUNNER_TERMINATION_GRACE_PERIOD_SECONDS
+    = "preview.runner.termination.grace.period.seconds";
+  private static final String PREVIEW_RUNNER_PRIORITY_CLASS_NAME = "preview.runner.priority.class.name";
 
   private final PodInfo podInfo;
+  private final Map<String, String> cConf;
 
   StatefulSetTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
                            RunId twillRunId, V1ObjectMeta resourceMeta, Map<String, String> cConf,
                            KubeTwillControllerFactory controllerFactory) {
     super(apiClient, kubeNamespace, podInfo, spec, twillRunId, resourceMeta, cConf, controllerFactory);
     this.podInfo = podInfo;
+    this.cConf = cConf;
+    for (Map.Entry<String, String> entry : cConf.entrySet()) {
+      LOG.info("Key: {}, Value: {}", entry.getKey(), entry.getValue());
+    }
   }
 
   @Override
@@ -87,29 +95,6 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
       }
     }
     LOG.info("Created StatefulSet with spec to K8s {}", getApiClient().getJSON().serialize(statefulSet));
-
-    // Create headless service
-    V1ObjectMeta serviceMeta = new V1ObjectMetaBuilder(resourceMeta).build();
-    // For headleass service set owner reference as the preview-runner statefulset instead of preview manager
-    V1OwnerReference ref = new V1OwnerReference();
-    ref.setApiVersion(statefulSet.getApiVersion());
-    ref.blockOwnerDeletion(true);
-    ref.setKind(statefulSet.getKind());
-    ref.setName(statefulSet.getMetadata().getName());
-    ref.setController(true);
-    ref.setUid(statefulSet.getMetadata().getUid());
-    serviceMeta.setOwnerReferences(Collections.singletonList(ref));
-    V1Service service = createService(serviceMeta);
-    CoreV1Api coreV1Api = new CoreV1Api(getApiClient());
-    LOG.info("Creating K8s service with spec {}", getApiClient().getJSON().serialize(service));
-    try {
-      coreV1Api.createNamespacedService(getKubeNamespace(), service, "true", null, null);
-    } catch (ApiException e) {
-      if (e.getCode() != HttpURLConnection.HTTP_CONFLICT) {
-        throw e;
-      }
-    }
-    LOG.info("Created K8s service with spec {}", getApiClient().getJSON().serialize(service));
   }
 
   private V1StatefulSet createStatefulSet(V1ObjectMeta resourceMeta, V1ResourceRequirements resourceRequirements,
@@ -127,21 +112,22 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
     V1LabelSelector labelSelector = new V1LabelSelector();
     labelSelector.matchLabels(statefulSetMeta.getLabels());
     statefulSetSpec.setSelector(labelSelector);
-    // TODO: Hard coded for now
-    statefulSetSpec.setReplicas(1);
+    statefulSetSpec.setReplicas(Integer.parseInt(cConf.getOrDefault(PREVIEW_RUNNERS_COUNT, "1")));
 
-    // We don't need to launch pods one after other since we do not have master-slave
+    // We don't need to launch pods one after other since we do not have primary-secondary
     // configurations for the preview runner pods
     statefulSetSpec.setPodManagementPolicy("Parallel");
-
 
     V1PodTemplateSpec podTemplateSpec = new V1PodTemplateSpec();
     podTemplateSpec.setMetadata(statefulSetMeta);
 
     V1PodSpec podSpec = new V1PodSpec();
 
-    // set termination grace period to 0 so pods can be deleted quickly
-    podSpec.setTerminationGracePeriodSeconds(0L);
+    // set termination grace period to 5 so pods can be deleted quickly default is 30
+    // TODO: [SAGAR] how will this behave when kill happens
+    podSpec.setTerminationGracePeriodSeconds(
+      Long.parseLong(cConf.getOrDefault(PREVIEW_RUNNER_TERMINATION_GRACE_PERIOD_SECONDS, "5"))
+    );
 
     // Define volumes in the pod
     V1Volume podInfoVolume = getPodInfoVolume();
@@ -157,22 +143,26 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
 
     container.addArgsItem("io.cdap.cdap.internal.app.runtime.k8s.PreviewRunnerMain");
     container.addArgsItem("--env=k8s");
-    container.addArgsItem(String.format("--twillRunId=%s", getTwillRunId()));
 
     container.setEnv(envVars);
 
     container.setResources(resourceRequirements);
 
-    // Add volume mounts to the container. Add those from the current pod for mount cdap and hadoop conf.
-    container.setVolumeMounts(containerVolumeMounts());
+    // Add volume mounts to the container.
+    // Add those from the current pod for mount cdap and hadoop conf.
+    List<V1VolumeMount> volumeMounts = new ArrayList<>(podInfo.getContainerVolumeMounts());
+    // Add data volume mount
+    volumeMounts.add(containerDataVolumeMount());
+    // Add pod info
+    volumeMounts.add(new V1VolumeMount().name(podInfoVolume.getName())
+                       .mountPath(podInfo.getPodInfoDir()).readOnly(true));
+    container.setVolumeMounts(volumeMounts);
 
     podSpec.addContainersItem(container);
 
     // For preview runner pods we can create another priority class with lower priority than
     // the sts-priority
-    podSpec.setPriorityClassName("priority-medium");
-
-    // podSpec.setInitContainers(createInitContainers());
+    podSpec.setPriorityClassName(cConf.getOrDefault(PREVIEW_RUNNER_PRIORITY_CLASS_NAME, "priority-medium"));
 
     podTemplateSpec.setSpec(podSpec);
     statefulSetSpec.setTemplate(podTemplateSpec);
@@ -193,7 +183,7 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
     V1PersistentVolumeClaimSpec spec = new V1PersistentVolumeClaimSpec();
     spec.setAccessModes(Collections.singletonList("ReadWriteOnce"));
     Map<String, Quantity> requests = new HashMap<>();
-    // TODO: Hardcoded for now
+    // TODO [SAGAR]: Hardcoded for now
     requests.put("storage", Quantity.fromString("10Gi"));
     V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
     resourceRequirements.setRequests(requests);
@@ -203,24 +193,58 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
     return pvc;
   }
 
-  private List<V1VolumeMount> containerVolumeMounts() {
-    List<V1VolumeMount> result = new ArrayList<>(podInfo.getContainerVolumeMounts());
+  private V1VolumeMount containerDataVolumeMount() {
     V1VolumeMount pvcMount = new V1VolumeMount();
     pvcMount.setReadOnly(false);
     pvcMount.setMountPath("/data");
     pvcMount.setName(PVC_NAME);
-    result.add(pvcMount);
-    return result;
+    return pvcMount;
   }
 
-  private V1Service createService(V1ObjectMeta resourceMeta) {
-    V1Service service = new V1Service();
-    service.metadata(resourceMeta);
-    // create the stateful set spec
-    V1ServiceSpec serviceSpec = new V1ServiceSpec();
-    serviceSpec.clusterIP("None");
-    serviceSpec.selector(resourceMeta.getLabels());
-    service.spec(serviceSpec);
-    return service;
+  /*
+     volumes:
+       - name: podinfo
+         downwardAPI:
+           items:
+             - path: "pod.labels.properties"
+               fieldRef:
+                 fieldPath: metadata.labels
+             - path: "pod.name"
+               fieldRef:
+                 fieldPath: metadata.name
+             - path: "pod.id"
+               fieldRef:
+                 fieldPath: metadata.id
+   */
+  V1Volume getPodInfoVolume() {
+    V1Volume volume = new V1Volume();
+    volume.setName("podinfo");
+
+    V1DownwardAPIVolumeSource downwardAPIVolumeSource = new V1DownwardAPIVolumeSource();
+
+    V1DownwardAPIVolumeFile podNameFile = new V1DownwardAPIVolumeFile();
+    V1ObjectFieldSelector nameRef = new V1ObjectFieldSelector();
+    nameRef.setFieldPath("metadata.name");
+    podNameFile.setFieldRef(nameRef);
+    podNameFile.setPath("pod.name");
+
+    V1DownwardAPIVolumeFile labelsFile = new V1DownwardAPIVolumeFile();
+    V1ObjectFieldSelector labelsRef = new V1ObjectFieldSelector();
+    labelsRef.setFieldPath("metadata.labels");
+    labelsFile.setFieldRef(labelsRef);
+    labelsFile.setPath("pod.labels.properties");
+
+    V1DownwardAPIVolumeFile idFile = new V1DownwardAPIVolumeFile();
+    V1ObjectFieldSelector idRef = new V1ObjectFieldSelector();
+    idRef.setFieldPath("metadata.uid");
+    idFile.setFieldRef(idRef);
+    idFile.setPath("pod.uid");
+
+    downwardAPIVolumeSource.addItemsItem(podNameFile);
+    downwardAPIVolumeSource.addItemsItem(labelsFile);
+    downwardAPIVolumeSource.addItemsItem(idFile);
+
+    volume.setDownwardAPI(downwardAPIVolumeSource);
+    return volume;
   }
 }

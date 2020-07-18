@@ -55,10 +55,9 @@ public class PreviewRunnerManagerModule extends PrivateModule {
 
   @Provides
   @Singleton
-  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue,
-                                                             DiscoveryServiceClient discoveryServiceClient) {
+  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(DiscoveryServiceClient discoveryServiceClient) {
     // return new DirectPreviewRequestFetcherFactory(previewRequestQueue);
-    // TODO [CODESAGAR] Bind to DirectPreviewRequestFetcherFactory in test case at least else it will fail
+    // TODO [SAGAR] Bind to DirectPreviewRequestFetcherFactory in test case at least else it will fail
     return new RemotePreviewRequestFetcherFactory(discoveryServiceClient);
   }
 }
