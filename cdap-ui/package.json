@@ -8,7 +8,7 @@
     "start": "NODE_ENV=development node ./packaged/server_dist/index.js",
     "cdap-prod-build": "NODE_ENV=production parallel-webpack",
     "cdap-dev-build": "NODE_ENV=development parallel-webpack --config=webpack.config.js -d",
-    "cdap-dev-build-w": "NODE_ENV=development node --max-old-space-size=8192 ./node_modules/parallel-webpack/bin/run.js --watch -d",
+    "cdap-dev-build-w": "NODE_ENV=development node --max-old-space-size=8192 ./node_modules/parallel-webpack/bin/run.js --watch -d --hot & NODE_ENV=development node --max-old-space-size=8192 ./node_modules/.bin/webpack-dev-server --watch --mode=development --hot",
     "cdap-full-build": "run-p cdap-prod-build distribute",
     "cdap-non-optimized-full-build": "NODE_ENV=non-optimized-production webpack --config=webpack.config.js",
     "clean-node-modules": "modclean -P -r --patterns=\"default:safe\" --additional-patterns=\"*.xls?x,*.ppt?x,*.rtf,*.png,*.jpg,*.jpeg,*.txt\" --ignore=\"validate-npm-license,readme*\"",
@@ -148,6 +148,7 @@
     "webpack": "4.41.2",
     "webpack-bundle-analyzer": "^3.8.0",
     "webpack-cli": "3.3.10",
+    "webpack-dev-server": "^3.11.0",
     "webpack-livereload-plugin": "2.2.0"
   },
   "dependencies": {

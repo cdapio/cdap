@@ -31,9 +31,9 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin'); // added
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin'); // added
 const safePostCssParser = require('postcss-safe-parser');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+//const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
 
-const smp = new SpeedMeasurePlugin();
+//const smp = new SpeedMeasurePlugin();
 
 // the clean options to use
 let cleanOptions = {
@@ -226,19 +226,19 @@ if (isModeProduction(mode)) {
 
 if (mode === 'development') {
   // plugins.push(
-  //   // new LiveReloadPlugin({
-  //   //   port: 35728,
-  //   //   appendScriptTag: true,
-  //   //   delay: 500,
-  //   //   ignore:
-  //   //     '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
-  //   // })
+  //   new LiveReloadPlugin({
+  //     port: 35728,
+  //     appendScriptTag: true,
+  //     delay: 500,
+  //     ignore:
+  //       '/node_modules/|/bower_components/|/packaged/public/dist/|/packaged/public/cdap_dist/|/packaged/public/common_dist/|/lib/',
+  //   })
   // );
-  //plugins.push(new webpack.HotModuleReplacementPlugin());
-  plugins.push(new UglifyJsPlugin({
-    cache: true,
-    parallel: true,
-  }))
+  plugins.push(new webpack.HotModuleReplacementPlugin());
+  // plugins.push(new UglifyJsPlugin({
+  //   cache: true,
+  //   parallel: true,
+  // }))
 }
 
 var webpackConfig = {
@@ -257,8 +257,8 @@ var webpackConfig = {
     rules,
   },
   output: {
-    filename: '[name].[chunkhash].js',
-    chunkFilename: '[name].[chunkhash].js',
+    filename: '[name].[hash].js', // '[name].[chunkhash].js',
+    chunkFilename: '[name].[hash].js',// '[name].[chunkhash].js',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
     pathinfo: false, // added. reduces 0.2~0.3 seconds
@@ -353,4 +353,6 @@ if (isModeProduction(mode)) {
   ]
 }
 
-module.exports = smp.wrap(webpackConfig);
+//module.exports = smp.wrap(webpackConfig);
+module.exports = webpackConfig;
+
