@@ -48,13 +48,12 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.tms.PreviewTMSLogAppender;
 import io.cdap.cdap.logging.framework.CustomLogPipelineConfigProvider;
-import io.cdap.cdap.logging.framework.local.LocalLogAppender;
-import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -71,7 +70,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -93,6 +92,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final Map<String, PreviewRunnerService> previewPollers;
   private final LevelDBTableService previewLevelDBTableService;
   private final PreviewRequestFetcherFactory previewRequestFetcherFactory;
+  private final PreviewRequestPollerInfoProvider pollerInfoProvider;
+  private final PreviewRunnerSystemTerminator previewRunnerSystemTerminator;
 
   @Inject
   DefaultPreviewRunnerManager(
@@ -103,7 +104,9 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
     TransactionSystemClient transactionSystemClient,
     @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-    PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory) {
+    PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory,
+    PreviewRequestPollerInfoProvider pollerInfoProvider,
+    PreviewRunnerSystemTerminator previewRunnerSystemTerminator) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -116,18 +119,29 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestFetcherFactory = previewRequestFetcherFactory;
+    this.pollerInfoProvider = pollerInfoProvider;
+    this.previewRunnerSystemTerminator = previewRunnerSystemTerminator;
   }
+
 
   @Override
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
-      String pollerInfo = UUID.randomUUID().toString();
+      String pollerInfo = Bytes.toString(pollerInfoProvider.get());
 
+      Callable<Void> callable = () -> {
+        previewPollers.remove(pollerInfo);
+        if (previewPollers.isEmpty()) {
+          // terminate the preview runner system
+          previewRunnerSystemTerminator.terminate();
+        }
+        return null;
+      };
       PreviewRunnerService pollerService = new PreviewRunnerService(
         previewCConf, previewInjector.getInstance(PreviewRunner.class),
-        previewRequestFetcherFactory.create(Bytes.toBytes(pollerInfo)));
+        previewRequestFetcherFactory.create(Bytes.toBytes(pollerInfo)), callable);
 
       pollerService.startAndWait();
       previewPollers.put(pollerInfo, pollerService);
@@ -165,7 +179,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       throw new NotFoundException("Preview run cannot be stopped. Please try stopping again or start new preview run.");
     }
     service.stopAndWait();
-    String newRunnerId = UUID.randomUUID().toString();
+    String newRunnerId = Bytes.toString(pollerInfoProvider.get());
     PreviewRunnerService newService = new PreviewRunnerService(
       previewCConf, previewInjector.getInstance(PreviewRunner.class),
       previewRequestFetcherFactory.create(Bytes.toBytes(newRunnerId)));
@@ -194,13 +208,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
       // save threads for reading metrics from TMS, as there won't be metrics in TMS.
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      /*
-      Modules.override(new PreviewLocalLogAppenderModule()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
-        }
-      }),*/
       new AbstractModule() {
         @Override
         protected void configure() {

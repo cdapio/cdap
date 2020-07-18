@@ -69,6 +69,8 @@ import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
+import io.cdap.cdap.internal.app.preview.LocalPreviewRequestPollerInfoProvider;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServer;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.LoggingUtil;
@@ -542,7 +544,7 @@ public class StandaloneMain {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
-      new PreviewRunnerManagerModule(),
+      new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),

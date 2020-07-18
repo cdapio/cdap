@@ -96,7 +96,10 @@ import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerStore;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
+import io.cdap.cdap.spi.data.StructuredTableAdmin;
+import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.DefaultOwnerStore;
+import io.cdap.cdap.store.StoreDefinition;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
@@ -161,6 +164,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   @Override
   protected void startUp() throws Exception {
     previewInjector = createPreviewInjector();
+    StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class),
+                                    previewInjector.getInstance(StructuredTableRegistry.class), false);
     PreviewDataSubscriberService subscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     subscriberService.startAndWait();
     PreviewTMSLogSubscriber logSubscriber = previewInjector.getInstance(PreviewTMSLogSubscriber.class);

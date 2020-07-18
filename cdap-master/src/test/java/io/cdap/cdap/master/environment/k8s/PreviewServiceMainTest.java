@@ -27,6 +27,7 @@ import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.internal.app.runtime.k8s.PreviewRunnerMain;
 import io.cdap.cdap.master.environment.app.PreviewTestApp;
 import io.cdap.cdap.master.environment.app.PreviewTestAppWithPlugin;
 import io.cdap.cdap.master.environment.plugin.ConstantCallable;
@@ -85,6 +86,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     // Start the preview service main, which will use its own local datadir, thus should fetch artifact location
     // from appFabric when running a preview
     startService(PreviewServiceMain.class);
+    startService(PreviewRunnerMain.class);
 
     // Run a preview
     ArtifactSummary artifactSummary = new ArtifactSummary(artifactName, artifactVersion);
@@ -110,6 +112,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
                         tracerData);
 
     // Stop the preview service main to
+    stopService(PreviewRunnerMain.class);
     stopService(PreviewServiceMain.class);
 
     // Clean up
@@ -148,6 +151,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
 
     // Start preview service
     startService(PreviewServiceMain.class);
+    startService(PreviewRunnerMain.class);
 
     // Run a preview
     String expectedOutput = "output_value";
@@ -177,6 +181,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
                                                  Collections.singletonList(expectedOutput)),
                         tracerData);
 
+    stopService(PreviewRunnerMain.class);
     stopService(PreviewServiceMain.class);
   }
 
