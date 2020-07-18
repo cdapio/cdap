@@ -63,7 +63,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.discovery.EndpointStrategy;
-import io.cdap.cdap.common.discovery.RandomEndpointStrate
+import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;

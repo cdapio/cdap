@@ -29,6 +29,8 @@ import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
 import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcherFactory;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
+import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcherFactory;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  *
@@ -53,7 +55,10 @@ public class PreviewRunnerManagerModule extends PrivateModule {
 
   @Provides
   @Singleton
-  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
-    return new DirectPreviewRequestFetcherFactory(previewRequestQueue);
+  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue,
+                                                             DiscoveryServiceClient discoveryServiceClient) {
+    // return new DirectPreviewRequestFetcherFactory(previewRequestQueue);
+    // TODO [CODESAGAR] Bind to DirectPreviewRequestFetcherFactory in test case at least else it will fail
+    return new RemotePreviewRequestFetcherFactory(discoveryServiceClient);
   }
 }
