@@ -73,6 +73,7 @@
     "babel-eslint": "7.2.3",
     "babel-jest": "24.9.0",
     "babel-loader": "8.0.6",
+    "babel-plugin-dynamic-import-node": "^2.3.3",
     "babel-plugin-lodash": "3.3.4",
     "babel-upgrade": "1.0.1",
     "bower": "1.8.8",
@@ -246,6 +247,7 @@
     "vega": "3.0.10",
     "vega-lite": "2.0.0-beta.16",
     "vega-tooltip": "0.4.3",
+    "webpack-dev-server": "^3.11.0",
     "whatwg-fetch": "https://registry.npmjs.org/whatwg-fetch/-/whatwg-fetch-1.0.0.tgz",
     "yml-loader": "2.1.0"
   },

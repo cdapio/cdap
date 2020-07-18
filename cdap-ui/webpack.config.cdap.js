@@ -21,17 +21,13 @@ var path = require('path');
 var HtmlWebpackPlugin = require('html-webpack-plugin');
 var StyleLintPlugin = require('stylelint-webpack-plugin');
 var CaseSensitivePathsPlugin = require('case-sensitive-paths-webpack-plugin');
-var uuidV4 = require('uuid/v4');
 var TerserPlugin = require('terser-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 var ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 var LodashModuleReplacementPlugin = require('lodash-webpack-plugin');
-const WebpackBundleAnalyzer = require('webpack-bundle-analyzer');
-const UglifyJsPlugin = require('uglifyjs-webpack-plugin'); // added
-const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin'); // added
-const safePostCssParser = require('postcss-safe-parser');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const SpeedMeasurePlugin = require("speed-measure-webpack-plugin");
+const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const smp = new SpeedMeasurePlugin();
 
@@ -39,7 +35,7 @@ const smp = new SpeedMeasurePlugin();
 let cleanOptions = {
   verbose: true,
   dry: false,
-  cleanStaleWebpackAssets: false, // reduces down from 2.7seconds to 2.2seconds
+  cleanStaleWebpackAssets: true, // reduces down from 2.7seconds to 2.2seconds
 };
 
 const loaderExclude = [
@@ -79,7 +75,7 @@ const getWebpackDllPlugins = (mode) => {
 };
 var plugins = [
   new CleanWebpackPlugin(cleanOptions),
-  new CaseSensitivePathsPlugin(),
+  //new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
   new LodashModuleReplacementPlugin({
     shorthands: true,
@@ -107,7 +103,7 @@ var plugins = [
       },
     ],
     {
-      copyUnmodified: true,
+      copyUnmodified: false,
     }
   ),
   // new StyleLintPlugin({
@@ -120,7 +116,6 @@ var plugins = [
     filename: 'cdap.html',
     hash: true,
     inject: false,
-    hashId: uuidV4(),
     mode: isModeProduction(mode) ? '' : 'development.',
   }),
   // new MiniCssExtractPlugin(),
@@ -128,6 +123,9 @@ var plugins = [
   //   filename: '[name].css',
   //   chunkFilename: '[id].css'
   // })
+  new MiniCssExtractPlugin({
+    // filename: devMode ? '[name].css' : '[name].[hash].css'
+  }),
 ];
 if (!isModeProduction(mode)) {
   plugins.push(
@@ -136,7 +134,7 @@ if (!isModeProduction(mode)) {
       tslint: __dirname + '/tslint.json',
       tslintAutoFix: true,
       // watch: ["./app/cdap"], // optional but improves performance (less stat calls)
-      memoryLimit: 4096,
+      memoryLimit: 8192,
     })
   );
 }
@@ -277,11 +275,21 @@ var webpackConfig = {
           name: "node_vedors",
           test: /[\\/]node_modules[\\/]/,
           chunks: "all",
+          reuseExistingChunk: true,
         },
         fonts: {
           name: "fonts",
           test: /[\\/]app[\\/]cdap[\\/]styles[\\/]fonts[\\/]/,
           chunks: "all",
+          reuseExistingChunk: true,
+        },
+        common: {
+          name: 'common',
+          minChunks: 2,
+          chunks: 'async',
+          priority: 10,
+          reuseExistingChunk: true,
+          enforce: true
         }
       }
     },
@@ -309,7 +317,7 @@ var webpackConfig = {
 };
 
 if (!isModeProduction(mode)) {
-  webpackConfig.devtool = 'source-map'; // fixed
+  webpackConfig.devtool = 'cheap-eval-source-map'; // fixed
 }
 
 if (isModeProduction(mode)) {
