@@ -30,6 +30,7 @@ import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
@@ -117,6 +118,9 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     if (outputSchema != null) {
       builder.setOutputSchema(outputSchema);
     }
+    if (conf.getDistributionName() != null && conf.getDistributionSize() != null) {
+      builder.setDistributionFactor(conf.getDistributionSize(), conf.getDistributionName());
+    }
     return builder.build();
   }
 
@@ -141,6 +145,8 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     public static final String SELECT = "select";
     public static final String BROADCAST = "broadcast";
     public static final String SCHEMA = "schema";
+    public static final String DISTRIBUTION_NAME = "distributionName";
+    public static final String DISTRIBUTION_SIZE = "distributionSize";
 
     @Macro
     private String stages;
@@ -164,6 +170,18 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     @Macro
     @Nullable
     private String schema;
+
+    private String distributionName;
+
+    private Integer distributionSize;
+
+    public String getDistributionName() {
+      return distributionName;
+    }
+
+    public Integer getDistributionSize() {
+      return distributionSize;
+    }
 
     List<String> getKey() {
       return GSON.fromJson(key, LIST);
@@ -202,11 +220,22 @@ public class MockAutoJoiner extends BatchAutoJoiner {
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
                                     List<String> broadcast, List<JoinField> select, boolean nullSafe) {
     return new ETLPlugin(NAME, BatchAutoJoiner.PLUGIN_TYPE,
-                         getProperties(stages, key, required, broadcast, select, nullSafe));
+                         getProperties(stages, key, required, broadcast, select, nullSafe, null));
+  }
+
+  public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
+                                    List<JoinField> select, boolean nullSafe, JoinDistribution distribution) {
+    return new ETLPlugin(NAME, BatchAutoJoiner.PLUGIN_TYPE,
+                         getProperties(stages, key, required, Collections.emptyList(), select, nullSafe, distribution));
   }
 
   public static Map<String, String> getProperties(List<String> stages, List<String> key, List<String> required,
                                                   List<String> broadcast, List<JoinField> select, boolean nullSafe) {
+    return getProperties(stages, key, required, broadcast, select, nullSafe, null);
+  }
+  public static Map<String, String> getProperties(List<String> stages, List<String> key, List<String> required,
+                                                  List<String> broadcast, List<JoinField> select, boolean nullSafe,
+                                                  JoinDistribution distribution) {
     Map<String, String> properties = new HashMap<>();
     properties.put(Conf.STAGES, GSON.toJson(stages));
     properties.put(Conf.REQUIRED, GSON.toJson(required));
@@ -214,6 +243,9 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     properties.put(Conf.BROADCAST, GSON.toJson(broadcast));
     properties.put(Conf.SELECT, GSON.toJson(select));
     properties.put(Conf.NULL_SAFE, Boolean.toString(nullSafe));
+    properties.put(Conf.DISTRIBUTION_SIZE, distribution == null ? null :
+      String.valueOf(distribution.getDistributionFactor()));
+    properties.put(Conf.DISTRIBUTION_NAME, distribution == null ? null : distribution.getSkewedStageName());
     return properties;
   }
 
@@ -226,7 +258,9 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     properties.put(Conf.BROADCAST, new PluginPropertyField(Conf.BROADCAST, "", "string", false, false));
     properties.put(Conf.SELECT, new PluginPropertyField(Conf.SELECT, "", "string", false, true));
     properties.put(Conf.SCHEMA, new PluginPropertyField(Conf.SCHEMA, "", "string", false, true));
+    properties.put(Conf.DISTRIBUTION_SIZE, new PluginPropertyField(Conf.DISTRIBUTION_SIZE, "", "integer", false,
+                                                                   false));
+    properties.put(Conf.DISTRIBUTION_NAME, new PluginPropertyField(Conf.DISTRIBUTION_NAME, "", "string", false, false));
     return new PluginClass(BatchJoiner.PLUGIN_TYPE, NAME, "", MockAutoJoiner.class.getName(), "conf", properties);
   }
-
 }
