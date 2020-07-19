@@ -143,6 +143,8 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
 
     container.addArgsItem("io.cdap.cdap.internal.app.runtime.k8s.PreviewRunnerMain");
     container.addArgsItem("--env=k8s");
+    container.addArgsItem(String.format("--instanceNameFilePath=%s/%s", podInfo.getPodInfoDir(), "pod.name"));
+    container.addArgsItem(String.format("--instanceUidFilePath=%s/%s", podInfo.getPodInfoDir(), "pod.uid"));
 
     container.setEnv(envVars);
 

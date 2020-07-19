@@ -17,9 +17,11 @@
 package io.cdap.cdap.internal.app.runtime.k8s;
 
 import com.google.common.util.concurrent.Service;
+import com.google.gson.Gson;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
@@ -34,8 +36,8 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.master.environment.k8s.AbstractServiceMain;
-import io.cdap.cdap.master.environment.k8s.EnvironmentOptions;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -45,7 +47,13 @@ import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.Reader;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -54,7 +62,10 @@ import javax.annotation.Nullable;
 /**
  * The main class to run the preview runner. Preview runner will run in its own pod.
  */
-public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
+public class PreviewRunnerMain extends AbstractServiceMain<PreviewRunnerOptions> {
+  private static final Gson GSON = new Gson();
+  private static final Logger LOG = LoggerFactory.getLogger(PreviewRunnerMain.class);
+  private PreviewRequestPollerInfo previewRequestPollerInfo;
 
   /**
    * Main entry point
@@ -64,7 +75,7 @@ public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
   }
 
   @Override
-  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv, PreviewRunnerOptions options) {
     return Arrays.asList(
       new PreviewRunnerManagerModule(),
       new DataSetServiceModules().getStandaloneModules(),
@@ -85,6 +96,8 @@ public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
         @Override
         protected void configure() {
           bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+          bind(PreviewRequestPollerInfoProvider.class).toInstance(
+            () -> Bytes.toBytes(GSON.toJson(previewRequestPollerInfo)));
         }
       }
     );
@@ -93,15 +106,32 @@ public class PreviewRunnerMain extends AbstractServiceMain<EnvironmentOptions> {
   @Override
   protected void addServices(Injector injector, List<? super Service> services,
                              List<? super AutoCloseable> closeableResources, MasterEnvironment masterEnv,
-                             MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
+                             MasterEnvironmentContext masterEnvContext, PreviewRunnerOptions options) {
     services.add(((Service) injector.getInstance(PreviewRunnerManager.class)));
   }
 
   @Nullable
   @Override
-  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
+  protected LoggingContext getLoggingContext(PreviewRunnerOptions options) {
+    File instanceNameFile = new File(options.getInstanceNameFilePath());
+    String instanceName = readJsonFile(instanceNameFile);
+    File instanceUidFile = new File(options.getInstanceUidFilePath());
+    String instanceUid = readJsonFile(instanceUidFile);
+    LOG.info("Instance name: {}, Instance UID: {}", instanceName, instanceUid);
+    previewRequestPollerInfo = new PreviewRequestPollerInfo(instanceName, instanceUid);
+    LOG.info("Instance id: {}, Instance UID: {}", previewRequestPollerInfo.getInstanceId(),
+             previewRequestPollerInfo.getInstanceUid());
     return new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                      Constants.Logging.COMPONENT_NAME,
                                      Constants.Service.PREVIEW_HTTP);
+  }
+
+  private static String readJsonFile(File file) {
+    try (Reader reader = new BufferedReader(new FileReader(file))) {
+      return GSON.fromJson(reader, String.class);
+    } catch (Exception e) {
+      throw new IllegalArgumentException(
+        String.format("Unable to read file at %s", file.getAbsolutePath()), e);
+    }
   }
 }

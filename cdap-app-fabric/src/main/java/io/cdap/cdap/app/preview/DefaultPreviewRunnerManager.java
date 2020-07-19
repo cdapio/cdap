@@ -47,6 +47,7 @@ import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.metadata.writer.NoOpMetadataServiceClient;
 import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.appender.LogAppender;
@@ -68,7 +69,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -91,6 +91,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final Map<String, PreviewRunnerService> previewPollers;
   private final LevelDBTableService previewLevelDBTableService;
   private final PreviewRequestFetcherFactory previewRequestFetcherFactory;
+  private final PreviewRequestPollerInfoProvider pollerInfoProvider;
 
   @Inject
   DefaultPreviewRunnerManager(
@@ -101,7 +102,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     @Named(DataSetsModules.BASE_DATASET_FRAMEWORK) DatasetFramework datasetFramework,
     TransactionSystemClient transactionSystemClient,
     @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-    PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory) {
+    PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory,
+    PreviewRequestPollerInfoProvider pollerInfoProvider) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -114,6 +116,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestFetcherFactory = previewRequestFetcherFactory;
+    this.pollerInfoProvider = pollerInfoProvider;
   }
 
   @Override
@@ -121,7 +124,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     previewInjector = createPreviewInjector();
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
-      String pollerInfo = UUID.randomUUID().toString();
+      String pollerInfo = Bytes.toString(pollerInfoProvider.get());
 
       Callable<Void> callable = () -> {
         previewPollers.remove(pollerInfo);
@@ -171,7 +174,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       throw new Exception(msg);
     }
     service.stopAndWait();
-    String newRunnerId = UUID.randomUUID().toString();
+    String newRunnerId = Bytes.toString(pollerInfoProvider.get());
     PreviewRunnerService newService = new PreviewRunnerService(
       previewCConf, previewInjector.getInstance(PreviewRunner.class),
       previewRequestFetcherFactory.create(Bytes.toBytes(newRunnerId)));
