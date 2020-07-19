@@ -107,10 +107,10 @@ var plugins = [
       copyUnmodified: false,
     }
   ),
-  // new StyleLintPlugin({
-  //   syntax: 'scss',
-  //   files: ['**/*.scss'],
-  // }),
+  new StyleLintPlugin({
+    syntax: 'scss',
+    files: ['**/*.scss'],
+  }),
   new HtmlWebpackPlugin({
     title: 'CDAP',
     template: './cdap.html',
