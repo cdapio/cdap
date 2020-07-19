@@ -35,7 +35,7 @@ const smp = new SpeedMeasurePlugin();
 let cleanOptions = {
   verbose: true,
   dry: false,
-  cleanStaleWebpackAssets: true, // reduces down from 2.7seconds to 2.2seconds
+  cleanStaleWebpackAssets: false, // reduces down from 2.7seconds to 2.2seconds
 };
 
 const loaderExclude = [
@@ -74,6 +74,7 @@ const getWebpackDllPlugins = (mode) => {
   ];
 };
 var plugins = [
+  //new webpack.HotModuleReplacementPlugin(),
   new CleanWebpackPlugin(cleanOptions),
   //new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
@@ -165,26 +166,56 @@ var rules = [
     exclude: loaderExclude,
   },
   {
-    test: /\.js$/,
-    use: ['babel-loader?cacheDirectory'],
+    test: /\.(j|t)sx?$/,
     exclude: loaderExclude,
     include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
+    use: {
+      loader: "babel-loader",
+      options: {
+        cacheDirectory: true,
+        babelrc: false,
+        presets: [
+          [
+            "@babel/preset-env",
+            { targets: { browsers: [
+              "last 10 versions",
+              "safari >= 7"
+            ] } }
+          ],
+          "@babel/preset-typescript",
+          "@babel/preset-react"
+        ],
+        plugins: [
+          // plugin-proposal-decorators is only needed if you're using experimental decorators in TypeScript
+          ["@babel/plugin-proposal-decorators", { legacy: true }],
+          ["@babel/plugin-proposal-class-properties", { loose: true }],
+          "react-hot-loader/babel"
+        ]
+      }
+    }
   },
-  {
-    test: /\.tsx?$/,
-    use: [
-      'babel-loader?cacheDirectory',
-      {
-        loader: 'ts-loader',
-        options: {
-          transpileOnly: true,
-          experimentalWatchApi: true, // added
-        },
-      },
-    ],
-    exclude: loaderExclude,
-    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
-  },
+  // {
+  //   test: /\.js$/,
+  //   use: ['babel-loader?cacheDirectory'],
+  //   exclude: loaderExclude,
+  //   include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
+  //   plugins: ['react-hot-loader/babel'],
+  // },
+  // {
+  //   test: /\.tsx?$/,
+  //   use: [
+  //     'babel-loader?cacheDirectory',
+  //     {
+  //       loader: 'ts-loader',
+  //       options: {
+  //         transpileOnly: true,
+  //         experimentalWatchApi: true, // added
+  //       },
+  //     },
+  //   ],
+  //   exclude: loaderExclude,
+  //   plugins: ['react-hot-loader/babel'],
+  // },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     use: [
@@ -239,14 +270,21 @@ var webpackConfig = {
   devtool: 'eval-source-map',
   context: __dirname + '/app/cdap',
   entry: {
-    cdap: ['@babel/polyfill', './cdap.js'],
+    //cdap: ['webpack-dev-server/client?http://localhost:8080', 'webpack/hot/dev-server', '@babel/polyfill', './cdap.js'],
+    cdap: [
+      'react-hot-loader/patch', // RHL patch
+      '@babel/polyfill',
+      './cdap.js'
+    ],
   },
   module: {
     rules,
   },
   output: {
-    filename: '[name].[hash].js',
-    chunkFilename: '[name].[hash].js',
+    filename: '[name].js',
+    chunkFilename: '[name].js',
+    hotUpdateChunkFilename: 'hot-update.js',
+    hotUpdateMainFilename: 'hot-update.json',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
     pathinfo: false, // added. reduces 0.2~0.3 seconds
@@ -283,14 +321,14 @@ var webpackConfig = {
           chunks: "all",
           reuseExistingChunk: true,
         },
-        common: {
-          name: 'common',
-          minChunks: 2,
-          chunks: 'async',
-          priority: 10,
-          reuseExistingChunk: true,
-          enforce: true
-        }
+        // common: {
+        //   name: 'common',
+        //   minChunks: 2,
+        //   chunks: 'async',
+        //   priority: 10,
+        //   reuseExistingChunk: true,
+        //   enforce: true
+        // }
       }
     },
     minimize: true,
@@ -303,21 +341,32 @@ var webpackConfig = {
       api: __dirname + '/app/cdap/api',
       lib: __dirname + '/app/lib',
       styles: __dirname + '/app/cdap/styles',
+      'react-dom': '@hot-loader/react-dom',
     },
   },
   devServer: {
     index: 'cdap.html',
     contentBase: path.join(__dirname, '/packaged/public/cdap_dist/cdap_assets/'),
-    compress: true,
-    hot: true,
-    port: 9000,
+    port: 8080,
     open: 'chrome',
     writeToDisk: true,
+    publicPath: '/cdap_assets/',
+    watchContentBase: false,
+    historyApiFallback: true,
+    hot: true,
+    inline: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:11011',
+        pathRewrite: { '^/api': '' }
+      }
+    }
   }
 };
 
 if (!isModeProduction(mode)) {
-  webpackConfig.devtool = 'cheap-eval-source-map'; // fixed
+  /// webpackConfig.devtool = 'cheap-eval-source-map'; // fixed
+  webpackConfig.devtool = 'eval';
 }
 
 if (isModeProduction(mode)) {
@@ -356,4 +405,5 @@ if (isModeProduction(mode)) {
   ]
 }
 
-module.exports = smp.wrap(webpackConfig);
+module.exports = webpackConfig;
+//module.exports = smp.wrap(webpackConfig);

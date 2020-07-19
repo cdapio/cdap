@@ -18,7 +18,6 @@ import React, { Component } from 'react';
 
 import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
 import HttpResponse from 'components/HttpExecutor/HttpResponse';
-import InputPath from 'components/HttpExecutor/InputPath';
 import MethodSelector from 'components/HttpExecutor/MethodSelector';
 import { Provider } from 'react-redux';
 import RequestMetadata from 'components/HttpExecutor/RequestMetadata';
@@ -40,7 +39,6 @@ export default class HttpExecutor extends Component {
         <div className="http-executor">
           <div className="request-section">
             <MethodSelector />
-            <InputPath />
 
             <SendButton />
           </div>

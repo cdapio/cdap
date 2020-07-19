@@ -14,13 +14,14 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import * as React from 'react';
+
 import Heading, { HeadingTypes } from 'components/Heading';
-import { PluginTypes } from 'components/PluginJSONCreator/constants';
-import { usePluginInfoState } from 'components/PluginJSONCreator/Create';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import * as React from 'react';
+import { usePluginInfoState } from 'components/PluginJSONCreator/Create';
 
 const styles = (): StyleRules => {
   return {
@@ -48,9 +49,11 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
   const requiredFilledOut =
     pluginName.length > 0 && pluginType.length > 0 && displayName.length > 0;
 
+  debugger;
+
   return (
     <div>
-      <Heading type={HeadingTypes.h3} label="Plugin Information" />
+      <Heading type={HeadingTypes.h3} label="Plugin Information 7" />
       <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'textbox'}
@@ -58,16 +61,6 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           onChange={setPluginName}
           label={'Plugin Name'}
           placeholder={'Select a Plugin Name'}
-          required={true}
-        />
-      </div>
-      <div className={classes.basicPluginInput}>
-        <PluginInput
-          widgetType={'select'}
-          value={pluginType}
-          onChange={setPluginType}
-          label={'Plugin Type'}
-          options={PluginTypes}
           required={true}
         />
       </div>
