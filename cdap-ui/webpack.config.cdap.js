@@ -367,7 +367,7 @@ var webpackConfig = {
 
 if (!isModeProduction(mode)) {
   /// webpackConfig.devtool = 'cheap-eval-source-map'; // fixed
-  webpackConfig.devtool = 'cheap-eval-source-map';
+  webpackConfig.devtool = 'eval-cheap-module-source-map';
 }
 
 if (isModeProduction(mode)) {
