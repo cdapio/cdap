@@ -50,10 +50,9 @@ import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.Reader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nullable;
@@ -77,7 +76,7 @@ public class PreviewRunnerMain extends AbstractServiceMain<PreviewRunnerOptions>
   @Override
   protected List<Module> getServiceModules(MasterEnvironment masterEnv, PreviewRunnerOptions options) {
     return Arrays.asList(
-      new PreviewRunnerManagerModule(),
+      new PreviewRunnerManagerModule().getDistributedModules(),
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
@@ -113,10 +112,8 @@ public class PreviewRunnerMain extends AbstractServiceMain<PreviewRunnerOptions>
   @Nullable
   @Override
   protected LoggingContext getLoggingContext(PreviewRunnerOptions options) {
-    File instanceNameFile = new File(options.getInstanceNameFilePath());
-    String instanceName = readJsonFile(instanceNameFile);
-    File instanceUidFile = new File(options.getInstanceUidFilePath());
-    String instanceUid = readJsonFile(instanceUidFile);
+    String instanceName = readFile(options.getInstanceNameFilePath());
+    String instanceUid = readFile(options.getInstanceUidFilePath());
     LOG.info("Instance name: {}, Instance UID: {}", instanceName, instanceUid);
     previewRequestPollerInfo = new PreviewRequestPollerInfo(instanceName, instanceUid);
     LOG.info("Instance id: {}, Instance UID: {}", previewRequestPollerInfo.getInstanceId(),
@@ -126,12 +123,12 @@ public class PreviewRunnerMain extends AbstractServiceMain<PreviewRunnerOptions>
                                      Constants.Service.PREVIEW_HTTP);
   }
 
-  private static String readJsonFile(File file) {
-    try (Reader reader = new BufferedReader(new FileReader(file))) {
-      return GSON.fromJson(reader, String.class);
-    } catch (Exception e) {
+  private static String readFile(String fileName) {
+    try {
+      return new String(Files.readAllBytes(Paths.get(fileName)));
+    } catch (IOException e) {
       throw new IllegalArgumentException(
-        String.format("Unable to read file at %s", file.getAbsolutePath()), e);
+        String.format("Unable to read file %s", fileName), e);
     }
   }
 }

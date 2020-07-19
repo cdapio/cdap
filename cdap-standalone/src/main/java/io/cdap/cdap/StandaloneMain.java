@@ -537,7 +537,7 @@ public class StandaloneMain {
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
-      new PreviewRunnerManagerModule(),
+      new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),
       new MonitorHandlerModule(false),
@@ -547,7 +547,6 @@ public class StandaloneMain {
         protected void configure() {
           // Needed by MonitorHandlerModuler
           bind(TwillRunner.class).to(NoopTwillRunnerService.class);
-          bind(PreviewRequestPollerInfoProvider.class).to(LocalPreviewRequestPollerInfoProvider.class);
         }
       }
     );

@@ -17,6 +17,7 @@
 package io.cdap.cdap.master.environment.k8s;
 
 import com.google.common.collect.Lists;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -40,6 +41,7 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.StreamSupport;
 
 /**
@@ -181,6 +183,18 @@ public class MasterServiceMainTestBase {
     }
 
     initArgs = new String[] { "--env=mock", "--conf=" + confDir.getAbsolutePath() };
+    if (dataDir.equals("PreviewRunnerMain")) {
+      // add more options for preview runner
+      File podInfoDir = TEMP_FOLDER.newFolder();
+      byte[] instanceName = Bytes.toBytes("preview-runner-0");
+      assert instanceName != null;
+      String instanceNameFilePath = String.format("%s/%s", podInfoDir.getAbsolutePath(), "pod.name");
+      Files.write(new File(podInfoDir, "pod.name").toPath(), instanceName);
+      String instanceUidFilePath = String.format("%s/%s", podInfoDir.getAbsolutePath(), "pod.uid");
+      Files.write(new File(podInfoDir, "pod.uid").toPath(), Bytes.toBytes(UUID.randomUUID()));
+      initArgs = new String[] { "--env=mock", "--conf=" + confDir.getAbsolutePath(),
+        "--instanceNameFilePath=" + instanceNameFilePath, "--instanceUidFilePath=" + instanceUidFilePath };
+    }
     T service = serviceMainClass.newInstance();
     service.init(initArgs);
     service.start();
