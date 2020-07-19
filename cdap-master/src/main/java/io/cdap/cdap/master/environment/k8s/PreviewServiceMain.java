@@ -38,6 +38,7 @@ import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.explore.client.ExploreClient;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -94,6 +95,7 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
           bind(TwillRunner.class).to(TwillRunnerService.class);
 
           bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+          bind(PreviewRequestPollerInfoProvider.class).toInstance(() -> new byte[0]);
         }
       }
     );

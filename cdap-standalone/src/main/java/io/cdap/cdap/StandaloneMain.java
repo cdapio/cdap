@@ -68,6 +68,8 @@ import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.explore.service.ExploreServiceUtils;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.gateway.router.RouterModules;
+import io.cdap.cdap.internal.app.preview.LocalPreviewRequestPollerInfoProvider;
+import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.LoggingUtil;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
@@ -545,6 +547,7 @@ public class StandaloneMain {
         protected void configure() {
           // Needed by MonitorHandlerModuler
           bind(TwillRunner.class).to(NoopTwillRunnerService.class);
+          bind(PreviewRequestPollerInfoProvider.class).to(LocalPreviewRequestPollerInfoProvider.class);
         }
       }
     );

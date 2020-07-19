@@ -61,6 +61,7 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
       byte[] pollerInfo = ByteStreams.toByteArray(is);
       Optional<PreviewRequest> previewRequestOptional = previewManager.poll(pollerInfo);
       if (previewRequestOptional.isPresent()) {
+        LOG.info("Received poller info is {}", Bytes.toString(pollerInfo));
         responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewRequestOptional.get()));
       } else {
         responder.sendStatus(HttpResponseStatus.NOT_FOUND);
