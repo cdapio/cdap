@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -53,10 +54,17 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   private final RetryStrategy retryStrategy;
   private final CountDownLatch stopLatch;
   private final AtomicReference<Cancellable> cancelPreview;
+  private final Callable<Void> completionNotifier;
   private volatile boolean triggerredShutDown;
 
   public PreviewRunnerService(CConfiguration cConf, PreviewRunner previewRunner,
                               PreviewRequestFetcher previewRequestFetcher) {
+    this(cConf, previewRunner, previewRequestFetcher, null);
+  }
+
+  public PreviewRunnerService(CConfiguration cConf, PreviewRunner previewRunner,
+                              PreviewRequestFetcher previewRequestFetcher,
+                              @Nullable Callable<Void> completionNotifier) {
     this.previewRunner = previewRunner;
     this.requestFetcher = previewRequestFetcher;
     this.pollDelayMillis = cConf.getLong(Constants.Preview.REQUEST_POLL_DELAY_MILLIS);
@@ -64,6 +72,7 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     this.retryStrategy = RetryStrategies.fromConfiguration(cConf, "system.preview.");
     this.stopLatch = new CountDownLatch(1);
     this.cancelPreview = new AtomicReference<>();
+    this.completionNotifier = completionNotifier;
   }
 
   @Override
@@ -115,6 +124,9 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
   @Override
   protected void shutDown() throws Exception {
     LOG.debug("Preview runner service completed");
+    if (completionNotifier != null) {
+      completionNotifier.call();
+    }
   }
 
   @Nullable

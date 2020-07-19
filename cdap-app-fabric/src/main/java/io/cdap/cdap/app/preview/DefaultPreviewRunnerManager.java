@@ -52,8 +52,6 @@ import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.appender.tms.PreviewTMSLogAppender;
 import io.cdap.cdap.logging.framework.CustomLogPipelineConfigProvider;
-import io.cdap.cdap.logging.framework.local.LocalLogAppender;
-import io.cdap.cdap.logging.guice.PreviewLocalLogAppenderModule;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -71,6 +69,7 @@ import java.net.InetSocketAddress;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -124,9 +123,16 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     for (int i = 0; i < maxConcurrentPreviews; i++) {
       String pollerInfo = UUID.randomUUID().toString();
 
+      Callable<Void> callable = () -> {
+        previewPollers.remove(pollerInfo);
+        if (previewPollers.isEmpty()) {
+          System.exit(0);
+        }
+        return null;
+      };
       PreviewRunnerService pollerService = new PreviewRunnerService(
         previewCConf, previewInjector.getInstance(PreviewRunner.class),
-        previewRequestFetcherFactory.create(Bytes.toBytes(pollerInfo)));
+        previewRequestFetcherFactory.create(Bytes.toBytes(pollerInfo)), callable);
 
       pollerService.startAndWait();
       previewPollers.put(pollerInfo, pollerService);
@@ -194,13 +200,6 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       // Use the in-memory module for metrics collection, which metrics still get persisted to dataset, but
       // save threads for reading metrics from TMS, as there won't be metrics in TMS.
       new MetricsClientRuntimeModule().getInMemoryModules(),
-      /*
-      Modules.override(new PreviewLocalLogAppenderModule()).with(new AbstractModule() {
-        @Override
-        protected void configure() {
-          bind(LogAppender.class).to(PreviewTMSLogAppender.class).in(Scopes.SINGLETON);
-        }
-      }),*/
       new AbstractModule() {
         @Override
         protected void configure() {
