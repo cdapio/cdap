@@ -293,7 +293,7 @@ public class TestBase {
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new PreviewHttpModule(),
-      new PreviewRunnerManagerModule(),
+      new PreviewRunnerManagerModule().getInMemoryModules(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override

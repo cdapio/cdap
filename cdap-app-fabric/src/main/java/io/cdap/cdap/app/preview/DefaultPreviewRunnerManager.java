@@ -92,6 +92,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final LevelDBTableService previewLevelDBTableService;
   private final PreviewRequestFetcherFactory previewRequestFetcherFactory;
   private final PreviewRequestPollerInfoProvider pollerInfoProvider;
+  private final PreviewRunnerSystemTerminator previewRunnerSystemTerminator;
 
   @Inject
   DefaultPreviewRunnerManager(
@@ -103,7 +104,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     TransactionSystemClient transactionSystemClient,
     @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
     PreviewRunnerModule previewRunnerModule, PreviewRequestFetcherFactory previewRequestFetcherFactory,
-    PreviewRequestPollerInfoProvider pollerInfoProvider) {
+    PreviewRequestPollerInfoProvider pollerInfoProvider,
+    PreviewRunnerSystemTerminator previewRunnerSystemTerminator) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -117,7 +119,9 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestFetcherFactory = previewRequestFetcherFactory;
     this.pollerInfoProvider = pollerInfoProvider;
+    this.previewRunnerSystemTerminator = previewRunnerSystemTerminator;
   }
+
 
   @Override
   protected synchronized void startUp() throws Exception {
@@ -129,7 +133,8 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       Callable<Void> callable = () -> {
         previewPollers.remove(pollerInfo);
         if (previewPollers.isEmpty()) {
-          System.exit(0);
+          // terminate the preview runner system
+          previewRunnerSystemTerminator.terminate();
         }
         return null;
       };

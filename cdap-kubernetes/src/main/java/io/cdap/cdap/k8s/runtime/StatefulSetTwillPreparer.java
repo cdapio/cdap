@@ -164,7 +164,7 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
 
     // For preview runner pods we can create another priority class with lower priority than
     // the sts-priority
-    podSpec.setPriorityClassName(cConf.getOrDefault(PREVIEW_RUNNER_PRIORITY_CLASS_NAME, "priority-medium"));
+    podSpec.setPriorityClassName(cConf.getOrDefault(PREVIEW_RUNNER_PRIORITY_CLASS_NAME, "priority-low"));
 
     podTemplateSpec.setSpec(podSpec);
     statefulSetSpec.setTemplate(podTemplateSpec);
@@ -214,7 +214,7 @@ public class StatefulSetTwillPreparer extends AbstractKubeTwillPreparer {
              - path: "pod.name"
                fieldRef:
                  fieldPath: metadata.name
-             - path: "pod.id"
+             - path: "pod.uid"
                fieldRef:
                  fieldPath: metadata.id
    */

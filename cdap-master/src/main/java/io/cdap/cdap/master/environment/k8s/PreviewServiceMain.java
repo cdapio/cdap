@@ -26,6 +26,7 @@ import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.UnsupportedExploreClient;
+import io.cdap.cdap.app.preview.DefaultPreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
@@ -39,6 +40,7 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.preview.PreviewRequestPollerInfoProvider;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
@@ -72,7 +74,13 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
     return Arrays.asList(
       new PreviewHttpModule(),
-      new PreviewRunnerManagerModule(),
+      new AbstractModule() {
+        @Override
+        protected void configure() {
+          bind(PreviewRunnerServiceStopper.class).toInstance(runnerId -> {
+          });
+        }
+      },
       new DataSetServiceModules().getStandaloneModules(),
       new DataSetsModules().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),

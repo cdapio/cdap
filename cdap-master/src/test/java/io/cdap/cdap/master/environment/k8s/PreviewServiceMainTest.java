@@ -151,6 +151,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
 
     // Start preview service
     startService(PreviewServiceMain.class);
+    startService(PreviewRunnerMain.class);
 
     // Run a preview
     String expectedOutput = "output_value";
@@ -180,6 +181,7 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
                                                  Collections.singletonList(expectedOutput)),
                         tracerData);
 
+    stopService(PreviewRunnerMain.class);
     stopService(PreviewServiceMain.class);
   }
 
