@@ -107,10 +107,6 @@ var plugins = [
       copyUnmodified: false,
     }
   ),
-  new StyleLintPlugin({
-    syntax: 'scss',
-    files: ['**/*.scss'],
-  }),
   new HtmlWebpackPlugin({
     title: 'CDAP',
     template: './cdap.html',
@@ -118,14 +114,6 @@ var plugins = [
     hash: true,
     inject: false,
     mode: isModeProduction(mode) ? '' : 'development.',
-  }),
-  // new MiniCssExtractPlugin(),
-  // new MiniCssExtractPlugin({
-  //   filename: '[name].css',
-  //   chunkFilename: '[id].css'
-  // })
-  new MiniCssExtractPlugin({
-    // filename: devMode ? '[name].css' : '[name].[hash].css'
   }),
 ];
 if (!isModeProduction(mode)) {
@@ -406,5 +394,5 @@ if (isModeProduction(mode)) {
   ]
 }
 
-module.exports = webpackConfig;
-//module.exports = smp.wrap(webpackConfig);
+//module.exports = webpackConfig;
+module.exports = smp.wrap(webpackConfig);
