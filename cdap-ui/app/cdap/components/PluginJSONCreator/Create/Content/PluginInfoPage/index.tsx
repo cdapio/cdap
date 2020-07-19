@@ -20,6 +20,7 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { PluginTypes } from 'components/PluginJSONCreator/constants';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import { usePluginInfoState } from 'components/PluginJSONCreator/Create';
 
@@ -49,11 +50,9 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
   const requiredFilledOut =
     pluginName.length > 0 && pluginType.length > 0 && displayName.length > 0;
 
-  debugger;
-
   return (
     <div>
-      <Heading type={HeadingTypes.h3} label="Plugin Information 7" />
+      <Heading type={HeadingTypes.h3} label="Plugin Information 1" />
       <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'textbox'}
@@ -61,6 +60,16 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           onChange={setPluginName}
           label={'Plugin Name'}
           placeholder={'Select a Plugin Name'}
+          required={true}
+        />
+      </div>
+      <div className={classes.basicPluginInput}>
+        <PluginInput
+          widgetType={'select'}
+          value={pluginType}
+          onChange={setPluginType}
+          label={'Plugin Type'}
+          options={PluginTypes}
           required={true}
         />
       </div>

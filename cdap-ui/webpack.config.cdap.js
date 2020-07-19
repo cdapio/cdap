@@ -165,57 +165,58 @@ var rules = [
     },
     exclude: loaderExclude,
   },
-  {
-    test: /\.(j|t)sx?$/,
-    exclude: loaderExclude,
-    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
-    use: {
-      loader: "babel-loader",
-      options: {
-        cacheDirectory: true,
-        babelrc: false,
-        presets: [
-          [
-            "@babel/preset-env",
-            { targets: { browsers: [
-              "last 10 versions",
-              "safari >= 7"
-            ] } }
-          ],
-          "@babel/preset-typescript",
-          "@babel/preset-react"
-        ],
-        plugins: [
-          // plugin-proposal-decorators is only needed if you're using experimental decorators in TypeScript
-          ["@babel/plugin-proposal-decorators", { legacy: true }],
-          ["@babel/plugin-proposal-class-properties", { loose: true }],
-          "react-hot-loader/babel"
-        ]
-      }
-    }
-  },
   // {
+  //   //test: /\.(j|t)sx?$/,
   //   test: /\.js$/,
-  //   use: ['babel-loader?cacheDirectory'],
   //   exclude: loaderExclude,
   //   include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
-  //   plugins: ['react-hot-loader/babel'],
+  //   use: {
+  //     loader: "babel-loader",
+  //     options: {
+  //       cacheDirectory: true,
+  //       babelrc: false,
+  //       presets: [
+  //         [
+  //           "@babel/preset-env",
+  //           { targets: { browsers: [
+  //             "last 10 versions",
+  //             "safari >= 7"
+  //           ] } }
+  //         ],
+  //         "@babel/preset-typescript",
+  //         "@babel/preset-react"
+  //       ],
+  //       plugins: [
+  //         // plugin-proposal-decorators is only needed if you're using experimental decorators in TypeScript
+  //         ["@babel/plugin-proposal-decorators", { legacy: true }],
+  //         ["@babel/plugin-proposal-class-properties", { loose: true }],
+  //         "react-hot-loader/babel"
+  //       ]
+  //     }
+  //   }
   // },
-  // {
-  //   test: /\.tsx?$/,
-  //   use: [
-  //     'babel-loader?cacheDirectory',
-  //     {
-  //       loader: 'ts-loader',
-  //       options: {
-  //         transpileOnly: true,
-  //         experimentalWatchApi: true, // added
-  //       },
-  //     },
-  //   ],
-  //   exclude: loaderExclude,
-  //   plugins: ['react-hot-loader/babel'],
-  // },
+  {
+    test: /\.js$/,
+    use: ['react-hot-loader/webpack', 'babel-loader?cacheDirectory'],
+    exclude: loaderExclude,
+    include: [path.join(__dirname, 'app'), path.join(__dirname, '.storybook')],
+    // plugins: ['react-hot-loader/babel'],
+  },
+  {
+    test: /\.tsx?$/,
+    use: [
+      'react-hot-loader/webpack',
+      'babel-loader?cacheDirectory',
+      {
+        loader: 'ts-loader',
+        options: {
+          transpileOnly: true,
+          experimentalWatchApi: true, // added
+        },
+      },
+    ],
+    exclude: loaderExclude,
+  },
   {
     test: /\.woff(2)?(\?v=[0-9]\.[0-9]\.[0-9])?$/,
     use: [
@@ -366,7 +367,7 @@ var webpackConfig = {
 
 if (!isModeProduction(mode)) {
   /// webpackConfig.devtool = 'cheap-eval-source-map'; // fixed
-  webpackConfig.devtool = 'eval';
+  webpackConfig.devtool = 'cheap-eval-source-map';
 }
 
 if (isModeProduction(mode)) {
