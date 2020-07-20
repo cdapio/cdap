@@ -16,99 +16,26 @@
 
 import { ISchemaType } from './SchemaTypes';
 
-/**
- * Defines all the defaults we use for the schema.
- */
-const logicalTypes = ['time', 'timestamp', 'decimal', 'date'];
-const defaultPrecision = 32;
-const defaultScale = 3;
-const defaultDecimalTypeProperties = {
-  type: 'bytes',
-  logicalType: 'decimal',
-  precision: defaultPrecision,
-  scale: defaultScale,
-};
-const defaultTimeTypeProperties = {
-  type: 'long',
-  logicalType: 'time-micros',
-};
-const defaultTimeStampTypeProperties = {
-  type: 'long',
-  logicalType: 'timestamp-micros',
-};
-const defaultDateTypeProperties = {
-  type: 'int',
-  logicalType: 'date',
-};
-
-const defaultArrayType = {
-  type: 'array',
-  items: 'string',
-};
-const defaultEnumType = {
-  type: 'enum',
-  symbols: [''],
-};
-const defaultMapType = {
-  type: 'map',
-  keys: 'string',
-  values: 'string',
-};
-const defaultRecordType = {
-  name: 'etlSchemaBody',
-  type: 'record',
-  fields: [
-    {
-      name: '',
-      type: 'string',
-    },
-  ],
-};
-const defaultFieldType = {
-  name: '',
-  type: 'string',
-};
-const defaultUnionType = ['string'];
-
-const schemaTypes = [
-  'array',
-  'boolean',
-  'bytes',
-  'double',
-  'enum',
-  'float',
-  'int',
-  'long',
-  'map',
-  'record',
-  'string',
-  'union',
-].concat(logicalTypes);
-
-const logicalTypeToSimpleTypeMap = {
-  'time-micros': 'time',
-  'timestamp-micros': 'timestamp',
-  date: 'date',
-  decimal: 'decimal',
-};
-
-const INDENTATION_SPACING = 15;
-
-const getDefaultEmptyAvroSchema = (): ISchemaType => {
-  return {
-    name: 'etlSchemaBody',
-    schema: {
-      name: 'etlSchemaBody',
-      type: 'record',
-      fields: [
-        {
-          name: '',
-          type: 'string',
-        },
-      ],
-    },
-  };
-};
+enum AvroSchemaTypesEnum {
+  ARRAY = 'array',
+  BOOLEAN = 'boolean',
+  BYTES = 'bytes',
+  DATE = 'date',
+  DECIMAL = 'decimal',
+  DOUBLE = 'double',
+  ENUM = 'enum',
+  FLOAT = 'float',
+  INT = 'int',
+  LONG = 'long',
+  MAP = 'map',
+  RECORD = 'record',
+  STRING = 'string',
+  TIME = 'time',
+  TIMESTAMP = 'timestamp',
+  UNION = 'union',
+  TIMESTAMPMICROS = 'timestamp-micros',
+  TIMEMICROS = 'time-micros',
+}
 
 enum InternalTypesEnum {
   SCHEMA = 'schema',
@@ -133,6 +60,105 @@ enum OperationTypesEnum {
   COLLAPSE = 'collapse',
 }
 
+/**
+ * Defines all the defaults we use for the schema.
+ */
+const logicalTypes = [
+  AvroSchemaTypesEnum.TIME,
+  AvroSchemaTypesEnum.TIMESTAMP,
+  AvroSchemaTypesEnum.DECIMAL,
+  AvroSchemaTypesEnum.DATE,
+];
+const defaultPrecision = 32;
+const defaultScale = 3;
+const defaultDecimalTypeProperties = {
+  type: AvroSchemaTypesEnum.BYTES,
+  logicalType: AvroSchemaTypesEnum.DECIMAL,
+  precision: defaultPrecision,
+  scale: defaultScale,
+};
+const defaultTimeTypeProperties = {
+  type: AvroSchemaTypesEnum.LONG,
+  logicalType: AvroSchemaTypesEnum.TIMEMICROS,
+};
+const defaultTimeStampTypeProperties = {
+  type: AvroSchemaTypesEnum.LONG,
+  logicalType: AvroSchemaTypesEnum.TIMESTAMPMICROS,
+};
+const defaultDateTypeProperties = {
+  type: AvroSchemaTypesEnum.INT,
+  logicalType: AvroSchemaTypesEnum.DATE,
+};
+
+const defaultArrayType = {
+  type: AvroSchemaTypesEnum.ARRAY,
+  items: AvroSchemaTypesEnum.STRING,
+};
+const defaultEnumType = {
+  type: AvroSchemaTypesEnum.ENUM,
+  symbols: [''],
+};
+const defaultMapType = {
+  type: AvroSchemaTypesEnum.MAP,
+  keys: AvroSchemaTypesEnum.STRING,
+  values: AvroSchemaTypesEnum.STRING,
+};
+const defaultRecordType = {
+  name: 'etlSchemaBody',
+  type: AvroSchemaTypesEnum.RECORD,
+  fields: [
+    {
+      name: '',
+      type: AvroSchemaTypesEnum.STRING,
+    },
+  ],
+};
+const defaultFieldType = {
+  name: '',
+  type: AvroSchemaTypesEnum.STRING,
+};
+const defaultUnionType = [AvroSchemaTypesEnum.STRING];
+
+const schemaTypes = [
+  AvroSchemaTypesEnum.ARRAY,
+  AvroSchemaTypesEnum.BOOLEAN,
+  AvroSchemaTypesEnum.BYTES,
+  AvroSchemaTypesEnum.DOUBLE,
+  AvroSchemaTypesEnum.ENUM,
+  AvroSchemaTypesEnum.FLOAT,
+  AvroSchemaTypesEnum.INT,
+  AvroSchemaTypesEnum.LONG,
+  AvroSchemaTypesEnum.MAP,
+  AvroSchemaTypesEnum.RECORD,
+  AvroSchemaTypesEnum.STRING,
+  AvroSchemaTypesEnum.UNION,
+].concat(logicalTypes);
+
+const logicalTypeToSimpleTypeMap = {
+  'time-micros': AvroSchemaTypesEnum.TIME,
+  'timestamp-micros': AvroSchemaTypesEnum.TIMESTAMP,
+  date: AvroSchemaTypesEnum.DATE,
+  decimal: AvroSchemaTypesEnum.DECIMAL,
+};
+
+const INDENTATION_SPACING = 10;
+
+const getDefaultEmptyAvroSchema = (): ISchemaType => {
+  return {
+    name: 'etlSchemaBody',
+    schema: {
+      name: 'etlSchemaBody',
+      type: AvroSchemaTypesEnum.RECORD,
+      fields: [
+        {
+          name: '',
+          type: AvroSchemaTypesEnum.STRING,
+        },
+      ],
+    },
+  };
+};
+
 export {
   schemaTypes,
   INDENTATION_SPACING,
@@ -151,6 +177,7 @@ export {
   defaultUnionType,
   defaultFieldType,
   getDefaultEmptyAvroSchema,
+  AvroSchemaTypesEnum,
   InternalTypesEnum,
   OperationTypesEnum,
 };

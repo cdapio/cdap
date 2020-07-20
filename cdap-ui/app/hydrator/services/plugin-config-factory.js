@@ -25,6 +25,7 @@ class HydratorPlusPlusPluginConfigFactory {
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
     this.EventPipe = EventPipe;
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
   }
   fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
     let cache = this.data[`${artifactName}-${artifactVersion}-${artifactScope}-${key}`];
@@ -353,8 +354,10 @@ class HydratorPlusPlusPluginConfigFactory {
           }
           if (schemas.length) {
             this.EventPipe.emit('schema.import', schemas);
+            this.eventEmitter.emit('schema.import', schemas);
           } else if (!this.myHelpers.objectQuery(widgetJson, 'outputs', 0, 'name')) {
             this.EventPipe.emit('schema.clear');
+            this.eventEmitter.emit('schema.clear', schemas);
           }
         }
       }, (err) => {

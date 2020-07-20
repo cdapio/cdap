@@ -15,7 +15,10 @@
  */
 
 import * as React from 'react';
-import { schemaTypes } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  schemaTypes,
+  AvroSchemaTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { SingleColumnWrapper } from 'components/AbstractWidget/SchemaEditor/SingleColumnWrapper';
 import Select from 'components/AbstractWidget/FormInputs/Select';
 import { IFieldTypeBaseProps } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
@@ -27,6 +30,7 @@ const ArrayTypeBase = ({
   onChange,
   autoFocus,
   typeProperties,
+  disabled = false,
 }: IFieldTypeBaseProps) => {
   const [fieldType, setFieldType] = React.useState(type);
   const [fieldNullable, setFieldNullable] = React.useState(nullable);
@@ -52,18 +56,20 @@ const ArrayTypeBase = ({
     <React.Fragment>
       <SingleColumnWrapper>
         <Select
+          disabled={disabled}
           value={fieldType}
           onChange={(newValue) => {
             setFieldType(newValue);
             onChange('type', newValue);
           }}
-          widgetProps={{ options: schemaTypes, dense: true }}
+          widgetProps={{ options: schemaTypes, dense: true, native: true }}
           inputRef={(ref) => (inputEle.current = ref)}
         />
       </SingleColumnWrapper>
       <RowButtons
+        disabled={disabled}
         nullable={fieldNullable}
-        onNullable={type === 'union' ? undefined : onNullable}
+        onNullable={type === AvroSchemaTypesEnum.UNION ? undefined : onNullable}
         type={fieldType}
         onChange={onTypePropertiesChangeHandler}
         typeProperties={fieldTypeProperties}

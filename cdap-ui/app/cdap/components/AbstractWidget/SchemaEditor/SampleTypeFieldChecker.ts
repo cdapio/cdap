@@ -30,13 +30,14 @@ import {
   ISimpleType,
   IComplexTypeFieldNullable,
 } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
+import { AvroSchemaTypesEnum } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 const mapfield: IMapField = {
   name: 'map1',
   type: {
-    type: 'map',
-    keys: 'string',
-    values: 'string',
+    type: AvroSchemaTypesEnum.MAP,
+    keys: AvroSchemaTypesEnum.STRING,
+    values: AvroSchemaTypesEnum.STRING,
   },
 };
 // tslint:disable-next-line: no-console
@@ -45,8 +46,8 @@ console.log(mapfield.type.keys);
 const arrayField: IArrayField = {
   name: 'arr',
   type: {
-    type: 'array',
-    items: 'string',
+    type: AvroSchemaTypesEnum.ARRAY,
+    items: AvroSchemaTypesEnum.STRING,
   },
 };
 // tslint:disable-next-line: no-console
@@ -54,7 +55,7 @@ console.log(!Array.isArray(arrayField.type) ? arrayField.type.items : arrayField
 
 const unionField: IUnionField = {
   name: 'something',
-  type: ['long', 'string'],
+  type: [AvroSchemaTypesEnum.LONG, AvroSchemaTypesEnum.STRING],
 };
 // tslint:disable-next-line: no-console
 console.log(unionField.type[1]);
@@ -62,7 +63,7 @@ console.log(unionField.type[1]);
 const enumField: IEnumField = {
   name: 'enum1',
   type: {
-    type: 'enum',
+    type: AvroSchemaTypesEnum.ENUM,
     symbols: ['something', 'somethingelse', 'nothing', 'maybesomething'],
   },
 };
@@ -71,16 +72,16 @@ const enumField: IEnumField = {
 console.log(enumField.type.symbols);
 
 const recordField: IRecordField = {
-  type: 'record',
+  type: AvroSchemaTypesEnum.RECORD,
   name: 'record1',
   fields: [
     {
       name: 'name',
-      type: 'string',
+      type: AvroSchemaTypesEnum.STRING,
     },
     {
       name: 'email',
-      type: 'string',
+      type: AvroSchemaTypesEnum.STRING,
     },
   ],
 };
@@ -92,8 +93,8 @@ const complexArrField2: IArrayFieldNullable = {
   name: 'arr1',
   type: [
     {
-      type: 'array',
-      items: 'string',
+      type: AvroSchemaTypesEnum.ARRAY,
+      items: AvroSchemaTypesEnum.STRING,
     },
     'null',
   ],
@@ -110,19 +111,19 @@ const complexArrayField: IArrayFieldNullable = {
   name: 'complexArray',
   type: [
     {
-      type: 'array',
+      type: AvroSchemaTypesEnum.ARRAY,
       items: [
         {
-          type: 'record',
+          type: AvroSchemaTypesEnum.RECORD,
           name: 'ad5bddf76ef2743218d79d3905f0f8e4f',
           fields: [
             {
               name: 'name',
-              type: 'string',
+              type: AvroSchemaTypesEnum.STRING,
             },
             {
               name: 'email',
-              type: 'string',
+              type: AvroSchemaTypesEnum.STRING,
             },
           ],
         },
@@ -134,7 +135,9 @@ const complexArrayField: IArrayFieldNullable = {
 };
 
 if (Array.isArray(complexArrayField.type)) {
-  const a1 = complexArrayField.type.find((t) => t !== 'null' && t.type === 'array');
+  const a1 = complexArrayField.type.find(
+    (t) => t !== 'null' && t.type === AvroSchemaTypesEnum.ARRAY
+  );
   // tslint:disable-next-line: no-console
   console.log(a1 !== 'null' && a1.items);
   if (isNullable(complexArrayField.type)) {
@@ -146,36 +149,36 @@ if (Array.isArray(complexArrayField.type)) {
 const complexUnionField: IUnionField = {
   name: 'something',
   type: [
-    'long',
+    AvroSchemaTypesEnum.LONG,
     {
-      type: 'map',
+      type: AvroSchemaTypesEnum.MAP,
       keys: {
-        type: 'record',
+        type: AvroSchemaTypesEnum.RECORD,
         name: 'a64d56b7343854e81801874b77b536802',
         fields: [
           {
             name: 'sdfsd',
-            type: 'string',
+            type: AvroSchemaTypesEnum.STRING,
           },
           {
             name: 'sdfsdsdfsdf',
-            type: 'string',
+            type: AvroSchemaTypesEnum.STRING,
           },
         ],
       },
-      values: 'string',
+      values: AvroSchemaTypesEnum.STRING,
     },
     {
-      type: 'record',
+      type: AvroSchemaTypesEnum.RECORD,
       name: 'record1',
       fields: [
         {
           name: 'name',
-          type: 'string',
+          type: AvroSchemaTypesEnum.STRING,
         },
         {
           name: 'email',
-          type: 'string',
+          type: AvroSchemaTypesEnum.STRING,
         },
       ],
     },
@@ -184,24 +187,29 @@ const complexUnionField: IUnionField = {
 const isSimpleType = (type: ISimpleType | IComplexTypeFieldNullable) =>
   typeof type === 'string' &&
   [
-    'boolean',
-    'bytes',
-    'date',
-    'decimal',
-    'double',
-    'float',
-    'int',
-    'long',
-    'number',
-    'string',
-    'time',
+    AvroSchemaTypesEnum.BOOLEAN,
+    AvroSchemaTypesEnum.BYTES,
+    AvroSchemaTypesEnum.DATE,
+    AvroSchemaTypesEnum.DECIMAL,
+    AvroSchemaTypesEnum.DOUBLE,
+    AvroSchemaTypesEnum.FLOAT,
+    AvroSchemaTypesEnum.INT,
+    AvroSchemaTypesEnum.LONG,
+    AvroSchemaTypesEnum.STRING,
+    AvroSchemaTypesEnum.TIME,
   ].indexOf(type) !== -1;
 if (Array.isArray(complexUnionField.type)) {
   const map1 = complexUnionField.type
     .filter((t) => typeof t !== 'string')
-    .find((t: IComplexType) => !Array.isArray(t.type) && t.type === 'map') as IMapFieldBase;
+    .find(
+      (t: IComplexType) => !Array.isArray(t.type) && t.type === AvroSchemaTypesEnum.MAP
+    ) as IMapFieldBase;
   let fieldsInRecords;
-  if (!Array.isArray(map1.keys) && typeof map1.keys === 'object' && map1.keys.type === 'record') {
+  if (
+    !Array.isArray(map1.keys) &&
+    typeof map1.keys === 'object' &&
+    map1.keys.type === AvroSchemaTypesEnum.RECORD
+  ) {
     fieldsInRecords = (map1.keys as IRecordField).fields;
   }
   // tslint:disable-next-line: no-console

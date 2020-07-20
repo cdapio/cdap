@@ -53,8 +53,6 @@
         // 340px for all the buttons and error validation message
         width: 100%;
         max-width: ~"calc(100% - 340px)";
-        max-width: ~"-moz-calc(100% - 340px)";
-        max-width: ~"-webkit-calc(100% - 340px)";
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
@@ -175,8 +173,6 @@
         margin-left: 0;
         width: 100%;
         height: ~"calc(100vh - 100px)";
-        height: ~"-moz-calc(100vh - 100px)";
-        height: ~"-webkit-calc(100vh - 100px)";
         margin-bottom: 0;
       }
 
@@ -218,10 +214,8 @@
               }
               .bottompanel-body {
                 padding: 0 10px 10px 10px;
-                overflow-y: auto;
+                overflow-y: hidden;
                 height: ~"calc(100vh - 180px)";
-                height: ~"-moz-calc(100vh - 180px)";
-                height: ~"-webkit-calc(100vh - 180px)";
                 .reference-tab { padding: 0 10px; }
 
                 .btn-hydrator {
@@ -243,45 +237,42 @@
                   > p,
                   .validator-plugin > div { padding: 20px 10px; }
                   div.config-table {
-                    display: table;
+                    display: grid;
                     width: 100%;
-                    height: ~"calc(100vh - 240px)";
-                    height: ~"-moz-calc(100vh - 240px)";
-                    height: ~"-webkit-calc(100vh - 240px)";
+                    height: ~"calc(100vh - 180px)";
 
                     > div {
-                      display: table-cell;
-                      padding: 20px 10px;
+                      padding: 10px 10px;
                       vertical-align: top;
+                      overflow-y: auto;
+                      .output-schema-container {
+                        height: 100%;
+                      }
                     }
                   }
                   div.source-table {
+                    grid-template-columns: 67% 33%;
                     > div {
                       &:first-child {
                         border-right: 1px solid @table-border-color;
-                        width: 66.66666667%;
                       }
-                      &:last-child { width: 33.33333333%; }
                     }
                   }
                   div.transform-table {
+                    grid-template-columns: minmax(250px, 25%) 50% minmax(250px, 25%);
                     > div {
-                      &:first-child,
-                      &:last-child { width: 25%; }
                       &:nth-child(2) {
-                        width: 50%;
                         border-right: 1px solid @table-border-color;
                         border-left: 1px solid @table-border-color;
                       }
                     }
                   }
                   div.sink-table {
+                    grid-template-columns: 33% 67%;
                     > div {
                       &:first-child {
                         border-right: 1px solid @table-border-color;
-                        width: 33.33333333%;
                       }
-                      &:last-child { width: 66.66666667%; }
                     }
                   }
                 }
@@ -404,8 +395,6 @@ body.theme-cdap {
             .modal-header {
               .modal-title {
                 max-width: ~"calc(100% - 180px)";
-                max-width: ~"-moz-calc(100% - 180px)";
-                max-width: ~"-webkit-calc(100% - 180px)";
               }
             }
             .modal-body {
@@ -413,9 +402,7 @@ body.theme-cdap {
               .console-type {
                 .node-config {
                   div.config-table {
-                    height: ~"calc(100vh - 240px)";
-                    height: ~"-moz-calc(100vh - 240px)";
-                    height: ~"-webkit-calc(100vh - 240px)";
+                    height: ~"calc(100vh - 180px)";
                   }
                 }
               }

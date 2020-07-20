@@ -28,12 +28,13 @@ import uuidV4 from 'uuid/v4';
 import {
   getDefaultEmptyAvroSchema,
   InternalTypesEnum,
+  AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { isDisplayTypeComplex } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
 
 function generateArrayType(children: IOrderedChildren, nullable: boolean) {
   const finalType = {
-    type: 'array',
+    type: AvroSchemaTypesEnum.ARRAY,
     items: null,
   };
   for (const childId of Object.keys(children)) {
@@ -59,9 +60,9 @@ function generateArrayType(children: IOrderedChildren, nullable: boolean) {
 
 function generateMapType(children: IOrderedChildren, nullable) {
   const finalType = {
-    type: 'map',
-    keys: 'string',
-    values: 'string',
+    type: AvroSchemaTypesEnum.MAP,
+    keys: AvroSchemaTypesEnum.STRING,
+    values: AvroSchemaTypesEnum.STRING,
   };
   for (const childId of Object.keys(children)) {
     const currentChild = children[childId];
@@ -90,7 +91,7 @@ function generateMapType(children: IOrderedChildren, nullable) {
 
 function generateEnumType(children: IOrderedChildren, currentNode: INode, nullable) {
   const finalType: IEnumFieldBase = {
-    type: 'enum',
+    type: AvroSchemaTypesEnum.ENUM,
     symbols: [],
   };
   const { typeProperties: currentTypeProperties = {} } = currentNode;
@@ -120,7 +121,7 @@ function generateEnumType(children: IOrderedChildren, currentNode: INode, nullab
 
 function generateRecordType(children: IOrderedChildren, currentNode: INode, nullable: boolean) {
   const finalType: IRecordField = {
-    type: 'record',
+    type: AvroSchemaTypesEnum.RECORD,
     name: currentNode.name || `name-${uuidV4()}`,
     fields: [],
   };
@@ -184,20 +185,20 @@ function generateLogicalType(child) {
 function generateSchemaFromComplexType(type: string, currentChild, nullable: boolean) {
   const complexTypeChildren: IOrderedChildren = currentChild.children;
   switch (type) {
-    case 'array':
+    case AvroSchemaTypesEnum.ARRAY:
       return generateArrayType(complexTypeChildren, nullable);
-    case 'map':
+    case AvroSchemaTypesEnum.MAP:
       return generateMapType(complexTypeChildren, nullable);
-    case 'enum':
+    case AvroSchemaTypesEnum.ENUM:
       return generateEnumType(complexTypeChildren, currentChild, nullable);
-    case 'union':
+    case AvroSchemaTypesEnum.UNION:
       return generateUnionType(complexTypeChildren);
-    case 'record':
+    case AvroSchemaTypesEnum.RECORD:
       return generateRecordType(complexTypeChildren, currentChild, nullable);
-    case 'time':
-    case 'timestamp':
-    case 'decimal':
-    case 'date':
+    case AvroSchemaTypesEnum.TIME:
+    case AvroSchemaTypesEnum.TIMESTAMP:
+    case AvroSchemaTypesEnum.DECIMAL:
+    case AvroSchemaTypesEnum.DATE:
       return generateLogicalType(currentChild);
     default:
       return type;

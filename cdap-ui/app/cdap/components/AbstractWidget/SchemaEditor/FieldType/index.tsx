@@ -17,7 +17,10 @@
 import * as React from 'react';
 import { FieldInputWrapper } from 'components/AbstractWidget/SchemaEditor/FieldWrapper';
 import Select from 'components/AbstractWidget/FormInputs/Select';
-import { schemaTypes } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  schemaTypes,
+  AvroSchemaTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { IFieldTypeBaseProps } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
 import { RowButtons } from 'components/AbstractWidget/SchemaEditor/RowButtons';
 import TextboxOnValium from 'components/TextboxOnValium';
@@ -39,6 +42,7 @@ const FieldTypeBase = ({
   onRemove,
   autoFocus,
   typeProperties,
+  disabled = false,
 }: IFieldTypeBaseProps) => {
   /**
    * We use hooks here because we propagte the state only upwards
@@ -73,12 +77,13 @@ const FieldTypeBase = ({
     onChange('nullable', checked);
   };
   const onChangeHandler = (newValue, _, keyPressKeyCode) => {
+    if (newValue !== fieldName) {
+      setFieldName(newValue);
+      onChange('name', newValue);
+    }
     if (keyPressKeyCode === 13) {
       onAdd();
-      return;
     }
-    setFieldName(newValue);
-    onChange('name', newValue);
   };
 
   const onTypeChangeHandler = (newValue) => {
@@ -107,14 +112,22 @@ const FieldTypeBase = ({
           onKeyUp={() => ({})}
         />
         <Select
+          disabled={disabled}
           value={fieldType}
           onChange={onTypeChangeHandler}
-          widgetProps={{ options: schemaTypes, dense: true }}
+          widgetProps={{
+            options: schemaTypes,
+            dense: true,
+            fullWidth: false,
+            inputProps: { title: fieldType },
+            native: true,
+          }}
         />
       </FieldInputWrapper>
       <RowButtons
+        disabled={disabled}
         nullable={fieldNullable}
-        onNullable={type === 'union' ? undefined : onNullable}
+        onNullable={type === AvroSchemaTypesEnum.UNION ? undefined : onNullable}
         type={fieldType}
         onAdd={onAdd}
         onRemove={onRemove}
