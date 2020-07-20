@@ -1484,6 +1484,10 @@ features:
       title: Welcome to {featureName}
 
   FieldLevelLineage:
+    Error:
+      lineageTooLarge: Field level lineage data is too large to display
+      suggestionHeading: "You can try to:"
+      suggestionMessage: Change the time range
     fieldsCount:
       1: "{context} Field"
       _: "{context} Fields"
@@ -2420,7 +2424,7 @@ features:
         inputHeader: Input Records
         outputHeader: Output Records
     errorHeader: Error fetching preview data. Please try re-running preview.
-    loading: Fetching preview data 
+    loading: Fetching preview data
     RecordView:
       RecordContainer:
         conditionHeader: Input Records and Output Records
