@@ -27,6 +27,7 @@ const ArrayTypeBase = ({
   onChange,
   autoFocus,
   typeProperties,
+  disabled = false,
 }: IFieldTypeBaseProps) => {
   const [fieldType, setFieldType] = React.useState(type);
   const [fieldNullable, setFieldNullable] = React.useState(nullable);
@@ -52,16 +53,18 @@ const ArrayTypeBase = ({
     <React.Fragment>
       <SingleColumnWrapper>
         <Select
+          disabled={disabled}
           value={fieldType}
           onChange={(newValue) => {
             setFieldType(newValue);
             onChange('type', newValue);
           }}
-          widgetProps={{ options: schemaTypes, dense: true }}
+          widgetProps={{ options: schemaTypes, dense: true, native: true }}
           inputRef={(ref) => (inputEle.current = ref)}
         />
       </SingleColumnWrapper>
       <RowButtons
+        disabled={disabled}
         nullable={fieldNullable}
         onNullable={type === 'union' ? undefined : onNullable}
         type={fieldType}

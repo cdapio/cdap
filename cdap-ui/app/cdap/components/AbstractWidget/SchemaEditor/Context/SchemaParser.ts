@@ -29,7 +29,10 @@ import {
   getSimpleType,
 } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
 import uuidV4 from 'uuid/v4';
-import { InternalTypesEnum } from '../SchemaConstants';
+import {
+  InternalTypesEnum,
+  defaultFieldType,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 type ITypeProperties = Record<string, any>;
 
@@ -84,9 +87,10 @@ function parseUnionType(type): IOrderedChildren {
     } else {
       result[id] = {
         id,
-        type: subType,
+        type: getSimpleType(subType),
         nullable: false,
         internalType: InternalTypesEnum.UNION_SIMPLE_TYPE,
+        ...checkForLogicalType({ type: subType }),
       };
     }
   }
@@ -116,7 +120,8 @@ function parseArrayType(type): IOrderedChildren {
         internalType: InternalTypesEnum.ARRAY_SIMPLE_TYPE,
         id,
         nullable: isNullable(t.items),
-        type: getNonNullableType(t.items),
+        type: getSimpleType(getNonNullableType(t.items)),
+        ...checkForLogicalType({ type: t.items }),
       },
     };
   }
@@ -184,7 +189,8 @@ function getMapSubType(type, internalTypeName): INode {
       id,
       internalType: internalTypeName.simpleType,
       nullable: isNullable(type),
-      type: getNonNullableType(type),
+      type: getSimpleType(getNonNullableType(type)),
+      ...checkForLogicalType({ type }),
     };
   } else {
     const complexType = getComplexTypeName(type);
@@ -265,6 +271,11 @@ function parseRecordType(type): IOrderedChildren {
     result.order.push(child.id);
     result[child.id] = child;
   }
+  if (!result.order.length) {
+    const child = parseSubTree(defaultFieldType as IFieldType);
+    result.order.push(child.id);
+    result[child.id] = child;
+  }
   return result;
 }
 
@@ -298,7 +309,7 @@ function parseComplexType(type): IOrderedChildren {
  *  children and will have type properties that map the logical property to underlying type.
  * @param field - field in the schema.
  */
-function checkForLogicalType(field: IFieldType | IFieldTypeNullable) {
+function checkForLogicalType(field: Partial<IFieldType | IFieldTypeNullable>) {
   let type = field.type;
   type = getNonNullableType(type) as ILogicalTypeBase;
   switch (type.logicalType) {

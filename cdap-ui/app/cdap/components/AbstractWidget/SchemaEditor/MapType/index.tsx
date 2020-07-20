@@ -45,6 +45,7 @@ const MapTypeBase = ({
   onChange,
   autoFocus,
   typeProperties,
+  disabled = false,
 }: IFieldTypeBaseProps) => {
   let label = '';
   const keysType: string[] = [
@@ -88,16 +89,18 @@ const MapTypeBase = ({
       <MapWrapper>
         <span>{label}</span>
         <Select
+          disabled={disabled}
           value={fieldType}
           onChange={(newValue) => {
             setFieldType(newValue);
             onChange('type', newValue);
           }}
-          widgetProps={{ options: schemaTypes, dense: true, inline: true }}
+          widgetProps={{ options: schemaTypes, dense: true, inline: true, native: true }}
           inputRef={(ref) => (inputEle.current = ref)}
         />
       </MapWrapper>
       <RowButtons
+        disabled={disabled}
         nullable={fieldNullable}
         onNullable={type === 'union' ? undefined : onNullable}
         type={fieldType}

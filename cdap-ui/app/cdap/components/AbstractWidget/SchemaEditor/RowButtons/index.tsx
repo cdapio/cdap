@@ -35,6 +35,9 @@ const RowButtonWrapper = withStyles(() => {
       display: 'grid',
       gridTemplateColumns: '24px 24px 24px 24px',
       gridTemplateRows: '24px',
+      '& [disabled]': {
+        cursor: 'not-allowed',
+      },
     },
   };
 })(Box);
@@ -47,6 +50,7 @@ interface IRowButtonsProps {
   onChange?: IOnchangeHandler;
   typeProperties?: Record<string, string>;
   type?: ISimpleType | IComplexTypeNames;
+  disabled?: boolean;
 }
 
 function RowButtons({
@@ -57,25 +61,27 @@ function RowButtons({
   onRemove,
   onChange,
   typeProperties,
+  disabled = false,
 }: IRowButtonsProps) {
   return (
-    <RowButtonWrapper>
+    <RowButtonWrapper disabled={disabled}>
       <If condition={typeof onNullable === 'function'} invisible>
-        <Nullable nullable={nullable} onNullable={onNullable} />
+        <Nullable nullable={nullable} onNullable={disabled ? undefined : onNullable} />
       </If>
       <If condition={typeof onAdd === 'function'} invisible>
-        <AddRowButton onAdd={onAdd} />
+        <AddRowButton onAdd={disabled ? undefined : onAdd} />
       </If>
       <If condition={typeof onRemove === 'function'} invisible>
-        <RemoveRowButton onRemove={onRemove} />
+        <RemoveRowButton onRemove={disabled ? undefined : onRemove} />
       </If>
       <If condition={type === 'record' || type === 'enum' || type === 'decimal'}>
         <FieldPropertiesPopoverButton
           nullable={nullable}
-          onNullable={onNullable}
+          onNullable={disabled ? undefined : onNullable}
           type={type}
-          onChange={onChange}
+          onChange={disabled ? undefined : onChange}
           typeProperties={typeProperties}
+          disabled={disabled}
         />
       </If>
     </RowButtonWrapper>

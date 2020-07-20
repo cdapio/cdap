@@ -33,6 +33,7 @@ interface IFieldPropertiesPopoverButtonProps {
   type: ISimpleType | IComplexTypeNames;
   onChange?: IOnchangeHandler;
   typeProperties: ITypeProperties;
+  disabled?: boolean;
 }
 
 const useAttributePopoverStyles = makeStyles({
@@ -50,6 +51,10 @@ const useStyles = makeStyles((theme) => ({
   popoverContainer: {
     padding: theme.spacing(1),
     width: '300px',
+    '&[disabled] *': {
+      color: theme.palette.grey[200],
+      cursor: 'not-allowed',
+    },
   },
 }));
 
@@ -57,6 +62,7 @@ function FieldPropertiesPopoverButton({
   type,
   onChange,
   typeProperties,
+  disabled,
 }: IFieldPropertiesPopoverButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -91,7 +97,7 @@ function FieldPropertiesPopoverButton({
           horizontal: 'center',
         }}
       >
-        <div className={classes.popoverContainer}>
+        <fieldset className={classes.popoverContainer} disabled={disabled}>
           <If condition={!isFlatRowTypeComplex(type)}>
             <strong>No Attributes</strong>
           </If>
@@ -99,7 +105,7 @@ function FieldPropertiesPopoverButton({
             <strong>Attributes</strong>
             <RecordEnumTypeAttributes
               typeProperties={typeProperties}
-              onChange={onChange}
+              onChange={disabled ? undefined : onChange}
               handleClose={handleClose}
             />
           </If>
@@ -107,11 +113,12 @@ function FieldPropertiesPopoverButton({
             <strong>Attributes</strong>
             <DecimalTypeAttributes
               typeProperties={typeProperties}
-              onChange={onChange}
+              onChange={disabled ? undefined : onChange}
               handleClose={handleClose}
+              disabled={disabled}
             />
           </If>
-        </div>
+        </fieldset>
       </Popover>
     </React.Fragment>
   );

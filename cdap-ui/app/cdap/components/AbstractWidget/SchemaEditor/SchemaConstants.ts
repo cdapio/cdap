@@ -92,7 +92,7 @@ const logicalTypeToSimpleTypeMap = {
   decimal: 'decimal',
 };
 
-const INDENTATION_SPACING = 15;
+const INDENTATION_SPACING = 10;
 
 const getDefaultEmptyAvroSchema = (): ISchemaType => {
   return {

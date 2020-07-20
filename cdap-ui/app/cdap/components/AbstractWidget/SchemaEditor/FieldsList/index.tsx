@@ -35,11 +35,14 @@ const styles = (): StyleRules => {
 };
 
 interface IFieldsListState {
+  visibleRowCount: number;
   rows: IFlattenRowType[];
   currentRowToFocus: string;
 }
 
 interface IFieldsListProps extends WithStyles<typeof styles> {
+  visibleRowCount?: number;
+  disabled?: boolean;
   value: IFlattenRowType[];
   onChange: (id: IFieldIdentifier, onChangePayload: IOnChangePayload) => IOnChangeReturnType;
 }
@@ -52,13 +55,16 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
   public state: IFieldsListState = {
     rows: this.props.value || [],
     currentRowToFocus: null,
+    visibleRowCount: this.props.visibleRowCount || FieldsListBase.visibleNodeCount,
   };
   public componentWillReceiveProps(nextProps: IFieldsListProps) {
-    const ids = nextProps.value.map((r) => `${r.id}-${r.hidden}`).join(',');
-    const existingids = this.state.rows.map((r) => `${r.id}-${r.hidden}`).join(',');
-    if (ids !== existingids) {
+    const ids = nextProps.value.map((r) => `${r.id}-${r.hidden}-${r.collapsed}`).join(',');
+    const existingids = this.state.rows.map((r) => `${r.id}-${r.hidden}-${r.collapsed}`).join(',');
+    const { visibleRowCount } = nextProps;
+    if (ids !== existingids || visibleRowCount !== this.state.visibleRowCount) {
       this.setState({
         rows: nextProps.value,
+        visibleRowCount,
       });
     }
   }
@@ -85,6 +91,7 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
         }
         return (
           <FieldRow
+            disabled={this.props.disabled}
             autoFocus={currentRowToFocus === field.id}
             key={field.id}
             field={field}
@@ -110,7 +117,7 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
         </SchemaValidatorConsumer>
         <VirtualScroll
           itemCount={() => itemCount}
-          visibleChildCount={FieldsListBase.visibleNodeCount}
+          visibleChildCount={this.state.visibleRowCount}
           childHeight={FieldsListBase.heightOfRow}
           renderList={this.renderList.bind(this)}
           childrenUnderFold={FieldsListBase.childrenUnderFold}
@@ -120,4 +127,4 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
   }
 }
 const FieldsList = withstyles(styles)(FieldsListBase);
-export { FieldsList };
+export { FieldsList, FieldsListBase };

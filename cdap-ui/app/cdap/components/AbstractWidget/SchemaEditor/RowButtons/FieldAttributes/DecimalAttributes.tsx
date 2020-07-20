@@ -24,6 +24,7 @@ import {
 import { IAttributesComponentProps } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
 import { objectQuery } from 'services/helpers';
 import { useAttributePopoverStyles } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/FieldAttributesPopoverButton';
+import If from 'components/If';
 
 function DecimalTypeAttributes({
   typeProperties,
@@ -73,9 +74,11 @@ function DecimalTypeAttributes({
           onChange={setPrecision}
         />
       </div>
-      <Button variant="contained" color="primary" onClick={onChangeHandler}>
-        Save
-      </Button>
+      <If condition={typeof onChange === 'function'}>
+        <Button variant="contained" color="primary" onClick={onChangeHandler}>
+          Save
+        </Button>
+      </If>
     </React.Fragment>
   );
 }
