@@ -147,6 +147,8 @@ $border-color: $grey-05;
   }
 
   .run-logs-container {
+    cursor: pointer;
+
     .run-logs-btn {
       border: 1px solid transparent;
       color: $grey-02;

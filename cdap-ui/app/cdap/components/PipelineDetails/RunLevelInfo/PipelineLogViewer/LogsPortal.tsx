@@ -14,16 +14,21 @@
  * the License.
  */
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import { apiCreator } from 'services/resource-helper';
+import * as React from 'react';
+import { createPortal } from 'react-dom';
 
-let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/namespaces/:namespace/previews';
+const LogsPortal = ({ children }) => {
+  const body = document.body;
+  const [el] = React.useState(document.createElement('div'));
 
-export const MyPreviewApi = {
-  getStageData: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:previewId/tracers`),
+  React.useEffect(() => {
+    body.appendChild(el);
+    return () => {
+      body.removeChild(el);
+    };
+  }, []);
 
-  // logs
-  nextLogs: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:previewId/logs/next`),
-  prevLogs: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:previewId/logs/prev`),
+  return createPortal(children, el);
 };
+
+export default LogsPortal;
