@@ -20,7 +20,6 @@ import io.kubernetes.client.ApiCallback;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
-import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Status;
 import org.apache.twill.api.Command;
@@ -32,7 +31,9 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
+import org.apache.twill.filesystem.Location;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,6 +51,7 @@ import javax.annotation.Nullable;
  * Kubernetes version of a TwillController.
  */
 class KubeTwillController implements TwillController {
+
   private final String name;
   private final String kubeNamespace;
   private final RunId runId;
@@ -59,7 +61,7 @@ class KubeTwillController implements TwillController {
   private final DiscoveryServiceClient discoveryServiceClient;
 
   KubeTwillController(String name, String kubeNamespace, RunId runId, ApiClient apiClient,
-                      DiscoveryServiceClient discoveryServiceClient) {
+                      DiscoveryServiceClient discoveryServiceClient, Location appLocation) {
     this.name = name;
     this.kubeNamespace = kubeNamespace;
     this.runId = runId;
@@ -67,6 +69,15 @@ class KubeTwillController implements TwillController {
     this.completion = new CompletableFuture<>();
     this.terminateCalled = new AtomicBoolean();
     this.discoveryServiceClient = discoveryServiceClient;
+
+    completion.whenComplete((kubeTwillController, throwable) -> {
+      // Cleanup the app location when the program completed
+      try {
+        appLocation.delete(true);
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to delete location for " + name + "-" + runId + " at " + appLocation, e);
+      }
+    });
   }
 
   @Override
@@ -166,25 +177,10 @@ class KubeTwillController implements TwillController {
       try {
         V1DeleteOptions deleteOptions = new V1DeleteOptions();
         AppsV1Api appsApi = new AppsV1Api(apiClient);
-        CoreV1Api coreApi = new CoreV1Api(apiClient);
-
-        // callback for the delete config-map call
-        ApiCallback<V1Status> deleteConfigMapCallback = new CallbackAdapter(
-          completion::completeExceptionally,
-          () -> completion.complete(KubeTwillController.this));
 
         // callback for the delete deployment call
         ApiCallback<V1Status> deleteDeploymentCallback = new CallbackAdapter(
-          completion::completeExceptionally,
-          () -> {
-            // when delete deployment finishes successfully, delete the config-map
-            try {
-              coreApi.deleteNamespacedConfigMapAsync(name, kubeNamespace, null, deleteOptions, null, null, null, null,
-                                                     deleteConfigMapCallback);
-            } catch (ApiException e) {
-              completion.completeExceptionally(e);
-            }
-          });
+          completion::completeExceptionally, () -> completion.complete(KubeTwillController.this));
         appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, deleteOptions,
                                                 null, null, null, null, deleteDeploymentCallback);
       } catch (ApiException e) {

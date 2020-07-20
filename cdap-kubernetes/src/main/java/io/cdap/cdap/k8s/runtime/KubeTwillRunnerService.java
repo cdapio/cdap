@@ -19,6 +19,7 @@ package io.cdap.cdap.k8s.runtime;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.k8s.common.ResourceChangeListener;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.models.V1DeploymentCondition;
@@ -39,6 +40,7 @@ import org.apache.twill.api.security.SecureStoreRenewer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.common.Threads;
 import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.filesystem.Location;
 import org.apache.twill.internal.RunIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,9 +93,9 @@ public class KubeTwillRunnerService implements TwillRunnerService {
 
   private static final String AVAILABLE_TYPE = "Available";
 
+  private final MasterEnvironmentContext masterEnvContext;
   private final String kubeNamespace;
   private final String resourcePrefix;
-  private final Map<String, String> cConf;
   private final PodInfo podInfo;
   private final DiscoveryServiceClient discoveryServiceClient;
   private final Map<String, String> extraLabels;
@@ -103,13 +105,13 @@ public class KubeTwillRunnerService implements TwillRunnerService {
   private ScheduledExecutorService monitorScheduler;
   private ApiClient apiClient;
 
-  public KubeTwillRunnerService(String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
-                                PodInfo podInfo, String resourcePrefix, Map<String, String> cConf,
-                                Map<String, String> extraLabels) {
+  public KubeTwillRunnerService(MasterEnvironmentContext masterEnvContext,
+                                String kubeNamespace, DiscoveryServiceClient discoveryServiceClient,
+                                PodInfo podInfo, String resourcePrefix, Map<String, String> extraLabels) {
+    this.masterEnvContext = masterEnvContext;
     this.kubeNamespace = kubeNamespace;
     this.podInfo = podInfo;
     this.resourcePrefix = resourcePrefix;
-    this.cConf = cConf;
     this.discoveryServiceClient = discoveryServiceClient;
     this.extraLabels = Collections.unmodifiableMap(new HashMap<>(extraLabels));
     // Selects all runs start by the k8s twill runner that has the run id label
@@ -145,14 +147,18 @@ public class KubeTwillRunnerService implements TwillRunnerService {
     // labels have more strict requirements around valid character sets,
     // so use annotations to store the app name.
     resourceMeta.setAnnotations(Collections.singletonMap(APP_ANNOTATION, spec.getName()));
-    return new KubeTwillPreparer(apiClient, kubeNamespace, podInfo,
-                                 spec, runId, resourceMeta, cConf, (timeout, timeoutUnit) -> {
+
+    Location appLocation = getApplicationLocation(spec.getName(), runId);
+    return new KubeTwillPreparer(masterEnvContext, apiClient, kubeNamespace, podInfo,
+                                 spec, runId, resourceMeta,
+                                 appLocation, (timeout, timeoutUnit) -> {
       // Adds the controller to the LiveInfo.
       liveInfoLock.lock();
       try {
         KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(spec.getName(), KubeLiveInfo::new);
         KubeTwillController controller = new KubeTwillController(resourceMeta.getName(), kubeNamespace,
-                                                                 runId, apiClient, discoveryServiceClient);
+                                                                 runId, apiClient, discoveryServiceClient,
+                                                                 appLocation);
         return liveInfo.addControllerIfAbsent(runId, timeout, timeoutUnit, controller);
       } finally {
         liveInfoLock.unlock();
@@ -308,10 +314,30 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       } finally {
         liveInfoLock.unlock();
       }
-      LOG.info("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
+
+      try {
+        Uninterruptibles.getUninterruptibly(controller.terminate());
+        LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
+      } catch (ExecutionException e) {
+        LOG.error("Controller for application {} of run {} is terminated due to failure",
+                  liveInfo.getApplicationName(), runId, e.getCause());
+      }
+
+      LOG.debug("Controller for application {} of run {} is terminated", liveInfo.getApplicationName(), runId);
     }, Threads.SAME_THREAD_EXECUTOR);
 
     return controller;
+  }
+
+  /**
+   * Returns the application {@link Location} for staging files.
+   *
+   * @param name name of the twill application
+   * @param runId the runId
+   * @return the applicaiton {@link Location}
+   */
+  private Location getApplicationLocation(String name, RunId runId) {
+    return masterEnvContext.getLocationFactory().create(String.format("twill/%s/%s", name, runId.getId()));
   }
 
   /**
@@ -345,7 +371,8 @@ public class KubeTwillRunnerService implements TwillRunnerService {
       try {
         KubeLiveInfo liveInfo = liveInfos.computeIfAbsent(appName, KubeLiveInfo::new);
         KubeTwillController controller = new KubeTwillController(deploymentName, kubeNamespace,
-                                                                 runId, apiClient, discoveryServiceClient);
+                                                                 runId, apiClient, discoveryServiceClient,
+                                                                 getApplicationLocation(deploymentName, runId));
         liveInfo.addControllerIfAbsent(runId, startTimeoutMillis, TimeUnit.MILLISECONDS, controller);
       } finally {
         liveInfoLock.unlock();

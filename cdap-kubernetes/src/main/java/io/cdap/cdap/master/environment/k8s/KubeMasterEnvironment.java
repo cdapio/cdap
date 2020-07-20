@@ -22,6 +22,7 @@ import io.cdap.cdap.k8s.discovery.KubeDiscoveryService;
 import io.cdap.cdap.k8s.runtime.KubeTwillRunnerService;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentTask;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CoreV1Api;
@@ -106,7 +107,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // No TX in K8s
     conf.put(DATA_TX_ENABLED, Boolean.toString(false));
 
-
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
     PodInfo podInfo = getPodInfo(conf);
     Map<String, String> podLabels = podInfo.getLabels();
@@ -149,7 +149,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                namespace, podKillerSelector, delayMillis);
     }
 
-    twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, conf,
+    twillRunner = new KubeTwillRunnerService(context, namespace, discoveryService,
+                                             podInfo, resourcePrefix,
                                              Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
   }
@@ -183,6 +184,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Optional<MasterEnvironmentTask> getTask() {
     return Optional.ofNullable(podKillerTask);
+  }
+
+  @Override
+  public MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
+                                                  Class<? extends MasterEnvironmentRunnable> cls) throws Exception {
+    // All MasterEnvironmentRunnable class supported by kube env takes two parameters in the constructor.
+    return cls.getConstructor(MasterEnvironmentContext.class, MasterEnvironment.class).newInstance(context, this);
   }
 
   private PodInfo getPodInfo(Map<String, String> conf) throws IOException, ApiException {

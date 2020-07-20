@@ -314,29 +314,12 @@ public final class Constants {
     @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
     @BindingAnnotation
     public @interface ProgramRunner { }
-
-    /**
-     * Annotation for binding {@link KeyStore} that is used for storing encryption keys.
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
-    @BindingAnnotation
-    public @interface KeyStore { }
-
-    /**
-     * Annotation for binding {@link KeyStore} that for certificate verification.
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target({ ElementType.FIELD, ElementType.PARAMETER, ElementType.METHOD })
-    @BindingAnnotation
-    public @interface TrustStore { }
-
   }
 
   /**
    * Preview Configurations
    */
-  public class Preview {
+  public static final class Preview {
     public static final String ENABLED = "enable.preview";
 
     /**
@@ -360,7 +343,7 @@ public final class Constants {
   /**
    * Scheduler options.
    */
-  public class Scheduler {
+  public static final class Scheduler {
     public static final String CFG_SCHEDULER_MAX_THREAD_POOL_SIZE = "scheduler.max.thread.pool.size";
     public static final String CFG_SCHEDULER_MISFIRE_THRESHOLD_MS = "scheduler.misfire.threshold.ms";
     /**
@@ -405,7 +388,6 @@ public final class Constants {
    * Configuration Store.
    */
   public static final class ConfigStore {
-    public static final String CONFIG_TABLE = "config.store.table";
     public static final Byte VERSION = 0;
   }
 
@@ -766,8 +748,6 @@ public final class Constants {
     public static final class Query {
       public static final long MAX_HOUR_RESOLUTION_QUERY_INTERVAL = 36000;
       public static final long MAX_MINUTE_RESOLUTION_QUERY_INTERVAL = 600;
-      // Number of seconds to subtract from current timestamp when query without "end" time.
-      public static final long QUERY_SECOND_DELAY = 2;
     }
 
     /**
@@ -939,6 +919,7 @@ public final class Constants {
 
     // log appender configs
     public static final String LOG_APPENDER_PROVIDER = "app.program.log.appender.provider";
+    public static final String LOG_APPENDER_PROVISIONERS = "app.program.log.appender.provisioners";
     public static final String LOG_APPENDER_EXT_DIR = "app.program.log.appender.extensions.dir";
     public static final String LOG_APPENDER_PROPERTY_PREFIX = "app.program.log.appender.system.properties.";
 

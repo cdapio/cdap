@@ -57,19 +57,14 @@ public class SparkTwillRunnableModuleTest {
                      createProgramOptions(programRunId, mode), programRunId);
       Injector injector = Guice.createInjector(module);
       injector.getInstance(SparkProgramRunner.class);
-      if (mode == ClusterMode.ON_PREMISE) {
-        injector.getInstance(ExploreClient.class);
-      }
+      injector.getInstance(ExploreClient.class);
 
       Injector contextInjector = SparkRuntimeContextProvider.createInjector(CConfiguration.create(),
                                                                             new Configuration(),
                                                                             programRunId.getParent(),
                                                                             createProgramOptions(programRunId, mode));
       contextInjector.getInstance(PluginFinder.class);
-
-      if (mode == ClusterMode.ON_PREMISE) {
-        contextInjector.getInstance(ExploreClient.class);
-      }
+      contextInjector.getInstance(ExploreClient.class);
     }
   }
 

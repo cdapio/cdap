@@ -31,6 +31,7 @@ import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.store.ServiceStore;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.service.RetryOnStartFailureService;

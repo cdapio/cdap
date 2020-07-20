@@ -25,6 +25,7 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.test.MockTwillContext;
+import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.explore.client.ExploreClient;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
@@ -34,42 +35,77 @@ import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
+import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.api.TwillRunnerService;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
+import org.apache.twill.discovery.InMemoryDiscoveryService;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.function.Supplier;
 
 /**
  * Tests for guice modules used in various {@link AbstractProgramTwillRunnable}.
  */
+@RunWith(Parameterized.class)
 public class ProgramTwillRunnableModuleTest {
+
+  // Runs two sets of tests, one with master environment, one without
+  @Parameterized.Parameters (name = "User Master Environment = {0}")
+  public static Collection<Object[]> parameters() {
+    return Arrays.asList(new Object[][]{
+      {true},
+      {false},
+    });
+  }
+
+  public ProgramTwillRunnableModuleTest(boolean useMasterEnv) {
+    if (useMasterEnv) {
+      MasterEnvironments.setMasterEnvironment(new MockMasterEnvironment());
+    } else {
+      MasterEnvironments.setMasterEnvironment(null);
+    }
+  }
 
   @Test
   public void testService() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").service("service").run(RunIds.generate());
-    Module module = new ServiceTwillRunnable("service") {
-      @Override
-      protected ServiceAnnouncer getServiceAnnouncer() {
-        return new MockTwillContext();
-      }
-    }.createModule(CConfiguration.create(), new Configuration(),
-                   createProgramOptions(programRunId, ClusterMode.ON_PREMISE), programRunId);
-    Injector injector = Guice.createInjector(module);
-    injector.getInstance(ServiceProgramRunner.class);
-    injector.getInstance(ExploreClient.class);
+    for (ClusterMode mode : ClusterMode.values()) {
+      Module module = new ServiceTwillRunnable("service") {
+        @Override
+        protected ServiceAnnouncer getServiceAnnouncer() {
+          return new MockTwillContext();
+        }
+      }.createModule(CConfiguration.create(), new Configuration(),
+                     createProgramOptions(programRunId, mode), programRunId);
+      Injector injector = Guice.createInjector(module);
+      injector.getInstance(ServiceProgramRunner.class);
+      injector.getInstance(ExploreClient.class);
+    }
   }
 
   @Test
   public void testWorker() {
     ProgramRunId programRunId = NamespaceId.DEFAULT.app("test").worker("worker").run(RunIds.generate());
-    Module module = new WorkerTwillRunnable("worker").createModule(CConfiguration.create(), new Configuration(),
-                                                                   createProgramOptions(programRunId,
-                                                                                        ClusterMode.ON_PREMISE),
-                                                                   programRunId);
-    Injector injector = Guice.createInjector(module);
-    injector.getInstance(WorkerProgramRunner.class);
-    injector.getInstance(ExploreClient.class);
+    for (ClusterMode mode : ClusterMode.values()) {
+      Module module = new WorkerTwillRunnable("worker").createModule(CConfiguration.create(), new Configuration(),
+                                                                     createProgramOptions(programRunId, mode),
+                                                                     programRunId);
+      Injector injector = Guice.createInjector(module);
+      injector.getInstance(WorkerProgramRunner.class);
+      injector.getInstance(ExploreClient.class);
+    }
   }
 
   @Test
@@ -81,9 +117,7 @@ public class ProgramTwillRunnableModuleTest {
                                                                            programRunId);
       Injector injector = Guice.createInjector(module);
       injector.getInstance(MapReduceProgramRunner.class);
-      if (mode == ClusterMode.ON_PREMISE) {
-        injector.getInstance(ExploreClient.class);
-      }
+      injector.getInstance(ExploreClient.class);
     }
   }
 
@@ -98,10 +132,7 @@ public class ProgramTwillRunnableModuleTest {
       injector.getInstance(WorkflowProgramRunner.class);
       // Workflow supports spark, which supports PluginFinder
       injector.getInstance(PluginFinder.class);
-
-      if (mode == ClusterMode.ON_PREMISE) {
-        injector.getInstance(ExploreClient.class);
-      }
+      injector.getInstance(ExploreClient.class);
     }
   }
 
@@ -113,5 +144,39 @@ public class ProgramTwillRunnableModuleTest {
                                       ProgramOptionConstants.RUN_ID, programRunId.getRun(),
                                       ProgramOptionConstants.CLUSTER_MODE, clusterMode.name())),
                                     new BasicArguments());
+  }
+
+  /**
+   * A mock implementation of {@link MasterEnvironment} for unit testing program twill runnables.
+   */
+  private static final class MockMasterEnvironment implements MasterEnvironment {
+
+    private final InMemoryDiscoveryService discoveryService = new InMemoryDiscoveryService();
+
+    @Override
+    public MasterEnvironmentRunnable createRunnable(MasterEnvironmentContext context,
+                                                    Class<? extends MasterEnvironmentRunnable> runnableClass) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public String getName() {
+      return "mock";
+    }
+
+    @Override
+    public Supplier<DiscoveryService> getDiscoveryServiceSupplier() {
+      return () -> discoveryService;
+    }
+
+    @Override
+    public Supplier<DiscoveryServiceClient> getDiscoveryServiceClientSupplier() {
+      return () -> discoveryService;
+    }
+
+    @Override
+    public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
+      return NoopTwillRunnerService::new;
+    }
   }
 }

@@ -21,7 +21,6 @@ import com.google.inject.util.Modules;
 import io.cdap.cdap.app.guice.DistributedArtifactManagerModule;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -39,8 +38,6 @@ public class ServiceTwillRunnable extends AbstractProgramTwillRunnable<ServicePr
   protected Module createModule(CConfiguration cConf, Configuration hConf,
                                 ProgramOptions programOptions, ProgramRunId programRunId) {
     Module module = super.createModule(cConf, hConf, programOptions, programRunId);
-    return Modules.combine(module,
-                           new DistributedArtifactManagerModule(),
-                           new SystemDatasetRuntimeModule().getDistributedModules());
+    return Modules.combine(module, new DistributedArtifactManagerModule());
   }
 }
