@@ -74,6 +74,7 @@ interface IFieldTypeBaseProps {
   onAdd: () => void;
   onRemove: () => void;
   autoFocus?: boolean;
+  disabled?: boolean;
 }
 
 interface IOnChangePayload {
@@ -90,6 +91,7 @@ interface IAttributesComponentProps {
   onChange?: IOnchangeHandler;
   typeProperties: ITypeProperties;
   handleClose: () => void;
+  disabled?: boolean;
 }
 
 export {

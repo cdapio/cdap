@@ -300,7 +300,11 @@ body.theme-cdap.state-hydrator {
         margin-top: 20px;
       }
     }
+    .old-output-schema-container {
+      padding-bottom: 10px;
+    }
     .output-schema {
+      height: 100%;
       .schema-propagation-confirm {
         padding-top: 10px;
       }
@@ -313,7 +317,15 @@ body.theme-cdap.state-hydrator {
         }
       }
     }
+    plugin-schema-editor {
+      height: 100%;
+      display: block;
+    }
     .input-schema {
+      height: 100%;
+      .schema-inner {
+        height: 100%;
+      }
       @media (max-width: @screen-md-max) {
         margin-bottom: 15px;
       }

@@ -17,5 +17,6 @@
 import { INDENTATION_SPACING } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 const rowHeight = 28;
 const rowMarginTop = 2;
+const schemaRowHeight = rowHeight + 2 * rowMarginTop;
 
-export { INDENTATION_SPACING, rowHeight, rowMarginTop };
+export { INDENTATION_SPACING, rowHeight, rowMarginTop, schemaRowHeight };

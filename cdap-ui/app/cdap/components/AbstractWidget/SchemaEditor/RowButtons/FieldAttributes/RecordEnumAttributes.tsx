@@ -19,6 +19,7 @@ import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import Button from '@material-ui/core/Button';
 import { IAttributesComponentProps } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
 import { useAttributePopoverStyles } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/FieldAttributesPopoverButton';
+import If from 'components/If';
 
 function RecordEnumTypeAttributes({
   typeProperties,
@@ -41,13 +42,13 @@ function RecordEnumTypeAttributes({
       <div className={classes.root}>
         <WidgetWrapper
           pluginProperty={{
-            name: 'doc',
+            name: 'documentation',
             macroSupported: false,
             description: 'documentation for the record',
           }}
           widgetProperty={{
             'widget-type': 'textbox',
-            label: 'Doc',
+            label: 'Documentation',
           }}
           value={doc}
           onChange={setDoc}
@@ -68,9 +69,11 @@ function RecordEnumTypeAttributes({
           }}
         />
       </div>
-      <Button variant="contained" color="primary" onClick={onChangeHandler}>
-        Save
-      </Button>
+      <If condition={typeof onChange === 'function'}>
+        <Button variant="contained" color="primary" onClick={onChangeHandler}>
+          Save
+        </Button>
+      </If>
     </React.Fragment>
   );
 }

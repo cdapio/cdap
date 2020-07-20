@@ -28,6 +28,7 @@ angular.module(PKG.name + '.commons')
         var fnConfig = $scope.fnConfig;
         var methodName = fnConfig['plugin-method'] || 'getSchema';
         var methodType = fnConfig.method || 'GET';
+        var ee = window.CaskCommon.ee(window.CaskCommon.ee);
         var getPluginMethodApi = function(methodType) {
           switch(methodType) {
             case 'POST':
@@ -99,6 +100,7 @@ angular.module(PKG.name + '.commons')
 
           modal.result.then(function (obj) {
             EventPipe.emit('schema.import', JSON.stringify(obj.schema));
+            ee.emit('schema.import', JSON.stringify(obj.schema));
             $scope.node.plugin.properties.importQuery = obj.query;
           });
         };
