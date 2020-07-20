@@ -19,10 +19,11 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import { MyProgramApi } from 'api/program';
-import NamespaceStore from 'services/NamespaceStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 import { convertProgramToApi } from 'services/program-api-converter';
 import { Tooltip } from 'reactstrap';
 import T from 'i18n-react';
+import { getLogViewerPageUrl } from 'components/LogViewer/LogViewerPage';
 
 export default class LogAction extends Component {
   constructor(props) {
@@ -40,7 +41,7 @@ export default class LogAction extends Component {
     if (this.state.runId) {
       return;
     }
-    let namespace = NamespaceStore.getState().selectedNamespace;
+    const namespace = getCurrentNamespace();
 
     this.pollRuns$ = MyProgramApi.pollRuns({
       namespace,
@@ -66,13 +67,13 @@ export default class LogAction extends Component {
     if (!this.state.runId) {
       return null;
     }
-    let namespace = NamespaceStore.getState().selectedNamespace,
+    const namespace = getCurrentNamespace(),
       appId = this.props.entity.applicationId,
       programType = convertProgramToApi(this.props.entity.programType),
       programId = this.props.entity.id,
       runId = this.state.runId;
 
-    let path = `/logviewer/view?namespace=${namespace}&appId=${appId}&programType=${programType}&programId=${programId}&runId=${runId}`;
+    const path = getLogViewerPageUrl(namespace, appId, programType, programId, runId);
 
     return path;
   }

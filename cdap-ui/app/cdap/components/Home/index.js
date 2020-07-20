@@ -30,8 +30,6 @@ import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 require('./Home.scss');
 
-import Playground from 'components/LogViewer/Playground';
-
 const EntityListView = Loadable({
   loader: () => import(/* webpackChunkName: "EntityListView" */ 'components/EntityListView'),
   loading: LoadingSVGCentered,
@@ -121,6 +119,12 @@ const PluginJSONCreator = Loadable({
   loading: LoadingSVGCentered,
 });
 
+const LogViewerPage = Loadable({
+  loader: () =>
+    import(/* webpackChunkName: "LogViewerPage" */ 'components/LogViewer/LogViewerPage'),
+  loading: LoadingSVGCentered,
+});
+
 export default class Home extends Component {
   constructor(props) {
     super(props);
@@ -204,7 +208,11 @@ export default class Home extends Component {
               );
             }}
           />
-          <Route exact path="/ns/:namespace/logs" component={Playground} />
+          <Route
+            exact
+            path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"
+            component={LogViewerPage}
+          />
           <Route
             exact
             path="/ns/:namespace/lab-experiment-test"
