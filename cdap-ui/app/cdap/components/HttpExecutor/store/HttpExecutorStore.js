@@ -15,9 +15,10 @@
  */
 
 import { combineReducers, createStore } from 'redux';
+import { getDateID, getRequestsByDate } from 'components/HttpExecutor/utilities';
 
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-import { List } from 'immutable';
+import { Map } from 'immutable';
 import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
@@ -43,7 +44,7 @@ const defaultInitialState = {
   loading: false,
   activeTab: 0,
   incomingRequest: false,
-  requestLog: List([]),
+  requestLog: Map({}),
 };
 
 export const REQUEST_HISTORY = 'RequestHistory';
@@ -62,10 +63,19 @@ const setResponse = (state, action) => {
     timestamp: new Date().toLocaleString(),
   };
 
-  const newRequestLog = requestLog.push(newCall);
+  // Update the component view in real-time, since we cannot listen to local storage's change
+  // Since the new request call is the latest out of all the request histories, insert at 0th index
+  const timestamp = new Date(newCall.timestamp);
+  const dateID = getDateID(timestamp);
+  const requestsGroup = getRequestsByDate(requestLog, dateID);
+  const newRequestLog = requestLog.set(dateID, requestsGroup.insert(0, newCall));
 
-  // saving of the request to the localStorage
-  localStorage.setItem(REQUEST_HISTORY, JSON.stringify(newRequestLog));
+  // Saving request histories to the localStorage
+  const storedLogs = newRequestLog
+    .valueSeq()
+    .toJS()
+    .flat();
+  localStorage.setItem(REQUEST_HISTORY, JSON.stringify(storedLogs));
 
   return {
     ...state,
