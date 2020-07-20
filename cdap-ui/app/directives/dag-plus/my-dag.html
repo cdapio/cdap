@@ -151,8 +151,8 @@
                   data-nodetype="condition-false">
               <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
             </div>
-            <div ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
-              <div class="error-node-notification" ng-if="node.errorCount > 0">
+            <div ng-click="node.isPluginAvailable && !disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
+              <div class="error-node-notification" ng-if="node.errorCount > 0" data-cy="node-badge">
                 <span class="badge" ng-class="{'badge-warning': !node.error, 'badge-danger': node.error}">
                   <span>{{node.errorCount}}</span>
                 </span>
@@ -180,10 +180,12 @@
                       ng-class="{ 'hidden': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"
                       ng-bind="node.plugin.artifact.version">
                 </div>
-                <button class="node-configure-btn"
-                        ng-class="{'btn-shown': DAGPlusPlusCtrl.nodeMenuOpen === node.name}"
-                        ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
-                  <span class="node-configure-btn-label">
+                <button data-cy="node-properties-btn" ng-class="{'node-configure-btn': true,
+                                 'btn-shown': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
+                                 'btn-disabled': !node.isPluginAvailable}"
+                  ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)" ng-disabled="!node.isPluginAvailable">
+                  <span class="node-configure-btn-label" uib-tooltip="{{ !node.isPluginAvailable ? 'Plugin artifact is not available.' : ''}}"
+                    tooltip-popup-delay="300" tooltip-placement="right">
                     Properties
                   </span>
                 </button>

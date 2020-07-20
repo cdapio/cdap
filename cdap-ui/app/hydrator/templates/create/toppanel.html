@@ -17,7 +17,8 @@
 <div class="side-panel top text-center">
   <div class="hydrator-metadata"
         ng-class="{'expanded': HydratorPlusPlusTopPanelCtrl.metadataExpanded}"
-        ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()">
+        ng-click="!HydratorPlusPlusTopPanelCtrl.metadataExpanded && HydratorPlusPlusTopPanelCtrl.openMetadata()"
+        data-cy="pipeline-metadata">
 
     <div class="pipeline-type">
       <span ng-if="HydratorPlusPlusTopPanelCtrl.GLOBALS.etlBatchPipelines.indexOf(HydratorPlusPlusTopPanelCtrl.state.artifact.name) !== -1"
@@ -115,7 +116,8 @@
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
-         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes">
+         ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         data-cy="pipeline-draft-save-btn">
       <div class="btn-container">
         <span class="fa icon-savedraft"></span>
         <div class="button-label">Save</div>
