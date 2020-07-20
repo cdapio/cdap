@@ -23,7 +23,6 @@ const SingleColumnWrapper = withStyles(() => {
   return {
     root: {
       width: '132px',
-      marginLeft: '-12px',
     },
   };
 })(Box);

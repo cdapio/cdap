@@ -16,12 +16,13 @@
 
 <div class="output-schema" ng-init="watchproperty=HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.schemaProperties['property-watch']" data-cy="plugin-output-schema-container">
 
-  <div class="schema-error">
+  <div class="schema-error" ng-if="!HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor">
     <ul>
       <li class="text-danger" ng-repeat="error in HydratorPlusPlusNodeConfigCtrl.state.errors">{{ error }}</li>
     </ul>
   </div>
-  <h4>
+
+  <h4 ng-if="!HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor">
     <span ng-if="!HydratorPlusPlusNodeConfigCtrl.state.isSink">Output Schema</span>
     <span ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">Schema</span>
 
@@ -94,15 +95,28 @@
         </div>
       </div>
     </div>
-    <my-output-schema
-      schema-advance="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance"
-      node="HydratorPlusPlusNodeConfigCtrl.state.node"
-      groups-config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig"
-      update-default-output-schema="HydratorPlusPlusNodeConfigCtrl.updateDefaultOutputSchema(outputSchema)"
-      is-disabled="isDisabled || HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists"
-      errors="HydratorPlusPlusNodeConfigCtrl.outputSchemaErrors">
-    </my-output-schema>
+    <div class="old-output-schema-container" ng-if="!HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor">
+      <my-output-schema
+        schema-advance="HydratorPlusPlusNodeConfigCtrl.state.schemaAdvance"
+        node="HydratorPlusPlusNodeConfigCtrl.state.node"
+        groups-config="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig"
+        update-default-output-schema="HydratorPlusPlusNodeConfigCtrl.updateDefaultOutputSchema(outputSchema)"
+        is-disabled="isDisabled || HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists"
+        errors="HydratorPlusPlusNodeConfigCtrl.outputSchemaErrors">
+      </my-output-schema>
+    </div>
   </fieldset>
+  <div class="output-schema" ng-if="HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor">
+    <plugin-schema-editor
+      schemas="HydratorPlusPlusNodeConfigCtrl.state.node.outputSchema"
+      on-schema-change="HydratorPlusPlusNodeConfigCtrl.onSchemaChange"
+      actions-dropdown-map="HydratorPlusPlusNodeConfigCtrl.getActionsDropdownMap()"
+      schema-title="'Output Schema'"
+      is-schema-macro="HydratorPlusPlusNodeConfigCtrl.isSchemaMacro()"
+      disabled="isDisabled || HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists">
+    </plugin-schema-editor>
+  </div>
+
 </div>
 
 <my-file-select class="sr-only" id="schema-import-link" data-button-icon="fa-upload" on-file-select="HydratorPlusPlusNodeConfigCtrl.importFiles($files)" data-button-label="Import">

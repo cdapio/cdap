@@ -77,13 +77,13 @@ const FieldWrapperBase = ({
    *
    * The width of the wrapper is reduced based on the indentation.
    */
-  const spacing = ancestors.length * INDENTATION_SPACING;
+  const spacing = (ancestors.length - 1) * INDENTATION_SPACING;
   const firstColumn = '20px';
   const thirdColumn = `96px`;
   const errorColumn = '10px';
   const secondColumn = `calc(100% - (${firstColumn} + ${thirdColumn} + ${errorColumn}))`;
   let customStyles: Partial<CSSStyleDeclaration> = {
-    marginLeft: `${spacing}px`,
+    marginLeft: `${spacing === 0 ? 2 : spacing}px`,
     gridTemplateColumns: `${firstColumn} ${secondColumn} ${thirdColumn}`,
     width: `calc(100% - ${spacing + 5 /* box shadow */}px)`,
     alignItems: 'center',
@@ -134,7 +134,7 @@ const FieldInputWrapperBase = withStyles(() => {
   return {
     root: {
       display: 'grid',
-      gridTemplateColumns: 'auto 100px',
+      gridTemplateColumns: '60% 40%',
     },
   };
 })(Box);

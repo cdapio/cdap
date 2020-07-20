@@ -14,7 +14,7 @@
  * the License.
  */
 import React from 'react';
-import Select from '@material-ui/core/Select';
+import Select, { SelectProps } from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputBase from '@material-ui/core/InputBase';
 import { IWidgetProps } from 'components/AbstractWidget';
@@ -22,6 +22,20 @@ import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import withStyles from '@material-ui/core/styles/withStyles';
 import { blue } from 'components/ThemeWrapper/colors';
+import { isNilOrEmptyString } from 'services/helpers';
+import Tooltip from '@material-ui/core/Tooltip';
+
+const CustomTooltip = withStyles((theme) => {
+  return {
+    tooltip: {
+      backgroundColor: theme.palette.grey[200],
+      color: (theme.palette as any).white[50],
+      fontSize: '12px',
+      wordBreak: 'break-word',
+    },
+  };
+})(Tooltip);
+
 const CustomizedInput = withStyles(() => {
   return {
     input: {
@@ -57,14 +71,16 @@ interface ISelectOptions {
   label: string;
 }
 
-interface ISelectWidgetProps {
+interface ISelectWidgetProps extends SelectProps {
   options: ISelectOptions[] | string[] | number[];
   dense?: boolean;
   inline?: boolean;
 }
 
 interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {
+  placeholder?: string;
   inputRef?: (ref: React.ReactNode) => void;
+  classes?: any;
 }
 
 const CustomSelect: React.FC<ISelectProps> = ({
@@ -74,6 +90,9 @@ const CustomSelect: React.FC<ISelectProps> = ({
   disabled,
   dataCy,
   inputRef,
+  placeholder,
+  classes,
+  ...restProps
 }: ISelectProps) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const v = event.target.value;
@@ -85,11 +104,15 @@ const CustomSelect: React.FC<ISelectProps> = ({
   const options = objectQuery(widgetProps, 'options') || objectQuery(widgetProps, 'values') || [];
   const dense = objectQuery(widgetProps, 'dense') || false;
   const inline = objectQuery(widgetProps, 'inline') || false;
-  const OptionItem = dense ? DenseMenuItem : MenuItem;
+  const native = objectQuery(widgetProps, 'native') || false;
+  const OptionItem = native ? 'option' : dense ? DenseMenuItem : MenuItem;
   const SelectComponent = inline ? InlineSelect : Select;
-  const optionValues = options.map((opt) => {
+  let optionValues = options.map((opt) => {
     return ['string', 'number'].indexOf(typeof opt) !== -1 ? { value: opt, label: opt } : opt;
   });
+  if (!isNilOrEmptyString(placeholder)) {
+    optionValues = [{ placeholder, value: '', label: placeholder }, ...optionValues];
+  }
 
   return (
     <SelectComponent
@@ -108,13 +131,30 @@ const CustomSelect: React.FC<ISelectProps> = ({
           horizontal: 'left',
         },
       }}
+      displayEmpty={!isNilOrEmptyString(placeholder)}
       inputRef={inputRef}
+      classes={classes}
+      {...widgetProps}
     >
-      {optionValues.map((opt) => (
-        <OptionItem value={opt.value} key={opt.value}>
-          {opt.label}
-        </OptionItem>
-      ))}
+      {optionValues.map((opt) => {
+        const option = (
+          <OptionItem
+            value={opt.value}
+            key={opt.value}
+            disabled={opt.disabled || !isNilOrEmptyString(opt.placeholder)}
+          >
+            {opt.label}
+          </OptionItem>
+        );
+        if (opt.tooltip) {
+          return (
+            <CustomTooltip title={opt.tooltip} placement={opt.tooltipPlacement || 'left'}>
+              <span>{option}</span>
+            </CustomTooltip>
+          );
+        }
+        return option;
+      })}
     </SelectComponent>
   );
 };

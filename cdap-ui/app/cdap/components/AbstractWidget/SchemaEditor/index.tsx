@@ -19,7 +19,6 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/styles/withStyl
 import ThemeWrapper from 'components/ThemeWrapper';
 import {
   SchemaManager,
-  INode,
   ISchemaManager,
   IOnChangeReturnType,
 } from 'components/AbstractWidget/SchemaEditor/Context/SchemaManager';
@@ -35,8 +34,14 @@ import {
   SchemaValidatorProvider,
 } from 'components/AbstractWidget/SchemaEditor/SchemaValidator';
 import { dumbestClone } from 'services/helpers';
+import PropTypes from 'prop-types';
+import {
+  getDefaultEmptyAvroSchema,
+  OperationTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import { INode } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     schemaContainer: {
       width: '100%',
@@ -46,7 +51,9 @@ const styles = (): StyleRules => {
 };
 
 interface ISchemaEditorProps extends WithStyles<typeof styles> {
+  visibleRows?: number;
   schema: ISchemaType;
+  disabled?: boolean;
   onChange: (props: {
     tree: INode;
     flat: IFlattenRowType[];
@@ -57,33 +64,46 @@ interface ISchemaEditorProps extends WithStyles<typeof styles> {
 interface ISchemaEditorState {
   tree: INode;
   flat: IFlattenRowType[];
+  schemaRowCount: number;
 }
 
 class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditorState> {
   private schema: ISchemaManager = null;
+  private validate;
   constructor(props) {
     super(props);
-    const { options } = props;
-    this.schema = SchemaManager(this.props.schema, options).getInstance();
+    const { schema = getDefaultEmptyAvroSchema(), options } = props;
+    this.schema = SchemaManager(schema, options).getInstance();
     this.state = {
       flat: dumbestClone(this.schema.getFlatSchema()),
       tree: dumbestClone(this.schema.getSchemaTree()),
+      schemaRowCount: this.props.visibleRows,
     };
+  }
+  public componentDidMount() {
+    if (this.validate) {
+      this.validate(this.schema.getFlatSchema()[1], this.schema.getSchemaTree());
+    }
   }
 
   public componentWillReceiveProps(nextProps) {
-    this.schema = SchemaManager(nextProps.schema).getInstance();
-    this.setState({
-      flat: dumbestClone(this.schema.getFlatSchema()),
-      tree: dumbestClone(this.schema.getSchemaTree()),
-    });
+    const { visibleRows } = nextProps;
+    if (visibleRows !== this.state.schemaRowCount) {
+      this.setState({
+        schemaRowCount: visibleRows,
+      });
+    }
+    return;
   }
   public onChange = (validate, fieldId: IFieldIdentifier, onChangePayload: IOnChangePayload) => {
     const { fieldIdToFocus } = this.schema.onChange(fieldId, onChangePayload);
     this.setState({
-      flat: [...this.schema.getFlatSchema()],
-      tree: { ...this.schema.getSchemaTree() },
+      flat: this.schema.getFlatSchema(),
+      tree: this.schema.getSchemaTree(),
     });
+    if (onChangePayload.type === OperationTypesEnum.COLLAPSE) {
+      return { fieldIdToFocus };
+    }
     this.props.onChange({
       tree: this.schema.getSchemaTree(),
       flat: this.schema.getFlatSchema(),
@@ -102,9 +122,17 @@ class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditor
         <SchemaValidatorProvider>
           <div className={classes.schemaContainer}>
             <SchemaValidatorConsumer>
-              {({ validate }) => (
-                <FieldsList value={flat} onChange={this.onChange.bind(this, validate)} />
-              )}
+              {({ validate }) => {
+                this.validate = validate;
+                return (
+                  <FieldsList
+                    value={flat}
+                    onChange={this.onChange.bind(this, validate)}
+                    disabled={this.props.disabled}
+                    visibleRowCount={this.state.schemaRowCount}
+                  />
+                );
+              }}
             </SchemaValidatorConsumer>
           </div>
         </SchemaValidatorProvider>
@@ -121,5 +149,12 @@ function SchemaEditor(props) {
     </ThemeWrapper>
   );
 }
+
+SchemaEditor.propTypes = {
+  schema: PropTypes.object,
+  onChange: PropTypes.func,
+  disabled: PropTypes.bool,
+  visibleRows: PropTypes.number,
+};
 
 export { SchemaEditor };

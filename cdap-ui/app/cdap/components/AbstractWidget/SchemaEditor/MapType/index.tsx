@@ -19,6 +19,7 @@ import Select from 'components/AbstractWidget/FormInputs/Select';
 import {
   schemaTypes,
   InternalTypesEnum,
+  AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import Box from '@material-ui/core/Box';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
@@ -45,6 +46,7 @@ const MapTypeBase = ({
   onChange,
   autoFocus,
   typeProperties,
+  disabled = false,
 }: IFieldTypeBaseProps) => {
   let label = '';
   const keysType: string[] = [
@@ -88,18 +90,20 @@ const MapTypeBase = ({
       <MapWrapper>
         <span>{label}</span>
         <Select
+          disabled={disabled}
           value={fieldType}
           onChange={(newValue) => {
             setFieldType(newValue);
             onChange('type', newValue);
           }}
-          widgetProps={{ options: schemaTypes, dense: true, inline: true }}
+          widgetProps={{ options: schemaTypes, dense: true, inline: true, native: true }}
           inputRef={(ref) => (inputEle.current = ref)}
         />
       </MapWrapper>
       <RowButtons
+        disabled={disabled}
         nullable={fieldNullable}
-        onNullable={type === 'union' ? undefined : onNullable}
+        onNullable={type === AvroSchemaTypesEnum.UNION ? undefined : onNullable}
         type={fieldType}
         onChange={onTypePropertiesChangeHandler}
         typeProperties={fieldTypeProperties}

@@ -14,6 +14,7 @@
  * the License.
  */
 
+ // TODO: CDAP-17106 - Need to refactor this function to make it generic for usage across CDAP UI.
  function DownloadFile(fileConfig, postExportCb) {
   const blob = new Blob([JSON.stringify(fileConfig, null, 4)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);

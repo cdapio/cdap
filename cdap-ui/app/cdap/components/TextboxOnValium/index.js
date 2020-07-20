@@ -95,6 +95,7 @@ export default class TextboxOnValium extends Component {
   render() {
     return (
       <input
+        disabled={this.props.disabled}
         className={this.props.className}
         placeholder={this.props.placeholder}
         ref={
@@ -117,6 +118,7 @@ export default class TextboxOnValium extends Component {
 TextboxOnValium.defaultProps = {
   allowSpace: true,
   validCharacterRegex: null,
+  disabled: false,
 };
 
 TextboxOnValium.propTypes = {
@@ -130,4 +132,5 @@ TextboxOnValium.propTypes = {
   allowSpace: PropTypes.bool,
   shouldSelect: PropTypes.bool,
   validCharacterRegex: PropTypes.object, // regex expression
+  disabled: PropTypes.bool,
 };
