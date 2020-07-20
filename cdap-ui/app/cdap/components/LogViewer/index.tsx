@@ -15,15 +15,17 @@
  */
 
 import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+
 import { ILogResponse, LogLevel as LogLevelEnum } from 'components/LogViewer/types';
+import TopPanel, { TOP_PANEL_HEIGHT } from 'components/LogViewer/TopPanel';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+import Alert from 'components/Alert';
 import DataFetcher from 'components/LogViewer/DataFetcher';
+import LogLevel from 'components/LogViewer/LogLevel';
 import LogRow from 'components/LogViewer/LogRow';
 import debounce from 'lodash/debounce';
-import TopPanel, { TOP_PANEL_HEIGHT } from 'components/LogViewer/TopPanel';
-import LogLevel from 'components/LogViewer/LogLevel';
 import { extractErrorMessage } from 'services/helpers';
-import Alert from 'components/Alert';
 
 export function logsTableGridStyle(theme): StyleRules {
   return {

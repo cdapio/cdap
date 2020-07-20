@@ -16,16 +16,22 @@
 
 import * as React from 'react';
 
+import { List, Map } from 'immutable';
+import { getDateID, getRequestsByDate } from 'components/HttpExecutor/utilities';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelActions from '@material-ui/core/ExpansionPanelActions';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-import { List } from 'immutable';
 import { REQUEST_HISTORY } from 'components/HttpExecutor/store/HttpExecutorStore';
 import { RequestMethod } from 'components/HttpExecutor';
+import Typography from '@material-ui/core/Typography';
 import classnames from 'classnames';
 import { connect } from 'react-redux';
 
 export interface IRequestHistory {
+  timestamp: string;
   method: RequestMethod;
   path: string;
   body: string;
@@ -47,6 +53,10 @@ const styles = (theme): StyleRules => {
     root: {
       borderRight: `1px solid ${theme.palette.grey[300]}`,
       height: '100%',
+    },
+    timestampGroup: {
+      display: 'flex',
+      flexFlow: 'column',
     },
     requestRow: {
       padding: '10px',
@@ -102,9 +112,20 @@ const styles = (theme): StyleRules => {
   };
 };
 
+const StyledExpansionPanel = withStyles((theme) => ({
+  root: {
+    '&$expanded': {
+      margin: 0,
+    },
+    borderBottom: `1px solid ${theme.palette.grey[300]}`,
+  },
+  /* Styles applied to the root element if `expanded={true}`. */
+  expanded: {},
+}))(ExpansionPanel);
+
 interface IRequestHistoryTabProps extends WithStyles<typeof styles> {
-  requestLog: List<IRequestHistory>;
-  setRequestLog: (requestLog: List<IRequestHistory>) => void;
+  requestLog: Map<string, List<IRequestHistory>>;
+  setRequestLog: (requestLog: Map<string, List<IRequestHistory>>) => void;
   onRequestClick: (request: IRequestHistory) => void;
 }
 
@@ -116,7 +137,7 @@ const mapStateToProps = (state) => {
 
 const mapDispatch = (dispatch) => {
   return {
-    setRequestLog: (requestLog: List<IRequestHistory>) => {
+    setRequestLog: (requestLog: Map<string, List<IRequestHistory>>) => {
       dispatch({
         type: HttpExecutorActions.setRequestLog,
         payload: {
@@ -140,37 +161,77 @@ const RequestHistoryTabView: React.FC<IRequestHistoryTabProps> = ({
   onRequestClick,
 }) => {
   // Query through localstorage to populate RequestHistoryTab
+  // requestLog maps timestamp date (e.g. April 5th) to a list of corresponding request histories, sorted by timestamp
   React.useEffect(() => {
+    // Group and sort logs by timestamp
+    let newRequestLog = Map<string, List<IRequestHistory>>({});
+
     const storedLogs = localStorage.getItem(REQUEST_HISTORY);
     if (storedLogs) {
       try {
-        setRequestLog(List(JSON.parse(storedLogs)));
+        const savedCalls = List(JSON.parse(storedLogs));
+        savedCalls
+          .sort((a: IRequestHistory, b: IRequestHistory) => {
+            const timestampA = new Date(a.timestamp);
+            const timestampB = new Date(b.timestamp);
+            if (timestampA < timestampB) {
+              return 1;
+            } else if (timestampA > timestampB) {
+              return -1;
+            } else {
+              return 0;
+            }
+          })
+          .forEach((req: IRequestHistory) => {
+            const timestamp = new Date(req.timestamp);
+            const dateID: string = getDateID(timestamp);
+            const requestsGroup = getRequestsByDate(newRequestLog, dateID);
+            newRequestLog = newRequestLog.set(dateID, requestsGroup.push(req));
+          });
+        setRequestLog(newRequestLog);
       } catch (e) {
-        setRequestLog(List([]));
+        setRequestLog(Map({}));
       }
     } else {
+      // If REQUEST_HISTORY key doesn't exist in localStorage, initialize it
       localStorage.setItem(REQUEST_HISTORY, JSON.stringify([]));
-      setRequestLog(List([]));
+      setRequestLog(Map({}));
     }
   }, []);
 
   return (
     <div className={classes.root}>
-      {requestLog.map((history, i) => {
+      {requestLog.keySeq().map((timestamp) => {
+        const requestHistories = requestLog.get(timestamp);
         return (
-          <div key={i} className={classes.requestRow} onClick={() => onRequestClick(history)}>
-            <div
-              className={classnames(classes.requestMethod, {
-                [classes.getMethod]: history.method === RequestMethod.GET,
-                [classes.postMethod]: history.method === RequestMethod.POST,
-                [classes.deleteMethod]: history.method === RequestMethod.DELETE,
-                [classes.putMethod]: history.method === RequestMethod.PUT,
+          <StyledExpansionPanel key={timestamp} defaultExpanded elevation={0}>
+            <ExpansionPanelSummary classes={{ root: classes.root, expanded: classes.expanded }}>
+              <Typography>{timestamp}</Typography>
+            </ExpansionPanelSummary>
+            <ExpansionPanelActions className={classes.timestampGroup}>
+              {requestHistories.map((request, requestIndex) => {
+                return (
+                  <div
+                    key={`request-${requestIndex}`}
+                    className={classes.requestRow}
+                    onClick={() => onRequestClick(request)}
+                  >
+                    <div
+                      className={classnames(classes.requestMethod, {
+                        [classes.getMethod]: request.method === RequestMethod.GET,
+                        [classes.postMethod]: request.method === RequestMethod.POST,
+                        [classes.deleteMethod]: request.method === RequestMethod.DELETE,
+                        [classes.putMethod]: request.method === RequestMethod.PUT,
+                      })}
+                    >
+                      <div className={classes.requestMethodText}>{request.method}</div>
+                    </div>
+                    <div className={classes.requestPath}>{request.path}</div>
+                  </div>
+                );
               })}
-            >
-              <div className={classes.requestMethodText}>{history.method}</div>
-            </div>
-            <div className={classes.requestPath}>{history.path}</div>
-          </div>
+            </ExpansionPanelActions>
+          </StyledExpansionPanel>
         );
       })}
     </div>

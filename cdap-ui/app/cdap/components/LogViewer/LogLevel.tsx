@@ -15,13 +15,15 @@
  */
 
 import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { LogLevel as LogLevelEnum } from 'components/LogViewer/types';
-import DataFetcher from 'components/LogViewer/DataFetcher';
-import Popover from 'components/Popover';
-import If from 'components/If';
+
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
+import DataFetcher from 'components/LogViewer/DataFetcher';
 import IconSVG from 'components/IconSVG';
+import If from 'components/If';
+import { LogLevel as LogLevelEnum } from 'components/LogViewer/types';
+import Popover from 'components/Popover';
 
 const styles = (theme): StyleRules => {
   return {
