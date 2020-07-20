@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,43 +14,48 @@
  * the License.
  */
 
+import * as React from 'react';
+
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-import PropTypes from 'prop-types';
-import React from 'react';
+import Switch from '@material-ui/core/Switch';
 import { connect } from 'react-redux';
 
 const mapStateToProps = (state) => {
   return {
-    value: state.http.body,
+    saveCall: state.http.saveCall,
   };
 };
 
 const mapDispatch = (dispatch) => {
   return {
-    onChange: (e) => {
+    togglesaveCall: () => {
       dispatch({
-        type: HttpExecutorActions.setBody,
-        payload: {
-          body: e.target.value,
-        },
+        type: HttpExecutorActions.togglesaveCall,
       });
     },
   };
 };
 
-function BodyView({ value, onChange }) {
-  return (
-    <div className="request-body">
-      <textarea data-cy="request-body" className="form-control" value={value} onChange={onChange} />
-    </div>
-  );
+interface ISaveCallToggleProps {
+  saveCall: boolean;
+  togglesaveCall: () => void;
 }
 
-BodyView.propTypes = {
-  value: PropTypes.string,
-  onChange: PropTypes.func,
+const SaveCallToggleView: React.FC<ISaveCallToggleProps> = ({ saveCall, togglesaveCall }) => {
+  return (
+    <div>
+      <Switch
+        checked={saveCall}
+        onChange={() => togglesaveCall()}
+        color="primary"
+        name="checkedB"
+        inputProps={{ 'aria-label': 'primary checkbox' }}
+        data-cy="save-mode-btn"
+      />
+      Save calls
+    </div>
+  );
 };
 
-const Body = connect(mapStateToProps, mapDispatch)(BodyView);
-
-export default Body;
+const SaveCallToggle = connect(mapStateToProps, mapDispatch)(SaveCallToggleView);
+export default SaveCallToggle;

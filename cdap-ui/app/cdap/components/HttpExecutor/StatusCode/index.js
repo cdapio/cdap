@@ -14,12 +14,11 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React from 'react';
-import { connect } from 'react-redux';
 import classnames from 'classnames';
 import T from 'i18n-react';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { connect } from 'react-redux';
 
 const PREFIX = 'features.HttpExecutor';
 
@@ -39,6 +38,7 @@ function StatusCodeView({ code }) {
           'text-success': code < 300,
           'text-danger': code !== null && code >= 300,
         })}
+        data-cy="response-status-code"
       >
         {code}
       </div>

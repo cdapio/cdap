@@ -14,15 +14,14 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React from 'react';
+import classnames from 'classnames';
 import Body from 'components/HttpExecutor/RequestMetadata/Body';
 import Header from 'components/HttpExecutor/RequestMetadata/Header';
-import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-import classnames from 'classnames';
 import T from 'i18n-react';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { connect } from 'react-redux';
 
 const PREFIX = 'features.HttpExecutor';
 
@@ -61,6 +60,7 @@ function RequestMetadataView({ activeTab, onTabClick, method }) {
             active: activeTab === 0,
           })}
           onClick={onTabClick.bind(null, 0, false)}
+          data-cy="header-btn"
         >
           <span>{T.translate(`${PREFIX}.header`)}</span>
         </div>
@@ -70,6 +70,7 @@ function RequestMetadataView({ activeTab, onTabClick, method }) {
             disabled: bodyDisabled,
           })}
           onClick={onTabClick.bind(null, 1, bodyDisabled)}
+          data-cy="body-btn"
         >
           <span>{T.translate(`${PREFIX}.body`)}</span>
         </div>

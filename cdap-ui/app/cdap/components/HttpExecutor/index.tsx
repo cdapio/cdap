@@ -14,39 +14,87 @@
  * the License.
  */
 
-import React, { Component } from 'react';
+import { WithStyles, withStyles } from '@material-ui/core';
 
 import HttpExecutorStore from 'components/HttpExecutor/store/HttpExecutorStore';
 import HttpResponse from 'components/HttpExecutor/HttpResponse';
 import InputPath from 'components/HttpExecutor/InputPath';
 import MethodSelector from 'components/HttpExecutor/MethodSelector';
 import { Provider } from 'react-redux';
+import React from 'react';
+import RequestHistoryTab from 'components/HttpExecutor/RequestHistoryTab';
 import RequestMetadata from 'components/HttpExecutor/RequestMetadata';
+import SaveCallToggle from 'components/HttpExecutor/SaveCallsToggle';
 import SendButton from 'components/HttpExecutor/SendButton';
 import StatusCode from 'components/HttpExecutor/StatusCode';
+import { StyleRules } from '@material-ui/core/styles';
 import T from 'i18n-react';
 
 const PREFIX = 'features.HttpExecutor';
+
 require('./HttpExecutor.scss');
 
-export default class HttpExecutor extends Component {
-  constructor(props) {
-    super(props);
-  }
+export const LEFT_PANEL_WIDTH = 500;
 
-  render() {
-    return (
-      <Provider store={HttpExecutorStore}>
+const styles = (theme): StyleRules => {
+  return {
+    root: {
+      borderRight: `1px solid ${theme.palette.grey[300]}`,
+      height: '100%',
+    },
+    content: {
+      height: 'calc(100% - 50px)',
+      display: 'grid',
+      gridTemplateColumns: `${LEFT_PANEL_WIDTH}px 1fr`,
+
+      '& > div': {
+        overflowY: 'auto',
+      },
+    },
+    introPageRow: {
+      display: 'grid',
+      width: '100%',
+      gridTemplateColumns: 'repeat(7, 1fr)',
+      paddingTop: `${theme.Spacing(2)}px`,
+    },
+    pageTitle: {
+      fontSize: '28px',
+      paddingLeft: `${theme.Spacing(3)}px`,
+      gridColumnStart: '1',
+      gridColumnEnd: '2',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveCall: {
+      gridColumnStart: '7',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+  };
+};
+
+const HttpExecutorView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+  return (
+    <Provider store={HttpExecutorStore}>
+      <div className={classes.content}>
+        <RequestHistoryTab />
         <div className="http-executor">
+          <div className={classes.introPageRow}>
+            <div className={classes.pageTitle}>Http Executor</div>
+            <div className={classes.saveCall}>
+              <SaveCallToggle />
+            </div>
+          </div>
+
           <div className="request-section">
             <MethodSelector />
             <InputPath />
 
             <SendButton />
           </div>
-
           <RequestMetadata />
-
           <div className="response-section">
             <div className="response-header">
               <span className="title">{T.translate(`${PREFIX}.responseTitle`)}</span>
@@ -54,11 +102,13 @@ export default class HttpExecutor extends Component {
                 <StatusCode />
               </span>
             </div>
-
             <HttpResponse />
           </div>
         </div>
-      </Provider>
-    );
-  }
-}
+      </div>
+    </Provider>
+  );
+};
+
+const HttpExecutor = withStyles(styles)(HttpExecutorView);
+export default HttpExecutor;

@@ -15,7 +15,6 @@
  */
 
 import PropTypes from 'prop-types';
-
 import React from 'react';
 import { connect } from 'react-redux';
 
@@ -36,7 +35,7 @@ function HttpResponseView({ response }) {
 
   return (
     <div className="response-container">
-      <pre>{viewResponse}</pre>
+      <pre data-cy="response">{viewResponse}</pre>
     </div>
   );
 }

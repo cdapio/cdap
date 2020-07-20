@@ -15,6 +15,7 @@
  */
 
 import { combineReducers, createStore } from 'redux';
+
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import uuidV4 from 'uuid/v4';
 
@@ -40,6 +41,8 @@ const defaultInitialState = {
   statusCode: 0,
   loading: false,
   activeTab: 0,
+  incomingRequest: false,
+  saveCall: true,
 };
 
 const http = (state = defaultInitialState, action = defaultAction) => {
@@ -84,6 +87,27 @@ const http = (state = defaultInitialState, action = defaultAction) => {
       };
     case HttpExecutorActions.reset:
       return defaultInitialState;
+    case HttpExecutorActions.setRequestHistoryView:
+      return {
+        ...state,
+        method: action.payload.method,
+        activeTab: ['GET', 'DELETE'].indexOf(action.payload.method) !== -1 ? 0 : 1,
+        path: action.payload.path,
+        response: action.payload.response,
+        statusCode: action.payload.statusCode,
+        body: action.payload.body,
+        headers: action.payload.headers,
+      };
+    case HttpExecutorActions.notifyIncomingRequest:
+      return {
+        ...state,
+        incomingRequest: action.payload.incomingRequest,
+      };
+    case HttpExecutorActions.togglesaveCall:
+      return {
+        ...state,
+        saveCall: !state.saveCall,
+      };
     default:
       return state;
   }

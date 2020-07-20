@@ -14,12 +14,11 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React from 'react';
-import { connect } from 'react-redux';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import T from 'i18n-react';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { connect } from 'react-redux';
 
 const PREFIX = 'features.HttpExecutor';
 
@@ -57,6 +56,7 @@ function InputPathView({ value, onChange }) {
           placeholder={T.translate(`${PREFIX}.path`)}
           value={value}
           onChange={onChange}
+          data-cy="request-path-input"
         />
       </div>
     </div>
