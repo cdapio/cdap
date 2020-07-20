@@ -18,11 +18,12 @@ import * as React from 'react';
 import FormControl from '@material-ui/core/FormControl';
 import { SchemaEditor } from 'components/AbstractWidget/SchemaEditor';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import If from 'components/If';
 import FileDnD from 'components/FileDnD';
 import { Button } from '@material-ui/core';
 import { getDefaultEmptyAvroSchema } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import LoadingSVG from 'components/LoadingSVG';
+
 const emptySchema = getDefaultEmptyAvroSchema();
 
 const styles = (): StyleRules => {
@@ -65,13 +66,25 @@ class SchemaEditorDemoBase extends React.Component<ISchemaEditorDemoBaseProps> {
         if (Array.isArray(schema)) {
           schema = schema[0];
         }
-        this.setState({
-          schema,
-          file: e[0],
-          error: null,
-        });
+        this.setState(
+          {
+            schema,
+            file: e[0],
+            error: null,
+            loading: true,
+          },
+          () => {
+            setTimeout(
+              () =>
+                this.setState({
+                  loading: false,
+                }),
+              1000
+            );
+          }
+        );
       } catch (e) {
-        this.setState({ error: e.message });
+        this.setState({ error: e.message, loading: false });
       }
     };
     reader.readAsText(e[0], 'UTF-8');
@@ -95,12 +108,21 @@ class SchemaEditorDemoBase extends React.Component<ISchemaEditorDemoBaseProps> {
   };
 
   public clearSchema = () => {
-    this.setState({
-      loading: false,
-      file: {},
-      error: null,
-      schema: emptySchema,
-    });
+    this.setState(
+      {
+        loading: true,
+      },
+      () => {
+        setTimeout(() => {
+          this.setState({
+            loading: false,
+            file: {},
+            error: null,
+            schema: emptySchema,
+          });
+        }, 500);
+      }
+    );
   };
 
   public render() {
@@ -136,7 +158,7 @@ class SchemaEditorDemoBase extends React.Component<ISchemaEditorDemoBaseProps> {
         </FormControl>
         <div className={classes.contentContainer}>
           <If condition={this.state.loading}>
-            <LoadingSVGCentered />
+            <LoadingSVG />
           </If>
           <If condition={!this.state.loading}>
             <SchemaEditor

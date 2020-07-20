@@ -37,6 +37,7 @@ import {
   InternalTypesEnum,
   OperationTypesEnum,
   getDefaultEmptyAvroSchema,
+  AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 interface ISchemaManagerOptions {
@@ -141,7 +142,7 @@ class SchemaManagerBase implements ISchemaManager {
       id,
       internalType: InternalTypesEnum.RECORD_SIMPLE_TYPE,
       nullable: false,
-      type: 'string',
+      type: AvroSchemaTypesEnum.STRING,
       name: '',
     };
     tree.children[id] = newlyAddedField;
@@ -166,7 +167,7 @@ class SchemaManagerBase implements ISchemaManager {
       id,
       internalType: InternalTypesEnum.UNION_SIMPLE_TYPE,
       nullable: false,
-      type: 'string',
+      type: AvroSchemaTypesEnum.STRING,
     };
     tree.children[id] = newlyAddedField;
     return {
@@ -179,11 +180,11 @@ class SchemaManagerBase implements ISchemaManager {
 
   private addSpecificTypesToTree = (tree: INode, fieldId: IFieldIdentifier) => {
     switch (tree.type) {
-      case 'enum':
+      case AvroSchemaTypesEnum.ENUM:
         return this.addNewEnumSymbol(tree, fieldId);
-      case 'record':
+      case AvroSchemaTypesEnum.RECORD:
         return this.addNewFieldType(tree, fieldId);
-      case 'union':
+      case AvroSchemaTypesEnum.UNION:
         return this.addNewUnionType(tree, fieldId);
       default:
         return { tree: undefined, newTree: undefined, currentField: undefined };

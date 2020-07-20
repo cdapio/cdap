@@ -19,30 +19,32 @@ import {
   ISimpleType,
   ILogicalTypeNames,
 } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
-import { logicalTypeToSimpleTypeMap } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  logicalTypeToSimpleTypeMap,
+  AvroSchemaTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import cloneDeep from 'lodash/cloneDeep';
 
 const displayTypes: Array<ISimpleType | IComplexTypeNames | ILogicalTypeNames> = [
-  'array',
-  'enum',
-  'map',
-  'record',
-  'union',
-  'boolean',
-  'bytes',
-  'date',
-  'decimal',
-  'double',
-  'float',
-  'int',
-  'long',
-  'number',
-  'string',
-  'time',
-  'timestamp-micros',
-  'date',
-  'time-micros',
-  'decimal',
+  AvroSchemaTypesEnum.ARRAY,
+  AvroSchemaTypesEnum.ENUM,
+  AvroSchemaTypesEnum.MAP,
+  AvroSchemaTypesEnum.RECORD,
+  AvroSchemaTypesEnum.UNION,
+  AvroSchemaTypesEnum.BOOLEAN,
+  AvroSchemaTypesEnum.BYTES,
+  AvroSchemaTypesEnum.DATE,
+  AvroSchemaTypesEnum.DECIMAL,
+  AvroSchemaTypesEnum.DOUBLE,
+  AvroSchemaTypesEnum.FLOAT,
+  AvroSchemaTypesEnum.INT,
+  AvroSchemaTypesEnum.LONG,
+  AvroSchemaTypesEnum.STRING,
+  AvroSchemaTypesEnum.TIME,
+  AvroSchemaTypesEnum.TIMESTAMPMICROS,
+  AvroSchemaTypesEnum.DATE,
+  AvroSchemaTypesEnum.TIMEMICROS,
+  AvroSchemaTypesEnum.DECIMAL,
 ];
 
 /**
@@ -77,7 +79,7 @@ const getNonNullableType = (type) => {
  * @param type valid simple/logical avro type
  */
 const getSimpleType = (type) => {
-  if (typeof type === 'string') {
+  if (typeof type === AvroSchemaTypesEnum.STRING) {
     return type;
   }
   if (type && type.logicalType) {
@@ -96,14 +98,14 @@ const isComplexType = (complexType) => {
   if (nullable) {
     type = complexType.filter((t) => t !== 'null').pop();
   }
-  if (typeof type === 'string') {
+  if (typeof type === AvroSchemaTypesEnum.STRING) {
     return false;
   }
   switch (type.type) {
-    case 'record':
-    case 'enum':
-    case 'array':
-    case 'map':
+    case AvroSchemaTypesEnum.RECORD:
+    case AvroSchemaTypesEnum.ENUM:
+    case AvroSchemaTypesEnum.ARRAY:
+    case AvroSchemaTypesEnum.MAP:
       return true;
     default:
       return isUnion(complexType) ? true : false;
@@ -112,10 +114,10 @@ const isComplexType = (complexType) => {
 
 const isDisplayTypeLogical = ({ type }) => {
   switch (type) {
-    case 'decimal':
-    case 'date':
-    case 'time':
-    case 'timestamp':
+    case AvroSchemaTypesEnum.DECIMAL:
+    case AvroSchemaTypesEnum.DATE:
+    case AvroSchemaTypesEnum.TIME:
+    case AvroSchemaTypesEnum.TIMESTAMP:
       return true;
     default:
       return false;
@@ -124,11 +126,11 @@ const isDisplayTypeLogical = ({ type }) => {
 
 const isDisplayTypeComplex = ({ type }) => {
   switch (type) {
-    case 'record':
-    case 'enum':
-    case 'union':
-    case 'map':
-    case 'array':
+    case AvroSchemaTypesEnum.RECORD:
+    case AvroSchemaTypesEnum.ENUM:
+    case AvroSchemaTypesEnum.UNION:
+    case AvroSchemaTypesEnum.MAP:
+    case AvroSchemaTypesEnum.ARRAY:
       return true;
     default:
       return isDisplayTypeLogical({ type }) || false;
@@ -149,27 +151,26 @@ const getComplexTypeName = (complexType): IComplexTypeNames => {
     type = cloneDeep(c.type);
   }
   switch (type) {
-    case 'record':
-    case 'enum':
-    case 'array':
-    case 'map':
+    case AvroSchemaTypesEnum.RECORD:
+    case AvroSchemaTypesEnum.ENUM:
+    case AvroSchemaTypesEnum.ARRAY:
+    case AvroSchemaTypesEnum.MAP:
       return type;
     default:
-      return isUnion(c) ? 'union' : undefined;
+      return isUnion(c) ? AvroSchemaTypesEnum.UNION : undefined;
   }
 };
 
 const isFlatRowTypeComplex = (typeName: ISimpleType | IComplexTypeNames) => {
   switch (typeName) {
-    case 'string':
-    case 'boolean':
-    case 'bytes':
-    case 'double':
-    case 'float':
-    case 'int':
-    case 'long':
-    case 'number':
-    case 'string':
+    case AvroSchemaTypesEnum.STRING:
+    case AvroSchemaTypesEnum.BOOLEAN:
+    case AvroSchemaTypesEnum.BYTES:
+    case AvroSchemaTypesEnum.DOUBLE:
+    case AvroSchemaTypesEnum.FLOAT:
+    case AvroSchemaTypesEnum.INT:
+    case AvroSchemaTypesEnum.LONG:
+    case AvroSchemaTypesEnum.STRING:
       return false;
     default:
       return true;

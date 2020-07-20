@@ -32,6 +32,7 @@ const EnumTypeBase = ({
   onAdd,
   onRemove,
   autoFocus,
+  disabled = false,
 }: IFieldTypeBaseProps) => {
   const { symbol } = typeProperties;
   const [enumSymbol, setEnumSymbol] = React.useState(symbol);
@@ -50,6 +51,9 @@ const EnumTypeBase = ({
       onAdd();
       return;
     }
+    if (enumSymbol === newValue) {
+      return;
+    }
     setEnumSymbol(newValue);
     onChange('typeProperties', {
       symbol: newValue,
@@ -66,6 +70,7 @@ const EnumTypeBase = ({
   return (
     <React.Fragment>
       <TextboxOnValium
+        disabled={disabled}
         value={enumSymbol}
         onChange={onChangeHandler}
         placeholder="symbol"
@@ -74,6 +79,7 @@ const EnumTypeBase = ({
         className={classes.textbox}
       />
       <RowButtons
+        disabled={disabled}
         onRemove={onRemove}
         onAdd={onAdd}
         typeProperties={fieldTypeProperties}
