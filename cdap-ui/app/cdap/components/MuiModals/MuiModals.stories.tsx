@@ -80,7 +80,7 @@ storiesOf('Material Modals and Dialogs', module)
   .add(
     'ConfirmationDialog',
     withInfo({
-      text: 'Confirmation dialog (Carbon stlying)'
+      text: 'Confirmation dialog (Carbon styling)'
     })(() => (
       <React.Fragment>
         <Typography variant="h2">Confirmation Dialog</Typography>
@@ -101,7 +101,7 @@ storiesOf('Material Modals and Dialogs', module)
   .add(
     'FormDialog',
     withInfo({
-      text: 'Form dialog (Carbon stlying)'
+      text: 'Form dialog (Carbon styling)'
     })(() => {
       const error = boolean('Error', false);
       return <React.Fragment>
