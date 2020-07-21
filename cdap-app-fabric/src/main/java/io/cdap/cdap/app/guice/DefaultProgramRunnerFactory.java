@@ -19,6 +19,7 @@ package io.cdap.cdap.app.guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.Provider;
+import com.google.inject.name.Named;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramClassLoaderProvider;
 import io.cdap.cdap.app.runtime.ProgramController;
@@ -51,6 +52,7 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
   private final ProgramRuntimeProvider.Mode mode;
   private final ProgramRuntimeProviderLoader runtimeProviderLoader;
   private final ProgramStateWriter programStateWriter;
+  private boolean publishProgramState;
 
   @Inject
   DefaultProgramRunnerFactory(Injector injector, ProgramRuntimeProvider.Mode mode,
@@ -62,6 +64,11 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
     this.mode = mode;
     this.runtimeProviderLoader = runtimeProviderLoader;
     this.programStateWriter = programStateWriter;
+  }
+
+  @Inject(optional = true)
+  void setPublishProgramState(@Named("publishProgramState") boolean publishProgramState) {
+    this.publishProgramState = publishProgramState;
   }
 
   @Override
@@ -82,20 +89,20 @@ public final class DefaultProgramRunnerFactory implements ProgramRunnerFactory {
 
     // Wrap a state change listener around the controller returned by the program runner in standalone mode
     // In distributed mode, program state changes are recorded in the event handler by Twill AM.
-    return (mode == ProgramRuntimeProvider.Mode.LOCAL)
-      ? new LocalProgramRunner(runner, programStateWriter)
+    return (mode == ProgramRuntimeProvider.Mode.LOCAL || publishProgramState)
+      ? new StatePublishProgramRunner(runner, programStateWriter)
       : runner;
   }
 
   /**
-   * A local program runner that wraps a state change listener around the program runner
+   * A {@link ProgramRunner} that wraps around another {@link ProgramRunner} and publish events on program state change.
    */
-  private static final class LocalProgramRunner implements ProgramRunner, ProgramClassLoaderProvider, Closeable {
+  private static final class StatePublishProgramRunner implements ProgramRunner, ProgramClassLoaderProvider, Closeable {
 
     private final ProgramRunner runner;
     private final ProgramStateWriter programStateWriter;
 
-    private LocalProgramRunner(ProgramRunner runner, ProgramStateWriter programStateWriter) {
+    private StatePublishProgramRunner(ProgramRunner runner, ProgramStateWriter programStateWriter) {
       this.runner = runner;
       this.programStateWriter = programStateWriter;
     }

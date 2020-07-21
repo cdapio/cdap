@@ -99,7 +99,7 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
           bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
         }
       }),
-      new ProgramRunnerRuntimeModule().getDistributedModules(),
+      new ProgramRunnerRuntimeModule().getDistributedModules(true),
       new MonitorHandlerModule(false),
       new SecureStoreServerModule(),
       new OperationalStatsModule(),
