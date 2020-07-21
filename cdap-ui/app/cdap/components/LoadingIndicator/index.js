@@ -40,7 +40,10 @@ export default class LoadingIndicator extends Component {
 
   componentDidMount() {
     this.loadingIndicatorStoreSubscription = LoadingIndicatorStore.subscribe(() => {
-      if (location.pathname.indexOf('/cdap/administration') !== -1) {
+      if (
+        location.pathname.indexOf('/cdap/administration') !== -1 ||
+        location.pathname.indexOf('/studio') !== -1
+      ) {
         return;
       }
       let { status, services = [] } = LoadingIndicatorStore.getState().loading;
