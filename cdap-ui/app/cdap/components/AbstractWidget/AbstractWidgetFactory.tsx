@@ -20,6 +20,7 @@ import CodeEditorWidget from 'components/AbstractWidget/CodeEditorWidget';
 import CSVWidget from 'components/AbstractWidget/CSVWidget';
 import DatasetSelector from 'components/AbstractWidget/DatasetSelectorWidget';
 import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropdownAliasWidget';
+import FunctionDropdownOptionsWidget from 'components/AbstractWidget/FunctionDropdownOptionsWidget';
 import DLPCustomWidget from 'components/AbstractWidget/DLPCustomWidget';
 import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
 import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
@@ -61,6 +62,7 @@ export const WIDGET_FACTORY = {
   'ds-multiplevalues': MultipleValuesWidget,
   dsv: CSVWidget,
   'function-dropdown-with-alias': FunctionDropdownAliasWidget,
+  'function-drowdown-with-options': FunctionDropdownOptionsWidget,
   dlp: DLPCustomWidget,
   'get-schema': GetSchemaWidget,
   'input-field-selector': InputFieldDropdown,
