@@ -35,6 +35,7 @@ import {
   defaultRecordType,
   defaultUnionType,
   InternalTypesEnum,
+  AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import isEmpty from 'lodash/isEmpty';
 
@@ -88,15 +89,15 @@ const branchCount = (tree: INode): number => {
 
 const initChildren = (type): IOrderedChildren => {
   switch (type) {
-    case 'array':
+    case AvroSchemaTypesEnum.ARRAY:
       return parseArrayType(defaultArrayType);
-    case 'enum':
+    case AvroSchemaTypesEnum.ENUM:
       return parseEnumType(defaultEnumType);
-    case 'map':
+    case AvroSchemaTypesEnum.MAP:
       return parseMapType(defaultMapType);
-    case 'record':
+    case AvroSchemaTypesEnum.RECORD:
       return parseComplexType(defaultRecordType);
-    case 'union':
+    case AvroSchemaTypesEnum.UNION:
       return parseUnionType(defaultUnionType);
     default:
       return;
@@ -108,13 +109,13 @@ const initTypeProperties = (tree: INode) => {
     return {};
   }
   switch (tree.type) {
-    case 'decimal':
+    case AvroSchemaTypesEnum.DECIMAL:
       return defaultDecimalTypeProperties;
-    case 'time':
+    case AvroSchemaTypesEnum.TIME:
       return defaultTimeTypeProperties;
-    case 'timestamp':
+    case AvroSchemaTypesEnum.TIMESTAMP:
       return defaultTimeStampTypeProperties;
-    case 'date':
+    case AvroSchemaTypesEnum.DATE:
       return defaultDateTypeProperties;
     default:
       return {};

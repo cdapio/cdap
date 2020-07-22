@@ -26,6 +26,7 @@ import { DecimalTypeAttributes } from 'components/AbstractWidget/SchemaEditor/Ro
 import If from 'components/If';
 import { ITypeProperties } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
 import { IOnchangeHandler } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
+import { AvroSchemaTypesEnum } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 interface IFieldPropertiesPopoverButtonProps {
   nullable: boolean;
@@ -101,7 +102,7 @@ function FieldPropertiesPopoverButton({
           <If condition={!isFlatRowTypeComplex(type)}>
             <strong>No Attributes</strong>
           </If>
-          <If condition={type === 'record' || type === 'enum'}>
+          <If condition={type === AvroSchemaTypesEnum.RECORD || type === AvroSchemaTypesEnum.ENUM}>
             <strong>Attributes</strong>
             <RecordEnumTypeAttributes
               typeProperties={typeProperties}
@@ -109,7 +110,7 @@ function FieldPropertiesPopoverButton({
               handleClose={handleClose}
             />
           </If>
-          <If condition={type === 'decimal'}>
+          <If condition={type === AvroSchemaTypesEnum.DECIMAL}>
             <strong>Attributes</strong>
             <DecimalTypeAttributes
               typeProperties={typeProperties}

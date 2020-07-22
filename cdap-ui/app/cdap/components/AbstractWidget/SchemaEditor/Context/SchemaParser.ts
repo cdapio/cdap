@@ -32,6 +32,7 @@ import uuidV4 from 'uuid/v4';
 import {
   InternalTypesEnum,
   defaultFieldType,
+  AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 type ITypeProperties = Record<string, any>;
@@ -106,7 +107,7 @@ function parseUnionType(type): IOrderedChildren {
  * }
  * @param type avro array type
  * {
- *  type: 'array',
+ *  type: AvroSchemaTypesEnum.ARRAY,
  *  items: 'string'
  * }
  */
@@ -157,7 +158,7 @@ function parseArrayType(type): IOrderedChildren {
  * }
  * @param type avro enum type
  * {
- *  type: 'enum',
+ *  type: AvroSchemaTypesEnum.ENUM,
  *  symbols: ['symbol1', 'symbol2', ....]
  * }
  */
@@ -283,19 +284,19 @@ function parseComplexType(type): IOrderedChildren {
   const complexTypeName = getComplexTypeName(type);
   let record: IOrderedChildren = {};
   switch (complexTypeName) {
-    case 'enum':
+    case AvroSchemaTypesEnum.ENUM:
       record = parseEnumType(type);
       break;
-    case 'array':
+    case AvroSchemaTypesEnum.ARRAY:
       record = parseArrayType(type);
       break;
-    case 'record':
+    case AvroSchemaTypesEnum.RECORD:
       record = parseRecordType(type);
       break;
-    case 'union':
+    case AvroSchemaTypesEnum.UNION:
       record = parseUnionType(type);
       break;
-    case 'map':
+    case AvroSchemaTypesEnum.MAP:
       record = parseMapType(type);
       break;
     default:
@@ -313,33 +314,33 @@ function checkForLogicalType(field: Partial<IFieldType | IFieldTypeNullable>) {
   let type = field.type;
   type = getNonNullableType(type) as ILogicalTypeBase;
   switch (type.logicalType) {
-    case 'decimal':
+    case AvroSchemaTypesEnum.DECIMAL:
       return {
         typeProperties: {
-          type: 'bytes',
+          type: AvroSchemaTypesEnum.BYTES,
           logicalType: type.logicalType,
           precision: type.precision,
           scale: type.scale,
         },
       };
-    case 'date':
+    case AvroSchemaTypesEnum.DATE:
       return {
         typeProperties: {
-          type: 'int',
+          type: AvroSchemaTypesEnum.INT,
           logicalType: type.logicalType,
         },
       };
-    case 'time-micros':
+    case AvroSchemaTypesEnum.TIMEMICROS:
       return {
         typeProperties: {
-          type: 'long',
+          type: AvroSchemaTypesEnum.LONG,
           logicalType: type.logicalType,
         },
       };
-    case 'timestamp-micros':
+    case AvroSchemaTypesEnum.TIMESTAMPMICROS:
       return {
         typeProperties: {
-          type: 'long',
+          type: AvroSchemaTypesEnum.LONG,
           logicalType: type.logicalType,
         },
       };
@@ -411,7 +412,7 @@ function parseSchema(avroSchema: ISchemaType, name = 'etlSchemaBody'): INode {
   const root: INode = {
     name,
     internalType: 'schema', // The 'schema' is only used for top level schema.
-    type: 'record',
+    type: AvroSchemaTypesEnum.RECORD,
     id: uuidV4(),
     children: {
       order: [],

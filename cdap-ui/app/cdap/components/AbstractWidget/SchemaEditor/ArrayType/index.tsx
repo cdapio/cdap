@@ -15,7 +15,10 @@
  */
 
 import * as React from 'react';
-import { schemaTypes } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  schemaTypes,
+  AvroSchemaTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { SingleColumnWrapper } from 'components/AbstractWidget/SchemaEditor/SingleColumnWrapper';
 import Select from 'components/AbstractWidget/FormInputs/Select';
 import { IFieldTypeBaseProps } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
@@ -66,7 +69,7 @@ const ArrayTypeBase = ({
       <RowButtons
         disabled={disabled}
         nullable={fieldNullable}
-        onNullable={type === 'union' ? undefined : onNullable}
+        onNullable={type === AvroSchemaTypesEnum.UNION ? undefined : onNullable}
         type={fieldType}
         onChange={onTypePropertiesChangeHandler}
         typeProperties={fieldTypeProperties}

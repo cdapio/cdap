@@ -14,26 +14,35 @@
  * the License.
  */
 
+import { AvroSchemaTypesEnum } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 /**
  * Contains types used in parsing an avro schema.
  * TODO: This is a work in progress. We don't use these types yet fully
  * in the schema parser yet.
  */
-type IComplexTypeNames = 'array' | 'enum' | 'map' | 'record' | 'union';
+type IComplexTypeNames =
+  | AvroSchemaTypesEnum.ARRAY
+  | AvroSchemaTypesEnum.ENUM
+  | AvroSchemaTypesEnum.MAP
+  | AvroSchemaTypesEnum.RECORD
+  | AvroSchemaTypesEnum.UNION;
 type ISimpleType =
-  | 'boolean'
-  | 'bytes'
-  | 'date'
-  | 'decimal'
-  | 'double'
-  | 'float'
-  | 'int'
-  | 'long'
-  | 'number'
-  | 'string'
-  | 'time'
-  | 'timestamp';
-type ILogicalTypeNames = 'timestamp-micros' | 'date' | 'time-micros' | 'decimal';
+  | AvroSchemaTypesEnum.BOOLEAN
+  | AvroSchemaTypesEnum.BYTES
+  | AvroSchemaTypesEnum.DATE
+  | AvroSchemaTypesEnum.DECIMAL
+  | AvroSchemaTypesEnum.DOUBLE
+  | AvroSchemaTypesEnum.FLOAT
+  | AvroSchemaTypesEnum.INT
+  | AvroSchemaTypesEnum.LONG
+  | AvroSchemaTypesEnum.STRING
+  | AvroSchemaTypesEnum.TIME
+  | AvroSchemaTypesEnum.TIMESTAMP;
+type ILogicalTypeNames =
+  | AvroSchemaTypesEnum.TIMESTAMPMICROS
+  | AvroSchemaTypesEnum.DATE
+  | AvroSchemaTypesEnum.TIMEMICROS
+  | AvroSchemaTypesEnum.DECIMAL;
 
 type IDisplayType = ISimpleType | IComplexTypeNames;
 
@@ -63,7 +72,7 @@ interface IFieldBaseType {
 }
 
 interface IEnumFieldBase {
-  type: 'enum';
+  type: AvroSchemaTypesEnum.ENUM;
   symbols: string[];
   doc?: string;
   aliases?: string[];
@@ -76,7 +85,7 @@ interface IEnumFieldNullable extends IFieldBaseType {
 }
 
 interface IMapFieldBase {
-  type: 'map';
+  type: AvroSchemaTypesEnum.MAP;
   keys: ISimpleType | ISimpleTypeNullable | IComplexType | IComplexTypeFieldNullable;
   values: ISimpleType | ISimpleTypeNullable | IComplexType | IComplexTypeFieldNullable;
 }
@@ -88,7 +97,7 @@ interface IMapFieldNullable extends IFieldBaseType {
 }
 
 interface IArrayFieldBase {
-  type: 'array';
+  type: AvroSchemaTypesEnum.ARRAY;
   items: ISimpleType | ISimpleTypeNullable | IComplexType | IComplexTypeFieldNullable;
 }
 
@@ -129,7 +138,7 @@ interface IFieldTypeNullable extends IFieldBaseType {
 }
 
 interface IRecordField extends IFieldBaseType {
-  type: 'record';
+  type: AvroSchemaTypesEnum.RECORD;
   fields: Array<IFieldType | IFieldTypeNullable>;
   doc?: string;
   aliases?: string[];

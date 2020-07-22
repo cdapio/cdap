@@ -19,6 +19,7 @@ import Select from 'components/AbstractWidget/FormInputs/Select';
 import {
   schemaTypes,
   InternalTypesEnum,
+  AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import Box from '@material-ui/core/Box';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
@@ -102,7 +103,7 @@ const MapTypeBase = ({
       <RowButtons
         disabled={disabled}
         nullable={fieldNullable}
-        onNullable={type === 'union' ? undefined : onNullable}
+        onNullable={type === AvroSchemaTypesEnum.UNION ? undefined : onNullable}
         type={fieldType}
         onChange={onTypePropertiesChangeHandler}
         typeProperties={fieldTypeProperties}

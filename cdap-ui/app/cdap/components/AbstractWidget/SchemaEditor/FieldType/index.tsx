@@ -17,7 +17,10 @@
 import * as React from 'react';
 import { FieldInputWrapper } from 'components/AbstractWidget/SchemaEditor/FieldWrapper';
 import Select from 'components/AbstractWidget/FormInputs/Select';
-import { schemaTypes } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  schemaTypes,
+  AvroSchemaTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { IFieldTypeBaseProps } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
 import { RowButtons } from 'components/AbstractWidget/SchemaEditor/RowButtons';
 import TextboxOnValium from 'components/TextboxOnValium';
@@ -124,7 +127,7 @@ const FieldTypeBase = ({
       <RowButtons
         disabled={disabled}
         nullable={fieldNullable}
-        onNullable={type === 'union' ? undefined : onNullable}
+        onNullable={type === AvroSchemaTypesEnum.UNION ? undefined : onNullable}
         type={fieldType}
         onAdd={onAdd}
         onRemove={onRemove}

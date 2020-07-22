@@ -24,6 +24,7 @@ import If from 'components/If';
 import { IComplexTypeNames, ISimpleType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import { Nullable } from 'components/AbstractWidget/SchemaEditor/RowButtons/Nullable';
 import { IOnchangeHandler } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
+import { AvroSchemaTypesEnum } from '../SchemaConstants';
 /**
  * Generic row buttons (add, nullable & remove buttons)
  * Based on the availability of handlers for each action each
@@ -74,7 +75,13 @@ function RowButtons({
       <If condition={typeof onRemove === 'function'} invisible>
         <RemoveRowButton onRemove={disabled ? undefined : onRemove} />
       </If>
-      <If condition={type === 'record' || type === 'enum' || type === 'decimal'}>
+      <If
+        condition={
+          type === AvroSchemaTypesEnum.RECORD ||
+          type === AvroSchemaTypesEnum.ENUM ||
+          type === AvroSchemaTypesEnum.DECIMAL
+        }
+      >
         <FieldPropertiesPopoverButton
           nullable={nullable}
           onNullable={disabled ? undefined : onNullable}
