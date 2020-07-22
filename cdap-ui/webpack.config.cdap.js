@@ -347,6 +347,7 @@ var webpackConfig = {
     publicPath: '/cdap_assets/',
     watchContentBase: false,
     historyApiFallback: true,
+    compress: true,
     hot: true,
     inline: true,
     proxy: {
