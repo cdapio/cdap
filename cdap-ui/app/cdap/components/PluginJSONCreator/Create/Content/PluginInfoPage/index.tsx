@@ -52,7 +52,7 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
 
   return (
     <div>
-      <Heading type={HeadingTypes.h3} label="Plugin Information 1" />
+      <Heading type={HeadingTypes.h3} label="Plugin Informa" />
       <div className={classes.basicPluginInput}>
         <PluginInput
           widgetType={'textbox'}

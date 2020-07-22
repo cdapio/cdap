@@ -76,7 +76,7 @@ const getWebpackDllPlugins = (mode) => {
 var plugins = [
   //new webpack.HotModuleReplacementPlugin(),
   new CleanWebpackPlugin(cleanOptions),
-  //new CaseSensitivePathsPlugin(),
+  new CaseSensitivePathsPlugin(),
   ...getWebpackDllPlugins(mode),
   new LodashModuleReplacementPlugin({
     shorthands: true,
@@ -114,6 +114,11 @@ var plugins = [
     hash: true,
     inject: false,
     mode: isModeProduction(mode) ? '' : 'development.',
+  }),
+  new StyleLintPlugin({
+    syntax: 'scss',
+    files: ['**/*.scss'],
+    lintDirtyModulesOnly: true,
   }),
 ];
 if (!isModeProduction(mode)) {
