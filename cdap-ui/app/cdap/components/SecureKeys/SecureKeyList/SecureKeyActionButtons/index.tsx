@@ -14,6 +14,8 @@
  * the License.
  */
 
+import * as React from 'react';
+
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
@@ -21,7 +23,6 @@ import IconButton from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
-import React from 'react';
 import { preventPropagation } from 'services/helpers';
 
 const styles = (theme): StyleRules => {

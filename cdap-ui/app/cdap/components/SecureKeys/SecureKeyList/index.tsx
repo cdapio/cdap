@@ -22,6 +22,7 @@ import Button from '@material-ui/core/Button';
 import Paper from '@material-ui/core/Paper';
 import SecureKeyActionButtons from 'components/SecureKeys/SecureKeyList/SecureKeyActionButtons';
 import SecureKeyCreate from 'components/SecureKeys/SecureKeyCreate';
+import SecureKeySearch from 'components/SecureKeys/SecureKeySearch';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -32,15 +33,15 @@ export const CustomTableCell = withStyles((theme) => ({
   head: {
     backgroundColor: theme.palette.grey['300'],
     color: theme.palette.common.white,
-    padding: 10,
-    fontSize: 14,
+    padding: '5px 10px',
+    fontSize: 13,
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
     },
   },
   body: {
-    padding: 10,
-    fontSize: 14,
+    padding: '5px 10px',
+    fontSize: 13,
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
     },
@@ -50,6 +51,7 @@ export const CustomTableCell = withStyles((theme) => ({
 const styles = (theme): StyleRules => {
   return {
     secureKeysTitle: {
+      fontSize: '20px',
       paddingTop: theme.spacing(1),
     },
     secureKeyManager: {
@@ -60,6 +62,10 @@ const styles = (theme): StyleRules => {
     addSecureKeyButton: {
       gridRow: '1',
       gridColumnStart: '1',
+    },
+    secureKeySearch: {
+      gridRow: '1',
+      gridColumnStart: '7',
     },
     root: {
       width: '100%',
@@ -93,8 +99,8 @@ interface ISecureKeyListProps extends WithStyles<typeof styles> {
   state: any;
   alertSuccess: () => void;
   alertFailure: () => void;
-  openDeleteDialog: (index: number) => void;
   openEditDialog: (index: number) => void;
+  openDeleteDialog: (index: number) => void;
 }
 
 const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
@@ -102,16 +108,31 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
   state,
   alertSuccess,
   alertFailure,
-  openDeleteDialog,
   openEditDialog,
+  openDeleteDialog,
 }) => {
   const { secureKeys } = state;
 
+  // used for filtering down secure keys
+  const [searchText, setSearchText] = React.useState('');
+
   const [createDialogOpen, setCreateDialogOpen] = React.useState(false);
+
+  const filteredSecureKeys = secureKeys.filter(
+    (key) =>
+      key
+        .get('name')
+        .toLowerCase()
+        .includes(searchText.toLowerCase()) ||
+      key
+        .get('description')
+        .toLowerCase()
+        .includes(searchText.toLowerCase())
+  );
 
   return (
     <div>
-      <h1 className={classes.secureKeysTitle}>Secure keys</h1>
+      <div className={classes.secureKeysTitle}>Secure keys</div>
       <div className={classes.secureKeyManager}>
         <div className={classes.addSecureKeyButton}>
           <Button
@@ -120,8 +141,11 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
             size="small"
             onClick={() => setCreateDialogOpen(true)}
           >
-            Add Secure Key
+            Create Secure Key
           </Button>
+        </div>
+        <div className={classes.secureKeySearch}>
+          <SecureKeySearch searchText={searchText} setSearchText={setSearchText} />
         </div>
       </div>
 
@@ -135,7 +159,7 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
             </TableRow>
           </TableHead>
           <TableBody>
-            {secureKeys.map((keyMetadata, keyIndex) => {
+            {filteredSecureKeys.map((keyMetadata, keyIndex) => {
               const keyID = keyMetadata.get('name');
               return (
                 <TableRow
