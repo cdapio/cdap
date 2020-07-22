@@ -15,12 +15,19 @@
  */
 
 import { combineReducers, createStore } from 'redux';
-import { getDateID, getRequestsByDate } from 'components/HttpExecutor/utilities';
+import {
+  compareByTimestamp,
+  getDateID,
+  getRequestsByDate,
+} from 'components/HttpExecutor/utilities';
 
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import { Map } from 'immutable';
 import { REQUEST_HISTORY } from 'components/HttpExecutor/RequestHistoryTab';
 import uuidV4 from 'uuid/v4';
+
+// Limit number of log entries to be <= REQUEST_LOG_LIMIT.
+const REQUEST_LOG_LIMIT = 200;
 
 const defaultAction = {
   action: '',
@@ -85,14 +92,40 @@ const addRequestLog = (state) => {
   const timestamp = new Date(newCall.timestamp);
   const dateID = getDateID(timestamp);
   const requestsGroup = getRequestsByDate(requestLog, dateID);
-  const newRequestLog = requestLog.set(dateID, requestsGroup.insert(0, newCall));
+  let newRequestLog = requestLog.set(dateID, requestsGroup.insert(0, newCall));
 
   // Saving request histories to the localStorage
-  const storedLogs = newRequestLog
+  let localStorageHistories = newRequestLog
     .valueSeq()
     .toJS()
     .flat();
-  localStorage.setItem(REQUEST_HISTORY, JSON.stringify(storedLogs));
+
+  // Limit log entries to be <= REQUEST_LOG_LIMIT.
+  // If the log entries count exceeds REQUEST_LOG_LIMIT, the oldest log should be removed.
+  const logCount = localStorageHistories.length;
+  if (logCount >= REQUEST_LOG_LIMIT) {
+    const sortedDateIDs = requestLog
+      .keySeq()
+      .toArray()
+      .sort((a, b) => compareByTimestamp(a, b));
+
+    // Find the oldest date
+    const oldestDateID = sortedDateIDs[sortedDateIDs.length - 1];
+
+    // Find the oldest request
+    const oldestRequests = getRequestsByDate(newRequestLog, oldestDateID);
+    const oldestRequestID = oldestRequests.get(-1).timestamp;
+
+    // Delete the oldest request
+    state.requestLog = newRequestLog;
+    newRequestLog = deleteRequestLog(state, oldestRequestID).requestLog;
+    localStorageHistories = newRequestLog
+      .valueSeq()
+      .toJS()
+      .flat();
+  }
+
+  localStorage.setItem(REQUEST_HISTORY, JSON.stringify(localStorageHistories));
   return {
     ...state,
     requestLog: newRequestLog,
