@@ -20,15 +20,21 @@ import { List, Map } from 'immutable';
 import { getDateID, getRequestsByDate } from 'components/HttpExecutor/utilities';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
+import Button from '@material-ui/core/Button';
+import ClearAllDialog from 'components/HttpExecutor/RequestHistoryTab/RequestActionDialogs/ClearAllDialog';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
-import ExpansionPanelActions from '@material-ui/core/ExpansionPanelActions';
+import ExpansionPanelDetails from '@material-ui/core/ExpansionPanelDetails';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
-import { REQUEST_HISTORY } from 'components/HttpExecutor/store/HttpExecutorStore';
+import If from 'components/If';
 import { RequestMethod } from 'components/HttpExecutor';
+import RequestRow from 'components/HttpExecutor/RequestHistoryTab/RequestRow';
+import RequestSearch from 'components/HttpExecutor/RequestHistoryTab/RequestSearch';
 import Typography from '@material-ui/core/Typography';
-import classnames from 'classnames';
 import { connect } from 'react-redux';
+
+export const REQUEST_HISTORY = 'RequestHistory';
 
 export interface IRequestHistory {
   timestamp: string;
@@ -48,87 +54,6 @@ export interface IRequestHistory {
   statusCode: number;
 }
 
-const styles = (theme): StyleRules => {
-  return {
-    root: {
-      borderRight: `1px solid ${theme.palette.grey[300]}`,
-      height: '100%',
-    },
-    timestampGroup: {
-      display: 'flex',
-      flexFlow: 'column',
-    },
-    requestRow: {
-      padding: '10px',
-      lineHeight: '24px',
-      display: 'grid',
-      width: '100%',
-      gridTemplateColumns: '50px 1fr',
-      cursor: 'pointer',
-
-      '&:hover': {
-        backgroundColor: theme.palette.grey[700],
-      },
-    },
-    requestMethod: {
-      paddingLeft: '5px',
-      color: theme.palette.white[50],
-      width: '100%',
-      height: '100%',
-      fontWeight: 600,
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'flex-start',
-      fontSize: '10px',
-    },
-    requestMethodText: {
-      width: '100%',
-      textAlign: 'left',
-      alignSelf: 'center',
-    },
-    requestPath: {
-      maxWidth: '80%',
-      minWidth: '80%',
-      wordWrap: 'break-word',
-      textAlign: 'left',
-      alignSelf: 'center',
-      textTransform: 'lowercase',
-      fontSize: '10px',
-      display: 'inline-block',
-      lineHeight: '1.3',
-    },
-    getMethod: {
-      color: theme.palette.green[50],
-    },
-    postMethod: {
-      color: theme.palette.orange[50],
-    },
-    putMethod: {
-      color: theme.palette.yellow[50],
-    },
-    deleteMethod: {
-      color: theme.palette.red[50],
-    },
-  };
-};
-
-const StyledExpansionPanel = withStyles((theme) => ({
-  root: {
-    '&$expanded': {
-      margin: 0,
-    },
-    borderBottom: `1px solid ${theme.palette.grey[300]}`,
-  },
-  /* Styles applied to the root element if `expanded={true}`. */
-  expanded: {},
-}))(ExpansionPanel);
-
-interface IRequestHistoryTabProps extends WithStyles<typeof styles> {
-  requestLog: Map<string, List<IRequestHistory>>;
-  setRequestLog: (requestLog: Map<string, List<IRequestHistory>>) => void;
-  onRequestClick: (request: IRequestHistory) => void;
-}
-
 const mapStateToProps = (state) => {
   return {
     requestLog: state.http.requestLog,
@@ -145,24 +70,90 @@ const mapDispatch = (dispatch) => {
         },
       });
     },
-    onRequestClick: (request: IRequestHistory) => {
-      dispatch({
-        type: HttpExecutorActions.setRequestHistoryView,
-        payload: request,
-      });
+  };
+};
+
+const styles = (theme): StyleRules => {
+  return {
+    root: {
+      borderRight: `1px solid ${theme.palette.grey[300]}`,
+      height: '100%',
+    },
+    introRow: {
+      display: 'grid',
+      width: '100%',
+      gridTemplateColumns: 'repeat(7, 1fr)',
+      padding: `${theme.spacing(1)}px 0`,
+    },
+    title: {
+      fontSize: '15px',
+      paddingLeft: `${theme.Spacing(3)}px`,
+      gridColumnStart: '1',
+      width: '100px',
+      overflow: 'hidden',
+      whiteSpace: 'nowrap',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    clearAllBtn: {
+      width: '100%',
+      gridColumnStart: '7',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      textTransform: 'none',
+    },
+    timestampGroup: {
+      display: 'flex',
+      flexFlow: 'column',
+      padding: '0',
     },
   };
 };
+
+const StyledExpansionPanel = withStyles((theme) => ({
+  root: {
+    '&$expanded': {
+      margin: 0,
+    },
+    borderBottom: `1px solid ${theme.palette.grey[300]}`,
+  },
+  /* Styles applied to the root element if `expanded={true}`. */
+  expanded: {},
+}))(ExpansionPanel);
+
+const StyledExpansionPanelSummary = withStyles({
+  expandIcon: {
+    order: -1,
+    paddingRight: '10px',
+  },
+  root: {
+    height: '35px',
+    padding: '0px',
+  },
+})(ExpansionPanelSummary);
+
+interface IRequestHistoryTabProps extends WithStyles<typeof styles> {
+  requestLog: Map<string, List<IRequestHistory>>;
+  setRequestLog: (requestLog: Map<string, List<IRequestHistory>>) => void;
+}
 
 const RequestHistoryTabView: React.FC<IRequestHistoryTabProps> = ({
   classes,
   requestLog,
   setRequestLog,
-  onRequestClick,
 }) => {
+  const [ClearAllDialogOpen, setClearAllDialogOpen] = React.useState(false);
+  const [searchText, setSearchText] = React.useState('');
+
   // Query through localstorage to populate RequestHistoryTab
   // requestLog maps timestamp date (e.g. April 5th) to a list of corresponding request histories, sorted by timestamp
   React.useEffect(() => {
+    fetchFromLocalStorage();
+  }, []);
+
+  const fetchFromLocalStorage = () => {
     // Group and sort logs by timestamp
     let newRequestLog = Map<string, List<IRequestHistory>>({});
 
@@ -171,17 +162,9 @@ const RequestHistoryTabView: React.FC<IRequestHistoryTabProps> = ({
       try {
         const savedCalls = List(JSON.parse(storedLogs));
         savedCalls
-          .sort((a: IRequestHistory, b: IRequestHistory) => {
-            const timestampA = new Date(a.timestamp);
-            const timestampB = new Date(b.timestamp);
-            if (timestampA < timestampB) {
-              return 1;
-            } else if (timestampA > timestampB) {
-              return -1;
-            } else {
-              return 0;
-            }
-          })
+          .sort((a: IRequestHistory, b: IRequestHistory) =>
+            compareByTimestamp(a.timestamp, b.timestamp)
+          )
           .forEach((req: IRequestHistory) => {
             const timestamp = new Date(req.timestamp);
             const dateID: string = getDateID(timestamp);
@@ -197,43 +180,62 @@ const RequestHistoryTabView: React.FC<IRequestHistoryTabProps> = ({
       localStorage.setItem(REQUEST_HISTORY, JSON.stringify([]));
       setRequestLog(Map({}));
     }
-  }, []);
+  };
+
+  const compareByTimestamp = (a: string, b: string) => {
+    const timestampA = new Date(a);
+    const timestampB = new Date(b);
+    if (timestampA < timestampB) {
+      return 1;
+    } else if (timestampA > timestampB) {
+      return -1;
+    } else {
+      return 0;
+    }
+  };
+
+  const getFilteredRequestLogs = (requests: List<IRequestHistory>, query: string) => {
+    return requests.filter((request) => request.path.includes(query));
+  };
 
   return (
     <div className={classes.root}>
-      {requestLog.keySeq().map((timestamp) => {
-        const requestHistories = requestLog.get(timestamp);
-        return (
-          <StyledExpansionPanel key={timestamp} defaultExpanded elevation={0}>
-            <ExpansionPanelSummary classes={{ root: classes.root, expanded: classes.expanded }}>
-              <Typography>{timestamp}</Typography>
-            </ExpansionPanelSummary>
-            <ExpansionPanelActions className={classes.timestampGroup}>
-              {requestHistories.map((request, requestIndex) => {
-                return (
-                  <div
-                    key={`request-${requestIndex}`}
-                    className={classes.requestRow}
-                    onClick={() => onRequestClick(request)}
-                  >
-                    <div
-                      className={classnames(classes.requestMethod, {
-                        [classes.getMethod]: request.method === RequestMethod.GET,
-                        [classes.postMethod]: request.method === RequestMethod.POST,
-                        [classes.deleteMethod]: request.method === RequestMethod.DELETE,
-                        [classes.putMethod]: request.method === RequestMethod.PUT,
-                      })}
-                    >
-                      <div className={classes.requestMethodText}>{request.method}</div>
-                    </div>
-                    <div className={classes.requestPath}>{request.path}</div>
-                  </div>
-                );
-              })}
-            </ExpansionPanelActions>
-          </StyledExpansionPanel>
-        );
-      })}
+      <div className={classes.introRow}>
+        <div className={classes.title}>Calls history</div>
+        <Button
+          color="primary"
+          onClick={() => setClearAllDialogOpen(true)}
+          className={classes.clearAllBtn}
+        >
+          Clear
+        </Button>
+      </div>
+      <RequestSearch searchText={searchText} setSearchText={setSearchText} />
+      {requestLog
+        .keySeq()
+        .toArray()
+        .sort((a: string, b: string) => compareByTimestamp(a, b))
+        .map((dateID: string) => {
+          const requests: List<IRequestHistory> = requestLog.get(dateID);
+          const filteredRequests = getFilteredRequestLogs(requests, searchText);
+          return (
+            <div key={dateID}>
+              <If condition={filteredRequests.size > 0}>
+                <StyledExpansionPanel key={dateID} defaultExpanded elevation={0}>
+                  <StyledExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
+                    <Typography>{dateID}</Typography>
+                  </StyledExpansionPanelSummary>
+                  <ExpansionPanelDetails className={classes.timestampGroup}>
+                    {filteredRequests.map((request, requestIndex) => (
+                      <RequestRow key={requestIndex} request={request} />
+                    ))}
+                  </ExpansionPanelDetails>
+                </StyledExpansionPanel>
+              </If>
+            </div>
+          );
+        })}
+      <ClearAllDialog open={ClearAllDialogOpen} handleClose={() => setClearAllDialogOpen(false)} />
     </div>
   );
 };

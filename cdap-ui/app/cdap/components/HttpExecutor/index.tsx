@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,10 +24,17 @@ import { Provider } from 'react-redux';
 import React from 'react';
 import RequestHistoryTab from 'components/HttpExecutor/RequestHistoryTab';
 import RequestMetadata from 'components/HttpExecutor/RequestMetadata';
+import SaveCalls from 'components/HttpExecutor/SaveCalls';
 import SendButton from 'components/HttpExecutor/SendButton';
 import StatusCode from 'components/HttpExecutor/StatusCode';
 import { StyleRules } from '@material-ui/core/styles';
 import T from 'i18n-react';
+
+const PREFIX = 'features.HttpExecutor';
+
+require('./HttpExecutor.scss');
+
+export const LEFT_PANEL_WIDTH = 500;
 
 export enum RequestMethod {
   GET = 'GET',
@@ -35,12 +42,6 @@ export enum RequestMethod {
   PUT = 'PUT',
   DELETE = 'DELETE',
 }
-
-const PREFIX = 'features.HttpExecutor';
-
-require('./HttpExecutor.scss');
-
-export const LEFT_PANEL_WIDTH = 300;
 
 const styles = (theme): StyleRules => {
   return {
@@ -57,6 +58,27 @@ const styles = (theme): StyleRules => {
         overflowY: 'auto',
       },
     },
+    introPageRow: {
+      display: 'grid',
+      width: '100%',
+      gridTemplateColumns: 'repeat(7, 1fr)',
+      paddingTop: `${theme.Spacing(2)}px`,
+    },
+    pageTitle: {
+      fontSize: '20px',
+      paddingLeft: `${theme.Spacing(3)}px`,
+      gridColumnStart: '1',
+      gridColumnEnd: '2',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    saveCalls: {
+      gridColumnStart: '7',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
   };
 };
 
@@ -66,6 +88,13 @@ const HttpExecutorView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
       <div className={classes.content}>
         <RequestHistoryTab />
         <div className="http-executor">
+          <div className={classes.introPageRow}>
+            <div className={classes.pageTitle}>Http calls executor</div>
+            <div className={classes.saveCalls}>
+              <SaveCalls />
+            </div>
+          </div>
+
           <div className="request-section">
             <MethodSelector />
             <InputPath />
@@ -80,7 +109,6 @@ const HttpExecutorView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                 <StatusCode />
               </span>
             </div>
-
             <HttpResponse />
           </div>
         </div>

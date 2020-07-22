@@ -25,6 +25,9 @@ const HttpExecutorActions = {
   reset: 'HTTP_RESET',
   setRequestLog: 'HTTP_SET_REQUEST_LOG',
   setRequestHistoryView: 'HTTP_SET_REQUEST_HISTORY_VIEW',
+  toggleSaveCalls: 'HTTP_TOGGLE_SAVE_CALLS',
+  deleteRequestLog: 'HTTP_DELETE_REQUEST_LOG',
+  clearAllRequestLog: 'HTTP_CLEAR_ALL_REQUEST_LOG',
 };
 
 export default HttpExecutorActions;

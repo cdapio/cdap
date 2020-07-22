@@ -19,6 +19,7 @@ import { getDateID, getRequestsByDate } from 'components/HttpExecutor/utilities'
 
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import { Map } from 'immutable';
+import { REQUEST_HISTORY } from 'components/HttpExecutor/RequestHistoryTab';
 import uuidV4 from 'uuid/v4';
 
 const defaultAction = {
@@ -43,15 +44,31 @@ const defaultInitialState = {
   statusCode: 0,
   loading: false,
   activeTab: 0,
-  incomingRequest: false,
   requestLog: Map({}),
+  saveCalls: true,
+  selectedRequest: null,
 };
 
-export const REQUEST_HISTORY = 'RequestHistory';
-
 const setResponse = (state, action) => {
-  const { method, path, body, headers, requestLog } = state;
+  const { saveCalls } = state;
   const { response, statusCode } = action.payload;
+
+  const newState = {
+    ...state,
+    response,
+    statusCode,
+    loading: false,
+  };
+
+  if (saveCalls) {
+    return addRequestLog(newState);
+  } else {
+    return newState;
+  }
+};
+
+const addRequestLog = (state) => {
+  const { method, path, body, headers, response, statusCode, requestLog } = state;
 
   const newCall = {
     method,
@@ -76,13 +93,46 @@ const setResponse = (state, action) => {
     .toJS()
     .flat();
   localStorage.setItem(REQUEST_HISTORY, JSON.stringify(storedLogs));
+  return {
+    ...state,
+    requestLog: newRequestLog,
+  };
+};
+
+const deleteRequestLog = (state, requestID) => {
+  if (!requestID) {
+    return;
+  }
+  const { requestLog } = state;
+
+  // Delete the request log from local state
+  const dateID = getDateID(new Date(requestID));
+  const requestsGroup = getRequestsByDate(requestLog, dateID);
+  const requestToDelete = requestsGroup.findIndex((data) => data.requestID === requestID);
+  const newRequestLog = requestLog.set(dateID, requestsGroup.delete(requestToDelete));
+
+  // Delete the specified request log from local storage
+  const storedLogs = newRequestLog
+    .valueSeq()
+    .toJS()
+    .flat();
+  localStorage.setItem(REQUEST_HISTORY, JSON.stringify(storedLogs));
 
   return {
     ...state,
-    response,
-    statusCode,
-    loading: false,
-    // When new request history is incoming, update RequestHistoryTab
+    requestLog: newRequestLog,
+  };
+};
+
+const clearAllRequestLog = (state) => {
+  // Delete every request log from local state
+  const newRequestLog = Map({});
+
+  // Delete every request log from local storage
+  localStorage.removeItem(REQUEST_HISTORY);
+
+  return {
+    ...state,
     requestLog: newRequestLog,
   };
 };
@@ -139,7 +189,17 @@ const http = (state = defaultInitialState, action = defaultAction) => {
         statusCode: action.payload.statusCode,
         body: action.payload.body,
         headers: action.payload.headers,
+        selectedRequest: action.payload,
       };
+    case HttpExecutorActions.toggleSaveCalls:
+      return {
+        ...state,
+        saveCalls: !state.saveCalls,
+      };
+    case HttpExecutorActions.deleteRequestLog:
+      return deleteRequestLog(state, action.payload.requestID);
+    case HttpExecutorActions.clearAllRequestLog:
+      return clearAllRequestLog(state);
     default:
       return state;
   }
