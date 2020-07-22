@@ -26,3 +26,15 @@ export function getDateID(date: Date) {
 export function getRequestsByDate(log: Map<string, List<IRequestHistory>>, dateID: string) {
   return log.get(dateID) || List([]);
 }
+
+export function compareByTimestamp(a: string, b: string) {
+  const timestampA = new Date(a);
+  const timestampB = new Date(b);
+  if (timestampA < timestampB) {
+    return 1;
+  } else if (timestampA > timestampB) {
+    return -1;
+  } else {
+    return 0;
+  }
+}

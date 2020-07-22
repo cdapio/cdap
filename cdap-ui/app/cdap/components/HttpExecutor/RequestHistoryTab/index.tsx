@@ -17,7 +17,11 @@
 import * as React from 'react';
 
 import { List, Map } from 'immutable';
-import { getDateID, getRequestsByDate } from 'components/HttpExecutor/utilities';
+import {
+  compareByTimestamp,
+  getDateID,
+  getRequestsByDate,
+} from 'components/HttpExecutor/utilities';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 import Button from '@material-ui/core/Button';
@@ -179,18 +183,6 @@ const RequestHistoryTabView: React.FC<IRequestHistoryTabProps> = ({
       // If REQUEST_HISTORY key doesn't exist in localStorage, initialize it
       localStorage.setItem(REQUEST_HISTORY, JSON.stringify([]));
       setRequestLog(Map({}));
-    }
-  };
-
-  const compareByTimestamp = (a: string, b: string) => {
-    const timestampA = new Date(a);
-    const timestampB = new Date(b);
-    if (timestampA < timestampB) {
-      return 1;
-    } else if (timestampA > timestampB) {
-      return -1;
-    } else {
-      return 0;
     }
   };
 
