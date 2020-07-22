@@ -32,6 +32,10 @@ import { grey, orange } from 'components/ThemeWrapper/colors';
 import If from 'components/If';
 import TopPanel from 'components/FieldLevelLineage/v2/TopPanel';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import Heading, { HeadingTypes } from 'components/Heading';
+import T from 'i18n-react';
+
+const PREFIX = 'features.FieldLevelLineage';
 
 const styles = (theme): StyleRules => {
   return {
@@ -61,6 +65,19 @@ const styles = (theme): StyleRules => {
     },
     summaryCol: {
       maxWidth: '30%',
+    },
+    errorContainer: {
+      margin: '25vh auto 0',
+      maxWidth: '50vw',
+    },
+    errorMessage: {
+      fontWeight: 500,
+    },
+    errorSeparator: {
+      backgroundColor: theme.palette.grey[200],
+    },
+    errorMessageSuggestion: {
+      fontSize: '14px',
     },
   };
 };
@@ -211,6 +228,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
     this.myRef = ReactDOM.findDOMNode(this);
     window.addEventListener('resize', this.debounceRedrawLinks);
   }
+
   public render() {
     return (
       <Consumer>
@@ -225,6 +243,7 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
           activeImpactSets,
           showingOneField,
           loadingLineage,
+          error,
         }) => {
           let visibleLinks = links;
           let visibleCauseSets = causeSets;
@@ -250,10 +269,35 @@ class LineageSummary extends React.Component<{ classes }, ILineageState> {
               </div>
             );
           }
+
+          if (error) {
+            return (
+              <div className={this.props.classes.wrapper}>
+                <TopPanel datasetId={target} />
+
+                <div className={this.props.classes.root}>
+                  <div className={this.props.classes.errorContainer}>
+                    <Heading
+                      type={HeadingTypes.h4}
+                      label={error}
+                      className={this.props.classes.errorMessage}
+                    />
+                    <hr className={this.props.classes.errorSeparator} />
+                    <div className={this.props.classes.errorMessageSuggestion}>
+                      <span>{T.translate(`${PREFIX}.Error.suggestionHeading`)}</span>
+                      <br />
+                      <span>{T.translate(`${PREFIX}.Error.suggestionMessage`)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+
           return (
             <div className={this.props.classes.wrapper}>
               <TopPanel datasetId={target} />
-              <If condition={!loadingLineage}>
+              <If condition={!loadingLineage && !error}>
                 <div className={this.props.classes.root} id="fll-container">
                   <svg id="links-container" className={this.props.classes.container}>
                     <g>
