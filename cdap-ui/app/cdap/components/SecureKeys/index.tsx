@@ -75,19 +75,10 @@ const styles = (): StyleRules => {
     content: {
       padding: '50px',
     },
-    loadingBox: {
-      width: '100%',
-      height: '100%',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
   };
 };
 
-interface ISecureKeysProps extends WithStyles<typeof styles> {}
-
-const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
+const SecureKeysView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [state, dispatch] = React.useReducer(reducer, initialState);
 
   const { secureKeyStatus, editMode, deleteMode, loading } = state;
@@ -123,12 +114,10 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
 
   const onEditDialogClose = () => {
     dispatch({ type: 'SET_EDIT_MODE', editMode: false });
-    dispatch({ type: 'SET_ACTIVE_KEY_INDEX', activeKeyIndex: null });
   };
 
   const onDeleteDialogClose = () => {
     dispatch({ type: 'SET_DELETE_MODE', deleteMode: false });
-    dispatch({ type: 'SET_ACTIVE_KEY_INDEX', activeKeyIndex: null });
   };
 
   const alertSuccess = () => {
@@ -166,22 +155,21 @@ const SecureKeysView: React.FC<ISecureKeysProps> = ({ classes }) => {
         onClose={onAlertClose}
       />
 
-      <div className={classes.content}>
-        <If condition={loading}>
-          <div className={classes.loadingBox}>
-            <LoadingSVGCentered />
-          </div>
-        </If>
-        <If condition={!loading}>
+      <If condition={loading}>
+        <LoadingSVGCentered showFullPage />
+      </If>
+
+      <If condition={!loading}>
+        <div className={classes.content}>
           <SecureKeyList
             state={state}
             alertSuccess={alertSuccess}
             alertFailure={alertFailure}
-            openEditDialog={openEditDialog}
             openDeleteDialog={openDeleteDialog}
+            openEditDialog={openEditDialog}
           />
-        </If>
-      </div>
+        </div>
+      </If>
 
       <If condition={editMode}>
         <SecureKeyEdit
