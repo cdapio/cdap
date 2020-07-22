@@ -95,6 +95,10 @@ const LogViewerContainer: React.FC<ILogViewerProps> = ({
 
 const StyledLogViewer = withStyles(styles)(LogViewerContainer);
 
+const WrappedStyles = (props) => {
+  return <StyledLogViewer {...props} />;
+};
+
 const mapStateToProps = (state) => {
   return {
     currentRun: state.currentRun,
@@ -103,5 +107,5 @@ const mapStateToProps = (state) => {
   };
 };
 
-const PipelineLogViewer = connect(mapStateToProps)(StyledLogViewer);
+const PipelineLogViewer = connect(mapStateToProps)(WrappedStyles);
 export default PipelineLogViewer;

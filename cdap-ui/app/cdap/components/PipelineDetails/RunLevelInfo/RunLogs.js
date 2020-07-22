@@ -32,9 +32,12 @@ const PREFIX = 'features.PipelineDetails.RunLevel';
 const RunLogs = ({ currentRun, runs }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
-  React.useEffect(() => {
-    setIsOpen(false);
-  }, [objectQuery(currentRun, 'runid')]);
+  React.useEffect(
+    () => {
+      setIsOpen(false);
+    },
+    [objectQuery(currentRun, 'runid')]
+  );
 
   const LogsBtnComp = () => (
     <div className="run-logs-btn">

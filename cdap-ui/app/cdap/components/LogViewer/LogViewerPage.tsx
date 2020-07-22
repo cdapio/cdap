@@ -67,7 +67,9 @@ interface IStatus {
 }
 
 interface ILogViewerPageProps extends WithStyles<typeof styles> {
-  match: RouterMatch<IMatchParams>;
+  match?: {
+    params?: IMatchParams;
+  };
 }
 
 export function getLogViewerPageUrl(namespace, appId, programType, programId, runId) {
