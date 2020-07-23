@@ -17,6 +17,7 @@
 import { constructUrl } from 'server/url-helper';
 import { getCDAPConfig } from 'server/cdap-config';
 import { getPOSTRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
+import { ApolloError } from 'apollo-server';
 import chunk from 'lodash/chunk';
 
 let cdapConfig;
@@ -28,6 +29,11 @@ export async function batchTotalRuns(req, auth) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
+
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'totalRuns' });
+  }
+
   const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   const chunkedBody = chunk(body, 100);
 
@@ -37,7 +43,7 @@ export async function batchTotalRuns(req, auth) {
         ...options,
         body: reqBody,
       };
-      return requestPromiseWrapper(reqOptions, auth);
+      return requestPromiseWrapper(reqOptions, auth, null, errorModifiersFn);
     })
   );
 

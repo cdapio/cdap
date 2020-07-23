@@ -16,6 +16,7 @@
 
 import { constructUrl } from 'server/url-helper';
 import { getCDAPConfig } from 'server/cdap-config';
+import { ApolloError } from 'apollo-server';
 import { getGETRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
 
 let cdapConfig;
@@ -26,8 +27,11 @@ getCDAPConfig().then(function(value) {
 export async function queryTypeStatusResolver(parent, args, context) {
   const options = getGETRequestOptions();
   options.url = constructUrl(cdapConfig, '/ping');
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'statusPing' });
+  }
 
-  const status = await requestPromiseWrapper(options, context.auth);
+  const status = await requestPromiseWrapper(options, context.auth, null, errorModifiersFn);
 
   return status.trim();
 }
