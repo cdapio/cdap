@@ -16,31 +16,24 @@
 
 package io.cdap.cdap.app.preview;
 
-import com.google.inject.Exposed;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
-import com.google.inject.name.Named;
 import com.google.inject.name.Names;
-import io.cdap.cdap.app.store.preview.PreviewStore;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import io.cdap.cdap.internal.app.preview.DefaultPreviewManager;
-import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
-import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
+import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcherFactory;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
 
 /**
- * Provides bindings required create the {@link PreviewHttpHandler}.
+ * Guice module to provide bindings for {@link PreviewRunnerManager} service.
  */
-public class PreviewHttpModule extends PrivateModule {
-
+public class PreviewRunnerManagerModule extends PrivateModule {
   @Override
   protected void configure() {
     bind(DatasetDefinitionRegistryFactory.class)
@@ -49,18 +42,16 @@ public class PreviewHttpModule extends PrivateModule {
     bind(DatasetFramework.class)
       .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
       .to(RemoteDatasetFramework.class);
-
-    bind(PreviewManager.class).to(DefaultPreviewManager.class).in(Scopes.SINGLETON);
-    expose(PreviewManager.class);
+    bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
+    bind(PreviewRunnerServiceStopper.class).to(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+    expose(PreviewRunnerServiceStopper.class);
+    bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+    expose(PreviewRunnerManager.class);
   }
 
   @Provides
   @Singleton
-  @Exposed
-  PreviewRequestQueue getPreviewRequestQueue(
-    @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
-    @Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService service) {
-    PreviewStore store = new DefaultPreviewStore(service);
-    return new DefaultPreviewRequestQueue(previewCConf, store);
+  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
+    return new DirectPreviewRequestFetcherFactory(previewRequestQueue);
   }
 }
