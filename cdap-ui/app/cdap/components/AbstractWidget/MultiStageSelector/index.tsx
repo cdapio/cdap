@@ -12,10 +12,11 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 import * as React from 'react';
 import { IWidgetProps, IStageSchema } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
+import Select from 'components/AbstractWidget/FormInputs/Select';
 import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
@@ -36,6 +37,7 @@ const styles = () => {
 
 interface IMultiStageSelectorWidgetProps {
   delimiter: string;
+  singleSelectOnly?: boolean;
 }
 interface IMultiStageSelectorProps
   extends IWidgetProps<IMultiStageSelectorWidgetProps>,
@@ -58,13 +60,8 @@ const MultiStageSelectorBase: React.FC<IMultiStageSelectorProps> = ({
 }) => {
   const inputSchema = objectQuery(extraConfig, 'inputSchema');
   const inputStages = getInputStages(inputSchema);
-  const { delimiter } = widgetProps;
-  const multiSelectWidgetProps = {
-    delimiter,
-    options: inputStages,
-    showSelectionCount: false,
-    emptyPlaceholder: 'Select input stage',
-  };
+  const { delimiter, singleSelectOnly = false } = widgetProps;
+
   if (!inputStages.length) {
     return (
       <div className={classes.emptyMessageContainer}>
@@ -72,14 +69,35 @@ const MultiStageSelectorBase: React.FC<IMultiStageSelectorProps> = ({
       </div>
     );
   }
-  return (
-    <MultiSelect
-      value={value}
-      onChange={onChange}
-      widgetProps={multiSelectWidgetProps}
-      disabled={disabled}
-    />
-  );
+
+  if (singleSelectOnly) {
+    const selectWidgetProps = {
+      options: inputStages.map((stage) => stage.label),
+    };
+    return (
+      <Select
+        value={value}
+        onChange={onChange}
+        widgetProps={selectWidgetProps}
+        disabled={disabled}
+      />
+    );
+  } else {
+    const multiSelectWidgetProps = {
+      delimiter,
+      options: inputStages,
+      showSelectionCount: false,
+      emptyPlaceholder: 'Select input stage',
+    };
+    return (
+      <MultiSelect
+        value={value}
+        onChange={onChange}
+        widgetProps={multiSelectWidgetProps}
+        disabled={disabled}
+      />
+    );
+  }
 };
 
 const StyledMultiStageSelector = withStyles(styles)(MultiStageSelectorBase);
