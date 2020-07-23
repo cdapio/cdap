@@ -34,6 +34,7 @@ import { objectQuery } from 'services/helpers';
 import { NamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ThemeWrapper from 'components/ThemeWrapper';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import { loadDefaultExperiments } from 'components/Lab';
 
 require('styles/bootstrap_4_patch.scss');
 
@@ -66,6 +67,7 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
   private eventEmitter = ee(ee);
 
   public componentDidMount() {
+    loadDefaultExperiments();
     // Polls for namespace data
     this.namespacesubscription = MyNamespaceApi.pollList().subscribe(
       (res) => {
