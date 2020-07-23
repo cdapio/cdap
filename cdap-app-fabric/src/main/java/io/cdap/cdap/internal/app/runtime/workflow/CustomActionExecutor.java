@@ -25,6 +25,7 @@ import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.customaction.CustomAction;
 import io.cdap.cdap.api.customaction.CustomActionContext;
+import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.data2.transaction.Transactions;
@@ -86,7 +87,7 @@ class CustomActionExecutor {
       customActionContext.setState(new ProgramState(ProgramStatus.COMPLETED, null));
 
     } catch (Throwable t) {
-      customActionContext.setState(new ProgramState(ProgramStatus.FAILED, Throwables.getRootCause(t).getMessage()));
+      customActionContext.setState(new ProgramState(ProgramStatus.FAILED, Exceptions.condenseThrowableMessage(t)));
       Throwables.propagateIfPossible(t, Exception.class);
       throw Throwables.propagate(t);
 
