@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,7 +14,7 @@
  * the License.
  */
 
-package io.cdap.cdap.etl.batch;
+package io.cdap.cdap.etl.exec;
 
 import io.cdap.cdap.etl.api.Destroyable;
 import io.cdap.cdap.etl.api.Emitter;
@@ -24,17 +24,16 @@ import io.cdap.cdap.etl.common.RecordInfo;
 
 
 /**
- * Processing any stages that can be represented as a Transformation. Passes the RecordInfo directly to
- * the underlying transformation.
+ * Processing any stages that can be represented as a Transformation. Gets the value from a RecordInfo before
+ * passing it on to the underlying transformation.
  *
  * @param <T> type of input object
  */
-public class DirectOutputPipeStage<T> extends PipeStage<RecordInfo<T>> {
-  private final Transformation<RecordInfo<T>, Object> transform;
+public class UnwrapPipeStage<T> extends PipeStage<RecordInfo<T>> {
+  private final Transformation<T, Object> transform;
   private final Emitter<Object> emitter;
 
-  public DirectOutputPipeStage(String stageName, Transformation<RecordInfo<T>, Object> transform,
-                               Emitter<Object> emitter) {
+  public UnwrapPipeStage(String stageName, Transformation<T, Object> transform, Emitter<Object> emitter) {
     super(stageName);
     this.transform = transform;
     this.emitter = emitter;
@@ -42,7 +41,7 @@ public class DirectOutputPipeStage<T> extends PipeStage<RecordInfo<T>> {
 
   @Override
   public void consumeInput(RecordInfo<T> input) throws Exception {
-    transform.transform(input, emitter);
+    transform.transform(input.getValue(), emitter);
   }
 
   @Override
@@ -51,4 +50,5 @@ public class DirectOutputPipeStage<T> extends PipeStage<RecordInfo<T>> {
       Destroyables.destroyQuietly((Destroyable) transform);
     }
   }
+
 }

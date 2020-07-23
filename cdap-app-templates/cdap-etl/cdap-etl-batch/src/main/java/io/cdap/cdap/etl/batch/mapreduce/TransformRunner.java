@@ -29,7 +29,6 @@ import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.batch.BatchPhaseSpec;
-import io.cdap.cdap.etl.batch.PipeTransformExecutor;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
 import io.cdap.cdap.etl.batch.connector.MultiConnectorFactory;
 import io.cdap.cdap.etl.common.BasicArguments;
@@ -37,6 +36,7 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.Destroyables;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.SetMultimapCodec;
+import io.cdap.cdap.etl.exec.PipeTransformExecutor;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.conf.Configuration;
@@ -103,8 +103,8 @@ public class TransformRunner<KEY, VALUE> {
     MapReduceTransformExecutorFactory<KeyValue<KEY, VALUE>> transformExecutorFactory =
       new MapReduceTransformExecutorFactory<>(context, pluginInstantiator, metrics,
                                               new BasicArguments(context.getWorkflowToken(), runtimeArgs),
-                                              sourceStage, phaseSpec.pipelineContainsCondition());
-    this.transformExecutor = transformExecutorFactory.create(phase, outputWriter);
+                                              sourceStage, phaseSpec.pipelineContainsCondition(), outputWriter);
+    this.transformExecutor = transformExecutorFactory.create(phase);
   }
 
   // this is needed because we need to write to the context differently depending on the number of outputs
