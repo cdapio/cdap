@@ -168,4 +168,10 @@ angular
   })
   .directive('previewLogs', function (reactDirective) {
     return reactDirective(window.CaskCommon.PreviewLogs);
+  })
+  .directive('schemaEditor', function(reactDirective) {
+    return reactDirective(window.CaskCommon.SchemaEditor);
+  })
+  .directive('pluginSchemaEditor', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PluginSchemaEditor);
   });

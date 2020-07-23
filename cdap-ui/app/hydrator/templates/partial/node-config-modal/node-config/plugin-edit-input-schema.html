@@ -15,12 +15,24 @@
 -->
 <div class="input-schema" data-cy="plugin-input-schema-container">
   <div class="schema-inner" ng-if="::HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema">
-    <h4>Input Schema</h4>
+    <h4 ng-if="!HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor">Input Schema</h4>
+
+    <div class="output-schema" ng-if="HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor">
+      <plugin-schema-editor
+        disabled="true"
+        schemas="HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema"
+        on-schema-change="HydratorPlusPlusNodeConfigCtrl.onSchemaChange"
+        actions-dropdown-map="HydratorPlusPlusNodeConfigCtrl.getActionsDropdownMap(true)"
+        schema-title="'Input Schema'">
+      </plugin-schema-editor>
+    </div>
+
     <my-input-schema
-        data-multiple-inputs="{{::(HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.inputs.multipleInputs === true)}}"
-        input-schema="{{::HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema}}"
-        is-in-studio="!isDisabled"
-        errors="HydratorPlusPlusNodeConfigCtrl.inputSchemaErrors">
+      ng-if="!HydratorPlusPlusNodeConfigCtrl.showNewSchemaEditor"
+      data-multiple-inputs="{{::(HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.inputs.multipleInputs === true)}}"
+      input-schema="{{::HydratorPlusPlusNodeConfigCtrl.state.node.inputSchema}}"
+      is-in-studio="!isDisabled"
+      errors="HydratorPlusPlusNodeConfigCtrl.inputSchemaErrors">
     </my-input-schema>
   </div>
 </div>

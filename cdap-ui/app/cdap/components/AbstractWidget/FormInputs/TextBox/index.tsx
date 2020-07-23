@@ -24,13 +24,34 @@ interface ITextBoxWidgetProps {
   placeholder?: string;
 }
 
-interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {}
+interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {
+  autoFocus?: boolean;
+  inputRef?: (ref: React.ReactNode) => void;
+  className?: string;
+}
 
-const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabled, dataCy }) => {
+const TextBox: React.FC<ITextBoxProps> = ({
+  value,
+  onChange,
+  onBlur,
+  widgetProps,
+  disabled,
+  dataCy,
+  autoFocus,
+  inputRef,
+  onKeyPress,
+  className,
+}) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
     const v = event.target.value;
     if (typeof onChange === 'function') {
       onChange(v);
+    }
+  };
+  const onBlurHandler = (event: React.FocusEvent<HTMLInputElement>) => {
+    const v = event.target.value;
+    if (typeof onBlur === 'function') {
+      onBlur(v);
     }
   };
 
@@ -40,14 +61,19 @@ const TextBox: React.FC<ITextBoxProps> = ({ value, onChange, widgetProps, disabl
       fullWidth
       value={value}
       onChange={onChangeHandler}
+      onBlur={onBlurHandler}
+      onKeyPress={onKeyPress}
       placeholder={placeholder}
       readOnly={disabled}
       inputProps={{
         'data-cy': dataCy,
       }}
+      autoFocus={autoFocus}
+      inputRef={inputRef}
+      className={className}
     />
   );
 };
 
-export default TextBox;
+export default React.memo(TextBox);
 (TextBox as any).propTypes = WIDGET_PROPTYPES;
