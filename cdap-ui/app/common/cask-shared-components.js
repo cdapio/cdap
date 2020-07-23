@@ -110,6 +110,7 @@ var DownloadFile = require('../cdap/services/download-file').default;
 var PreviewUtilities = require('../cdap/components/PreviewData/utilities');
 var PreviewDataView = require('../cdap/components/PreviewData').default;
 var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
+var ALERT_STATUS = require('../cdap/services/AlertStatus').ALERT_STATUS;
 
 export {
   Store,
@@ -194,4 +195,5 @@ export {
   PreviewUtilities,
   PreviewDataView,
   PREVIEW_STATUS,
+  ALERT_STATUS,
 };

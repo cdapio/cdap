@@ -19,14 +19,14 @@ angular.module(PKG.name + '.services')
     var isAnAlertOpened = false,
         alertObj;
 
-    var SUCCESS_ALERT_DURATION = 4; // duration amount in seconds
+    var SUCCESS_ALERT_DURATION = 3; // duration amount in seconds
 
     function show(obj) {
       if (alertObj) {
         alertObj.hide();
       }
 
-      obj.duration = obj.type === 'success' ? SUCCESS_ALERT_DURATION : false;
+      obj.duration = obj.type === window.CaskCommon.ALERT_STATUS.Success || obj.type === window.CaskCommon.ALERT_STATUS.Info ? SUCCESS_ALERT_DURATION : false;
       alertObj = $alert(obj);
       if (obj.templateUrl) {
         alertObj.$scope.templateScope = obj.templateScope;
