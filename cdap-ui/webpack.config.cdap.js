@@ -345,7 +345,7 @@ var webpackConfig = {
     open: 'chrome',
     writeToDisk: true,
     publicPath: '/cdap_assets/',
-    watchContentBase: false,
+    watchContentBase: true,
     historyApiFallback: true,
     compress: true,
     hot: true,
