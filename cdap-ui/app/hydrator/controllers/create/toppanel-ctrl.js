@@ -309,15 +309,15 @@ class HydratorPlusPlusTopPanelCtrl {
 
   setDisplayDuration(minutes, seconds) {
     this.displayDuration = {
-      minutes: !minutes ? '--' : minutes,
-      seconds: !seconds ? '--' : seconds,
+      minutes: minutes || '--',
+      seconds: seconds || '--',
     }
   }
 
   updateTimerLabelAndTitle(res) {
     // set default
     if (!res) {
-      this.timerLabel = this.GLOBALS.en.hydrator.preview.timerLabels.DURATION;
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.DURATION;
       this.queueStatus = '';
       return;
     }
@@ -326,13 +326,13 @@ class HydratorPlusPlusTopPanelCtrl {
     if (res.status === WAITING && res.positionInWaitingQueue > 0) {
       const runsAheadInQueue = res.positionInWaitingQueue;
       this.queueStatus = `${runsAheadInQueue} ${runsAheadInQueue === 1? 'run' : 'runs'} ahead in queue`;
-      this.timerLabel = `${runsAheadInQueue} ${this.GLOBALS.en.hydrator.preview.timerLabels.PENDING}`;
+      this.timerLabel = `${runsAheadInQueue} ${this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.PENDING}`;
     } else if ([ WAITING, ACQUIRED, INIT, RUNNING ].includes(res.status) && this.loadingLabel !== 'Stopping') {
-      this.timerLabel = this.GLOBALS.en.hydrator.preview.timerLabels.RUNNING;
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.RUNNING;
       this.queueStatus = '';
     } else {
-    this.timerLabel = this.GLOBALS.en.hydrator.preview.timerLabels.DURATION;
-    this.queueStatus = '';
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.DURATION;
+      this.queueStatus = '';
     }
   }
 
