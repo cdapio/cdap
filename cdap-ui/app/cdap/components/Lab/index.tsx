@@ -148,5 +148,14 @@ class Lab extends React.Component<ILabProps, ILabState> {
   }
 }
 
+function loadDefaultExperiments() {
+  experimentsList.forEach((experiment) => {
+    if (window.localStorage.getItem(experiment.id) === null) {
+      window.localStorage.setItem(experiment.id, experiment.value.toString());
+    }
+  });
+}
+
 const StyledLab = withStyles(styles)(Lab);
 export default StyledLab;
+export { loadDefaultExperiments };
