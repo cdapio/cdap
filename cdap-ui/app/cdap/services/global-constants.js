@@ -319,6 +319,9 @@ const KEY_CODE = {
   'Down': 40,
 };
 
+const PIPELINE_LOGS_FILTER =
+  'AND .origin=plugin OR MDC:eventType=lifecycle OR MDC:eventType=userLog';
+
 export {
   NUMBER_TYPES,
   GLOBALS,
@@ -330,4 +333,5 @@ export {
   SCOPES,
   SYSTEM_NAMESPACE,
   KEY_CODE,
+  PIPELINE_LOGS_FILTER,
 };

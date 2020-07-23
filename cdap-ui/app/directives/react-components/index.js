@@ -147,4 +147,7 @@ angular
   })
   .directive('previewDataView', function(reactDirective) {
     return reactDirective(window.CaskCommon.PreviewDataView);
+  })
+  .directive('previewLogs', function (reactDirective) {
+    return reactDirective(window.CaskCommon.PreviewLogs);
   });

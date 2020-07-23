@@ -19,6 +19,7 @@ let getInitialState = () => {
   return {
     isPreviewModeEnabled: false,
     startTime: null,
+    status: null,
     previewId: null,
     previewData: false,
     macros: {},
@@ -38,6 +39,9 @@ var preview = (state = getInitialState(), action = {}) => {
     case previewActions.SET_PREVIEW_START_TIME:
       let startTime = action.payload.startTime;
       return Object.assign({}, state, {startTime});
+    case previewActions.SET_PREVIEW_STATUS:
+      let status = action.payload.status;
+      return Object.assign({}, state, {status});
     case previewActions.SET_PREVIEW_ID:
       let previewId = action.payload.previewId;
       return Object.assign({}, state, {previewId});
@@ -86,6 +90,7 @@ angular.module(`${PKG.name}.feature.hydrator`)
   .constant('PREVIEWSTORE_ACTIONS', {
     'TOGGLE_PREVIEW_MODE': 'TOGGLE_PREVIEW_MODE',
     'SET_PREVIEW_START_TIME': 'SET_PREVIEW_START_TIME',
+    'SET_PREVIEW_STATUS': 'SET_PREVIEW_STATUS',
     'SET_PREVIEW_ID': 'SET_PREVIEW_ID',
     'PREVIEW_RESET': 'PREVIEW_RESET',
     'SET_MACROS': 'SET_MACROS',

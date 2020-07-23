@@ -101,6 +101,12 @@ const ExperimentToggle = Loadable({
   loading: LoadingSVGCentered,
 });
 
+const LogViewerPage = Loadable({
+  loader: () =>
+    import(/* webpackChunkName: "LogViewerPage" */ 'components/LogViewer/LogViewerPage'),
+  loading: LoadingSVGCentered,
+});
+
 export default class Home extends Component {
   componentWillMount() {
     NamespaceStore.dispatch({
@@ -151,6 +157,11 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/experimentToggle" component={ExperimentToggle} />
+          <Route
+            exact
+            path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"
+            component={LogViewerPage}
+          />
           <Route component={Page404} />
         </Switch>
       </div>
