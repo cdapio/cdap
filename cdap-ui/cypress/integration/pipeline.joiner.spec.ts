@@ -33,8 +33,6 @@ const closeButton = '[data-testid="close-config-popover"]';
 // Pipeline and plugin info
 const JOINER_PIPELINE_NAME = `joiner_pipeline_${Date.now()}`;
 
-const input1 = 'File';
-const input2 = 'File2';
 const sourceNode1 = { nodeName: 'File', nodeType: 'batchsource', nodeId: '0' };
 const sourceNode2 = { nodeName: 'File2', nodeType: 'batchsource', nodeId: '2' };
 const joinerNode = { nodeName: 'Joiner', nodeType: 'batchjoiner', nodeId: '1' };
@@ -137,7 +135,7 @@ describe('Running preview with joiner plugin in pipeline studio', () => {
       cy.get(dataCy(`${sinkNode.nodeName}-preview-data-btn`)).click();
     });
     // Should be able to toggle view and navigate records
-    cy.get(dataCy('toggle-Table'), { timeout: 10000 }).should('exist');
+    cy.get(dataCy('toggle-Table'), { timeout: 15000 }).should('exist');
     cy.contains('Charles,apples,10').should('be.visible');
 
     cy.get(dataCy('toggle-Table')).click();
@@ -166,9 +164,9 @@ describe('Running preview with joiner plugin in pipeline studio', () => {
     cy.contains(sourceNode2.nodeName).should('exist');
 
     cy.get(dataCy('toggle-Table')).click();
-    cy.get(dataCy(`tab-head-${input1}`)).should('be.visible');
-    cy.get(dataCy(`tab-head-${input2}`)).should('be.visible');
-    cy.contains(input1).should('be.visible');
+    cy.get(dataCy(`tab-head-${sourceNode1.nodeName}`)).should('be.visible');
+    cy.get(dataCy(`tab-head-${sourceNode2.nodeName}`)).should('be.visible');
+    cy.contains(sourceNode1.nodeName).should('be.visible');
 
     cy.get(closeButton).click();
   });

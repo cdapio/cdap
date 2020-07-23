@@ -47,12 +47,8 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     });
   });
 
-  after(() => {
-    // Delete the pipeline to clean up
-    pipelines.forEach((pipeline) => cy.cleanup_pipelines(headers, pipeline));
-  });
-
-  it('Should upload pipeline with union splitter and condition plugins', () => {
+  before(() => {
+    // Upload union splitter pipeline for first two tests
     cy.visit('/pipelines/ns/default/studio');
     cy.get('#resource-center-btn').click();
     cy.get('#create-pipeline-link').click();
@@ -71,7 +67,13 @@ describe('Pipelines with plugins having more than one endpoints', () => {
       .clear()
       .type(unionConditionPipeline)
       .type('{enter}');
+  })
+
+  after(() => {
+    // Delete the pipeline to clean up
+    pipelines.forEach((pipeline) => cy.cleanup_pipelines(headers, pipeline));
   });
+
   it('Should show preview data for multiple outputs for splitter and correct message for conditional', () => {
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
@@ -108,7 +110,7 @@ describe('Pipelines with plugins having more than one endpoints', () => {
 
   it('Should deploy pipeline with union splitter and condition plugins', (done) => {
     cy.get('[data-testid=deploy-pipeline]').click();
-    cy.get('[data-cy="Deployed"]', { timeout: 60000 }).should('contain', 'Deployed');
+    cy.get(Helpers.dataCy('Deployed'), { timeout: 60000 }).should('contain', 'Deployed');
     cy.url()
       .should('include', `/view/${unionConditionPipeline}`)
       .then(() => done());
