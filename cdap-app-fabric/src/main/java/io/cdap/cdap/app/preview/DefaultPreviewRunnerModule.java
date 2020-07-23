@@ -26,6 +26,7 @@ import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
+import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
@@ -47,6 +48,7 @@ import io.cdap.cdap.internal.app.preview.MessagingPreviewDataPublisher;
 import io.cdap.cdap.internal.app.runtime.ProgramRuntimeProviderLoader;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactStore;
+import io.cdap.cdap.internal.app.runtime.artifact.DefaultArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
@@ -104,6 +106,14 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
   protected void configure() {
     bind(ArtifactRepository.class).toInstance(artifactRepository);
     expose(ArtifactRepository.class);
+
+    bind(ArtifactRepository.class)
+      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO))
+      .to(DefaultArtifactRepository.class)
+      .in(Scopes.SINGLETON);
+    expose(ArtifactRepository.class)
+      .annotatedWith(Names.named(AppFabricServiceRuntimeModule.NOAUTH_ARTIFACT_REPO));
+
     bind(ArtifactStore.class).toInstance(artifactStore);
     expose(ArtifactStore.class);
 
