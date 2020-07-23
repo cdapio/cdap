@@ -16,6 +16,8 @@
 
 import { constructUrl } from 'server/url-helper';
 import { getCDAPConfig } from 'server/cdap-config';
+import { ApolloError } from 'apollo-server';
+
 import { getPOSTRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
 
 let cdapConfig;
@@ -28,8 +30,11 @@ export async function batchProgramRuns(req, auth) {
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
   options.body = req.slice(0, 25).map((reqObj) => reqObj.program);
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'programRuns' });
+  }
 
-  const runInfo = await requestPromiseWrapper(options, auth);
+  const runInfo = await requestPromiseWrapper(options, auth, null, errorModifiersFn);
 
   const runsMap = {};
   runInfo.forEach((run) => {

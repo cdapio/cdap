@@ -29,9 +29,13 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { gql } from 'apollo-boost';
 import { useQuery } from '@apollo/react-hooks';
+import If from 'components/If';
+import { categorizeGraphQlErrors } from 'services/helpers';
+import ErrorBanner from 'components/ErrorBanner';
+import T from 'i18n-react';
 
 import './DeployedPipelineView.scss';
-import { objectQuery } from 'services/helpers';
+const I18N_PREFIX = 'features.PipelineList.DeployedPipelineView';
 
 const DeployedPipeline: React.FC = () => {
   const QUERY = gql`
@@ -60,7 +64,7 @@ const DeployedPipeline: React.FC = () => {
       reset();
     };
   }, []);
-
+  let bannerMessage = '';
   const { loading, error, data, refetch, networkStatus } = useQuery(QUERY, {
     errorPolicy: 'all',
     notifyOnNetworkStatusChange: true,
@@ -71,22 +75,27 @@ const DeployedPipeline: React.FC = () => {
   }
 
   if (error) {
-    // tslint:disable-next-line: no-console
-    console.log('error', JSON.stringify(error, null, 2));
-    const graphQLErrors = objectQuery(error, 'graphQLErrors') || [];
-    const networkErrors = objectQuery(error, 'networkError') || [];
+    const errorMap = categorizeGraphQlErrors(error);
+    // Errors thrown here will be caught by error boundary
+    // and will show error to the user within pipeline list view
 
-    let errors = graphQLErrors
-      .concat(networkErrors)
-      .map((err) => err.message)
-      .join('\n');
-
-    if (!errors || errors.length === 0) {
-      const prefix = /^GraphQL error\:/;
-      errors = error.message.replace(prefix, '').trim();
+    // Each error type could have multiple error messages, we're using the first one available
+    if (errorMap.hasOwnProperty('pipelines')) {
+      throw new Error(errorMap.pipelines[0]);
+    } else if (errorMap.hasOwnProperty('network')) {
+      throw new Error(errorMap.network[0]);
+    } else if (errorMap.hasOwnProperty('generic')) {
+      throw new Error(errorMap.generic[0]);
+    } else {
+      if (Object.keys(errorMap).length > 1) {
+        // If multiple services are down
+        const message = T.translate(`${I18N_PREFIX}.graphQLMultipleServicesDown`).toString();
+        throw new Error(message);
+      } else {
+        // Pick one of the leftover errors to show in the banner;
+        bannerMessage = Object.values(errorMap)[0][0];
+      }
     }
-
-    return <div className="pipeline-deployed-view error-container">{errors}</div>;
   }
 
   setFilteredPipelines(data.pipelines);
@@ -100,6 +109,9 @@ const DeployedPipeline: React.FC = () => {
           <Pagination />
         </div>
 
+        <If condition={!!error && !!bannerMessage}>
+          <ErrorBanner error={bannerMessage} />
+        </If>
         <PipelineTable refetch={refetch} />
       </div>
     </Provider>

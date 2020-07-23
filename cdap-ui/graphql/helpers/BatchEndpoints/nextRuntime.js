@@ -16,6 +16,7 @@
 
 import { constructUrl } from 'server/url-helper';
 import { getCDAPConfig } from 'server/cdap-config';
+import { ApolloError } from 'apollo-server';
 import { getPOSTRequestOptions, requestPromiseWrapper } from 'gql/resolvers-common';
 
 let cdapConfig;
@@ -29,8 +30,15 @@ export async function batchNextRuntime(req, auth) {
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/nextruntime`);
   const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   options.body = body;
-
-  let nextRuntimeInfo = await requestPromiseWrapper(options, auth);
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: "runs" });
+  };
+  let nextRuntimeInfo = await requestPromiseWrapper(
+    options,
+    auth,
+    null,
+    errorModifiersFn
+  );
 
   const runsMap = {};
   nextRuntimeInfo.forEach((run) => {

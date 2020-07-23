@@ -20,7 +20,7 @@ import Alert from 'components/Alert';
 
 interface IErrorProps {
   error: object | string | null;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 const ErrorBanner: React.SFC<IErrorProps> = ({ error, onClose }) => {
