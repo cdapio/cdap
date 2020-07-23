@@ -18,25 +18,18 @@ package io.cdap.cdap.etl.batch.mapreduce;
 
 import com.google.common.base.Function;
 import com.google.common.collect.Iterators;
-import com.google.common.collect.Sets;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
-import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.mapreduce.MapReduceTaskContext;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.etl.api.Aggregator;
-import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.Emitter;
-import io.cdap.cdap.etl.api.ErrorTransform;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.Joiner;
-import io.cdap.cdap.etl.api.SplitterTransform;
-import io.cdap.cdap.etl.api.StageLifecycle;
 import io.cdap.cdap.etl.api.StageMetrics;
-import io.cdap.cdap.etl.api.TransformContext;
 import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchAggregator;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
@@ -47,14 +40,7 @@ import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
-import io.cdap.cdap.etl.batch.ConnectorSourceEmitter;
-import io.cdap.cdap.etl.batch.DirectOutputPipeStage;
-import io.cdap.cdap.etl.batch.MultiOutputTransformPipeStage;
-import io.cdap.cdap.etl.batch.PipeEmitter;
-import io.cdap.cdap.etl.batch.PipeStage;
-import io.cdap.cdap.etl.batch.PipeTransformExecutor;
 import io.cdap.cdap.etl.batch.PipelinePluginInstantiator;
-import io.cdap.cdap.etl.batch.UnwrapPipeStage;
 import io.cdap.cdap.etl.batch.conversion.WritableConversion;
 import io.cdap.cdap.etl.batch.conversion.WritableConversions;
 import io.cdap.cdap.etl.batch.join.Join;
@@ -65,15 +51,17 @@ import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.NoErrorEmitter;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
-import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
-import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
 import io.cdap.cdap.etl.common.plugin.AggregatorBridge;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
+import io.cdap.cdap.etl.exec.DirectOutputPipeStage;
+import io.cdap.cdap.etl.exec.PipeStage;
+import io.cdap.cdap.etl.exec.TransformExecutorFactory;
+import io.cdap.cdap.etl.exec.UnwrapPipeStage;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.apache.hadoop.conf.Configuration;
@@ -84,12 +72,8 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.stream.Collectors;
@@ -100,72 +84,73 @@ import javax.annotation.Nullable;
  *
  * @param <T> the type of input for the created transform executors
  */
-public class MapReduceTransformExecutorFactory<T> {
-  private final String sourceStageName;
-  private final MacroEvaluator macroEvaluator;
-  private final PipelinePluginInstantiator pluginInstantiator;
-  private final Metrics metrics;
+public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFactory<T> {
   private final MapReduceTaskContext taskContext;
   private final String mapOutputKeyClassName;
   private final String mapOutputValClassName;
   private final BasicArguments arguments;
-  private final boolean isPipelineContainsCondition;
-  private boolean isMapPhase;
+  private final OutputWriter<Object, Object> outputWriter;
+  private final boolean isMapPhase;
 
   public MapReduceTransformExecutorFactory(MapReduceTaskContext taskContext,
                                            PipelinePluginInstantiator pluginInstantiator,
                                            Metrics metrics,
                                            BasicArguments arguments,
                                            String sourceStageName,
-                                           boolean isPipelineContainsCondition) {
+                                           boolean collectStageStatistics,
+                                           OutputWriter<Object, Object> outputWriter) {
+    super(pluginInstantiator, new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(),
+                                                        taskContext, taskContext.getNamespace()),
+          metrics, sourceStageName, collectStageStatistics);
     this.taskContext = taskContext;
-    this.pluginInstantiator = pluginInstantiator;
-    this.metrics = metrics;
-    this.sourceStageName = sourceStageName;
-    this.macroEvaluator =
-      new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
     Configuration hConf = hadoopContext.getConfiguration();
     this.mapOutputKeyClassName = hConf.get(ETLMapReduce.MAP_KEY_CLASS);
     this.mapOutputValClassName = hConf.get(ETLMapReduce.MAP_VAL_CLASS);
     this.isMapPhase = hadoopContext instanceof Mapper.Context;
     this.arguments = arguments;
-    this.isPipelineContainsCondition = isPipelineContainsCondition;
+    this.outputWriter = outputWriter;
   }
 
-  private MapReduceRuntimeContext createRuntimeContext(StageSpec stageInfo) {
+  @Override
+  protected MapReduceRuntimeContext createRuntimeContext(StageSpec stageInfo) {
     PipelineRuntime pipelineRuntime = new PipelineRuntime(taskContext, metrics, arguments);
     return new MapReduceRuntimeContext(taskContext, pipelineRuntime, stageInfo);
   }
 
-  private <IN, ERROR> TrackedMultiOutputTransform<IN, ERROR> getMultiOutputTransform(StageSpec stageSpec)
-    throws Exception {
-    String stageName = stageSpec.getName();
-    DefaultMacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
-    SplitterTransform<IN, ERROR> splitterTransform =
-      pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
-    TransformContext transformContext = createRuntimeContext(stageSpec);
-    splitterTransform.initialize(transformContext);
+  @Override
+  protected StageStatisticsCollector getStatisticsCollector(String stageName) {
+    return new MapReduceStageStatisticsCollector(stageName, (TaskAttemptContext) taskContext.getHadoopContext());
+  }
 
-    StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
-    TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
-    StageStatisticsCollector collector = isPipelineContainsCondition
-      ? new MapReduceStageStatisticsCollector(stageName, taskAttemptContext) : new NoopStageStatisticsCollector();
-    return new TrackedMultiOutputTransform<>(splitterTransform, stageMetrics, taskContext.getDataTracer(stageName),
-                                             collector);
+  @Override
+  protected DataTracer getDataTracer(String stageName) {
+    return taskContext.getDataTracer(stageName);
+  }
+
+  @Override
+  protected PipeStage getSinkPipeStage(StageSpec stageSpec) throws Exception {
+    String stageName = stageSpec.getName();
+    String pluginType = stageSpec.getPluginType();
+    if (Constants.Connector.PLUGIN_TYPE.equals(pluginType) || BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
+      // connectors and joiners require the getting the RecordInfo class directly instead of unwrapping it
+      Transformation<RecordInfo<Object>, Object> sink = getTransformation(stageSpec);
+      return new DirectOutputPipeStage<>(stageName, sink, new SinkEmitter<>(stageName, outputWriter));
+    } else {
+      // others (batchsink, aggregators, alertpublisher), only required the value within the RecordInfo
+      return new UnwrapPipeStage<>(stageName, getTransformation(stageSpec),
+                                   new SinkEmitter<>(stageName, outputWriter));
+    }
   }
 
   @SuppressWarnings("unchecked")
-  private <IN, OUT> TrackedTransform<IN, OUT> getTransformation(StageSpec stageSpec) throws Exception {
-
-    DefaultMacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(), taskContext, taskContext.getNamespace());
+  @Override
+  protected <IN, OUT> TrackedTransform<IN, OUT> getTransformation(StageSpec stageSpec) throws Exception {
     String stageName = stageSpec.getName();
     String pluginType = stageSpec.getPluginType();
     StageMetrics stageMetrics = new DefaultStageMetrics(metrics, stageName);
     TaskAttemptContext taskAttemptContext = (TaskAttemptContext) taskContext.getHadoopContext();
-    StageStatisticsCollector collector = isPipelineContainsCondition ?
+    StageStatisticsCollector collector = collectStageStatistics ?
       new MapReduceStageStatisticsCollector(stageName, taskAttemptContext) : new NoopStageStatisticsCollector();
     if (BatchAggregator.PLUGIN_TYPE.equals(pluginType)) {
       Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
@@ -182,12 +167,12 @@ public class MapReduceTransformExecutorFactory<T> {
       if (isMapPhase) {
         return getTrackedEmitKeyStep(new MapperAggregatorTransformation(batchAggregator, mapOutputKeyClassName,
                                                                         mapOutputValClassName),
-                                     stageMetrics, taskContext.getDataTracer(stageName), collector);
+                                     stageMetrics, getDataTracer(stageName), collector);
       } else {
         return getTrackedAggregateStep(new ReducerAggregatorTransformation(batchAggregator,
                                                                            mapOutputKeyClassName,
                                                                            mapOutputValClassName),
-                                       stageMetrics, taskContext.getDataTracer(stageName), collector);
+                                       stageMetrics, getDataTracer(stageName), collector);
       }
     } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
       Object plugin = pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
@@ -223,144 +208,16 @@ public class MapReduceTransformExecutorFactory<T> {
           new MapperJoinerTransformation(batchJoiner, mapOutputKeyClassName,
                                          mapOutputValClassName, filterNullKeyStages),
           stageMetrics,
-          taskContext.getDataTracer(stageName), collector);
+          getDataTracer(stageName), collector);
       } else {
         return getTrackedMergeStep(
           new ReducerJoinerTransformation(batchJoiner, mapOutputKeyClassName, mapOutputValClassName,
                                           runtimeContext.getInputSchemas().size()), stageMetrics,
-          taskContext.getDataTracer(stageName), collector);
+          getDataTracer(stageName), collector);
       }
     }
 
-    Transformation transformation = getInitializedTransformation(stageSpec);
-    // we emit metrics for records into alert publishers when the actual alerts are published,
-    // not when we write the alerts to the temporary dataset
-    String recordsInMetric = AlertPublisher.PLUGIN_TYPE.equals(pluginType) ? null : Constants.Metrics.RECORDS_IN;
-    return new TrackedTransform<>(transformation, stageMetrics, recordsInMetric, Constants.Metrics.RECORDS_OUT,
-                                  taskContext.getDataTracer(stageName), collector);
-  }
-
-  /**
-   * Create a transform executor for the specified pipeline. Will instantiate and initialize all sources,
-   * transforms, and sinks in the pipeline.
-   *
-   * @param pipeline the pipeline to create a transform executor for
-   * @param outputWriter writes output records to the mapreduce context
-   * @return executor for the pipeline
-   * @throws InstantiationException if there was an error instantiating a plugin
-   * @throws Exception              if there was an error initializing a plugin
-   */
-  public <KEY_OUT, VAL_OUT> PipeTransformExecutor<T> create(PipelinePhase pipeline,
-                                                            OutputWriter<KEY_OUT, VAL_OUT> outputWriter)
-    throws Exception {
-    // populate the pipe stages in reverse topological order to ensure that an output is always created before its
-    // input. this will allow us to setup all outputs for a stage when we get to it.
-    List<String> traversalOrder = pipeline.getDag().getTopologicalOrder();
-    Collections.reverse(traversalOrder);
-
-    Map<String, PipeStage> pipeStages = new HashMap<>();
-    for (String stageName : traversalOrder) {
-      pipeStages.put(stageName, getPipeStage(pipeline, stageName, pipeStages, outputWriter));
-    }
-
-    // sourceStageName will be null in reducers, so need to handle that case
-    Set<String> startingPoints = (sourceStageName == null) ? pipeline.getSources() : Sets.newHashSet(sourceStageName);
-    return new PipeTransformExecutor<>(pipeStages, startingPoints);
-  }
-
-  private PipeStage getPipeStage(PipelinePhase pipeline, String stageName, Map<String, PipeStage> pipeStages,
-                                 OutputWriter<?, ?> outputWriter) throws Exception {
-    StageSpec stageSpec = pipeline.getStage(stageName);
-    String pluginType = stageSpec.getPluginType();
-
-    /*
-     * Every stage in the pipe uses a PipeEmitter except for ending stages, which use an emitter that
-     * lets them write directly to the MapReduce context instead of some other stage.
-     *
-     * Since every PipeEmitter outputs RecordInfo because some stages require the stage the record was from.
-     * Connector sinks require the stage name so that they can preserve it for the next phase.
-     * Joiners inside mappers require it so that they can include the stage name with each record, so that on the
-     * reduce side, Joiner.join() can be sent records along with the stage they came from.
-     *
-     * PipeEmitter emits ErrorRecord for ErrorTransforms.
-     *
-     * Every other non-starting stage in the pipe takes RecordInfo as input.
-     * These stages need to be wrapped so that they extract the actual
-     * value inside a RecordInfo before passing it to the actual plugin.
-     */
-
-    // handle ending stage case, which don't use PipeEmitter
-    if (pipeline.getSinks().contains(stageName)) {
-      if (Constants.Connector.PLUGIN_TYPE.equals(pluginType) || BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
-        // connectors and joiners require the getting the RecordInfo class directly instead of unwrapping it
-        Transformation<RecordInfo<Object>, Object> sink = getTransformation(stageSpec);
-        return new DirectOutputPipeStage<>(stageName, sink, new SinkEmitter<>(stageName, outputWriter));
-      } else {
-        // others (batchsink, aggregators, alertpublisher), only required the value within the RecordInfo
-        return new UnwrapPipeStage<>(stageName, getTransformation(stageSpec),
-                                     new SinkEmitter<>(stageName, outputWriter));
-      }
-    }
-
-    // create PipeEmitter, which holds all output PipeStages it needs to write to and wraps any output it gets
-    // into a RecordInfo
-    // ConnectorSources require a special emitter since they need to build RecordInfo from the temporary dataset
-    PipeEmitter.Builder emitterBuilder =
-      Constants.Connector.PLUGIN_TYPE.equals(pluginType) && pipeline.getSources().contains(stageName) ?
-        ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
-
-    Map<String, StageSpec.Port> outputPorts = stageSpec.getOutputPorts();
-    for (String outputStageName : pipeline.getDag().getNodeOutputs(stageName)) {
-      StageSpec outputStageSpec = pipeline.getStage(outputStageName);
-      String outputStageType = outputStageSpec.getPluginType();
-      PipeStage outputPipeStage = pipeStages.get(outputStageName);
-
-      if (ErrorTransform.PLUGIN_TYPE.equals(outputStageType)) {
-        emitterBuilder.addErrorConsumer(outputPipeStage);
-      } else if (AlertPublisher.PLUGIN_TYPE.equals(outputStageType)) {
-        emitterBuilder.addAlertConsumer(outputPipeStage);
-      } else if (Constants.Connector.PLUGIN_TYPE.equals(pluginType)) {
-        // connectors only have a single output
-        emitterBuilder.addOutputConsumer(outputPipeStage);
-      } else {
-        // if the output is a connector like agg5.connector, the outputPorts will contain the original 'agg5' as
-        // a key, but not 'agg5.connector' so we need to lookup the original stage from the connector's plugin spec
-        String originalOutputName = Constants.Connector.PLUGIN_TYPE.equals(outputStageType) ?
-          outputStageSpec.getPlugin().getProperties().get(Constants.Connector.ORIGINAL_NAME) : outputStageName;
-
-        String port = outputPorts.containsKey(originalOutputName) ? outputPorts.get(originalOutputName).getPort()
-          : null;
-        if (port != null) {
-          emitterBuilder.addOutputConsumer(outputPipeStage, port);
-        } else {
-          emitterBuilder.addOutputConsumer(outputPipeStage);
-        }
-      }
-    }
-    PipeEmitter pipeEmitter = emitterBuilder.build();
-
-    if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
-      // this is a SplitterTransform, needs to emit records to the right outputs based on port
-      return new MultiOutputTransformPipeStage<>(stageName, getMultiOutputTransform(stageSpec), pipeEmitter);
-    } else {
-      return new UnwrapPipeStage<>(stageName, getTransformation(stageSpec), pipeEmitter);
-    }
-  }
-
-  /**
-   * Instantiates and initializes the plugin for the stage.
-   *
-   * @param stageInfo the stage info
-   * @return the initialized Transformation
-   * @throws InstantiationException if the plugin for the stage could not be instantiated
-   * @throws Exception              if there was a problem initializing the plugin
-   */
-  private <T extends Transformation & StageLifecycle<BatchRuntimeContext>> Transformation
-  getInitializedTransformation(StageSpec stageInfo) throws Exception {
-    BatchRuntimeContext runtimeContext = createRuntimeContext(stageInfo);
-    T plugin = pluginInstantiator.newPluginInstance(stageInfo.getName(), macroEvaluator);
-    plugin.initialize(runtimeContext);
-    return plugin;
+    return super.getTransformation(stageSpec);
   }
 
   private static <IN, OUT> TrackedTransform<IN, OUT> getTrackedEmitKeyStep(Transformation<IN, OUT> transform,
