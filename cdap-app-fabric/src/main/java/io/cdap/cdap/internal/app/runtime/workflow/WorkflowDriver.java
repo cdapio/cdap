@@ -57,6 +57,7 @@ import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.lang.Exceptions;
 import io.cdap.cdap.common.lang.InstantiatorFactory;
 import io.cdap.cdap.common.lang.PropertyFieldSetter;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -626,7 +627,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
   }
 
   private void executeAll(Iterator<WorkflowNode> iterator, ApplicationSpecification appSpec,
-                          InstantiatorFactory instantiator, ClassLoader classLoader, WorkflowToken token) {
+                          InstantiatorFactory instantiator, ClassLoader classLoader, WorkflowToken token)
+    throws Exception {
     while (iterator.hasNext() && runningThread != null) {
       try {
         blockIfSuspended();
@@ -640,8 +642,8 @@ final class WorkflowDriver extends AbstractExecutionThreadService {
           workflowContext.setState(new ProgramState(ProgramStatus.KILLED, rootCause.getMessage()));
           break;
         }
-        workflowContext.setState(new ProgramState(ProgramStatus.FAILED, rootCause.getMessage()));
-        throw Throwables.propagate(rootCause);
+        workflowContext.setState(new ProgramState(ProgramStatus.FAILED, Exceptions.condenseThrowableMessage(t)));
+        throw t;
       }
     }
   }
