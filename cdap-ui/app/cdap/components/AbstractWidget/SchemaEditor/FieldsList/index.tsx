@@ -60,7 +60,7 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
   public componentWillReceiveProps(nextProps: IFieldsListProps) {
     const ids = nextProps.value.map((r) => `${r.id}-${r.hidden}-${r.collapsed}`).join(',');
     const existingids = this.state.rows.map((r) => `${r.id}-${r.hidden}-${r.collapsed}`).join(',');
-    const { visibleRowCount } = nextProps;
+    const { visibleRowCount = FieldsListBase.visibleNodeCount } = nextProps;
     if (ids !== existingids || visibleRowCount !== this.state.visibleRowCount) {
       this.setState({
         rows: nextProps.value,

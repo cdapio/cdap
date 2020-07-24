@@ -34,6 +34,7 @@ import Alert from 'components/Alert';
 import { isObject } from 'vega-lite/build/src/util';
 import { isMacro } from 'services/helpers';
 import DownloadFile from 'services/download-file';
+import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 
 const styles = (theme): StyleRules => {
   return {
@@ -363,11 +364,11 @@ class PluginSchemaEditorBase extends React.PureComponent<
     }
   };
 
-  private santizeSchemasForEditor = (schemas = this.state.schemas) => {
+  private santizeSchemasForEditor = (schemas = this.state.schemas): ISchemaType[] => {
     return (schemas || []).map((s) => {
-      const newSchema = {
+      const newSchema: ISchemaType = {
         name: s.name,
-        schema: s.schema,
+        schema: null,
       };
       if (typeof s.schema === 'string') {
         try {
@@ -375,6 +376,8 @@ class PluginSchemaEditorBase extends React.PureComponent<
         } catch (e) {
           return { ...getDefaultEmptyAvroSchema() };
         }
+      } else {
+        newSchema.schema = s.schema;
       }
       return newSchema;
     });

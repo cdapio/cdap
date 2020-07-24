@@ -19,6 +19,7 @@ import { SchemaEditor } from 'components/AbstractWidget/SchemaEditor';
 import If from 'components/If';
 import LoadingSVG from 'components/LoadingSVG';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 const styles = (): StyleRules => {
   return {
     container: {
@@ -33,8 +34,8 @@ interface IPluginSchema {
 }
 
 interface IRefreshableSchemaEditor extends WithStyles<typeof styles> {
-  schema: IPluginSchema;
-  onChange: (schemas: IPluginSchema) => void;
+  schema: ISchemaType;
+  onChange: ({ avroSchema: ISchemaType }) => void;
   disabled?: boolean;
   visibleRows?: number;
 }
@@ -48,12 +49,15 @@ function RefreshableSchemaEditorBase({
 }: IRefreshableSchemaEditor) {
   const [loading, setLoading] = React.useState(false);
 
-  React.useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
-  }, [schema]);
+  React.useEffect(
+    () => {
+      setLoading(true);
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+    },
+    [schema]
+  );
 
   return (
     <div className={classes.container}>
