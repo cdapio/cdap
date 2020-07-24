@@ -349,6 +349,7 @@ var webpackConfig = {
     historyApiFallback: true,
     hot: true,
     inline: true,
+    compress: true,
     proxy: {
       '/api': {
         target: 'http://localhost:11011',
