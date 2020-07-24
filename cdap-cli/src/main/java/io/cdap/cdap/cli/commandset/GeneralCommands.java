@@ -22,6 +22,7 @@ import com.google.inject.Injector;
 import io.cdap.cdap.cli.Categorized;
 import io.cdap.cdap.cli.CommandCategory;
 import io.cdap.cdap.cli.command.ConnectCommand;
+import io.cdap.cdap.cli.command.ConnectLinkCommand;
 import io.cdap.cdap.cli.command.system.ExitCommand;
 import io.cdap.cdap.cli.command.system.QuitCommand;
 import io.cdap.cdap.cli.command.system.RenderAsCommand;
@@ -42,6 +43,7 @@ public class GeneralCommands extends CommandSet<Command> implements Categorized 
         .add(injector.getInstance(ExitCommand.class))
         .add(injector.getInstance(QuitCommand.class))
         .add(injector.getInstance(ConnectCommand.class))
+        .add(injector.getInstance(ConnectLinkCommand.class))
         .add(injector.getInstance(RenderAsCommand.class))
         .build());
   }

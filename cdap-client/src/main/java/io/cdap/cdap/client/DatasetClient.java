@@ -240,7 +240,9 @@ public class DatasetClient {
     throws IOException, UnauthenticatedException, UnauthorizedException {
     URL url = config.resolveNamespacedURLV3(instance.getParent(),
                                             String.format("data/datasets/%s/admin/truncate", instance.getDataset()));
-    restClient.execute(HttpMethod.POST, url, config.getAccessToken());
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request = HttpRequest.post(url).withBody("");
+    restClient.execute(request.build(), config.getAccessToken());
   }
 
   /**

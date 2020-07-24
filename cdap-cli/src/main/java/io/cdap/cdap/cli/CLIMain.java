@@ -25,6 +25,7 @@ import com.google.common.base.Supplier;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.io.Files;
+import com.google.gson.JsonSyntaxException;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -41,6 +42,7 @@ import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.client.exception.DisconnectedException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.utils.OSDetector;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.common.cli.CLI;
 import io.cdap.common.cli.Command;
 import io.cdap.common.cli.CommandSet;
@@ -81,9 +83,18 @@ public class CLIMain {
     "h", "help", false, "Print the usage message.");
 
   private static final Option URI_OPTION = new Option(
-    "u", "uri", true, "CDAP instance URI to interact with in" +
+    "u", "uri", true, "(Deprecated. Please use option --link instead). CDAP instance URI to interact with in" +
     " the format \"[http[s]://]<hostname>[:<port>[/<namespace>]]\"." +
     " Defaults to \"" + getDefaultURI().toString() + "\".");
+
+  private static final Option LINK_OPTION = new Option(
+    "l", "link", true, "CDAP instance URI to interact with in" +
+    " the format \"[http[s]://]<hostname>[:<port>][/<path>]\" ." +
+    " Defaults to \"" + getDefaultURI().toString() + "\".");
+
+  private static final Option NAMESPACE_OPTION = new Option(
+    "n", "namespace", true, "CDAP Instance Namespace to connect to" +
+    " Defaults to \"" + NamespaceId.DEFAULT.getNamespace() + "\".");
 
   private static final Option VERIFY_SSL_OPTION = new Option(
     "v", "verify-ssl", true, "If \"true\", verify SSL certificate when making requests." +
@@ -156,6 +167,8 @@ public class CLIMain {
           output.printf("Invalid command '%s'. Enter 'help' for a list of commands\n", ex.getInput());
         } else if (e instanceof DisconnectedException || e instanceof ConnectException) {
           cli.getReader().setPrompt("cdap (DISCONNECTED)> ");
+        } else if (e instanceof JsonSyntaxException) {
+          output.printf("Unexpected response %s . Try reconnecting. ", e.getMessage());
         } else {
           output.println("Error: " + e.getMessage());
         }
@@ -187,7 +200,15 @@ public class CLIMain {
 
     InstanceURIParser instanceURIParser = injector.getInstance(InstanceURIParser.class);
     try {
-      CLIConnectionConfig connection = instanceURIParser.parse(options.getUri());
+      String uri = options.getUri();
+      boolean uriParamEmpty = uri == null || uri.isEmpty();
+      CLIConnectionConfig connection =
+        uriParamEmpty ?
+          instanceURIParser.parseInstanceURI(options.getInstanceURI(), options.getNamespace()) :
+          instanceURIParser.parse(uri);
+      if (!uriParamEmpty) {
+        cliConfig.getOutput().println("-u option is deprecated. Use -l instead. ");
+      }
       cliConfig.tryConnect(connection, options.isVerifySSL(), cliConfig.getOutput(), options.isDebug());
       return true;
     } catch (Exception e) {
@@ -197,7 +218,7 @@ public class CLIMain {
         cliConfig.getOutput().println(e.getMessage());
       }
       if (!command.hasOption(URI_OPTION.getOpt())) {
-        cliConfig.getOutput().printf("Specify the CDAP instance URI with the -u command line argument.\n");
+        cliConfig.getOutput().printf("Specify the CDAP instance URI with the -l command line argument.\n");
       }
       return false;
     }
@@ -259,7 +280,9 @@ public class CLIMain {
       }
 
       LaunchOptions launchOptions = LaunchOptions.builder()
-        .setUri(command.getOptionValue(URI_OPTION.getOpt(), getDefaultURI().toString()))
+        .setUri(command.getOptionValue(URI_OPTION.getOpt()))
+        .setInstanceURI(command.getOptionValue(LINK_OPTION.getOpt(), getDefaultURI().toString()))
+        .setNamespace(command.getOptionValue(NAMESPACE_OPTION.getOpt(), NamespaceId.DEFAULT.getNamespace()))
         .setDebug(command.hasOption(DEBUG_OPTION.getOpt()))
         .setVerifySSL(parseBooleanOption(command, VERIFY_SSL_OPTION, DEFAULT_VERIFY_SSL))
         .setAutoconnect(parseBooleanOption(command, AUTOCONNECT_OPTION, DEFAULT_AUTOCONNECT))
@@ -335,6 +358,8 @@ public class CLIMain {
     Options options = new Options();
     addOptionalOption(options, HELP_OPTION);
     addOptionalOption(options, URI_OPTION);
+    addOptionalOption(options, LINK_OPTION);
+    addOptionalOption(options, NAMESPACE_OPTION);
     addOptionalOption(options, VERIFY_SSL_OPTION);
     addOptionalOption(options, AUTOCONNECT_OPTION);
     addOptionalOption(options, DEBUG_OPTION);
@@ -360,6 +385,8 @@ public class CLIMain {
         "[--help] " +
         "[--verify-ssl <true|false>] " +
         "[--uri <uri>] " +
+        "[--link <uri>] " +
+        "[--namespace <namespace>] " +
         "[--script <script-file>] " +
         "[-r | --retries N]";
     formatter.printHelp(toolName + " " + args, getOptions());
