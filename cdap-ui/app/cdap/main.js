@@ -61,6 +61,7 @@ import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemo
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
+import ToggleExperiment from 'components/Lab/ToggleExperiment';
 
 const Administration = Loadable({
   loader: () => import(/* webpackChunkName: "Administration" */ 'components/Administration'),
@@ -147,7 +148,6 @@ class CDAP extends Component {
     });
     if (!VersionStore.getState().version) {
       MyCDAPVersionApi.get().subscribe((res) => {
-        this.setState({ version: res.version });
         VersionStore.dispatch({
           type: VersionActions.updateVersion,
           payload: {
@@ -283,6 +283,24 @@ class CDAP extends Component {
                         <ErrorBoundary>
                           <MarkdownImpl {...props} />
                         </ErrorBoundary>
+                      );
+                    }}
+                  />
+                  <Route
+                    exact
+                    path="/schema"
+                    render={(props) => {
+                      const SchemaEditorDemo = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "SchemaEditor" */ 'components/AbstractWidget/SchemaEditor/SchemaEditorDemo'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return (
+                        <ToggleExperiment
+                          name="schema-editor"
+                          defaultComponent={<Page404 {...props} />}
+                          experimentalComponent={<SchemaEditorDemo />}
+                        />
                       );
                     }}
                   />

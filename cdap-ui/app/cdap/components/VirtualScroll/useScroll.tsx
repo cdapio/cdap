@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { useRef, useState, useEffect, MutableRefObject } from 'react';
+import { useRef, useState, useLayoutEffect, MutableRefObject } from 'react';
 
 export function useScroll<T extends HTMLElement = HTMLDivElement>(): [number, MutableRefObject<T>] {
   const [scrollTop, setScrollTop] = useState(0);
@@ -25,7 +25,7 @@ export function useScroll<T extends HTMLElement = HTMLDivElement>(): [number, Mu
       setScrollTop(e.target.scrollTop);
     });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const scrollContainer = ref.current;
 
     if (scrollContainer === undefined) {

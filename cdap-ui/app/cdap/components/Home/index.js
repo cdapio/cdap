@@ -24,7 +24,7 @@ import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
-
+import Lab from 'components/Lab';
 require('./Home.scss');
 
 const EntityListView = Loadable({
@@ -157,6 +157,7 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/experimentToggle" component={ExperimentToggle} />
+          <Route path="/ns/:namespace/lab" component={Lab} />
           <Route
             exact
             path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"

@@ -89,6 +89,7 @@ var plugins = [
     files: ['**/*.scss'],
   }),
   new HtmlWebpackPlugin({
+    chunksSortMode: 'none',
     title: 'CDAP',
     template: './cdap.html',
     filename: 'cdap.html',
