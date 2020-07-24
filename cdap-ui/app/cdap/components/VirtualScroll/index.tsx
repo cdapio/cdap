@@ -79,24 +79,27 @@ const VirtualScroll = ({
 
   const offsetY = startNode * childHeight;
 
-  useMemo(() => {
-    if (scrollingChildrenUnderFold === childrenUnderFold && startNode > childrenUnderFold) {
-      setScrollingChildrenUnderFold(childrenUnderFold + childrenUnderFoldOnScroll);
-    }
-    if (Array.isArray(list) && startNode + visibleNodeCount < list.length) {
-      return;
-    }
-    const newList = renderList(visibleNodeCount, startNode);
-    if (Array.isArray(newList)) {
-      setList(newList);
-    }
-    if (Array.isArray(newList) && newList.length < visibleNodeCount) {
-      const p = renderList(visibleChildCount, startNode);
-      if (p instanceof Promise && Array.isArray(list)) {
-        setPromise(p);
+  useMemo(
+    () => {
+      if (scrollingChildrenUnderFold === childrenUnderFold && startNode > childrenUnderFold) {
+        setScrollingChildrenUnderFold(childrenUnderFold + childrenUnderFoldOnScroll);
       }
-    }
-  }, [startNode, visibleNodeCount, itemCount]);
+      if (Array.isArray(list) && startNode + visibleNodeCount < list.length) {
+        return;
+      }
+      const newList = renderList(visibleNodeCount, startNode);
+      if (Array.isArray(newList)) {
+        setList(newList);
+      }
+      if (Array.isArray(newList) && newList.length < visibleNodeCount) {
+        const p = renderList(visibleChildCount, startNode);
+        if (p instanceof Promise && Array.isArray(list)) {
+          setPromise(p);
+        }
+      }
+    },
+    [startNode, visibleNodeCount, itemCount]
+  );
 
   useEffect(
     () => {

@@ -292,9 +292,7 @@ class CDAP extends Component {
                     render={(props) => {
                       const SchemaEditorDemo = Loadable({
                         loader: () =>
-                          import(
-                            /* webpackChunkName: "SchemaEditor" */ 'components/AbstractWidget/SchemaEditor/SchemaEditorDemo'
-                          ),
+                          import(/* webpackChunkName: "SchemaEditor" */ 'components/AbstractWidget/SchemaEditor/SchemaEditorDemo'),
                         loading: LoadingSVGCentered,
                       });
                       return (

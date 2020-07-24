@@ -35,13 +35,15 @@ const If: React.FC<IIfComponentProps> = ({
     if (!invisible) {
       return null;
     }
-    const InvisibleBox = withStyles((): StyleRules => {
-      return {
-        root: {
-          visibility: 'hidden',
-        },
-      };
-    })(!HiddenContainer ? Box : (HiddenContainer as React.ComponentType<any>));
+    const InvisibleBox = withStyles(
+      (): StyleRules => {
+        return {
+          root: {
+            visibility: 'hidden',
+          },
+        };
+      }
+    )(!HiddenContainer ? Box : (HiddenContainer as React.ComponentType<any>));
     return <InvisibleBox>{children}</InvisibleBox>;
   }
 

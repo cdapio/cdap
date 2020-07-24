@@ -88,9 +88,9 @@ interface IWidgetWrapperProps extends WithStyles<typeof styles> {
   pluginProperty?: IPluginProperty;
   value: string;
   onChange: (value: string) => void;
-  updateAllProperties: (values) => void;
-  extraConfig: any;
-  disabled: boolean;
+  updateAllProperties?: (values) => void;
+  extraConfig?: any;
+  disabled?: boolean;
   hideDescription?: boolean;
   errors?: IErrorObj[];
   size?: 'large' | 'small' | 'medium';

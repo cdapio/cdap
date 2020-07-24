@@ -21,7 +21,13 @@ import Dropzone from 'react-dropzone';
 require('./FileDnD.scss');
 import T from 'i18n-react';
 
-export default function FileDnD({ file, onDropHandler, error, uploadLabel, clickLabel }) {
+export default function FileDnD({
+  file,
+  onDropHandler,
+  error,
+  uploadLabel = T.translate('features.FileDnD.uploadLabel'),
+  clickLabel = T.translate('features.FileDnD.clickLabel'),
+}) {
   return (
     <Dropzone
       activeClassName="file-drag-container"
@@ -34,11 +40,11 @@ export default function FileDnD({ file, onDropHandler, error, uploadLabel, click
           <span>{file.name}</span>
         ) : (
           <span>
-            {uploadLabel ? uploadLabel : T.translate('features.FileDnD.uploadLabel')}
+            {uploadLabel}
             <br />
             or
             <br />
-            {clickLabel ? clickLabel : T.translate('features.FileDnD.clickLabel')}
+            {clickLabel}
           </span>
         )}
         {error ? <div className="text-danger">{error}</div> : null}
