@@ -64,6 +64,7 @@ var plugins = [
     },
   ]),
   new HtmlWebpackPlugin({
+    chunksSortMode: 'none',
     title: 'CDAP',
     template: './login.html',
     filename: 'login.html',
