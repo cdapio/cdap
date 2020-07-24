@@ -55,41 +55,52 @@ public class ConnectionConfig {
   public static final ConnectionConfig DEFAULT = ConnectionConfig.builder().build();
 
   private final String hostname;
-  private final int port;
+  private final Integer port;
   private final boolean sslEnabled;
+  private final String apiPath;
 
   public ConnectionConfig(ConnectionConfig config) {
-    this(config.getHostname(), config.getPort(), config.isSSLEnabled());
+    this(config.getHostname(), config.getPort(), config.isSSLEnabled(), config.getApiPath());
   }
 
-  public ConnectionConfig(String hostname, int port, boolean sslEnabled) {
+  public ConnectionConfig(String hostname, Integer port, boolean sslEnabled) {
+    this(hostname, port, sslEnabled, null);
+  }
+
+  public ConnectionConfig(String hostname, Integer port, boolean sslEnabled, @Nullable String apiPath) {
     Preconditions.checkArgument(hostname != null && !hostname.isEmpty(), "hostname cannot be empty");
     this.hostname = hostname;
     this.port = port;
     this.sslEnabled = sslEnabled;
+    this.apiPath = apiPath;
   }
 
   public URI getURI() {
-    return URI.create(String.format("%s://%s:%d", sslEnabled ? "https" : "http", hostname, port));
+    return URI.create(String.format("%s://%s/", sslEnabled ? "https" : "http", getFullHost()));
+  }
+
+  public String getFullHost() {
+    return port == null ? hostname : String.format("%s:%d", hostname, port);
   }
 
   public URI resolveURI(String path) {
-    return getURI().resolve(String.format("/%s", path));
+    return getURI().resolve(String.format("/%s%s", apiPath == null ? "" : apiPath, path));
   }
 
   public URI resolveURI(String apiVersion, String path) {
-    return getURI().resolve(String.format("/%s/%s", apiVersion, path));
+    return getURI().resolve(String.format("/%s%s/%s", apiPath == null ? "" : apiPath, apiVersion, path));
   }
 
   public URI resolveNamespacedURI(NamespaceId namespace, String apiVersion, String path) {
-    return getURI().resolve(String.format("/%s/namespaces/%s/%s", apiVersion, namespace.getNamespace(), path));
+    return getURI().resolve(String.format("/%s%s/namespaces/%s/%s", apiPath == null ? "" : apiPath,
+                                          apiVersion, namespace.getNamespace(), path));
   }
 
   public String getHostname() {
     return hostname;
   }
 
-  public int getPort() {
+  public Integer getPort() {
     return port;
   }
 
@@ -97,9 +108,13 @@ public class ConnectionConfig {
     return sslEnabled;
   }
 
+  public String getApiPath() {
+    return apiPath;
+  }
+
   @Override
   public int hashCode() {
-    return Objects.hashCode(hostname, port, sslEnabled);
+    return Objects.hashCode(hostname, port, sslEnabled, apiPath);
   }
 
   @Override
@@ -113,7 +128,8 @@ public class ConnectionConfig {
     final ConnectionConfig other = (ConnectionConfig) obj;
     return Objects.equal(this.hostname, other.hostname) &&
       Objects.equal(this.port, other.port) &&
-      Objects.equal(this.sslEnabled, other.sslEnabled);
+      Objects.equal(this.sslEnabled, other.sslEnabled) &&
+      Objects.equal(this.apiPath, other.apiPath);
   }
 
   @Override
@@ -140,6 +156,7 @@ public class ConnectionConfig {
     private String hostname = DEFAULT_HOST;
     private Integer port = null;
     private boolean sslEnabled = DEFAULT_SSL_ENABLED;
+    private String apiPath = null;
 
     public Builder() {
     }
@@ -148,6 +165,7 @@ public class ConnectionConfig {
       this.hostname = connectionConfig.hostname;
       this.port = connectionConfig.port;
       this.sslEnabled = connectionConfig.sslEnabled;
+      this.apiPath = connectionConfig.getApiPath();
     }
 
     public Builder setHostname(String hostname) {
@@ -170,15 +188,20 @@ public class ConnectionConfig {
       return this;
     }
 
+    public Builder setApiPath(String apiPath) {
+      this.apiPath = apiPath;
+      return this;
+    }
+
     public ConnectionConfig build() {
-      if (port == null) {
+      if (port == null && DEFAULT_HOST.equals(hostname)) {
         if (sslEnabled) {
           port = DEFAULT_SSL_PORT;
         } else {
           port = DEFAULT_PORT;
         }
       }
-      return new ConnectionConfig(hostname, port, sslEnabled);
+      return new ConnectionConfig(hostname, port, sslEnabled, apiPath);
     }
   }
 }

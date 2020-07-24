@@ -123,11 +123,8 @@ public class ProgramClient {
     String path = String.format("apps/%s/versions/%s/%s/%s/%s", program.getApplication(), program.getVersion(),
                                 program.getType().getCategoryName(), program.getProgram(), action);
     URL url = config.resolveNamespacedURLV3(program.getNamespaceId(), path);
-    HttpRequest.Builder request = HttpRequest.post(url);
-    if (runtimeArgs != null) {
-      request.withBody(GSON.toJson(runtimeArgs));
-    }
-
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request = HttpRequest.post(url).withBody(GSON.toJson(runtimeArgs));;
     HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
@@ -220,7 +217,9 @@ public class ProgramClient {
     String path = String.format("apps/%s/versions/%s/%s/%s/stop", programId.getApplication(), programId.getVersion(),
                                 programId.getType().getCategoryName(), programId.getProgram());
     URL url = config.resolveNamespacedURLV3(programId.getNamespaceId(), path);
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken(),
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request = HttpRequest.post(url).withBody("");
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
                                                HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programId);

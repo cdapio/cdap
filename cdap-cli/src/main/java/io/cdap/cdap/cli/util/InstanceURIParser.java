@@ -40,9 +40,7 @@ public class InstanceURIParser {
   }
 
   public CLIConnectionConfig parse(String uriString) {
-    if (!uriString.contains("://")) {
-      uriString = DEFAULT_PROTOCOL + "://" + uriString;
-    }
+    uriString = addScheme(uriString);
 
     URI uri = URI.create(uriString);
     NamespaceId namespace =
@@ -62,6 +60,35 @@ public class InstanceURIParser {
       .setHostname(hostname)
       .setPort(port)
       .setSSLEnabled(sslEnabled)
+      .build();
+    return new CLIConnectionConfig(config, namespace, null);
+  }
+
+  private String addScheme(String uriString) {
+    if (!uriString.contains("://")) {
+      uriString = DEFAULT_PROTOCOL + "://" + uriString;
+    }
+    return uriString;
+  }
+
+  public CLIConnectionConfig parseInstanceURI(String uriString, String namespaceString) {
+    uriString = addScheme(uriString);
+    //Having '/' at the end of the path helps java.net.URI to recognise this as a valid URI path
+    if (uriString.length() > 0 && !uriString.endsWith("/")) {
+      uriString = String.format("%s/", uriString);
+    }
+    URI uri = URI.create(uriString);
+    NamespaceId namespace =
+      (namespaceString == null || namespaceString.isEmpty()) ? NamespaceId.DEFAULT : new NamespaceId(namespaceString);
+    String apiPath = uri.getPath();
+    if (apiPath != null && apiPath.startsWith("/")) {
+      apiPath = apiPath.substring(1);
+    }
+    ConnectionConfig config = ConnectionConfig.builder()
+      .setHostname(uri.getHost())
+      .setPort(uri.getPort() == -1 ? null : uri.getPort())
+      .setSSLEnabled("https".equals(uri.getScheme()))
+      .setApiPath(apiPath)
       .build();
     return new CLIConnectionConfig(config, namespace, null);
   }
