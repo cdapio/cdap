@@ -28,8 +28,6 @@ function getEs6Directives(isNegate) {
     'my-global-navbar',
     'datetime-picker',
     'datetime-range',
-    'log-viewer',
-    'log-viewer-preview',
     'complex-schema',
     'my-pipeline-settings',
     'my-pipeline-summary',
@@ -37,8 +35,6 @@ function getEs6Directives(isNegate) {
     'my-post-run-action-wizard',
     'my-post-run-actions',
     'widget-container/widget-complex-schema-editor',
-    'timeline',
-    'timeline-preview',
     'widget-container',
     'plugin-functions',
     'my-link-button',
@@ -128,7 +124,6 @@ gulp.task('css:application', function() {
       './app/directives/**/*.less',
       './app/hydrator/**/*.less',
       './app/tracker/**/*.less',
-      './app/logviewer/**/*.less',
     ])
     .pipe(plug.less())
     .pipe(plug.concat('app.css'))
@@ -281,10 +276,6 @@ gulp.task('watch:js:app:tracker', function() {
   return getExtensionBuildPipeline('tracker').pipe(plug.livereload({ port: 35728 }));
 });
 
-gulp.task('watch:js:app:logviewer', function() {
-  return getExtensionBuildPipeline('logviewer').pipe(plug.livereload({ port: 35728 }));
-});
-
 gulp.task('watch:js:app:babel', function() {
   return getBabelBuildPipeline().pipe(plug.livereload({ port: 35728 }));
 });
@@ -298,23 +289,13 @@ gulp.task('js:app:tracker', function() {
   return getExtensionBuildPipeline('tracker');
 });
 
-gulp.task('js:app:logviewer', function() {
-  return getExtensionBuildPipeline('logviewer');
-});
-
 gulp.task('js:app:babel', function() {
   return getBabelBuildPipeline();
 });
 
-gulp.task(
-  'js:app',
-  gulp.series('js:app:babel', 'js:app:hydrator', 'js:app:tracker', 'js:app:logviewer')
-);
+gulp.task('js:app', gulp.series('js:app:babel', 'js:app:hydrator', 'js:app:tracker'));
 
-gulp.task(
-  'watch:js:app',
-  gulp.series('watch:js:app:hydrator', 'watch:js:app:tracker', 'watch:js:app:logviewer')
-);
+gulp.task('watch:js:app', gulp.series('watch:js:app:hydrator', 'watch:js:app:tracker'));
 gulp.task('polyfill', function() {
   return gulp
     .src(['./app/polyfill.js', './app/ui-utils/url-generator.js'])
@@ -330,10 +311,9 @@ gulp.task('img', function() {
 gulp.task('html:partials', function() {
   return gulp
     .src([
-      './app/{hydrator,tracker,logviewer}/**/*.html',
+      './app/{hydrator,tracker}/**/*.html',
       '!./app/tracker/tracker.html',
       '!./app/hydrator/hydrator.html',
-      '!./app/logviewer/logviewer.html',
     ])
     .pipe(plug.htmlmin({ removeComments: true }))
     .pipe(gulp.dest('./packaged/public/dist/assets/features'))
@@ -342,11 +322,7 @@ gulp.task('html:partials', function() {
 
 gulp.task('html:main', function() {
   return gulp
-    .src([
-      './app/tracker/tracker.html',
-      './app/hydrator/hydrator.html',
-      './app/logviewer/logviewer.html',
-    ])
+    .src(['./app/tracker/tracker.html', './app/hydrator/hydrator.html'])
     .pipe(plug.htmlmin({ removeComments: true }))
     .pipe(gulp.dest('./packaged/public/dist'));
 });
@@ -547,10 +523,7 @@ gulp.task('watcher', function(cb) {
 
   gulp.watch('./app/**/*.{less,css}', gulp.series('css'));
   gulp.watch(['./app/directives/**/*.html', './app/services/**/*.html'], gulp.series('tpl'));
-  gulp.watch(
-    ['./app/hydrator/**/*.html', './app/tracker/**/*.html', './app/logviewer/**/*.html'],
-    gulp.series('html:partials')
-  );
+  gulp.watch(['./app/hydrator/**/*.html', './app/tracker/**/*.html'], gulp.series('html:partials'));
   cb();
 });
 

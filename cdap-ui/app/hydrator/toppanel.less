@@ -116,7 +116,7 @@ body.theme-cdap {
         &.btn-select {
           background-color: #ebebeb;
         }
-        &:active {
+        &:not([disabled]):active {
           background-color: #828da0;
           border-top: 1px solid #828da0;
           border-right: 1px solid #828da0;
@@ -259,6 +259,19 @@ body.theme-cdap {
         }
       }
     }
+
+    .canvas-wrapper .top-panel .pipeline-settings.pipeline-logs-section {
+      left: 0;
+      max-width: initial;
+      max-height: initial;
+
+      preview-logs {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+      }
+    }
+
     .pipeline-settings {
       // Right now we don't have the height of the top panel to be the same
       // in both studio and published view.

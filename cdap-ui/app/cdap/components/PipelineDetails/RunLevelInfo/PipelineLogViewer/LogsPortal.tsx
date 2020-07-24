@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,30 +14,21 @@
  * the License.
  */
 
-@import "../../styles/variables.less";
+import * as React from 'react';
+import { createPortal } from 'react-dom';
 
-my-old-log-viewer {
-  .row {
-    border: 1px solid lightgray;
-    padding: 10px 0;
-  }
-  .terminal {
-    background: @cdap-header;
-    color: white;
-    padding: 10px;
-    overflow: auto;
-    border: 1px inset #eeeeee;
-    border-radius: 4px;
-    min-height: 240px;
-    max-height: 600px;
-    pre {
-      background: transparent;
-      color: inherit;
-      border: 0;
-      padding: 0;
-      margin-bottom: 7px;
-      white-space: normal;
-      word-break: normal;
-    }
-  }
-}
+const LogsPortal = ({ children }) => {
+  const body = document.body;
+  const [el] = React.useState(document.createElement('div'));
+
+  React.useEffect(() => {
+    body.appendChild(el);
+    return () => {
+      body.removeChild(el);
+    };
+  }, []);
+
+  return createPortal(children, el);
+};
+
+export default LogsPortal;

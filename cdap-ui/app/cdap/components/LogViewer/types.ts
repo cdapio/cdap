@@ -14,16 +14,35 @@
  * the License.
  */
 
-import DataSourceConfigurer from 'services/datasource/DataSourceConfigurer';
-import { apiCreator } from 'services/resource-helper';
+interface ILog {
+  timestamp: number;
+  logLevel: string;
+  threadName: string;
+  className: string;
+  simpleClassName: string;
+  lineNumber: number;
+  message: string;
+  stackTrace: string;
+  loggerName: string;
+}
 
-let dataSrc = DataSourceConfigurer.getInstance();
-const basepath = '/namespaces/:namespace/previews';
+export interface ILogResponse {
+  log: ILog;
+  offset: 'string';
+}
 
-export const MyPreviewApi = {
-  getStageData: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}/:previewId/tracers`),
+export interface IProgram {
+  namespace: string;
+  application: string;
+  programType: string;
+  programName: string;
+  runId: string;
+}
 
-  // logs
-  nextLogs: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:previewId/logs/next`),
-  prevLogs: apiCreator(dataSrc, 'GET', 'REQUEST', `${basepath}/:previewId/logs/prev`),
-};
+export enum LogLevel {
+  ERROR = 'ERROR',
+  WARN = 'WARN',
+  INFO = 'INFO',
+  DEBUG = 'DEBUG',
+  TRACE = 'TRACE',
+}

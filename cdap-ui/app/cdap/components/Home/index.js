@@ -115,6 +115,12 @@ const Ingestion = Loadable({
   loading: LoadingSVGCentered,
 });
 
+const LogViewerPage = Loadable({
+  loader: () =>
+    import(/* webpackChunkName: "LogViewerPage" */ 'components/LogViewer/LogViewerPage'),
+  loading: LoadingSVGCentered,
+});
+
 export default class Home extends Component {
   constructor(props) {
     super(props);
@@ -185,6 +191,11 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/replication" component={Replicator} />
           <Route path="/ns/:namespace/lab" component={Lab} />
+          <Route
+            exact
+            path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"
+            component={LogViewerPage}
+          />
           <Route
             exact
             path="/ns/:namespace/lab-experiment-test"
