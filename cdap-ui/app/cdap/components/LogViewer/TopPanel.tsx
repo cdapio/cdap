@@ -46,6 +46,12 @@ const styles = (theme): StyleRules => {
         backgroundColor: theme.palette.grey[200],
       },
 
+      '&:focus': {
+        color: 'inherit',
+        outline: 'none',
+        textDecoration: 'none',
+      },
+
       '&$disabled': {
         // needed to beat specificity
         color: theme.palette.grey[50],
@@ -143,6 +149,7 @@ const TopPanelView: React.FC<ITopPanelProps> = ({
         color="inherit"
         className={classes.actionButton}
         href={getDownloadLogsUrl()}
+        target="_blank"
       >
         Download All
       </Button>
