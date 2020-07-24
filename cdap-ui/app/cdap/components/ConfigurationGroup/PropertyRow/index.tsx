@@ -15,16 +15,17 @@
  */
 
 import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { objectQuery } from 'services/helpers';
-import If from 'components/If';
+
 import { IPluginProperty, IWidgetProperty } from 'components/ConfigurationGroup/types';
-import classnames from 'classnames';
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
-import { isMacro } from 'services/helpers';
-import MacroIndicator from 'components/ConfigurationGroup/MacroIndicator';
 import { isEmpty, isEqual, xorWith } from 'lodash';
+import { isMacro, objectQuery } from 'services/helpers';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import { IErrorObj } from 'components/ConfigurationGroup/utilities';
+import If from 'components/If';
+import MacroIndicator from 'components/ConfigurationGroup/MacroIndicator';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import classnames from 'classnames';
 
 const styles = (theme): StyleRules => {
   return {
@@ -32,7 +33,7 @@ const styles = (theme): StyleRules => {
       display: 'flex',
       flexDirection: 'column',
       marginBottom: '5px',
-      padding: '15px 10px 10px',
+      padding: '15px 5px 10px',
     },
     row: {
       display: 'grid',

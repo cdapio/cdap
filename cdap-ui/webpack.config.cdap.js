@@ -277,8 +277,8 @@ var webpackConfig = {
   output: {
     filename: '[name].js',
     chunkFilename: '[name].js',
-    hotUpdateChunkFilename: 'hot-update.js',
-    hotUpdateMainFilename: 'hot-update.json',
+    //hotUpdateChunkFilename: 'hot-update.js',
+    //hotUpdateMainFilename: 'hot-update.json',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
     pathinfo: false, // added. reduces 0.2~0.3 seconds
@@ -345,7 +345,7 @@ var webpackConfig = {
     open: 'chrome',
     writeToDisk: true,
     publicPath: '/cdap_assets/',
-    watchContentBase: false,
+    watchContentBase: true,
     historyApiFallback: true,
     hot: true,
     inline: true,
