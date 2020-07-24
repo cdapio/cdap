@@ -420,8 +420,8 @@ function parseSchema(avroSchema: ISchemaType, name = 'etlSchemaBody'): INode {
   };
   for (const field of fields) {
     const child = parseSubTree(field);
-    if (Array.isArray(root.children.order)) {
-      root.children.order.push(child.id);
+    if (Array.isArray((root.children as Record<'order', string[]>).order)) {
+      (root.children as Record<'order', string[]>).order.push(child.id);
     }
     root.children[child.id] = child;
   }

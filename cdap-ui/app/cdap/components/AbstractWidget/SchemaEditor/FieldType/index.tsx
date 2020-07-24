@@ -63,15 +63,18 @@ const FieldTypeBase = ({
   const [fieldNullable, setFieldNullable] = React.useState(nullable);
   const [fieldTypeProperties, setFieldTypeProperties] = React.useState(typeProperties || {});
   const inputEle = React.useRef(null);
-  const classes = useStyles();
-  React.useEffect(() => {
-    if (autoFocus) {
-      if (inputEle.current) {
-        inputEle.current.focus();
-        inputEle.current.select();
+  const classes = useStyles({});
+  React.useEffect(
+    () => {
+      if (autoFocus) {
+        if (inputEle.current) {
+          inputEle.current.focus();
+          inputEle.current.select();
+        }
       }
-    }
-  }, [autoFocus]);
+    },
+    [autoFocus]
+  );
   const onNullable = (checked) => {
     setFieldNullable(checked);
     onChange('nullable', checked);

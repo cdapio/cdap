@@ -256,12 +256,14 @@ class FieldRowBase extends React.Component<IFieldRowProps, IFieldRowState> {
                   </Tooltip>
                 </If>
                 <If condition={typeof this.state.collapsed === 'boolean'} invisible>
-                  <If condition={this.state.collapsed}>
-                    <KeyboardArrowRightIcon onClick={this.onToggleCollapse} />
-                  </If>
-                  <If condition={!this.state.collapsed}>
-                    <KeyboardArrowDownIcon onClick={this.onToggleCollapse} />
-                  </If>
+                  <React.Fragment>
+                    <If condition={this.state.collapsed}>
+                      <KeyboardArrowRightIcon onClick={this.onToggleCollapse} />
+                    </If>
+                    <If condition={!this.state.collapsed}>
+                      <KeyboardArrowDownIcon onClick={this.onToggleCollapse} />
+                    </If>
+                  </React.Fragment>
                 </If>
                 {this.RenderSubType(this.props.field)}
               </React.Fragment>

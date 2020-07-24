@@ -105,14 +105,17 @@ class SchemaManagerBase implements ISchemaManager {
   };
 
   private addNewEnumSymbol = (tree: INode, fieldId: IFieldIdentifier) => {
-    if (!tree.children || (tree.children && !Array.isArray(tree.children.order))) {
+    if (
+      !tree.children ||
+      (tree.children && !Array.isArray((tree.children as Record<'order', string[]>).order))
+    ) {
       return { tree, newTree: undefined, currentField: undefined };
     }
     const { id = uuidV4(), order = [] } = this.insertNewIdToOrder(
-      tree.children.order as string[],
+      (tree.children as Record<'order', string[]>).order as string[],
       fieldId.id
     );
-    tree.children.order = order;
+    (tree.children as Record<'order', string[]>).order = order;
     const newlyAddedField = {
       id,
       internalType: InternalTypesEnum.ENUM_SYMBOL,
@@ -130,14 +133,17 @@ class SchemaManagerBase implements ISchemaManager {
   };
 
   private addNewFieldType = (tree: INode, fieldId: IFieldIdentifier) => {
-    if (!tree.children || (tree.children && !Array.isArray(tree.children.order))) {
+    if (
+      !tree.children ||
+      (tree.children && !Array.isArray((tree.children as Record<'order', string[]>).order))
+    ) {
       return { tree, newTree: undefined, currentField: undefined };
     }
     const { id = uuidV4(), order = [] } = this.insertNewIdToOrder(
-      tree.children.order as string[],
+      (tree.children as Record<'order', string[]>).order as string[],
       fieldId.id
     );
-    tree.children.order = order;
+    (tree.children as Record<'order', string[]>).order = order;
     const newlyAddedField = {
       id,
       internalType: InternalTypesEnum.RECORD_SIMPLE_TYPE,
@@ -155,14 +161,17 @@ class SchemaManagerBase implements ISchemaManager {
   };
 
   private addNewUnionType = (tree: INode, fieldId: IFieldIdentifier) => {
-    if (!tree.children || (tree.children && !Array.isArray(tree.children.order))) {
+    if (
+      !tree.children ||
+      (tree.children && !Array.isArray((tree.children as Record<'order', string[]>).order))
+    ) {
       return { tree, newTree: undefined, currentField: undefined };
     }
     const { id = uuidV4(), order = [] } = this.insertNewIdToOrder(
-      tree.children.order as string[],
+      (tree.children as Record<'order', string[]>).order as string[],
       fieldId.id
     );
-    tree.children.order = order;
+    (tree.children as Record<'order', string[]>).order = order;
     const newlyAddedField = {
       id,
       internalType: InternalTypesEnum.UNION_SIMPLE_TYPE,
@@ -277,7 +286,10 @@ class SchemaManagerBase implements ISchemaManager {
     if (fieldId.ancestors.length === 1) {
       const field = { ...tree.children[fieldId.id] };
       let newField;
-      if (Array.isArray(tree.children.order) && Object.keys(tree.children).length === 2) {
+      if (
+        Array.isArray((tree.children as Record<'order', string[]>).order) &&
+        Object.keys(tree.children).length === 2
+      ) {
         const {
           tree: treeWithDefaultChild,
           newlyAddedField: defaultNewField,
@@ -285,8 +297,11 @@ class SchemaManagerBase implements ISchemaManager {
         newField = defaultNewField;
         tree = treeWithDefaultChild;
       }
-      if (Array.isArray(tree.children.order)) {
-        tree.children.order = tree.children.order.filter((id) => id !== fieldId.id);
+      if (Array.isArray((tree.children as Record<'order', string[]>).order)) {
+        (tree.children as Record<'order', string[]>).order = (tree.children as Record<
+          'order',
+          string[]
+        >).order.filter((id) => id !== fieldId.id);
       }
       delete tree.children[fieldId.id];
       return { tree, removedField: field, newlyAddedField: newField };

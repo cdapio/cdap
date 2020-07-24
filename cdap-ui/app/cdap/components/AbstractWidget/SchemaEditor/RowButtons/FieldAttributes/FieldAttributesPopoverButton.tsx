@@ -19,7 +19,6 @@ import MoreVertical from '@material-ui/icons/MoreVert';
 import { IconWrapper } from 'components/AbstractWidget/SchemaEditor/RowButtons/IconWrapper';
 import Popover from '@material-ui/core/Popover';
 import makeStyles from '@material-ui/core/styles/makeStyles';
-import { ISimpleType, IComplexTypeNames } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import { isFlatRowTypeComplex } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
 import { RecordEnumTypeAttributes } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/RecordEnumAttributes';
 import { DecimalTypeAttributes } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/DecimalAttributes';
@@ -31,7 +30,7 @@ import { AvroSchemaTypesEnum } from 'components/AbstractWidget/SchemaEditor/Sche
 interface IFieldPropertiesPopoverButtonProps {
   nullable: boolean;
   onNullable: (nullable: boolean) => void;
-  type: ISimpleType | IComplexTypeNames;
+  type: AvroSchemaTypesEnum;
   onChange?: IOnchangeHandler;
   typeProperties: ITypeProperties;
   disabled?: boolean;
@@ -77,7 +76,7 @@ function FieldPropertiesPopoverButton({
 
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : null;
-  const classes = useStyles();
+  const classes = useStyles({});
   return (
     <React.Fragment>
       <IconWrapper onClick={handleClick}>
@@ -103,21 +102,25 @@ function FieldPropertiesPopoverButton({
             <strong>No Attributes</strong>
           </If>
           <If condition={type === AvroSchemaTypesEnum.RECORD || type === AvroSchemaTypesEnum.ENUM}>
-            <strong>Attributes</strong>
-            <RecordEnumTypeAttributes
-              typeProperties={typeProperties}
-              onChange={disabled ? undefined : onChange}
-              handleClose={handleClose}
-            />
+            <React.Fragment>
+              <strong>Attributes</strong>
+              <RecordEnumTypeAttributes
+                typeProperties={typeProperties}
+                onChange={disabled ? undefined : onChange}
+                handleClose={handleClose}
+              />
+            </React.Fragment>
           </If>
           <If condition={type === AvroSchemaTypesEnum.DECIMAL}>
-            <strong>Attributes</strong>
-            <DecimalTypeAttributes
-              typeProperties={typeProperties}
-              onChange={disabled ? undefined : onChange}
-              handleClose={handleClose}
-              disabled={disabled}
-            />
+            <React.Fragment>
+              <strong>Attributes</strong>
+              <DecimalTypeAttributes
+                typeProperties={typeProperties}
+                onChange={disabled ? undefined : onChange}
+                handleClose={handleClose}
+                disabled={disabled}
+              />
+            </React.Fragment>
           </If>
         </fieldset>
       </Popover>

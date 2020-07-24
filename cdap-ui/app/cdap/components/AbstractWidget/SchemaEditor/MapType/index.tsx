@@ -74,13 +74,16 @@ const MapTypeBase = ({
     onChange(property, value);
   };
   const inputEle = React.useRef(null);
-  React.useEffect(() => {
-    if (autoFocus) {
-      if (inputEle.current) {
-        inputEle.current.focus();
+  React.useEffect(
+    () => {
+      if (autoFocus) {
+        if (inputEle.current) {
+          inputEle.current.focus();
+        }
       }
-    }
-  }, [autoFocus]);
+    },
+    [autoFocus]
+  );
   const onNullable = (checked) => {
     setFieldNullable(checked);
     onChange('nullable', checked);

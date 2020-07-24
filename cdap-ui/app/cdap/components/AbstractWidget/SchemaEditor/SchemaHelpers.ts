@@ -161,7 +161,7 @@ const getComplexTypeName = (complexType): IComplexTypeNames => {
   }
 };
 
-const isFlatRowTypeComplex = (typeName: ISimpleType | IComplexTypeNames) => {
+const isFlatRowTypeComplex = (typeName: AvroSchemaTypesEnum) => {
   switch (typeName) {
     case AvroSchemaTypesEnum.STRING:
     case AvroSchemaTypesEnum.BOOLEAN:

@@ -28,7 +28,7 @@ function RecordEnumTypeAttributes({
 }: IAttributesComponentProps) {
   const [doc, setDoc] = React.useState(typeProperties.doc || '');
   const [aliases, setAlias] = React.useState(typeProperties.aliases || []);
-  const classes = useAttributePopoverStyles();
+  const classes = useAttributePopoverStyles({});
 
   const onChangeHandler = () => {
     onChange('typeProperties', {
@@ -47,6 +47,7 @@ function RecordEnumTypeAttributes({
             description: 'documentation for the record',
           }}
           widgetProperty={{
+            name: 'documentation',
             'widget-type': 'textbox',
             label: 'Documentation',
           }}
@@ -60,6 +61,7 @@ function RecordEnumTypeAttributes({
             description: 'Aliases for the record',
           }}
           widgetProperty={{
+            name: 'aliases',
             'widget-type': 'csv',
             label: 'Aliases',
           }}

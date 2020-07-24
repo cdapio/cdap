@@ -25,38 +25,43 @@ import {
   rowHeight,
   rowMarginTop,
 } from 'components/AbstractWidget/SchemaEditor/FieldWrapper/FieldWrapperConstants';
+import { PositionProperty } from 'csstype';
 
-const useStyles = makeStyles({
-  root: {
-    position: 'absolute',
-    height: `${rowHeight + rowMarginTop * 2 + 2}px`,
-    width: `${widthOfSiblingLines}px`,
-    borderLeft: `${borderSizeOfSiblingLines}px solid rgba(0, 0, 0, 0.2)`,
-    left: (props) => (props as any).index * -1 * INDENTATION_SPACING,
-  },
-  innerMostSiblingConnector: {
-    '&:after': {
-      position: 'absolute',
-      height: '2px',
-      width: `${INDENTATION_SPACING - borderSizeOfSiblingLines}px`,
-      left: '0px',
-      content: '""',
-      borderTop: '2px solid rgba(0, 0, 0, 0.2)',
-      top: `${rowHeight / 2}px`,
+const useStyles = makeStyles(() => {
+  return {
+    root: (props) => ({
+      position: 'absolute' as PositionProperty,
+      height: `${rowHeight + rowMarginTop * 2 + 2}px`,
+      width: `${widthOfSiblingLines}px`,
+      borderLeft: `${borderSizeOfSiblingLines}px solid rgba(0, 0, 0, 0.2)`,
+      left: props.index * -1 * INDENTATION_SPACING,
+    }),
+    innerMostSiblingConnector: {
+      '&:after': {
+        position: 'absolute' as PositionProperty,
+        height: '2px',
+        width: `${INDENTATION_SPACING - borderSizeOfSiblingLines}px`,
+        left: '0px',
+        content: '""',
+        borderTop: '2px solid rgba(0, 0, 0, 0.2)',
+        top: `${rowHeight / 2}px`,
+      },
     },
-  },
-  highlight: {
-    borderLeftColor: `${blue[300]}`,
-    '&:after': {
-      borderTopColor: `${blue[300]}`,
+    // We are having the important here because of the way jss generates the css class
+    // the root takes precendence overriding this borderLeft.
+    highlight: {
+      borderLeftColor: `${blue[300]} !important`,
+      '&:after': {
+        borderTopColor: `${blue[300]} !important`,
+      },
     },
-  },
-  errorHighlight: {
-    borderLeftColor: `${red[100]}`, // TODO: should be able to use from theme.
-    '&:after': {
-      borderTopColor: `${red[100]}`,
+    errorHighlight: {
+      borderLeftColor: `${red[100]} !important`, // TODO: should be able to use from theme.
+      '&:after': {
+        borderTopColor: `${red[100]} !important`,
+      },
     },
-  },
+  };
 });
 
 const SiblingLine = ({ id, index, activeParent, setActiveParent, ancestors, error = false }) => {

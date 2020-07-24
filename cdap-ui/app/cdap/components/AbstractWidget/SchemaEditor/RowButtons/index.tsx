@@ -50,7 +50,7 @@ interface IRowButtonsProps {
   onRemove?: () => void;
   onChange?: IOnchangeHandler;
   typeProperties?: Record<string, string>;
-  type?: ISimpleType | IComplexTypeNames;
+  type?: AvroSchemaTypesEnum;
   disabled?: boolean;
 }
 
@@ -65,7 +65,7 @@ function RowButtons({
   disabled = false,
 }: IRowButtonsProps) {
   return (
-    <RowButtonWrapper disabled={disabled}>
+    <RowButtonWrapper>
       <If condition={typeof onNullable === 'function'} invisible>
         <Nullable nullable={nullable} onNullable={disabled ? undefined : onNullable} />
       </If>

@@ -101,8 +101,8 @@ function generateEnumType(children: IOrderedChildren, currentNode: INode, nullab
   if (currentTypeProperties.aliases) {
     finalType.aliases = currentTypeProperties.aliases;
   }
-  if (Array.isArray(children.order)) {
-    for (const childId of children.order) {
+  if (Array.isArray((children as Record<'order', string[]>).order)) {
+    for (const childId of (children as Record<'order', string[]>).order) {
       const currentChild = children[childId];
       const { typeProperties } = currentChild;
       if (typeProperties.symbol && typeProperties.symbol !== '') {
@@ -132,8 +132,8 @@ function generateRecordType(children: IOrderedChildren, currentNode: INode, null
   if (typeProperties.aliases) {
     finalType.aliases = typeProperties.aliases;
   }
-  if (Array.isArray(children.order)) {
-    for (const childId of children.order) {
+  if (Array.isArray((children as Record<'order', string[]>).order)) {
+    for (const childId of (children as Record<'order', string[]>).order) {
       const currentChild = children[childId];
       const { name, type, nullable: isFieldNullable } = currentChild;
       if (!name || name === '') {
@@ -162,8 +162,8 @@ function generateRecordType(children: IOrderedChildren, currentNode: INode, null
 
 function generateUnionType(children: IOrderedChildren) {
   const finalType = [];
-  if (Array.isArray(children.order)) {
-    for (const childId of children.order) {
+  if (Array.isArray((children as Record<'order', string[]>).order)) {
+    for (const childId of (children as Record<'order', string[]>).order) {
       const currentChild = children[childId];
       const { type } = currentChild;
       const isUnionTypeComplex = isDisplayTypeComplex({ type });
@@ -218,7 +218,7 @@ function SchemaGenerator(schemaTree: INode) {
   }
   avroSchema.schema.fields = [];
   // Top level record fields.
-  const { order } = schemaTree.children;
+  const { order } = schemaTree.children as Record<'order', string[]>;
   if (Array.isArray(order)) {
     for (const id of order) {
       const currentField = schemaTree.children[id];

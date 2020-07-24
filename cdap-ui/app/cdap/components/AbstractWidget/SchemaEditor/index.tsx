@@ -41,7 +41,7 @@ import {
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { INode } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
 
-const styles = (theme): StyleRules => {
+const styles = () => {
   return {
     schemaContainer: {
       width: '100%',
@@ -54,11 +54,13 @@ interface ISchemaEditorProps extends WithStyles<typeof styles> {
   visibleRows?: number;
   schema: ISchemaType;
   disabled?: boolean;
-  onChange: (props: {
-    tree: INode;
-    flat: IFlattenRowType[];
-    avroSchema: ISchemaType;
-  }) => IOnChangeReturnType;
+  onChange: (
+    props: {
+      tree: INode;
+      flat: IFlattenRowType[];
+      avroSchema: ISchemaType;
+    }
+  ) => IOnChangeReturnType;
 }
 
 interface ISchemaEditorState {
@@ -150,7 +152,7 @@ function SchemaEditor(props) {
   );
 }
 
-SchemaEditor.propTypes = {
+(SchemaEditor as any).propTypes = {
   schema: PropTypes.object,
   onChange: PropTypes.func,
   disabled: PropTypes.bool,

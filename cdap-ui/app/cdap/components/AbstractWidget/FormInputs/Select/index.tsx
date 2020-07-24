@@ -26,16 +26,18 @@ import { isNilOrEmptyString } from 'services/helpers';
 import Tooltip from '@material-ui/core/Tooltip';
 import { StyleRules } from '@material-ui/core/styles';
 
-const CustomTooltip = withStyles((theme): StyleRules => {
-  return {
-    tooltip: {
-      backgroundColor: theme.palette.grey[200],
-      color: (theme.palette as any).white[50],
-      fontSize: '12px',
-      wordBreak: 'break-word',
-    },
-  };
-})(Tooltip);
+const CustomTooltip = withStyles(
+  (theme): StyleRules => {
+    return {
+      tooltip: {
+        backgroundColor: theme.palette.grey[200],
+        color: (theme.palette as any).white[50],
+        fontSize: '12px',
+        wordBreak: 'break-word',
+      },
+    };
+  }
+)(Tooltip);
 
 const CustomizedInput = withStyles(() => {
   return {

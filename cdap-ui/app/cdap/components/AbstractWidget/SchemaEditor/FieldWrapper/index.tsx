@@ -29,6 +29,7 @@ import {
   rowHeight,
   rowMarginTop,
 } from 'components/AbstractWidget/SchemaEditor/FieldWrapper/FieldWrapperConstants';
+import { StyleRules } from '@material-ui/core/styles';
 
 interface IFieldWrapperProps {
   ancestors: string[];
@@ -37,27 +38,31 @@ interface IFieldWrapperProps {
   className?: any;
 }
 
-const CustomizedPaper = withStyles(() => {
-  return {
-    root: {
-      padding: '2px 10px 2px 0px',
-      display: 'grid',
-      marginTop: `${rowMarginTop}px`,
-      gridTemplateRows: `${rowHeight}px`,
-      position: 'relative',
-    },
-  };
-})(Paper);
+const CustomizedPaper = withStyles(
+  (): StyleRules => {
+    return {
+      root: {
+        padding: '2px 10px 2px 0px',
+        display: 'grid',
+        marginTop: `${rowMarginTop}px`,
+        gridTemplateRows: `${rowHeight}px`,
+        position: 'relative',
+      },
+    };
+  }
+)(Paper);
 
-const SiblingsWrapper = withStyles(() => {
-  return {
-    root: {
-      position: 'absolute',
-      left: 0,
-      top: 0,
-    },
-  };
-})(Box);
+const SiblingsWrapper = withStyles(
+  (): StyleRules => {
+    return {
+      root: {
+        position: 'absolute',
+        left: 0,
+        top: 0,
+      },
+    };
+  }
+)(Box);
 
 const FieldWrapperBase = ({
   ancestors = [],
@@ -82,7 +87,7 @@ const FieldWrapperBase = ({
   const thirdColumn = `96px`;
   const errorColumn = '10px';
   const secondColumn = `calc(100% - (${firstColumn} + ${thirdColumn} + ${errorColumn}))`;
-  let customStyles: Partial<CSSStyleDeclaration> = {
+  let customStyles: Partial<React.CSSProperties> = {
     marginLeft: `${spacing === 0 ? 2 : spacing}px`,
     gridTemplateColumns: `${firstColumn} ${secondColumn} ${thirdColumn}`,
     width: `calc(100% - ${spacing + 5 /* box shadow */}px)`,

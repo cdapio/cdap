@@ -37,7 +37,7 @@ const EnumTypeBase = ({
   const { symbol } = typeProperties;
   const [enumSymbol, setEnumSymbol] = React.useState(symbol);
   const inputEle = React.useRef(null);
-  const classes = useStyles();
+  const classes = useStyles({});
   const [fieldTypeProperties, setFieldTypeProperties] = React.useState(typeProperties || {});
 
   const onTypePropertiesChangeHandler = (property, value) => {
@@ -60,13 +60,16 @@ const EnumTypeBase = ({
     });
   };
 
-  React.useEffect(() => {
-    if (autoFocus) {
-      if (inputEle.current) {
-        inputEle.current.focus();
+  React.useEffect(
+    () => {
+      if (autoFocus) {
+        if (inputEle.current) {
+          inputEle.current.focus();
+        }
       }
-    }
-  }, [autoFocus]);
+    },
+    [autoFocus]
+  );
   return (
     <React.Fragment>
       <TextboxOnValium

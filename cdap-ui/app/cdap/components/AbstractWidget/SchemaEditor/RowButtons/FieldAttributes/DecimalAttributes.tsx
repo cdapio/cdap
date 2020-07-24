@@ -35,7 +35,7 @@ function DecimalTypeAttributes({
   const [precision, setPrecision] = React.useState(
     objectQuery(typeProperties, 'precision') || defaultPrecision
   );
-  const classes = useAttributePopoverStyles();
+  const classes = useAttributePopoverStyles({});
 
   const onChangeHandler = () => {
     onChange('typeProperties', {
@@ -54,6 +54,7 @@ function DecimalTypeAttributes({
             description: 'Scale of decimal',
           }}
           widgetProperty={{
+            name: 'scale',
             'widget-type': 'number',
             label: 'Scale',
           }}
@@ -69,6 +70,7 @@ function DecimalTypeAttributes({
           widgetProperty={{
             'widget-type': 'number',
             label: 'Precision',
+            name: 'precision',
           }}
           value={precision}
           onChange={setPrecision}

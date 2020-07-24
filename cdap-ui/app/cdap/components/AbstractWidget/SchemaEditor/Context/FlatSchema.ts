@@ -50,8 +50,11 @@ function FlatSchemaBase(
   });
   if (hasChildren) {
     let iterable;
-    if (Array.isArray(children.order) && children.order.length) {
-      iterable = children.order;
+    if (
+      Array.isArray((children as Record<'order', string[]>).order) &&
+      (children as Record<'order', string[]>).order.length
+    ) {
+      iterable = (children as Record<'order', string[]>).order;
       for (const childId of iterable) {
         result.push(...FlatSchemaBase(children[childId], options, ancestors.concat(id), collapsed));
       }

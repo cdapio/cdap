@@ -32,7 +32,7 @@ const ArrayTypeBase = ({
   typeProperties,
   disabled = false,
 }: IFieldTypeBaseProps) => {
-  const [fieldType, setFieldType] = React.useState(type);
+  const [fieldType, setFieldType] = React.useState<AvroSchemaTypesEnum>(type);
   const [fieldNullable, setFieldNullable] = React.useState(nullable);
   const [fieldTypeProperties, setFieldTypeProperties] = React.useState(typeProperties || {});
 
@@ -43,11 +43,14 @@ const ArrayTypeBase = ({
     onChange(property, value);
   };
   const inputEle = React.useRef(null);
-  React.useEffect(() => {
-    if (autoFocus && inputEle.current) {
-      inputEle.current.focus();
-    }
-  }, [autoFocus]);
+  React.useEffect(
+    () => {
+      if (autoFocus && inputEle.current) {
+        inputEle.current.focus();
+      }
+    },
+    [autoFocus]
+  );
   const onNullable = (checked) => {
     setFieldNullable(checked);
     onChange('nullable', checked);
