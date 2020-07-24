@@ -18,6 +18,8 @@ package io.cdap.cdap.cli;
 
 import io.cdap.cdap.client.config.ConnectionConfig;
 
+import javax.annotation.Nullable;
+
 /**
  * Contains the options that the user can pass to the CLI upon launch.
  */
@@ -31,16 +33,29 @@ public class LaunchOptions {
   private final boolean autoconnect;
   private final boolean debug;
   private final boolean verifySSL;
+  private final String namespace;
+  private final String instanceURI;
 
   public LaunchOptions(String uri, boolean autoconnect, boolean debug, boolean verifySSL) {
+    this(uri, autoconnect, debug, verifySSL, null, null);
+  }
+
+  public LaunchOptions(String uri, boolean autoconnect, boolean debug, boolean verifySSL,
+                       String namespace, @Nullable String instanceURI) {
     this.uri = uri;
     this.autoconnect = autoconnect;
     this.debug = debug;
     this.verifySSL = verifySSL;
+    this.namespace = namespace;
+    this.instanceURI = instanceURI;
   }
 
   public String getUri() {
     return uri;
+  }
+
+  public String getNamespace() {
+    return namespace;
   }
 
   public boolean isAutoconnect() {
@@ -55,6 +70,10 @@ public class LaunchOptions {
     return verifySSL;
   }
 
+  public String getInstanceURI() {
+    return instanceURI;
+  }
+
   public static Builder builder() {
     return new Builder();
   }
@@ -67,9 +86,16 @@ public class LaunchOptions {
     private boolean autoconnect;
     private boolean debug;
     private boolean verifySSL;
+    private String namespace;
+    private String instanceURI;
 
     public Builder setUri(String uri) {
       this.uri = uri;
+      return this;
+    }
+
+    public Builder setNamespace(String namespace) {
+      this.namespace = namespace;
       return this;
     }
 
@@ -88,8 +114,13 @@ public class LaunchOptions {
       return this;
     }
 
+    public Builder setInstanceURI(String instanceURI) {
+      this.instanceURI = instanceURI;
+      return this;
+    }
+
     public LaunchOptions build() {
-      return new LaunchOptions(uri, autoconnect, debug, verifySSL);
+      return new LaunchOptions(uri, autoconnect, debug, verifySSL, namespace, instanceURI);
     }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,13 @@
 
 package io.cdap.cdap.cli;
 
+import io.cdap.cdap.cli.util.InstanceURIParser;
+import io.cdap.cdap.cli.util.table.CsvTableRenderer;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.QueryClient;
 import io.cdap.cdap.client.app.FakeApp;
+import io.cdap.cdap.client.config.ClientConfig;
+import io.cdap.cdap.client.config.ConnectionConfig;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.XSlowTests;
 import io.cdap.common.cli.CLI;
@@ -26,11 +30,10 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.experimental.categories.Category;
 
-/**
- * Test for {@link CLIMain}.
- */
+import java.net.URI;
+
 @Category(XSlowTests.class)
-public class CLIMainTest extends CLITestBase {
+public class CLIMainLinkTest extends CLITestBase {
 
   private static ProgramClient programClient;
   private static QueryClient queryClient;
@@ -40,9 +43,9 @@ public class CLIMainTest extends CLITestBase {
 
   @BeforeClass
   public static void setUpClass() throws Exception {
-    cliConfig = createCLIConfig(STANDALONE.getBaseURI());
-    LaunchOptions launchOptions = new LaunchOptions(LaunchOptions.DEFAULT.getUri(),
-                                                    true, true, false);
+    cliConfig = createCLIConfigWithURIPrefix(STANDALONE.getBaseURI());
+    LaunchOptions launchOptions = new LaunchOptions("", true, true,
+                                                    false, null, LaunchOptions.DEFAULT.getUri());
     cliMain = new CLIMain(launchOptions, cliConfig);
     programClient = new ProgramClient(cliConfig.getClientConfig());
     queryClient = new QueryClient(cliConfig.getClientConfig());
@@ -58,6 +61,13 @@ public class CLIMainTest extends CLITestBase {
     testCommandOutputContains(cli, "delete app " + FakeApp.NAME, "Successfully deleted app");
     testCommandOutputContains(cli, String.format("delete app %s version %s", FakeApp.NAME, V1_SNAPSHOT),
                               "Successfully deleted app");
+  }
+
+  public static CLIConfig createCLIConfigWithURIPrefix(URI standaloneUri) throws Exception {
+    ConnectionConfig connectionConfig = InstanceURIParser.DEFAULT.parseInstanceURI(standaloneUri.toString(), null);
+    ClientConfig clientConfig = new ClientConfig.Builder().setConnectionConfig(connectionConfig).build();
+    clientConfig.setAllTimeouts(60000);
+    return new CLIConfig(clientConfig, System.out, new CsvTableRenderer());
   }
 
   @Override
