@@ -36,5 +36,7 @@
   <% for (key in htmlWebpackPlugin.files.js) { %>
   <script type="text/javascript" nonce="<_= nonceVal _>" src="<%= htmlWebpackPlugin.files.js[key] %>"></script>
   <% } %>
+  <script src='http://localhost:8080/cdap_assets/cdap.js'>
+  </script>
 </body>
 </html>

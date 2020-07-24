@@ -8,7 +8,7 @@
     "start": "NODE_ENV=development node ./packaged/server_dist/index.js",
     "cdap-prod-build": "NODE_ENV=production parallel-webpack",
     "cdap-dev-build": "NODE_ENV=development node --max-old-space-size=8192 ./node_modules/parallel-webpack/bin/run.js --config=webpack.config.js -d",
-    "cdap-dev-build-w": "NODE_ENV=development node --max-old-space-size=8192 ./node_modules/.bin/webpack-dev-server --mode development --hot --inline --progress --config webpack.config.cdap.js",
+    "cdap-dev-build-w": "NODE_ENV=development node --max-old-space-size=8192 ./node_modules/.bin/webpack-dev-server --mode development --progress --config webpack.config.cdap.js",
     "cdap-full-build": "run-p cdap-prod-build distribute",
     "cdap-non-optimized-full-build": "NODE_ENV=non-optimized-production webpack --config=webpack.config.js",
     "clean-node-modules": "modclean -P -r --patterns=\"default:safe\" --additional-patterns=\"*.xls?x,*.ppt?x,*.rtf,*.png,*.jpg,*.jpeg,*.txt\" --ignore=\"validate-npm-license,readme*\"",

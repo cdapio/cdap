@@ -29,11 +29,11 @@ import classnames from 'classnames';
 
 const styles = (theme): StyleRules => {
   return {
-    root: {
+    propertyRowww: {
       display: 'flex',
       flexDirection: 'column',
       marginBottom: '5px',
-      padding: '15px 10px 10px',
+      padding: '30px 15px 10px',
     },
     row: {
       display: 'grid',
@@ -191,7 +191,9 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
       <div className={classes.root}>
         <div
           data-cy={cypressId}
-          className={classnames(classes.row, { [classes.macroRow]: this.state.isMacroTextbox })}
+          className={classnames(classes.propertyRowww, {
+            [classes.macroRow]: this.state.isMacroTextbox,
+          })}
         >
           <WidgetWrapper
             widgetProperty={updatedWidgetProperty}

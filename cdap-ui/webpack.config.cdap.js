@@ -267,8 +267,10 @@ var webpackConfig = {
     //cdap: ['webpack-dev-server/client?http://localhost:8080', 'webpack/hot/dev-server', '@babel/polyfill', './cdap.js'],
     cdap: [
       'react-hot-loader/patch', // RHL patch
+      'webpack-dev-server/client?http://localhost:8080',
+      'webpack/hot/only-dev-server',
       '@babel/polyfill',
-      './cdap.js'
+      './cdap.js',
     ],
   },
   module: {
@@ -277,8 +279,6 @@ var webpackConfig = {
   output: {
     filename: '[name].js',
     chunkFilename: '[name].js',
-    hotUpdateChunkFilename: 'hot-update.js',
-    hotUpdateMainFilename: 'hot-update.json',
     path: __dirname + '/packaged/public/cdap_dist/cdap_assets/',
     publicPath: '/cdap_assets/',
     pathinfo: false, // added. reduces 0.2~0.3 seconds
@@ -350,12 +350,16 @@ var webpackConfig = {
     compress: true,
     hot: true,
     inline: true,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:11011',
-        pathRewrite: { '^/api': '' }
-      }
-    }
+    // proxy: {
+    //   '/api': {
+    //     target: 'http://localhost:11011',
+    //     pathRewrite: { '^/api': '' }
+    //   }
+    // },
+    // watchOptions: {
+    //   poll: true,
+    //   aggregateTimeout: 1000,
+    // }
   }
 };
 

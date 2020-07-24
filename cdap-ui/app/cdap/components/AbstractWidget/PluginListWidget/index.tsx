@@ -15,14 +15,15 @@
  */
 
 import * as React from 'react';
-import { IWidgetProps } from 'components/AbstractWidget';
-import { getCurrentNamespace } from 'services/NamespaceStore';
+
 import { GLOBALS, SCOPES } from 'services/global-constants';
-import VersionStore from 'services/VersionStore';
-import { objectQuery } from 'services/helpers';
-import { MyPipelineApi } from 'api/pipeline';
+
 import CustomSelect from 'components/AbstractWidget/FormInputs/Select';
-import T from 'i18n-react';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { MyPipelineApi } from 'api/pipeline';
+import VersionStore from 'services/VersionStore';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
 
 const PREFIX = 'features.AbstractWidget.PluginListWidget';
 
@@ -67,7 +68,7 @@ const PluginListWidget: React.FC<IPluginListProps> = ({
         const emptyOptions = [
           {
             value: '',
-            label: T.translate(`${PREFIX}.emptyLabel`, { pluginType: params.extension }).toString(),
+            label: 'mm', // T.translate(`${PREFIX}.emptyLabel`, { pluginType: params.extension }).toString(),
             disabled: true,
           },
         ];
