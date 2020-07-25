@@ -625,25 +625,38 @@ class HydratorPlusPlusNodeConfigCtrl {
     );
   }
   onClearSchema() {
-    this.$timeout(() => this.state.node['outputSchema'] = [{ name: 'etlSchemaBody', schema: ''}]);
+    this.state.node['outputSchema'] = [{ name: 'etlSchemaBody', schema: ''}];
+    this.updateAngularPostSchemaUpdate();
   }
   onPropagateSchema() {
-    this.$timeout(() => this.showPropagateConfirm = true);
+    this.showPropagateConfirm = true;
+    this.updateAngularPostSchemaUpdate();
   }
   onMacroEnabled() {
-    this.$timeout(() => this.state.schemaAdvance = !this.state.schemaAdvance);
+    this.state.schemaAdvance = !this.state.schemaAdvance;
+    this.updateAngularPostSchemaUpdate();
   }
   onSchemaChange(outputSchemas) {
-    this.$timeout(() => this.state.node.outputSchema = outputSchemas);
+    this.state.node.outputSchema = outputSchemas;
+    this.updateAngularPostSchemaUpdate();
   }
   onImportSchema(stringifiedSchema) {
     try {
       this.state.node.outputSchema = JSON.parse(stringifiedSchema);
       if (!Array.isArray(this.state.node.outputSchema)) {
-        this.$timeout(() => this.state.node.outputSchema = [this.state.node.outputSchema]);
+        this.state.node.outputSchema = [this.state.node.outputSchema];
+        this.updateAngularPostSchemaUpdate();
       }
     } catch(e) {
-      this.$timeout(() => this.state.node.outputSchema = [{ name: 'etlSchemaBody', schema: ''}]);
+      this.state.node.outputSchema = [{ name: 'etlSchemaBody', schema: ''}];
+      this.updateAngularPostSchemaUpdate();
+    }
+  }
+  updateAngularPostSchemaUpdate() {
+    try {
+      this.$scope.$digest();
+    } catch(e) {
+      return;
     }
   }
   isSchemaMacro() {

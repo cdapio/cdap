@@ -26,15 +26,19 @@ import { DecimalTypeAttributes } from 'components/AbstractWidget/SchemaEditor/Ro
 import If from 'components/If';
 import { ITypeProperties } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
 import { IOnchangeHandler } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
-import { AvroSchemaTypesEnum } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  AvroSchemaTypesEnum,
+  InternalTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 interface IFieldPropertiesPopoverButtonProps {
   nullable: boolean;
   onNullable: (nullable: boolean) => void;
-  type: ISimpleType | IComplexTypeNames;
+  type: AvroSchemaTypesEnum;
   onChange?: IOnchangeHandler;
   typeProperties: ITypeProperties;
   disabled?: boolean;
+  internalType?: InternalTypesEnum;
 }
 
 const useAttributePopoverStyles = makeStyles({
@@ -64,6 +68,7 @@ function FieldPropertiesPopoverButton({
   onChange,
   typeProperties,
   disabled,
+  internalType,
 }: IFieldPropertiesPopoverButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -77,7 +82,15 @@ function FieldPropertiesPopoverButton({
 
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : null;
-  const classes = useStyles();
+  const classes = useStyles({});
+  // Show doc and aliases for record types, fields in a record and enums.
+  const isValidFieldInRecord =
+    internalType === InternalTypesEnum.RECORD_COMPLEX_TYPE_ROOT ||
+    internalType === InternalTypesEnum.RECORD_SIMPLE_TYPE;
+  const isValidRecord = type === AvroSchemaTypesEnum.RECORD;
+  const isValidEnum = type === AvroSchemaTypesEnum.ENUM;
+  // Show precision and scale attributes for decimal type.
+  const isDecimal = type === AvroSchemaTypesEnum.DECIMAL;
   return (
     <React.Fragment>
       <IconWrapper onClick={handleClick}>
@@ -99,25 +112,26 @@ function FieldPropertiesPopoverButton({
         }}
       >
         <fieldset className={classes.popoverContainer} disabled={disabled}>
-          <If condition={!isFlatRowTypeComplex(type)}>
-            <strong>No Attributes</strong>
+          <If condition={(isValidFieldInRecord || isValidRecord || isValidEnum) && !isDecimal}>
+            <React.Fragment>
+              <strong>Attributes</strong>
+              <RecordEnumTypeAttributes
+                typeProperties={typeProperties}
+                onChange={disabled ? undefined : onChange}
+                handleClose={handleClose}
+              />
+            </React.Fragment>
           </If>
-          <If condition={type === AvroSchemaTypesEnum.RECORD || type === AvroSchemaTypesEnum.ENUM}>
-            <strong>Attributes</strong>
-            <RecordEnumTypeAttributes
-              typeProperties={typeProperties}
-              onChange={disabled ? undefined : onChange}
-              handleClose={handleClose}
-            />
-          </If>
-          <If condition={type === AvroSchemaTypesEnum.DECIMAL}>
-            <strong>Attributes</strong>
-            <DecimalTypeAttributes
-              typeProperties={typeProperties}
-              onChange={disabled ? undefined : onChange}
-              handleClose={handleClose}
-              disabled={disabled}
-            />
+          <If condition={isDecimal}>
+            <React.Fragment>
+              <strong>Attributes</strong>
+              <DecimalTypeAttributes
+                typeProperties={typeProperties}
+                onChange={disabled ? undefined : onChange}
+                handleClose={handleClose}
+                disabled={disabled}
+              />
+            </React.Fragment>
           </If>
         </fieldset>
       </Popover>
