@@ -213,9 +213,12 @@
                 }
               }
               .bottompanel-body {
-                padding: 0 10px 10px 10px;
-                overflow-y: hidden;
+                padding: 0 0 10px 0;
+                overflow-y: auto;
                 height: ~"calc(100vh - 180px)";
+                &.plugin-properties-tab {
+                  overflow-y: hidden;
+                }
                 .reference-tab { padding: 0 10px; }
 
                 .btn-hydrator {

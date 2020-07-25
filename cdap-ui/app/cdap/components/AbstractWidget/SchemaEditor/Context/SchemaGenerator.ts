@@ -31,6 +31,7 @@ import {
   AvroSchemaTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { isDisplayTypeComplex } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
+import isEmpty from 'lodash/isEmpty';
 
 function generateArrayType(children: IOrderedChildren, nullable: boolean) {
   const finalType = {
@@ -217,12 +218,13 @@ function SchemaGenerator(schemaTree: INode) {
     avroSchema.schema.fields = [];
   }
   avroSchema.schema.fields = [];
+  avroSchema.name = schemaTree.name || avroSchema.name;
   // Top level record fields.
   const { order } = schemaTree.children;
   if (Array.isArray(order)) {
     for (const id of order) {
       const currentField = schemaTree.children[id];
-      const { name, type, nullable } = currentField;
+      const { name, type, nullable, typeProperties } = currentField;
       // Skip the newly added rows.
       if (!name || name === '') {
         continue;
@@ -234,6 +236,12 @@ function SchemaGenerator(schemaTree: INode) {
       };
       if (isFieldComplexType) {
         field.type = generateSchemaFromComplexType(type, currentField, nullable);
+      }
+      if (typeProperties && typeProperties.doc) {
+        field.doc = typeProperties.doc;
+      }
+      if (typeProperties && typeProperties.aliases) {
+        field.aliases = typeProperties.aliases.slice();
       }
       avroSchema.schema.fields.push(field);
     }

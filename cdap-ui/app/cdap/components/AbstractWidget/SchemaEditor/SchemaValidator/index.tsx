@@ -23,6 +23,7 @@ import {
 import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import { IFlattenRowType } from '../EditorTypes';
 import { isNilOrEmpty } from 'services/helpers';
+import isEqual from 'lodash/isEqual';
 
 /**
  * Schema validator is independent of the schema editor. It takes in a schema tree
@@ -49,16 +50,32 @@ interface ISchemaValidatorContext {
   validate: (id: string, avroSchema: ISchemaType) => ISchemaValidatorProviderBaseState;
   errorMap: Record<string, ISchemaValidatorProviderBaseState>;
 }
+interface ISchemaValidatorProviderProps {
+  errors?: Record<string, string>;
+}
+
 const SchemaValidatorContext = React.createContext<ISchemaValidatorContext>({
   validate: null,
   errorMap: {},
 });
 const SchemaValidatorConsumer = SchemaValidatorContext.Consumer;
 
-class SchemaValidatorProvider extends React.Component {
+class SchemaValidatorProvider extends React.Component<ISchemaValidatorProviderProps> {
   public defaultState = {
     errorMap: {},
   };
+
+  public componentWillReceiveProps(nextProps) {
+    const { errors } = nextProps;
+    if (!isEqual(errors, this.props.errors)) {
+      this.setState({
+        errorMap: {
+          ...this.state.errorMap,
+          ...(errors || {}),
+        },
+      });
+    }
+  }
 
   /**
    * The subtree validation takes in a flat field, its ancestors

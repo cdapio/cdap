@@ -353,8 +353,11 @@ class HydratorPlusPlusPluginConfigFactory {
             });
           }
           if (schemas.length) {
-            this.EventPipe.emit('schema.import', schemas);
-            this.eventEmitter.emit('schema.import', schemas);
+            if (window.localStorage.getItem('schema-editor') === 'true') {
+              this.eventEmitter.emit('schema.import', schemas);
+            } else {
+              this.EventPipe.emit('schema.import', schemas);
+            }
           } else if (!this.myHelpers.objectQuery(widgetJson, 'outputs', 0, 'name')) {
             this.EventPipe.emit('schema.clear');
             this.eventEmitter.emit('schema.clear', schemas);

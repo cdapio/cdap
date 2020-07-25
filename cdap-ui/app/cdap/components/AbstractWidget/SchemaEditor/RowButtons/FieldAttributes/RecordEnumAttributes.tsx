@@ -44,7 +44,7 @@ function RecordEnumTypeAttributes({
           pluginProperty={{
             name: 'documentation',
             macroSupported: false,
-            description: 'documentation for the record',
+            description: 'Documentation for the record',
           }}
           widgetProperty={{
             'widget-type': 'textbox',
