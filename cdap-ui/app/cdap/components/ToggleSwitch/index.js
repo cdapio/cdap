@@ -24,7 +24,10 @@ export default function ToggleSwitch({ isOn, onToggle, disabled, onLabel, offLab
     <div className={classnames('toggle-switch-container', { disabled: disabled })}>
       <div className={classnames('toggle-switch', { on: isOn, off: !isOn })} onClick={onToggle}>
         <div className="switch-button" />
-        <div className={classnames('label', 'truncate', { 'on-label': isOn, 'off-label': !isOn })}>
+        <div
+          className={classnames('label', 'truncate', { 'on-label': isOn, 'off-label': !isOn })}
+          data-cy={`toggle-${isOn ? onLabel : offLabel}`}
+        >
           {isOn ? onLabel : offLabel}
         </div>
       </div>
