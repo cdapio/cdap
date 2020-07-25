@@ -666,9 +666,11 @@ class HydratorPlusPlusTopPanelCtrl {
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
-        .then(() => {
-          this.previewLoading = false;
-          this.previewRunning = false;
+        .then(
+          (err) => {
+            this.previewLoading = false;
+            this.previewRunning = false;
+            this.myAlertOnValium.show({type: 'danger', content: err.data});
         });
   }
 
