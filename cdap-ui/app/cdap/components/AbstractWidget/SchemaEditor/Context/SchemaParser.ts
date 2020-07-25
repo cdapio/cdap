@@ -51,7 +51,7 @@ interface INode {
   name?: string;
   children?: IOrderedChildren;
   id: string;
-  internalType: IInternalFieldType;
+  internalType: InternalTypesEnum;
   nullable?: boolean;
   type?: IDisplayType;
   typeProperties?: ITypeProperties;
@@ -84,6 +84,7 @@ function parseUnionType(type): IOrderedChildren {
         type: typeName,
         internalType: InternalTypesEnum.UNION_COMPLEX_TYPE_ROOT,
         children: parseComplexType(subType),
+        ...checkForLogicalType(subType),
       };
     } else {
       result[id] = {
@@ -133,6 +134,7 @@ function parseArrayType(type): IOrderedChildren {
       nullable,
       type: getComplexTypeName(t.items),
       children: parseComplexType(t.items),
+      ...checkForLogicalType(t.items),
     },
   };
 }
@@ -202,6 +204,7 @@ function getMapSubType(type, internalTypeName): INode {
       internalType: internalTypeName.complexType,
       type: complexType,
       nullable,
+      ...checkForLogicalType(type),
     };
   }
 }
@@ -313,6 +316,9 @@ function parseComplexType(type): IOrderedChildren {
 function checkForLogicalType(field: Partial<IFieldType | IFieldTypeNullable>) {
   let type = field.type;
   type = getNonNullableType(type) as ILogicalTypeBase;
+  if (!type) {
+    return;
+  }
   switch (type.logicalType) {
     case AvroSchemaTypesEnum.DECIMAL:
       return {
@@ -380,10 +386,7 @@ function parseSubTree(field: IFieldType | IFieldTypeNullable): INode {
     internalType: InternalTypesEnum.RECORD_COMPLEX_TYPE_ROOT,
     nullable,
     type: getComplexTypeName(t),
-    typeProperties: {
-      doc: t.doc,
-      aliases: t.aliases,
-    },
+    ...checkForLogicalType(field),
   };
 }
 
@@ -407,11 +410,12 @@ function parseSubTree(field: IFieldType | IFieldTypeNullable): INode {
  *  }
  * }
  */
-function parseSchema(avroSchema: ISchemaType, name = 'etlSchemaBody'): INode {
+function parseSchema(avroSchema: ISchemaType): INode {
+  const name = avroSchema.name || 'etlSchemaBody';
   const fields = avroSchema.schema.fields;
   const root: INode = {
     name,
-    internalType: 'schema', // The 'schema' is only used for top level schema.
+    internalType: InternalTypesEnum.SCHEMA, // The 'schema' is only used for top level schema.
     type: AvroSchemaTypesEnum.RECORD,
     id: uuidV4(),
     children: {

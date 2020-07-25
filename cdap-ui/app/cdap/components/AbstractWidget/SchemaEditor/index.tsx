@@ -22,7 +22,7 @@ import {
   ISchemaManager,
   IOnChangeReturnType,
 } from 'components/AbstractWidget/SchemaEditor/Context/SchemaManager';
-import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
+import { ISchemaType, IFieldType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import {
   IFlattenRowType,
   IFieldIdentifier,
@@ -40,6 +40,7 @@ import {
   OperationTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { INode } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
+import isEqual from 'lodash/isEqual';
 
 const styles = () => {
   return {
@@ -61,12 +62,14 @@ interface ISchemaEditorProps extends WithStyles<typeof styles> {
       avroSchema: ISchemaType;
     }
   ) => IOnChangeReturnType;
+  errors?: Record<string, string>;
 }
 
 interface ISchemaEditorState {
   tree: INode;
   flat: IFlattenRowType[];
   schemaRowCount: number;
+  errors: Record<string, string>;
 }
 
 class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditorState> {
@@ -80,6 +83,7 @@ class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditor
       flat: dumbestClone(this.schema.getFlatSchema()),
       tree: dumbestClone(this.schema.getSchemaTree()),
       schemaRowCount: this.props.visibleRows,
+      errors: null,
     };
   }
   public componentDidMount() {
@@ -89,13 +93,28 @@ class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditor
   }
 
   public componentWillReceiveProps(nextProps) {
-    const { visibleRows } = nextProps;
+    const { visibleRows, errors } = nextProps;
+    const newState: Partial<ISchemaEditorState> = {};
     if (visibleRows !== this.state.schemaRowCount) {
-      this.setState({
-        schemaRowCount: visibleRows,
-      });
+      newState.schemaRowCount = visibleRows;
     }
-    return;
+    if (errors && !isEqual(errors, this.state.errors)) {
+      const mapOfRowIdToError = {};
+      const fieldNameToFieldMap: Record<string, IFlattenRowType> = {};
+      this.schema.getFlatSchema().map((field) => {
+        fieldNameToFieldMap[field.name] = field;
+      });
+      for (const fieldName of Object.keys(errors)) {
+        const matchingField = fieldNameToFieldMap[fieldName];
+        if (matchingField && typeof matchingField.id === 'string') {
+          mapOfRowIdToError[matchingField.id] = errors[fieldName];
+        }
+      }
+      newState.errors = mapOfRowIdToError;
+    }
+    if (Object.keys(newState).length) {
+      this.setState(newState as ISchemaEditorState);
+    }
   }
   public onChange = (validate, fieldId: IFieldIdentifier, onChangePayload: IOnChangePayload) => {
     const { fieldIdToFocus } = this.schema.onChange(fieldId, onChangePayload);
@@ -121,7 +140,7 @@ class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditor
     const { classes } = this.props;
     return (
       <div>
-        <SchemaValidatorProvider>
+        <SchemaValidatorProvider errors={this.state.errors}>
           <div className={classes.schemaContainer}>
             <SchemaValidatorConsumer>
               {({ validate }) => {

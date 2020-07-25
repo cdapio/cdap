@@ -19,7 +19,10 @@
  */
 import { ISimpleType, IComplexTypeNames } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import { ITypeProperties } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
-import { OperationTypesEnum } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import {
+  OperationTypesEnum,
+  InternalTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 
 type IInternalFieldType =
   | 'schema'
@@ -50,7 +53,7 @@ interface IFlattenRowType {
   id: string;
   name?: string;
   type?: ISimpleType | IComplexTypeNames;
-  internalType: IInternalFieldType;
+  internalType: InternalTypesEnum;
   nullable?: boolean;
   ancestors: string[];
   typeProperties?: ITypeProperties;
@@ -68,7 +71,7 @@ interface IFieldTypeBaseProps {
   name?: string;
   type?: ISimpleType | IComplexTypeNames;
   nullable?: boolean;
-  internalType?: IInternalFieldType;
+  internalType?: InternalTypesEnum;
   typeProperties?: ITypeProperties;
   onChange: IOnchangeHandler;
   onAdd: () => void;
