@@ -36,7 +36,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 
 /**
  * A scheduled service that periodically poll for new preview request and execute it.
@@ -97,10 +96,15 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
 
         // If the cancelPreview was not null, this means the triggerShutdown was called while the
         // startPreview was call. If that's the case, stop the preview.
-        if (cancelPreview.compareAndSet(null, () -> stopPreview(request))) {
-          waitForCompletion(request, future);
+        Cancellable cancelPreview = () -> {
+          if (!future.isDone()) {
+            stopPreview(request);
+          }
+        };
+        if (this.cancelPreview.compareAndSet(null, cancelPreview)) {
+          waitForCompletion(request, future, cancelPreview);
         } else {
-          stopPreview(request);
+          cancelPreview.cancel();
           terminated = true;
         }
       } catch (Exception e) {
@@ -128,12 +132,14 @@ public class PreviewRunnerService extends AbstractExecutionThreadService {
     }
   }
 
-  private void waitForCompletion(PreviewRequest request, Future<?> future) {
+  private void waitForCompletion(PreviewRequest request, Future<?> future, Cancellable cancelPreview) {
     try {
       Uninterruptibles.getUninterruptibly(future);
     } catch (ExecutionException e) {
       // Just log a debug if preview failed since it is expected for an application having execution failure
       LOG.debug("Preview for {} failed", request.getProgram(), e.getCause());
+    } finally {
+      this.cancelPreview.compareAndSet(cancelPreview, null);
     }
   }
 }
