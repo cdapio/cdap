@@ -100,7 +100,7 @@ class HydratorPlusPlusTopPanelCtrl {
             payload: {
               status: statusRes.status,
             },
-          })
+          });
 
           const { WAITING, ACQUIRED, INIT, RUNNING } = window.CaskCommon.PREVIEW_STATUS; 
           this.updateTimerLabelAndTitle(statusRes);
@@ -305,7 +305,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.displayDuration = {
       minutes: minutes || '--',
       seconds: seconds || '--',
-    }
+    };
   }
 
   updateTimerLabelAndTitle(res) {
@@ -683,10 +683,11 @@ class HydratorPlusPlusTopPanelCtrl {
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
-        .then(() => {
-          this.previewLoading = false;
-          this.previewRunning = false;
-          this.myAlertOnValium.show({type: 'danger', content: err.data});
+        .then(
+          (err) => {
+            this.previewLoading = false;
+            this.previewRunning = false;
+            this.myAlertOnValium.show({type: 'danger', content: err.data});
         });
   }
 
