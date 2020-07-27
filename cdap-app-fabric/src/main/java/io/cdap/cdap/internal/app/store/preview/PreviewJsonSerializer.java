@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.store.preview;
 
 
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
@@ -43,8 +44,13 @@ public class PreviewJsonSerializer implements JsonSerializer<StructuredRecord> {
   public JsonElement serialize(StructuredRecord src, Type typeOfSrc, JsonSerializationContext context) {
     StringWriter strWriter = new StringWriter();
     try (JsonWriter writer = new JsonWriter(strWriter)) {
-      JSON_DATUM_WRITER.encode(src, new JsonEncoder(writer));
-      return new JsonParser().parse(strWriter.toString()).getAsJsonObject();
+      // serialize schema
+      JsonObject jsonObj = new JsonObject();
+      jsonObj.add("schema", context.serialize(src.getSchema()));
+      JsonEncoder encoder = new JsonEncoder(writer);
+      JSON_DATUM_WRITER.encode(src, encoder);
+      jsonObj.add("fields", new JsonParser().parse(strWriter.toString()));
+      return jsonObj;
     } catch (IOException e) {
       LOG.error("Error while serializing structured record {}", e.getMessage(), e);
     }
