@@ -16,8 +16,7 @@
 language: java
 
 jdk:
-  - oraclejdk7
-  - oraclejdk8
+  - openjdk8
 
 branches:
   only:
@@ -26,7 +25,7 @@ branches:
 
 # The twill.zk.server.localhost property is to make the InMemoryZKServer used in unit-test not to bind to localhost
 # as it won't work in travis VM.
-script: mvn -Dhadoop.version="$HADOOP_VERSION" test -fae -P examples,templates,unit-tests -Dtwill.zk.server.localhost=false
+script: mvn -Dhadoop.version="$HADOOP_VERSION" test -fae -P examples,templates,unit-tests -Dtest=*ServiceMainTest -DfailIfNoTests=false -Dtwill.zk.server.localhost=false -Drat.consoleOutput=true -Dsurefire.redirectTestOutputToFile=false
 
 # Setup the VM cache
 install: mvn -Dhadoop.version="$HADOOP_VERSION" install -B -P examples,unit-tests -DskipTests=true -Drat.ignoreErrors=true
