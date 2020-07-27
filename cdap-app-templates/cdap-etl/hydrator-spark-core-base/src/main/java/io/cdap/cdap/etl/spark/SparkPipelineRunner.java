@@ -81,7 +81,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -486,7 +485,8 @@ public abstract class SparkPipelineRunner {
     JoinRequest joinRequest = new JoinRequest(stageName, leftName, leftKey, leftSchema,
                                               left.isRequired(), onKeys.isNullSafe(),
                                               joinDefinition.getSelectedFields(),
-                                              joinDefinition.getOutputSchema(), toJoin, numPartitions);
+                                              joinDefinition.getOutputSchema(), toJoin, numPartitions,
+                                              joinDefinition.getDistribution());
     return leftCollection.join(joinRequest);
   }
 

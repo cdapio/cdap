@@ -37,17 +37,22 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
-import javax.annotation.Nullable;
+import java.util.stream.IntStream;
+
+import static org.apache.spark.sql.functions.floor;
 
 /**
  * Spark2 RDD collection.
@@ -106,6 +111,32 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
         .map(right::col)
         .collect(Collectors.toList());
 
+      // UUID for salt column name to avoid name collisions
+      String saltColumn = UUID.randomUUID().toString();
+      if (joinRequest.isDistributionEnabled()) {
+
+        boolean isLeftStageSkewed =
+          joinRequest.getLeftStage().equals(joinRequest.getDistribution().getSkewedStageName());
+
+        // Apply salt/explode transformations to each Dataset
+        if (isLeftStageSkewed) {
+          left = saltDataset(left, saltColumn, joinRequest.getDistribution().getDistributionFactor());
+          right = explodeDataset(right, saltColumn, joinRequest.getDistribution().getDistributionFactor());
+        } else {
+          left = explodeDataset(left, saltColumn, joinRequest.getDistribution().getDistributionFactor());
+          right = saltDataset(right, saltColumn, joinRequest.getDistribution().getDistributionFactor());
+        }
+
+        // Add the salt column to the join key
+        leftJoinColumns.add(left.col(saltColumn));
+        rightJoinColumns.add(right.col(saltColumn));
+
+        // Updating other values that will be used later in join
+        joined = left;
+        sparkSchema = sparkSchema.add(saltColumn, DataTypes.IntegerType, false);
+        leftSparkSchema = leftSparkSchema.add(saltColumn, DataTypes.IntegerType, false);
+      }
+
       Iterator<Column> leftIter = leftJoinColumns.iterator();
       Iterator<Column> rightIter = rightJoinColumns.iterator();
       Column joinOn = eq(leftIter.next(), rightIter.next(), joinRequest.isNullSafe());
@@ -133,12 +164,21 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
       // which allows us to use a different number of partitions per joiner instead of using the global
       // spark.sql.shuffle.partitions setting in the spark conf
       if (joinPartitions != null && !toJoin.isBroadcast()) {
-        right = partitionOnKey(right, toJoin.getKey(), joinRequest.isNullSafe(), sparkSchema, joinPartitions);
+        List<String> rightKeys = new ArrayList<>(toJoin.getKey());
+        List<String> leftKeys = new ArrayList<>(joinRequest.getLeftKey());
+
+        // If distribution is enabled we need to add it to the partition keys to ensure we end up with the desired
+        // number of partitions
+        if (joinRequest.isDistributionEnabled()) {
+          rightKeys.add(saltColumn);
+          leftKeys.add(saltColumn);
+        }
+        right = partitionOnKey(right, rightKeys, joinRequest.isNullSafe(), sparkSchema, joinPartitions);
         // only need to repartition the left side if this is the first join,
         // as intermediate joins will already be partitioned on the key
         if (joined == left) {
-          joined = partitionOnKey(joined, joinRequest.getLeftKey(), joinRequest.isNullSafe(),
-                                  leftSparkSchema, joinPartitions);
+          joined = partitionOnKey(joined, leftKeys, joinRequest.isNullSafe(),
+            leftSparkSchema, joinPartitions);
         }
       }
       joined = joined.join(right, joinOn, joinType);
@@ -178,7 +218,6 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
       if (field.getAlias() != null) {
         column = column.alias(field.getAlias());
       }
-
       outputColumns.add(column);
     }
 
@@ -193,6 +232,42 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     return (SparkCollection<T>) wrap(output);
   }
 
+  /**
+   * Helper method that adds a salt column to a dataframe for join distribution
+   *
+   * @param data               Dataframe add salt to
+   * @param saltColumnName     Name to use for the new salt column
+   * @param distributionFactor The desired salt size, values in the salt column will range [0,distributionFactor)
+   * @return Dataframe with an additional salt column
+   */
+  private Dataset saltDataset(Dataset data, String saltColumnName, int distributionFactor) {
+    Dataset saltedData = data.withColumn(saltColumnName, functions.rand().multiply(distributionFactor));
+    saltedData = saltedData.withColumn(saltColumnName,
+      floor(saltedData.col(saltColumnName)).cast(DataTypes.IntegerType));
+    return saltedData;
+  }
+
+  /**
+   * Helper method that adds salt column to a dataframe and explodes the rows
+   *
+   * @param data               Dataframe to explode
+   * @param saltColumnName     Name to use for the new salt column
+   * @param distributionFactor The desired salt size, this will increase the number of rows by a factor of
+   *                           distributionFactor
+   * @return Dataframe with an additional salt column
+   */
+  private Dataset explodeDataset(Dataset data, String saltColumnName, int distributionFactor) {
+    //Array of [0,distributionFactor) to be used in to prepare for the explode
+    Integer[] numbers = IntStream.range(0, distributionFactor).boxed().toArray(Integer[]::new);
+
+    // Add a column that uses the 'numbers' array as the value for every row
+    Dataset explodedData = data.withColumn(saltColumnName,
+      functions.array(
+        Arrays.stream(numbers).map(functions::lit).toArray(Column[]::new)
+      ));
+    explodedData = explodedData.withColumn(saltColumnName, functions.explode(explodedData.col(saltColumnName)));
+    return explodedData;
+  }
 
   protected Dataset<Row> toDataset(String stageName, JavaRDD<StructuredRecord> rdd, StructType sparkSchema) {
     JavaRDD<Row> rowRDD = rdd.map(record -> DataFrames.toRow(record, sparkSchema));
