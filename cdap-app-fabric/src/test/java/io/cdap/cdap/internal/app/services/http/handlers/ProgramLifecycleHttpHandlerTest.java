@@ -497,13 +497,17 @@ public class ProgramLifecycleHttpHandlerTest extends AppFabricTestBase {
     verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped);
 
     // second run
-    startProgram(sleepWorkflow1);
+    Map<String, String> args = new HashMap<>();
+    // wait for a second before creating the cluster
+    args.put(SystemArguments.PROFILE_PROPERTIES_PREFIX + MockProvisioner.WAIT_CREATE_MS, Integer.toString(1000));
+    startProgram(sleepWorkflow1, args);
     // workflow stops by itself after actions are done
     waitState(sleepWorkflow1, STOPPED);
     verifyProgramRuns(sleepWorkflow1, ProgramRunStatus.COMPLETED, numWorkflowRunsStopped + 1);
+    // cluster provisioning time should be at least 1 second
+    Assert.assertTrue(getProfileTotalMetric(Constants.Metrics.Program.PROGRAM_PROVISIONING_DELAY_SECONDS) >= 1);
 
     historyStatusWithRetry(sleepWorkflow1.toEntityId(), ProgramRunStatus.COMPLETED, 2);
-
     deleteApp(sleepWorkflow1.getApplication(), 200);
   }
 

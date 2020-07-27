@@ -536,6 +536,37 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // Publish the program STARTING state before starting the program
         programStateWriter.start(programRunId, newProgramOptions, null, programDescriptor);
 
+        long provisioningTime = System.currentTimeMillis() / 1000 -
+          RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+        // emit provisioning time metric
+        ProfileId profileId = null;
+        try {
+          RunRecordDetail runRecordMeta = appMetadataStore.getRun(programRunId);
+          profileId = SystemArguments
+            .getProfileIdFromArgs(programRunId.getNamespaceId(),
+              runRecordMeta.getSystemArgs()).orElse(null);
+        } catch (IOException e) {
+          LOG.error("Failed to get run record", e);
+        }
+
+        if (profileId != null) {
+          Map<String, String> args = programOptions.getArguments().asMap();
+          String provisioner = SystemArguments.getProfileProvisioner(args);
+
+          Map<String, String> tags = ImmutableMap.<String, String>builder()
+            .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+            .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+            .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+            .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
+            .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+            .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+            .put(Constants.Metrics.Tag.PROVISIONER, provisioner)
+            .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+            .build();
+          metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PROGRAM_PROVISIONING_DELAY_SECONDS,
+            provisioningTime);
+        }
+
         // start the program run
         return Optional.of(() -> {
           String oldUser = SecurityRequestContext.getUserId();

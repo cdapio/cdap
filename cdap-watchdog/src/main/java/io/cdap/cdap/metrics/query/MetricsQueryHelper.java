@@ -107,6 +107,8 @@ public class MetricsQueryHelper {
 
       .put(Constants.Metrics.Tag.WORKFLOW, "workflow")
 
+      .put(Constants.Metrics.Tag.PROVISIONER, "provisioner")
+
       .put(Constants.Metrics.Tag.SPARK, "spark")
 
       // put program related tag
