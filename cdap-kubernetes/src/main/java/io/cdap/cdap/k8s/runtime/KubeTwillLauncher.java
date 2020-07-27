@@ -19,6 +19,7 @@ package io.cdap.cdap.k8s.runtime;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
@@ -46,14 +47,18 @@ import java.util.Map;
 public class KubeTwillLauncher implements MasterEnvironmentRunnable {
 
   private final MasterEnvironmentContext context;
-  private final MasterEnvironment masterEnv;
+  private final KubeMasterEnvironment masterEnv;
 
   private volatile boolean stopped;
   private TwillRunnable twillRunnable;
 
   public KubeTwillLauncher(MasterEnvironmentContext context, MasterEnvironment masterEnv) {
     this.context = context;
-    this.masterEnv = masterEnv;
+    if (!(masterEnv instanceof KubeMasterEnvironment)) {
+      // This shouldn't happen
+      throw new IllegalArgumentException("Expected a KubeMasterEnvironment");
+    }
+    this.masterEnv = (KubeMasterEnvironment) masterEnv;
   }
 
   @Override
@@ -91,13 +96,15 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       }
 
       twillRunnable = (TwillRunnable) Instances.newInstance(runnableClass);
-      twillRunnable.initialize(new KubeTwillContext(runtimeSpec, runId,
-                                                    RunIds.fromString(runId.getId() + "-0"),
-                                                    appArgs.toArray(new String[0]), runnableArgs.toArray(new String[0]),
-                                                    masterEnv.getDiscoveryServiceSupplier().get(),
-                                                    masterEnv.getDiscoveryServiceClientSupplier().get()));
-      if (!stopped) {
-        twillRunnable.run();
+
+      try (KubeTwillContext twillContext = new KubeTwillContext(runtimeSpec, runId,
+                                                                RunIds.fromString(runId.getId() + "-0"),
+                                                                appArgs.toArray(new String[0]),
+                                                                runnableArgs.toArray(new String[0]), masterEnv)) {
+        twillRunnable.initialize(twillContext);
+        if (!stopped) {
+          twillRunnable.run();
+        }
       }
     } finally {
       TwillRunnable runnable = twillRunnable;

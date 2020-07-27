@@ -20,7 +20,11 @@ import io.kubernetes.client.ApiCallback;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
+import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
+import io.kubernetes.client.models.V1Deployment;
+import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1Status;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
@@ -31,20 +35,22 @@ import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.apache.twill.discovery.ServiceDiscovered;
-import org.apache.twill.filesystem.Location;
 
-import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.annotation.Nullable;
 
 /**
@@ -52,32 +58,23 @@ import javax.annotation.Nullable;
  */
 class KubeTwillController implements TwillController {
 
-  private final String name;
   private final String kubeNamespace;
   private final RunId runId;
-  private final ApiClient apiClient;
   private final CompletableFuture<KubeTwillController> completion;
-  private final AtomicBoolean terminateCalled;
   private final DiscoveryServiceClient discoveryServiceClient;
+  private final ApiClient apiClient;
+  private final Type resourceType;
+  private final V1ObjectMeta meta;
 
-  KubeTwillController(String name, String kubeNamespace, RunId runId, ApiClient apiClient,
-                      DiscoveryServiceClient discoveryServiceClient, Location appLocation) {
-    this.name = name;
+  KubeTwillController(String kubeNamespace, RunId runId, DiscoveryServiceClient discoveryServiceClient,
+                      ApiClient apiClient, Type resourceType, V1ObjectMeta meta) {
     this.kubeNamespace = kubeNamespace;
     this.runId = runId;
-    this.apiClient = apiClient;
     this.completion = new CompletableFuture<>();
-    this.terminateCalled = new AtomicBoolean();
     this.discoveryServiceClient = discoveryServiceClient;
-
-    completion.whenComplete((kubeTwillController, throwable) -> {
-      // Cleanup the app location when the program completed
-      try {
-        appLocation.delete(true);
-      } catch (IOException e) {
-        throw new RuntimeException("Failed to delete location for " + name + "-" + runId + " at " + appLocation, e);
-      }
-    });
+    this.apiClient = apiClient;
+    this.resourceType = resourceType;
+    this.meta = meta;
   }
 
   @Override
@@ -93,7 +90,9 @@ class KubeTwillController implements TwillController {
   @Override
   public Future<Integer> changeInstances(String runnable, int newCount) {
     // TODO: implement with AppsV1Api.patchNamespacedDeploymentAsync()
-    throw new UnsupportedOperationException("Change instances is currently not supported");
+    CompletableFuture<Integer> f = new CompletableFuture<>();
+    f.completeExceptionally(new UnsupportedOperationException("Change instances is currently not supported"));
+    return f;
   }
 
   @Nullable
@@ -104,22 +103,46 @@ class KubeTwillController implements TwillController {
 
   @Override
   public Future<String> restartAllInstances(String runnable) {
-    throw new UnsupportedOperationException("restartAllInstances is currently not supported");
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    CoreV1Api api = new CoreV1Api(apiClient);
+
+    try {
+      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, getLabelSelector(), null, null,
+                                             null, null, createCallbackFutureAdapter(resultFuture, r -> runnable));
+    } catch (ApiException e) {
+      resultFuture.completeExceptionally(e);
+    }
+
+    return resultFuture;
   }
 
   @Override
   public Future<Set<String>> restartInstances(Map<String, ? extends Set<Integer>> runnableToInstanceIds) {
-    throw new UnsupportedOperationException("restartInstances is currently not supported");
+    CompletableFuture<Set<String>> future = new CompletableFuture<>();
+
+    // Since we only support one TwillRunnable, the runnable name is ignored
+    if (runnableToInstanceIds.isEmpty()) {
+      future.complete(Collections.emptySet());
+      return future;
+    }
+    if (runnableToInstanceIds.size() != 1) {
+      future.completeExceptionally(new UnsupportedOperationException("Only one runnable is supported"));
+      return future;
+    }
+    Map.Entry<String, ? extends Set<Integer>> entry = runnableToInstanceIds.entrySet().iterator().next();
+    return doRestartInstances(entry.getKey(), entry.getValue()).thenApply(s -> Collections.singleton(entry.getKey()));
   }
 
   @Override
   public Future<String> restartInstances(String runnable, int instanceId, int... moreInstanceIds) {
-    throw new UnsupportedOperationException("restartInstances is currently not supported");
+    return restartInstances(runnable,
+                            IntStream.concat(IntStream.of(instanceId),
+                                             IntStream.of(moreInstanceIds)).boxed().collect(Collectors.toSet()));
   }
 
   @Override
   public Future<String> restartInstances(String runnable, Set<Integer> instanceIds) {
-    throw new UnsupportedOperationException("restartInstances is currently not supported");
+    return doRestartInstances(runnable, instanceIds);
   }
 
   @Override
@@ -172,22 +195,24 @@ class KubeTwillController implements TwillController {
 
   @Override
   public Future<? extends ServiceController> terminate() {
-    if (terminateCalled.compareAndSet(false, true)) {
-      // delete the deployment, then delete the config map
-      try {
-        V1DeleteOptions deleteOptions = new V1DeleteOptions();
-        AppsV1Api appsApi = new AppsV1Api(apiClient);
-
-        // callback for the delete deployment call
-        ApiCallback<V1Status> deleteDeploymentCallback = new CallbackAdapter(
-          completion::completeExceptionally, () -> completion.complete(KubeTwillController.this));
-        appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, deleteOptions,
-                                                null, null, null, null, deleteDeploymentCallback);
-      } catch (ApiException e) {
-        completion.completeExceptionally(e);
-      }
+    if (completion.isDone()) {
+      return completion;
     }
-    return completion;
+
+    CompletableFuture<KubeTwillController> resultFuture = new CompletableFuture<>();
+
+    // delete the resource
+    deleteResource().whenComplete((name, t) -> {
+      if (t != null) {
+        resultFuture.completeExceptionally(t);
+      } else {
+        resultFuture.complete(KubeTwillController.this);
+      }
+    });
+    // If the deletion was successful, reflect the status into the completion future
+    // If the deletion was failed, don't change the completion state so that caller can retry
+    resultFuture.thenAccept(completion::complete);
+    return resultFuture;
   }
 
   @Override
@@ -258,35 +283,163 @@ class KubeTwillController implements TwillController {
   }
 
   /**
-   * Allows more succinct creation of ApiCallback.
+   * Creates a label selector that matches all labels in the meta object.
    */
-  private static class CallbackAdapter implements ApiCallback<V1Status> {
-    private final Consumer<ApiException> onFailure;
-    private final Runnable onSuccess;
+  private String getLabelSelector() {
+    return meta.getLabels().entrySet().stream()
+      .map(e -> String.format("%s=%s", e.getKey(), e.getValue()))
+      .collect(Collectors.joining(","));
+  }
 
-    CallbackAdapter(Consumer<ApiException> onFailure, Runnable onSuccess) {
-      this.onFailure = onFailure;
-      this.onSuccess = onSuccess;
+  /**
+   * Restarts the given set of instances. This method currently only supports restart of stateful set.
+   *
+   * @param runnable name of the runnable to restart. This is currently unused
+   * @param instanceIds the set of instance ids to restart
+   * @return a {@link CompletableFuture} that will complete when the delete operation completed
+   */
+  private CompletableFuture<String> doRestartInstances(String runnable, Set<Integer> instanceIds) {
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    CoreV1Api api = new CoreV1Api(apiClient);
+
+    // Only support for stateful set for now
+    if (!V1StatefulSet.class.equals(resourceType)) {
+      resultFuture.completeExceptionally(
+        new UnsupportedOperationException("Instance restart by instance id is only supported for deployment"));
+      return resultFuture;
     }
 
-    @Override
-    public void onFailure(ApiException e, int i, Map<String, List<String>> map) {
-      onFailure.accept(e);
-    }
+    // For stateful set, it can be done by deleting pods by the selected names formed by the instance ids.
+    String labelSelector = "statefulset.kubernetes.io/pod-name in " +
+      instanceIds.stream()
+        .map(i -> String.format("%s-%d", meta.getName(), i))
+        .collect(Collectors.joining(",", "(", ")"));
 
-    @Override
-    public void onSuccess(V1Status v1Status, int i, Map<String, List<String>> map) {
-      onSuccess.run();
+    try {
+      api.deleteCollectionNamespacedPodAsync(kubeNamespace, null, null, null, labelSelector, null, null, null,
+                                             null, createCallbackFutureAdapter(resultFuture, r -> runnable));
+    } catch (ApiException e) {
+      resultFuture.completeExceptionally(e);
     }
+    return resultFuture;
+  }
 
-    @Override
-    public void onUploadProgress(long l, long l1, boolean b) {
-      // no-op
-    }
+  /**
+   * Creates a {@link ApiCallback} with the callback result adapted back to the provided {@link CompletableFuture}.
+   *
+   * @param <T> type of the result
+   * @param <R> type of the result for the future
+   */
+  private <T, R> ApiCallback<T> createCallbackFutureAdapter(CompletableFuture<R> future, Function<T, R> func) {
+    return new ApiCallbackAdapter<T>() {
+      @Override
+      public void onFailure(ApiException e, int statusCode, Map responseHeaders) {
+        future.completeExceptionally(e);
+      }
 
-    @Override
-    public void onDownloadProgress(long l, long l1, boolean b) {
-      // no-op
+      @Override
+      public void onSuccess(T result, int statusCode, Map<String, List<String>> responseHeaders) {
+        future.complete(func.apply(result));
+      }
+    };
+  }
+
+  /**
+   * Deletes the underlying resource in k8s represented by this controller.
+   *
+   * @return a {@link CompletionStage} that will complete when the delete operation completed
+   */
+  private CompletionStage<String> deleteResource() {
+    if (V1Deployment.class.equals(resourceType)) {
+      return deleteDeployment();
     }
+    if (V1StatefulSet.class.equals(resourceType)) {
+      return deleteStatefulSet();
+    }
+    // This shouldn't happen
+    throw new UnsupportedOperationException("Cannot delete resource of type " + resourceType);
+  }
+
+  /**
+   * Deletes the deployment controlled by this controller asynchronously.
+   *
+   * @return a {@link CompletionStage} that will complete when the delete operation completed
+   */
+  private CompletionStage<String> deleteDeployment() {
+    AppsV1Api appsApi = new AppsV1Api(apiClient);
+
+    // callback for the delete deployment call
+    CompletableFuture<String> result = new CompletableFuture<>();
+    try {
+      String name = meta.getName();
+      appsApi.deleteNamespacedDeploymentAsync(name, kubeNamespace, null, new V1DeleteOptions(),
+                                              null, null, null, null, new ApiCallbackAdapter<V1Status>() {
+          @Override
+          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+            // Ignore the failure if the deployment is already deleted
+            if (statusCode == 404) {
+              result.complete(name);
+            } else {
+              result.completeExceptionally(e);
+            }
+          }
+
+          @Override
+          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
+            result.complete(name);
+          }
+        });
+    } catch (ApiException e) {
+      result.completeExceptionally(e);
+    }
+    return result;
+  }
+
+  /**
+   * Deletes the stateful set controlled by this controller asynchronously.
+
+   * @return a {@link CompletionStage} that will complete when the delete operation completed
+   */
+  private CompletionStage<String> deleteStatefulSet() {
+    AppsV1Api appsApi = new AppsV1Api(apiClient);
+    CoreV1Api coreApi = new CoreV1Api(apiClient);
+
+    // callback for the delete deployment call
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    try {
+      String name = meta.getName();
+      appsApi.deleteNamespacedStatefulSetAsync(name, kubeNamespace, null, new V1DeleteOptions(),
+                                               null, null, null, null, new ApiCallbackAdapter<V1Status>() {
+          @Override
+          public void onFailure(ApiException e, int statusCode, Map<String, List<String>> responseHeaders) {
+            // Ignore if the stateful set is already deleted
+            if (statusCode == 404) {
+              deletePVCs();
+            } else {
+              resultFuture.completeExceptionally(e);
+            }
+          }
+
+          @Override
+          public void onSuccess(V1Status v1Status, int statusCode, Map<String, List<String>> responseHeaders) {
+            deletePVCs();
+          }
+
+          // Delete the PVCs used by the stateful set
+          private void deletePVCs() {
+            try {
+              coreApi.deleteCollectionNamespacedPersistentVolumeClaimAsync(
+                kubeNamespace, null, null, null, getLabelSelector(), null, null, null, false,
+                createCallbackFutureAdapter(resultFuture, r -> name));
+            } catch (ApiException e) {
+              resultFuture.completeExceptionally(e);
+            }
+          }
+        });
+
+    } catch (ApiException e) {
+      resultFuture.completeExceptionally(e);
+    }
+    return resultFuture;
   }
 }

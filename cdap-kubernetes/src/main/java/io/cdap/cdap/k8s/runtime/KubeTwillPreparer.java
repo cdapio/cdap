@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.hash.Hashing;
 import com.google.common.io.Resources;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -23,6 +24,8 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.cdap.cdap.master.spi.twill.StatefulDisk;
+import io.cdap.cdap.master.spi.twill.StatefulTwillPreparer;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.AppsV1Api;
@@ -39,10 +42,14 @@ import io.kubernetes.client.models.V1LabelSelector;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
 import io.kubernetes.client.models.V1ObjectMetaBuilder;
+import io.kubernetes.client.models.V1PersistentVolumeClaim;
+import io.kubernetes.client.models.V1PersistentVolumeClaimBuilder;
 import io.kubernetes.client.models.V1PodSpec;
 import io.kubernetes.client.models.V1PodSpecBuilder;
 import io.kubernetes.client.models.V1ResourceRequirements;
 import io.kubernetes.client.models.V1ResourceRequirementsBuilder;
+import io.kubernetes.client.models.V1StatefulSet;
+import io.kubernetes.client.models.V1StatefulSetBuilder;
 import io.kubernetes.client.models.V1Volume;
 import io.kubernetes.client.models.V1VolumeMount;
 import org.apache.twill.api.ClassAcceptor;
@@ -75,6 +82,7 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Writer;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -107,7 +115,7 @@ import java.util.stream.Collectors;
  * Most of these operations are no-ops as many of these methods and pretty closely coupled to the Hadoop implementation
  * and have no analogy in Kubernetes.
  */
-class KubeTwillPreparer implements TwillPreparer {
+class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwillPreparer> {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
@@ -121,18 +129,21 @@ class KubeTwillPreparer implements TwillPreparer {
   private final PodInfo podInfo;
   private final List<String> arguments;
   private final Map<String, List<String>> runnableArgs;
+  private final Map<String, StatefulRunnable> statefulRunnables;
   private final List<URI> resources;
   private final Set<String> runnables;
   private final Map<String, Map<String, String>> environments;
   private final RunId twillRunId;
-  private final V1ObjectMeta resourceMeta;
   private final Location appLocation;
   private final KubeTwillControllerFactory controllerFactory;
   private final TwillSpecification twillSpec;
+  private final String resourcePrefix;
+  private final Map<String, String> extraLabels;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
-                    PodInfo podInfo, TwillSpecification spec, RunId twillRunId, V1ObjectMeta resourceMeta,
-                    Location appLocation, KubeTwillControllerFactory controllerFactory) {
+                    PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
+                    String resourcePrefix, Map<String, String> extraLabels,
+                    KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
@@ -144,13 +155,32 @@ class KubeTwillPreparer implements TwillPreparer {
     this.runnables = spec.getRunnables().keySet();
     this.arguments = new ArrayList<>();
     this.runnableArgs = runnables.stream().collect(Collectors.toMap(r -> r, r -> new ArrayList<>()));
+    this.statefulRunnables = new HashMap<>();
     this.resources = new ArrayList<>();
     this.controllerFactory = controllerFactory;
     this.environments = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
     this.twillRunId = twillRunId;
-    this.resourceMeta = resourceMeta;
     this.appLocation = appLocation;
     this.twillSpec = spec;
+    this.resourcePrefix = resourcePrefix;
+    this.extraLabels = extraLabels;
+  }
+
+  @Override
+  public KubeTwillPreparer withStatefulRunnable(String runnableName,
+                                                boolean orderedStart, StatefulDisk... disks) {
+    if (!twillSpec.getRunnables().containsKey(runnableName)) {
+      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
+    }
+
+    if (Arrays.stream(disks).map(StatefulDisk::getName).collect(Collectors.toSet()).size() != disks.length) {
+      throw new IllegalArgumentException("Each stateful disk must have unique name");
+    }
+    if (Arrays.stream(disks).map(StatefulDisk::getMountPath).collect(Collectors.toSet()).size() != disks.length) {
+      throw new IllegalArgumentException("Each stateful disk must have unique mount path");
+    }
+    statefulRunnables.put(runnableName, new StatefulRunnable(orderedStart, Arrays.asList(disks)));
+    return this;
   }
 
   @Override
@@ -229,7 +259,10 @@ class KubeTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer withArguments(String runnableName, Iterable<String> args) {
-    List<String> runnableArgs = this.runnableArgs.computeIfAbsent(runnableName, k -> new ArrayList<>());
+    List<String> runnableArgs = this.runnableArgs.get(runnableName);
+    if (runnableArgs == null) {
+      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
+    }
     args.forEach(runnableArgs::add);
     return this;
   }
@@ -278,7 +311,11 @@ class KubeTwillPreparer implements TwillPreparer {
 
   @Override
   public TwillPreparer withEnv(String runnableName, Map<String, String> env) {
-    environments.put(runnableName, env);
+    Map<String, String> runnableEnv = environments.get(runnableName);
+    if (runnableEnv == null) {
+      throw new IllegalArgumentException("Runnable " + runnableName + " not found");
+    }
+    runnableEnv.putAll(env);
     return this;
   }
 
@@ -346,12 +383,18 @@ class KubeTwillPreparer implements TwillPreparer {
       }
 
       RuntimeSpecification runtimeSpec = twillSpec.getRunnables().values().iterator().next();
-      V1ObjectMeta metadata = new V1ObjectMetaBuilder(resourceMeta)
-        .addToLabels(podInfo.getContainerLabelName(), runtimeSpec.getName())
-        .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION, Long.toString(timeoutUnit.toMillis(timeout)))
-        .build();
+      StatefulRunnable statefulRunnable = statefulRunnables.get(runtimeSpec.getName());
+      Type resourceType = statefulRunnable == null ? V1Deployment.class : V1StatefulSet.class;
 
-      createDeployment(metadata, runtimeSpec, runtimeConfigLocation);
+      V1ObjectMeta metadata = createResourceMetadata(resourceType, runtimeSpec.getName(),
+                                                     timeoutUnit.toMillis(timeout));
+      if (V1Deployment.class.equals(resourceType)) {
+        metadata = createDeployment(metadata, runtimeSpec, runtimeConfigLocation);
+      } else {
+        metadata = createStatefulSet(metadata, runtimeSpec, runtimeConfigLocation, statefulRunnable);
+      }
+
+      return controllerFactory.create(resourceType, metadata, timeout, timeoutUnit);
     } catch (Exception e) {
       try {
         appLocation.delete(true);
@@ -360,21 +403,94 @@ class KubeTwillPreparer implements TwillPreparer {
       }
       throw new RuntimeException("Unable to create Kubernetes resource while attempting to start program.", e);
     }
-
-    return controllerFactory.create(timeout, timeoutUnit);
   }
 
   /**
-   * Build a {@link V1Deployment} object to run the program and deploy it in kubernete
+   * Creates a {@link V1ObjectMeta} for the given resource type.
    */
-  private void createDeployment(V1ObjectMeta metadata,
-                                RuntimeSpecification runtimeSpec, Location runtimeConfigLocation) throws ApiException {
+  private V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis) {
+    // For StatefulSet, it generates a label for each pod, with format of [statefulset_name]-[10_chars_hash],
+    // hence the allowed resource name has to be <= 52
+    String resourceName = getResourceName(twillSpec.getName(), twillRunId,
+                                          V1Deployment.class.equals(resourceType) ? 240 : 52);
+
+    Map<String, String> extraLabels = this.extraLabels.entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> asLabel(e.getValue())));
+
+    // labels have more strict requirements around valid character sets,
+    // so use annotations to store the app name.
+    return new V1ObjectMetaBuilder()
+      .withName(resourceName)
+      .withOwnerReferences(podInfo.getOwnerReferences())
+      .addToLabels(extraLabels)
+      .addToLabels(podInfo.getContainerLabelName(), runnableName)
+      .addToAnnotations(KubeTwillRunnerService.APP_LABEL, twillSpec.getName())
+      .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION, Long.toString(startTimeoutMillis))
+      .build();
+  }
+
+  /**
+   * Returns the name for the resource to be deployed in Kubernetes.
+   */
+  private String getResourceName(String appName, RunId runId, int maxLength) {
+    String fullName = resourcePrefix + appName + "-" + runId;
+    // Don't trim when cleansing the name
+    fullName = cleanse(fullName, Integer.MAX_VALUE);
+
+    if (fullName.length() <= maxLength) {
+      return fullName;
+    }
+
+    // Generates a hash and takes the first 5 bytes of it. It should be unique enough in our use case.
+    String hash = "-" + Hashing.sha256().hashString(fullName, StandardCharsets.UTF_8).toString().substring(0, 10);
+    return fullName.substring(0, maxLength - hash.length()) + hash;
+  }
+
+  /**
+   * label values must be 63 characters or less and consist of alphanumeric, '.', '_', or '-'.
+   */
+  private String asLabel(String val) {
+    return cleanse(val, 63);
+  }
+
+  /**
+   * Kubernetes names must be lower case alphanumeric, or '-'. Some are less restrictive, but those characters
+   * should always be ok.
+   */
+  private String cleanse(String val, int maxLength) {
+    String cleansed = val.replaceAll("[^A-Za-z0-9\\-_]", "-").toLowerCase();
+    return cleansed.length() > maxLength ? cleansed.substring(0, maxLength) : cleansed;
+  }
+
+  /**
+   * Deploys a {@link V1Deployment} to for runnable exeuction in Kubernetes.
+   */
+  private V1ObjectMeta createDeployment(V1ObjectMeta metadata,
+                                        RuntimeSpecification runtimeSpec,
+                                        Location runtimeConfigLocation) throws ApiException {
     AppsV1Api appsApi = new AppsV1Api(apiClient);
 
     V1Deployment deployment = buildDeployment(metadata, runtimeSpec, runtimeConfigLocation);
 
-    appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
-    LOG.info("Created deployment {} in Kubernetes", resourceMeta.getName());
+    deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
+    LOG.info("Created deployment {} in Kubernetes", metadata.getName());
+    return deployment.getMetadata();
+  }
+
+  /**
+   * Deploys a {@link V1StatefulSet} to for runnable exeuction in Kubernetes.
+   */
+  private V1ObjectMeta createStatefulSet(V1ObjectMeta metadata,
+                                         RuntimeSpecification runtimeSpec,
+                                         Location runtimeConfigLocation,
+                                         StatefulRunnable statefulRunnable) throws ApiException {
+    AppsV1Api appsApi = new AppsV1Api(apiClient);
+
+    V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpec, runtimeConfigLocation, statefulRunnable);
+
+    statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
+    LOG.info("Created deployment {} in Kubernetes", metadata.getName());
+    return statefulSet.getMetadata();
   }
 
   /**
@@ -391,6 +507,30 @@ class KubeTwillPreparer implements TwillPreparer {
         .withNewTemplate()
           .withMetadata(metadata)
           .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpec))
+        .endTemplate()
+      .endSpec()
+      .build();
+  }
+
+  /**
+   * Returns a {@link V1StatefulSet} object for the {@link TwillRunnable} represented by the
+   * given {@link RuntimeSpecification}
+   */
+  private V1StatefulSet buildStatefulSet(V1ObjectMeta metadata, RuntimeSpecification runtimeSpec,
+                                         Location runtimeConfigLocation, StatefulRunnable statefulRunnable) {
+    List<StatefulDisk> disks = statefulRunnable.getStatefulDisks();
+
+    return new V1StatefulSetBuilder()
+      .withMetadata(metadata)
+      .withNewSpec()
+        .withSelector(new V1LabelSelector().matchLabels(metadata.getLabels()))
+        .withReplicas(runtimeSpec.getResourceSpecification().getInstances())
+        .withPodManagementPolicy(statefulRunnable.isOrderedStart() ? "OrderedReady" : "Parallel")
+        .addAllToVolumeClaimTemplates(disks.stream().map(this::createPVC).collect(Collectors.toList()))
+        .withNewTemplate()
+          .withMetadata(metadata)
+          .withSpec(createPodSpec(runtimeConfigLocation, runtimeSpec,
+                                  disks.stream().map(this::createDiskMount).toArray(V1VolumeMount[]::new)))
         .endTemplate()
       .endSpec()
       .build();
@@ -493,6 +633,8 @@ class KubeTwillPreparer implements TwillPreparer {
 
     for (Map.Entry<String, RuntimeSpecification> entry: spec.getRunnables().entrySet()) {
       String runnableName = entry.getKey();
+      Collection<LocalFile> runnableFiles = localFiles.computeIfAbsent(runnableName, k -> new ArrayList<>());
+
       for (LocalFile localFile : entry.getValue().getLocalFiles()) {
         Location location;
 
@@ -508,9 +650,8 @@ class KubeTwillPreparer implements TwillPreparer {
           LOG.debug("Done {} : {}", runnableName, url);
         }
 
-        localFiles.computeIfAbsent(runnableName, k -> new ArrayList<>())
-          .add(new DefaultLocalFile(localFile.getName(), location.toURI(), location.lastModified(),
-                                    location.length(), localFile.isArchive(), localFile.getPattern()));
+        runnableFiles.add(new DefaultLocalFile(localFile.getName(), location.toURI(), location.lastModified(),
+                                               location.length(), localFile.isArchive(), localFile.getPattern()));
       }
     }
 
@@ -596,7 +737,7 @@ class KubeTwillPreparer implements TwillPreparer {
       .collect(Collectors.toList());
 
     return new V1ContainerBuilder()
-      .withName(name)
+      .withName(cleanse(name, 254))
       .withImage(containerImage)
       .withWorkingDir(workDir)
       .withResources(resourceRequirements)
@@ -636,5 +777,52 @@ class KubeTwillPreparer implements TwillPreparer {
           .addItemsItem(new V1DownwardAPIVolumeFile()
                           .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.labels"))
                           .path(podInfo.getLabelsFile())));
+  }
+
+  /**
+   * Creates a {@link V1PersistentVolumeClaim} with the given disk information.
+   *
+   * @param disk the disk information
+   * @return a {@link V1PersistentVolumeClaim}
+   */
+  private V1PersistentVolumeClaim createPVC(StatefulDisk disk) {
+    return new V1PersistentVolumeClaimBuilder()
+      .withMetadata(new V1ObjectMeta().name(cleanse(disk.getName(), 254)))
+      .withNewSpec()
+      .addToAccessModes("ReadWriteOnce")
+      .withResources(
+        new V1ResourceRequirements()
+          .requests(Collections.singletonMap("storage",
+                                             Quantity.fromString(String.format("%dGi", disk.getDiskSizeGB())))))
+      .endSpec()
+      .build();
+  }
+
+  /**
+   * Creates a {@link V1VolumeMount} with the given disk information.
+   */
+  private V1VolumeMount createDiskMount(StatefulDisk disk) {
+    return new V1VolumeMount().name(cleanse(disk.getName(), 254)).mountPath(disk.getMountPath());
+  }
+
+  /**
+   * Class to hold information about stateful runnable.
+   */
+  private static final class StatefulRunnable {
+    private final boolean orderedStart;
+    private final List<StatefulDisk> statefulDisks;
+
+    private StatefulRunnable(boolean orderedStart, List<StatefulDisk> statefulDisks) {
+      this.orderedStart = orderedStart;
+      this.statefulDisks = new ArrayList<>(statefulDisks);
+    }
+
+    boolean isOrderedStart() {
+      return orderedStart;
+    }
+
+    List<StatefulDisk> getStatefulDisks() {
+      return statefulDisks;
+    }
   }
 }

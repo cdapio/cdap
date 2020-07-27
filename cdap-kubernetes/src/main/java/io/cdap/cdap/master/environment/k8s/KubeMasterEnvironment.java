@@ -95,6 +95,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private KubeDiscoveryService discoveryService;
   private PodKillerTask podKillerTask;
   private KubeTwillRunnerService twillRunner;
+  private PodInfo podInfo;
 
   @Override
   public void initialize(MasterEnvironmentContext context) throws IOException, ApiException {
@@ -108,7 +109,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     conf.put(DATA_TX_ENABLED, Boolean.toString(false));
 
     // Load the pod labels from the configured path. It should be setup by the CDAP operator
-    PodInfo podInfo = getPodInfo(conf);
+    podInfo = createPodInfo(conf);
     Map<String, String> podLabels = podInfo.getLabels();
 
     String namespace = podInfo.getNamespace();
@@ -193,7 +194,17 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     return cls.getConstructor(MasterEnvironmentContext.class, MasterEnvironment.class).newInstance(context, this);
   }
 
-  private PodInfo getPodInfo(Map<String, String> conf) throws IOException, ApiException {
+  /**
+   * Returns the {@link PodInfo} of the current environment.
+   */
+  public PodInfo getPodInfo() {
+    if (podInfo == null) {
+      throw new IllegalStateException("This environment is not yet initialized");
+    }
+    return podInfo;
+  }
+
+  private PodInfo createPodInfo(Map<String, String> conf) throws IOException, ApiException {
     String namespace = conf.getOrDefault(NAMESPACE_KEY, DEFAULT_NAMESPACE);
 
     File podInfoDir = new File(conf.getOrDefault(POD_INFO_DIR, DEFAULT_POD_INFO_DIR));
@@ -253,7 +264,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     // Ideally we should use a more restricted role.
     String serviceAccountName = pod.getSpec().getServiceAccountName();
     String runtimeClassName = pod.getSpec().getRuntimeClassName();
-    return new PodInfo(podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
+    return new PodInfo(podName, podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
                        podNameFile.getName(), namespace, podLabels, ownerReferences,
                        serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
