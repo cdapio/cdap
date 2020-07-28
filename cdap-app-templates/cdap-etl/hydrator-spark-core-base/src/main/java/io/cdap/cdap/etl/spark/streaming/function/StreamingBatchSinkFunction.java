@@ -22,8 +22,10 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.BatchSink;
+import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -41,6 +43,8 @@ import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.streaming.Time;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Set;
 
 /**
  * Function used to write a batch of data to a batch sink for use with a JavaDStream.
@@ -97,8 +101,17 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
                                                                               new NoopStageStatisticsCollector());
       PairFlatMapFunc<T, Object, Object> sinkFunction = new BatchSinkFunction<T, Object, Object>(pluginFunctionContext);
 
-      sinkFactory.writeFromRDD(data.flatMapToPair(Compat.convert(sinkFunction)), sec, stageName,
-                               Object.class, Object.class);
+      Set<String> outputNames = sinkFactory.writeFromRDD(data.flatMapToPair(Compat.convert(sinkFunction)),
+                                                         sec, stageName);
+      sec.execute(new TxRunnable() {
+        @Override
+        public void run(DatasetContext context) throws Exception {
+          for (String outputName : outputNames) {
+            ExternalDatasets.registerLineage(sec.getAdmin(), outputName, AccessType.WRITE,
+                                             null, () -> context.getDataset(outputName));
+          }
+        }
+      });
       isDone = true;
       sec.execute(new TxRunnable() {
         @Override

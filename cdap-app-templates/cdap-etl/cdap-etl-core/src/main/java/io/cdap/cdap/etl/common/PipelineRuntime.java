@@ -29,6 +29,7 @@ import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.api.workflow.WorkflowContext;
 import io.cdap.cdap.etl.api.StageContext;
 
+import java.io.Serializable;
 import java.util.Optional;
 
 /**
@@ -36,7 +37,7 @@ import java.util.Optional;
  * don't have modify several layers of constructors whenever anything is added to {@link StageContext}. Instead, it
  * can just be added here.
  */
-public class PipelineRuntime {
+public class PipelineRuntime implements Serializable {
   private final String namespace;
   private final String pipelineName;
   private final long logicalStartTime;

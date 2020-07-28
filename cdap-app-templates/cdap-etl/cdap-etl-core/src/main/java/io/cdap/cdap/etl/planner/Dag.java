@@ -25,6 +25,7 @@ import com.google.common.collect.Sets;
 import io.cdap.cdap.api.Predicate;
 import io.cdap.cdap.etl.proto.Connection;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -40,7 +41,7 @@ import javax.annotation.Nullable;
 /**
  * A DAG (directed acyclic graph).
  */
-public class Dag {
+public class Dag implements Serializable {
   protected final Set<String> nodes;
   protected final Set<String> sources;
   protected final Set<String> sinks;
