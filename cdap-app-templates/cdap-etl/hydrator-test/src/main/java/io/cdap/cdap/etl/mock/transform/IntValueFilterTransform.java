@@ -40,6 +40,8 @@ import java.util.Map;
 @Name("IntValueFilter")
 public class IntValueFilterTransform extends Transform<StructuredRecord, StructuredRecord> {
   public static final PluginClass PLUGIN_CLASS = getPluginClass();
+  public static final String ERROR_MESSAGE = "bad int value";
+  public static final int ERROR_CODE = 2;
   private final Config config;
 
   public IntValueFilterTransform(Config config) {
@@ -58,7 +60,7 @@ public class IntValueFilterTransform extends Transform<StructuredRecord, Structu
     if (value != config.value) {
       emitter.emit(input);
     } else {
-      emitter.emitError(new InvalidEntry<>(2, "bad int value", input));
+      emitter.emitError(new InvalidEntry<>(ERROR_CODE, ERROR_MESSAGE, input));
     }
   }
 
