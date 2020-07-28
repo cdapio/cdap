@@ -37,6 +37,7 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedMultiOutputTransform;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.TransformExecutor;
+import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
 import java.util.Collections;
@@ -44,6 +45,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.annotation.Nullable;
 
 /**
  * Helps create {@link TransformExecutor TransformExecutors}.
@@ -58,7 +60,7 @@ public abstract class TransformExecutorFactory<T> {
   protected final boolean collectStageStatistics;
 
   protected TransformExecutorFactory(PipelinePluginInstantiator pluginInstantiator, MacroEvaluator macroEvaluator,
-                                     Metrics metrics, String sourceStageName,
+                                     Metrics metrics, @Nullable String sourceStageName,
                                      boolean collectStageStatistics) {
     this.pluginInstantiator = pluginInstantiator;
     this.metrics = metrics;
@@ -118,7 +120,10 @@ public abstract class TransformExecutorFactory<T> {
   public PipeTransformExecutor<T> create(PipelinePhase pipeline) throws Exception {
     // populate the pipe stages in reverse topological order to ensure that an output is always created before its
     // input. this will allow us to setup all outputs for a stage when we get to it.
-    List<String> traversalOrder = pipeline.getDag().getTopologicalOrder();
+    Dag pipelineDag = pipeline.getDag();
+    // dag is null if the pipeline phase contains a single stage.
+    List<String> traversalOrder = pipelineDag == null ?
+      Collections.singletonList(pipeline.iterator().next().getName()) : pipelineDag.getTopologicalOrder();
     Collections.reverse(traversalOrder);
 
     Map<String, PipeStage> pipeStages = new HashMap<>();
@@ -165,7 +170,7 @@ public abstract class TransformExecutorFactory<T> {
         ConnectorSourceEmitter.builder(stageName) : PipeEmitter.builder(stageName);
 
     Map<String, StageSpec.Port> outputPorts = stageSpec.getOutputPorts();
-    for (String outputStageName : pipeline.getDag().getNodeOutputs(stageName)) {
+    for (String outputStageName : pipeline.getStageOutputs(stageName)) {
       StageSpec outputStageSpec = pipeline.getStage(outputStageName);
       String outputStageType = outputStageSpec.getPluginType();
       PipeStage outputPipeStage = pipeStages.get(outputStageName);

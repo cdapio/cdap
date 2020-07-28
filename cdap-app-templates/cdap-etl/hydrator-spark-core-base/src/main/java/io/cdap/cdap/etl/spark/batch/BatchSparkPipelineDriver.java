@@ -69,7 +69,6 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
-    .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
     .create();
 
@@ -146,7 +145,10 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     try {
       PipelinePluginInstantiator pluginInstantiator =
         new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
-      runPipeline(phaseSpec.getPhase(), BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors);
+      boolean shouldConsolidateStages = Boolean.parseBoolean(
+        sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.FALSE.toString()));
+      runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
+                  sinkFactory.getUncombinableSinks(), shouldConsolidateStages);
     } finally {
       updateWorkflowToken(sec.getWorkflowToken(), collectors);
     }

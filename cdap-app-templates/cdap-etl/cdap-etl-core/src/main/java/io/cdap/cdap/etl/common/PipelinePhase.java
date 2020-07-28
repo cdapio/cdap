@@ -26,6 +26,7 @@ import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,12 +40,13 @@ import javax.annotation.Nullable;
 /**
  * Keeps track of the plugin ids for the source, transforms, and sink of a pipeline phase.
  */
-public class PipelinePhase implements Iterable<StageSpec> {
+public class PipelinePhase implements Iterable<StageSpec>, Serializable {
   // plugin type -> stage info
   private final Map<String, Set<StageSpec>> stagesByType;
   private final Map<String, StageSpec> stagesByName;
   private final Dag dag;
 
+  // dag is nullable in case the pipeline phase is a single stage (which is not a valid dag)
   private PipelinePhase(Set<StageSpec> stages, @Nullable Dag dag) {
     stagesByType = new HashMap<>();
     stagesByName = new HashMap<>();
@@ -103,11 +105,13 @@ public class PipelinePhase implements Iterable<StageSpec> {
   }
 
   public Set<String> getSources() {
-    return dag == null ? new HashSet<>() : dag.getSources();
+    // null dag means there's just one stage, which is both a source and a sink
+    return dag == null ? Collections.singleton(stagesByName.values().iterator().next().getName()) : dag.getSources();
   }
 
   public Set<String> getSinks() {
-    return dag == null ? new HashSet<>() : dag.getSinks();
+    // null dag means there's just one stage, which is both a source and a sink
+    return dag == null ? Collections.singleton(stagesByName.values().iterator().next().getName()) : dag.getSinks();
   }
 
   public int size() {

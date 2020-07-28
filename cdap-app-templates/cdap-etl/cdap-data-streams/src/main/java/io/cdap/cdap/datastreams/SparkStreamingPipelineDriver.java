@@ -41,6 +41,7 @@ import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -60,7 +61,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -206,8 +207,11 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
       // TODO: figure out how to get partitions to use for aggregators and joiners.
       // Seems like they should be set at configure time instead of runtime? but that requires an API change.
       try {
-        runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE, sec, new HashMap<>(),
-                           pluginContext, new HashMap<>());
+        PhaseSpec phaseSpec = new PhaseSpec(sec.getApplicationSpecification().getName(), pipelinePhase,
+                                            Collections.emptyMap(), pipelineSpec.isStageLoggingEnabled(),
+                                            pipelineSpec.isProcessTimingEnabled());
+        runner.runPipeline(phaseSpec, StreamingSource.PLUGIN_TYPE, sec, Collections.emptyMap(),
+                           pluginContext, Collections.emptyMap(), Collections.emptySet(), false);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }
