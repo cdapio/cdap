@@ -1725,6 +1725,8 @@ features:
     viewHydrator: View in Hydrator
     viewTracker: View in Tracker
 
+  licenseText: Licensed under the Apache License, Version 2.0
+
   LoadingIndicator:
     contactadmin: It could take a few minutes for the system to self-heal.
     defaultMessage: 'Loading...'
@@ -1736,7 +1738,8 @@ features:
     systemDashboard: system services
     tryMessage: 'You can try to: '
 
-  licenseText: Licensed under the Apache License, Version 2.0
+  LogViewer:
+    noLogsMessage: There are no logs to display
 
   Market:
     action-types:
