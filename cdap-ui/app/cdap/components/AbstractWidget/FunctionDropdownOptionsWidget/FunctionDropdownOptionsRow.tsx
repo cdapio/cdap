@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 import * as React from 'react';
 import Input from '@material-ui/core/Input';
 import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
@@ -30,7 +31,7 @@ const styles = (theme): StyleRules => {
     ...AbstractRowStyles(theme),
     inputContainer: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr 30px 1fr',
+      gridTemplateColumns: '1fr 1fr 30px 1fr 1fr 1fr',
       gridGap: '10px',
     },
     disabled: {
@@ -205,11 +206,19 @@ class FunctionDropdownOptionsRow extends AbstractRow<
           disabled={this.props.disabled}
         />
 
-        <Checkbox
-          classes={{ disabled: this.props.classes.disabled }}
-          onChange={this.handleChange.bind(this, 'ignoreNulls')}
-          value={this.state.ignoreNulls}
+        <FormControlLabel
+          className={this.props.classes.checkbox}
           disabled={this.props.disabled}
+          control={
+            <Checkbox
+              classes={{ disabled: this.props.classes.disabled }}
+              onChange={this.handleChange.bind(this, 'ignoreNulls')}
+              checked={this.state.ignoreNulls}
+              disabled={this.props.disabled}
+              color="primary"
+            />
+          }
+          label={<span>Ignore Nulls</span>}
         />
       </div>
     );
