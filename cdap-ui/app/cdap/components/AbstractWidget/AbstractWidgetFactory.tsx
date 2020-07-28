@@ -132,7 +132,7 @@ export const WIDGET_FACTORY = {
   'ds-multiplevalues': MultipleValuesWidget,
   dsv: CSVWidget,
   'function-dropdown-with-alias': FunctionDropdownAliasWidget,
-  'function-drowdown-with-options': FunctionDropdownOptionsWidget,
+  'function-dropdown-with-options': FunctionDropdownOptionsWidget,
   dlp: DLPCustomWidget,
   'get-schema': GetSchemaWidget,
   'input-field-selector': InputFieldDropdown,

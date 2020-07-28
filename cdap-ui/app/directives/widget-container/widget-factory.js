@@ -171,6 +171,15 @@ angular.module(PKG.name + '.commons')
           'widget-props': 'myconfig["widget-attributes"]',
         }
       },
+      'function-dropdown-with-options': {
+        element: '<function-dropdown-options-widget></function-dropdown-options-widget>',
+        attributes: {
+          'value': 'model',
+          'on-change': 'onChange',
+          'disabled': 'disabled',
+          'widget-props': 'myconfig["widget-attributes"]',
+        }
+      },
       // 'schedule': {
       //   element: '<my-schedule></my-schedule>',
       //   attributes: {
