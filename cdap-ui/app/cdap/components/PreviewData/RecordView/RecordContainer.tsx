@@ -49,6 +49,7 @@ const styles = (theme): StyleRules => ({
   recordHeader: {
     paddingTop: '10px',
     paddingLeft: '20px',
+    borderBottom: `1px solid ${theme.palette.grey[400]}`,
   },
 });
 

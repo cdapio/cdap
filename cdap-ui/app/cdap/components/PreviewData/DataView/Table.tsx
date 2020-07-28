@@ -44,6 +44,7 @@ export const styles = (theme): StyleRules => ({
   tableContainer: {
     width: 'fit-content',
     minWidth: '100%',
+    marginLeft: '10px',
   },
   row: {
     height: 40,

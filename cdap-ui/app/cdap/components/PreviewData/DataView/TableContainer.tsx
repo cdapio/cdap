@@ -45,10 +45,14 @@ export const styles = (theme): StyleRules => ({
     borderRight: `1px solid ${theme.palette.grey[400]}`,
     height: 'inherit',
   },
+  tableWrapper: {
+    width: 'fit-content',
+    marginLeft: '-10px',
+    borderTop: `1px solid ${theme.palette.grey[400]}`,
+  },
   h2Title: {
     fontSize: '1.4rem !important',
     fontWeight: 'bold',
-    borderBottom: `1px solid ${theme.palette.grey[400]}`,
     paddingBottom: '5px',
     paddingLeft: '10px',
     margin: '0 -10px',
@@ -82,7 +86,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const inputHeaders = tableValue.schemaFields;
             const inputRecords = tableValue.records;
             return (
-              <div key={`input-table-${i}`}>
+              <div key={`input-table-${i}`} className={classes.tableWrapper}>
                 {inputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={inputHeaders}
@@ -106,7 +110,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const outputHeaders = tableValue.schemaFields;
             const outputRecords = tableValue.records;
             return (
-              <div key={`output-table-${j}`}>
+              <div key={`output-table-${j}`} className={classes.tableWrapper}>
                 {outputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={outputHeaders}
