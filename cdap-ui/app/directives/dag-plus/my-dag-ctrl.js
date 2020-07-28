@@ -565,6 +565,11 @@ angular.module(PKG.name + '.commons')
 
     function initNodes() {
       angular.forEach($scope.nodes, function (node) {
+        const key = generatePluginMapKey(node);
+        const ispluginsMapAvailable = Object.keys(vm.pluginsMap).length;
+        // If pluginsMap is not available yet, consider the plugin to be valid until we know otherwise
+        node.isPluginAvailable = ispluginsMapAvailable ?
+            Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) : true;
         if (node.type === 'condition') {
           initConditionNode(node.name);
         } else if (node.type === 'splittertransform') {
@@ -587,8 +592,6 @@ angular.module(PKG.name + '.commons')
           }
           vm.instance.makeTarget(node.name, targetOptions);
         }
-        let key = generatePluginMapKey(node);
-        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) ;
       });
     }
 
@@ -1688,7 +1691,6 @@ angular.module(PKG.name + '.commons')
       });
       if (!_.isEmpty(vm.pluginsMap)) {
         addErrorAlertsEndpointsAndConnections();
-        subAvailablePlugins();
       }
     });
 

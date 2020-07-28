@@ -207,7 +207,7 @@
                                  'btn-disabled': !node.isPluginAvailable}"
                   ng-click="!disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)" ng-disabled="!node.isPluginAvailable">
                   <span class="node-configure-btn-label" uib-tooltip="{{ !node.isPluginAvailable ? 'Plugin artifact is not available.' : ''}}"
-                    tooltip-popup-delay="300" tooltip-placement="right">
+                    tooltip-popup-delay="300" tooltip-placement="right" tooltip-append-to-body="true">
                     Properties
                   </span>
                 </button>
