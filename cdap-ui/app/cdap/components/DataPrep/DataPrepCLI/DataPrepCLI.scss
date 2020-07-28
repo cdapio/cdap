@@ -33,7 +33,7 @@ $cli-font: "Courier New", Courier, monospace;
       position: absolute;
       width: 100%;
       bottom: 29px;
-      z-index: 1000;
+      z-index: 999;
 
       .content {
         width: calc(100% - 30px);

@@ -18,6 +18,7 @@ import React, { Component } from 'react';
 import DirectiveUploadWizard from 'components/CaskWizards/PluginArtifactUpload/DirectiveUploadWizard';
 import T from 'i18n-react';
 import PlusButton from 'components/PlusButton';
+import Alert from 'components/Alert';
 
 export default class DataPrepPlusButton extends Component {
   constructor(props) {
@@ -44,20 +45,17 @@ export default class DataPrepPlusButton extends Component {
   ];
 
   onDirectiveSubmit() {
-    this.setState(
-      {
-        showCustomDirective: false,
-        showSuccessAlert: true,
-      },
-      () => {
-        setTimeout(() => {
-          this.setState({
-            showSuccessAlert: false,
-          });
-        }, 3000);
-      }
-    );
+    this.setState({
+      showCustomDirective: false,
+      showSuccessAlert: true,
+    });
   }
+
+  onAlertClose = () => {
+    this.setState({
+      showSuccessAlert: false,
+    });
+  };
 
   renderSuccessAlert() {
     if (!this.state.showSuccessAlert) {
@@ -65,9 +63,12 @@ export default class DataPrepPlusButton extends Component {
     }
 
     return (
-      <div className="success-alert">
-        {T.translate('features.DataPrep.TopPanel.PlusButton.successMessage')}
-      </div>
+      <Alert
+        showAlert={this.state.showSuccessAlert}
+        message={T.translate('features.DataPrep.TopPanel.PlusButton.successMessage')}
+        onClose={this.onAlertClose}
+        type="success"
+      />
     );
   }
 
