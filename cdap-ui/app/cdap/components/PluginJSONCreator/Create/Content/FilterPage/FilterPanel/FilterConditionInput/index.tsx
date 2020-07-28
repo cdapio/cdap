@@ -14,16 +14,18 @@
  * the License.
  */
 
-import { StyleRules, withStyles, WithStyles } from '@material-ui/core/styles';
-import { CustomOperator } from 'components/ConfigurationGroup/types';
+import * as React from 'react';
+
 import Heading, { HeadingTypes } from 'components/Heading';
+import { List, Map } from 'immutable';
+import { StyleRules, WithStyles, withStyles } from '@material-ui/core/styles';
+import { useFilterState, useWidgetState } from 'components/PluginJSONCreator/Create';
+
+import { CustomOperator } from 'components/ConfigurationGroup/types';
 import If from 'components/If';
 import { OPERATOR_VALUES } from 'components/PluginJSONCreator/constants';
-import { useFilterState, useWidgetState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { List, Map } from 'immutable';
 import isNil from 'lodash/isNil';
-import * as React from 'react';
 
 const styles = (): StyleRules => {
   return {
@@ -35,8 +37,8 @@ const styles = (): StyleRules => {
 };
 
 enum FilterConditionMode {
-  Operator = 'operator',
-  Expression = 'expression',
+  Operator = 'Operator',
+  Expression = 'Expression',
 }
 
 enum FilterConditionProperty {
@@ -67,7 +69,7 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({ classe
     ? widgetInfo
         .valueSeq()
         .map((info) => info.get('name'))
-        .filter((widgetName) => !isNil(widgetName))
+        .filter((widgetName) => widgetName && widgetName.length > 0)
     : List([]);
 
   // 'value' field in condition is required if 'operator' is 'equal to' or 'not equal to'.
@@ -111,67 +113,62 @@ const FilterConditionInputview: React.FC<IFilterConditionInputProps> = ({ classe
   return React.useMemo(
     () => (
       <If condition={!isNil(existingCondition)}>
+        <Heading type={HeadingTypes.h6} label="Show these widgets by the following condition..." />
         <div className={classes.filterConditionInput}>
-          <Heading
-            type={HeadingTypes.h6}
-            label="Show these widgets by the following condition..."
+          <PluginInput
+            widgetType={'radio-group'}
+            value={conditionMode}
+            onChange={setConditionMode}
+            label={'Condition type'}
+            options={Object.values(FilterConditionMode).map((mode) => ({
+              id: mode,
+              label: mode,
+            }))}
+            layout={'inline'}
           />
+        </div>
+        <If condition={conditionMode === FilterConditionMode.Expression}>
           <div className={classes.filterConditionInput}>
             <PluginInput
-              widgetType={'radio-group'}
-              value={conditionMode}
-              onChange={setConditionMode}
-              label={'Condition Type'}
-              options={Object.values(FilterConditionMode).map((mode) => ({
-                id: mode,
-                label: mode,
-              }))}
-              layout={'inline'}
+              widgetType={'textbox'}
+              value={existingCondition.get(FilterConditionProperty.Expression)}
+              onChange={setFilterCondition(FilterConditionProperty.Expression)}
+              label={FilterConditionProperty.Expression}
+              required={false}
             />
           </div>
-          <If condition={conditionMode === FilterConditionMode.Expression}>
+        </If>
+        <If condition={conditionMode === FilterConditionMode.Operator}>
+          <div className={classes.filterConditionInput}>
+            <PluginInput
+              widgetType={'select'}
+              value={existingCondition.get(FilterConditionProperty.Property)}
+              onChange={setFilterCondition(FilterConditionProperty.Property)}
+              label={FilterConditionProperty.Property}
+              options={allWidgetNames}
+            />
+          </div>
+          <div className={classes.filterConditionInput}>
+            <PluginInput
+              widgetType={'select'}
+              value={existingCondition.get(FilterConditionProperty.Operator)}
+              onChange={setFilterCondition(FilterConditionProperty.Operator)}
+              label={FilterConditionProperty.Operator}
+              options={OPERATOR_VALUES}
+            />
+          </div>
+          <If condition={valueRequired}>
             <div className={classes.filterConditionInput}>
               <PluginInput
                 widgetType={'textbox'}
-                value={existingCondition.get(FilterConditionProperty.Expression)}
-                onChange={setFilterCondition(FilterConditionProperty.Expression)}
-                label={FilterConditionProperty.Expression}
+                value={existingCondition.get(FilterConditionProperty.Value)}
+                onChange={setFilterCondition(FilterConditionProperty.Value)}
+                label={FilterConditionProperty.Value}
                 required={false}
               />
             </div>
           </If>
-          <If condition={conditionMode === FilterConditionMode.Operator}>
-            <div className={classes.filterConditionInput}>
-              <PluginInput
-                widgetType={'select'}
-                value={existingCondition.get(FilterConditionProperty.Property)}
-                onChange={setFilterCondition(FilterConditionProperty.Property)}
-                label={FilterConditionProperty.Property}
-                options={allWidgetNames}
-              />
-            </div>
-            <div className={classes.filterConditionInput}>
-              <PluginInput
-                widgetType={'select'}
-                value={existingCondition.get(FilterConditionProperty.Operator)}
-                onChange={setFilterCondition(FilterConditionProperty.Operator)}
-                label={FilterConditionProperty.Operator}
-                options={OPERATOR_VALUES}
-              />
-            </div>
-            <If condition={valueRequired}>
-              <div className={classes.filterConditionInput}>
-                <PluginInput
-                  widgetType={'textbox'}
-                  value={existingCondition.get(FilterConditionProperty.Value)}
-                  onChange={setFilterCondition(FilterConditionProperty.Value)}
-                  label={FilterConditionProperty.Value}
-                  required={false}
-                />
-              </div>
-            </If>
-          </If>
-        </div>
+        </If>
       </If>
     ),
     [filterToCondition, widgetInfo]

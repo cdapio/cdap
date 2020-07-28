@@ -14,15 +14,16 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import classnames from 'classnames';
-import { SHOW_TYPE_VALUES } from 'components/PluginJSONCreator/constants';
-import { useWidgetState } from 'components/PluginJSONCreator/Create';
-import ShowActionButtons from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput/ShowPropertyRow/ShowActionButtons';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { List } from 'immutable';
-import isNil from 'lodash/isNil';
 import * as React from 'react';
+
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+import { List } from 'immutable';
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { SHOW_TYPE_VALUES } from 'components/PluginJSONCreator/constants';
+import ShowActionButtons from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput/ShowPropertyRow/ShowActionButtons';
+import classnames from 'classnames';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
 
 const styles = (): StyleRules => {
   return {
@@ -76,7 +77,7 @@ const ShowPropertyRowView: React.FC<IShowPropertyRowProps> = ({
     ? widgetInfo
         .valueSeq()
         .map((info) => info.get('name'))
-        .filter((widgetName) => !isNil(widgetName))
+        .filter((widgetName) => widgetName && widgetName.length > 0)
     : List([]);
 
   return (
@@ -87,7 +88,7 @@ const ShowPropertyRowView: React.FC<IShowPropertyRowProps> = ({
           value={showName}
           onChange={setShowName}
           options={allWidgetNames}
-          label={'name'}
+          label={'Name'}
           required={true}
         />
       </div>
@@ -97,7 +98,7 @@ const ShowPropertyRowView: React.FC<IShowPropertyRowProps> = ({
           value={showType}
           onChange={setShowType}
           options={SHOW_TYPE_VALUES}
-          label={'type'}
+          label={'Type'}
           required={false}
         />
       </div>

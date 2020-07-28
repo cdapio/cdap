@@ -14,29 +14,31 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import FilterNameInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilerNameInput';
-import FilterConditionInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterConditionInput';
-import FilterShowlistInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput';
 import * as React from 'react';
+
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+import Button from '@material-ui/core/Button';
+import FilterConditionInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterConditionInput';
+import FilterNameInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilerNameInput';
+import FilterShowlistInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput';
 
 const styles = (theme): StyleRules => {
   return {
     filterContainer: {
-      border: `1px solid`,
-      borderColor: theme.palette.grey[300],
+      border: `1px solid ${theme.palette.grey[300]}`,
       borderRadius: '6px',
       position: 'relative',
-      padding: '7px 10px 5px',
-      margin: '25px',
+      padding: `${theme.spacing(2)}px 10px 5px`,
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
     filterInput: {
       display: 'block',
       marginLeft: 'auto',
       marginRight: 'auto',
-      marginTop: '30px',
-      marginBottom: '30px',
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
     },
   };
 };

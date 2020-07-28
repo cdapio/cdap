@@ -18,9 +18,11 @@ import * as React from 'react';
 
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 
-import GetAppIcon from '@material-ui/icons/GetApp';
+import CodeIcon from '@material-ui/icons/Code';
 import IconButton from '@material-ui/core/IconButton';
+import { LiveViewMode } from 'components/PluginJSONCreator/Create/PluginJSONMenu';
 import Tooltip from '@material-ui/core/Tooltip';
+import classnames from 'classnames';
 
 const styles = (theme): StyleRules => {
   return {
@@ -28,32 +30,39 @@ const styles = (theme): StyleRules => {
       fontSize: '13px',
       backgroundColor: theme.palette.grey[50],
     },
-    exportIcon: {
-      fontSize: '14px',
+    liveJSONButton: {
+      '&:focus': {
+        outline: 'none',
+      },
+    },
+    clickedButton: {
+      backgroundColor: 'rgb(26,115,232,0.2)',
     },
   };
 };
 
-const JSONDownloadButtonView = ({ classes, downloadDisabled, onDownloadClick }) => {
+export const LiveJSONButtonView = ({ classes, liveViewMode, switchToJSONView }) => {
   return (
     <Tooltip
-      title={
-        downloadDisabled
-          ? 'Download is disabled until the required fields are filled in'
-          : 'Download Plugin JSON'
-      }
+      title="JSON View"
       classes={{
         tooltip: classes.buttonTooltip,
       }}
     >
-      <div>
-        <IconButton color="primary" disabled={downloadDisabled} onClick={onDownloadClick}>
-          <GetAppIcon />
-        </IconButton>
-      </div>
+      <IconButton
+        className={classnames(classes.liveJSONButton, {
+          [classes.clickedButton]: liveViewMode === LiveViewMode.JSONView,
+        })}
+        color="primary"
+        onClick={switchToJSONView}
+        disableRipple
+        disableFocusRipple
+      >
+        <CodeIcon />
+      </IconButton>
     </Tooltip>
   );
 };
 
-const JSONDownloadButton = withStyles(styles)(JSONDownloadButtonView);
-export default JSONDownloadButton;
+const LiveJSONButton = withStyles(styles)(LiveJSONButtonView);
+export default LiveJSONButton;

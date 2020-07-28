@@ -14,10 +14,13 @@
  * the License.
  */
 
-import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { List } from 'immutable';
 import * as React from 'react';
+
+import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
+import If from 'components/If';
+import { List } from 'immutable';
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { isNilOrEmpty } from 'services/helpers';
 
 const AttributeRowsInput = ({
   widgetID,
@@ -29,7 +32,10 @@ const AttributeRowsInput = ({
   const [currentAttributeValues, setCurrentAttributeValues] = React.useState('');
 
   React.useEffect(() => {
-    setCurrentAttributeValues(processAttributeValues());
+    const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
+    if (existingAttributeValues) {
+      setCurrentAttributeValues(processAttributeValues(existingAttributeValues));
+    }
   }, [selectedType, localWidgetToAttributes]);
 
   /*
@@ -44,9 +50,8 @@ const AttributeRowsInput = ({
    * Example)
    *     "GET,POST,PUT,DELETE"
    */
-  function processAttributeValues() {
-    const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
-    return existingAttributeValues ? existingAttributeValues.join(COMMON_DELIMITER) : '';
+  function processAttributeValues(attributeValues) {
+    return attributeValues ? attributeValues.join(COMMON_DELIMITER) : '';
   }
 
   const onAttributeChange = (newVal) => {
@@ -57,13 +62,15 @@ const AttributeRowsInput = ({
   };
 
   return (
-    <PluginInput
-      widgetType={'dsv'}
-      value={currentAttributeValues}
-      onChange={onAttributeChange}
-      label={field}
-      required={true}
-    />
+    <If condition={!isNilOrEmpty(currentAttributeValues)}>
+      <PluginInput
+        widgetType={'dsv'}
+        value={currentAttributeValues}
+        onChange={onAttributeChange}
+        label={field}
+        required={true}
+      />
+    </If>
   );
 };
 

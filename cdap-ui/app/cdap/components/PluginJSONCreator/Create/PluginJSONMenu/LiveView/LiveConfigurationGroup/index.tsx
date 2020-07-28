@@ -14,15 +14,25 @@
  * the License.
  */
 
+import * as React from 'react';
+
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import ConfigurationGroup from 'components/ConfigurationGroup';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import debounce from 'lodash/debounce';
-import * as React from 'react';
 
 const styles = (): StyleRules => {
   return {
+    liveConfigurationGroup: {
+      padding: '14px 0px',
+      // Full height excluding header, footer, and top panel
+      // 100vh - header - footer - top panel
+      // 100vh - 48px - 53px - 40px
+      height: 'calc(100vh - 141px)',
+      overflow: 'scroll',
+    },
     loadingBox: {
       width: '100%',
       height: '100%',
@@ -40,6 +50,7 @@ interface ILiveConfigurationGroup extends WithStyles<typeof styles> {
 const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes, JSONOutput }) => {
   // Values needed for Configuration Groups live view
   const [pluginProperties, setPluginProperties] = React.useState(null);
+  const [widgetJson, setWidgetJson] = React.useState(null);
   const [values, onChange] = React.useState<Record<string, string>>({});
 
   const [loading, setLoading] = React.useState(false);
@@ -49,6 +60,7 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
   const debouncedUpdate = debounce(() => {
     const newPluginProperties = getNewPluginProperties(JSONOutput);
     setPluginProperties(newPluginProperties);
+    setWidgetJson(processForConfigurationGroup(JSONOutput));
     setLoading(false);
   }, 500);
 
@@ -62,7 +74,7 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
    * Get pluginProperties, which is required for ConfigurationGroups component.
    */
   function getNewPluginProperties(config) {
-    if (!config['configuration-groups']) {
+    if (!config || !config['configuration-groups']) {
       return;
     }
     const newPluginProperties = {};
@@ -80,6 +92,9 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
    * ConfigurationGroup component takes non-immutable data as input.
    */
   function processForConfigurationGroup(config) {
+    if (!config || !config['configuration-groups']) {
+      return;
+    }
     const processed = {
       ...config,
       ...(config['configuration-groups'] && {
@@ -93,7 +108,7 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
   }
 
   return (
-    <div>
+    <div className={classes.liveConfigurationGroup}>
       <If condition={loading}>
         <div className={classes.loadingBox}>
           <LoadingSVGCentered />
@@ -102,8 +117,9 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
       <If condition={!loading}>
         <ConfigurationGroup
           pluginProperties={pluginProperties}
-          widgetJson={processForConfigurationGroup(JSONOutput)}
+          widgetJson={widgetJson}
           values={values}
+          onChange={onChange}
         />
       </If>
     </div>

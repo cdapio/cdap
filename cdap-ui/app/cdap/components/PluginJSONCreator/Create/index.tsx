@@ -14,31 +14,35 @@
  * the License.
  */
 
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import classnames from 'classnames';
+import * as React from 'react';
+
 import { JSONStatusMessage, SchemaType } from 'components/PluginJSONCreator/constants';
+import { List, Map } from 'immutable';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
 import Content from 'components/PluginJSONCreator/Create/Content';
+import Dropzone from 'react-dropzone';
 import PluginJSONMenu from 'components/PluginJSONCreator/Create/PluginJSONMenu';
 import StepsGuidelineMenu from 'components/PluginJSONCreator/Create/StepsGuidelineMenu';
-import { List, Map } from 'immutable';
-import * as React from 'react';
-import Dropzone from 'react-dropzone';
+import classnames from 'classnames';
 
 export const LEFT_PANEL_WIDTH = 250;
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     root: {
-      height: '100%',
-    },
-    content: {
-      height: 'calc(100% - 50px)',
       display: 'grid',
       gridTemplateColumns: `${LEFT_PANEL_WIDTH}px 1fr`,
-
-      '& > div': {
-        overflowY: 'auto',
-      },
+      height: 'calc(100vh - 53px - 48px)', // excluding header and footer
+      width: '100%',
+    },
+    stepsGuidelineMenu: {
+      height: '100%',
+      borderRight: `1px solid ${theme.palette.divider}`,
+    },
+    content: {
+      width: '100%',
+      height: '100%',
     },
     overlayScreen: {
       position: 'fixed',
@@ -322,18 +326,22 @@ const CreateView = ({ classes, children }) => {
               >
                 <PluginJSONMenu uploadedFile={uploadedFile} />
               </GlobalStateProvider>
-              <div className={classes.content}>
-                <AppInternalContext.Provider value={appInternalContextValue}>
-                  <StepsGuidelineMenu />
-                  <Content
-                    pluginInfoContextValue={pluginInfoContextValue}
-                    configuratioGroupContextValue={configuratioGroupContextValue}
-                    widgetContextValue={widgetContextValue}
-                    outputContextValue={outputContextValue}
-                    filterContextValue={filterContextValue}
-                  />
-                </AppInternalContext.Provider>
-              </div>
+              <AppInternalContext.Provider value={appInternalContextValue}>
+                <div className={classes.root}>
+                  <div className={classes.stepsGuidelineMenu}>
+                    <StepsGuidelineMenu />
+                  </div>
+                  <div className={classes.content}>
+                    <Content
+                      pluginInfoContextValue={pluginInfoContextValue}
+                      configuratioGroupContextValue={configuratioGroupContextValue}
+                      widgetContextValue={widgetContextValue}
+                      outputContextValue={outputContextValue}
+                      filterContextValue={filterContextValue}
+                    />
+                  </div>
+                </div>
+              </AppInternalContext.Provider>
             </div>
           </section>
         </div>

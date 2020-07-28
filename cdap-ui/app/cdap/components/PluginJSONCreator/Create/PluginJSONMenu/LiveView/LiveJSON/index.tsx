@@ -14,13 +14,24 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import * as React from 'react';
 
-const styles = (theme): StyleRules => {
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+const styles = (): StyleRules => {
   return {
     JSONLiveCode: {
       padding: '14px',
+      overflow: 'auto',
+      height: '100%',
+    },
+    output: {
+      whiteSpace: 'pre-wrap',
+      // Full height excluding header, footer, and top panel
+      // 100vh - header - footer - top panel
+      // 100vh - 48px - 53px - 40px
+      height: 'calc(100vh - 141px)',
+      overflow: 'scroll',
     },
   };
 };
@@ -32,7 +43,7 @@ interface ILiveJSONProps extends WithStyles<typeof styles> {
 const LiveJSONView: React.FC<ILiveJSONProps> = ({ classes, JSONOutput }) => {
   return (
     <div className={classes.JSONLiveCode}>
-      <pre>{JSON.stringify(JSONOutput, undefined, 2)}</pre>
+      <pre className={classes.output}>{JSON.stringify(JSONOutput, undefined, 2)}</pre>
     </div>
   );
 };

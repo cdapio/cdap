@@ -14,16 +14,26 @@
  * the License.
  */
 
+import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-
-import Button from '@material-ui/core/Button';
-import InsertDriveFileIcon from '@material-ui/icons/InsertDriveFile';
+import Tooltip from '@material-ui/core/Tooltip';
+import IconSVG from 'components/IconSVG';
 import React from 'react';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     fileInput: {
       display: 'none',
+    },
+    buttonTooltip: {
+      fontSize: '13px',
+      backgroundColor: theme.palette.grey[50],
+    },
+    importButton: {
+      marginTop: theme.spacing(0.5),
+    },
+    importIcon: {
+      fontSize: '14px',
     },
   };
 };
@@ -62,9 +72,23 @@ const JSONImportButtonView: React.FC<IJSONImportButtonProps> = ({
         onChange={processFileUpload()}
       />
       <label htmlFor="raised-button-file">
-        <Button aria-label="save" component="span" color="primary">
-          <InsertDriveFileIcon />
-        </Button>
+        <Tooltip
+          title="Import JSON"
+          classes={{
+            tooltip: classes.buttonTooltip,
+          }}
+        >
+          <div>
+            <IconButton
+              className={classes.importButton}
+              aria-label="save"
+              component="span"
+              color="primary"
+            >
+              <IconSVG name="icon-import" className={classes.importIcon} />
+            </IconButton>
+          </div>
+        </Tooltip>
       </label>
     </div>
   );

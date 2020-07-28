@@ -14,12 +14,13 @@
  * the License.
  */
 
-import Drawer from '@material-ui/core/Drawer';
-import List from '@material-ui/core/List';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import Alert from 'components/Alert';
-import If from 'components/If';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/constants';
+import * as React from 'react';
+
+import {
+  downloadPluginJSON,
+  getJSONOutput,
+  parsePluginJSON,
+} from 'components/PluginJSONCreator/utilities';
 import {
   useAppInternalState,
   useConfigurationGroupState,
@@ -28,43 +29,56 @@ import {
   usePluginInfoState,
   useWidgetState,
 } from 'components/PluginJSONCreator/Create';
-import CollapsedMenu from 'components/PluginJSONCreator/Create/PluginJSONMenu/CollapsedMenu';
-import LiveViewMenu from 'components/PluginJSONCreator/Create/PluginJSONMenu/LiveViewMenu';
-import {
-  downloadPluginJSON,
-  getJSONOutput,
-  parsePluginJSON,
-} from 'components/PluginJSONCreator/utilities';
-import * as React from 'react';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
-const LIVE_VIEWER_WIDTH = '600px';
+import Alert from 'components/Alert';
+import Drawer from '@material-ui/core/Drawer';
+import If from 'components/If';
+import JSONActionButtons from 'components/PluginJSONCreator/Create/PluginJSONMenu/JSONActionButtons';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/constants';
+import LiveView from 'components/PluginJSONCreator/Create/PluginJSONMenu/LiveView';
+
+export enum LiveViewMode {
+  JSONView = 'JSON_VIEW',
+  ConfigurationGroupsView = 'CONFIGURATION_GROUPS',
+  None = 'NONE',
+}
+
+const LIVE_VIEWER_WIDTH = '550px';
 
 const styles = (theme): StyleRules => {
   return {
     mainMenu: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 9fr',
       width: '100%',
       height: '100%',
       borderTop: `1px solid ${theme.palette.grey['500']}`,
-      paddingTop: theme.Spacing(1),
-      paddingBottom: theme.Spacing(1),
+    },
+    jsonActionButtons: {
+      margin: 'auto',
+      padding: '0',
+    },
+    liveView: {
+      width: '100%',
     },
     toolbar: {
       minHeight: '48px',
     },
-    closedPluginJSONMenu: {
+    closedMenu: {
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
     },
-    closedPluginJSONMenuPaper: {
+    closedMenuPaper: {
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
       backgroundColor: theme.palette.white[50],
     },
     liveViewer: {
-      zIndex: 1000, // lower than '1061', which is Alert component's z-index
       width: LIVE_VIEWER_WIDTH,
+      zIndex: 1000, // lower than '1061', which is Alert component's z-index
     },
     liveViewerPaper: {
-      zIndex: 1000, // lower than '1061', which is Alert component's z-index
       width: LIVE_VIEWER_WIDTH,
+      zIndex: 1000, // lower than '1061', which is Alert component's z-index
       backgroundColor: theme.palette.white[50],
     },
   };
@@ -132,7 +146,7 @@ const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedF
 
   const { JSONStatus, setJSONStatus } = useAppInternalState();
 
-  const [isLiveView, setIsLiveView] = React.useState(false);
+  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.ConfigurationGroupsView);
 
   // In the user drag-and-drops a file, it should populate the UI with the file content.
   React.useEffect(() => {
@@ -206,12 +220,16 @@ const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedF
     }
   };
 
-  const expandLiveView = () => {
-    setIsLiveView(true);
+  const switchToJSONView = () => {
+    setLiveViewMode(LiveViewMode.JSONView);
+  };
+
+  const switchToConfigurationGroupsView = () => {
+    setLiveViewMode(LiveViewMode.ConfigurationGroupsView);
   };
 
   const collapseLiveView = () => {
-    setIsLiveView(false);
+    setLiveViewMode(LiveViewMode.None);
   };
 
   // When an error Alert component is closed, reset JSONStatus back to Normal
@@ -234,6 +252,8 @@ const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedF
   const downloadDisabled =
     !pluginName || pluginName.length === 0 || !pluginType || pluginType.length === 0;
 
+  const isLiveView = liveViewMode !== LiveViewMode.None;
+
   React.useEffect(() => {
     if (JSONStatus === JSONStatusMessage.Normal) {
       setJSONOutput(getJSONOutput(widgetData));
@@ -245,39 +265,51 @@ const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedF
       <Drawer
         open={true}
         variant="persistent"
-        className={isLiveView ? classes.liveViewer : classes.closedPluginJSONMenu}
+        className={isLiveView ? classes.liveViewer : classes.closedMenu}
         anchor="right"
         ModalProps={{
           keepMounted: true,
         }}
         classes={{
-          paperAnchorRight: isLiveView
-            ? classes.liveViewerPaper
-            : classes.closedPluginJSONMenuPaper,
+          paperAnchorRight: isLiveView ? classes.liveViewerPaper : classes.closedMenuPaper,
         }}
         data-cy="navbar-drawer"
       >
         <div className={classes.toolbar} />
-        <List component="nav" dense={true} className={classes.mainMenu}>
-          <If condition={isLiveView}>
-            <LiveViewMenu
-              JSONOutput={JSONOutput}
+        <If condition={isLiveView}>
+          <div className={classes.mainMenu}>
+            <div className={classes.jsonActionButtons}>
+              <JSONActionButtons
+                downloadDisabled={downloadDisabled}
+                onDownloadClick={onDownloadClick}
+                populateImportResults={populateImportResults}
+                liveViewMode={liveViewMode}
+                switchToJSONView={switchToJSONView}
+                switchToConfigurationGroupsView={switchToConfigurationGroupsView}
+              />
+            </div>
+            <div className={classes.liveView}>
+              <LiveView
+                liveViewMode={liveViewMode}
+                JSONFilename={JSONFilename}
+                JSONOutput={JSONOutput}
+                collapseLiveView={collapseLiveView}
+              />
+            </div>
+          </div>
+        </If>
+        <If condition={!isLiveView}>
+          <div className={classes.jsonActionButtons}>
+            <JSONActionButtons
               downloadDisabled={downloadDisabled}
               onDownloadClick={onDownloadClick}
-              collapseLiveView={collapseLiveView}
               populateImportResults={populateImportResults}
-              JSONFilename={JSONFilename}
+              liveViewMode={liveViewMode}
+              switchToJSONView={switchToJSONView}
+              switchToConfigurationGroupsView={switchToConfigurationGroupsView}
             />
-          </If>
-          <If condition={!isLiveView}>
-            <CollapsedMenu
-              downloadDisabled={downloadDisabled}
-              onDownloadClick={onDownloadClick}
-              expandLiveView={expandLiveView}
-              populateImportResults={populateImportResults}
-            />
-          </If>
-        </List>
+          </div>
+        </If>
       </Drawer>
 
       <Alert

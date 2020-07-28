@@ -14,30 +14,41 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import IconButton from '@material-ui/core/IconButton';
+import * as React from 'react';
+
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import CloseIcon from '@material-ui/icons/Close';
+
+import Button from '@material-ui/core/Button';
 import If from 'components/If';
-import { h2Styles } from 'components/Markdown/MarkdownHeading';
+import StandardModal from 'components/StandardModal';
 import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
-import { useWidgetState } from 'components/PluginJSONCreator/Create';
 import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput';
 import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetInfoInput';
-import * as React from 'react';
+import { h2Styles } from 'components/Markdown/MarkdownHeading';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
 
 const styles = (theme): StyleRules => {
   return {
     widgetAttributesTitle: {
-      marginTop: '15px',
-      marginBottom: '15px',
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
     h2Title: {
       ...h2Styles(theme).root,
       marginBottom: '5px',
+    },
+    setAttributes: {
+      paddingLeft: theme.spacing(3),
+      paddingRight: theme.spacing(3),
+    },
+    saveButton: {
+      textTransform: 'none',
+    },
+    cancelButton: {
+      textTransform: 'none',
+    },
+    actionButtons: {
+      float: 'right',
     },
   };
 };
@@ -60,15 +71,6 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
   // 'widgetToAttributes' will only be changed when user clicks on 'save' button or closes the dialog.
   const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
 
-  // If 'widgetToAttributes' changes, local values should also be updated.
-  // For instance, if user changes the widgetType.
-  React.useEffect(() => {
-    setLocalWidgetToAttributes(widgetToAttributes);
-  }, [widgetToAttributes]);
-
-  // Check whether local changes to widget attributes is saved
-  const [localSaved, setLocalSaved] = React.useState(true);
-
   const widgetType = widgetInfo.get(widgetID).get('widgetType') || '';
 
   // There are situations when the widgets from imported file do not include
@@ -78,39 +80,23 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
     ? Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType])
     : [];
 
-  // When local changes to widget attributes happen
-  React.useEffect(() => {
-    setLocalSaved(false);
-  }, [localWidgetToAttributes]);
-
   function saveWidgetToAttributes() {
     return () => {
       const localAttributeValues = localWidgetToAttributes.get(widgetID);
       setWidgetToAttributes(widgetToAttributes.set(widgetID, localAttributeValues));
-      setLocalSaved(true);
+      closeWidgetAttributes();
     };
   }
 
   return React.useMemo(
     () => (
       <If condition={widgetAttributesOpen}>
-        <Dialog
-          open={true}
-          onClose={closeWidgetAttributes}
-          disableBackdropClick={true}
-          fullWidth={true}
-          maxWidth={'md'}
-          classes={{ paper: classes.attributeDialog }}
+        <StandardModal
+          open={widgetAttributesOpen}
+          toggle={closeWidgetAttributes}
+          headerText={'Widget Attributes'}
         >
-          <DialogTitle disableTypography className={classes.dialogTitle}>
-            <IconButton onClick={closeWidgetAttributes}>
-              <CloseIcon />
-            </IconButton>
-          </DialogTitle>
-          <DialogContent>
-            <div className={classes.widgetAttributesTitle}>
-              <h1 className={classes.h2Title}>Widget Property</h1>
-            </div>
+          <div className={classes.setAttributes}>
             <WidgetInfoInput widgetID={widgetID} />
             <If condition={attributeFields && attributeFields.length > 0}>
               <div className={classes.widgetAttributesTitle}>
@@ -130,16 +116,26 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
               );
             })}
 
-            <Button
-              variant="contained"
-              color="primary"
-              disabled={localSaved}
-              onClick={saveWidgetToAttributes()}
-            >
-              Save
-            </Button>
-          </DialogContent>
-        </Dialog>
+            <div className={classes.actionButtons}>
+              <Button
+                color="primary"
+                onClick={() => closeWidgetAttributes()}
+                className={classes.cancelButton}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={saveWidgetToAttributes()}
+                className={classes.saveButton}
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </StandardModal>
       </If>
     ),
     [

@@ -14,28 +14,30 @@
  * the License.
  */
 
+import * as React from 'react';
+
+import { List, Map } from 'immutable';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import Button from '@material-ui/core/Button';
 import Divider from '@material-ui/core/Divider';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import If from 'components/If';
-import { useWidgetState } from 'components/PluginJSONCreator/Create';
 import WidgetPanel from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel';
-import { List, Map } from 'immutable';
-import * as React from 'react';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
 import uuidV4 from 'uuid/v4';
 
 const styles = (theme): StyleRules => {
   return {
     widgetWrapper: {
-      border: `1px solid`,
-      borderColor: theme.palette.grey[300],
+      border: `1px solid ${theme.palette.grey[300]}`,
       borderRadius: '6px',
       position: 'relative',
       padding: '12px 12px 9px',
-      margin: '25px',
+      margin: theme.spacing(4),
     },
     widgetContainer: {
-      width: 'calc(100%-1000px)',
+      width: '97%',
+      margin: 'auto',
     },
     addWidgetLabel: {
       fontSize: '12px',
@@ -47,8 +49,8 @@ const styles = (theme): StyleRules => {
     },
     widgetDivider: {
       width: '100%',
-      marginTop: '10px',
-      marginBottom: '10px',
+      marginTop: theme.spacing(2),
+      marginBottom: theme.spacing(2),
     },
   };
 };
@@ -119,7 +121,7 @@ const WidgetCollectionView: React.FC<IWidgetCollectionProps> = ({ classes, group
   return React.useMemo(
     () => (
       <div className={classes.widgetWrapper}>
-        <div className={classes.addWidgetLabel}>Add Widgets</div>
+        <div className={classes.addWidgetLabel}>Widgets</div>
         <div className={classes.widgetContainer}>
           <If condition={activeWidgets.size === 0}>
             <Button variant="contained" color="primary" onClick={addWidgetToGroup(0)}>
