@@ -38,6 +38,7 @@ interface IRefreshableSchemaEditor extends WithStyles<typeof styles> {
   onChange: ({ avroSchema: ISchemaType }) => void;
   disabled?: boolean;
   visibleRows?: number;
+  errors?: Record<string, string>;
 }
 
 function RefreshableSchemaEditorBase({
@@ -46,11 +47,16 @@ function RefreshableSchemaEditorBase({
   disabled,
   classes,
   visibleRows,
+  errors,
 }: IRefreshableSchemaEditor) {
   const [loading, setLoading] = React.useState(false);
+  const [isSchemaUpdateInProgress, setIsSchemaUpdateInProgress] = React.useState(0);
 
   React.useEffect(
     () => {
+      if (isSchemaUpdateInProgress > 0) {
+        return setIsSchemaUpdateInProgress(isSchemaUpdateInProgress - 1);
+      }
       setLoading(true);
       setTimeout(() => {
         setLoading(false);
@@ -68,8 +74,12 @@ function RefreshableSchemaEditorBase({
         <SchemaEditor
           schema={schema}
           disabled={disabled}
-          onChange={onChange}
+          onChange={(...props) => {
+            setIsSchemaUpdateInProgress((prevState) => prevState + 1);
+            onChange.apply(null, props);
+          }}
           visibleRows={visibleRows}
+          errors={errors}
         />
       </If>
     </div>

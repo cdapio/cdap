@@ -43,6 +43,7 @@ const FieldTypeBase = ({
   autoFocus,
   typeProperties,
   disabled = false,
+  internalType,
 }: IFieldTypeBaseProps) => {
   /**
    * We use hooks here because we propagte the state only upwards
@@ -136,6 +137,7 @@ const FieldTypeBase = ({
         onRemove={onRemove}
         onChange={onTypePropertiesChangeHandler}
         typeProperties={fieldTypeProperties}
+        internalType={internalType}
       />
     </React.Fragment>
   );

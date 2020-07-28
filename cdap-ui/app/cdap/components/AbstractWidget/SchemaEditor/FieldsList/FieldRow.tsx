@@ -155,6 +155,7 @@ class FieldRowBase extends React.Component<IFieldRowProps, IFieldRowState> {
       case InternalTypesEnum.RECORD_COMPLEX_TYPE_ROOT:
         return (
           <FieldType
+            internalType={this.props.field.internalType}
             disabled={this.props.disabled}
             name={this.props.field.name}
             type={this.props.field.type}
