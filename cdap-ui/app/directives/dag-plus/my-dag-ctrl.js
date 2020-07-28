@@ -1345,7 +1345,6 @@ angular.module(PKG.name + '.commons')
       });
       if (!_.isEmpty(vm.pluginsMap)) {
         addErrorAlertsEndpointsAndConnections();
-        subAvailablePlugins();
       }
     });
 
