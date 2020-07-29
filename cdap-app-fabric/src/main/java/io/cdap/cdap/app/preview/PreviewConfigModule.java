@@ -42,6 +42,7 @@ public class PreviewConfigModule extends AbstractModule {
   public static final String PREVIEW_HCONF = "previewHConf";
   public static final String PREVIEW_SCONF = "previewSConf";
   public static final String PREVIEW_LEVEL_DB = "previewLevelDB";
+  public static final String GLOBAL_TMS = "globalTMS";
 
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
@@ -71,6 +72,9 @@ public class PreviewConfigModule extends AbstractModule {
     previewCConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
     // Use No-SQL store for preview data
     previewCConf.set(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION, Constants.Dataset.DATA_STORAGE_NOSQL);
+
+    // Don't load custom log pipelines in preview
+    previewCConf.unset(Constants.Logging.PIPELINE_CONFIG_DIR);
 
     // Setup Hadoop configuration
     previewHConf = new Configuration(hConf);
