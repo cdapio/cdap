@@ -300,7 +300,7 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
     // Start and then immediately stop preview
     cy.get(dataCy('preview-top-run-btn')).click();
     cy.get(dataCy('stop-preview-btn')).click();
-    cy.get(dataCy('preview-top-run-btn'), { timeout: 30000 }).should('exist');
+    cy.get(dataCy('preview-top-run-btn'), { timeout: 35000 }).should('exist');
     cy.get(dataCy(`plugin-node-BigQueryTable-batchsink-3`)).within(() => {
       cy.get(dataCy(`${sinkNode.nodeName}-preview-data-btn`)).click();
     });
