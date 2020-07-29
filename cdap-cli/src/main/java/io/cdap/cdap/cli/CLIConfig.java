@@ -183,7 +183,7 @@ public class CLIConfig implements TableRendererConfig {
     try {
       metaClient.ping();
     } catch (IOException e) {
-      throw new IOException("Check hostname and/or port", e);
+      throw new IOException("Check connection parameters and/or accesstoken", e);
     }
   }
 
@@ -196,21 +196,16 @@ public class CLIConfig implements TableRendererConfig {
     ClientConfig clientConfig, ConnectionConfig connectionInfo, PrintStream output,
     boolean debug) throws IOException, UnauthorizedException {
 
+    //Check for a saved token that works
+    UserAccessToken savedToken = getSavedAccessToken(connectionInfo);
+    if (savedToken != null) {
+      return savedToken;
+    }
+    //Check if connection can be attempted without auth
     if (!isAuthenticationEnabled(connectionInfo)) {
       return null;
     }
-
-    try {
-      UserAccessToken savedToken = getSavedAccessToken(connectionInfo.getHostname());
-      if (savedToken == null) {
-        throw new UnauthenticatedException();
-      }
-      checkConnection(clientConfig, connectionInfo, savedToken.getAccessToken());
-      return savedToken;
-    } catch (UnauthenticatedException ignored) {
-      // access token invalid - fall through to try acquiring token manually
-    }
-
+    //auth enabled - try to get a new access token from server
     return getNewAccessToken(connectionInfo, output, debug);
   }
 
@@ -255,17 +250,23 @@ public class CLIConfig implements TableRendererConfig {
 
   private AuthenticationClient getAuthenticationClient(ConnectionConfig connectionInfo) {
     AuthenticationClient authenticationClient = new BasicAuthenticationClient();
-    authenticationClient.setConnectionInfo(connectionInfo.getHostname(), connectionInfo.getPort(),
+    authenticationClient.setConnectionInfo(connectionInfo.getHostname(),
+                                           connectionInfo.getPort() == null ? -1 : connectionInfo.getPort(),
                                            connectionInfo.isSSLEnabled());
     return authenticationClient;
   }
 
   @Nullable
-  private UserAccessToken getSavedAccessToken(String hostname) {
-    File file = getAccessTokenFile(hostname);
+  private UserAccessToken getSavedAccessToken(ConnectionConfig connectionInfo) {
+    File file = getAccessTokenFile(connectionInfo.getHostname());
     try (BufferedReader reader = Files.newReader(file, Charsets.UTF_8)) {
-      return GSON.fromJson(reader, UserAccessToken.class);
-    } catch (IOException | JsonSyntaxException ignored) {
+      UserAccessToken userAccessToken = GSON.fromJson(reader, UserAccessToken.class);
+      if (userAccessToken == null) {
+        return null;
+      }
+      checkConnection(clientConfig, connectionInfo, userAccessToken.getAccessToken());
+      return userAccessToken;
+    } catch (IOException | JsonSyntaxException | UnauthenticatedException ignored) {
       // Fall through
     }
 

@@ -35,7 +35,7 @@ import io.cdap.cdap.proto.MetricQueryResult;
 import io.cdap.cdap.proto.MetricTagValue;
 import io.cdap.cdap.proto.id.ServiceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.common.http.HttpMethod;
+import io.cdap.common.http.HttpRequest;
 import io.cdap.common.http.HttpResponse;
 import io.cdap.common.http.ObjectResponse;
 
@@ -87,7 +87,9 @@ public class MetricsClient {
     addTags(tags, queryParts);
 
     URL url = config.resolveURLV3(String.format("metrics/search?%s", Joiner.on("&").join(queryParts)));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken());
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request = HttpRequest.post(url).withBody("");
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken());
     ObjectResponse<List<MetricTagValue>> result = ObjectResponse.fromJsonBody(
       response, new TypeToken<List<MetricTagValue>>() { }.getType());
     return result.getResponseObject();
@@ -109,7 +111,9 @@ public class MetricsClient {
     addTags(tags, queryParts);
 
     URL url = config.resolveURLV3(String.format("metrics/search?%s", Joiner.on("&").join(queryParts)));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken());
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request = HttpRequest.post(url).withBody("");
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken());
     ObjectResponse<List<String>> result = ObjectResponse.fromJsonBody(
       response, new TypeToken<List<String>>() { }.getType());
     return result.getResponseObject();
@@ -177,7 +181,9 @@ public class MetricsClient {
     addTimeRangeParametersToQuery(timeRangeParams, queryParts);
 
     URL url = config.resolveURLV3(String.format("metrics/query?%s", Joiner.on("&").join(queryParts)));
-    HttpResponse response = restClient.execute(HttpMethod.POST, url, config.getAccessToken());
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request = HttpRequest.post(url).withBody("");
+    HttpResponse response = restClient.execute(request.build(), config.getAccessToken());
     return ObjectResponse.fromJsonBody(response, MetricQueryResult.class).getResponseObject();
   }
 

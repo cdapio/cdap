@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,18 +28,17 @@ import java.io.PrintStream;
 import javax.inject.Inject;
 
 /**
- * Connects to a CDAP instance. This command implements the deprecated connect command.
- * The class ConnectLinkCommand implements the preferred connect-link command.
+ * Connects to a CDAP instance with URI in the format [http[s]://]<hostname>[:<port>][/<path>].
  */
-public class ConnectCommand implements Command {
+public class ConnectLinkCommand implements Command {
 
   private final CLIConfig cliConfig;
   private final InstanceURIParser instanceURIParser;
   private final boolean debug;
 
   @Inject
-  public ConnectCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser,
-                        LaunchOptions launchOptions) {
+  public ConnectLinkCommand(CLIConfig cliConfig, InstanceURIParser instanceURIParser,
+                            LaunchOptions launchOptions) {
     this.cliConfig = cliConfig;
     this.instanceURIParser = instanceURIParser;
     this.debug = launchOptions.isDebug();
@@ -48,12 +47,12 @@ public class ConnectCommand implements Command {
   @Override
   public void execute(Arguments arguments, PrintStream output) throws Exception {
     String instanceURI = arguments.get(ArgumentName.INSTANCE_URI.toString());
+    String nameSpace = arguments.getOptional(ArgumentName.NAMESPACE_NAME.toString());
     String verifySSLCertString = arguments.getOptional(ArgumentName.VERIFY_SSL_CERT.toString());
     boolean verifySSLCert = verifySSLCertString != null ? Boolean.valueOf(verifySSLCertString) : true;
 
-    CLIConnectionConfig connection = instanceURIParser.parse(instanceURI);
+    CLIConnectionConfig connection = instanceURIParser.parseInstanceURI(instanceURI, nameSpace);
     try {
-      output.println("connect command is deprecated. Use connect-link instead.");
       cliConfig.tryConnect(connection, verifySSLCert, output, debug);
     } catch (Exception e) {
       output.println("Failed to connect to " + instanceURI + ": " + e.getMessage());
@@ -65,12 +64,12 @@ public class ConnectCommand implements Command {
 
   @Override
   public String getPattern() {
-    return String.format("connect <%s> [<%s>]",
-                         ArgumentName.INSTANCE_URI, ArgumentName.VERIFY_SSL_CERT);
+    return String.format("connect-link <%s> [<%s>] [<%s>]",
+                         ArgumentName.INSTANCE_URI, ArgumentName.NAMESPACE_NAME,  ArgumentName.VERIFY_SSL_CERT);
   }
 
   @Override
   public String getDescription() {
-    return "Connects to a CDAP instance (Deprecated, use connect-link instead)";
+    return "Connects to a CDAP instance";
   }
 }
