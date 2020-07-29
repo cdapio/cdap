@@ -71,6 +71,7 @@ import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -309,13 +310,16 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
     public void transform(RecordInfo<INPUT_RECORD> input,
                           Emitter<KeyValue<OUT_KEY, TaggedWritable<OUT_VALUE>>> emitter) throws Exception {
       String stageName = input.getFromStage();
-      JOIN_KEY key = joiner.joinOn(stageName, input.getValue());
-      if (shouldFilter.test(stageName, key)) {
-        return;
+      Collection<JOIN_KEY> keys = joiner.getJoinKeys(stageName, input.getValue());
+      for (JOIN_KEY key : keys) {
+        if (shouldFilter.test(stageName, key)) {
+          continue;
+        }
+        TaggedWritable<OUT_VALUE> output = new TaggedWritable<>(stageName,
+                                                                inputConversion.toWritable(input.getValue()));
+
+        emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));
       }
-      TaggedWritable<OUT_VALUE> output = new TaggedWritable<>(stageName,
-                                                              inputConversion.toWritable(input.getValue()));
-      emitter.emit(new KeyValue<>(keyConversion.toWritable(key), output));
     }
   }
 
@@ -363,7 +367,6 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
       join.joinRecords();
     }
   }
-
 
   /**
    * A Transformation that uses an aggregator's groupBy method. Supports applying a function to the types

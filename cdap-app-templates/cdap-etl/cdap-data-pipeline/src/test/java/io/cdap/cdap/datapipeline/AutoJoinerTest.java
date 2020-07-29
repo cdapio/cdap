@@ -302,7 +302,8 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("users_user_id", 1)
                    .set("users_name", "bob").build());
 
-    testSimpleAutoJoinSkewed(Arrays.asList("users", "interests"), expected);
+    testSimpleAutoJoinSkewed(Arrays.asList("users", "interests"), expected, Engine.SPARK);
+    testSimpleAutoJoinSkewed(Arrays.asList("users", "interests"), expected, Engine.MAPREDUCE);
   }
 
   @Test
@@ -350,7 +351,8 @@ public class AutoJoinerTest extends HydratorTestBase {
                    .set("users_user_id", 1)
                    .set("users_name", "bob").build());
 
-    testSimpleAutoJoinSkewed(Collections.singletonList("interests"), expected);
+    testSimpleAutoJoinSkewed(Collections.singletonList("interests"), expected, Engine.SPARK);
+    testSimpleAutoJoinSkewed(Collections.singletonList("interests"), expected, Engine.MAPREDUCE);
   }
 
   @Test
@@ -513,7 +515,7 @@ public class AutoJoinerTest extends HydratorTestBase {
   }
 
   private void testSimpleAutoJoinSkewed(List<String> required,
-                                        Set<StructuredRecord> expected) throws Exception {
+                                        Set<StructuredRecord> expected, Engine engine) throws Exception {
     /*
          users ------|
                      |--> join --> sink
@@ -537,7 +539,7 @@ public class AutoJoinerTest extends HydratorTestBase {
       .addConnection("users", "join")
       .addConnection("interests", "join")
       .addConnection("join", "sink")
-      .setEngine(Engine.SPARK)
+      .setEngine(engine)
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
