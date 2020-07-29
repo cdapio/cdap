@@ -2148,6 +2148,7 @@ features:
         1: "pipeline "
         _: "pipelines "
     DeployedPipelineView:
+      graphQLMultipleServicesDown: The system is unable to display the list of pipelines because some of the services are down. Please try again later.
       searchPlaceholder: Search by pipeline name
       pipelineCount:
         1: "{context} pipeline"
