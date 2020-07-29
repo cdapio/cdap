@@ -34,7 +34,7 @@ export const styles = (theme): StyleRules => ({
     },
   },
   innerContainer: {
-    overflow: 'scroll',
+    overflow: 'hidden',
     padding: '10px',
     width: '100%',
     height: '100%',
@@ -45,6 +45,9 @@ export const styles = (theme): StyleRules => ({
     padding: '10px',
     borderRight: `1px solid ${theme.palette.grey[400]}`,
     height: 'inherit',
+  },
+  tableContainer: {
+    overflow: 'scroll',
   },
   h2Title: {
     fontSize: '1.4rem !important',
@@ -83,7 +86,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const inputHeaders = tableValue.schemaFields;
             const inputRecords = tableValue.records;
             return (
-              <div key={`input-table-${i}`}>
+              <div key={`input-table-${i}`} className={classes.tableContainer}>
                 {inputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={inputHeaders}
@@ -107,7 +110,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const outputHeaders = tableValue.schemaFields;
             const outputRecords = tableValue.records;
             return (
-              <div key={`output-table-${j}`}>
+              <div key={`output-table-${j}`} className={classes.tableContainer}>
                 {outputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
                 <DataTable
                   headers={outputHeaders}
