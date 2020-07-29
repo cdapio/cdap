@@ -132,7 +132,7 @@ public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter
     Schema nonNullableSchema = schema.isNullable() ? schema.getNonNullable() : schema;
     Schema.LogicalType logicalType = nonNullableSchema.getLogicalType();
 
-    if (logicalTypeAsString && logicalType != null) {
+    if (value != null && logicalTypeAsString && logicalType != null) {
       switch (logicalType) {
         case DATE:
           Integer date = (Integer) value;
@@ -150,13 +150,13 @@ public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter
           encoder.writeString(localTimeMicros.format(DateTimeFormatter.ISO_LOCAL_TIME));
           break;
         case TIMESTAMP_MILLIS:
-          ZonedDateTime timestampMillis = getZonedDateTime((long) value, TimeUnit.MILLISECONDS,
+          ZonedDateTime timestampMillis = getZonedDateTime((Long) value, TimeUnit.MILLISECONDS,
                                                            ZoneId.ofOffset("UTC", ZoneOffset.UTC));
           // will be encoded to string of format YYYY-mm-DDTHH:mm:ss.SSSSSSSSSZ[UTC]
           encoder.writeString(timestampMillis.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
           break;
         case TIMESTAMP_MICROS:
-          ZonedDateTime timestampMicros = getZonedDateTime((long) value, TimeUnit.MICROSECONDS,
+          ZonedDateTime timestampMicros = getZonedDateTime((Long) value, TimeUnit.MICROSECONDS,
                                                            ZoneId.ofOffset("UTC", ZoneOffset.UTC));
           // will be encoded to string of format YYYY-mm-DDTHH:mm:ss.SSSSSSSSSZ[UTC]
           encoder.writeString(timestampMicros.format(DateTimeFormatter.ISO_ZONED_DATE_TIME));
