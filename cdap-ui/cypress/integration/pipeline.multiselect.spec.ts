@@ -55,7 +55,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
     });
   });
 
-  it.only('Should select connection(s)', () => {
+  it('Should select connection(s)', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.create_simple_pipeline().then(({ sourceNodeId, transformNodeId, sinkNodeId }) => {
       cy.select_connection(sourceNodeId, transformNodeId).then((element) => {
