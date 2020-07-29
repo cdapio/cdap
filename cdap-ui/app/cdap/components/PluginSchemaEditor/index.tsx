@@ -44,7 +44,7 @@ const styles = (theme): StyleRules => {
     },
     fieldset: {
       '&[disabled] *': {
-        color: `${theme.palette.grey[200]} !important`,
+        color: `${theme.palette.grey[200]}`,
         cursor: 'not-allowed !important',
       },
     },
@@ -116,21 +116,21 @@ interface IPluginSchemaEditorState {
 
 interface IPluginSchemaEditorProps extends WithStyles<typeof styles> {
   disabled?: boolean;
-  actionsDropdownMap: IActionsDropdownTooltip;
+  actionsDropdownMap?: IActionsDropdownTooltip;
   schemas: IPluginSchema[];
-  onSchemaChange: (schemas: IPluginSchema[]) => void;
+  onSchemaChange?: (schemas: IPluginSchema[]) => void;
   schemaTitle?: string;
   isSchemaMacro?: boolean;
-  errors: Record<string, Record<string, string>>;
+  errors?: Record<string, Record<string, string>>;
 }
 
 class PluginSchemaEditorBase extends React.PureComponent<
   IPluginSchemaEditorProps,
   IPluginSchemaEditorState
 > {
-  private actions: IActionsOptionsObj[] = Object.values(this.props.actionsDropdownMap).map(
-    (value) => value
-  );
+  private actions: IActionsOptionsObj[] =
+    this.props.actionsDropdownMap &&
+    Object.values(this.props.actionsDropdownMap).map((value) => value);
   private containerRef;
 
   private getMode = () => {
@@ -160,9 +160,12 @@ class PluginSchemaEditorBase extends React.PureComponent<
       this.ee.on('schema.import', this.onSchemaImport);
       this.ee.on('dataset.selected', this.onSchemaImport);
     }
-    const doesActionDropdownHasExport = Object.keys(this.props.actionsDropdownMap).find(
-      (key) => key.toLowerCase() === 'export'
-    );
+    let doesActionDropdownHasExport;
+    if (this.props.actionsDropdownMap) {
+      doesActionDropdownHasExport = Object.keys(this.props.actionsDropdownMap).find(
+        (key) => key.toLowerCase() === 'export'
+      );
+    }
     if (doesActionDropdownHasExport) {
       // Schema can be exported on detailed view even if it is disabled.
       this.ee.on('schema.export', this.onSchemaExport);
@@ -171,7 +174,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
   }
 
   public componentWillReceiveProps(nextProps: IPluginSchemaEditorProps) {
-    if (!Object.keys(nextProps.actionsDropdownMap).length) {
+    if (!nextProps.actionsDropdownMap || !Object.keys(nextProps.actionsDropdownMap).length) {
       this.actions = [];
       return;
     }
@@ -182,12 +185,16 @@ class PluginSchemaEditorBase extends React.PureComponent<
   public shouldComponentUpdate(nextProps: IPluginSchemaEditorProps, nextState) {
     const { disabled, isSchemaMacro, actionsDropdownMap, schemas, errors } = nextProps;
     const { schemaRowCount, loading, mode, error } = nextState;
-    const newActions = Object.values(actionsDropdownMap)
-      .filter((value) => typeof value === 'string')
-      .join('--');
-    const existingActions = Object.values(this.props.actionsDropdownMap)
-      .filter((value) => typeof value === 'string')
-      .join('--');
+    const newActions =
+      actionsDropdownMap &&
+      Object.values(actionsDropdownMap)
+        .filter((value) => typeof value === 'string')
+        .join('--');
+    const existingActions =
+      this.props.actionsDropdownMap &&
+      Object.values(this.props.actionsDropdownMap)
+        .filter((value) => typeof value === 'string')
+        .join('--');
     const existingSchemas = this.props.schemas.map((s) => s.schema).join('__');
     const newSchemas = schemas.map((s) => s.schema).join('__');
 
@@ -321,7 +328,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
         }
         return s;
       });
-      this.props.onSchemaChange(schemasForPlugin);
+      if (typeof this.props.onSchemaChange === 'function') {
+        this.props.onSchemaChange(schemasForPlugin);
+      }
       setTimeout(() => {
         this.setState({
           loading: false,
@@ -357,7 +366,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
             : [{ name: 'etlSchemaBody', schema: '' }],
       };
       this.setState({ mode: newState.mode });
-      this.props.onSchemaChange(newState.schemas);
+      if (typeof this.props.onSchemaChange === 'function') {
+        this.props.onSchemaChange(newState.schemas);
+      }
     }
   };
 
@@ -395,7 +406,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
                 const newSchemas = [...this.props.schemas];
                 newSchemas[i] = avroSchema;
                 newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
-                this.props.onSchemaChange(newSchemas);
+                if (typeof this.props.onSchemaChange === 'function') {
+                  this.props.onSchemaChange(newSchemas);
+                }
               }}
               errors={
                 this.props.errors && this.props.errors[s.name] ? this.props.errors[s.name] : null
@@ -448,9 +461,15 @@ class PluginSchemaEditorBase extends React.PureComponent<
               newSchemas[i] = avroSchema;
             }
             newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
-            this.props.onSchemaChange(newSchemas);
+            if (typeof this.props.onSchemaChange === 'function') {
+              this.props.onSchemaChange(newSchemas);
+            }
           }}
-          errors={this.props.errors ? this.props.errors.noSchemaSection : null}
+          errors={
+            this.props.errors && this.props.errors[schema.name]
+              ? objectQuery(this.props, 'errors', schema.name)
+              : objectQuery(this.props, 'errors', 'noSchemaSection') || null
+          }
         />
       </fieldset>
     ));
@@ -475,7 +494,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
         className={this.props.classes.macroTextBox}
         onChange={(value) => {
           const newSchemas = [{ name: 'etlSchemaBody', schema: value }];
-          this.props.onSchemaChange(newSchemas);
+          if (typeof this.props.onSchemaChange === 'function') {
+            this.props.onSchemaChange(newSchemas);
+          }
         }}
       />
     );
@@ -483,6 +504,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
 
   public renderHeader = () => {
     const { classes, schemaTitle, disabled } = this.props;
+    if (!this.actions) {
+      return null;
+    }
     return (
       <div
         className={classnames(classes.header, {

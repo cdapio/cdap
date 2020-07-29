@@ -47,6 +47,9 @@ const styles = (theme): StyleRules => {
       position: 'absolute',
       right: '5px',
       color: theme.palette.red[200],
+      '& *': {
+        color: `${theme.palette.red[200]} !important`,
+      },
     },
     erroredRow: {
       outline: `2px solid ${theme.palette.red[200]}`,
