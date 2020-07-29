@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.guice.AuthorizationModule;
@@ -44,6 +45,9 @@ import io.cdap.cdap.metrics.guice.MetricsStoreModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
+import org.apache.twill.api.TwillController;
+import org.apache.twill.api.TwillRunner;
+import org.apache.twill.api.TwillRunnerService;
 
 import java.util.Arrays;
 import java.util.List;
@@ -82,6 +86,10 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
       new AbstractModule() {
         @Override
         protected void configure() {
+          bind(TwillRunnerService.class).toProvider(
+            new SupplierProviderBridge<>(masterEnv.getTwillRunnerSupplier())).in(Scopes.SINGLETON);
+          bind(TwillRunner.class).to(TwillRunnerService.class);
+
           bind(ExploreClient.class).to(UnsupportedExploreClient.class);
         }
       }
@@ -95,6 +103,9 @@ public class PreviewServiceMain extends AbstractServiceMain<EnvironmentOptions> 
                              EnvironmentOptions options) {
     services.add(injector.getInstance(MetricsCollectionService.class));
     services.add(injector.getInstance(PreviewHttpServer.class));
+    TwillRunnerService previewRunner = injector.getInstance(TwillRunnerService.class);
+    previewRunner.start();
+    previewRunner.prepare(new PreviewRunnerTwillRunnable()).start();
   }
 
   @Nullable
