@@ -15,14 +15,16 @@
  */
 
 import * as React from 'react';
-import CSVRow from 'components/AbstractWidget/CSVWidget/CSVRow';
-import ThemeWrapper from 'components/ThemeWrapper';
+
 import AbstractMultiRowWidget, {
   IMultiRowProps,
   IMultiRowWidgetProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
-import { objectQuery } from 'services/helpers';
+
+import CSVRow from 'components/AbstractWidget/CSVWidget/CSVRow';
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface ICSVWidgetProps extends IMultiRowWidgetProps {
   'value-placeholder'?: string;
@@ -64,3 +66,10 @@ export default function CSVWidget(props) {
 }
 
 (CSVWidget as any).propTypes = WIDGET_PROPTYPES;
+(CSVWidget as any).getWidgetAttributes = () => {
+  return {
+    'value-placeholder': { type: 'string', required: false },
+    delimiter: { type: 'string', required: false },
+    default: { type: 'string', required: false },
+  };
+};

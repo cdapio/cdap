@@ -14,17 +14,18 @@
  * the License.
  */
 
-import React, { useState, useEffect } from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import isEqual from 'lodash/isEqual';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import React, { useEffect, useState } from 'react';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import Checkbox from '@material-ui/core/Checkbox';
-import ThemeWrapper from 'components/ThemeWrapper';
-import If from 'components/If';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import If from 'components/If';
 import OutlinedSelect from 'components/OutlinedSelect';
+import ThemeWrapper from 'components/ThemeWrapper';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import isEqual from 'lodash/isEqual';
+import { objectQuery } from 'services/helpers';
 
 const styles = (theme): StyleRules => {
   return {
@@ -82,7 +83,7 @@ const JoinTypeWidgetView: React.FC<IJoinTypeWidgetProps> = ({
   const [joinType, setJoinType] = useState(DROP_DOWN_OPTIONS[1]);
   const [selectedCount, setSelectedCount] = useState(0);
   const [inputs, setInputs] = useState([]);
-  const inputSchema = objectQuery(extraConfig, 'inputSchema');
+  const inputSchema = objectQuery(extraConfig, 'inputSchema') || [];
 
   const formatOutput = () => {
     const outputArr = inputs.filter((schema) => schema.selected).map((schema) => schema.name);
@@ -213,3 +214,6 @@ export default function JoinTypeWidget(props: IJoinTypeWidgetProps) {
 }
 
 (JoinTypeWidget as any).propTypes = WIDGET_PROPTYPES;
+(JoinTypeWidget as any).getWidgetAttributes = () => {
+  return {};
+};

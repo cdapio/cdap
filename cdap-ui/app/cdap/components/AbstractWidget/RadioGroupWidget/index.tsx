@@ -14,17 +14,17 @@
  * the License.
  */
 
-import React from 'react';
-import classnames from 'classnames';
-import { objectQuery } from 'services/helpers';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Radio from '@material-ui/core/Radio';
 import RadioGroup from '@material-ui/core/RadioGroup';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import ThemeWrapper from 'components/ThemeWrapper';
-import If from 'components/If';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import classnames from 'classnames';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import If from 'components/If';
+import ThemeWrapper from 'components/ThemeWrapper';
+import React from 'react';
+import { objectQuery } from 'services/helpers';
 
 export const styles = (theme): StyleRules => {
   return {
@@ -128,3 +128,10 @@ export default function RadioGroupWidget(props) {
 }
 
 (RadioGroupWidget as any).propTypes = WIDGET_PROPTYPES;
+(RadioGroupWidget as any).getWidgetAttributes = () => {
+  return {
+    layout: { type: 'string', required: true },
+    options: { type: 'IOption[]', required: true },
+    default: { type: 'string', required: false },
+  };
+};

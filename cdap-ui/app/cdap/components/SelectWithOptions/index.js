@@ -1,3 +1,4 @@
+import { Input } from 'reactstrap';
 /*
  * Copyright © 2016 Cask Data, Inc.
  *
@@ -14,11 +15,9 @@
  * the License.
  */
 import PropTypes from 'prop-types';
-
 import React from 'react';
-import { Input } from 'reactstrap';
 
-export default function SelectWithOptions({ className, value, onChange, options }) {
+export default function SelectWithOptions({ className, value, onChange, options = [] }) {
   return (
     <Input type="select" value={value} className={className} onChange={onChange}>
       {options.map((o) => {

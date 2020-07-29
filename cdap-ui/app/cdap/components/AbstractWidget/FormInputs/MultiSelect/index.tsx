@@ -14,11 +14,12 @@
  * the License.
  */
 
+import React, { useEffect, useState } from 'react';
+
+import { IWidgetProps } from 'components/AbstractWidget';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
-import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import React, { useEffect, useState } from 'react';
 import { objectQuery } from 'services/helpers';
 
 export interface IOption {
@@ -112,3 +113,12 @@ export default function MultiSelect({
 }
 
 (MultiSelect as any).propTypes = WIDGET_PROPTYPES;
+(MultiSelect as any).getWidgetAttributes = () => {
+  return {
+    delimiter: { type: 'string', required: false },
+    options: { type: 'IOption[]|string[]', required: true },
+    showSelectionCount: { type: 'boolean', required: false },
+    // including additional property that was found from the docs
+    defaultValue: { type: 'string[]', required: false },
+  };
+};

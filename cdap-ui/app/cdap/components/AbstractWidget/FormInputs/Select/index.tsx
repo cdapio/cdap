@@ -13,17 +13,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import React from 'react';
 import Select, { SelectProps } from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
-import InputBase from '@material-ui/core/InputBase';
+
 import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
+import InputBase from '@material-ui/core/InputBase';
+import MenuItem from '@material-ui/core/MenuItem';
+import React from 'react';
+import Tooltip from '@material-ui/core/Tooltip';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import withStyles from '@material-ui/core/styles/withStyles';
 import { blue } from 'components/ThemeWrapper/colors';
 import { isNilOrEmptyString } from 'services/helpers';
-import Tooltip from '@material-ui/core/Tooltip';
+import { objectQuery } from 'services/helpers';
+import withStyles from '@material-ui/core/styles/withStyles';
 
 const CustomTooltip = withStyles((theme) => {
   return {
@@ -160,5 +161,13 @@ const CustomSelect: React.FC<ISelectProps> = ({
 };
 
 (CustomSelect as any).propTypes = WIDGET_PROPTYPES;
+(CustomSelect as any).getWidgetAttributes = () => {
+  return {
+    options: { type: 'ISelectOptions[]|string[]|number[]', required: true },
+    default: { type: 'string', required: false },
+    dense: { type: 'boolean', required: false },
+    inline: { type: 'boolean', required: false },
+  };
+};
 
 export default CustomSelect;

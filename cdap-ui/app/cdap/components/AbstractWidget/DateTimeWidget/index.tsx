@@ -16,8 +16,9 @@
 
 import React, { useState } from 'react';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import { IWidgetProps } from 'components/AbstractWidget';
+
 import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
+import { IWidgetProps } from 'components/AbstractWidget';
 
 export const DatePickerStyles = () => {
   return {
@@ -53,4 +54,7 @@ const DateTimeWidget: React.FC<IDateTimeWidgetProps> = ({ value, onChange, disab
 
 const StyledDateTimeWidget = withStyles(DatePickerStyles)(DateTimeWidget);
 
+(StyledDateTimeWidget as any).getWidgetAttributes = () => {
+  return {};
+};
 export default StyledDateTimeWidget;

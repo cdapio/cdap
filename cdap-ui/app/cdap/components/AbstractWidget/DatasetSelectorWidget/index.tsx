@@ -14,20 +14,20 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { MyDatasetApi } from 'api/dataset';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import If from 'components/If';
-import classnames from 'classnames';
-import ee from 'event-emitter';
-import { objectQuery } from 'services/helpers';
-import ThemeWrapper from 'components/ThemeWrapper';
 import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import { KEY_CODE } from 'services/global-constants';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import { IWidgetProps } from 'components/AbstractWidget';
 import InputBase from '@material-ui/core/InputBase';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import { MyDatasetApi } from 'api/dataset';
+import classnames from 'classnames';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import If from 'components/If';
+import ThemeWrapper from 'components/ThemeWrapper';
+import ee from 'event-emitter';
+import * as React from 'react';
+import { KEY_CODE } from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
 
 const styles = (theme): StyleRules => {
   return {
@@ -216,6 +216,12 @@ function DatasetSelector(props) {
     </ThemeWrapper>
   );
 }
-(DatasetSelector as any).propTypes = WIDGET_PROPTYPES;
 
 export default DatasetSelector;
+
+(DatasetSelector as any).propTypes = WIDGET_PROPTYPES;
+(DatasetSelector as any).getWidgetAttributes = () => {
+  return {
+    placeholder: { type: 'string', required: false },
+  };
+};

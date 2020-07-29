@@ -15,14 +15,16 @@
  */
 
 import * as React from 'react';
-import Input from '@material-ui/core/Input';
-import withStyles from '@material-ui/core/styles/withStyles';
-import Select from '@material-ui/core/Select';
-import MenuItem from '@material-ui/core/MenuItem';
+
 import AbstractRow, {
-  IAbstractRowProps,
   AbstractRowStyles,
+  IAbstractRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget/AbstractRow';
+
+import Input from '@material-ui/core/Input';
+import MenuItem from '@material-ui/core/MenuItem';
+import Select from '@material-ui/core/Select';
+import withStyles from '@material-ui/core/styles/withStyles';
 
 const styles = (theme) => {
   return {

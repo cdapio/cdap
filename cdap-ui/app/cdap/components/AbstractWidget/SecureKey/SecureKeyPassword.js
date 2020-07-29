@@ -14,9 +14,9 @@
  * the License.
  */
 
+import { DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 import React from 'react';
 import SecureKey from 'components/AbstractWidget/SecureKey';
-import { DEFAULT_WIDGET_PROPS } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 export default function SecureKeyPassword(props) {
@@ -25,3 +25,6 @@ export default function SecureKeyPassword(props) {
 
 SecureKeyPassword.propTypes = WIDGET_PROPTYPES;
 SecureKeyPassword.defaultProps = DEFAULT_WIDGET_PROPS;
+SecureKeyPassword.getWidgetAttributes = () => {
+  return {};
+};

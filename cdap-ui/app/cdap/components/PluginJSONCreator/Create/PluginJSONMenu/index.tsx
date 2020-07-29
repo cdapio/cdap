@@ -146,7 +146,7 @@ const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedF
 
   const { JSONStatus, setJSONStatus } = useAppInternalState();
 
-  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.ConfigurationGroupsView);
+  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.JSONView);
 
   // In the user drag-and-drops a file, it should populate the UI with the file content.
   React.useEffect(() => {

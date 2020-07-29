@@ -14,18 +14,19 @@
  * the License.
  */
 
-import React from 'react';
-import isEqual from 'lodash/isEqual';
-import classnames from 'classnames';
-import { objectQuery } from 'services/helpers';
-import T from 'i18n-react';
 import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+
 import Button from '@material-ui/core/Button';
-import ThemeWrapper from 'components/ThemeWrapper';
-import SchemaContainer from 'components/AbstractWidget/SqlSelectorWidget/SchemaContainer';
-import If from 'components/If';
 import { IWidgetProps } from 'components/AbstractWidget';
+import If from 'components/If';
+import React from 'react';
+import SchemaContainer from 'components/AbstractWidget/SqlSelectorWidget/SchemaContainer';
+import T from 'i18n-react';
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import classnames from 'classnames';
+import isEqual from 'lodash/isEqual';
+import { objectQuery } from 'services/helpers';
 
 const I18N_PREFIX = 'features.AbstractWidget.SqlSelectorWidget';
 
@@ -342,3 +343,6 @@ export default function SqlSelectorWidget(props) {
 }
 
 (SqlSelectorWidget as any).propTypes = WIDGET_PROPTYPES;
+(SqlSelectorWidget as any).getWidgetAttributes = () => {
+  return {};
+};

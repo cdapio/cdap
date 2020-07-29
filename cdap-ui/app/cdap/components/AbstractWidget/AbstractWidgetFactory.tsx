@@ -51,6 +51,116 @@ import ToggleSwitchWidget from 'components/AbstractWidget/ToggleSwitchWidget';
 import WranglerEditor from 'components/AbstractWidget/WranglerEditor';
 import { objectQuery } from 'services/helpers';
 
+export enum CodeEditorType {
+  Textarea = 'TEXTAREA',
+  Javascript = 'JAVASCRIPT',
+  JSON = 'JSON',
+  Python = 'PYTHON',
+  Scala = 'SCALA',
+  SQL = 'SQL',
+}
+
+function getCodeEditor(props, codeEditorType) {
+  let component;
+  switch (codeEditorType) {
+    case CodeEditorType.Textarea:
+      component = (
+        <CodeEditorWidget mode="plain_text" rows={getRowsFromWidgetProps(props)} {...props} />
+      );
+      break;
+    case CodeEditorType.Javascript:
+      component = <CodeEditorWidget mode="javascript" rows={25} {...props} />;
+      break;
+    case CodeEditorType.JSON:
+      component = <JsonEditorWidget rows={getRowsFromWidgetProps(props)} {...props} />;
+      break;
+    case CodeEditorType.Python:
+      component = <CodeEditorWidget mode="python" rows={25} {...props} />;
+      break;
+    case CodeEditorType.Scala:
+      component = <CodeEditorWidget mode="scala" rows={25} {...props} />;
+      break;
+    case CodeEditorType.SQL:
+      component = <CodeEditorWidget mode="sql" rows={15} {...props} />;
+      break;
+  }
+  (component as any).getWidgetAttributes = () => {
+    return {
+      default: { type: 'string', required: false },
+      rows: { type: 'number', required: false },
+    };
+  };
+  return component;
+}
+
+function Textarea(props) {
+  const rows = getRowsFromWidgetProps(props);
+  return <CodeEditorWidget mode="plain_text" rows={rows} {...props} />;
+}
+
+function JavascriptEditor(props) {
+  return <CodeEditorWidget mode="javascript" rows={25} {...props} />;
+}
+
+function JSONEditor(props) {
+  const rows = getRowsFromWidgetProps(props);
+  return <JsonEditorWidget rows={rows} {...props} />;
+}
+
+function PythonEditor(props) {
+  return <CodeEditorWidget mode="python" rows={25} {...props} />;
+}
+
+function ScalaEditor(props) {
+  return <CodeEditorWidget mode="scala" rows={25} {...props} />;
+}
+
+function SQLEditor(props) {
+  return <CodeEditorWidget mode="sql" rows={15} {...props} />;
+}
+
+(Textarea as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};
+
+(JavascriptEditor as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};
+
+(JSONEditor as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};
+
+(PythonEditor as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};
+
+(ScalaEditor as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};
+
+(SQLEditor as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};
+
 /**
  * Please maintain alphabetical order of the widget factory.
  *
@@ -88,26 +198,12 @@ export const WIDGET_FACTORY = {
   toggle: ToggleSwitchWidget,
 
   // CODE EDITORS
-  'javascript-editor': (props) => {
-    return <CodeEditorWidget mode="javascript" rows={25} {...props} />;
-  },
-  'json-editor': (props) => {
-    const rows = getRowsFromWidgetProps(props);
-    return <JsonEditorWidget rows={rows} {...props} />;
-  },
-  'python-editor': (props) => {
-    return <CodeEditorWidget mode="python" rows={25} {...props} />;
-  },
-  'scala-editor': (props) => {
-    return <CodeEditorWidget mode="scala" rows={25} {...props} />;
-  },
-  'sql-editor': (props) => {
-    return <CodeEditorWidget mode="sql" rows={15} {...props} />;
-  },
-  textarea: (props) => {
-    const rows = getRowsFromWidgetProps(props);
-    return <CodeEditorWidget mode="plain_text" rows={rows} {...props} />;
-  },
+  'javascript-editor': JavascriptEditor,
+  'json-editor': JSONEditor,
+  'python-editor': PythonEditor,
+  'scala-editor': ScalaEditor,
+  'sql-editor': SQLEditor,
+  textarea: Textarea,
 
   // JOINS
   'join-types': JoinTypeWidget,

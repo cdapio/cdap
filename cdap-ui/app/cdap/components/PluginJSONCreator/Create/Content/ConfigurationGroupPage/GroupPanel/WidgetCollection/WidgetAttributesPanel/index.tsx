@@ -21,7 +21,7 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
 import StandardModal from 'components/StandardModal';
-import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
+import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
 import WidgetAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput';
 import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetInfoInput';
 import { h2Styles } from 'components/Markdown/MarkdownHeading';
@@ -71,14 +71,23 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
   // 'widgetToAttributes' will only be changed when user clicks on 'save' button or closes the dialog.
   const [localWidgetToAttributes, setLocalWidgetToAttributes] = React.useState(widgetToAttributes);
 
+  React.useEffect(() => {
+    setLocalWidgetToAttributes(widgetToAttributes);
+  }, [widgetToAttributes]);
+
   const widgetType = widgetInfo.get(widgetID).get('widgetType') || '';
 
   // There are situations when the widgets from imported file do not include
   // all the required 'widget-atttributes'. Therefore, this approach will include
   // those missing fields.
-  const attributeFields = WIDGET_TYPE_TO_ATTRIBUTES[widgetType]
-    ? Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType])
-    : [];
+  let attributeFields;
+  try {
+    const comp = WIDGET_FACTORY[widgetType];
+    const widgetAttributes = comp.getWidgetAttributes();
+    attributeFields = Object.keys(widgetAttributes);
+  } catch (e) {
+    attributeFields = [];
+  }
 
   function saveWidgetToAttributes() {
     return () => {
@@ -115,7 +124,6 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
                 />
               );
             })}
-
             <div className={classes.actionButtons}>
               <Button
                 color="primary"

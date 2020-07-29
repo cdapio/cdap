@@ -15,16 +15,18 @@
  */
 
 import * as React from 'react';
-import DLPRow, {
-  ITransformProp,
-  FilterOption,
-} from 'components/AbstractWidget/DLPCustomWidget/DLPRow';
-import ThemeWrapper from 'components/ThemeWrapper';
+
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
-import { objectQuery } from 'services/helpers';
+import DLPRow, {
+  FilterOption,
+  ITransformProp,
+} from 'components/AbstractWidget/DLPCustomWidget/DLPRow';
+
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface IDLPWidgetProps {
   transforms: ITransformProp[];
@@ -85,3 +87,11 @@ export default function DLPWidget(props) {
 }
 
 (DLPWidget as any).propTypes = WIDGET_PROPTYPES;
+(DLPWidget as any).getWidgetAttributes = () => {
+  return {
+    // TODO: Need to investigatet 'transforms' more
+    // transforms: { type: 'ITransformProp[]', required: true },
+    filters: { type: 'FilterOption[]', required: true },
+    delimiter: { type: 'string', required: false },
+  };
+};

@@ -14,11 +14,14 @@
  * the License.
  */
 
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
-import { CODE_EDITORS } from 'components/PluginJSONCreator/constants';
-import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/SingleAttributeInput/AttributeKeyValueInput';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import * as React from 'react';
+
+import WidgetWrapper, { Size } from 'components/ConfigurationGroup/WidgetWrapper';
+
+import AttributeKeyValueInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/SingleAttributeInput/AttributeKeyValueInput';
+import { CODE_EDITORS } from 'components/PluginJSONCreator/constants';
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { Position } from 'components/AbstractWidget/GetSchemaWidget';
 
 export const SingleAttributeInput = ({
   widgetID,
@@ -56,9 +59,7 @@ export const SingleAttributeInput = ({
           onChange={onAttributeValueChange}
         />
       );
-    }
-
-    if (fieldType === 'IToggle' || fieldType === 'IOption') {
+    } else if (fieldType === 'IToggle' || fieldType === 'IOption') {
       const props = {
         keyRequired: true,
         valueRequired: true,
@@ -79,6 +80,28 @@ export const SingleAttributeInput = ({
           <AttributeKeyValueInput {...finalProps} />
         </div>
       );
+    } else if (fieldType === 'Position') {
+      const props = {
+        label: field,
+        value: currentAttributeValue,
+        onChange: onAttributeValueChange,
+        required: fieldInfo.required,
+        widgetType: 'select',
+        options: Object.values(Position),
+      };
+
+      return <PluginInput {...props} />;
+    } else if (fieldType === 'Size') {
+      const props = {
+        label: field,
+        value: currentAttributeValue,
+        onChange: onAttributeValueChange,
+        required: fieldInfo.required,
+        widgetType: 'select',
+        options: Object.values(Size),
+      };
+
+      return <PluginInput {...props} />;
     } else {
       const props = {
         label: field,

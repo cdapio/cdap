@@ -14,15 +14,15 @@
  * the License.
  */
 
-import * as React from 'react';
-import { IWidgetProps } from 'components/AbstractWidget';
-import { getCurrentNamespace } from 'services/NamespaceStore';
-import { GLOBALS, SCOPES } from 'services/global-constants';
-import VersionStore from 'services/VersionStore';
-import { objectQuery } from 'services/helpers';
 import { MyPipelineApi } from 'api/pipeline';
+import { IWidgetProps } from 'components/AbstractWidget';
 import CustomSelect from 'components/AbstractWidget/FormInputs/Select';
 import T from 'i18n-react';
+import * as React from 'react';
+import { GLOBALS, SCOPES } from 'services/global-constants';
+import { objectQuery } from 'services/helpers';
+import { getCurrentNamespace } from 'services/NamespaceStore';
+import VersionStore from 'services/VersionStore';
 
 const PREFIX = 'features.AbstractWidget.PluginListWidget';
 
@@ -101,3 +101,9 @@ const PluginListWidget: React.FC<IPluginListProps> = ({
 };
 
 export default PluginListWidget;
+
+(PluginListWidget as any).getWidgetAttributes = () => {
+  return {
+    'plugin-type': { type: 'string', required: true },
+  };
+};

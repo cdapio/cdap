@@ -15,12 +15,14 @@
  */
 
 import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { IWidgetProps } from 'components/AbstractWidget';
+
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import CodeEditor from 'components/CodeEditor';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { IWidgetProps } from 'components/AbstractWidget';
 import PropTypes from 'prop-types';
 import ThemeWrapper from 'components/ThemeWrapper';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
 const styles = (): StyleRules => {
   return {
@@ -72,10 +74,16 @@ function CodeEditorWidget(props) {
   );
 }
 
+export default CodeEditorWidget;
+
 (CodeEditorWidget as any).propTypes = {
   ...WIDGET_PROPTYPES,
   mode: PropTypes.string,
   rows: PropTypes.number,
 };
-
-export default CodeEditorWidget;
+(CodeEditorWidget as any).getWidgetAttributes = () => {
+  return {
+    default: { type: 'string', required: false },
+    rows: { type: 'number', required: false },
+  };
+};

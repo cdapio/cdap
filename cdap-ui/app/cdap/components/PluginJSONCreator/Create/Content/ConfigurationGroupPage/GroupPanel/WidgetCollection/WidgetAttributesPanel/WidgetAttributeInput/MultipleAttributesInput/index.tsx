@@ -82,6 +82,7 @@ export enum SupportedType {
   Number = 'number',
   ValueLabelPair = 'Value-Label pair',
   IDLabelPair = 'ID-Label pair',
+  Record = 'record',
 }
 
 const styles = (theme): StyleRules => {
@@ -124,6 +125,9 @@ export const processSupportedTypes = (types: string[]) => {
         allTypes.add(SupportedType.String);
         allTypes.add(SupportedType.IDLabelPair);
         break;
+      case 'Record<string, string>':
+        allTypes.add(SupportedType.Record);
+        break;
       default:
         break;
     }
@@ -146,7 +150,7 @@ const MultipleAttributesInputView = ({
   React.useEffect(() => {
     const initialType = getInitialType();
     setSelectedType(initialType);
-  }, []);
+  }, [localWidgetToAttributes.get(widgetID)]);
 
   /*
    * The input fields can have some pre-populated values.
@@ -155,6 +159,14 @@ const MultipleAttributesInputView = ({
    * and decide what should be 'selectedType' for the component.
    */
   function getInitialType() {
+    if (
+      !localWidgetToAttributes ||
+      !localWidgetToAttributes.get(widgetID) ||
+      !multiSupportedTypes
+    ) {
+      return cleanSupportedTypes[0];
+    }
+
     const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
     let newType;
     if (!existingAttributeValues || existingAttributeValues.isEmpty()) {
@@ -203,7 +215,8 @@ const MultipleAttributesInputView = ({
       <If
         condition={
           selectedType === SupportedType.IDLabelPair ||
-          selectedType === SupportedType.ValueLabelPair
+          selectedType === SupportedType.ValueLabelPair ||
+          selectedType === SupportedType.Record
         }
       >
         <AttributeKeyvalueRowsInput

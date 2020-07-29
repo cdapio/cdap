@@ -14,11 +14,11 @@
  * the License.
  */
 
-import React from 'react';
 import { IWidgetProps } from 'components/AbstractWidget';
+import InputBase from '@material-ui/core/InputBase';
+import React from 'react';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import { objectQuery } from 'services/helpers';
-import InputBase from '@material-ui/core/InputBase';
 
 interface INumberWidgetProps {
   min?: number;
@@ -62,3 +62,10 @@ const NumberWidget: React.FC<INumberProps> = ({
 
 export default NumberWidget;
 (NumberWidget as any).propTypes = WIDGET_PROPTYPES;
+(NumberWidget as any).getWidgetAttributes = () => {
+  return {
+    min: { type: 'number', required: false },
+    max: { type: 'number', required: false },
+    default: { type: 'number', required: false },
+  };
+};

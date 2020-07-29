@@ -14,9 +14,10 @@
  * the License.
  */
 
+import * as React from 'react';
+
 import { IWidgetProps } from 'components/AbstractWidget';
 import MultiRowContainer from 'components/AbstractWidget/AbstractMultiRowWidget/Container';
-import * as React from 'react';
 import { objectQuery } from 'services/helpers';
 import uuidV4 from 'uuid/v4';
 
@@ -80,26 +81,27 @@ export default class AbstractMultiRowWidget<
           autofocus: null,
         },
         () => {
-          this.addRow(-1, false);
+          if (!this.state.rows || this.state.rows.length === 0) {
+            // adding a new empty row in case values are empty
+            this.addRow(-1, false);
+          }
         }
       );
+    } else {
+      const rows = [];
 
-      return;
+      splitValues.forEach((value) => {
+        const id = uuidV4();
+        this.values[id] = {
+          ref: React.createRef(),
+          value,
+        };
+
+        rows.push(id);
+      });
+
+      this.setState({ rows });
     }
-
-    const rows = [];
-
-    splitValues.forEach((value) => {
-      const id = uuidV4();
-      this.values[id] = {
-        ref: React.createRef(),
-        value,
-      };
-
-      rows.push(id);
-    });
-
-    this.setState({ rows });
   };
 
   public addRow = (index = -1, shouldFocus: boolean = true) => {

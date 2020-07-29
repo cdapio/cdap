@@ -15,16 +15,18 @@
  */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { IWidgetProperty, IPluginProperty } from 'components/ConfigurationGroup/types';
-import DescriptionTooltip from 'components/ConfigurationGroup/PropertyRow/DescriptionTooltip';
+
+import { IPluginProperty, IWidgetProperty } from 'components/ConfigurationGroup/types';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import AbstractWidget from 'components/AbstractWidget';
+import DescriptionTooltip from 'components/ConfigurationGroup/PropertyRow/DescriptionTooltip';
+import { IErrorObj } from 'components/ConfigurationGroup/utilities';
+import If from 'components/If';
+import PropTypes from 'prop-types';
+import ThemeWrapper from 'components/ThemeWrapper';
 import classnames from 'classnames';
 import { objectQuery } from 'services/helpers';
-import If from 'components/If';
-import ThemeWrapper from 'components/ThemeWrapper';
-import { IErrorObj } from 'components/ConfigurationGroup/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -83,6 +85,12 @@ const styles = (theme): StyleRules => {
   };
 };
 
+export enum Size {
+  Large = 'large',
+  Small = 'small',
+  Medium = 'medium',
+}
+
 interface IWidgetWrapperProps extends WithStyles<typeof styles> {
   widgetProperty: IWidgetProperty;
   pluginProperty?: IPluginProperty;
@@ -93,7 +101,7 @@ interface IWidgetWrapperProps extends WithStyles<typeof styles> {
   disabled?: boolean;
   hideDescription?: boolean;
   errors?: IErrorObj[];
-  size?: 'large' | 'small' | 'medium';
+  size?: Size;
   hideLabel?: boolean;
 }
 

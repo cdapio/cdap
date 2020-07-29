@@ -14,12 +14,12 @@
  * the License.
  */
 
-import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
 import IconSVG from 'components/IconSVG';
+import * as React from 'react';
+import { objectQuery } from 'services/helpers';
 
 const styles = (): StyleRules => {
   return {
@@ -94,3 +94,9 @@ const GetSchemaWidgetView: React.FC<IGetSchemaProps> = ({ extraConfig, classes, 
 
 const GetSchemaWidget = withStyles(styles)(GetSchemaWidgetView);
 export default GetSchemaWidget;
+
+(GetSchemaWidget as any).getWidgetAttributes = () => {
+  return {
+    position: { type: 'Position', required: false },
+  };
+};
