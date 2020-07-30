@@ -25,14 +25,17 @@ import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
+import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.join.JoinKey;
 import io.cdap.cdap.etl.api.join.JoinStage;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -42,11 +45,13 @@ import java.util.stream.Collectors;
  * @param <INPUT_RECORD> type of input record
  */
 public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, INPUT_RECORD, StructuredRecord> {
+  private static final String SALT_COLUMN = "salt";
   private final BatchAutoJoiner autoJoiner;
   private final JoinDefinition joinDefinition;
   private final Set<String> requiredStages;
   private final Map<String, List<String>> joinKeys;
   private final Map<String, List<JoinField>> stageFields;
+  private final Random saltGenerator;
   private Schema keySchema;
   private Schema outputSchema;
 
@@ -78,6 +83,7 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       List<JoinField> fields = stageFields.computeIfAbsent(field.getStageName(), k -> new ArrayList<>());
       fields.add(field);
     }
+    saltGenerator = new Random();
   }
 
   @Override
@@ -96,6 +102,7 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
   }
 
   @Override
+  @Deprecated
   public StructuredRecord joinOn(String stageName, INPUT_RECORD input) {
     if (!(input instanceof StructuredRecord)) {
       // don't expect this to ever be the case since all existing plugins use StructuredRecord,
@@ -118,13 +125,70 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       keySchema = getKeySchema(stageName, inputRecord.getSchema(), key);
     }
 
+    StructuredRecord.Builder keyRecord = getKeyRecordBuilder(key, inputRecord);
+    return keyRecord.build();
+  }
+
+  @Override
+  public Collection<StructuredRecord> getJoinKeys(String stageName, INPUT_RECORD record) throws Exception {
+    if (!(record instanceof StructuredRecord)) {
+      // don't expect this to ever be the case since all existing plugins use StructuredRecord,
+      // but it is technically possible.
+      throw new IllegalArgumentException(String.format(
+        "Received an input record of unsupported type '%s' from stage '%s'.",
+        record.getClass().getName(), stageName));
+    }
+
+    List<String> key = joinKeys.get(stageName);
+    if (key == null) {
+      // this should not happen, it should be caught by the pipeline app at configure or prepare time and failed then
+      throw new IllegalArgumentException(
+        String.format("Received data from stage '%s', but the stage was not included as part of the join. " +
+                        "Check the plugin to make sure it is including all input stages.", stageName));
+    }
+
+    StructuredRecord inputRecord = (StructuredRecord) record;
+    if (keySchema == null) {
+      keySchema = getKeySchema(stageName, inputRecord.getSchema(), key);
+    }
+
+    JoinDistribution distribution = joinDefinition.getDistribution();
+    List<StructuredRecord> keyRecords = new ArrayList<>();
+
+    StructuredRecord.Builder keyRecord = getKeyRecordBuilder(key, inputRecord);
+
+    // If distribution is not enabled then return the record without any changes
+    if (distribution == null) {
+      keyRecords.add(keyRecord.build());
+      return keyRecords;
+    }
+
+    int distributionFactor = distribution.getDistributionFactor();
+
+    // If this is the skewed stage then we need to add salt
+    if (stageName.equals(distribution.getSkewedStageName())) {
+      keyRecord.set(SALT_COLUMN, saltGenerator.nextInt(distributionFactor));
+      keyRecords.add(keyRecord.build());
+      return keyRecords;
+    }
+
+    // This is not the skewed stage so we need to explode it
+    for (int i = 0; i < distributionFactor; i++) {
+      StructuredRecord.Builder recordBuilder = getKeyRecordBuilder(key, inputRecord);
+      recordBuilder.set(SALT_COLUMN, i);
+      keyRecords.add(recordBuilder.build());
+    }
+    return keyRecords;
+  }
+
+  private StructuredRecord.Builder getKeyRecordBuilder(List<String> key, StructuredRecord inputRecord) {
     StructuredRecord.Builder keyRecord = StructuredRecord.builder(keySchema);
     int fieldNum = 0;
     for (String keyField : key) {
       String translatedName = "f" + fieldNum++;
       keyRecord.set(translatedName, inputRecord.get(keyField));
     }
-    return keyRecord.build();
+    return keyRecord;
   }
 
   // JoinDefinition can have something like A.x = B.y and A.z = B.w
@@ -149,6 +213,9 @@ public class JoinerBridge<INPUT_RECORD> extends BatchJoiner<StructuredRecord, IN
       Schema keyFieldSchema = Schema.nullableOf(Schema.of(fieldSchema.getType()));
       String translatedName = "f" + fieldNum++;
       fields.add(Schema.Field.of(translatedName, keyFieldSchema));
+    }
+    if (joinDefinition.getDistribution() != null) {
+      fields.add(Schema.Field.of(SALT_COLUMN, Schema.of(Schema.Type.INT)));
     }
     return Schema.recordOf("key", fields);
   }
