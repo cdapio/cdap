@@ -265,8 +265,9 @@ public class ApplicationClient {
       }
     }
 
-    HttpResponse response = restClient.execute(HttpMethod.POST,
-                                               config.resolveNamespacedURLV3(app.getParent(), path),
+    //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
+    HttpRequest.Builder request  = HttpRequest.post(config.resolveNamespacedURLV3(app.getParent(), path)).withBody("");
+    HttpResponse response = restClient.execute(request.build(),
                                                config.getAccessToken(), HttpURLConnection.HTTP_NOT_FOUND);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ApplicationNotFoundException(app);
