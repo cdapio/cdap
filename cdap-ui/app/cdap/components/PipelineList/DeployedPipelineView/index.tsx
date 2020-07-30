@@ -63,6 +63,7 @@ const DeployedPipeline: React.FC = () => {
 
   const { loading, error, data, refetch, networkStatus } = useQuery(QUERY, {
     errorPolicy: 'all',
+    fetchPolicy: 'no-cache',
     notifyOnNetworkStatusChange: true,
   });
 
