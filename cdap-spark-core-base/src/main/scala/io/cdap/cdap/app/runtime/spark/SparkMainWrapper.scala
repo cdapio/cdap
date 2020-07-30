@@ -50,6 +50,7 @@ object SparkMainWrapper {
 
   def main(args: Array[String]): Unit = {
     if (stopped) {
+      readyLatch.countDown()
       return
     }
 
