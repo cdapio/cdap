@@ -16,7 +16,8 @@
 
 const urlHelper = require('../../../server/url-helper'),
   cdapConfigurator = require('../../../server/cdap-config.js'),
-  resolversCommon = require('../../resolvers-common.js');
+  resolversCommon = require('../../resolvers-common.js'),
+  { ApolloError } = require('apollo-server');
 
 const chunk = require('lodash/chunk');
 
@@ -29,6 +30,9 @@ async function batchTotalRuns(req, auth) {
   const namespace = req[0].namespace;
   const options = resolversCommon.getPOSTRequestOptions();
   options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'totalRuns' });
+  }
   const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   const chunkedBody = chunk(body, 100);
 
@@ -38,7 +42,7 @@ async function batchTotalRuns(req, auth) {
         ...options,
         body: reqBody,
       };
-      return resolversCommon.requestPromiseWrapper(reqOptions, auth);
+      return resolversCommon.requestPromiseWrapper(reqOptions, auth, null, errorModifiersFn);
     })
   );
 

@@ -16,7 +16,8 @@
 
 const urlHelper = require('../../../server/url-helper'),
   cdapConfigurator = require('../../../server/cdap-config.js'),
-  resolversCommon = require('../../resolvers-common.js');
+  resolversCommon = require('../../resolvers-common.js'),
+  { ApolloError } = require('apollo-server');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
@@ -28,8 +29,11 @@ async function batchProgramRuns(req, auth) {
   const options = resolversCommon.getPOSTRequestOptions();
   options.url = urlHelper.constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
   options.body = req.slice(0, 25).map((reqObj) => reqObj.program);
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'programRuns' });
+  }
 
-  const runInfo = await resolversCommon.requestPromiseWrapper(options, auth);
+  const runInfo = await resolversCommon.requestPromiseWrapper(options, auth, null, errorModifiersFn);
 
   const runsMap = {};
   runInfo.forEach((run) => {

@@ -17,7 +17,8 @@
 const urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../server/cdap-config.js'),
   resolversCommon = require('../resolvers-common.js'),
-  naturalSort = require('natural-orderby');
+  naturalSort = require('natural-orderby'),
+  { ApolloError } = require('apollo-server');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
@@ -35,7 +36,11 @@ async function queryTypePipelinesResolver(parent, args, context) {
   options.url = urlHelper.constructUrl(cdapConfig, path);
   context.namespace = namespace;
 
-  const apps = await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'pipelines' });
+  }
+
+  const apps = await resolversCommon.requestPromiseWrapper(options, context.auth, null, errorModifiersFn);
   return naturalSort.orderBy(apps, [(app) => app.name], ['asc']);
 }
 

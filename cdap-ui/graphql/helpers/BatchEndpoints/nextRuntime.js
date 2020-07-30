@@ -16,7 +16,8 @@
 
 const { constructUrl } = require('../../../server/url-helper'),
   { getCDAPConfig } = require('../../../server/cdap-config.js'),
-  { getPOSTRequestOptions, requestPromiseWrapper } = require('../../resolvers-common.js');
+  { getPOSTRequestOptions, requestPromiseWrapper } = require('../../resolvers-common.js'),
+  { ApolloError } = require('apollo-server');
 
 let cdapConfig;
 getCDAPConfig().then(function(value) {
@@ -29,8 +30,15 @@ async function batchNextRuntime(req, auth) {
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/nextruntime`);
   const body = req.slice(0, 25).map((reqObj) => reqObj.program);
   options.body = body;
-
-  let nextRuntimeInfo = await requestPromiseWrapper(options, auth);
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: "runs" });
+  };
+  let nextRuntimeInfo = await requestPromiseWrapper(
+    options,
+    auth,
+    null,
+    errorModifiersFn
+  );
 
   const runsMap = {};
   nextRuntimeInfo.forEach((run) => {

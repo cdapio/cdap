@@ -16,7 +16,8 @@
 
 const urlHelper = require('../../server/url-helper'),
   cdapConfigurator = require('../../server/cdap-config.js'),
-  resolversCommon = require('../resolvers-common.js');
+  resolversCommon = require('../resolvers-common.js'),
+  { ApolloError } = require('apollo-server');
 
 let cdapConfig;
 cdapConfigurator.getCDAPConfig().then(function(value) {
@@ -26,8 +27,11 @@ cdapConfigurator.getCDAPConfig().then(function(value) {
 async function queryTypeStatusResolver(parent, args, context) {
   const options = resolversCommon.getGETRequestOptions();
   options.url = urlHelper.constructUrl(cdapConfig, '/ping');
+  const errorModifiersFn = (error, statusCode) => {
+    return new ApolloError(error, statusCode, { errorOrigin: 'statusPing' });
+  }
 
-  const status = await resolversCommon.requestPromiseWrapper(options, context.auth);
+  const status = await resolversCommon.requestPromiseWrapper(options, context.auth, null, errorModifiersFn);
 
   return status.trim();
 }

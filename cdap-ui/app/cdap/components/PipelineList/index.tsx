@@ -24,6 +24,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import Helmet from 'react-helmet';
 import { Theme } from 'services/ThemeHelper';
 import T from 'i18n-react';
+import ErrorBoundary from 'components/ErrorBoundary';
 
 import './PipelineList.scss';
 
@@ -56,7 +57,17 @@ const PipelineList: React.SFC = () => {
       <ResourceCenterButton />
 
       <Switch>
-        <Route exact path="/ns/:namespace/pipelines" component={DeployedPipelineView} />
+        <Route
+          exact
+          path="/ns/:namespace/pipelines"
+          component={() => {
+            return (
+              <ErrorBoundary>
+                <DeployedPipelineView />
+              </ErrorBoundary>
+            );
+          }}
+        />
         <Route exact path="/ns/:namespace/pipelines/drafts" component={DraftPipelineView} />
       </Switch>
     </div>
