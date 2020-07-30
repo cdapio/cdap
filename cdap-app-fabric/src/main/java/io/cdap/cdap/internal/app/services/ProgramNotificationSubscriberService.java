@@ -536,6 +536,14 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
         // Publish the program STARTING state before starting the program
         programStateWriter.start(programRunId, newProgramOptions, null, programDescriptor);
 
+        // emit provisioning time metric
+        long provisioningTime = System.currentTimeMillis() / 1000 -
+          RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+        SystemArguments
+          .getProfileIdFromArgs(programRunId.getNamespaceId(), systemArgs)
+          .ifPresent(profileId -> emitProvisioningTimeMetric(programRunId, profileId,
+                                                             programOptions, provisioningTime));
+
         // start the program run
         return Optional.of(() -> {
           String oldUser = SecurityRequestContext.getUserId();
@@ -639,6 +647,28 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       .build();
 
     metricsCollectionService.getContext(tags).increment(metricName, 1L);
+  }
+
+  /**
+   * Emit the provisioning time metric. The tags are constructed with the program run id,
+   * profile id and program options.
+   */
+  private void emitProvisioningTimeMetric(ProgramRunId programRunId, ProfileId profileId,
+                                          ProgramOptions programOptions, long provisioningTime) {
+    Map<String, String> args = programOptions.getArguments().asMap();
+    String provisioner = SystemArguments.getProfileProvisioner(args);
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.PROFILE_SCOPE, profileId.getScope().name())
+      .put(Constants.Metrics.Tag.PROFILE, profileId.getProfile())
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.PROGRAM_TYPE, programRunId.getType().getPrettyName())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .put(Constants.Metrics.Tag.PROGRAM, programRunId.getProgram())
+      .put(Constants.Metrics.Tag.PROVISIONER, provisioner)
+      .put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun())
+      .build();
+    metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PROGRAM_PROVISIONING_DELAY_SECONDS,
+                                                    provisioningTime);
   }
 
   /**
