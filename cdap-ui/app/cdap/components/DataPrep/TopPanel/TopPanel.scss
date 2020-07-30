@@ -111,11 +111,12 @@ $success_alert_bg_color: $brand-success;
       margin-right: 20px;
       align-items: center;
       justify-content: flex-end;
-      z-index: 999;
+      z-index: 1060;
       height: 49px;
 
       .btn-primary {
         margin: 0 10px;
+        white-space: nowrap;
         .icon-spinner {
           margin: 0 5px;
         }
