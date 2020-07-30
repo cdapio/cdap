@@ -31,6 +31,10 @@ import java.util.Map;
  */
 public final class PodInfo {
 
+  private final String apiVersion;
+  private final String kind;
+  private final String name;
+  private final String uid;
   private final String podInfoDir;
   private final String labelsFile;
   private final String nameFile;
@@ -45,11 +49,15 @@ public final class PodInfo {
   private final List<V1VolumeMount> containerVolumeMounts;
   private final List<V1EnvVar> containerEnvironments;
 
-  public PodInfo(String podInfoDir, String labelsFile, String nameFile, String namespace,
-                 Map<String, String> labels, List<V1OwnerReference> ownerReferences,
+  public PodInfo(String apiVersion, String kind, String name, String uid, String podInfoDir, String labelsFile,
+                 String nameFile, String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
                  String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
                  List<V1EnvVar> containerEnvironments) {
+    this.apiVersion = apiVersion;
+    this.kind = kind;
+    this.name = name;
+    this.uid = uid;
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
     this.nameFile = nameFile;
@@ -118,5 +126,21 @@ public final class PodInfo {
 
   public List<V1EnvVar> getContainerEnvironments() {
     return containerEnvironments;
+  }
+
+  public String getApiVersion() {
+    return apiVersion;
+  }
+
+  public String getKind() {
+    return kind;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public String getUid() {
+    return uid;
   }
 }

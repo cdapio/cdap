@@ -16,16 +16,20 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import com.google.common.hash.Hashing;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.custom.Quantity;
+import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.models.V1DownwardAPIVolumeFile;
 import io.kubernetes.client.models.V1DownwardAPIVolumeSource;
 import io.kubernetes.client.models.V1EnvVar;
 import io.kubernetes.client.models.V1ObjectFieldSelector;
 import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.models.V1ResourceRequirements;
+import io.kubernetes.client.models.V1ResourceRequirementsBuilder;
 import io.kubernetes.client.models.V1Volume;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.api.Configs;
@@ -42,13 +46,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -62,41 +69,41 @@ public abstract class AbstractKubeTwillPreparer implements TwillPreparer {
   private static final String MEMORY_MULTIPLIER = "master.environment.k8s.container.memory.multiplier";
   private static final String DEFAULT_MULTIPLIER = "1.0";
 
+  private final Map<String, String> cConf;
   private final ApiClient apiClient;
   private final String kubeNamespace;
-  private final Set<String> runnables;
-  private final KubeTwillControllerFactory controllerFactory;
   private final PodInfo podInfo;
+  private final TwillSpecification twillSpec;
   private final RunId twillRunId;
+  private final String resourcePrefix;
+  private final Map<String, String> extraLabels;
+  private final Type resourceType;
+  private final KubeTwillControllerFactory controllerFactory;
   private final List<URI> resources;
-  private final V1ObjectMeta resourceMeta;
+  private final Set<String> runnables;
   private final Map<String, Map<String, String>> environments;
-  private final int memoryMB;
-  private final int vcores;
-  private final Map<String, String> cConf;
 
-  AbstractKubeTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo,
-                            TwillSpecification spec, RunId twillRunId, V1ObjectMeta resourceMeta,
-                            Map<String, String> cConf, KubeTwillControllerFactory controllerFactory) {
+  AbstractKubeTwillPreparer(Map<String, String> cConf, ApiClient apiClient, String kubeNamespace,
+                            PodInfo podInfo, TwillSpecification spec, RunId twillRunId, String resourcePrefix,
+                            Map<String, String> extraLabels, Type resourceType,
+                            KubeTwillControllerFactory controllerFactory) {
     // only expect one runnable for now
     if (spec.getRunnables().size() != 1) {
       throw new IllegalStateException("Kubernetes runner currently only supports one Twill Runnable");
     }
-
+    this.cConf = cConf;
     this.apiClient = apiClient;
     this.kubeNamespace = kubeNamespace;
-    this.runnables = spec.getRunnables().keySet();
-    this.controllerFactory = controllerFactory;
     this.podInfo = podInfo;
-    this.environments = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
+    this.twillSpec = spec;
     this.twillRunId = twillRunId;
+    this.resourcePrefix = resourcePrefix;
+    this.extraLabels = extraLabels;
+    this.resourceType = resourceType;
+    this.controllerFactory = controllerFactory;
+    this.runnables = spec.getRunnables().keySet();
+    this.environments = runnables.stream().collect(Collectors.toMap(r -> r, r -> new HashMap<>()));
     this.resources = new ArrayList<>();
-    this.resourceMeta = resourceMeta;
-    RuntimeSpecification runtimeSpecification = spec.getRunnables().values().iterator().next();
-    ResourceSpecification resourceSpecification = runtimeSpecification.getResourceSpecification();
-    this.memoryMB = resourceSpecification.getMemorySize();
-    this.vcores = resourceSpecification.getVirtualCores();
-    this.cConf = cConf;
   }
 
   @Override
@@ -283,31 +290,17 @@ public abstract class AbstractKubeTwillPreparer implements TwillPreparer {
   @Override
   public TwillController start(long timeout, TimeUnit timeoutUnit) {
     try {
-      V1ResourceRequirements resourceRequirements = new V1ResourceRequirements();
-      Map<String, Quantity> quantityMap = new HashMap<>();
-      float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
-      float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
-      int cpuToRequest = (int) (vcores * 1000 * cpuMultiplier);
-      int memoryToRequest = (int) (memoryMB * memoryMultiplier);
-      quantityMap.put("cpu", new Quantity(String.format("%dm", cpuToRequest)));
-      quantityMap.put("memory", new Quantity(String.format("%dMi", memoryToRequest)));
-      resourceRequirements.setRequests(quantityMap);
+      RuntimeSpecification runtimeSpecification = twillSpec.getRunnables().values().iterator().next();
+      V1ResourceRequirements resourceRequirements
+        = createResourceRequirements(runtimeSpecification.getResourceSpecification());
 
-      // Setup the container environment. Inherit everything from the current pod.
-      Map<String, String> environs = podInfo.getContainerEnvironments().stream()
-        .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+      V1ObjectMeta resourceMeta = createResourceMetadata(resourceType, runtimeSpecification.getName(),
+                                                         timeoutUnit.toMillis(timeout));
 
-      // assumption is there is only a single runnable
-      environs.putAll(environments.values().iterator().next());
+      List<V1EnvVar> envVars = createContainerEnvironments(resourceRequirements);
 
-      // Set the process memory is through the JAVA_HEAPMAX variable.
-      environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", computeMaxHeapSize(memoryToRequest)));
-      List<V1EnvVar> envVars = environs.entrySet().stream()
-        .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
-        .collect(Collectors.toList());
-
-      createKubeResources(resourceMeta, resourceRequirements, envVars, timeout, timeoutUnit);
-      return controllerFactory.create(timeout, timeoutUnit);
+      resourceMeta = createKubeResources(resourceMeta, resourceRequirements, envVars, timeout, timeoutUnit);
+      return controllerFactory.create(resourceType, resourceMeta, timeout, timeoutUnit);
     } catch (ApiException | IOException e) {
       if (e instanceof ApiException) {
         String msg = ((ApiException) e).getResponseBody();
@@ -320,15 +313,26 @@ public abstract class AbstractKubeTwillPreparer implements TwillPreparer {
   /**
    * Calculates the max heap size for a given total RAM size based on configurations
    */
-  private int computeMaxHeapSize(int memoryMB) {
+  private int computeMaxHeapSize(V1ResourceRequirements resourceRequirements) {
+    // Gets the memory from either the requests or the limits
+    Quantity memory = Optional.ofNullable(resourceRequirements.getRequests())
+      .map(m -> m.get("memory"))
+      .orElse(Optional.ofNullable(resourceRequirements.getLimits()).map(m -> m.get("memory")).orElse(null));
+
+    if (memory == null) {
+      throw new IllegalArgumentException("No memory settings in the given resource requirements");
+    }
+    int memoryMB = (int) (memory.getNumber().longValue() >> 20);
+
     int reservedMemoryMB = Integer.parseInt(cConf.get(Configs.Keys.JAVA_RESERVED_MEMORY_MB));
     double minHeapRatio = Double.parseDouble(cConf.get(Configs.Keys.HEAP_RESERVED_MIN_RATIO));
     return org.apache.twill.internal.utils.Resources.computeMaxHeapSize(memoryMB, reservedMemoryMB, minHeapRatio);
   }
 
-  protected abstract void createKubeResources(V1ObjectMeta resourceMeta, V1ResourceRequirements resourceRequirements,
-                                              List<V1EnvVar> envVars, long timeout,
-                                              TimeUnit timeoutUnit) throws IOException, ApiException;
+  protected abstract V1ObjectMeta createKubeResources(V1ObjectMeta resourceMeta,
+                                                      V1ResourceRequirements resourceRequirements,
+                                                      List<V1EnvVar> envVars, long timeout,
+                                                      TimeUnit timeoutUnit) throws IOException, ApiException;
 
   ApiClient getApiClient() {
     return apiClient;
@@ -377,5 +381,95 @@ public abstract class AbstractKubeTwillPreparer implements TwillPreparer {
 
     volume.setDownwardAPI(downwardAPIVolumeSource);
     return volume;
+  }
+
+  /**
+   * Creates a {@link V1ResourceRequirements} based on the given {@link ResourceSpecification}.
+   */
+  private V1ResourceRequirements createResourceRequirements(ResourceSpecification resourceSpec) {
+    float cpuMultiplier = Float.parseFloat(cConf.getOrDefault(CPU_MULTIPLIER, DEFAULT_MULTIPLIER));
+    float memoryMultiplier = Float.parseFloat(cConf.getOrDefault(MEMORY_MULTIPLIER, DEFAULT_MULTIPLIER));
+    int cpuToRequest = (int) (resourceSpec.getVirtualCores() * 1000 * cpuMultiplier);
+    int memoryToRequest = (int) (resourceSpec.getMemorySize() * memoryMultiplier);
+
+    return new V1ResourceRequirementsBuilder()
+      .addToRequests("cpu", new Quantity(String.format("%dm", cpuToRequest)))
+      .addToRequests("memory", new Quantity(String.format("%dMi", memoryToRequest)))
+      .build();
+  }
+
+  /**
+   * Creates a {@link V1ObjectMeta} for the given resource type.
+   */
+  private V1ObjectMeta createResourceMetadata(Type resourceType, String runnableName, long startTimeoutMillis) {
+    // For StatefulSet, it generates a label for each pod, with format of [statefulset_name]-[10_chars_hash],
+    // hence the allowed resource name has to be <= 52
+    String resourceName = getResourceName(twillSpec.getName(), twillRunId,
+                                          V1Deployment.class.equals(resourceType) ? 240 : 52);
+
+    Map<String, String> extraLabels = this.extraLabels.entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> asLabel(e.getValue())));
+
+    // labels have more strict requirements around valid character sets,
+    // so use annotations to store the app name.
+    return new V1ObjectMetaBuilder()
+      .withName(resourceName)
+      .withOwnerReferences(podInfo.getOwnerReferences())
+      .addToLabels(extraLabels)
+      .addToLabels(podInfo.getContainerLabelName(), runnableName)
+      .addToAnnotations(KubeTwillRunnerService.APP_LABEL, twillSpec.getName())
+      .addToAnnotations(KubeTwillRunnerService.START_TIMEOUT_ANNOTATION, Long.toString(startTimeoutMillis))
+      .build();
+  }
+
+  /**
+   * Returns the name for the resource to be deployed in Kubernetes.
+   */
+  private String getResourceName(String appName, RunId runId, int maxLength) {
+    String fullName = resourcePrefix + appName + "-" + runId;
+    // Don't trim when cleansing the name
+    fullName = cleanse(fullName, Integer.MAX_VALUE);
+
+    if (fullName.length() <= maxLength) {
+      return fullName;
+    }
+
+    // Generates a hash and takes the first 5 bytes of it. It should be unique enough in our use case.
+    String hash = "-" + Hashing.sha256().hashString(fullName, StandardCharsets.UTF_8).toString().substring(0, 10);
+    return fullName.substring(0, maxLength - hash.length()) + hash;
+  }
+
+  /**
+   * label values must be 63 characters or less and consist of alphanumeric, '.', '_', or '-'.
+   */
+  private String asLabel(String val) {
+    return cleanse(val, 63);
+  }
+
+  /**
+   * Kubernetes names must be lower case alphanumeric, or '-'. Some are less restrictive, but those characters
+   * should always be ok.
+   */
+  private String cleanse(String val, int maxLength) {
+    String cleansed = val.replaceAll("[^A-Za-z0-9\\-_]", "-").toLowerCase();
+    return cleansed.length() > maxLength ? cleansed.substring(0, maxLength) : cleansed;
+  }
+
+  /**
+   * Create container environment inherited from the current pod.
+   */
+  private List<V1EnvVar> createContainerEnvironments(V1ResourceRequirements resourceRequirements) {
+    // Setup the container environment. Inherit everything from the current pod.
+    Map<String, String> environs = podInfo.getContainerEnvironments().stream()
+      .collect(Collectors.toMap(V1EnvVar::getName, V1EnvVar::getValue));
+
+    // assumption is there is only a single runnable
+    environs.putAll(environments.values().iterator().next());
+
+    // Set the process memory is through the JAVA_HEAPMAX variable.
+    environs.put("JAVA_HEAPMAX", String.format("-Xmx%dm", computeMaxHeapSize(resourceRequirements)));
+    return environs.entrySet().stream()
+      .map(e -> new V1EnvVar().name(e.getKey()).value(e.getValue()))
+      .collect(Collectors.toList());
   }
 }

@@ -40,6 +40,7 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.InputStream;
@@ -56,7 +57,7 @@ import java.util.concurrent.TimeUnit;
 public class PreviewServiceMainTest extends MasterServiceMainTestBase {
   private static final Gson GSON = new Gson();
 
-  @Test
+  @Ignore
   public void testPreviewService() throws Exception {
 
     // Deploy the app artifact
