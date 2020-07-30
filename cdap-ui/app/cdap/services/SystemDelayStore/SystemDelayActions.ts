@@ -14,21 +14,10 @@
  * the License.
  */
 
-import * as React from 'react';
-
-interface IToggleFeatureProps {
-  defaultComponent: React.ReactElement<any>;
-  experimentalComponent: React.ReactElement<any>;
-  experimentId: string;
-}
-
-const ToggleFeature: React.SFC<IToggleFeatureProps> = ({
-  defaultComponent,
-  experimentalComponent,
-  experimentId,
-}) => {
-  const featureAvailable = window.localStorage.getItem(experimentId) === 'true';
-  return featureAvailable ? experimentalComponent : defaultComponent;
+const SystemDelayActions = {
+  registerDataSource: 'REGISTER_DATASOURCE',
+  showDelay: 'SHOW_DELAY',
+  hideDelay: 'HIDE_DELAY',
 };
 
-export default ToggleFeature;
+export default SystemDelayActions;
