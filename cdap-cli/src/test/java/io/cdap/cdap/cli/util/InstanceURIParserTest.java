@@ -67,4 +67,34 @@ public class InstanceURIParserTest {
                         parser.parse("https://somehost:1234/"));
   }
 
+  @Test
+  public void testParseInstanceURI() {
+    NamespaceId someNamespace = new NamespaceId("nsx");
+    InstanceURIParser parser = new InstanceURIParser(null);
+
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", null, false, ""),
+                        parser.parseInstanceURI("somehost", null));
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", null, false, ""),
+                        parser.parseInstanceURI("http://somehost", null));
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", null, true, ""),
+                        parser.parseInstanceURI("https://somehost", ""));
+
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", 1234, false, ""),
+                        parser.parseInstanceURI("somehost:1234", ""));
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", 1234, false, ""),
+                        parser.parseInstanceURI("http://somehost:1234", null));
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", 1234, true, ""),
+                        parser.parseInstanceURI("https://somehost:1234", null));
+
+    Assert.assertEquals(new CLIConnectionConfig(NamespaceId.DEFAULT, "somehost", null, false, "api/"),
+                        parser.parseInstanceURI("somehost/api/", ""));
+    Assert.assertEquals(new CLIConnectionConfig(someNamespace, "somehost", 1234, false, ""),
+                        parser.parseInstanceURI("http://somehost:1234", "nsx"));
+    Assert.assertEquals(new CLIConnectionConfig(someNamespace, "somehost", null, true, "api/"),
+                        parser.parseInstanceURI("https://somehost/api", "nsx"));
+
+
+  }
+
+
 }
