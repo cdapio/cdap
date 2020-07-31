@@ -734,9 +734,10 @@ class HydratorPlusPlusTopPanelCtrl {
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
         } else if (res.status === DEPLOY_FAILED || res.status === RUN_FAILED) {
+          let failureMsg = this.myHelpers.objectQuery(res, 'throwable', 'message') || `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`;
           this.myAlertOnValium.show({
             type: 'danger',
-            content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
+            content: failureMsg,
           });
         }
       }
