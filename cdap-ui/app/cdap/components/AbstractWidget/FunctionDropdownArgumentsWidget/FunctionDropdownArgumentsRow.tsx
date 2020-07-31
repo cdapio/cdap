@@ -25,6 +25,7 @@ import AbstractRow, {
   IAbstractRowProps,
   AbstractRowStyles,
 } from 'components/AbstractWidget/AbstractMultiRowWidget/AbstractRow';
+import { parse, serialize } from 'components/AbstractWidget/FunctionDropdownArgumentsWidget/parser';
 
 const styles = (theme): StyleRules => {
   return {
@@ -90,50 +91,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
    * Sample input: alias:Avg(fieldName)
    */
   public componentDidMount() {
-    const [alias, fn] = this.props.value.split(':');
-    const { func, field } = this.extractFunctionAndAlias(fn);
-
-    this.setState({
-      field,
-      func,
-      alias,
-    });
-  }
-
-  private extractFunctionAndAlias(fn) {
-    const defaultResponse = {
-      func: '',
-      field: '',
-      ignoreNulls: true,
-      arguments: '',
-    };
-
-    if (!fn) {
-      return defaultResponse;
-    }
-
-    const openBracketIndex = fn.indexOf('(');
-    const closeBracketIndex = fn.indexOf(')');
-
-    if (openBracketIndex === -1 || closeBracketIndex === -1) {
-      return defaultResponse;
-    }
-
-    const params = fn.substring(openBracketIndex + 1, closeBracketIndex).split(',');
-    const field = params[0];
-    const ignoreNulls = params[params.length - 1] === 'true';
-
-    let args = '';
-    if (params.length > 2) {
-      args = params.slice(1, params.length - 1).join(',');
-    }
-
-    return {
-      func: fn.substring(0, openBracketIndex),
-      field,
-      ignoreNulls,
-      arguments: args,
-    };
+    this.setState(parse(this.props.value));
   }
 
   private handleChange = (type: StateKeys, e) => {
@@ -144,15 +102,14 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
       () => {
         const { field, func, alias, arguments: args, ignoreNulls } = this.state;
 
-        if (field.length === 0 || func.length === 0 || alias.length === 0) {
-          this.onChange('');
-          return;
-        }
+        const updatedValue = serialize({
+          field,
+          func,
+          alias,
+          arguments: args,
+          ignoreNulls,
+        });
 
-        const argumentString = args && args.length > 0 ? `,${args}` : '';
-
-        const updatedValue = `${alias}:${func}(${field}${argumentString},${!!ignoreNulls})`;
-        console.log(updatedValue);
         this.onChange(updatedValue);
       }
     );
