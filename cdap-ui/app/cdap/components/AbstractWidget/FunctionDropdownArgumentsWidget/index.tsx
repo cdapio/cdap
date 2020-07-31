@@ -15,9 +15,9 @@
  */
 
 import * as React from 'react';
-import FunctionDropdownOptionsRow, {
+import FunctionDropdownArgumentsRow, {
   IDropdownOption,
-} from 'components/AbstractWidget/FunctionDropdownOptionsWidget/FunctionDropdownOptionsRow';
+} from 'components/AbstractWidget/FunctionDropdownArgumentsWidget/FunctionDropdownArgumentsRow';
 import ThemeWrapper from 'components/ThemeWrapper';
 import AbstractMultiRowWidget, {
   IMultiRowProps,
@@ -33,12 +33,12 @@ interface IFunctionDropdownWidgetProps {
 
 interface IFunctionDropdownProps extends IMultiRowProps<IFunctionDropdownWidgetProps> {}
 
-class FunctionDropdownOptionsWidgetView extends AbstractMultiRowWidget<IFunctionDropdownProps> {
+class FunctionDropdownArgumentsWidgetView extends AbstractMultiRowWidget<IFunctionDropdownProps> {
   public renderRow = (id, index) => {
     const placeholders = objectQuery(this.props, 'widgetProps', 'placeholders');
     const dropdownOptions = objectQuery(this.props, 'widgetProps', 'dropdownOptions');
     return (
-      <FunctionDropdownOptionsRow
+      <FunctionDropdownArgumentsRow
         key={id}
         value={this.values[id].value}
         id={id}
@@ -58,12 +58,12 @@ class FunctionDropdownOptionsWidgetView extends AbstractMultiRowWidget<IFunction
   };
 }
 
-export default function FunctionDropdownOptionsWidget(props) {
+export default function FunctionDropdownArgumentsWidget(props) {
   return (
     <ThemeWrapper>
-      <FunctionDropdownOptionsWidgetView {...props} />
+      <FunctionDropdownArgumentsWidgetView {...props} />
     </ThemeWrapper>
   );
 }
 
-(FunctionDropdownOptionsWidget as any).propTypes = WIDGET_PROPTYPES;
+(FunctionDropdownArgumentsWidget as any).propTypes = WIDGET_PROPTYPES;

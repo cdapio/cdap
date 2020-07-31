@@ -23,7 +23,7 @@ import DatasetSelector from 'components/AbstractWidget/DatasetSelectorWidget';
 import DateRangeWidget from 'components/AbstractWidget/DateRangeWidget';
 import DateTimeWidget from 'components/AbstractWidget/DateTimeWidget';
 import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropdownAliasWidget';
-import FunctionDropdownOptionsWidget from 'components/AbstractWidget/FunctionDropdownOptionsWidget';
+import FunctionDropdownArgumentsWidget from 'components/AbstractWidget/FunctionDropdownArgumentsWidget';
 import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
 import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
 import JoinTypeWidget from 'components/AbstractWidget/JoinTypeWidget';
@@ -132,7 +132,7 @@ export const WIDGET_FACTORY = {
   'ds-multiplevalues': MultipleValuesWidget,
   dsv: CSVWidget,
   'function-dropdown-with-alias': FunctionDropdownAliasWidget,
-  'function-dropdown-with-options': FunctionDropdownOptionsWidget,
+  'function-dropdown-with-arguments': FunctionDropdownArgumentsWidget,
   dlp: DLPCustomWidget,
   'get-schema': GetSchemaWidget,
   'input-field-selector': InputFieldDropdown,
