@@ -79,15 +79,7 @@ function RowButtons({
       <If condition={typeof onRemove === 'function'} invisible>
         <RemoveRowButton onRemove={disabled ? undefined : onRemove} />
       </If>
-      <If
-        condition={
-          type === AvroSchemaTypesEnum.RECORD ||
-          type === AvroSchemaTypesEnum.ENUM ||
-          type === AvroSchemaTypesEnum.DECIMAL ||
-          internalType === InternalTypesEnum.RECORD_COMPLEX_TYPE_ROOT ||
-          internalType === InternalTypesEnum.RECORD_SIMPLE_TYPE
-        }
-      >
+      <If condition={type === AvroSchemaTypesEnum.DECIMAL}>
         <FieldPropertiesPopoverButton
           nullable={nullable}
           onNullable={disabled ? undefined : onNullable}
