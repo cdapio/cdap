@@ -31,7 +31,7 @@ const styles = (theme): StyleRules => {
     ...AbstractRowStyles(theme),
     inputContainer: {
       display: 'grid',
-      gridTemplateColumns: '1fr 1fr 30px 1fr 1fr 1fr',
+      gridTemplateColumns: '1fr 1fr 1fr 1fr 30px 1fr',
       gridGap: '10px',
     },
     disabled: {
@@ -50,7 +50,7 @@ interface IComplexDropdown {
 
 export type IDropdownOption = string | number | IComplexDropdown;
 
-interface IFunctionDropdownOptionsRowProps extends IAbstractRowProps<typeof styles> {
+interface IFunctionDropdownArgumentsRowProps extends IAbstractRowProps<typeof styles> {
   placeholders: Record<string, string>;
   dropdownOptions: IDropdownOption[];
 }
@@ -65,8 +65,8 @@ interface IKeyValueState {
 
 type StateKeys = keyof IKeyValueState;
 
-class FunctionDropdownOptionsRow extends AbstractRow<
-  IFunctionDropdownOptionsRowProps,
+class FunctionDropdownArgumentsRow extends AbstractRow<
+  IFunctionDropdownArgumentsRowProps,
   IKeyValueState
 > {
   public static defaultProps = {
@@ -104,6 +104,8 @@ class FunctionDropdownOptionsRow extends AbstractRow<
     const defaultResponse = {
       func: '',
       field: '',
+      ignoreNulls: true,
+      arguments: '',
     };
 
     if (!fn) {
@@ -117,9 +119,20 @@ class FunctionDropdownOptionsRow extends AbstractRow<
       return defaultResponse;
     }
 
+    const params = fn.substring(openBracketIndex + 1, closeBracketIndex).split(',');
+    const field = params[0];
+    const ignoreNulls = params[params.length - 1] === 'true';
+
+    let args = '';
+    if (params.length > 2) {
+      args = params.slice(1, params.length - 1).join(',');
+    }
+
     return {
       func: fn.substring(0, openBracketIndex),
-      field: fn.substring(openBracketIndex + 1, closeBracketIndex),
+      field,
+      ignoreNulls,
+      arguments: args,
     };
   }
 
@@ -129,14 +142,17 @@ class FunctionDropdownOptionsRow extends AbstractRow<
         [type]: e.target.value,
       } as Pick<IKeyValueState, StateKeys>,
       () => {
-        const { field, func, alias } = this.state;
+        const { field, func, alias, arguments: args, ignoreNulls } = this.state;
 
         if (field.length === 0 || func.length === 0 || alias.length === 0) {
           this.onChange('');
           return;
         }
 
-        const updatedValue = `${alias}:${func}(${field})`;
+        const argumentString = args && args.length > 0 ? `,${args}` : '';
+
+        const updatedValue = `${alias}:${func}(${field}${argumentString},${!!ignoreNulls})`;
+        console.log(updatedValue);
         this.onChange(updatedValue);
       }
     );
@@ -156,18 +172,6 @@ class FunctionDropdownOptionsRow extends AbstractRow<
 
     return (
       <div className={this.props.classes.inputContainer}>
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.placeholders.field}
-          onChange={this.handleChange.bind(this, 'field')}
-          value={this.state.field}
-          autoFocus={this.props.autofocus}
-          onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
-          disabled={this.props.disabled}
-          inputRef={this.props.forwardedRef}
-        />
-
         <Select
           classes={{ disabled: this.props.classes.disabled }}
           value={this.state.func}
@@ -184,16 +188,16 @@ class FunctionDropdownOptionsRow extends AbstractRow<
           })}
         </Select>
 
-        <span className={this.props.classes.separator}>as</span>
-
         <Input
           classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.placeholders.alias}
-          onChange={this.handleChange.bind(this, 'alias')}
-          value={this.state.alias}
+          placeholder={this.props.placeholders.field}
+          onChange={this.handleChange.bind(this, 'field')}
+          value={this.state.field}
+          autoFocus={this.props.autofocus}
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
           disabled={this.props.disabled}
+          inputRef={this.props.forwardedRef}
         />
 
         <Input
@@ -220,10 +224,22 @@ class FunctionDropdownOptionsRow extends AbstractRow<
           }
           label={<span>Ignore Nulls</span>}
         />
+
+        <span className={this.props.classes.separator}>as</span>
+
+        <Input
+          classes={{ disabled: this.props.classes.disabled }}
+          placeholder={this.props.placeholders.alias}
+          onChange={this.handleChange.bind(this, 'alias')}
+          value={this.state.alias}
+          onKeyPress={this.handleKeyPress}
+          onKeyDown={this.handleKeyDown}
+          disabled={this.props.disabled}
+        />
       </div>
     );
   };
 }
 
-const StyledFunctionDropdownRow = withStyles(styles)(FunctionDropdownOptionsRow);
+const StyledFunctionDropdownRow = withStyles(styles)(FunctionDropdownArgumentsRow);
 export default StyledFunctionDropdownRow;
