@@ -172,7 +172,8 @@
       </div>
     </div>
     <div class="btn no-border-left"
-         ng-click="HydratorPlusPlusTopPanelCtrl.toggleConfig()"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.previewLoading && !HydratorPlusPlusTopPanelCtrl.previewRunning && HydratorPlusPlusTopPanelCtrl.toggleConfig()"
+         ng-disabled="HydratorPlusPlusTopPanelCtrl.previewLoading || HydratorPlusPlusTopPanelCtrl.previewRunning"
          ng-class="{'btn-select': HydratorPlusPlusTopPanelCtrl.viewConfig}">
       <div class="btn-container">
         <span class="fa fa-sliders"></span>
