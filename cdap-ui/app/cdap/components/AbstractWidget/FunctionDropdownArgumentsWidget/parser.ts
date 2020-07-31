@@ -15,7 +15,10 @@
  */
 
 export function parse(value) {
-  const [alias, fn] = this.props.value.split(':');
+  const colonIndex = value.indexOf(':');
+  // const [alias, fn] = value.split(':');
+  const alias = value.substring(0, colonIndex);
+  const fn = value.substring(colonIndex + 1);
 
   const defaultResponse = {
     alias,
@@ -38,7 +41,7 @@ export function parse(value) {
 
   const params = fn.substring(openBracketIndex + 1, closeBracketIndex).split(',');
   const field = params[0];
-  const ignoreNulls = params[params.length - 1] === 'true';
+  const ignoreNulls = params[params.length - 1] !== 'false';
 
   let args = '';
   if (params.length > 2) {
@@ -56,13 +59,13 @@ export function parse(value) {
 
 export function serialize(fields) {
   const { field, func, alias, arguments: args, ignoreNulls } = fields;
-  
+
   if (field.length === 0 || func.length === 0 || alias.length === 0) {
-    this.onChange('');
-    return;
+    return '';
   }
 
-  const argumentString = args && args.length > 0 ? `,${args}` : '';
+  const trimmedArgs = args && args.trim();
+  const argumentString = trimmedArgs && trimmedArgs.length > 0 ? `,${trimmedArgs}` : '';
 
   const updatedValue = `${alias}:${func}(${field}${argumentString},${!!ignoreNulls})`;
   return updatedValue;
