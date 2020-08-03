@@ -14,16 +14,16 @@
  * the License.
  */
 
-import React from 'react';
 import { execute } from 'components/HttpExecutor/store/HttpExecutorActionCreator';
 import T from 'i18n-react';
+import React from 'react';
 
 const PREFIX = 'features.HttpExecutor';
 
 export default function SendButton() {
   return (
     <div className="send-button-container text-right">
-      <button className="btn btn-primary" onClick={execute}>
+      <button className="btn btn-primary" onClick={execute} data-cy="send-btn">
         {T.translate(`${PREFIX}.send`)}
       </button>
     </div>

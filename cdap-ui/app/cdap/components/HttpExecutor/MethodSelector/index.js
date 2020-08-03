@@ -14,11 +14,10 @@
  * the License.
  */
 
+import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import PropTypes from 'prop-types';
-
 import React from 'react';
 import { connect } from 'react-redux';
-import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 
 const mapStateToProps = (state) => {
   return {
@@ -44,7 +43,12 @@ function MethodSelectorView({ onChange, value }) {
 
   return (
     <div className="method-selector-container">
-      <select className="form-control" value={value} onChange={onChange}>
+      <select
+        className="form-control"
+        data-cy="request-method-selector"
+        value={value}
+        onChange={onChange}
+      >
         {METHODS.map((method) => {
           return (
             <option value={method} key={method}>

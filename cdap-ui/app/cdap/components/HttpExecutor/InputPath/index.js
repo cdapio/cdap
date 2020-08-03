@@ -56,6 +56,7 @@ function InputPathView({ value, onChange }) {
           placeholder={T.translate(`${PREFIX}.path`)}
           value={value}
           onChange={onChange}
+          data-cy="request-path-input"
         />
       </div>
     </div>

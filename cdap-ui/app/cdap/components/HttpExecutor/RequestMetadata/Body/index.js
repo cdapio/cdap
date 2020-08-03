@@ -14,11 +14,10 @@
  * the License.
  */
 
+import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 import PropTypes from 'prop-types';
-
 import React from 'react';
 import { connect } from 'react-redux';
-import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
 
 const mapStateToProps = (state) => {
   return {
@@ -42,7 +41,7 @@ const mapDispatch = (dispatch) => {
 function BodyView({ value, onChange }) {
   return (
     <div className="request-body">
-      <textarea className="form-control" value={value} onChange={onChange} />
+      <textarea data-cy="request-body" className="form-control" value={value} onChange={onChange} />
     </div>
   );
 }

@@ -62,6 +62,7 @@ const RequestSearchView: React.FC<IRequestSearchProps> = ({
         placeholder="Search"
         value={searchText}
         onChange={(e) => setSearchText(e.target.value)}
+        data-cy="request-search-input"
       />
     </Paper>
   );
