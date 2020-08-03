@@ -101,6 +101,14 @@ class SchemaValidatorProvider extends React.Component<ISchemaValidatorProviderPr
         const entireSchema = SchemaGenerator(schemaTree);
         cdapavsc.parse(entireSchema.schema, { wrapUnions: true });
       } catch (e) {
+        // TODO: CDAP-17152. We don't have specific fields that are duplicate today.
+        // We should improve the way we validate the avro schema
+        if (e.message.includes('duplicate field name')) {
+          return {
+            error: 'There are two or more fields with the same name',
+            fieldIdToShowError: ancestors[0],
+          };
+        }
         return { error: e.message, fieldIdToShowError: ancestors[0] };
       }
       return;
@@ -110,6 +118,14 @@ class SchemaValidatorProvider extends React.Component<ISchemaValidatorProviderPr
       try {
         cdapavsc.parse(avroSchema, { wrapUnions: true });
       } catch (e) {
+        // TODO: CDAP-17152. We don't have specific fields that are duplicate today.
+        // We should improve the way we validate the avro schema
+        if (e.message.includes('duplicate field name')) {
+          return {
+            error: 'There are two or more fields with the same name',
+            fieldIdToShowError: tree.id,
+          };
+        }
         return { error: e.message, fieldIdToShowError: tree.id };
       }
     };
