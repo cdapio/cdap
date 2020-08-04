@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.io.Closeables;
 import com.google.gson.Gson;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
@@ -41,6 +42,10 @@ import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -144,6 +149,46 @@ public class SSHSessionManagerTest {
     } finally {
       manager.close();
       serverSocket.close();
+    }
+  }
+
+  @Test
+  public void testMultiPortForwardings() throws Exception {
+    List<ProgramRunId> programRunIds = Arrays.asList(
+      NamespaceId.DEFAULT.app("test").workflow("workflow1").run(RunIds.generate()),
+      NamespaceId.DEFAULT.app("test").workflow("workflow2").run(RunIds.generate())
+    );
+
+    // Start two server and register them to the SSHSessionManager
+    Map<ProgramRunId, ServerSocket> servers = new HashMap<>();
+    try (SSHSessionManager manager = new SSHSessionManager()) {
+      for (ProgramRunId programRunId : programRunIds) {
+        ServerSocket serverSocket = new ServerSocket();
+        serverSocket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), 0));
+        servers.put(programRunId, serverSocket);
+
+        // Adds a SSH session
+        CompletableFuture<SSHSession> sessionFuture = new CompletableFuture<>();
+        manager.addSSHConfig(programRunId, getSSHConfig(), sessionFuture::complete);
+
+        InetSocketAddress serverAddr = (InetSocketAddress) serverSocket.getLocalSocketAddress();
+        RuntimeMonitorServerInfo serverInfo = new RuntimeMonitorServerInfo(serverAddr);
+
+        manager.addRuntimeServer(programRunId, serverAddr.getAddress(), serverInfo);
+      }
+
+      // Create port forwarding for all program run ids, all of them should succeed
+      for (ProgramRunId programRunId : programRunIds) {
+        PortForwarding portForwarding = manager.createPortForwarding(
+          (InetSocketAddress) servers.get(programRunId).getLocalSocketAddress(), new PortForwarding.DataConsumer() {
+            @Override
+            public void received(ByteBuffer buffer) {
+              // no-op
+            }
+          });
+      }
+    } finally {
+      servers.values().forEach(Closeables::closeQuietly);
     }
   }
 

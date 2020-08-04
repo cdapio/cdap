@@ -48,7 +48,7 @@ import javax.annotation.Nullable;
 final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
 
   private final ConcurrentMap<ProgramRunId, SSHInfo> sshInfos;
-  private final ConcurrentMap<InetAddress, ProgramRunId> allowedPortForwardings;
+  private final ConcurrentMap<InetSocketAddress, ProgramRunId> allowedPortForwardings;
   private final ConcurrentMap<ProgramRunId, RuntimeMonitorServerInfo> monitorServerInfos;
 
   SSHSessionManager() {
@@ -84,17 +84,17 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
    */
   void addRuntimeServer(ProgramRunId programRunId, InetAddress allowedAddr, RuntimeMonitorServerInfo serverInfo) {
     monitorServerInfos.put(programRunId, serverInfo);
-    allowedPortForwardings.put(allowedAddr, programRunId);
+    allowedPortForwardings.put(new InetSocketAddress(allowedAddr, serverInfo.getPort()), programRunId);
   }
 
   /**
    * Removes the remote runtime server address with the given program run.
    *
    * @param programRunId the {@link ProgramRunId} to have the runtime server information removed
-   * @param allowedAddr the {@link InetAddress} of where the runtime monitor server is running
+   * @param serverSocketAddr the {@link InetSocketAddress} of the runtime monitor server for the given run
    */
-  void removeRuntimeServer(ProgramRunId programRunId, InetAddress allowedAddr) {
-    allowedPortForwardings.remove(allowedAddr, programRunId);
+  void removeRuntimeServer(ProgramRunId programRunId, InetSocketAddress serverSocketAddr) {
+    allowedPortForwardings.remove(serverSocketAddr, programRunId);
     monitorServerInfos.remove(programRunId);
   }
 
@@ -114,7 +114,7 @@ final class SSHSessionManager implements PortForwardingProvider, AutoCloseable {
   @Override
   public PortForwarding createPortForwarding(InetSocketAddress serverAddr,
                                              PortForwarding.DataConsumer dataConsumer) throws IOException {
-    ProgramRunId programRunId = allowedPortForwardings.get(serverAddr.getAddress());
+    ProgramRunId programRunId = allowedPortForwardings.get(serverAddr);
     if (programRunId == null) {
       throw new IllegalStateException("No SSHSession available for server " + serverAddr);
     }
