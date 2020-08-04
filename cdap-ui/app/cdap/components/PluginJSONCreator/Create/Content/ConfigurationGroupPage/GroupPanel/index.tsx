@@ -14,18 +14,20 @@
  * the License.
  */
 
+import * as React from 'react';
+
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpansionPanel from '@material-ui/core/ExpansionPanel';
 import ExpansionPanelActions from '@material-ui/core/ExpansionPanelActions';
 import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import Typography from '@material-ui/core/Typography';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import If from 'components/If';
-import { useConfigurationGroupState } from 'components/PluginJSONCreator/Create';
 import GroupActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/GroupActionButtons';
 import GroupInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/GroupInfoInput';
+import If from 'components/If';
+import Typography from '@material-ui/core/Typography';
 import WidgetCollection from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection';
-import * as React from 'react';
+import { useConfigurationGroupState } from 'components/PluginJSONCreator/Create';
 
 const styles = (): StyleRules => {
   return {
@@ -67,7 +69,6 @@ export const GroupPanelView = ({
           </If>
         </ExpansionPanelActions>
       </ExpansionPanel>
-
       <GroupActionButtons
         onAddConfigurationGroup={addConfigurationGroup}
         onDeleteConfigurationGroup={deleteConfigurationGroup}

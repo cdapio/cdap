@@ -14,12 +14,16 @@
  * the License.
  */
 
+import * as React from 'react';
+
 import { COMMON_DELIMITER, COMMON_KV_DELIMITER } from 'components/PluginJSONCreator/constants';
-import { SupportedType } from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput';
+
+import If from 'components/If';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { SupportedType } from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput';
 import { fromJS } from 'immutable';
 import isNil from 'lodash/isNil';
-import * as React from 'react';
+import { isNilOrEmpty } from 'services/helpers';
 
 const AttributeKeyvalueRowsInput = ({
   widgetID,
@@ -33,7 +37,10 @@ const AttributeKeyvalueRowsInput = ({
   // When user switches the selectedType, reset 'currentAttributeValues'.
   // Whenever there is a change in 'localWidgetToAttributes', reset the 'currentAttributeValues'.
   React.useEffect(() => {
-    setCurrentAttributeValues(processKeyValueAttributeValues());
+    const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
+    if (existingAttributeValues) {
+      setCurrentAttributeValues(processKeyValueAttributeValues(existingAttributeValues));
+    }
   }, [selectedType, localWidgetToAttributes]);
 
   /*
@@ -48,12 +55,11 @@ const AttributeKeyvalueRowsInput = ({
    * Example)
    *     "key1;val1,key2;val2"
    */
-  function processKeyValueAttributeValues() {
-    const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
-    if (!existingAttributeValues) {
+  function processKeyValueAttributeValues(attributeValues) {
+    if (!attributeValues) {
       return '';
     }
-    const keyvaluePairs = existingAttributeValues
+    const keyvaluePairs = attributeValues
       .map((keyvalue) => {
         if (!isNil(keyvalue.get('id'))) {
           return [keyvalue.get('id'), keyvalue.get('label')].join(COMMON_KV_DELIMITER);
@@ -80,16 +86,18 @@ const AttributeKeyvalueRowsInput = ({
   };
 
   return (
-    <PluginInput
-      widgetType={'keyvalue'}
-      value={currentAttributeValues}
-      onChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
-      label={field}
-      delimiter={COMMON_DELIMITER}
-      kvDelimiter={COMMON_KV_DELIMITER}
-      keyPlaceholder={selectedType === SupportedType.IDLabelPair ? 'id' : 'value'}
-      valuePlaceholder={'label'}
-    />
+    <If condition={!isNilOrEmpty(currentAttributeValues)}>
+      <PluginInput
+        widgetType={'keyvalue'}
+        value={currentAttributeValues}
+        onChange={(keyvalue) => onKeyValueAttributeChange(keyvalue, selectedType)}
+        label={field}
+        delimiter={COMMON_DELIMITER}
+        kvDelimiter={COMMON_KV_DELIMITER}
+        keyPlaceholder={selectedType === SupportedType.IDLabelPair ? 'id' : 'value'}
+        valuePlaceholder={'label'}
+      />
+    </If>
   );
 };
 

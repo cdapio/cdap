@@ -14,17 +14,19 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import Tooltip from '@material-ui/core/Tooltip';
-import FullscreenExitIcon from '@material-ui/icons/FullscreenExit';
 import * as React from 'react';
+
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import CloseIcon from '@material-ui/icons/Close';
+import IconButton from '@material-ui/core/IconButton';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const styles = (theme): StyleRules => {
   return {
     buttonTooltip: {
-      fontSize: '14px',
-      backgroundColor: theme.palette.grey[500],
+      fontSize: '13px',
+      backgroundColor: theme.palette.grey[50],
     },
   };
 };
@@ -35,11 +37,11 @@ export const CollapseLiveViewButtonView = ({ classes, collapseLiveView }) => {
       classes={{
         tooltip: classes.buttonTooltip,
       }}
-      title="Close JSON View"
+      title="Close"
     >
-      <Button onClick={collapseLiveView}>
-        <FullscreenExitIcon />
-      </Button>
+      <IconButton onClick={collapseLiveView}>
+        <CloseIcon />
+      </IconButton>
     </Tooltip>
   );
 };

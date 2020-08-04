@@ -14,14 +14,16 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
-import Heading, { HeadingTypes } from 'components/Heading';
-import If from 'components/If';
-import { useFilterState } from 'components/PluginJSONCreator/Create';
-import FilterPanel from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel';
-import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import { List, Map } from 'immutable';
 import * as React from 'react';
+
+import Heading, { HeadingTypes } from 'components/Heading';
+import { List, Map } from 'immutable';
+
+import Button from '@material-ui/core/Button';
+import FilterPanel from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel';
+import If from 'components/If';
+import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
+import { useFilterState } from 'components/PluginJSONCreator/Create';
 import uuidV4 from 'uuid/v4';
 
 const FilterPage = () => {

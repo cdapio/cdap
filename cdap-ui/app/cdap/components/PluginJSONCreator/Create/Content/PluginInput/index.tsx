@@ -14,8 +14,9 @@
  * the License.
  */
 
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import * as React from 'react';
+
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 
 const PluginInput = ({
   widgetType,
@@ -31,6 +32,7 @@ const PluginInput = ({
   kvDelimiter = null,
   layout = null,
   delimiter = null,
+  focus = false,
 }) => {
   let widgetAttributes;
   if (widgetType !== 'toggle') {
@@ -77,6 +79,7 @@ const PluginInput = ({
       pluginProperty={property}
       value={value}
       onChange={onChange}
+      focus={focus}
     />
   );
 };

@@ -14,19 +14,21 @@
  * the License.
  */
 
-import Chip from '@material-ui/core/Chip';
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import Check from '@material-ui/icons/Check';
-import classnames from 'classnames';
-import { useAppInternalState } from 'components/PluginJSONCreator/Create';
-import { STEPS } from 'components/PluginJSONCreator/Create/Content';
 import * as React from 'react';
+
+import { LEFT_PANEL_WIDTH, useAppInternalState } from 'components/PluginJSONCreator/Create';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+import Check from '@material-ui/icons/Check';
+import Chip from '@material-ui/core/Chip';
+import { STEPS } from 'components/PluginJSONCreator/Create/Content';
+import classnames from 'classnames';
 
 const styles = (theme): StyleRules => {
   return {
-    root: {
-      height: 'calc(100vh - 53px)', // height excluding footer
-      borderRight: `1px solid ${theme.palette.grey[300]}`,
+    steps: {
+      position: 'fixed',
+      width: `${LEFT_PANEL_WIDTH}px`,
     },
     row: {
       padding: '15px',
@@ -76,7 +78,7 @@ const StepsGuidelineMenuView: React.FC<WithStyles<typeof styles>> = ({ classes }
   }
 
   return (
-    <div className={classes.root}>
+    <div className={classes.steps}>
       {STEPS.map((step, i) => {
         const chipContent = i < activeStep ? <Check className={classes.checkIcon} /> : i + 1;
 

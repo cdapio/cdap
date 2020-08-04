@@ -14,16 +14,18 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import * as React from 'react';
+
 import Heading, { HeadingTypes } from 'components/Heading';
-import If from 'components/If';
-import { SchemaType } from 'components/PluginJSONCreator/constants';
-import { useOutputState } from 'components/PluginJSONCreator/Create';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import ExplicitSchemaDefiner from 'components/PluginJSONCreator/Create/Content/OutputPage/ExplicitSchemaDefiner';
+import If from 'components/If';
 import ImplicitSchemaDefiner from 'components/PluginJSONCreator/Create/Content/OutputPage/ImplicitSchemaDefiner';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { SchemaType } from 'components/PluginJSONCreator/constants';
 import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
-import * as React from 'react';
+import { useOutputState } from 'components/PluginJSONCreator/Create';
 
 const styles = (): StyleRules => {
   return {
@@ -45,7 +47,7 @@ const OutputPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
           widgetType={'radio-group'}
           value={outputWidgetType}
           onChange={setOutputWidgetType}
-          label={'Schema Type'}
+          label={'Schema type'}
           options={Object.values(SchemaType).map((mode) => ({ id: mode, label: mode }))}
           layout={'inline'}
         />

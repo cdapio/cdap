@@ -14,18 +14,20 @@
  * the License.
  */
 
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
-import MultipleAttributesInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput';
-import SingleAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/SingleAttributeInput';
 import * as React from 'react';
 
-const styles = (): StyleRules => {
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import MultipleAttributesInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput';
+import SingleAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/SingleAttributeInput';
+import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
+
+const styles = (theme): StyleRules => {
   return {
     widgetAttributeInput: {
       width: '100%',
-      marginTop: '20px',
-      marginBottom: '20px',
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
   };
 };

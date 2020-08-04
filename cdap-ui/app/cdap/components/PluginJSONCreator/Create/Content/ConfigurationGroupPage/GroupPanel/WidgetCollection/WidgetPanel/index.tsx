@@ -14,12 +14,14 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import WidgetAttributesPanel from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel';
-import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetActionButtons';
-import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetInfoInput';
 import * as React from 'react';
+
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import Button from '@material-ui/core/Button';
+import WidgetActionButtons from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetActionButtons';
+import WidgetAttributesPanel from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel';
+import WidgetInfoInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetPanel/WidgetInfoInput';
 
 const styles = (): StyleRules => {
   return {
@@ -28,6 +30,9 @@ const styles = (): StyleRules => {
       gridTemplateColumns: '5fr 1fr',
       marginLeft: 'auto',
       marginRight: 'auto',
+    },
+    openWidgetAttributesButton: {
+      textTransform: 'none',
     },
   };
 };
@@ -68,6 +73,7 @@ export const WidgetPanelView = ({
         color="primary"
         component="span"
         onClick={openWidgetAttributes(widgetIndex)}
+        className={classes.openWidgetAttributesButton}
       >
         Attributes
       </Button>
