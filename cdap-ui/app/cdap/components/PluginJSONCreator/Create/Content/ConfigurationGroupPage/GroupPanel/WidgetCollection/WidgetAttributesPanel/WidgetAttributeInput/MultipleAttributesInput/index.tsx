@@ -14,16 +14,19 @@
  * the License.
  */
 
+import * as React from 'react';
+
+import { List, Map } from 'immutable';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import AttributeKeyvalueRowsInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput/AttributeKeyvalueRowsInput';
+import AttributeRowsInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput/AttributeRowsInput';
 import FormControl from '@material-ui/core/FormControl';
+import If from 'components/If';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import If from 'components/If';
-import AttributeKeyvalueRowsInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput/AttributeKeyvalueRowsInput';
-import AttributeRowsInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput/AttributeRowsInput';
-import { List, Map } from 'immutable';
-import * as React from 'react';
+import classnames from 'classnames';
 
 /*
  * MultipleAttributesInput is a component used for setting widget-attributes of "array" type.
@@ -84,15 +87,13 @@ export enum SupportedType {
 const styles = (theme): StyleRules => {
   return {
     multipleAtributesWrapper: {
-      border: `1px solid`,
-      borderColor: theme.palette.grey[300],
+      border: `1px solid ${theme.palette.grey[300]}`,
       borderRadius: '6px',
       position: 'relative',
-      padding: '7px 10px 5px',
+      padding: '10px 10px 10px',
     },
     typeSelectInput: {
-      marginTop: '5px',
-      marginBottom: '5px',
+      marginBottom: theme.spacing(2),
       minWidth: '120',
     },
   };
@@ -174,9 +175,14 @@ const MultipleAttributesInputView = ({
     setLocalWidgetToAttributes(localWidgetToAttributes.setIn([widgetID, field], List([])));
   };
 
+  const multiSupportedTypes = cleanSupportedTypes.length > 1;
   return (
-    <div className={classes.multipleAtributesWrapper}>
-      <If condition={cleanSupportedTypes.length > 1}>
+    <div
+      className={classnames({
+        [classes.multipleAtributesWrapper]: multiSupportedTypes,
+      })}
+    >
+      <If condition={multiSupportedTypes}>
         <FormControl className={classes.typeSelectInput}>
           <InputLabel shrink>Data Type</InputLabel>
           <Select

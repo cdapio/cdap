@@ -14,12 +14,14 @@
  * the License.
  */
 
-import Heading, { HeadingTypes } from 'components/Heading';
-import If from 'components/If';
-import { useFilterState } from 'components/PluginJSONCreator/Create';
-import ShowPropertyRow from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput/ShowPropertyRow';
-import { Map } from 'immutable';
 import * as React from 'react';
+
+import Heading, { HeadingTypes } from 'components/Heading';
+
+import If from 'components/If';
+import { Map } from 'immutable';
+import ShowPropertyRow from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput/ShowPropertyRow';
+import { useFilterState } from 'components/PluginJSONCreator/Create';
 import uuidV4 from 'uuid/v4';
 
 interface IFilterShowlistInputProps {
@@ -77,7 +79,7 @@ const FilterShowlistInput: React.FC<IFilterShowlistInputProps> = ({ filterID }) 
   return React.useMemo(
     () => (
       <If condition={filterToShowlist.has(filterID)}>
-        <Heading type={HeadingTypes.h5} label="Add widgets to configure" />
+        <Heading type={HeadingTypes.h6} label="Add widgets to configure" />
         {filterToShowlist.get(filterID).map((showID: string, showIndex: number) => {
           if (!showToInfo.has(showID)) {
             return null;

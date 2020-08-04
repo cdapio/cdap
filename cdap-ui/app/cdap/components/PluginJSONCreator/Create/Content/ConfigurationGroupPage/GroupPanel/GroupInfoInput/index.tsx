@@ -14,21 +14,24 @@
  * the License.
  */
 
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import { useConfigurationGroupState } from 'components/PluginJSONCreator/Create';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import * as React from 'react';
 
-const styles = (): StyleRules => {
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { useConfigurationGroupState } from 'components/PluginJSONCreator/Create';
+
+const styles = (theme): StyleRules => {
   return {
     groupInput: {
-      marginTop: '10px',
-      marginBottom: '10px',
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
+      width: '100%',
     },
     groupInputContainer: {
       position: 'relative',
-      padding: '7px 10px 5px',
-      margin: '25px',
+      padding: '0',
+      margin: theme.spacing(4),
     },
   };
 };

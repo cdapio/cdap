@@ -14,11 +14,25 @@
  * the License.
  */
 
-import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
-import { Map } from 'immutable';
 import * as React from 'react';
 
-const AttributeKeyValueInput = ({
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
+import { Map } from 'immutable';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+
+const styles = (theme): StyleRules => {
+  return {
+    widgetInput: {
+      width: '100%',
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
+    },
+  };
+};
+
+const AttributeKeyValueInputView = ({
+  classes,
   keyField,
   valueField,
   keyRequired,
@@ -85,21 +99,26 @@ const AttributeKeyValueInput = ({
 
   return (
     <div>
-      <WidgetWrapper
-        widgetProperty={keyWidget}
-        pluginProperty={keyProperty}
-        value={currentKey}
-        onChange={onKeyChange}
-      />
+      <div className={classes.widgetInput}>
+        <WidgetWrapper
+          widgetProperty={keyWidget}
+          pluginProperty={keyProperty}
+          value={currentKey}
+          onChange={onKeyChange}
+        />
+      </div>
 
-      <WidgetWrapper
-        widgetProperty={valueWidget}
-        pluginProperty={valueProperty}
-        value={currentValue}
-        onChange={onValueChange}
-      />
+      <div className={classes.widgetInput}>
+        <WidgetWrapper
+          widgetProperty={valueWidget}
+          pluginProperty={valueProperty}
+          value={currentValue}
+          onChange={onValueChange}
+        />
+      </div>
     </div>
   );
 };
 
+const AttributeKeyValueInput = withStyles(styles)(AttributeKeyValueInputView);
 export default AttributeKeyValueInput;

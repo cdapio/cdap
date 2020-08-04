@@ -14,12 +14,14 @@
  * the License.
  */
 
+import * as React from 'react';
+
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
-import { useOutputState } from 'components/PluginJSONCreator/Create';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import { SCHEMA_TYPES } from 'components/SchemaEditor/SchemaHelpers';
-import * as React from 'react';
+import { useOutputState } from 'components/PluginJSONCreator/Create';
 
 const styles = (): StyleRules => {
   return {
@@ -58,7 +60,7 @@ const ExplicitSchemaDefinerView: React.FC<WithStyles<typeof styles>> = ({ classe
           widgetType={'textbox'}
           value={outputName}
           onChange={setOutputName}
-          label={'Output Name'}
+          label={'Output name'}
           placeholder={'output name'}
         />
       </div>
@@ -66,7 +68,7 @@ const ExplicitSchemaDefinerView: React.FC<WithStyles<typeof styles>> = ({ classe
         <PluginInput
           widgetType={'multi-select'}
           onChange={onSchemaTypesChange}
-          label={'Schema Types'}
+          label={'Schema types'}
           delimiter={COMMON_DELIMITER}
           options={SCHEMA_TYPES.types}
           value={schemaTypes}
@@ -77,7 +79,7 @@ const ExplicitSchemaDefinerView: React.FC<WithStyles<typeof styles>> = ({ classe
           widgetType={'select'}
           value={schemaDefaultType}
           onChange={setSchemaDefaultType}
-          label={'Schema Default Type'}
+          label={'Schema default type'}
           options={schemaTypes}
         />
       </div>

@@ -14,26 +14,28 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import * as React from 'react';
+
 import {
   WIDGET_CATEGORY,
   WIDGET_TYPES,
   WIDGET_TYPE_TO_ATTRIBUTES,
 } from 'components/PluginJSONCreator/constants';
-import { useWidgetState } from 'components/PluginJSONCreator/Create';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { Map } from 'immutable';
-import * as React from 'react';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
-const styles = (): StyleRules => {
+import { Map } from 'immutable';
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { useWidgetState } from 'components/PluginJSONCreator/Create';
+
+const styles = (theme): StyleRules => {
   return {
     widgetInputContainer: {
       width: '100%',
     },
     widgetInput: {
       width: '100%',
-      marginTop: '10px',
-      marginBottom: '10px',
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
   };
 };
@@ -121,7 +123,7 @@ const WidgetInfoInputView: React.FC<IWidgetInfoInputProps> = ({ classes, widgetI
             widgetType={'select'}
             value={widget.get('widgetType')}
             onChange={onWidgetTypeChange()}
-            label={'Widget Type'}
+            label={'Widget type'}
             options={WIDGET_TYPES}
             required={true}
           />

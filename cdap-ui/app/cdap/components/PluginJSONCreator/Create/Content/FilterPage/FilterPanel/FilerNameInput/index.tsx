@@ -14,9 +14,10 @@
  * the License.
  */
 
-import { useFilterState } from 'components/PluginJSONCreator/Create';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
 import * as React from 'react';
+
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { useFilterState } from 'components/PluginJSONCreator/Create';
 
 interface IFilterNameInputProps {
   filterID: string;
@@ -37,7 +38,7 @@ const FilterNameInput: React.FC<IFilterNameInputProps> = ({ filterID }) => {
         widgetType={'textbox'}
         value={filterToName.get(filterID)}
         onChange={setFilterName(filterID)}
-        label={'Filter Name'}
+        label={'Filter name'}
       />
     ),
     [filterToName]

@@ -14,19 +14,21 @@
  * the License.
  */
 
-import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import Heading, { HeadingTypes } from 'components/Heading';
-import { PluginTypes } from 'components/PluginJSONCreator/constants';
-import { usePluginInfoState } from 'components/PluginJSONCreator/Create';
-import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
 import * as React from 'react';
 
-const styles = (): StyleRules => {
+import Heading, { HeadingTypes } from 'components/Heading';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
+import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { PluginTypes } from 'components/PluginJSONCreator/constants';
+import StepButtons from 'components/PluginJSONCreator/Create/Content/StepButtons';
+import { usePluginInfoState } from 'components/PluginJSONCreator/Create';
+
+const styles = (theme): StyleRules => {
   return {
     basicPluginInput: {
-      marginTop: '30px',
-      marginBottom: '30px',
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
   };
 };
@@ -56,7 +58,7 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           widgetType={'textbox'}
           value={pluginName}
           onChange={setPluginName}
-          label={'Plugin Name'}
+          label={'Plugin name'}
           placeholder={'Select a Plugin Name'}
           required={true}
         />
@@ -66,7 +68,7 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           widgetType={'select'}
           value={pluginType}
           onChange={setPluginType}
-          label={'Plugin Type'}
+          label={'Plugin type'}
           options={PluginTypes}
           required={true}
         />
@@ -76,7 +78,7 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           widgetType={'textbox'}
           value={displayName}
           onChange={setDisplayName}
-          label={'Display Name'}
+          label={'Display name'}
           placeholder={'Select a Display Name'}
           required={true}
         />
@@ -86,7 +88,7 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           widgetType={'toggle'}
           value={emitAlerts ? 'true' : 'false'}
           onChange={(val) => setEmitAlerts(val === 'true')}
-          label={'Emit Alerts?'}
+          label={'Emit alerts?'}
         />
       </div>
       <div className={classes.basicPluginInput}>
@@ -94,7 +96,7 @@ const PluginInfoPageView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           widgetType={'toggle'}
           value={emitErrors ? 'true' : 'false'}
           onChange={(val) => setEmitErrors(val === 'true')}
-          label={'Emit Errors?'}
+          label={'Emit errors?'}
         />
       </div>
       <StepButtons nextDisabled={!requiredFilledOut} />
