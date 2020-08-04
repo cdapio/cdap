@@ -29,6 +29,7 @@ public class PreviewStatus {
    * Status for the preview
    */
   public enum Status {
+    WAITING(false),
     INIT(false),
     RUNNING(false),
     COMPLETED(true),
@@ -52,13 +53,20 @@ public class PreviewStatus {
   private final BasicThrowable throwable;
   private final Long startTime;
   private final Long endTime;
+  private final Integer positionInWaitingQueue;
 
   public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
                        @Nullable Long endTime) {
+    this(status, throwable, startTime, endTime, null);
+  }
+
+  public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
+                       @Nullable Long endTime, @Nullable Integer positionInWaitingQueue) {
     this.status = status;
     this.throwable = throwable;
     this.startTime = startTime;
     this.endTime = endTime;
+    this.positionInWaitingQueue = positionInWaitingQueue;
   }
 
   public Status getStatus() {
@@ -83,6 +91,11 @@ public class PreviewStatus {
     return endTime;
   }
 
+  @Nullable
+  public Integer getPositionInWaitingQueue() {
+    return positionInWaitingQueue;
+  }
+
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder("PreviewStatus{");
@@ -97,19 +110,20 @@ public class PreviewStatus {
     if (this == o) {
       return true;
     }
-
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
 
-    PreviewStatus that = (PreviewStatus) o;
-
-    return Objects.equals(this.status, that.status) &&
-      Objects.equals(this.throwable, that.throwable);
+    PreviewStatus status1 = (PreviewStatus) o;
+    return status == status1.status &&
+      Objects.equals(throwable, status1.throwable) &&
+      Objects.equals(startTime, status1.startTime) &&
+      Objects.equals(endTime, status1.endTime) &&
+      Objects.equals(positionInWaitingQueue, status1.positionInWaitingQueue);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(status, throwable);
+    return Objects.hash(status, throwable, startTime, endTime, positionInWaitingQueue);
   }
 }

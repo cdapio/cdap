@@ -29,6 +29,7 @@ import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.data2.dataset2.preview.PreviewDatasetFramework;
 import io.cdap.cdap.data2.metadata.lineage.DefaultLineageStoreReader;
 import io.cdap.cdap.data2.metadata.lineage.LineageStoreReader;
@@ -52,12 +53,14 @@ import org.apache.tephra.TransactionSystemClient;
 public class PreviewDataModules {
   public static final String BASE_DATASET_FRAMEWORK = "basicDatasetFramework";
 
-  public Module getDataFabricModule(final TransactionSystemClient transactionSystemClient) {
+  public Module getDataFabricModule(final TransactionSystemClient transactionSystemClient,
+                                    final LevelDBTableService levelDBTableService) {
     return Modules.override(new DataFabricLevelDBModule()).with(new AbstractModule() {
       @Override
       protected void configure() {
         // Use the distributed version of the transaction client
         bind(TransactionSystemClient.class).toInstance(transactionSystemClient);
+        bind(LevelDBTableService.class).toInstance(levelDBTableService);
       }
     });
   }
