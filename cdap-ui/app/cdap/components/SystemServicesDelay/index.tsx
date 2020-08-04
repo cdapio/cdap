@@ -24,11 +24,13 @@ import ee from 'event-emitter';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
 import { getExperimentValue, isExperimentEnabled } from 'services/helpers';
 import DataSource from 'services/datasource';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 interface IHealthCheckBindings {
   [key: string]: number | null;
 }
-interface ISystemDelayProps {
+
+interface ISystemDelayProps extends WithStyles<StyleRules> {
   showDelay: boolean;
   activeDataSources: DataSource[];
 }
@@ -41,6 +43,15 @@ const EXPERIMENT_ID = 'system-delay-notification';
 const HEALTH_CHECK_INTERVAL = 12000;
 const DEFAULT_DELAY_TIME = 5000;
 const CLEAN_CHECK_COUNT = 3;
+
+const styles = (theme): StyleRules => {
+  return {
+    snackbar: {
+      backgroundColor: theme.palette.grey[300],
+      color: 'black',
+    },
+  };
+};
 
 class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
   public state: ISystemDelayState = {
@@ -129,9 +140,14 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
     return (
       <Snackbar
         data-cy="system-delay-snackbar"
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={this.props.showDelay}
         message="Some system services are experiencing delays."
+        ContentProps={{
+          classes: {
+            root: this.props.classes.snackbar,
+          },
+        }}
         action={
           <Button
             size="small"
@@ -155,10 +171,11 @@ const mapStateToProps = (state) => {
 };
 
 const ConnectedSystemServicesDelay = connect(mapStateToProps)(SystemServicesDelayView);
+const StyledConnectedSystemServices = withStyles(styles)(ConnectedSystemServicesDelay);
 export default function SystemServicesDelay({ ...props }) {
   return (
     <Provider store={SystemDelayStore}>
-      <ConnectedSystemServicesDelay {...props} />
+      <StyledConnectedSystemServices {...props} />
     </Provider>
   );
 }
