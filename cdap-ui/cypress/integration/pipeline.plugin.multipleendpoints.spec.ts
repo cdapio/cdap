@@ -71,6 +71,8 @@ describe('Pipelines with plugins having more than one endpoints', () => {
       .clear()
       .type(unionConditionPipeline)
       .type('{enter}');
+
+    cy.get(Helpers.dataCy('pipeline-preview-btn')).should('be.visible');
   });
   it('Should show preview data for multiple outputs for splitter and correct message for conditional', () => {
     cy.window().then((window) => {
@@ -87,12 +89,8 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     // Check number of output fields for null splitter
     cy.get(Helpers.dataCy('UnionSplitter-preview-data-btn')).click();
     cy.get(Helpers.dataCy('toggle-Table')).should('exist');
-    cy.get('h3')
-      .contains('Int')
-      .should('be.visible');
-    cy.get('h3')
-      .contains('String')
-      .should('be.visible');
+    cy.get(Helpers.dataCy('tab-head-Int')).should('be.visible');
+    cy.get(Helpers.dataCy('tab-head-String')).should('be.visible');
     cy.get(closeButton).click();
     // Check messaging for condition plugin
     cy.get(`${Helpers.dataCy('plugin-node-Conditional-condition-5')} .node .node-configure-btn`)
