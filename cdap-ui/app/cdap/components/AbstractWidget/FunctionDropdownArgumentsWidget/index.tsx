@@ -53,6 +53,7 @@ class FunctionDropdownArgumentsWidgetView extends AbstractMultiRowWidget<IFuncti
         dropdownOptions={dropdownOptions}
         forwardedRef={this.values[id].ref}
         errors={this.props.errors}
+        extraConfig={this.props.extraConfig}
       />
     );
   };
