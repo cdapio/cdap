@@ -244,6 +244,8 @@ public class TestBase {
       System.load(new File(tmpDir, "hadoop.dll").getAbsolutePath());
     }
 
+    cConf.set(Constants.Preview.CACHE_SIZE, "1");
+
     injector = Guice.createInjector(
       createDataFabricModule(),
       new TransactionExecutorModule(),

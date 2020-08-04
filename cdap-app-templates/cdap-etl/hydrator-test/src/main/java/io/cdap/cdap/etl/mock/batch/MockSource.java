@@ -92,6 +92,9 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
 
     @Nullable
     private String metadataOperations;
+
+    @Nullable
+    private Long sleepInMillis;
   }
 
   @Override
@@ -179,6 +182,22 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
   }
 
   /**
+   * Get the plugin config to be used in a pipeline config. The source must only output records with the given schema.
+   *
+   * @param tableName the table backing the mock source
+   * @param schema the schema of records output by this source
+   * @param sleepInMillis sleep in milliseconds
+   * @return the plugin config to be used in a pipeline config
+   */
+  public static ETLPlugin getPlugin(String tableName, Schema schema, Long sleepInMillis) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("tableName", tableName);
+    properties.put("schema", schema.toString());
+    properties.put("sleepInMillis", sleepInMillis.toString());
+    return new ETLPlugin("Mock", BatchSource.PLUGIN_TYPE, properties, null);
+  }
+
+  /**
    * Used to write the input records for the pipeline run. Should be called after the pipeline has been created.
    *
    * @param tableManager dataset manager used to write to the source dataset
@@ -221,6 +240,7 @@ public class MockSource extends BatchSource<byte[], Row, StructuredRecord> {
     properties.put("tableName", new PluginPropertyField("tableName", "", "string", true, false));
     properties.put("schema", new PluginPropertyField("schema", "", "string", false, false));
     properties.put("metadataOperations", new PluginPropertyField("metadataOperations", "", "string", false, false));
+    properties.put("sleepInMillis", new PluginPropertyField("sleepInMillis", "", "long", false, false));
     return new PluginClass(BatchSource.PLUGIN_TYPE, "Mock", "", MockSource.class.getName(), "config", properties);
   }
 

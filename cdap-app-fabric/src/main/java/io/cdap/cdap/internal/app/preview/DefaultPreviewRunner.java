@@ -25,12 +25,13 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.DataTracerFactory;
+import io.cdap.cdap.app.preview.PreviewDataPublisher;
+import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRunner;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
-import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
@@ -91,7 +92,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final ApplicationLifecycleService applicationLifecycleService;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
-  private final PreviewStore previewStore;
+  private final PreviewDataPublisher previewDataPublisher;
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
   private final MetricsCollectionService metricsCollectionService;
@@ -108,7 +109,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ApplicationLifecycleService applicationLifecycleService,
                        ProgramRuntimeService programRuntimeService,
                        ProgramLifecycleService programLifecycleService,
-                       PreviewStore previewStore, DataTracerFactory dataTracerFactory,
+                       PreviewDataPublisher previewDataPublisher,
+                       DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin,
                        MetricsCollectionService metricsCollectionService,
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
@@ -122,7 +124,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.applicationLifecycleService = applicationLifecycleService;
     this.programRuntimeService = programRuntimeService;
     this.programLifecycleService = programLifecycleService;
-    this.previewStore = previewStore;
+    this.previewDataPublisher = previewDataPublisher;
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
     this.metricsCollectionService = metricsCollectionService;
@@ -232,7 +234,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     }, Threads.SAME_THREAD_EXECUTOR);
 
     trackPreviewTimeout(previewRequest, timeout, resultFuture);
-    previewStore.setProgramId(controller.getProgramRunId());
+    PreviewMessage message = new PreviewMessage(PreviewMessage.Type.PROGRAM_RUN_ID, programId.getParent(),
+                                                GSON.toJsonTree(controller.getProgramRunId()));
+    previewDataPublisher.publish(programId.getParent(), message);
     return resultFuture;
   }
 
@@ -262,7 +266,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
   private void setStatus(ProgramId programId, PreviewStatus previewStatus) {
     LOG.debug("Setting preview status for {} to {}", programId, previewStatus.getStatus());
-    previewStore.setPreviewStatus(programId.getParent(), previewStatus);
+    PreviewMessage message = new PreviewMessage(PreviewMessage.Type.STATUS, programId.getParent(),
+                                                GSON.toJsonTree(previewStatus));
+    previewDataPublisher.publish(programId.getParent(), message);
   }
 
   @Override
