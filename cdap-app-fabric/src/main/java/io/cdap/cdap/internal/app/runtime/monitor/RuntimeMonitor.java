@@ -27,6 +27,8 @@ import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.logging.LogSamplers;
+import io.cdap.cdap.common.logging.Loggers;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.service.AbstractRetryableScheduledService;
@@ -71,6 +73,10 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(RuntimeMonitor.class);
   private static final Gson GSON = new Gson();
+
+  // Use a field to have unique error sampling per runtime monitor instance
+  private final Logger outageLog = Loggers.sampling(
+    LOG, LogSamplers.all(LogSamplers.skipFirstN(10), LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30))));
 
   private final RuntimeMonitorClient monitorClient;
 
@@ -163,7 +169,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
     Cancellable cancellable = LoggingContextAccessor.setLoggingContext(loggingContext);
     try {
-      logOutage("Failed to fetch monitoring messages for program {}", programRunId, ex);
+      outageLog.warn("Failed to fetch monitoring messages for program {}", programRunId, ex);
       try {
         // If the program is not running, emit error state for the program run and stop the retry
         if (!remoteProcessController.isRunning()) {
@@ -176,7 +182,7 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
           return false;
         }
       } catch (Exception e) {
-        logOutage("Failed to check if the remote process is still running for program {}", programRunId, e);
+        outageLog.warn("Failed to check if the remote process is still running for program {}", programRunId, e);
       }
       return true;
     } finally {
@@ -261,15 +267,6 @@ public class RuntimeMonitor extends AbstractRetryableScheduledService {
     }
 
     return pollTimeMillis;
-  }
-
-  /**
-   * Logs a retryable outage message if failure persist for more than 30 seconds.
-   */
-  private void logOutage(String format, Object... args) {
-    if (System.currentTimeMillis() - getNonFailureStartTime() > TimeUnit.SECONDS.toMillis(30)) {
-      LOG.warn(format, args);
-    }
   }
 
   /**

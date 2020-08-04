@@ -729,7 +729,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService {
       closed = true;
       InetSocketAddress address = this.address;
       if (address != null) {
-        sshSessionManager.removeRuntimeServer(programRunId, address.getAddress());
+        sshSessionManager.removeRuntimeServer(programRunId, address);
       }
     }
   }
