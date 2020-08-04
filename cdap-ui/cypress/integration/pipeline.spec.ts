@@ -14,8 +14,7 @@
  * the License.
  */
 
-import * as Helpers from '../helpers';
-import { dataCy } from '../helpers';
+import { dataCy, loginIfRequired, getArtifactsPoll } from '../helpers';
 
 const TEST_PIPELINE_NAME = '__UI_test_pipeline';
 const TEST_PATH = '__UI_test_path';
@@ -39,7 +38,7 @@ const skip = () => {
 describe('Creating a pipeline', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
-    Helpers.loginIfRequired().then(() => {
+    loginIfRequired().then(() => {
       cy.getCookie('CDAP_Auth_Token').then((cookie) => {
         if (!cookie) {
           return;
@@ -58,7 +57,7 @@ describe('Creating a pipeline', () => {
   });
 
   beforeEach(() => {
-    Helpers.getArtifactsPoll(headers);
+    getArtifactsPoll(headers);
   });
 
   afterEach(() => {
@@ -217,14 +216,13 @@ describe('Creating a pipeline', () => {
     cy.get('[data-testid=close-modeless]').click();
   });
 
-  it.only(
-      'opening pipeline with unknown workspace should still render the studio',
-      () => {
-        cy.visit(
-            'pipelines/ns/default/studio?artifactType=cdap-data-pipeline&workspaceId=ebdbb6a7-8a8c-47b5-913f-9b75b1a0');
-        cy.get(dataCy('app-navbar')).should('be.visible');
-        cy.get(dataCy('navbar-toolbar')).should('be.visible');
-        cy.get(dataCy('navbar-hamburger-icon')).click();
-        cy.get(dataCy('navbar-home-link')).should('be.visible');
-      })
+  it.only('opening pipeline with unknown workspace should still render the studio', () => {
+    cy.visit(
+      'pipelines/ns/default/studio?artifactType=cdap-data-pipeline&workspaceId=ebdbb6a7-8a8c-47b5-913f-9b75b1a0'
+    );
+    cy.get(dataCy('app-navbar')).should('be.visible');
+    cy.get(dataCy('navbar-toolbar')).should('be.visible');
+    cy.get(dataCy('navbar-hamburger-icon')).click();
+    cy.get(dataCy('navbar-home-link')).should('be.visible');
+  });
 });

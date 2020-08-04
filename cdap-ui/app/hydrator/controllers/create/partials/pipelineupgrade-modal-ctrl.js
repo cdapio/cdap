@@ -15,7 +15,7 @@
  */
 
 angular.module(PKG.name + '.feature.hydrator')
-  .controller('PipelineUpgradeModalController', function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusLeftPanelStore,rIsImport) {
+  .controller('PipelineUpgradeModalController', function ($scope, rPipelineConfig, HydratorUpgradeService, $rootScope, HydratorPlusPlusConfigStore, $state, DAGPlusPlusFactory, GLOBALS, HydratorPlusPlusLeftPanelStore, rIsImport) {
     let eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     let globalEvents = window.CaskCommon.globalEvents;
 

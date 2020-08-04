@@ -77,7 +77,7 @@ class HydratorPlusPlusStudioCtrl {
       let config = {};
       config.artifact = artifact;
       HydratorPlusPlusConfigActions.initializeConfigStore(config);
-      if (rConfig.upgrade){
+      if (rConfig.upgrade) {
         HydratorUpgradeService.openUpgradeModal(rConfig.config, false);
       }
     }

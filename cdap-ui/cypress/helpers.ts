@@ -1,5 +1,3 @@
-import { INodeIdentifier } from './typings';
-
 /*
  * Copyright © 2018 Cask Data, Inc.
  *
@@ -16,6 +14,7 @@ import { INodeIdentifier } from './typings';
  * the License.
  */
 
+import { INodeIdentifier } from './typings';
 const uuidV4 = require('uuid/v4');
 
 const username = Cypress.env('username') || 'admin';
@@ -148,13 +147,13 @@ function setDefaultOldSchemaEditor() {
 }
 
 function generateDraftFromPipeline(pipeline) {
-  return cy.fixture(pipeline).then(pipeline_for_draft => {
+  return cy.fixture(pipeline).then((pipeline_for_draft) => {
     const draftId = uuidV4();
     const pipelineName = `${pipeline_for_draft.name}-${Date.now()}`;
-    pipeline_for_draft['__ui__'] = { draftId, lastSaved: Date.now() };
+    pipeline_for_draft.__ui__ = { draftId, lastSaved: Date.now() };
     pipeline_for_draft.name = pipelineName;
     const pipelineDraft = {
-      hydratorDrafts: { default: { [draftId]: pipeline_for_draft } }
+      hydratorDrafts: { default: { [draftId]: pipeline_for_draft } },
     };
     return { pipelineDraft, pipelineName };
   });
@@ -170,5 +169,5 @@ export {
   dataCy,
   getNodeSelectorFromNodeIndentifier,
   setDefaultOldSchemaEditor,
-  generateDraftFromPipeline
+  generateDraftFromPipeline,
 };
