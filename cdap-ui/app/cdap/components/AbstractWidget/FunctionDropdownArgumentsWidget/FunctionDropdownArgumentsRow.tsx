@@ -26,6 +26,9 @@ import AbstractRow, {
   AbstractRowStyles,
 } from 'components/AbstractWidget/AbstractMultiRowWidget/AbstractRow';
 import { parse, serialize } from 'components/AbstractWidget/FunctionDropdownArgumentsWidget/parser';
+import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
+import If from 'components/If';
+import { IWidgetExtraConfig } from 'components/AbstractWidget';
 
 const styles = (theme): StyleRules => {
   return {
@@ -39,6 +42,7 @@ const styles = (theme): StyleRules => {
       color: `${theme.palette.grey['50']}`,
     },
     separator: {
+      paddingTop: '10px',
       textAlign: 'center',
     },
   };
@@ -54,6 +58,7 @@ export type IDropdownOption = string | number | IComplexDropdown;
 interface IFunctionDropdownArgumentsRowProps extends IAbstractRowProps<typeof styles> {
   placeholders: Record<string, string>;
   dropdownOptions: IDropdownOption[];
+  extraConfig?: IWidgetExtraConfig;
 }
 
 interface IKeyValueState {
@@ -94,25 +99,45 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
     this.setState(parse(this.props.value));
   }
 
-  private handleChange = (type: StateKeys, e) => {
+  private handleInputChange = (type: StateKeys, e) => {
     this.setState(
       {
         [type]: e.target.value,
       } as Pick<IKeyValueState, StateKeys>,
-      () => {
-        const { field, func, alias, arguments: args, ignoreNulls } = this.state;
-
-        const updatedValue = serialize({
-          field,
-          func,
-          alias,
-          arguments: args,
-          ignoreNulls,
-        });
-
-        this.onChange(updatedValue);
-      }
+      this.serializeChange
     );
+  };
+
+  private handleCheckboxChange = (type: StateKeys, e) => {
+    this.setState(
+      {
+        [type]: e.target.checked,
+      } as Pick<IKeyValueState, StateKeys>,
+      this.serializeChange
+    );
+  };
+
+  private handleInputFieldDropdownChange = (type: StateKeys, value) => {
+    this.setState(
+      {
+        [type]: value,
+      } as Pick<IKeyValueState, StateKeys>,
+      this.serializeChange
+    );
+  };
+
+  private serializeChange = () => {
+    const { field, func, alias, arguments: args, ignoreNulls } = this.state;
+
+    const updatedValue = serialize({
+      field,
+      func,
+      alias,
+      arguments: args,
+      ignoreNulls,
+    });
+
+    this.onChange(updatedValue);
   };
 
   public renderInput = () => {
@@ -132,7 +157,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
         <Select
           classes={{ disabled: this.props.classes.disabled }}
           value={this.state.func}
-          onChange={this.handleChange.bind(this, 'func')}
+          onChange={this.handleInputChange.bind(this, 'func')}
           displayEmpty={true}
           disabled={this.props.disabled}
         >
@@ -145,22 +170,35 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
           })}
         </Select>
 
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.placeholders.field}
-          onChange={this.handleChange.bind(this, 'field')}
-          value={this.state.field}
-          autoFocus={this.props.autofocus}
-          onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
-          disabled={this.props.disabled}
-          inputRef={this.props.forwardedRef}
-        />
+        <If condition={!!this.props.extraConfig && !!this.props.extraConfig.inputSchema}>
+          <InputFieldDropdown
+            disabled={this.props.disabled}
+            extraConfig={this.props.extraConfig}
+            onChange={this.handleInputFieldDropdownChange.bind(this, 'field')}
+            onKeyPress={this.handleKeyPress}
+            value={this.state.field}
+            widgetProps={{}}
+          />
+        </If>
+
+        <If condition={!this.props.extraConfig || !this.props.extraConfig.inputSchema}>
+          <Input
+            classes={{ disabled: this.props.classes.disabled }}
+            placeholder={this.props.placeholders.field}
+            onChange={this.handleInputChange.bind(this, 'field')}
+            value={this.state.field}
+            autoFocus={this.props.autofocus}
+            onKeyPress={this.handleKeyPress}
+            onKeyDown={this.handleKeyDown}
+            disabled={this.props.disabled}
+            inputRef={this.props.forwardedRef}
+          />
+        </If>
 
         <Input
           classes={{ disabled: this.props.classes.disabled }}
           placeholder={this.props.placeholders.arguments}
-          onChange={this.handleChange.bind(this, 'arguments')}
+          onChange={this.handleInputChange.bind(this, 'arguments')}
           value={this.state.arguments}
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
@@ -173,7 +211,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
           control={
             <Checkbox
               classes={{ disabled: this.props.classes.disabled }}
-              onChange={this.handleChange.bind(this, 'ignoreNulls')}
+              onChange={this.handleCheckboxChange.bind(this, 'ignoreNulls')}
               checked={this.state.ignoreNulls}
               disabled={this.props.disabled}
               color="primary"
@@ -187,7 +225,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
         <Input
           classes={{ disabled: this.props.classes.disabled }}
           placeholder={this.props.placeholders.alias}
-          onChange={this.handleChange.bind(this, 'alias')}
+          onChange={this.handleInputChange.bind(this, 'alias')}
           value={this.state.alias}
           onKeyPress={this.handleKeyPress}
           onKeyDown={this.handleKeyDown}
