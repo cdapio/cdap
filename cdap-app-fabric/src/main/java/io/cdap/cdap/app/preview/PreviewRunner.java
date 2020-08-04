@@ -24,7 +24,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.concurrent.Future;
 import javax.annotation.Nullable;
 
 /**
@@ -34,11 +34,12 @@ import javax.annotation.Nullable;
 public interface PreviewRunner {
 
   /**
-   * Start the preview of an application.
+   * Start the preview of an application. The returned {@link Future} will be completed when the preview completed.
+   *
    * @param previewRequest request representing preview
    * @throws Exception when there is error while starting preview
    */
-  void startPreview(PreviewRequest previewRequest) throws Exception;
+  Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception;
 
   /**
    * Get the status of the preview.
@@ -54,12 +55,6 @@ public interface PreviewRunner {
    * @throws Exception thrown when any error in stopping the preview run
    */
   void stopPreview(ApplicationId applicationId) throws Exception;
-
-  /**
-   * Get list of tracers used in the preview run represented by this {@link PreviewRunner}.
-   * @return {@link Set} of tracers used in the preview
-   */
-  Set<String> getTracers();
 
   /**
    * Get the data associated with the preview run represented by this {@link PreviewRunner}.

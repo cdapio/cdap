@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.preview;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
+import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
@@ -65,13 +66,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 /**
@@ -139,7 +142,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public void startPreview(PreviewRequest previewRequest) throws Exception {
+  public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception {
     ProgramId programId = previewRequest.getProgram();
 
     // Set the status to INIT to prepare for preview run.
@@ -180,11 +183,11 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     ProgramController controller = programLifecycleService.start(
       programId, previewConfig == null ? Collections.emptyMap() : previewConfig.getRuntimeArgs(), false);
 
-    final boolean[] killedByTimer = new boolean[1];
-    long startTimeMillis;
-
-    startTimeMillis = System.currentTimeMillis();
+    long startTimeMillis = System.currentTimeMillis();
+    AtomicBoolean timeout = new AtomicBoolean();
+    CompletableFuture<PreviewRequest> resultFuture = new CompletableFuture<>();
     controller.addListener(new AbstractListener() {
+
       @Override
       public void init(ProgramController.State currentState, @Nullable Throwable cause) {
         switch (currentState) {
@@ -195,33 +198,14 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
             break;
           case COMPLETED:
             terminated(PreviewStatus.Status.COMPLETED, null);
-            return;
+            break;
           case KILLED:
             terminated(PreviewStatus.Status.KILLED, null);
-            return;
+            break;
           case ERROR:
             terminated(PreviewStatus.Status.RUN_FAILED, cause);
-            return;
+            break;
         }
-
-        long timeOutMinutes = previewConfig != null && previewConfig.getTimeout() != null ?
-          previewConfig.getTimeout() : PREVIEW_TIMEOUT;
-
-        Timer timer = new Timer(programId.getApplication());
-        timer.schedule(new TimerTask() {
-          @Override
-          public void run() {
-            try {
-              LOG.info("Stopping the preview for {} since it has reached running time: {} mins.",
-                       programId, timeOutMinutes);
-              killedByTimer[0] = true;
-              stopPreview(programId.getParent());
-            } catch (Exception e) {
-              killedByTimer[0] = false;
-              LOG.debug("Error shutting down the preview run with id: {}", programId, e);
-            }
-          }
-        }, timeOutMinutes * 60 * 1000);
       }
 
       @Override
@@ -231,7 +215,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
 
       @Override
       public void killed() {
-        terminated(killedByTimer[0] ? PreviewStatus.Status.KILLED_BY_TIMER : PreviewStatus.Status.KILLED, null);
+        terminated(timeout.get() ? PreviewStatus.Status.KILLED_BY_TIMER : PreviewStatus.Status.KILLED, null);
       }
 
       @Override
@@ -248,10 +232,41 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       private void terminated(PreviewStatus.Status status, @Nullable Throwable failureCause) {
         setStatus(programId, new PreviewStatus(status, failureCause == null ? null : new BasicThrowable(failureCause),
                                                startTimeMillis, System.currentTimeMillis()));
+        if (failureCause == null) {
+          resultFuture.complete(previewRequest);
+        } else {
+          resultFuture.completeExceptionally(failureCause);
+        }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
 
+    trackPreviewTimeout(previewRequest, timeout, resultFuture);
     previewStore.setProgramId(controller.getProgramRunId());
+    return resultFuture;
+  }
+
+  private void trackPreviewTimeout(PreviewRequest previewRequest, AtomicBoolean timeout,
+                                   CompletableFuture<PreviewRequest> resultFuture) {
+    ProgramId programId = previewRequest.getProgram();
+    long timeoutMins = Optional.ofNullable(previewRequest.getAppRequest().getPreview())
+      .map(PreviewConfig::getTimeout)
+      .map(Integer::longValue).orElse(PREVIEW_TIMEOUT);
+    Thread timeoutThread = Threads.createDaemonThreadFactory("preview-timeout-" + programId).newThread(() -> {
+      try {
+        Uninterruptibles.getUninterruptibly(resultFuture, timeoutMins, TimeUnit.MINUTES);
+      } catch (ExecutionException e) {
+        // Ignore. This means the preview completed with failure.
+      } catch (TimeoutException e) {
+        // Timeout, kill the preview
+        timeout.set(true);
+        try {
+          stopPreview(programId.getParent());
+        } catch (Exception ex) {
+          LOG.warn("Failed to stop preview upon timeout of {} minutes", timeoutMins, ex);
+        }
+      }
+    });
+    timeoutThread.start();
   }
 
   private void setStatus(ProgramId programId, PreviewStatus previewStatus) {
@@ -272,11 +287,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   public void stopPreview(ApplicationId applicationId) throws Exception {
     ProgramRunId programRunId = getRunRecord(applicationId).getProgramRunId();
     programLifecycleService.stop(programRunId.getParent());
-  }
-
-  @Override
-  public Set<String> getTracers() {
-    return new HashSet<>();
   }
 
   @Override
