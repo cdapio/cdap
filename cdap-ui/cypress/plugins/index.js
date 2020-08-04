@@ -29,6 +29,7 @@ module.exports = (on) => {
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
+          experimentalWatchApi: true,
         },
       },
     ],

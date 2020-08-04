@@ -14,59 +14,63 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
+import { hot } from 'react-hot-loader/root';
+import 'react-hot-loader/patch';
+import './globals';
 
+import { InMemoryCache, IntrospectionFragmentMatcher } from 'apollo-cache-inmemory';
 import React, { Component } from 'react';
+import { Route, Router, Switch } from 'react-router-dom';
+import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
+import { Theme, applyTheme } from 'services/ThemeHelper';
+import { WINDOW_ON_BLUR, WINDOW_ON_FOCUS } from 'services/WindowManager';
+
+import ApolloClient from 'apollo-boost';
+import { ApolloProvider } from 'react-apollo';
+import AppHeader from 'components/AppHeader';
+import AuthRefresher from 'components/AuthRefresher';
+import AuthorizationErrorMessage from 'components/AuthorizationErrorMessage';
+import Cookies from 'universal-cookie';
+import ErrorBoundary from 'components/ErrorBoundary';
+import Footer from 'components/Footer';
+import Helmet from 'react-helmet';
+import Home from 'components/Home';
+import HttpExecutor from 'components/HttpExecutor';
+import If from 'components/If';
+import Loadable from 'react-loadable';
+import LoadingIndicator from 'components/LoadingIndicator';
+import LoadingSVG from 'components/LoadingSVG';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import MyCDAPVersionApi from 'api/version.js';
+import { MyNamespaceApi } from 'api/namespace';
+import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
+import NamespaceStore from 'services/NamespaceStore';
+import Page404 from 'components/404';
+import Page500 from 'components/500';
+import PropTypes from 'prop-types';
 import ReactDOM from 'react-dom';
+import RouteToNamespace from 'components/RouteToNamespace';
+import StatusAlertMessage from 'components/StatusAlertMessage';
+import StatusFactory from 'services/StatusFactory';
+// Initialize i18n
+import T from 'i18n-react';
+import ThemeWrapper from 'components/ThemeWrapper';
+import ToggleExperiment from 'components/Lab/ToggleExperiment';
+import VersionActions from 'services/VersionStore/VersionActions';
+import VersionStore from 'services/VersionStore';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
+import { handlePageLevelError } from 'services/helpers';
+import history from 'services/history';
+// See ./graphql/fragements/README.md
+import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 
 require('../ui-utils/url-generator');
 require('font-awesome-sass-loader!./styles/font-awesome.config.js');
 require('./styles/lib-styles.scss');
 require('./styles/common.scss');
 require('./styles/main.scss');
-
-import Loadable from 'react-loadable';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import Home from 'components/Home';
-import AppHeader from 'components/AppHeader';
-import Footer from 'components/Footer';
-import Cookies from 'universal-cookie';
-import { Router, Route, Switch } from 'react-router-dom';
-import history from 'services/history';
-import NamespaceStore from 'services/NamespaceStore';
-import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
-import RouteToNamespace from 'components/RouteToNamespace';
-import Helmet from 'react-helmet';
-import MyCDAPVersionApi from 'api/version.js';
-import VersionStore from 'services/VersionStore';
-import VersionActions from 'services/VersionStore/VersionActions';
-import StatusFactory from 'services/StatusFactory';
-import LoadingIndicator from 'components/LoadingIndicator';
-import StatusAlertMessage from 'components/StatusAlertMessage';
-import AuthorizationErrorMessage from 'components/AuthorizationErrorMessage';
-import Page404 from 'components/404';
-import ee from 'event-emitter';
-import globalEvents from 'services/global-events';
-import HttpExecutor from 'components/HttpExecutor';
-import { applyTheme } from 'services/ThemeHelper';
-import ErrorBoundary from 'components/ErrorBoundary';
-import { Theme } from 'services/ThemeHelper';
-import AuthRefresher from 'components/AuthRefresher';
-import ThemeWrapper from 'components/ThemeWrapper';
-import './globals';
-import { ApolloProvider } from 'react-apollo';
-import ApolloClient from 'apollo-boost';
-import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemory';
-// See ./graphql/fragements/README.md
-import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
-import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
-import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
-import { MyNamespaceApi } from 'api/namespace';
-import If from 'components/If';
-import Page500 from 'components/500';
-import LoadingSVG from 'components/LoadingSVG';
-import { handlePageLevelError } from 'services/helpers';
-import ToggleExperiment from 'components/Lab/ToggleExperiment';
+T.setTexts(require('./text/text-en.yaml'));
 
 const cookie = new Cookies();
 
@@ -362,4 +366,8 @@ CDAP.propTypes = {
   children: PropTypes.node,
 };
 
-ReactDOM.render(<ThemeWrapper render={() => <CDAP />} />, document.getElementById('app-container'));
+const RootComp = hot(() => {
+  return <ThemeWrapper render={() => <CDAP />} />;
+});
+
+ReactDOM.render(<RootComp />, document.getElementById('app-container'));
