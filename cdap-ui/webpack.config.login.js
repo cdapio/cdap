@@ -135,6 +135,7 @@ var rules = [
         loader: 'ts-loader',
         options: {
           transpileOnly: true,
+          experimentalWatchApi: true,
         },
       },
     ],
