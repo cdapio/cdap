@@ -328,7 +328,7 @@ export default class Datasource {
     // stopping existing polls
     for (let key in this.bindings) {
       if (this.bindings[key].type === 'POLL') {
-        this.stopPoll(this.bindings[key].resource);
+        this.stopPoll(this.bindings[key].resource.id);
       }
     }
     this.bindings = {};

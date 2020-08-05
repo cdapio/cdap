@@ -153,7 +153,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
           Object.keys(self.bindings).forEach(function(key) {
             var b = self.bindings[key];
             if (b.poll) {
-              stopPoll(self.bindings, b.resource);
+              stopPoll(self.bindings, b.resource.id);
             }
           });
 
@@ -172,7 +172,7 @@ var socketDataSource = angular.module(PKG.name+'.services');
 
       function startClientPoll(resourceId, bindings, interval) {
         const intervalTimer = setTimeout(() => {
-          const resource = bindings[resourceId].resource;
+          const resource = bindings[resourceId]? bindings[resourceId].resource : undefined;
           if (!resource) {
             clearTimeout(intervalTimer);
             return;

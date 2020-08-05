@@ -67,7 +67,7 @@ describe('Pipelines with plugins having more than one endpoints', () => {
       .clear()
       .type(unionConditionPipeline)
       .type('{enter}');
-  })
+  });
 
   after(() => {
     // Delete the pipeline to clean up
