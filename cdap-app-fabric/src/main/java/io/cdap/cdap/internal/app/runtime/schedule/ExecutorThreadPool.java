@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.schedule;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.quartz.SchedulerConfigException;
 import org.quartz.spi.ThreadPool;
 
@@ -24,7 +25,6 @@ import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Executor based ThreadPool used in quartz scheduler.
@@ -79,22 +79,12 @@ public final class ExecutorThreadPool implements ThreadPool {
   }
 
   private ThreadPoolExecutor createThreadPoolExecutor() {
-    ThreadFactory threadFactory = new ThreadFactory() {
-      private final ThreadGroup threadGroup = new ThreadGroup("scheduler-thread");
-      private final AtomicLong count = new AtomicLong(0);
+    ThreadFactory threadFactory = new ThreadFactoryBuilder()
+      .setNameFormat("scheduler-executor-%d")
+      .setDaemon(true)
+      .build();
 
-      @Override
-      public Thread newThread(Runnable r) {
-        Thread t = new Thread(threadGroup, r,
-                              String.format("scheduler-executor-%d", count.getAndIncrement()));
-        t.setDaemon(true);
-        return t;
-      }
-    };
-
-    return new ThreadPoolExecutor(0, maxThreadPoolSize,
-                       60L, TimeUnit.SECONDS,
-                       new SynchronousQueue<Runnable>(),
-                       threadFactory, new ThreadPoolExecutor.AbortPolicy());
+    return new ThreadPoolExecutor(0, maxThreadPoolSize, 60L, TimeUnit.SECONDS, new SynchronousQueue<>(),
+                                  threadFactory, new ThreadPoolExecutor.AbortPolicy());
   }
 }

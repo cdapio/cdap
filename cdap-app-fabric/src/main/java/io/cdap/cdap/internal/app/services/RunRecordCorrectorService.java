@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.services;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
@@ -156,7 +157,7 @@ public abstract class RunRecordCorrectorService extends AbstractIdleService {
     LOG.info("Starting RunRecordCorrectorService");
 
     localDatasetDeleterService = Executors
-      .newSingleThreadScheduledExecutor(r -> new Thread(r, "local dataset deleter"));
+      .newSingleThreadScheduledExecutor(new ThreadFactoryBuilder().setNameFormat("local dataset deleter").build());
     long interval = cConf.getLong(Constants.AppFabric.LOCAL_DATASET_DELETER_INTERVAL_SECONDS);
     if (interval <= 0) {
       LOG.warn("Invalid interval specified for the local dataset deleter {}. Setting it to 3600 seconds.", interval);
