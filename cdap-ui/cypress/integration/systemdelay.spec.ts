@@ -1,9 +1,11 @@
 import { loginIfRequired } from '../helpers';
 import { dataCy } from '../helpers';
-import { getExperimentValue, isExperimentEnabled } from '../../app/cdap/services/helpers';
+import { getExperimentValue, isExperimentEnabled, ONE_HOUR_SECONDS } from '../../app/cdap/services/helpers';
 
 let headers = {};
 const EXPERIMENT_ID='system-delay-notification';
+const snoozeTimeLabel = `${EXPERIMENT_ID}-snoozetime`;
+const snoozeButtonLabel = `snooze-${EXPERIMENT_ID}`;
 
 describe('System delay notification ', () => {
     // Uses API call to login instead of logging in manually through UI
@@ -59,14 +61,34 @@ describe('System delay notification ', () => {
         expect(getExperimentValue(EXPERIMENT_ID)).to.be.eq('0');
         expect(isExperimentEnabled(EXPERIMENT_ID)).to.be.true;
         cy.get(dataCy('system-delay-snackbar')).should('be.visible');
-        cy.get(dataCy('do-not-show-delay-btn')).should('be.visible');
-        cy.get(dataCy('do-not-show-delay-btn')).click({ force: true });
+        cy.get(dataCy(snoozeButtonLabel)).should('be.visible');
+        cy.get(dataCy(snoozeButtonLabel)).click({ force: true });
         cy.get(dataCy('system-delay-snackbar')).should('not.be.visible');
         cy.then(() => {
-            expect(getExperimentValue(EXPERIMENT_ID)).to.be.eq(null);
-            expect(isExperimentEnabled(EXPERIMENT_ID)).to.be.false;
+            expect(isExperimentEnabled(EXPERIMENT_ID)).to.be.true;
+            expect(window.localStorage.getItem(snoozeTimeLabel)).to.not.be.null;
         });
         cy.visit('/cdap/ns/default/lab');
-        cy.get(`${dataCy(`${EXPERIMENT_ID}-switch`)} input`).should('have.value', 'false');
+        cy.get(`${dataCy(`${EXPERIMENT_ID}-switch`)} input`).should('have.value', 'true');
+        delete window.localStorage[snoozeTimeLabel];
+    });
+    it('should show notification when the snooze time elapsed', () => {
+        cy.visit('/cdap/ns/default');
+        cy.get(dataCy(snoozeButtonLabel)).should('be.visible');
+        cy.get(dataCy(snoozeButtonLabel)).click({ force: true });
+        cy.get(dataCy('system-delay-snackbar')).should('not.be.visible');
+        cy.then(() => {
+            expect(isExperimentEnabled(EXPERIMENT_ID)).to.be.true;
+            expect(window.localStorage.getItem(snoozeTimeLabel)).to.not.be.null;
+        });
+        cy.then(() => {
+            window.localStorage.setItem(snoozeTimeLabel, (Date.now() - (ONE_HOUR_SECONDS) * 1000).toString());
+        });
+        cy.wait(13000);
+        cy.visit('/cdap/ns/default');
+        cy.then(() => {
+            cy.get(dataCy(`snooze-${EXPERIMENT_ID}`)).should('be.visible');
+            expect(window.localStorage.getItem(snoozeTimeLabel)).to.be.null;
+        })
     });
 });
