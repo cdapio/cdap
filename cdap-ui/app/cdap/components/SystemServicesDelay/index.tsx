@@ -22,7 +22,7 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Button from '@material-ui/core/Button';
 import ee from 'event-emitter';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
-import { getExperimentValue, isExperimentEnabled } from 'services/helpers';
+import { getExperimentValue, isExperimentEnabled, ONE_HOUR_SECONDS } from 'services/helpers';
 import DataSource from 'services/datasource';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
@@ -40,6 +40,7 @@ interface ISystemDelayState {
 }
 
 const EXPERIMENT_ID = 'system-delay-notification';
+const snoozeTimelabel = `${EXPERIMENT_ID}-snoozetime`;
 const HEALTH_CHECK_INTERVAL = 12000;
 const DEFAULT_DELAY_TIME = 5000;
 const CLEAN_CHECK_COUNT = 3;
@@ -83,7 +84,24 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
     }
   };
 
+  /**
+   * When the user clicks on 'Close' button we snooze the notification for 1 hour
+   * We wait for 1 hour to show the delay notification if there are any delays.
+   */
+  private isNotificationSnoozed = () => {
+    const snoozeTime = window.localStorage.getItem(snoozeTimelabel);
+    if (!snoozeTime) {
+      return false;
+    }
+    const snoozeEpoch = parseInt(snoozeTime, 10);
+    return Date.now() - snoozeEpoch < ONE_HOUR_SECONDS * 1000;
+  };
+
   private checkForDelayedBindings = () => {
+    if (this.isNotificationSnoozed()) {
+      return;
+    }
+    delete window.localStorage[snoozeTimelabel];
     const delayedTimeFromExperiment = getExperimentValue(EXPERIMENT_ID);
     const SERVICES_DELAYED_TIME = delayedTimeFromExperiment
       ? parseInt(delayedTimeFromExperiment, 10) * 1000
@@ -130,10 +148,13 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
     clearInterval(this.healthCheckInterval);
   };
 
-  private doNotShowAgain = () => {
-    this.stopHealthCheck();
-    window.localStorage.removeItem(`${EXPERIMENT_ID}-value`);
-    window.localStorage.setItem(EXPERIMENT_ID, 'false');
+  private closeNotification = () => {
+    this.setState({ cleanChecksNeeded: 0 }, () => {
+      SystemDelayStore.dispatch({
+        type: SystemDelayActions.hideDelay,
+      });
+    });
+    window.localStorage.setItem(snoozeTimelabel, Date.now().toString());
   };
 
   public render() {
@@ -152,7 +173,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
           <Button
             size="small"
             color="primary"
-            onClick={this.doNotShowAgain}
+            onClick={this.closeNotification}
             data-cy="do-not-show-delay-btn"
           >
             Snooze for 1 hour
