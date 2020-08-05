@@ -174,7 +174,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
             size="small"
             color="primary"
             onClick={this.closeNotification}
-            data-cy="do-not-show-delay-btn"
+            data-cy="snooze-system-delay-notification"
           >
             Close
           </Button>
