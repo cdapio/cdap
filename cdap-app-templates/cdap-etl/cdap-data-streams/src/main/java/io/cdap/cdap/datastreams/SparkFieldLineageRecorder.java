@@ -17,17 +17,12 @@
 package io.cdap.cdap.datastreams;
 
 import io.cdap.cdap.api.lineage.field.Operation;
-import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
-import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
-import io.cdap.cdap.etl.common.PipelineRuntime;
-import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.lineage.FieldLineageProcessor;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
-import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.streaming.SparkStreamingPreparer;
 
 import java.util.Collections;
@@ -43,14 +38,16 @@ public class SparkFieldLineageRecorder {
   private final JavaSparkExecutionContext sec;
   private final PipelinePhase pipelinePhase;
   private final PipelineSpec pipelineSpec;
+  private final SparkStreamingPreparer preparer;
   private Map<String, List<FieldOperation>> operations;
 
-  public SparkFieldLineageRecorder(JavaSparkExecutionContext sec,
-                                   PipelinePhase pipelinePhase, PipelineSpec pipelineSpec) {
+  public SparkFieldLineageRecorder(JavaSparkExecutionContext sec, PipelinePhase pipelinePhase,
+                                   PipelineSpec pipelineSpec, SparkStreamingPreparer preparer) {
     this.sec = sec;
     this.pipelinePhase = pipelinePhase;
     this.pipelineSpec = pipelineSpec;
     this.operations = new HashMap<>();
+    this.preparer = preparer;
   }
 
   public void record() throws Exception {
@@ -67,15 +64,6 @@ public class SparkFieldLineageRecorder {
   }
 
   private void generateOperations() throws Exception {
-    PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                    pipelineSpec.isStageLoggingEnabled(),
-                                                                    pipelineSpec.isProcessTimingEnabled());
-    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
-    MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
-                                                         sec.getLogicalStartTime(), sec,
-                                                         sec.getNamespace());
-    SparkStreamingPreparer preparer = new SparkStreamingPreparer(pluginContext, sec.getMetrics(), evaluator,
-                                                                 pipelineRuntime, sec);
     preparer.prepare(new PhaseSpec(DataStreamsSparkLauncher.NAME, pipelinePhase, Collections.emptyMap(),
                                    pipelineSpec.isStageLoggingEnabled(), pipelineSpec.isProcessTimingEnabled()));
     operations = preparer.getFieldOperations();
