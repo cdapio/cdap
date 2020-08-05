@@ -69,6 +69,7 @@ const SecureKeySearchView: React.FC<ISecureKeySearchProps> = ({
             </InputAdornment>
           ),
         }}
+        data-cy="search-secure-key"
       />
     </FormControl>
   );
