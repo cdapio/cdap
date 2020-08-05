@@ -102,6 +102,8 @@ public class MasterServiceMainTestBase {
     cConf.setInt(Constants.Router.ROUTER_PORT, 0);
     cConf.setInt(Constants.Router.ROUTER_SSL_PORT, 0);
 
+    cConf.setInt(Constants.Preview.CACHE_SIZE, 1);
+
     // Use remote fetcher for runtime server
     cConf.setClass(Constants.RuntimeMonitor.RUN_RECORD_FETCHER_CLASS,
                    RemoteProgramRunRecordFetcher.class, ProgramRunRecordFetcher.class);

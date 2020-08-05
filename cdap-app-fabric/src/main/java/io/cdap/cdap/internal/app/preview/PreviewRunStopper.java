@@ -14,12 +14,18 @@
  * the License.
  */
 
-package io.cdap.cdap.app.preview;
+package io.cdap.cdap.internal.app.preview;
 
-import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
+import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
- * It is just a tagging interface for guice binding of {@link DefaultPreviewRunnerManager}.
+ * Interface to kill the preview runner service.
  */
-public interface PreviewRunnerManager extends PreviewRunStopper {
+public interface PreviewRunStopper {
+  /**
+   * Stops the preview as identified by the application id.
+   * @param preview id of the preview application to be stopped
+   * @throws Exception if any error while stopping
+   */
+  void stop(ApplicationId preview) throws Exception;
 }

@@ -76,6 +76,9 @@ public class PreviewConfigModule extends AbstractModule {
     // Don't load custom log pipelines in preview
     previewCConf.unset(Constants.Logging.PIPELINE_CONFIG_DIR);
 
+    previewCConf.set(Constants.Logging.TMS_TOPIC_PREFIX, "previewlog");
+    previewCConf.setInt(Constants.Logging.NUM_PARTITIONS, 1);
+
     // Setup Hadoop configuration
     previewHConf = new Configuration(hConf);
     previewHConf.set(MRConfig.FRAMEWORK_NAME, MRConfig.LOCAL_FRAMEWORK_NAME);
