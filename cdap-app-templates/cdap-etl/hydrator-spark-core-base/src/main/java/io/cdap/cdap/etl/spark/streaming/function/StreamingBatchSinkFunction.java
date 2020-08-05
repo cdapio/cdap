@@ -57,8 +57,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
   private final JavaSparkExecutionContext sec;
   private final StageSpec stageSpec;
 
-  public StreamingBatchSinkFunction(PairFlatMapFunction<T, Object, Object> sinkFunction,
-                                    JavaSparkExecutionContext sec, StageSpec stageSpec) {
+  public StreamingBatchSinkFunction(JavaSparkExecutionContext sec, StageSpec stageSpec) {
     this.sec = sec;
     this.stageSpec = stageSpec;
   }
