@@ -17,9 +17,11 @@
 package io.cdap.cdap.etl.spark;
 
 import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
@@ -28,6 +30,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -69,8 +72,8 @@ public interface SparkCollection<T> {
 
   Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
 
-  Runnable createMultiStoreTask(Set<String> sinkNames,
-                                PairFlatMapFunction<T, String, KeyValue<Object, Object>> multiSinkFunction);
+  Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
+                                Map<String, StageStatisticsCollector> collectors);
 
   Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
 

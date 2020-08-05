@@ -38,10 +38,12 @@ import io.cdap.cdap.data2.metadata.lineage.Relation;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.mock.alert.NullAlertTransform;
 import io.cdap.cdap.etl.mock.alert.TMSAlertPublisher;
+import io.cdap.cdap.etl.mock.batch.MockExternalSink;
 import io.cdap.cdap.etl.mock.batch.MockSink;
 import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.FieldCountReducibleAggregator;
 import io.cdap.cdap.etl.mock.batch.aggregator.GroupFilterAggregator;
+import io.cdap.cdap.etl.mock.batch.aggregator.IdentityAggregator;
 import io.cdap.cdap.etl.mock.batch.joiner.DupeFlagger;
 import io.cdap.cdap.etl.mock.batch.joiner.MockAutoJoiner;
 import io.cdap.cdap.etl.mock.batch.joiner.MockJoiner;
@@ -52,6 +54,7 @@ import io.cdap.cdap.etl.mock.test.HydratorTestBase;
 import io.cdap.cdap.etl.mock.transform.FilterErrorTransform;
 import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
+import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
@@ -79,6 +82,7 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1043,9 +1047,6 @@ public class DataStreamsTest extends HydratorTestBase {
 
   @Test
   public void testErrorTransform() throws Exception {
-    String sink1TableName = "errTestOut1";
-    String sink2TableName = "errTestOut2";
-
     Schema inputSchema = Schema.recordOf("user", Schema.Field.of("name", Schema.of(Schema.Type.STRING)));
     List<StructuredRecord> input = ImmutableList.of(
       StructuredRecord.builder(inputSchema).set("name", "Leo").build(),
@@ -1065,6 +1066,9 @@ public class DataStreamsTest extends HydratorTestBase {
      * this will test multiple stages from multiple phases emitting errors to the same stage
      * as well as errors from one stage going to multiple stages
      */
+    File outputDir = TMP_FOLDER.newFolder();
+    String output1 = new File(outputDir, "output1").getAbsolutePath();
+    String output2 = new File(outputDir, "output2").getAbsolutePath();
     DataStreamsConfig config = DataStreamsConfig.builder()
       .setBatchInterval("5s")
       .addStage(new ETLStage("source", MockSource.getPlugin(inputSchema, input)))
@@ -1074,8 +1078,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("agg2", GroupFilterAggregator.getPlugin("name", "Mike")))
       .addStage(new ETLStage("errorflatten", FlattenErrorTransform.getPlugin()))
       .addStage(new ETLStage("errorfilter", FilterErrorTransform.getPlugin(3)))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1TableName)))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2TableName)))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "sink1", output1)))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "sink2", output2)))
       .addConnection("source", "filter1")
       .addConnection("filter1", "filter2")
       .addConnection("filter2", "agg1")
@@ -1097,9 +1101,9 @@ public class DataStreamsTest extends HydratorTestBase {
     ApplicationId appId = NamespaceId.DEFAULT.app("ErrTransformTest");
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.start();
-    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.startAndWaitForRun(args, ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     Schema flattenSchema =
       Schema.recordOf("erroruser",
@@ -1116,12 +1120,10 @@ public class DataStreamsTest extends HydratorTestBase {
         .set("name", "Don").set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg1").build(),
       StructuredRecord.builder(flattenSchema)
         .set("name", "Mike").set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg2").build());
-    DataSetManager<Table> sink1Table = getDataset(sink1TableName);
     Tasks.waitFor(
       true,
       () -> {
-        sink1Table.flush();
-        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink1Table));
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockExternalSink.readOutput(output1, flattenSchema));
         return expected.equals(outputRecords);
       },
       4,
@@ -1130,12 +1132,10 @@ public class DataStreamsTest extends HydratorTestBase {
     Set<StructuredRecord> expected2 = ImmutableSet.of(
       StructuredRecord.builder(inputSchema).set("name", "Leo").build(),
       StructuredRecord.builder(inputSchema).set("name", "Ralph").build());
-    DataSetManager<Table> sink2Table = getDataset(sink2TableName);
     Tasks.waitFor(
       true,
       () -> {
-        sink2Table.flush();
-        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink2Table));
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockExternalSink.readOutput(output2, inputSchema));
         return expected2.equals(outputRecords);
       },
       4,
@@ -1155,8 +1155,9 @@ public class DataStreamsTest extends HydratorTestBase {
     StructuredRecord user3 = StructuredRecord.builder(schema)
       .set("id", 3L).set("name", "three").set("email", "three@example.com").build();
 
-    String sink1Name = "splitSink1";
-    String sink2Name = "splitSink2";
+    File outputDir = TMP_FOLDER.newFolder();
+    String output1 = new File(outputDir, "output1").getAbsolutePath();
+    String output2 = new File(outputDir, "output2").getAbsolutePath();
 
     /*
      *
@@ -1171,8 +1172,8 @@ public class DataStreamsTest extends HydratorTestBase {
       .addStage(new ETLStage("source", MockSource.getPlugin(schema, ImmutableList.of(user0, user1, user2, user3))))
       .addStage(new ETLStage("splitter1", NullFieldSplitterTransform.getPlugin("name")))
       .addStage(new ETLStage("splitter2", NullFieldSplitterTransform.getPlugin("email")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "sink1", output1)))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "sink2", output2)))
       .addConnection("source", "splitter1")
       .addConnection("splitter1", "splitter2", "null")
       .addConnection("splitter1", "sink2", "non-null")
@@ -1186,33 +1187,29 @@ public class DataStreamsTest extends HydratorTestBase {
     ApplicationManager appManager = deployApplication(appId, appRequest);
 
     // run pipeline
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
-    sparkManager.start();
-    sparkManager.waitForRun(ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
+    sparkManager.startAndWaitForRun(args, ProgramRunStatus.RUNNING, 10, TimeUnit.SECONDS);
 
     // check output
     // sink1 should only have records where both name and email are null (user0)
-    DataSetManager<Table> sink1Manager = getDataset(sink1Name);
     Set<StructuredRecord> expected1 = ImmutableSet.of(user0);
     Tasks.waitFor(
       true,
       () -> {
-        sink1Manager.flush();
-        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink1Manager));
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockExternalSink.readOutput(output1, schema));
         return expected1.equals(outputRecords);
       },
       4,
       TimeUnit.MINUTES);
 
     // sink2 should have anything with a non-null name or non-null email
-    DataSetManager<Table> sink2Manager = getDataset(sink2Name);
     Set<StructuredRecord> expected2 = ImmutableSet.of(user1, user2, user3);
 
     Tasks.waitFor(
       true,
       () -> {
-        sink2Manager.flush();
-        Set<StructuredRecord> outputRecords = new HashSet<>(MockSink.readOutput(sink2Manager));
+        Set<StructuredRecord> outputRecords = new HashSet<>(MockExternalSink.readOutput(output2, schema));
         return expected2.equals(outputRecords);
       },
       4,
@@ -1309,6 +1306,115 @@ public class DataStreamsTest extends HydratorTestBase {
     validateMetric(appId, "nullAlert.records.alert", 1);
     validateMetric(appId, "sink.records.in", 2);
     validateMetric(appId, "tms.records.in", 1);
+  }
+
+  @Test
+  public void testStageConsolidation() throws Exception {
+    /*
+                                   |non-null port --> sink1
+        items1 --> null splitter --|
+                                   |null port--> sink2
+                                                   ^
+                 |--> filter out id == 0  ---------|
+        items2 --|    |
+                 |    |--> error collector --> sink3
+                 |
+                 |                 |--> filter out id == 1 --> sink4
+                 |--> aggregator --|
+                                   |--> filter out id == 2 --> sink5
+     */
+    Schema schema = Schema.recordOf("item", Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+
+    StructuredRecord itemNull = StructuredRecord.builder(schema).build();
+    StructuredRecord item0 = StructuredRecord.builder(schema).set("id", 0).build();
+    StructuredRecord item1 = StructuredRecord.builder(schema).set("id", 1).build();
+    StructuredRecord item2 = StructuredRecord.builder(schema).set("id", 2).build();
+    StructuredRecord item3 = StructuredRecord.builder(schema).set("id", 3).build();
+    List<StructuredRecord> input1Records = Arrays.asList(itemNull, item3);
+    List<StructuredRecord> input2Records = Arrays.asList(item0, item1, item2);
+
+    File outputDir = TMP_FOLDER.newFolder();
+    String output1 = new File(outputDir, "output1").getAbsolutePath();
+    String output2 = new File(outputDir, "output2").getAbsolutePath();
+    String output3 = new File(outputDir, "output3").getAbsolutePath();
+    String output4 = new File(outputDir, "output4").getAbsolutePath();
+    String output5 = new File(outputDir, "output5").getAbsolutePath();
+    DataStreamsConfig config = DataStreamsConfig.builder()
+      .addStage(new ETLStage("items1", MockSource.getPlugin(schema, input1Records)))
+      .addStage(new ETLStage("items2", MockSource.getPlugin(schema, input2Records)))
+      .addStage(new ETLStage("nullSplitter", NullFieldSplitterTransform.getPlugin("id")))
+      .addStage(new ETLStage("filter0", IntValueFilterTransform.getPlugin("id", 0)))
+      .addStage(new ETLStage("collector", FlattenErrorTransform.getPlugin()))
+      .addStage(new ETLStage("filter1", IntValueFilterTransform.getPlugin("id", 1)))
+      .addStage(new ETLStage("filter2", IntValueFilterTransform.getPlugin("id", 2)))
+      .addStage(new ETLStage("identityAggregator", IdentityAggregator.getPlugin()))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s1", output1)))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s2", output2)))
+      .addStage(new ETLStage("sink3", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s3", output3)))
+      .addStage(new ETLStage("sink4", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s4", output4)))
+      .addStage(new ETLStage("sink5", MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s5", output5)))
+      .addConnection("items1", "nullSplitter")
+      .addConnection("nullSplitter", "sink1", "non-null")
+      .addConnection("nullSplitter", "sink2", "null")
+      .addConnection("items2", "filter0")
+      .addConnection("items2", "identityAggregator")
+      .addConnection("filter0", "sink2")
+      .addConnection("filter0", "collector")
+      .addConnection("identityAggregator", "filter1")
+      .addConnection("identityAggregator", "filter2")
+      .addConnection("collector", "sink3")
+      .addConnection("filter1", "sink4")
+      .addConnection("filter2", "sink5")
+      .setProperties(Collections.singletonMap(io.cdap.cdap.etl.common.Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG,
+                                              "false"))
+      .build();
+
+    AppRequest<DataStreamsConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("StageConsolidationTest");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // run pipeline
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
+    SparkManager sparkManager = appManager.getSparkManager(DataStreamsSparkLauncher.NAME);
+    sparkManager.startAndWaitForRun(args, ProgramRunStatus.RUNNING, 5, TimeUnit.MINUTES);
+
+
+    Schema errorSchema =
+      Schema.recordOf("erroritem",
+                      Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of("errMsg", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("errCode", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of("errStage", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    StructuredRecord expectedError = StructuredRecord.builder(errorSchema)
+      .set("id", 0)
+      .set("errMsg", IntValueFilterTransform.ERROR_MESSAGE)
+      .set("errCode", IntValueFilterTransform.ERROR_CODE)
+      .set("errStage", "filter0")
+      .build();
+
+    Set<StructuredRecord> sink1Expected = Collections.singleton(item3);
+    Set<StructuredRecord> sink2Expected = new HashSet<>(Arrays.asList(itemNull, item1, item2));
+    Set<StructuredRecord> sink3Expected = Collections.singleton(expectedError);
+    Set<StructuredRecord> sink4Expected = new HashSet<>(Arrays.asList(item0, item2));
+    Set<StructuredRecord> sink5Expected = new HashSet<>(Arrays.asList(item0, item1));
+
+    Tasks.waitFor(true, () -> sink1Expected.equals(new HashSet<>(MockExternalSink.readOutput(output1, schema))) &&
+                    sink2Expected.equals(new HashSet<>(MockExternalSink.readOutput(output2, schema))) &&
+                    sink3Expected.equals(new HashSet<>(MockExternalSink.readOutput(output3, errorSchema))) &&
+                    sink4Expected.equals(new HashSet<>(MockExternalSink.readOutput(output4, schema))) &&
+                    sink5Expected.equals(new HashSet<>(MockExternalSink.readOutput(output5, schema))),
+                  3, TimeUnit.MINUTES);
+    sparkManager.stop();
+    sparkManager.waitForStopped(1, TimeUnit.MINUTES);
+
+    // check output
+    validateMetric(appId, "nullSplitter.records.in", 2);
+    validateMetric(appId, "nullSplitter.records.out.null", 1);
+    validateMetric(appId, "nullSplitter.records.out.non-null", 1);
+    validateMetric(appId, "filter0.records.out", 2);
+    validateMetric(appId, "filter0.records.error", 1);
+    validateMetric(appId, "identityAggregator.records.in", 3);
+    validateMetric(appId, "identityAggregator.records.out", 3);
   }
 
   private void validateMetric(ApplicationId appId, String metric,

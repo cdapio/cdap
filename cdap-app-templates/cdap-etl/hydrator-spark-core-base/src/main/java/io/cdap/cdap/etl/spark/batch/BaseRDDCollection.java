@@ -35,6 +35,7 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
 import io.cdap.cdap.etl.common.ExternalDatasets;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -54,6 +55,7 @@ import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
+import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
@@ -72,6 +74,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
+import java.util.Map;
 import java.util.Set;
 import javax.annotation.Nullable;
 
@@ -236,13 +239,16 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createMultiStoreTask(Set<String> sinkNames,
-                                       PairFlatMapFunction<T, String, KeyValue<Object, Object>> multiSinkFunction) {
+  public Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
+                                       Map<String, StageStatisticsCollector> collectors) {
     return new Runnable() {
       @Override
       public void run() {
+        PairFlatMapFunction<T, String, KeyValue<Object, Object>> multiSinkFunction =
+          (PairFlatMapFunction<T, String, KeyValue<Object, Object>>)
+            Compat.convert(new MultiSinkFunction(sec, phaseSpec, group, collectors));
         JavaPairRDD<String, KeyValue<Object, Object>> taggedOutput = rdd.flatMapToPair(multiSinkFunction);
-        for (String outputName : sinkFactory.writeCombinedRDD(taggedOutput, sec, sinkNames)) {
+        for (String outputName : sinkFactory.writeCombinedRDD(taggedOutput, sec, sinks)) {
           recordLineage(outputName);
         }
       }
