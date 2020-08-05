@@ -191,13 +191,14 @@ const RequestHistoryTabView: React.FC<IRequestHistoryTabProps> = ({
   };
 
   return (
-    <div className={classes.root}>
+    <div className={classes.root} data-cy="request-history-tab">
       <div className={classes.introRow}>
         <div className={classes.title}>Calls history</div>
         <Button
           color="primary"
           onClick={() => setClearAllDialogOpen(true)}
           className={classes.clearAllBtn}
+          data-cy="clear-btn"
         >
           Clear
         </Button>

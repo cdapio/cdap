@@ -47,6 +47,7 @@ const SaveCallsView: React.FC<ISaveCallsProps> = ({ saveCalls, toggleSaveCalls }
       <Switch
         checked={saveCalls}
         onChange={() => toggleSaveCalls()}
+        data-cy="save-mode-btn"
         color="primary"
         name="checkedB"
         inputProps={{ 'aria-label': 'primary checkbox' }}

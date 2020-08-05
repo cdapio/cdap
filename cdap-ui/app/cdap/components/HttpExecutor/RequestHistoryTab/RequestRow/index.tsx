@@ -151,6 +151,7 @@ const RequestRowView: React.FC<IRequestRowProps> = ({
   return (
     <div>
       <div
+        data-cy={`request-row-${request.timestamp}`}
         className={classnames(classes.requestRow, {
           [classes.selectedRequestRow]: isSelectedRequest,
         })}
@@ -164,8 +165,9 @@ const RequestRowView: React.FC<IRequestRowProps> = ({
             title={request.timestamp}
             placement="right"
             className={classes.requestActionButton}
+            data-cy="timestamp-tooltip"
           >
-            <ScheduleIcon />
+            <ScheduleIcon data-cy="timestamp-icon" />
           </Tooltip>
         </div>
         <div
@@ -184,9 +186,12 @@ const RequestRowView: React.FC<IRequestRowProps> = ({
             [classes.putMethod]: request.method === RequestMethod.PUT,
           })}
         >
-          <div className={classes.requestMethodText}>{request.method}</div>
+          <div className={classes.requestMethodText} data-cy="request-method">
+            {request.method}
+          </div>
         </div>
         <div
+          data-cy="request-path"
           className={classnames(classes.requestPath, {
             [classes.selectedRequestPath]: isSelectedRequest,
           })}
@@ -202,7 +207,7 @@ const RequestRowView: React.FC<IRequestRowProps> = ({
             placement="bottom"
             className={classes.requestActionButton}
           >
-            <DeleteIcon onClick={() => setDeleteDialogOpen(true)} />
+            <DeleteIcon data-cy="delete-icon" onClick={() => setDeleteDialogOpen(true)} />
           </Tooltip>
         </div>
       </div>

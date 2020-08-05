@@ -14,15 +14,14 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
-import React, { Component } from 'react';
-import { Modal, ModalHeader, ModalBody, ModalFooter } from 'reactstrap';
 import CardActionFeedback from 'components/CardActionFeedback';
 import IconSVG from 'components/IconSVG';
-import Mousetrap from 'mousetrap';
-import T from 'i18n-react';
 import If from 'components/If';
+import T from 'i18n-react';
+import Mousetrap from 'mousetrap';
+import PropTypes from 'prop-types';
+import React, { Component } from 'react';
+import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
 
 require('./ConfirmationModal.scss');
 
@@ -143,6 +142,7 @@ export default class ConfirmationModal extends Component {
         backdrop="static"
         zIndex={1061}
         keyboard={this.props.keyboard}
+        data-cy="confirm-dialog"
       >
         <ModalHeader>
           {this.props.headerTitle}
