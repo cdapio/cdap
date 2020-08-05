@@ -14,10 +14,11 @@
  * the License.
  */
 
-import IconSVG from 'components/IconSVG';
-import PropTypes from 'prop-types';
 import React, { Component } from 'react';
+
+import IconSVG from 'components/IconSVG';
 import { Modal } from 'reactstrap';
+import PropTypes from 'prop-types';
 
 require('./Alert.scss');
 const SUCCESS_CLOSE_TIMEOUT = 3000;
@@ -104,7 +105,7 @@ export default class Alert extends Component {
         className="global-alert"
         zIndex={1061 /* This is required for showing error in angular side*/}
       >
-        <div className={this.state.type}>
+        <div className={this.state.type} data-cy="alert">
           {msgElem}
           <IconSVG name="icon-close" onClick={this.onClose} />
         </div>

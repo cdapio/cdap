@@ -14,7 +14,6 @@
  * the License.
  */
 
-import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
 import {
   DEFAULT_GCP_PROJECTID,
   DEFAULT_GCP_SERVICEACCOUNT_PATH,
@@ -24,11 +23,14 @@ import {
 } from '../support/constants';
 import { INodeIdentifier, INodeInfo, IgetNodeIDOptions } from '../typings';
 import {
-  getGenericEndpoint,
-  getConditionNodeEndpoint,
-  getNodeSelectorFromNodeIndentifier,
   dataCy,
+  getConditionNodeEndpoint,
+  getGenericEndpoint,
+  getNodeSelectorFromNodeIndentifier,
 } from '../helpers';
+
+import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
+
 /**
  * Uploads a pipeline json from fixtures to input file element.
  *
@@ -660,6 +662,23 @@ Cypress.Commands.add(
     ).should('have.value', value);
   }
 );
+
+/**
+ * Cleans up secure keys after executing the tests. This is to remove state
+ *  from individual tests.
+ *
+ * @headers - Any request headers to be passed.
+ * @secureKeyName - name of the secure key to be deleted.
+ */
+Cypress.Commands.add('cleanup_secure_key', (headers, secureKeyName) => {
+  return cy.request({
+    method: 'DELETE',
+    url: `http://${Cypress.env('host')}:11015/v3/namespaces/default/securekeys/${secureKeyName}`,
+    failOnStatusCode: false,
+    headers,
+  });
+});
+
 Cypress.Commands.add('delete_artifact_via_api', (headers, artifactName, version) => {
   return cy.request({
     method: 'DELETE',

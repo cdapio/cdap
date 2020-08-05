@@ -67,11 +67,13 @@ const SecureKeyActionButtonsView: React.FC<ISecureKeyActionButtonsProps> = ({
     <div className={classes.secureKeyActionButtons}>
       <div>
         <IconButton onClick={handleMenuClick}>
-          <MoreVertIcon />
+          <MoreVertIcon data-cy="menu-icon" />
         </IconButton>
         <ClickAwayListener onClickAway={handleMenuClose}>
           <Menu anchorEl={menuEl} open={Boolean(menuEl)} onClose={handleMenuClose}>
-            <MenuItem onClick={(e) => onDeleteClick(e, keyIndex)}>Delete</MenuItem>
+            <MenuItem onClick={(e) => onDeleteClick(e, keyIndex)} data-cy="delete-secure-key">
+              Delete
+            </MenuItem>
           </Menu>
         </ClickAwayListener>
       </div>

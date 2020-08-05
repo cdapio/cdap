@@ -62,6 +62,9 @@ const styles = (theme): StyleRules => {
     addSecureKeyButton: {
       gridRow: '1',
       gridColumnStart: '1',
+      textTransform: 'none',
+      padding: '7px',
+      fontSize: '13px',
     },
     secureKeySearch: {
       gridRow: '1',
@@ -134,16 +137,15 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
     <div>
       <div className={classes.secureKeysTitle}>Secure keys</div>
       <div className={classes.secureKeyManager}>
-        <div className={classes.addSecureKeyButton}>
-          <Button
-            variant="outlined"
-            color="primary"
-            size="small"
-            onClick={() => setCreateDialogOpen(true)}
-          >
-            Create Secure Key
-          </Button>
-        </div>
+        <Button
+          className={classes.addSecureKeyButton}
+          color="primary"
+          variant="contained"
+          onClick={() => setCreateDialogOpen(true)}
+          data-cy="create-secure-key"
+        >
+          Add secure key
+        </Button>
         <div className={classes.secureKeySearch}>
           <SecureKeySearch searchText={searchText} setSearchText={setSearchText} />
         </div>
@@ -158,7 +160,7 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
               <CustomTableCell></CustomTableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
+          <TableBody data-cy="secure-key-list">
             {filteredSecureKeys.map((keyMetadata, keyIndex) => {
               const keyID = keyMetadata.get('name');
               return (
@@ -168,6 +170,7 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
                   selected
                   className={classes.row}
                   onClick={() => openEditDialog(keyIndex)}
+                  data-cy={`secure-key-row-${keyMetadata.get('name')}`}
                 >
                   <CustomTableCell className={classes.nameCell}>{keyID}</CustomTableCell>
                   <CustomTableCell className={classes.descriptionCell}>
