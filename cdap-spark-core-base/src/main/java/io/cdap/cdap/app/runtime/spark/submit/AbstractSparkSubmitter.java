@@ -25,6 +25,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.api.spark.SparkSpecification;
 import io.cdap.cdap.app.runtime.spark.SparkMainWrapper;
@@ -44,7 +45,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
@@ -81,12 +81,10 @@ public abstract class AbstractSparkSubmitter implements SparkSubmitter {
 
     // Spark submit is called from this executor
     // Use an executor to simplify logic that is needed to interrupt the running thread on stopping
-    final ExecutorService executor = Executors.newSingleThreadExecutor(new ThreadFactory() {
-      @Override
-      public Thread newThread(Runnable r) {
-        return new Thread(r, "spark-submitter-" + spec.getName() + "-" + runtimeContext.getRunId());
-      }
-    });
+    final ExecutorService executor = Executors.newSingleThreadExecutor(
+      new ThreadFactoryBuilder()
+        .setNameFormat("spark-submitter-" + spec.getName() + "-" + runtimeContext.getRunId())
+        .build());
 
     // Latch for the Spark job completion
     final CountDownLatch completion = new CountDownLatch(1);
