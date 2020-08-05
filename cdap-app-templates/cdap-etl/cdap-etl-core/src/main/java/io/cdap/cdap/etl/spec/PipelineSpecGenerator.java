@@ -670,8 +670,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
           paths += parent + "->" + currentStage;
         }
         String msg = String.format("Stage in the pipeline '%s' is on the branch of condition '%s'. However it also " +
-                                     "has following incoming paths: '%s', which is not supported.", currentStage,
-                                   currentCondition, paths);
+                                     "has following incoming paths: '%s'. Different branches of a condition cannot " +
+                                     "be inputs to the same stage.", currentStage, currentCondition, paths);
         throw new IllegalArgumentException(msg);
       }
     }
