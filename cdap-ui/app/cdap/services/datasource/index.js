@@ -37,7 +37,6 @@ import { objectQuery } from 'services/helpers';
 import ifvisible from 'ifvisible.js';
 import SystemDelayStore from 'services/SystemDelayStore';
 import SystemDelayActions from 'services/SystemDelayStore/SystemDelayActions';
-import cloneDeep from 'lodash/cloneDeep';
 
 const CDAP_API_VERSION = 'v3';
 // FIXME (CDAP-14836): Right now this is scattered across node and client. Need to consolidate this.
