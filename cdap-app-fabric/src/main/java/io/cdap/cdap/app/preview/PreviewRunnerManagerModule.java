@@ -16,44 +16,99 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.inject.Exposed;
+import com.google.inject.Module;
 import com.google.inject.PrivateModule;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
+import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
+import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data2.datafabric.dataset.RemoteDatasetFramework;
 import io.cdap.cdap.data2.dataset2.DatasetDefinitionRegistryFactory;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.dataset2.DefaultDatasetDefinitionRegistryFactory;
-import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcherFactory;
-import io.cdap.cdap.internal.app.preview.PreviewRequestFetcherFactory;
-import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
+import io.cdap.cdap.internal.app.preview.DirectPreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
+import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
+import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
+import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * Guice module to provide bindings for {@link PreviewRunnerManager} service.
  */
-public class PreviewRunnerManagerModule extends PrivateModule {
+public class PreviewRunnerManagerModule extends RuntimeModule {
+
   @Override
-  protected void configure() {
-    bind(DatasetDefinitionRegistryFactory.class)
-      .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
-
-    bind(DatasetFramework.class)
-      .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
-      .to(RemoteDatasetFramework.class);
-    bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
-
-    bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
-    bind(PreviewRunnerServiceStopper.class).to(DefaultPreviewRunnerManager.class);
-    expose(PreviewRunnerServiceStopper.class);
-    bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
-    expose(PreviewRunnerManager.class);
+  public Module getInMemoryModules() {
+    return getStandaloneModules();
   }
 
-  @Provides
-  @Singleton
-  PreviewRequestFetcherFactory getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
-    return new DirectPreviewRequestFetcherFactory(previewRequestQueue);
+  @Override
+  public Module getStandaloneModules() {
+
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(DatasetDefinitionRegistryFactory.class)
+          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+          .to(RemoteDatasetFramework.class);
+        bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
+
+        bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+        bind(PreviewRunStopper.class).to(DefaultPreviewRunnerManager.class);
+        expose(PreviewRunStopper.class);
+        bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
+        expose(PreviewRunnerManager.class);
+
+        install(new FactoryModuleBuilder()
+                  .implement(PreviewRunnerService.class, PreviewRunnerService.class)
+                  .build(PreviewRunnerServiceFactory.class));
+      }
+
+      @Provides
+      @Singleton
+      @Exposed
+      PreviewRequestFetcher getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
+        return new DirectPreviewRequestFetcher(previewRequestQueue);
+      }
+    };
+  }
+
+  @Override
+  public Module getDistributedModules() {
+    return new PrivateModule() {
+      @Override
+      protected void configure() {
+        bind(DatasetDefinitionRegistryFactory.class)
+          .to(DefaultDatasetDefinitionRegistryFactory.class).in(Scopes.SINGLETON);
+
+        bind(DatasetFramework.class)
+          .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
+          .to(RemoteDatasetFramework.class);
+        bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
+
+        bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
+        bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
+        expose(PreviewRunnerManager.class);
+
+        install(new FactoryModuleBuilder()
+                  .implement(PreviewRunnerService.class, PreviewRunnerService.class)
+                  .build(PreviewRunnerServiceFactory.class));
+      }
+
+      @Provides
+      @Singleton
+      @Exposed
+      PreviewRequestFetcher getPreviewRequestQueueFetcher(DiscoveryServiceClient discoveryServiceClient) {
+        return new RemotePreviewRequestFetcher(discoveryServiceClient, new byte[0]);
+      }
+    };
   }
 }

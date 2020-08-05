@@ -26,6 +26,8 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 /**
  * Interface used for managing the preview runs.
@@ -82,4 +84,11 @@ public interface PreviewManager {
    * @return the {@link LogReader} for reading logs for the given preview
    */
   LogReader getLogReader();
+
+  /**
+   * Poll the next available request in the queue.
+   * @param pollerInfo information about the poller
+   * @return {@code PreviewRequest} if such request is available in the queue
+   */
+  Optional<PreviewRequest> poll(@Nullable byte[] pollerInfo);
 }

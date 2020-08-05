@@ -14,12 +14,21 @@
  * the License.
  */
 
-package io.cdap.cdap.app.preview;
+package io.cdap.cdap.logging.appender.tms;
 
-import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.messaging.MessagingService;
 
 /**
- * It is just a tagging interface for guice binding of {@link DefaultPreviewRunnerManager}.
+ * TMS Log Appender used for Preview. Only difference with {@link TMSLogAppender} is
+ * an instance of MessagingService it receives.
  */
-public interface PreviewRunnerManager extends PreviewRunStopper {
+public class PreviewTMSLogAppender extends TMSLogAppender  {
+  @Inject
+  PreviewTMSLogAppender(CConfiguration cConf,
+                        @Named("globalTMS") MessagingService messagingService) {
+    super(cConf, messagingService);
+  }
 }
