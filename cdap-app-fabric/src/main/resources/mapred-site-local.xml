@@ -43,4 +43,9 @@
     <value>8</value>
     <description>The maximum number of reduce tasks to run in parallel in LocalJobRunner</description>
   </property>
+  <property>
+    <name>mapreduce.task.io.sort.mb</name>
+    <value>30</value>
+    <description>Reduce the MR sort buffer to lower memory requirements in LocalJobRunner</description>
+  </property>
 </configuration>

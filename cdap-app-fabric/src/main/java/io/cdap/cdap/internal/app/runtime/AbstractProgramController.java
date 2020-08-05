@@ -22,6 +22,7 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -75,7 +76,8 @@ public abstract class AbstractProgramController implements ProgramController {
     // hanging around when it is idle.
     this.executor = new ThreadPoolExecutor(0, 1, 0, TimeUnit.SECONDS,
                                            new LinkedBlockingQueue<>(),
-                                           r -> new Thread(null, r, "pcontroller-" + name));
+                                           new ThreadFactoryBuilder()
+                                             .setNameFormat("pcontroller-" + name + "-%d").build());
   }
 
   @Override
