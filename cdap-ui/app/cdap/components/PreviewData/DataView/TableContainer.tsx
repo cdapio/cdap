@@ -56,6 +56,9 @@ export const styles = (theme): StyleRules => ({
     paddingLeft: '10px',
     margin: '0 -10px',
   },
+  headerBumper: {
+    height: '52px', // To align tables if there are multiple inputs or outputs
+  },
 });
 
 interface IPreviewTableContainerProps extends WithStyles<typeof styles> {
@@ -86,7 +89,15 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const inputRecords = tableValue.records;
             return (
               <div key={`input-table-${i}`} className={classes.tableContainer}>
-                {inputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
+                {inputs.length > 1 ? (
+                  <Heading type={HeadingTypes.h3} label={tableKey} />
+                ) : (
+                  <div
+                    className={classnames({
+                      [classes.headerBumper]: inputs.length === 1 && outputs.length > 1,
+                    })}
+                  />
+                )}
                 <DataTable
                   headers={inputHeaders}
                   records={inputRecords}
@@ -110,7 +121,15 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
             const outputRecords = tableValue.records;
             return (
               <div key={`output-table-${j}`} className={classes.tableContainer}>
-                {outputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
+                {outputs.length > 1 ? (
+                  <Heading type={HeadingTypes.h3} label={tableKey} />
+                ) : (
+                  <div
+                    className={classnames({
+                      [classes.headerBumper]: outputs.length === 1 && inputs.length > 1,
+                    })}
+                  />
+                )}
                 <DataTable
                   headers={outputHeaders}
                   records={outputRecords}

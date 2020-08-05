@@ -44,7 +44,10 @@ const styles = (theme): StyleRules => ({
     borderRight: `1px solid ${theme.palette.grey[400]}`,
     height: 'inherit',
     overflowX: 'hidden',
-    '& .record-pane': { width: '100%' },
+    '& .record-pane': {
+      width: '100%',
+      marginTop: '-8px', // To align with adjacent records when there are multiple inputs or outputs
+    },
     '& .cask-tab-headers': { overflowX: 'scroll' },
   },
   recordHeader: {
@@ -106,6 +109,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
             selectedRecord={selectedRecord}
             isInput={isInput}
             previewStatus={previewStatus}
+            className={classes.recordTab}
           />
         ),
         paneClassName: 'record-pane',
