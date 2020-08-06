@@ -21,7 +21,7 @@ describe('System delay notification ', () => {
     });
 
     beforeEach(() => {
-        cy.visit('/cdap/ns/default/lab');
+        cy.visit('/cdap/lab');
         cy.get(`${dataCy(`${EXPERIMENT_ID}-switch`)} input`).should('have.value', 'true');
         // Makes max allowed delay for requests to be 0 i.e all requests would be considered slow.
         cy.get(dataCy(`${EXPERIMENT_ID}-field`)).type('0');
@@ -66,7 +66,7 @@ describe('System delay notification ', () => {
             expect(getExperimentValue(EXPERIMENT_ID)).to.be.eq(null);
             expect(isExperimentEnabled(EXPERIMENT_ID)).to.be.false;
         });
-        cy.visit('/cdap/ns/default/lab');
+        cy.visit('/cdap/lab');
         cy.get(`${dataCy(`${EXPERIMENT_ID}-switch`)} input`).should('have.value', 'false');
     });
 });
