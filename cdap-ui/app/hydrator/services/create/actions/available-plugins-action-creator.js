@@ -126,34 +126,25 @@ class PipelineAvailablePluginsActions {
   _fetchInfo(availablePluginsMap, namespace, plugins) {
     const reqBody = plugins.map((plugin) => plugin.info);
 
-    const getKeyFromPluginProps = pluginProperties => {
+    const getKeyFromPluginProps = (pluginProperties) => {
       const key = this.myHelpers.objectQuery(pluginProperties, '0');
       return key ? key.split('.')[1] : '';
     };
-
-    const pluginsByKey = new Map();
-    plugins.forEach(plugin => {
-      const pluginProperties = this.myHelpers.objectQuery(plugin, 'info', 'properties');
-      if (pluginProperties.length > 0) {
-        const key = getKeyFromPluginProps(pluginProperties);
-        pluginsByKey.set(key, plugin);
-      }
-    });
 
     this.api.fetchAllPluginsProperties({ namespace }, reqBody)
       .$promise
       .then((res) => {
         res.forEach((plugin) => {
-          let pluginProperties = Object.keys(plugin.properties);
+          const pluginProperties = Object.keys(plugin.properties);
           if (pluginProperties.length === 0) { return; }
 
-          let pluginKey = getKeyFromPluginProps(pluginProperties);
-          const { key } = pluginsByKey.get(pluginKey);
+          const pluginKey = getKeyFromPluginProps(pluginProperties);
+          const key = `${pluginKey}-${this._getArtifactKey(plugin)}`;
 
           availablePluginsMap[key].doc = plugin.properties[`doc.${pluginKey}`];
 
           let parsedWidgets;
-          let widgets = plugin.properties[`widgets.${pluginKey}`];
+          const widgets = plugin.properties[`widgets.${pluginKey}`];
 
           if (widgets) {
             try {
@@ -175,11 +166,10 @@ class PipelineAvailablePluginsActions {
   }
 
   _createPluginInfo(plugin) {
-    let pluginKey = `${plugin.name}-${plugin.type}`;
+    const pluginKey = `${plugin.name}-${plugin.type}`;
+    const availablePluginKey = `${pluginKey}-${this._getArtifactKey(plugin.artifact)}`;
 
-    let availablePluginKey = `${plugin.name}-${plugin.type}-${plugin.artifact.name}-${plugin.artifact.version}-${plugin.artifact.scope}`;
-
-    let info = Object.assign({}, plugin.artifact, {
+    const info = Object.assign({}, plugin.artifact, {
       properties: [
         `widgets.${pluginKey}`,
         `doc.${pluginKey}`
@@ -190,6 +180,14 @@ class PipelineAvailablePluginsActions {
       info,
       key: availablePluginKey
     };
+  }
+
+  /**
+   *
+   * @param { name, version, scope } artifact
+   */
+  _getArtifactKey(artifact) {
+    return `${artifact.name}-${artifact.version}-${artifact.scope}`;
   }
 
   _prepareInfoRequest(namespace, pluginsList) {
