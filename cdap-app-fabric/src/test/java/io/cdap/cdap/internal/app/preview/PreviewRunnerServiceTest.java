@@ -114,7 +114,8 @@ public class PreviewRunnerServiceTest {
       CompletableFuture<PreviewRequest> future = new CompletableFuture<>();
       requests.put(request.getProgram(),
                    new RequestInfo(request, future, new PreviewStatus(PreviewStatus.Status.RUNNING,
-                                                                      null, System.currentTimeMillis(), null)));
+                                                                      System.currentTimeMillis(), null,
+                                                                      System.currentTimeMillis(), null)));
       return future;
     }
 
@@ -124,7 +125,7 @@ public class PreviewRunnerServiceTest {
       if (info == null) {
         throw new NotFoundException(programId);
       }
-      info.status = new PreviewStatus(PreviewStatus.Status.KILLED, null,
+      info.status = new PreviewStatus(PreviewStatus.Status.KILLED, System.currentTimeMillis(), null,
                                       info.status.getStartTime(), System.currentTimeMillis());
       info.future.complete(info.request);
     }

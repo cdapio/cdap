@@ -120,7 +120,7 @@ public class DefaultPreviewStoreTest {
     ApplicationId applicationId = new ApplicationId("ns1", "app1");
     ProgramRunId runId = new ProgramRunId("ns1", "app1", ProgramType.WORKFLOW, "test",
                                           RunIds.generate().getId());
-    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.COMPLETED, null, 0L,
+    PreviewStatus status = new PreviewStatus(PreviewStatus.Status.COMPLETED, System.currentTimeMillis(), null, 0L,
                                              System.currentTimeMillis());
     store.setProgramId(runId);
     store.setPreviewStatus(applicationId, status);
