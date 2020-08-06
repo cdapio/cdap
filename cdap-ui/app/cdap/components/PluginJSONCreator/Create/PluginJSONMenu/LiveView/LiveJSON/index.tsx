@@ -21,7 +21,6 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 const styles = (): StyleRules => {
   return {
     JSONLiveCode: {
-      padding: '14px',
       overflow: 'auto',
       height: '100%',
     },
@@ -32,6 +31,7 @@ const styles = (): StyleRules => {
       // 100vh - 48px - 53px - 40px
       height: 'calc(100vh - 141px)',
       overflow: 'scroll',
+      padding: '14px',
     },
   };
 };

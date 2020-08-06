@@ -15,16 +15,18 @@
  */
 
 import * as React from 'react';
-import DLPRow, {
-  ITransformProp,
-  FilterOption,
-} from 'components/AbstractWidget/DLPCustomWidget/DLPRow';
-import ThemeWrapper from 'components/ThemeWrapper';
+
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
-import { objectQuery } from 'services/helpers';
+import DLPRow, {
+  FilterOption,
+  ITransformProp,
+} from 'components/AbstractWidget/DLPCustomWidget/DLPRow';
+
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface IDLPWidgetProps {
   transforms: ITransformProp[];

@@ -15,10 +15,11 @@
  */
 
 import React, { useState } from 'react';
-import { WithStyles } from '@material-ui/core/styles/withStyles';
-import { IWidgetProps } from 'components/AbstractWidget';
-import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
+
 import { DatePickerStyles } from 'components/AbstractWidget/DateTimeWidget';
+import ExpandableTimeRange from 'components/TimeRangePicker/ExpandableTimeRange';
+import { IWidgetProps } from 'components/AbstractWidget';
+import { WithStyles } from '@material-ui/core/styles/withStyles';
 
 interface IDateRangeWidgetProps extends IWidgetProps<null>, WithStyles<typeof DatePickerStyles> {}
 
@@ -57,4 +58,7 @@ const DateRangeWidget: React.FC<IDateRangeWidgetProps> = ({
   );
 };
 
+(DateRangeWidget as any).getWidgetAttributes = () => {
+  return {};
+};
 export default DateRangeWidget;

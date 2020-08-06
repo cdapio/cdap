@@ -13,12 +13,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import PropTypes from 'prop-types';
 
-import React from 'react';
 import { Input } from 'reactstrap';
+import PropTypes from 'prop-types';
+import React from 'react';
 
-export default function SelectWithOptions({ className, value, onChange, options }) {
+export default function SelectWithOptions({ className, value, onChange, options = [] }) {
   return (
     <Input type="select" value={value} className={className} onChange={onChange}>
       {options.map((o) => {

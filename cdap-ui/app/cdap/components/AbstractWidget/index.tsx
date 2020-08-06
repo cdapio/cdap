@@ -15,9 +15,10 @@
  */
 
 import * as React from 'react';
+
 import AbstractWidgetFactory from 'components/AbstractWidget/AbstractWidgetFactory';
-import StateWrapper from 'components/AbstractWidget/StateWrapper';
 import { IErrorObj } from 'components/ConfigurationGroup/utilities';
+import StateWrapper from 'components/AbstractWidget/StateWrapper';
 require('./AbstractWidget.scss');
 
 export const DEFAULT_WIDGET_PROPS = {

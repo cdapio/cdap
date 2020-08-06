@@ -14,14 +14,15 @@
  * the License.
  */
 
-import React from 'react';
-import { objectQuery } from 'services/helpers';
 import { IWidgetProps } from 'components/AbstractWidget';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import InputBase from '@material-ui/core/InputBase';
+import React from 'react';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface ITextBoxWidgetProps {
   placeholder?: string;
+  default?: string;
 }
 
 interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {
@@ -30,7 +31,7 @@ interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {
   className?: string;
 }
 
-const TextBox: React.FC<ITextBoxProps> = ({
+const TextBoxComponent: React.FC<ITextBoxProps> = ({
   value,
   onChange,
   onBlur,
@@ -75,5 +76,14 @@ const TextBox: React.FC<ITextBoxProps> = ({
   );
 };
 
-export default React.memo(TextBox);
+const TextBox = React.memo(TextBoxComponent);
+
 (TextBox as any).propTypes = WIDGET_PROPTYPES;
+(TextBox as any).getWidgetAttributes = () => {
+  return {
+    placeholder: { type: 'string', required: false },
+    default: { type: 'string', required: false },
+  };
+};
+
+export default TextBox;

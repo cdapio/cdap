@@ -15,13 +15,15 @@
  */
 
 import * as React from 'react';
-import MultipleValuesRow from 'components/AbstractWidget/MultipleValuesWidget/MultipleValuesRow';
-import ThemeWrapper from 'components/ThemeWrapper';
+
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
-import { objectQuery } from 'services/helpers';
+
+import MultipleValuesRow from 'components/AbstractWidget/MultipleValuesWidget/MultipleValuesRow';
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface IMultipleValuesWidgetProps {
   placeholders?: string[];
@@ -74,3 +76,11 @@ export default function MultipleValuesWidget(props) {
 }
 
 (MultipleValuesWidget as any).propTypes = WIDGET_PROPTYPES;
+(MultipleValuesWidget as any).getWidgetAttributes = () => {
+  return {
+    placeholders: { type: 'string[]', required: false },
+    'values-delimiter': { type: 'string', required: false },
+    numValues: { type: 'number', required: true },
+    delimiter: { type: 'string', required: false },
+  };
+};

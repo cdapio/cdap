@@ -1,5 +1,6 @@
-import { SchemaType, SPEC_VERSION } from 'components/PluginJSONCreator/constants';
-import { fromJS, List, Map } from 'immutable';
+import { List, Map, fromJS } from 'immutable';
+import { SPEC_VERSION, SchemaType } from 'components/PluginJSONCreator/constants';
+
 import fileDownload from 'js-file-download';
 import uuidV4 from 'uuid/v4';
 
@@ -185,6 +186,17 @@ export function parsePluginJSON(filename, pluginJSON) {
             widgetObj['widget-attributes'] &&
             Object.keys(widgetObj['widget-attributes']).length > 0
           ) {
+            // Widget attributes "options" and "values" are used interchangeably.
+            // Thus, unify them into "options".
+            if (widgetObj['widget-attributes'].values) {
+              Object.defineProperty(
+                widgetObj['widget-attributes'],
+                'options',
+                Object.getOwnPropertyDescriptor(widgetObj['widget-attributes'], 'values')
+              );
+              delete widgetObj['widget-attributes'].values;
+            }
+
             widgetToAttributes = widgetToAttributes.set(
               newWidgetID,
               fromJS(widgetObj['widget-attributes'])

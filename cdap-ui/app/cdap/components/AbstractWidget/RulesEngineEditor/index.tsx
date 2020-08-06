@@ -14,17 +14,20 @@
  * the License.
  */
 
+import './rules-engine-modal.scss';
+
 import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { IWidgetProps } from '..';
-import CodeEditor from 'components/CodeEditor';
+
+import { Modal, ModalBody } from 'reactstrap';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import Button from '@material-ui/core/Button';
+import CodeEditor from 'components/CodeEditor';
+import { IWidgetProps } from '..';
 import IconSVG from 'components/IconSVG';
 import If from 'components/If';
-import { Modal, ModalBody } from 'reactstrap';
 import RulesEngineHome from 'components/RulesEngineHome';
 import { objectQuery } from 'services/helpers';
-import './rules-engine-modal.scss';
 
 const styles = (theme): StyleRules => {
   return {
@@ -119,4 +122,7 @@ const RulesEngineEditorView: React.FC<IRulesEngineProps> = ({
 };
 
 const RulesEngineEditor = withStyles(styles)(RulesEngineEditorView);
+(RulesEngineEditor as any).getWidgetAttributes = () => {
+  return {};
+};
 export default RulesEngineEditor;

@@ -15,20 +15,24 @@
  */
 
 import * as React from 'react';
-import PropTypes from 'prop-types';
-import KeyValueRow from 'components/AbstractWidget/KeyValueWidget/KeyValueRow';
-import ThemeWrapper from 'components/ThemeWrapper';
+
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
-import { objectQuery } from 'services/helpers';
+
+import KeyValueRow from 'components/AbstractWidget/KeyValueWidget/KeyValueRow';
+import PropTypes from 'prop-types';
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface IKeyValueWidgetProps {
   'key-placeholder'?: string;
   'value-placeholder'?: string;
   'kv-delimiter'?: string;
   delimiter?: string;
+  showDelimiter?: boolean;
+  default?: string;
 }
 
 interface IKeyValueProps extends IMultiRowProps<IKeyValueWidgetProps> {
@@ -75,4 +79,15 @@ export default function KeyValueWidget(props) {
 (KeyValueWidget as any).propTypes = {
   ...WIDGET_PROPTYPES,
   isEncoded: PropTypes.bool,
+};
+
+(KeyValueWidget as any).getWidgetAttributes = () => {
+  return {
+    'key-placeholder': { type: 'string', required: false },
+    'value-placeholder': { type: 'string', required: false },
+    'kv-delimiter': { type: 'string', required: false },
+    delimiter: { type: 'string', required: false },
+    showDelimiter: { type: 'boolean', required: false },
+    default: { type: 'string', required: false },
+  };
 };

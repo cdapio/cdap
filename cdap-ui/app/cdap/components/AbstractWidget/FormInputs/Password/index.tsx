@@ -14,17 +14,17 @@
  * the License.
  */
 
-import React, { useState } from 'react';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import ThemeWrapper from 'components/ThemeWrapper';
-import InputAdornment from '@material-ui/core/InputAdornment';
 import IconButton from '@material-ui/core/IconButton';
+import InputAdornment from '@material-ui/core/InputAdornment';
+import InputBase from '@material-ui/core/InputBase';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import Visibility from '@material-ui/icons/Visibility';
 import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import InputBase from '@material-ui/core/InputBase';
+import ThemeWrapper from 'components/ThemeWrapper';
+import React, { useState } from 'react';
+import { objectQuery } from 'services/helpers';
 
 const styles = (theme) => {
   return {
@@ -97,3 +97,8 @@ export default function StyledPasswordWrapper(props) {
 }
 
 (StyledPasswordWrapper as any).propTypes = WIDGET_PROPTYPES;
+(StyledPasswordWrapper as any).getWidgetAttributes = () => {
+  return {
+    placeholder: { type: 'string', required: false },
+  };
+};

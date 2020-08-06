@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { Modal, ModalBody, ModalFooter, ModalHeader } from 'reactstrap';
+import { Modal, ModalBody, ModalHeader } from 'reactstrap';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 import { CSSTransition } from 'react-transition-group';
@@ -26,7 +26,11 @@ const styles = (): StyleRules => {
   return {
     modal: {
       position: 'relative',
-      overflow: 'hidden',
+    },
+    modalBody: {
+      height: '100%',
+      maxHeight: '70vh',
+      overflow: 'scroll',
     },
     modalHeaderText: {
       verticalAlign: 'top',
@@ -78,7 +82,7 @@ const StandardModalView: React.FC<IStandardModalProps> = ({
           </div>
         </div>
       </ModalHeader>
-      <ModalBody>
+      <ModalBody className={classes.modalBody}>
         <CSSTransition
           transitionName="plus-button-modal-content"
           transitionEnterTimeout={500}

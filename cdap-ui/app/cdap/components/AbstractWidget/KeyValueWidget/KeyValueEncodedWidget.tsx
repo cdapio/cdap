@@ -15,6 +15,7 @@
  */
 
 import * as React from 'react';
+
 import KeyValueWidget from 'components/AbstractWidget/KeyValueWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 
@@ -23,3 +24,13 @@ export default function KeyValueEncodedWidget(props) {
 }
 
 (KeyValueEncodedWidget as any).propTypes = WIDGET_PROPTYPES;
+
+(KeyValueEncodedWidget as any).getWidgetAttributes = () => {
+  return {
+    'key-placeholder': { type: 'string', required: false },
+    'value-placeholder': { type: 'string', required: false },
+    'kv-delimiter': { type: 'string', required: false },
+    delimiter: { type: 'string', required: false },
+    showDelimiter: { type: 'boolean', required: false },
+  };
+};

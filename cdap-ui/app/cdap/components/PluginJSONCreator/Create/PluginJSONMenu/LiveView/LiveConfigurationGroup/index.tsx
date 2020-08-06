@@ -19,9 +19,6 @@ import * as React from 'react';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 import ConfigurationGroup from 'components/ConfigurationGroup';
-import If from 'components/If';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import debounce from 'lodash/debounce';
 
 const styles = (): StyleRules => {
   return {
@@ -48,27 +45,16 @@ interface ILiveConfigurationGroup extends WithStyles<typeof styles> {
 }
 
 const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes, JSONOutput }) => {
+  const [values, onChange] = React.useState<Record<string, string>>({});
+
   // Values needed for Configuration Groups live view
   const [pluginProperties, setPluginProperties] = React.useState(null);
   const [widgetJson, setWidgetJson] = React.useState(null);
-  const [values, onChange] = React.useState<Record<string, string>>({});
-
-  const [loading, setLoading] = React.useState(false);
-
-  // When JSON config changes, show loading view for 500ms
-  // This is in order to force rerender ConfigurationGroup component
-  const debouncedUpdate = debounce(() => {
-    const newPluginProperties = getNewPluginProperties(JSONOutput);
-    setPluginProperties(newPluginProperties);
-    setWidgetJson(processForConfigurationGroup(JSONOutput));
-    setLoading(false);
-  }, 500);
 
   React.useEffect(() => {
-    // after a setTimeout for 500ms, set the loading state back to false
-    setLoading(true);
-    debouncedUpdate();
-  }, [JSONOutput]);
+    setPluginProperties(getNewPluginProperties(JSONOutput));
+    setWidgetJson(getNewWidgetJson(JSONOutput));
+  }, []);
 
   /*
    * Get pluginProperties, which is required for ConfigurationGroups component.
@@ -91,7 +77,7 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
    * Convert immutable data to non-immutable.
    * ConfigurationGroup component takes non-immutable data as input.
    */
-  function processForConfigurationGroup(config) {
+  function getNewWidgetJson(config) {
     if (!config || !config.hasOwnProperty('configuration-groups')) {
       return;
     }
@@ -109,19 +95,12 @@ const LiveConfigurationGroupView: React.FC<ILiveConfigurationGroup> = ({ classes
 
   return (
     <div className={classes.liveConfigurationGroup}>
-      <If condition={loading}>
-        <div className={classes.loadingBox}>
-          <LoadingSVGCentered />
-        </div>
-      </If>
-      <If condition={!loading}>
-        <ConfigurationGroup
-          pluginProperties={pluginProperties}
-          widgetJson={widgetJson}
-          values={values}
-          onChange={onChange}
-        />
-      </If>
+      <ConfigurationGroup
+        pluginProperties={pluginProperties}
+        widgetJson={widgetJson}
+        values={values}
+        onChange={onChange}
+      />
     </div>
   );
 };

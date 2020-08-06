@@ -23,6 +23,8 @@ import If from 'components/If';
 import LiveConfigurationGroup from 'components/PluginJSONCreator/Create/PluginJSONMenu/LiveView/LiveConfigurationGroup';
 import LiveJSON from 'components/PluginJSONCreator/Create/PluginJSONMenu/LiveView/LiveJSON';
 import { LiveViewMode } from 'components/PluginJSONCreator/Create/PluginJSONMenu';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import debounce from 'lodash/debounce';
 
 const styles = (theme): StyleRules => {
   return {
@@ -66,6 +68,21 @@ const LiveViewView: React.FC<ILiveViewProps> = ({
   JSONFilename,
   collapseLiveView,
 }) => {
+  const [loading, setLoading] = React.useState(false);
+
+  // When JSONOutput changes, show loading view for 500ms
+  // This is in order to force rerender LiveConfigurationGroup component
+  const debouncedUpdate = debounce(() => {
+    setLoading(true);
+
+    // after a setTimeout for 500ms, set the loading state back to false
+    setTimeout(() => {
+      setLoading(false);
+    }, 500);
+  }, 500);
+
+  React.useEffect(debouncedUpdate, [JSONOutput]);
+
   return (
     <div>
       <div className={classes.liveViewtopPanel}>
@@ -74,7 +91,10 @@ const LiveViewView: React.FC<ILiveViewProps> = ({
           <CollapseLiveViewButton collapseLiveView={collapseLiveView} />
         </div>
       </div>
-      <If condition={liveViewMode === LiveViewMode.ConfigurationGroupsView}>
+      <If condition={loading && liveViewMode === LiveViewMode.ConfigurationGroupsView}>
+        <LoadingSVGCentered />
+      </If>
+      <If condition={!loading && liveViewMode === LiveViewMode.ConfigurationGroupsView}>
         <LiveConfigurationGroup JSONOutput={JSONOutput} />
       </If>
       <If condition={liveViewMode === LiveViewMode.JSONView}>

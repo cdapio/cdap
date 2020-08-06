@@ -71,6 +71,9 @@ const styles = (theme): StyleRules => {
     closedMenuPaper: {
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
       backgroundColor: theme.palette.white[50],
+      height: 'calc(100% - 53px)', // excluding height of footer
+      overflow: 'hidden',
+      borderBottom: `1px solid ${theme.palette.divider}`,
     },
     liveViewer: {
       width: LIVE_VIEWER_WIDTH,
@@ -80,6 +83,9 @@ const styles = (theme): StyleRules => {
       width: LIVE_VIEWER_WIDTH,
       zIndex: 1000, // lower than '1061', which is Alert component's z-index
       backgroundColor: theme.palette.white[50],
+      height: 'calc(100% - 53px)', // excluding height of footer
+      overflow: 'hidden',
+      borderBottom: `1px solid ${theme.palette.divider}`,
     },
   };
 };
@@ -146,7 +152,7 @@ const PluginJSONMenuView: React.FC<IPluginJSONMenuProps> = ({ classes, uploadedF
 
   const { JSONStatus, setJSONStatus } = useAppInternalState();
 
-  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.ConfigurationGroupsView);
+  const [liveViewMode, setLiveViewMode] = React.useState(LiveViewMode.JSONView);
 
   // In the user drag-and-drops a file, it should populate the UI with the file content.
   React.useEffect(() => {

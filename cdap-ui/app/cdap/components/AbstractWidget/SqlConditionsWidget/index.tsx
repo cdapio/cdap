@@ -14,16 +14,17 @@
  * the License.
  */
 
-import React from 'react';
-import classnames from 'classnames';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import ThemeWrapper from 'components/ThemeWrapper';
-import If from 'components/If';
-import Rule from 'components/AbstractWidget/SqlConditionsWidget/Rule';
-import { IWidgetProps } from 'components/AbstractWidget';
-import { objectQuery } from 'services/helpers';
-import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import { IErrorObj } from 'components/ConfigurationGroup/utilities';
+import { IWidgetProps } from 'components/AbstractWidget';
+import If from 'components/If';
+import React from 'react';
+import Rule from 'components/AbstractWidget/SqlConditionsWidget/Rule';
+import ThemeWrapper from 'components/ThemeWrapper';
+import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import classnames from 'classnames';
+import { objectQuery } from 'services/helpers';
 
 export const styles = (): StyleRules => {
   return {
@@ -155,7 +156,7 @@ class SqlConditionsWidgetView extends React.Component<
     const stageList = [];
     const mapInputSchema = {};
     let error = null;
-    const inputSchema = objectQuery(this.props, 'extraConfig', 'inputSchema');
+    const inputSchema = objectQuery(this.props, 'extraConfig', 'inputSchema') || [];
 
     inputSchema.forEach((input) => {
       stageList.push(input.name);
@@ -277,3 +278,6 @@ export default function SqlConditionsWidget(props) {
 }
 
 (SqlConditionsWidget as any).propTypes = WIDGET_PROPTYPES;
+(SqlConditionsWidget as any).getWidgetAttributes = () => {
+  return {};
+};

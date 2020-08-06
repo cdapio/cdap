@@ -18,27 +18,37 @@ import * as React from 'react';
 
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
-import Button from '@material-ui/core/Button';
+import AddIcon from '@material-ui/icons/Add';
+import DeleteIcon from '@material-ui/icons/Delete';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ExpansionPanel from '@material-ui/core/ExpansionPanel';
+import ExpansionPanelActions from '@material-ui/core/ExpansionPanelActions';
+import ExpansionPanelSummary from '@material-ui/core/ExpansionPanelSummary';
 import FilterConditionInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterConditionInput';
 import FilterNameInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilerNameInput';
 import FilterShowlistInput from 'components/PluginJSONCreator/Create/Content/FilterPage/FilterPanel/FilterShowlistInput';
+import IconButton from '@material-ui/core/IconButton';
+import If from 'components/If';
+import Typography from '@material-ui/core/Typography';
+import { useFilterState } from 'components/PluginJSONCreator/Create';
 
 const styles = (theme): StyleRules => {
   return {
     filterContainer: {
-      border: `1px solid ${theme.palette.grey[300]}`,
-      borderRadius: '6px',
       position: 'relative',
-      padding: `${theme.spacing(2)}px 10px 5px`,
-      marginTop: theme.spacing(3),
-      marginBottom: theme.spacing(3),
+      display: 'grid',
+      gridTemplateColumns: '5fr 1fr',
+    },
+    filterContent: {
+      display: 'block',
+      padding: `0 ${theme.spacing(4)}px`,
     },
     filterInput: {
       display: 'block',
       marginLeft: 'auto',
       marginRight: 'auto',
-      marginTop: theme.spacing(2),
-      marginBottom: theme.spacing(2),
+      marginTop: theme.spacing(3),
+      marginBottom: theme.spacing(3),
     },
   };
 };
@@ -47,6 +57,8 @@ interface IFilterPanelProps extends WithStyles<typeof styles> {
   filterID: string;
   addFilter: () => void;
   deleteFilter: () => void;
+  filterExpanded: boolean;
+  switchEditFilter: () => void;
 }
 
 const FilterPanelView: React.FC<IFilterPanelProps> = ({
@@ -54,23 +66,38 @@ const FilterPanelView: React.FC<IFilterPanelProps> = ({
   filterID,
   addFilter,
   deleteFilter,
+  filterExpanded,
+  switchEditFilter,
 }) => {
+  const { filterToName } = useFilterState();
+
   return (
     <div className={classes.filterContainer}>
-      <Button variant="contained" color="primary" onClick={addFilter}>
-        Add Filter
-      </Button>
-      <Button variant="contained" color="inherit" onClick={deleteFilter}>
-        Delete Filter
-      </Button>
-      <div className={classes.filterInput}>
-        <FilterNameInput filterID={filterID} />
-      </div>
-      <div className={classes.filterInput}>
-        <FilterShowlistInput filterID={filterID} />
-      </div>
-      <div className={classes.filterInput}>
-        <FilterConditionInput filterID={filterID} />
+      <ExpansionPanel expanded={filterExpanded} onChange={switchEditFilter}>
+        <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} id="panel1c-header">
+          <Typography className={classes.heading}>{filterToName.get(filterID)}</Typography>
+        </ExpansionPanelSummary>
+        <ExpansionPanelActions className={classes.filterContent}>
+          <If condition={filterExpanded}>
+            <div className={classes.filterInput}>
+              <FilterNameInput filterID={filterID} />
+            </div>
+            <div className={classes.filterInput}>
+              <FilterShowlistInput filterID={filterID} />
+            </div>
+            <div className={classes.filterInput}>
+              <FilterConditionInput filterID={filterID} />
+            </div>
+          </If>
+        </ExpansionPanelActions>
+      </ExpansionPanel>
+      <div>
+        <IconButton onClick={addFilter}>
+          <AddIcon fontSize="small" />
+        </IconButton>
+        <IconButton onClick={deleteFilter} color="secondary">
+          <DeleteIcon fontSize="small" />
+        </IconButton>
       </div>
     </div>
   );

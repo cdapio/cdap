@@ -14,13 +14,13 @@
  * the License.
  */
 
-import React from 'react';
-import { objectQuery } from 'services/helpers';
-import ToggleSwitch from 'components/ToggleSwitch';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
+import ToggleSwitch from 'components/ToggleSwitch';
+import React from 'react';
+import { objectQuery } from 'services/helpers';
 
 const styles = (): StyleRules => {
   return {
@@ -88,3 +88,10 @@ function ToggleSwitchWidget(props) {
 
 export default ToggleSwitchWidget;
 (ToggleSwitchWidget as any).propTypes = WIDGET_PROPTYPES;
+(ToggleSwitchWidget as any).getWidgetAttributes = () => {
+  return {
+    on: { type: 'IToggle', required: true },
+    off: { type: 'IToggle', required: true },
+    default: { type: 'string', required: false },
+  };
+};
