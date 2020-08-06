@@ -100,9 +100,6 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     sparkConf.set("spark.streaming.backpressure.enabled", "true");
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
-    for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
-      sparkConf.set(property.getKey(), property.getValue());
-    }
 
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
@@ -115,11 +112,33 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     // without this, stopping will hang on machines with few cores.
     sparkConf.set("spark.rpc.netty.dispatcher.numThreads", String.valueOf(numSources + 2));
 
-    sparkConf.set("spark.executor.instances", String.valueOf(numSources + 2));
     sparkConf.setMaster(String.format("local[%d]", numSources + 2));
+    sparkConf.set("spark.executor.instances", String.valueOf(numSources + 2));
 
     if (spec.isUnitTest()) {
       sparkConf.setMaster(String.format("local[%d]", numSources + 1));
+    }
+
+    // override defaults with any user provided engine configs
+    int minExecutors = numSources + 1;
+    for (Map.Entry<String, String> property : spec.getProperties().entrySet()) {
+      if ("spark.executor.instances".equals(property.getKey())) {
+        // don't let the user set this to something that doesn't make sense
+        try {
+          int numExecutors = Integer.parseInt(property.getValue());
+          if (numExecutors < minExecutors) {
+            LOG.warn("Number of executors {} is less than the minimum number required to run the pipeline. " +
+                       "Automatically increasing it to {}", numExecutors, minExecutors);
+            numExecutors = minExecutors;
+          }
+          sparkConf.set(property.getKey(), String.valueOf(numExecutors));
+        } catch (NumberFormatException e) {
+          throw new IllegalArgumentException(
+            "Number of spark executors was set to invalid value " + property.getValue(), e);
+        }
+      } else {
+        sparkConf.set(property.getKey(), property.getValue());
+      }
     }
     context.setSparkConf(sparkConf);
 
