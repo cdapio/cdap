@@ -99,11 +99,6 @@ const FieldLevelLineage = Loadable({
   loading: LoadingSVGCentered,
 });
 
-const Lab = Loadable({
-  loader: () => import(/* webpackChunkMame: "Lab" */ 'components/Lab'),
-  loading: LoadingSVGCentered,
-});
-
 const Replicator = Loadable({
   loader: () => import(/* webpackChunkMame: "Replicator" */ 'components/Replicator'),
   loading: LoadingSVGCentered,
@@ -193,7 +188,6 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/securekeys" component={SecureKeys} />
           <Route path="/ns/:namespace/kitchen" component={ConfigurationGroupKitchenSync} />
           <Route path="/ns/:namespace/replication" component={Replicator} />
-          <Route path="/ns/:namespace/lab" component={Lab} />
           <Route
             exact
             path="/ns/:namespace/vs"
@@ -218,23 +212,6 @@ export default class Home extends Component {
             exact
             path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"
             component={LogViewerPage}
-          />
-          <Route
-            exact
-            path="/ns/:namespace/lab-experiment-test"
-            render={(props) => {
-              if (!window.parent.Cypress) {
-                return <Page404 {...props} />;
-              }
-              const LabExperimentTestComp = Loadable({
-                loader: () =>
-                  import(
-                    /* webpackChunkName: "LabExperimentTest" */ 'components/Lab/LabExperimentTest'
-                  ),
-                loading: LoadingSVGCentered,
-              });
-              return <LabExperimentTestComp {...props} />;
-            }}
           />
           <Route
             path="/ns/:namespace/ingestion"
