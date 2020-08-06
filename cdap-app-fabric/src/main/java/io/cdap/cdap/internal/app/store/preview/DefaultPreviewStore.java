@@ -236,7 +236,9 @@ public class DefaultPreviewStore implements PreviewStore {
     try {
       table.put(mdsKey.getKey(), APPID, Bytes.toBytes(gson.toJson(applicationId)), 1L);
       table.put(mdsKey.getKey(), CONFIG, Bytes.toBytes(gson.toJson(appRequest)), 1L);
-      setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.WAITING, null, null, null));
+      long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.MILLISECONDS);
+      setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.WAITING, submitTimeInMillis, null, null,
+                                                        null));
     } catch (IOException e) {
       String message = String.format("Error while adding preview request with application '%s' in preview store.",
                                      applicationId);
@@ -304,7 +306,8 @@ public class DefaultPreviewStore implements PreviewStore {
                                                   "waiting state. Its current state is %s", applicationId,
                                                 previewStatus.getStatus().name()));
     }
-    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, null, null, null));
+    long submitTimeInMillis = RunIds.getTime(applicationId.getApplication(), TimeUnit.SECONDS);
+    setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.INIT, submitTimeInMillis, null, null, null));
   }
 
   private void setPollerinfo(ApplicationId applicationId, byte[] pollerInfo) {

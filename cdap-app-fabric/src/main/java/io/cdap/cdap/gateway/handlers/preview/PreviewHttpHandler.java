@@ -176,7 +176,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                              @QueryParam("filter") @DefaultValue("") String filterStr,
                              @QueryParam("format") @DefaultValue("text") String format,
                              @QueryParam("suppress") List<String> suppress) throws Exception {
-    sendLogs(namespaceId, previewId,
+    sendLogs(responder, namespaceId, previewId,
              info -> doGetLogs(info.getLogReader(), responder, info.getLoggingContext(),
                                fromTimeSecsParam, toTimeSecsParam, escape, filterStr,
                                info.getRunRecord(), format, suppress));
@@ -193,7 +193,7 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                                  @QueryParam("filter") @DefaultValue("") String filterStr,
                                  @QueryParam("format") @DefaultValue("text") String format,
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
-    sendLogs(namespaceId, previewId,
+    sendLogs(responder, namespaceId, previewId,
              info -> doPrev(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
                             fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
@@ -209,14 +209,19 @@ public class PreviewHttpHandler extends AbstractLogHandler {
                                  @QueryParam("filter") @DefaultValue("") String filterStr,
                                  @QueryParam("format") @DefaultValue("text") String format,
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
-    sendLogs(namespaceId, previewId,
+    sendLogs(responder, namespaceId, previewId,
              info -> doNext(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
                             fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
 
-  private void sendLogs(String namespaceId, String previewId, Consumer<LogReaderInfo> logsResponder) throws Exception {
+  private void sendLogs(HttpResponder responder, String namespaceId, String previewId,
+                        Consumer<LogReaderInfo> logsResponder) throws Exception {
     ApplicationId applicationId = new ApplicationId(namespaceId, previewId);
     ProgramRunId programRunId = previewManager.getRunId(applicationId);
+    if (programRunId == null) {
+      responder.sendStatus(HttpResponseStatus.OK);
+      return;
+    }
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(programRunId, null);
     LogReader logReader = previewManager.getLogReader();
     logsResponder.accept(new LogReaderInfo(logReader, loggingContext, null));

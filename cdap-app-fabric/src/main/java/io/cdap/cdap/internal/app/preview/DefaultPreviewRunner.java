@@ -23,6 +23,7 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.DataTracerFactory;
 import io.cdap.cdap.app.preview.PreviewDataPublisher;
@@ -33,6 +34,8 @@ import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
+import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -61,6 +64,12 @@ import org.apache.twill.common.Threads;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -69,6 +78,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 
 /**
@@ -100,6 +110,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final LevelDBTableService levelDBTableService;
   private final StructuredTableAdmin structuredTableAdmin;
   private final StructuredTableRegistry structuredTableRegistry;
+  private final Path previewIdDirPath;
 
   @Inject
   DefaultPreviewRunner(MessagingService messagingService,
@@ -116,7 +127,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
-                       StructuredTableRegistry structuredTableRegistry) {
+                       StructuredTableRegistry structuredTableRegistry,
+                       CConfiguration cConf) {
     this.messagingService = messagingService;
     this.dsOpExecService = dsOpExecService;
     this.datasetService = datasetService;
@@ -132,14 +144,14 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.levelDBTableService = levelDBTableService;
     this.structuredTableAdmin = structuredTableAdmin;
     this.structuredTableRegistry = structuredTableRegistry;
+    this.previewIdDirPath = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "previewid").toAbsolutePath();
   }
 
   @Override
   public Future<PreviewRequest> startPreview(PreviewRequest previewRequest) throws Exception {
     ProgramId programId = previewRequest.getProgram();
-
-    // Set the status to INIT to prepare for preview run.
-    setStatus(programId, new PreviewStatus(PreviewStatus.Status.INIT, null, System.currentTimeMillis(), null));
+    long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
+    previewStarted(programId);
 
     AppRequest<?> request = previewRequest.getAppRequest();
 
@@ -166,8 +178,9 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                                             artifactSummary, config, NOOP_PROGRAM_TERMINATOR, null,
                                             request.canUpdateSchedules());
     } catch (Exception e) {
-      setStatus(programId, new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, new BasicThrowable(e),
-                                             null, null));
+      PreviewStatus previewStatus = new PreviewStatus(PreviewStatus.Status.DEPLOY_FAILED, submitTimeMillis,
+                                                      new BasicThrowable(e), null, null);
+      previewTerminated(programId, previewStatus);
       throw e;
     }
 
@@ -187,7 +200,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
           case STARTING:
           case ALIVE:
           case STOPPING:
-            setStatus(programId, new PreviewStatus(PreviewStatus.Status.RUNNING, null, startTimeMillis, null));
+            setStatus(programId, new PreviewStatus(PreviewStatus.Status.RUNNING, submitTimeMillis, null,
+                                                   startTimeMillis, null));
             break;
           case COMPLETED:
             terminated(PreviewStatus.Status.COMPLETED, null);
@@ -223,8 +237,10 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
        * @param failureCause if the program was terminated due to error, this carries the failure cause
        */
       private void terminated(PreviewStatus.Status status, @Nullable Throwable failureCause) {
-        setStatus(programId, new PreviewStatus(status, failureCause == null ? null : new BasicThrowable(failureCause),
-                                               startTimeMillis, System.currentTimeMillis()));
+        PreviewStatus previewStatus = new PreviewStatus(status, submitTimeMillis,
+                                                        failureCause == null ? null : new BasicThrowable(failureCause),
+                                                        startTimeMillis, System.currentTimeMillis());
+        previewTerminated(programId, previewStatus);
         if (failureCause == null) {
           resultFuture.complete(previewRequest);
         } else {
@@ -299,6 +315,26 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       metricsCollectionService.start(),
       programNotificationSubscriberService.start()
     ).get();
+
+    Files.createDirectories(previewIdDirPath);
+
+    // Reconcile status for abruptly terminated preview runs
+    try (Stream<Path> paths = Files.walk(Paths.get(previewIdDirPath.toString()))) {
+      paths.filter(Files::isRegularFile).forEach(path -> {
+        try (Reader reader = Files.newBufferedReader(path, StandardCharsets.UTF_8)) {
+          ProgramId programId = GSON.fromJson(reader, ProgramId.class);
+          long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
+          PreviewStatus status = new PreviewStatus(
+            PreviewStatus.Status.RUN_FAILED, submitTimeMillis,
+            new BasicThrowable(new Exception("Preview runner container killed possibly because of out of memory. " +
+                                               "Please try running preview again.")),
+            null, null);
+          previewTerminated(programId, status);
+        } catch (IOException e) {
+          LOG.warn("Error reading file {}. Ignoring", path, e);
+        }
+      });
+    }
   }
 
   @Override
@@ -315,5 +351,30 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
       ((Service) messagingService).stopAndWait();
     }
     levelDBTableService.close();
+  }
+
+  private void previewStarted(ProgramId programId) {
+    Path pid = Paths.get(previewIdDirPath.toString(), programId.getApplication());
+    // write to temp file
+    try {
+      Files.write(pid, Bytes.toBytes(GSON.toJson(programId)));
+    } catch (IOException e) {
+      LOG.warn("Error saving the program id to file {}.", pid, e);
+    }
+    long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
+    // Set the status to INIT to prepare for preview run.
+    setStatus(programId, new PreviewStatus(PreviewStatus.Status.INIT, submitTimeMillis, null,
+                                           System.currentTimeMillis(), null));
+  }
+
+  private void previewTerminated(ProgramId programId, PreviewStatus previewStatus) {
+    Path pid = Paths.get(previewIdDirPath.toString(), programId.getApplication());
+    // delete the temp file
+    try {
+      Files.delete(pid);
+    } catch (IOException e) {
+      LOG.warn("Error deleting file {} containing preview program id.", pid, e);
+    }
+    setStatus(programId, previewStatus);
   }
 }

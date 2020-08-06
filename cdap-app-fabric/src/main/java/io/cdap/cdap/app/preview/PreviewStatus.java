@@ -51,18 +51,20 @@ public class PreviewStatus {
 
   private final Status status;
   private final BasicThrowable throwable;
+  private final long submitTime;
   private final Long startTime;
   private final Long endTime;
   private final Integer positionInWaitingQueue;
 
-  public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
+  public PreviewStatus(Status status, long submitTime, @Nullable BasicThrowable throwable, @Nullable Long startTime,
                        @Nullable Long endTime) {
-    this(status, throwable, startTime, endTime, null);
+    this(status, submitTime, throwable, startTime, endTime, null);
   }
 
-  public PreviewStatus(Status status, @Nullable BasicThrowable throwable, @Nullable Long startTime,
+  public PreviewStatus(Status status, long submitTime, @Nullable BasicThrowable throwable, @Nullable Long startTime,
                        @Nullable Long endTime, @Nullable Integer positionInWaitingQueue) {
     this.status = status;
+    this.submitTime = submitTime;
     this.throwable = throwable;
     this.startTime = startTime;
     this.endTime = endTime;
@@ -71,6 +73,10 @@ public class PreviewStatus {
 
   public Status getStatus() {
     return status;
+  }
+
+  public long getSubmitTime() {
+    return submitTime;
   }
 
   /**
@@ -116,6 +122,7 @@ public class PreviewStatus {
 
     PreviewStatus status1 = (PreviewStatus) o;
     return status == status1.status &&
+      submitTime == status1.submitTime &&
       Objects.equals(throwable, status1.throwable) &&
       Objects.equals(startTime, status1.startTime) &&
       Objects.equals(endTime, status1.endTime) &&
@@ -124,6 +131,6 @@ public class PreviewStatus {
 
   @Override
   public int hashCode() {
-    return Objects.hash(status, throwable, startTime, endTime, positionInWaitingQueue);
+    return Objects.hash(status, submitTime, throwable, startTime, endTime, positionInWaitingQueue);
   }
 }

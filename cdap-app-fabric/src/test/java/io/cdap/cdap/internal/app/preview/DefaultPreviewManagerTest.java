@@ -78,7 +78,7 @@ public class DefaultPreviewManagerTest {
   public static void beforeClass() throws IOException {
     CConfiguration cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
-    cConf.setInt(Constants.Preview.CACHE_SIZE, 1);
+    cConf.setInt(Constants.Preview.POLLER_COUNT, 1);
 
     injector = Guice.createInjector(
       new ConfigModule(cConf, new Configuration()),
