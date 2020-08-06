@@ -32,11 +32,20 @@ const styles = (): StyleRules => {
   return {
     root: {
       display: 'flex',
-      justifyContent: 'center',
+      alignItems: 'center',
+      flexDirection: 'column',
       paddingTop: '5%',
     },
     paperContainer: {
       display: 'flex',
+      height: 'fit-content',
+    },
+    pageDescription: {
+      display: 'flex',
+      alignItems: 'flex-start',
+      maxWidth: 900,
+      width: '100%',
+      margin: '20px 0px',
     },
     experimentsTable: {
       maxWidth: 900,
@@ -91,18 +100,19 @@ class Lab extends React.Component<ILabProps, ILabState> {
 
     return (
       <div className={classes.root}>
+        <div className={classes.pageDescription}>
+          <Typography variant="h3">Lab - Experimental Features</Typography>
+        </div>
         <Paper className={classes.paperContainer}>
           <Table className={classes.experimentsTable}>
             <TableHead>
               <TableRow>
-                <TableCell>
-                  <Typography variant="h5">Image</Typography>
-                </TableCell>
+                <TableCell></TableCell>
                 <TableCell>
                   <Typography variant="h5">Experiment</Typography>
                 </TableCell>
                 <TableCell>
-                  <Typography variant="h5">Status</Typography>
+                  <Typography variant="h5">Enable/Disable</Typography>
                 </TableCell>
               </TableRow>
             </TableHead>
