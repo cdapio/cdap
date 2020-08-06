@@ -76,7 +76,6 @@ angular.module(PKG.name + '.commons')
       clearConnectionsSelection();
       vm.selectedNode = node;
     };
-
     const repaintTimeoutsMap = {};
 
     function repaintEverything() {
@@ -299,7 +298,7 @@ angular.module(PKG.name + '.commons')
         const ispluginsMapAvailable = Object.keys(vm.pluginsMap).length;
         // If pluginsMap is not available yet, consider the plugin to be valid until we know otherwise
         node.isPluginAvailable = ispluginsMapAvailable ?
-            Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) : true;
+            Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) : true;
         if (node.type === 'condition') {
           initConditionNode(node.name);
         } else if (node.type === 'splittertransform') {
@@ -1344,7 +1343,7 @@ angular.module(PKG.name + '.commons')
       vm.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
       $scope.nodes.forEach(node => {
         let key = generatePluginMapKey(node);
-        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) ;
+        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) ;
       });
       if (!_.isEmpty(vm.pluginsMap)) {
         addErrorAlertsEndpointsAndConnections();
