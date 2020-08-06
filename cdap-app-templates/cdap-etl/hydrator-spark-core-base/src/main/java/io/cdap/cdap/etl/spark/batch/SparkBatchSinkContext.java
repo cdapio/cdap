@@ -23,7 +23,6 @@ import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
 import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
-import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 
@@ -53,8 +52,7 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
   @Override
   public void addOutput(Output output) {
     Output actualOutput = suffixOutput(getOutput(output));
-    Output trackableOutput = isPreviewEnabled ? actualOutput : ExternalDatasets.makeTrackable(admin, actualOutput);
-    sinkFactory.addOutput(getStageName(), trackableOutput);
+    sinkFactory.addOutput(getStageName(), actualOutput);
   }
 
   @Override

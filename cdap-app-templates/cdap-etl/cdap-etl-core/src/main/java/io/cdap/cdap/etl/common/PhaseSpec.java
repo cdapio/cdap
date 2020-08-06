@@ -16,12 +16,13 @@
 
 package io.cdap.cdap.etl.common;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Class that contain common pipeline phase information
  */
-public class PhaseSpec {
+public class PhaseSpec implements Serializable {
   private final String name;
   private final PipelinePhase phase;
   private final Map<String, String> connectorDatasets;
