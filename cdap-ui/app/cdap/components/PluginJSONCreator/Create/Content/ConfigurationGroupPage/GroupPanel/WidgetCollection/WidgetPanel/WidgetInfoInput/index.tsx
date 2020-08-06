@@ -16,15 +16,12 @@
 
 import * as React from 'react';
 
-import {
-  WIDGET_CATEGORY,
-  WIDGET_TYPES,
-  WIDGET_TYPE_TO_ATTRIBUTES,
-} from 'components/PluginJSONCreator/constants';
+import { WIDGET_CATEGORY, WIDGET_TYPES } from 'components/PluginJSONCreator/constants';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 
 import { Map } from 'immutable';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
+import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
 import { useWidgetState } from 'components/PluginJSONCreator/Create';
 
 const styles = (theme): StyleRules => {
@@ -70,12 +67,14 @@ const WidgetInfoInputView: React.FC<IWidgetInfoInputProps> = ({ classes, widgetI
       setWidgetInfo(widgetInfo.setIn([widgetID, 'widgetType'], widgetType));
 
       // Change widget-attributes so that it corresponds to the widget-type
+      const comp = WIDGET_FACTORY[widgetType];
+      const widgetAttributes = comp.getWidgetAttributes();
       setWidgetToAttributes(
         widgetToAttributes.set(
           widgetID,
           Map(
-            Object.keys(WIDGET_TYPE_TO_ATTRIBUTES[widgetType]).reduce((acc, curr) => {
-              acc[curr] = '';
+            Object.keys(widgetAttributes).reduce((acc, curr) => {
+              acc[curr] = undefined;
               return acc;
             }, {})
           )

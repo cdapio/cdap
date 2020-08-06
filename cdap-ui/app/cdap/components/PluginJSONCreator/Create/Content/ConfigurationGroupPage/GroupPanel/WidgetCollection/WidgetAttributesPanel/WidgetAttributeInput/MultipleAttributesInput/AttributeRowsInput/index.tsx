@@ -17,10 +17,8 @@
 import * as React from 'react';
 
 import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
-import If from 'components/If';
 import { List } from 'immutable';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { isNilOrEmpty } from 'services/helpers';
 
 const AttributeRowsInput = ({
   widgetID,
@@ -32,9 +30,13 @@ const AttributeRowsInput = ({
   const [currentAttributeValues, setCurrentAttributeValues] = React.useState('');
 
   React.useEffect(() => {
-    const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
-    if (existingAttributeValues) {
-      setCurrentAttributeValues(processAttributeValues(existingAttributeValues));
+    if (!localWidgetToAttributes || !localWidgetToAttributes.get(widgetID)) {
+      setCurrentAttributeValues('');
+    } else {
+      const existingAttributeValues = localWidgetToAttributes.get(widgetID).get(field);
+      if (existingAttributeValues) {
+        setCurrentAttributeValues(processAttributeValues(existingAttributeValues));
+      }
     }
   }, [selectedType, localWidgetToAttributes]);
 
@@ -62,15 +64,13 @@ const AttributeRowsInput = ({
   };
 
   return (
-    <If condition={!isNilOrEmpty(currentAttributeValues)}>
-      <PluginInput
-        widgetType={'dsv'}
-        value={currentAttributeValues}
-        onChange={onAttributeChange}
-        label={field}
-        required={true}
-      />
-    </If>
+    <PluginInput
+      widgetType={'dsv'}
+      value={currentAttributeValues}
+      onChange={onAttributeChange}
+      label={field}
+      required={true}
+    />
   );
 };
 

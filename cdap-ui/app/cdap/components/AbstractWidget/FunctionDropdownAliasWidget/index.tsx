@@ -15,15 +15,17 @@
  */
 
 import * as React from 'react';
-import FunctionDropdownRow, {
-  IDropdownOption,
-} from 'components/AbstractWidget/FunctionDropdownAliasWidget/FuctionDropdownRow';
-import ThemeWrapper from 'components/ThemeWrapper';
+
 import AbstractMultiRowWidget, {
   IMultiRowProps,
 } from 'components/AbstractWidget/AbstractMultiRowWidget';
-import { objectQuery } from 'services/helpers';
+import FunctionDropdownRow, {
+  IDropdownOption,
+} from 'components/AbstractWidget/FunctionDropdownAliasWidget/FuctionDropdownRow';
+
+import ThemeWrapper from 'components/ThemeWrapper';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import { objectQuery } from 'services/helpers';
 
 interface IFunctionDropdownWidgetProps {
   placeholders?: Record<string, string>;
@@ -67,3 +69,10 @@ export default function FunctionDropdownAliasWidget(props) {
 }
 
 (FunctionDropdownAliasWidget as any).propTypes = WIDGET_PROPTYPES;
+(FunctionDropdownAliasWidget as any).getWidgetAttributes = () => {
+  return {
+    placeholders: { type: 'Record<string, string>', required: false },
+    dropdownOptions: { type: 'IDropdownOption[]', required: true },
+    delimiter: { type: 'string', required: false },
+  };
+};

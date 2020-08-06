@@ -14,21 +14,22 @@
  * the License.
  */
 
-import React from 'react';
+import { Modal, ModalBody } from 'reactstrap';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
+
 import Button from '@material-ui/core/Button';
 import { ConnectionType } from 'components/DataPrepConnections/ConnectionType';
 import DataPrepConnection from 'components/DataPrepConnections';
-import { Modal, ModalBody } from 'reactstrap';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
-import ThemeWrapper from 'components/ThemeWrapper';
-import MyDataPrepApi from 'api/dataprep';
 import ErrorBanner from 'components/ErrorBanner';
+import { IWidgetProps } from 'components/AbstractWidget';
+import If from 'components/If';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import MyDataPrepApi from 'api/dataprep';
+import React from 'react';
+import ThemeWrapper from 'components/ThemeWrapper';
+import ee from 'event-emitter';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import If from 'components/If';
-import ee from 'event-emitter';
-import { IWidgetProps } from 'components/AbstractWidget';
 
 const styles = (theme) => {
   return {
@@ -371,5 +372,12 @@ function PluginConnectionBrowserWrapper(props) {
     </ThemeWrapper>
   );
 }
+
+(PluginConnectionBrowserWrapper as any).getWidgetAttributes = () => {
+  return {
+    connectionType: { type: 'string', required: true },
+    label: { type: 'string', required: true },
+  };
+};
 
 export default PluginConnectionBrowserWrapper;

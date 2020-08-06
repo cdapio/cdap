@@ -14,27 +14,29 @@
  * the License.
  */
 
-import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import If from 'components/If';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { JSONStatusMessage } from 'components/PluginJSONCreator/constants';
+import * as React from 'react';
+
 import {
   ConfigurationGroupContext,
   FilterContext,
   OutputContext,
   PluginInfoContext,
-  useAppInternalState,
   WidgetContext,
+  useAppInternalState,
 } from 'components/PluginJSONCreator/Create';
+import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
+
 import ConfigurationGroupPage from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage';
 import FilterPage from 'components/PluginJSONCreator/Create/Content/FilterPage';
+import If from 'components/If';
+import { JSONStatusMessage } from 'components/PluginJSONCreator/constants';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import OutputPage from 'components/PluginJSONCreator/Create/Content/OutputPage';
 import PluginInfoPage from 'components/PluginJSONCreator/Create/Content/PluginInfoPage';
-import * as React from 'react';
 
 export const STEPS = [
   {
-    label: 'Basic Plugin Information',
+    label: 'Plugin Information',
   },
   {
     label: 'Configuration Groups',

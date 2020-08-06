@@ -40,14 +40,25 @@ const FilterPage = () => {
     setShowToInfo,
   } = useFilterState();
 
+  const [activeFilterIndex, setActiveFilterIndex] = React.useState(null);
+
   function addFilter(index: number) {
     return () => {
       const newFilterID = 'Filter_' + uuidV4();
 
+      let newFilters;
       if (filters.size === 0) {
-        setFilters(filters.insert(0, newFilterID));
+        newFilters = filters.insert(0, newFilterID);
       } else {
-        setFilters(filters.insert(index + 1, newFilterID));
+        newFilters = filters.insert(index + 1, newFilterID);
+      }
+      setFilters(newFilters);
+
+      // Set the activeFilterIndex to the new filter's index
+      if (newFilters.size <= 1) {
+        setActiveFilterIndex(0);
+      } else {
+        setActiveFilterIndex(index + 1);
       }
 
       setFilterToName(filterToName.set(newFilterID, ''));
@@ -70,6 +81,8 @@ const FilterPage = () => {
 
   function deleteFilter(index: number) {
     return () => {
+      setActiveFilterIndex(null);
+
       const filterToDelete = filters.get(index);
 
       const newFilters = filters.remove(index);
@@ -92,10 +105,19 @@ const FilterPage = () => {
     };
   }
 
+  const switchEditFilter = (index) => (event, newExpanded) => {
+    if (newExpanded) {
+      setActiveFilterIndex(index);
+    } else {
+      setActiveFilterIndex(null);
+    }
+  };
+
   return React.useMemo(
     () => (
       <div>
         <Heading type={HeadingTypes.h3} label="Filters" />
+        <br />
         <If condition={filters.size === 0}>
           <Button variant="contained" color="primary" onClick={addFilter(0)}>
             Add Filters
@@ -109,13 +131,15 @@ const FilterPage = () => {
               filterID={filterID}
               addFilter={addFilter(filterIndex)}
               deleteFilter={deleteFilter(filterIndex)}
+              filterExpanded={activeFilterIndex === filterIndex}
+              switchEditFilter={switchEditFilter(filterIndex)}
             />
           );
         })}
         <StepButtons nextDisabled={false} />
       </div>
     ),
-    [filters, filterToName, filterToCondition, filterToShowlist]
+    [filters, filterToName, filterToCondition, filterToShowlist, activeFilterIndex]
   );
 };
 

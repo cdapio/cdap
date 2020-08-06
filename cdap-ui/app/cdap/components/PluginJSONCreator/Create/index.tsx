@@ -22,9 +22,11 @@ import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 
 import Content from 'components/PluginJSONCreator/Create/Content';
 import Dropzone from 'react-dropzone';
+import If from 'components/If';
 import PluginJSONMenu from 'components/PluginJSONCreator/Create/PluginJSONMenu';
 import StepsGuidelineMenu from 'components/PluginJSONCreator/Create/StepsGuidelineMenu';
 import classnames from 'classnames';
+import { fade } from '@material-ui/core/styles/colorManipulator';
 
 export const LEFT_PANEL_WIDTH = 250;
 
@@ -35,6 +37,11 @@ const styles = (theme): StyleRules => {
       gridTemplateColumns: `${LEFT_PANEL_WIDTH}px 1fr`,
       height: 'calc(100vh - 53px - 48px)', // excluding header and footer
       width: '100%',
+    },
+    dropzone: {
+      '&:focus': {
+        outline: 'none',
+      },
     },
     stepsGuidelineMenu: {
       height: '100%',
@@ -48,8 +55,11 @@ const styles = (theme): StyleRules => {
       position: 'fixed',
       padding: 0,
       margin: 0,
-      width: '100%',
-      color: 'rgba(0, 0, 0, 0.5)',
+      width: '100vw',
+      height: '100vh',
+      border: `3px dashed ${theme.palette.primary.main}`,
+      backgroundColor: `${fade(theme.palette.primary.main, 0.2)} !important`,
+      zIndex: 5000,
     },
   };
 };
@@ -314,7 +324,7 @@ const CreateView = ({ classes, children }) => {
           })}
         >
           <section>
-            <div {...getRootProps()}>
+            <div className={classes.dropzone} {...getRootProps()}>
               <input {...getInputProps()} />
               <GlobalStateProvider
                 pluginInfoContextValue={pluginInfoContextValue}
@@ -324,7 +334,9 @@ const CreateView = ({ classes, children }) => {
                 filterContextValue={filterContextValue}
                 appInternalContextValue={appInternalContextValue}
               >
-                <PluginJSONMenu uploadedFile={uploadedFile} />
+                <If condition={!isDragActive}>
+                  <PluginJSONMenu uploadedFile={uploadedFile} />
+                </If>
               </GlobalStateProvider>
               <AppInternalContext.Provider value={appInternalContextValue}>
                 <div className={classes.root}>

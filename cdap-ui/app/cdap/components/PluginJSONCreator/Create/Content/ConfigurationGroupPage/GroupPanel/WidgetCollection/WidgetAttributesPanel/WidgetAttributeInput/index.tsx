@@ -20,7 +20,7 @@ import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 
 import MultipleAttributesInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/MultipleAttributesInput';
 import SingleAttributeInput from 'components/PluginJSONCreator/Create/Content/ConfigurationGroupPage/GroupPanel/WidgetCollection/WidgetAttributesPanel/WidgetAttributeInput/SingleAttributeInput';
-import { WIDGET_TYPE_TO_ATTRIBUTES } from 'components/PluginJSONCreator/constants';
+import { WIDGET_FACTORY } from 'components/AbstractWidget/AbstractWidgetFactory';
 
 const styles = (theme): StyleRules => {
   return {
@@ -42,30 +42,41 @@ const WidgetAttributeInputView = ({
 }) => {
   /*
    * Let's suppose the following condition.
-   *     1. WIDGET_TYPE_TO_ATTRIBUTES = {
-   *       'connection-browser': {
-   *         connectionType: { type: 'string', required: true },
-   *         label: { type: 'string', required: true },
-   *       }
+   *     1. WIDGET_FACTORY = {
+   *       'connection-browser': ConnectionBrowser
    *     }
-   *     2. widgetType = 'connection-browser'
-   *     3. field = 'connectionType'
-   *
+   *     2. ConnectionBrowser.getWidgetAttributes = () => {
+   *          return {
+   *            connectionType: { type: 'string', required: true },
+   *            label: { type: 'string', required: true },
+   *          };
+   *       };
+   *     3. widgetType = 'connection-browser'
+   *     4. field = 'connectionType'
    *
    * In this case, fieldInfo = { type: 'string', required: true }.
    * Therefore, we will render out the input that matches this requirement.
    */
-  const fieldInfo = WIDGET_TYPE_TO_ATTRIBUTES[widgetType]
-    ? WIDGET_TYPE_TO_ATTRIBUTES[widgetType][field]
-    : {};
+  let fieldInfo;
+  try {
+    const comp = WIDGET_FACTORY[widgetType];
+    const widgetAttributes = comp.getWidgetAttributes();
+    fieldInfo = widgetAttributes[field];
+  } catch (e) {
+    fieldInfo = { type: 'string', required: false };
+  }
 
   const renderAttributeInput = () => {
     if (!fieldInfo) {
       return;
     }
 
-    const isMultipleInput = fieldInfo.type.includes('[]');
-    const supportedTypes = fieldInfo.type.split('|');
+    // widget-attributes is considered as multiple attributes in following cases:
+    // e.g. fieldInfo.type = 'string[] | number[]'
+    // e.g. fieldInfo.type = 'Record<string, string>'
+    const isMultipleInput = fieldInfo.type.includes('[]') || fieldInfo.type.includes('Record');
+    const supportedTypes = fieldInfo.type.split('|').map((item) => item.trim());
+
     if (isMultipleInput) {
       return (
         <MultipleAttributesInput

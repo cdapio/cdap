@@ -58,9 +58,7 @@ export const GroupPanelView = ({
     <div className={classes.eachGroup}>
       <ExpansionPanel expanded={configurationGroupExpanded} onChange={switchEditConfigurationGroup}>
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} id="panel1c-header">
-          <If condition={!configurationGroupExpanded}>
-            <Typography className={classes.heading}>{group.get('label')}</Typography>
-          </If>
+          <Typography className={classes.heading}>{group.get('label')}</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelActions className={classes.groupContent}>
           <If condition={configurationGroupExpanded}>
