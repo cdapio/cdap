@@ -350,7 +350,9 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
   }
 
   private cleanUpWatchers = () => {
-    this.io.disconnect();
+    if (this.io) {
+      this.io.disconnect();
+    }
     this.stopScrollWatch();
     this.stopPoll();
   };

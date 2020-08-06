@@ -80,7 +80,7 @@ class ProgramDataFetcher implements DataFetcher {
       params.fromOffset = this.lastLog.offset;
     }
 
-    return MyProgramApi.nextLogs(params).map((res) => {
+    return MyProgramApi.nextLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.lastLog = res[res.length - 1];
       }
@@ -96,7 +96,7 @@ class ProgramDataFetcher implements DataFetcher {
       params.fromOffset = this.firstLog.offset;
     }
 
-    return MyProgramApi.prevLogs(params).map((res) => {
+    return MyProgramApi.prevLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.firstLog = res[0];
       }
@@ -108,7 +108,7 @@ class ProgramDataFetcher implements DataFetcher {
   public getFirst = (): Observable<ILogResponse[]> => {
     const params = this.getBaseParams();
 
-    return MyProgramApi.nextLogs(params).map((res) => {
+    return MyProgramApi.nextLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.firstLog = res[0];
         this.lastLog = res[res.length - 1];
@@ -121,7 +121,7 @@ class ProgramDataFetcher implements DataFetcher {
   public getLast = (): Observable<ILogResponse[]> => {
     const params = this.getBaseParams();
 
-    return MyProgramApi.prevLogs(params).map((res) => {
+    return MyProgramApi.prevLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.firstLog = res[0];
         this.lastLog = res[res.length - 1];
