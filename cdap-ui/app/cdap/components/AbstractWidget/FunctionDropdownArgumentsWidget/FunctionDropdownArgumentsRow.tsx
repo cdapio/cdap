@@ -15,11 +15,11 @@
  */
 
 import * as React from 'react';
-import Input from '@material-ui/core/Input';
+import TextBox from 'components/AbstractWidget/FormInputs/TextBox';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
-import Select from '@material-ui/core/Select';
+import Select from 'components/AbstractWidget/FormInputs/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import AbstractRow, {
   IAbstractRowProps,
@@ -41,6 +41,7 @@ const styles = (theme): StyleRules => {
     disabled: {
       color: `${theme.palette.grey['50']}`,
     },
+    // Align with surrounding controls
     separator: {
       paddingTop: '10px',
       textAlign: 'center',
@@ -117,7 +118,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
     );
   };
 
-  private handleInputFieldDropdownChange = (type: StateKeys, value) => {
+  private handleWidgetChange = (type: StateKeys, value) => {
     this.setState(
       {
         [type]: value,
@@ -155,26 +156,19 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
     return (
       <div className={this.props.classes.inputContainer}>
         <Select
-          classes={{ disabled: this.props.classes.disabled }}
           value={this.state.func}
-          onChange={this.handleInputChange.bind(this, 'func')}
-          displayEmpty={true}
+          onChange={this.handleWidgetChange.bind(this, 'func')}
           disabled={this.props.disabled}
-        >
-          {dropdownOptions.map((option) => {
-            return (
-              <MenuItem value={option.value} key={option.value}>
-                {option.label}
-              </MenuItem>
-            );
-          })}
-        </Select>
+          widgetProps={{
+            options: dropdownOptions,
+          }}
+        />
 
         <If condition={!!this.props.extraConfig && !!this.props.extraConfig.inputSchema}>
           <InputFieldDropdown
             disabled={this.props.disabled}
             extraConfig={this.props.extraConfig}
-            onChange={this.handleInputFieldDropdownChange.bind(this, 'field')}
+            onChange={this.handleWidgetChange.bind(this, 'field')}
             onKeyPress={this.handleKeyPress}
             value={this.state.field}
             widgetProps={{}}
@@ -182,27 +176,27 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
         </If>
 
         <If condition={!this.props.extraConfig || !this.props.extraConfig.inputSchema}>
-          <Input
-            classes={{ disabled: this.props.classes.disabled }}
-            placeholder={this.props.placeholders.field}
-            onChange={this.handleInputChange.bind(this, 'field')}
+          <TextBox
+            onChange={this.handleWidgetChange.bind(this, 'field')}
             value={this.state.field}
             autoFocus={this.props.autofocus}
             onKeyPress={this.handleKeyPress}
-            onKeyDown={this.handleKeyDown}
             disabled={this.props.disabled}
             inputRef={this.props.forwardedRef}
+            widgetProps={{
+              placeholder: this.props.placeholders.field,
+            }}
           />
         </If>
 
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.placeholders.arguments}
-          onChange={this.handleInputChange.bind(this, 'arguments')}
+        <TextBox
+          onChange={this.handleWidgetChange.bind(this, 'arguments')}
           value={this.state.arguments}
           onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
           disabled={this.props.disabled}
+          widgetProps={{
+            placeholder: this.props.placeholders.arguments,
+          }}
         />
 
         <FormControlLabel
@@ -222,14 +216,14 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
 
         <span className={this.props.classes.separator}>as</span>
 
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.placeholders.alias}
-          onChange={this.handleInputChange.bind(this, 'alias')}
+        <TextBox
+          onChange={this.handleWidgetChange.bind(this, 'alias')}
           value={this.state.alias}
           onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
           disabled={this.props.disabled}
+          widgetProps={{
+            placeholder: this.props.placeholders.alias,
+          }}
         />
       </div>
     );
