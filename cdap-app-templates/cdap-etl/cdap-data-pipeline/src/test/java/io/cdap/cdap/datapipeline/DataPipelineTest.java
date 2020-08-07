@@ -815,14 +815,6 @@ public class DataPipelineTest extends HydratorTestBase {
      */
     validateMetric(4, appId, "source1.records.out");
     validateMetric(1, appId, "source2.records.out");
-    validateMetric(1, appId, "dropnull.records.error");
-    validateMetric(3, appId, "filter1.records.out");
-    validateMetric(1, appId, "filter1.records.error");
-    validateMetric(2, appId, "filter2.records.out");
-    validateMetric(1, appId, "filter2.records.error");
-    validateMetric(1, appId, "agg1.records.out");
-    validateMetric(1, appId, "agg1.records.error");
-    validateMetric(1, appId, "agg2.records.error");
     validateMetric(5, appId, "errorflatten.records.out");
     validateMetric(3, appId, "errorfilter.records.out");
     validateMetric(5, appId, "sink1.records.in");
@@ -2385,8 +2377,9 @@ public class DataPipelineTest extends HydratorTestBase {
     String input1Name = "source1InnerJoinInput-" + engine;
     String input2Name = "source2InnerJoinInput-" + engine;
     String input3Name = "source3InnerJoinInput-" + engine;
-    String outputName = "innerJoinOutput-" + engine;
-    String outputName2 = "innerJoinOutput2-" + engine;
+    File outputDir = TMP_FOLDER.newFolder();
+    String output1 = new File(outputDir, "output1").getAbsolutePath();
+    String output2 = new File(outputDir, "output2").getAbsolutePath();
     String joinerName = "innerJoiner-" + engine;
     String sinkName = "innerJoinSink-" + engine;
     String sinkName2 = "innerJoinSink-2" + engine;
@@ -2400,8 +2393,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage(joinerName, MockJoiner.getPlugin("t1.customer_id=t2.cust_id=t3.c_id&" +
                                                                   "t1.customer_name=t2.cust_name=t3.c_name",
                                                                 "t1,t2,t3", "")))
-      .addStage(new ETLStage(sinkName, MockSink.getPlugin(outputName)))
-      .addStage(new ETLStage(sinkName2, MockSink.getPlugin(outputName2)))
+      .addStage(new ETLStage(sinkName, MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s1", output1)))
+      .addStage(new ETLStage(sinkName2, MockExternalSink.getPlugin(UUID.randomUUID().toString(), "s2", output2)))
       .addConnection("source1", "t1")
       .addConnection("source2", "t2")
       .addConnection("source3", "t3")
@@ -2455,9 +2448,9 @@ public class DataPipelineTest extends HydratorTestBase {
     inputManager = getDataset(NamespaceId.DEFAULT.dataset(input3Name));
     MockSource.writeInput(inputManager, ImmutableList.of(recordTrasCar, recordTrasBike));
 
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     StructuredRecord joinRecordSamuel = StructuredRecord.builder(outSchema)
       .set("customer_id", "1").set("customer_name", "samuel")
@@ -2469,13 +2462,11 @@ public class DataPipelineTest extends HydratorTestBase {
       .set("item_id", "22").set("item_price", 100L).set("cust_id", "3").set("cust_name", "jane")
       .set("t_id", "2").set("c_id", "3").set("c_name", "jane").build();
 
-    DataSetManager<Table> sinkManager = getDataset(outputName);
     Set<StructuredRecord> expected = ImmutableSet.of(joinRecordSamuel, joinRecordJane);
-    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Set<StructuredRecord> actual = Sets.newHashSet(MockExternalSink.readOutput(output1, outSchema));
     Assert.assertEquals(expected, actual);
 
-    sinkManager = getDataset(outputName2);
-    actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    actual = Sets.newHashSet(MockExternalSink.readOutput(output2, outSchema));
     Assert.assertEquals(expected, actual);
 
     validateMetric(2, appId, joinerName + ".records.out");
@@ -3422,14 +3413,6 @@ public class DataPipelineTest extends HydratorTestBase {
     Assert.assertEquals(expected, actual);
 
     validateMetric(4, appId, "source.records.out");
-    validateMetric(4, appId, "splitter1.records.in");
-    validateMetric(2, appId, "splitter1.records.out.null");
-    validateMetric(2, appId, "splitter1.records.out.non-null");
-    validateMetric(2, appId, "identity.records.in");
-    validateMetric(2, appId, "identity.records.out");
-    validateMetric(2, appId, "splitter2.records.in");
-    validateMetric(1, appId, "splitter2.records.out.null");
-    validateMetric(1, appId, "splitter2.records.out.non-null");
     validateMetric(1, appId, "sink1.records.in");
     validateMetric(3, appId, "sink2.records.in");
   }
