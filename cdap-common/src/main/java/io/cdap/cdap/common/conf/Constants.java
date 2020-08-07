@@ -355,6 +355,8 @@ public final class Constants {
     public static final String WAITING_QUEUE_CAPACITY = "preview.waiting.queue.capacity";
     public static final String WAITING_QUEUE_TIMEOUT_SECONDS = "preview.waiting.queue.timeout.seconds";
     public static final String MESSAGING_TOPIC = "preview.messaging.topic";
+    public static final String DATA_CLEANUP_INTERVAL_SECONDS = "preview.data.cleanup.interval.seconds";
+    public static final String DATA_TTL_SECONDS = "preview.data.ttl.seconds";
   }
 
   /**

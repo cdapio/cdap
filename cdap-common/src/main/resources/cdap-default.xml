@@ -3058,6 +3058,22 @@
   </property>
 
   <property>
+    <name>preview.data.cleanup.interval.seconds</name>
+    <value>3600</value>
+    <description>
+      Interval in seconds for preview data cleanup process. Default is 1 hr.
+    </description>
+  </property>
+
+  <property>
+    <name>preview.data.ttl.seconds</name>
+    <value>86400</value>
+    <description>
+      TTL for the preview data, by default 1 day
+    </description>
+  </property>
+
+  <property>
     <name>preview.messaging.topic</name>
     <value>preview</value>
     <description>
