@@ -220,7 +220,11 @@ body.theme-cdap {
       overflow: auto;
       right: 0;
       z-index: 999;
-      box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+
+      &:not(.pipeline-logs-section) {
+        box-shadow: 0 7px 7px fade(black, 10%), 0 19px 59px fade(black, 20%);
+      }
+
       h5 { margin: 10px 10px 0; }
       .arguments-container {
         padding: 5px 10px;

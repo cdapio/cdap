@@ -20,6 +20,7 @@ export const grey = {
   600: colors.grey07,
   700: colors.grey08,
   800: colors.grey09,
+  900: colors.grey10,
 };
 
 export const green = {

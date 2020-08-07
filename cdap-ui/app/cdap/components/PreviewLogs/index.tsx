@@ -41,6 +41,7 @@ interface IPreviewLogs extends WithStyles<typeof styles> {
   namespace: string;
   previewId: string;
   stopPoll: boolean;
+  onClose: () => void;
 }
 
 const PreviewLogsWrapper: React.FC<IPreviewLogs> = ({
@@ -48,6 +49,7 @@ const PreviewLogsWrapper: React.FC<IPreviewLogs> = ({
   namespace,
   previewId,
   stopPoll,
+  onClose,
 }) => {
   const [dataFetcher] = React.useState(
     new PreviewDataFetcher({
@@ -58,7 +60,7 @@ const PreviewLogsWrapper: React.FC<IPreviewLogs> = ({
 
   return (
     <div className={classes.container}>
-      <LogViewer dataFetcher={dataFetcher} stopPoll={stopPoll} />
+      <LogViewer dataFetcher={dataFetcher} stopPoll={stopPoll} onClose={onClose} />
     </div>
   );
 };
@@ -77,6 +79,7 @@ function PreviewLogs(props) {
   namespace: PropTypes.string,
   previewId: PropTypes.string,
   stopPoll: PropTypes.bool,
+  onClose: PropTypes.func,
 };
 
 export default PreviewLogs;
