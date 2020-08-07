@@ -57,11 +57,11 @@ import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
 import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
-import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.planner.CombinerDag;
+import io.cdap.cdap.etl.planner.Dag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
 import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
@@ -70,7 +70,6 @@ import io.cdap.cdap.etl.spark.function.ErrorTransformFunction;
 import io.cdap.cdap.etl.spark.function.InitialJoinFunction;
 import io.cdap.cdap.etl.spark.function.JoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.LeftJoinFlattenFunction;
-import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OutputPassFilter;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
@@ -153,6 +152,15 @@ public abstract class SparkPipelineRunner {
         groupNum++;
       }
     }
+    Set<String> branchers = new HashSet<>();
+    for (String stageName : groupedDag.getNodes()) {
+      if (groupedDag.getNodeOutputs(stageName).size() > 1) {
+        branchers.add(stageName);
+      }
+    }
+    Set<String> shufflers = pipelinePhase.getStagesOfType(BatchAggregator.PLUGIN_TYPE).stream()
+      .map(StageSpec::getName)
+      .collect(Collectors.toSet());
 
     Collection<Runnable> sinkRunnables = new ArrayList<>();
     for (String stageName : groupedDag.getTopologicalOrder()) {
@@ -238,7 +246,7 @@ public abstract class SparkPipelineRunner {
         if (sourcePluginType.equals(pluginType) || isConnectorSource) {
           SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput);
+                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         } else {
           throw new IllegalStateException(String.format("Stage '%s' has no input and is not a source.", stageName));
         }
@@ -252,13 +260,13 @@ public abstract class SparkPipelineRunner {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.transform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+                                    combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
 
       } else if (SplitterTransform.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCollection<RecordInfo<Object>> combinedData = stageData.multiOutputTransform(stageSpec, collector);
         emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                    combinedData, hasErrorOutput, hasAlertOutput);
+                                    combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
 
       } else if (ErrorTransform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -280,7 +288,7 @@ public abstract class SparkPipelineRunner {
           SparkCollection<RecordInfo<Object>> combinedData =
             inputErrors.flatMap(stageSpec, Compat.convert(new ErrorTransformFunction<>(pluginFunctionContext)));
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput);
+                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         }
 
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
@@ -288,7 +296,7 @@ public abstract class SparkPipelineRunner {
         SparkCompute<Object, Object> sparkCompute = pluginContext.newPluginInstance(stageName, macroEvaluator);
         SparkCollection<Object> computed = stageData.compute(stageSpec, sparkCompute);
         addEmitted(emittedBuilder, pipelinePhase, stageSpec, computed.map(new RecordInfoWrapper<>(stageName)),
-                   false, false);
+                   groupedDag, branchers, shufflers, false, false);
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -304,11 +312,11 @@ public abstract class SparkPipelineRunner {
           SparkCollection<RecordInfo<Object>> combinedData = stageData.reduceAggregate(stageSpec, partitions,
                                                                                        collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput);
+                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         } else {
           SparkCollection<RecordInfo<Object>> combinedData = stageData.aggregate(stageSpec, partitions, collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                                      combinedData, hasErrorOutput, hasAlertOutput);
+                                      combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         }
 
       } else if (BatchJoiner.PLUGIN_TYPE.equals(pluginType)) {
@@ -316,16 +324,16 @@ public abstract class SparkPipelineRunner {
         Integer numPartitions = stagePartitions.get(stageName);
         Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
         SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
-                                                    stageSpec, plugin, numPartitions, collector);
+                                                    stageSpec, plugin, numPartitions, collector, shufflers);
         addEmitted(emittedBuilder, pipelinePhase, stageSpec,
-                   joined.map(new RecordInfoWrapper<>(stageName)), false, false);
+                   joined.map(new RecordInfoWrapper<>(stageName)), groupedDag, branchers, shufflers, false, false);
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
         Windower windower = pluginContext.newPluginInstance(stageName, macroEvaluator);
         SparkCollection<Object> windowed = stageData.window(stageSpec, windower);
         addEmitted(emittedBuilder, pipelinePhase, stageSpec, windowed.map(new RecordInfoWrapper<>(stageName)),
-                   false, false);
+                   groupedDag, branchers, shufflers, false, false);
 
       } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -431,14 +439,15 @@ public abstract class SparkPipelineRunner {
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
                                                PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
                                                StageSpec stageSpec, Object plugin, Integer numPartitions,
-                                               StageStatisticsCollector collector) throws Exception {
+                                               StageStatisticsCollector collector,
+                                               Set<String> shufflers) throws Exception {
     String stageName = stageSpec.getName();
     if (plugin instanceof BatchJoiner) {
       BatchJoiner<Object, Object, Object> joiner = (BatchJoiner<Object, Object, Object>) plugin;
       BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(joinerRuntimeContext);
-
-      return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector).cache();
+      shufflers.add(stageName);
+      return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector);
     } else if (plugin instanceof AutoJoiner) {
       AutoJoiner autoJoiner = (AutoJoiner) plugin;
       Map<String, Schema> inputSchemas = new HashMap<>();
@@ -453,6 +462,9 @@ public abstract class SparkPipelineRunner {
       // it is checked by PipelinePhasePreparer at the start of the run.
       JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
       failureCollector.getOrThrowException();
+      if (joinDefinition.getStages().stream().noneMatch(JoinStage::isBroadcast)) {
+        shufflers.add(stageName);
+      }
       return handleAutoJoin(stageName, joinDefinition, inputDataCollections, numPartitions);
     } else {
       // should never happen unless there is a bug in the code. should have failed during deployment
@@ -791,54 +803,61 @@ public abstract class SparkPipelineRunner {
     return mergeJoinResults(stageSpec, joinedInputs, collector);
   }
 
-  // return whether this stage should be cached to avoid recomputation
-  private boolean shouldCache(PipelinePhase pipelinePhase, StageSpec stageSpec) {
 
-    // cache this RDD if it has multiple outputs,
-    // otherwise computation of each output may trigger recomputing this stage
-    Set<String> outputs = pipelinePhase.getStageOutputs(stageSpec.getName());
-    if (outputs.size() > 1) {
-      return true;
+  /**
+   * A stage should be cached if it prevents a source from being recomputed. For example:
+   *
+   *                        |--> agg1 --> sink1
+   * source --> transform --|
+   *                        |--> agg2 --> sink2
+   *
+   * The output of the transform stage should be cached, otherwise the two branches would cause the source to be
+   * recomputed. However, if the pipeline was a little different:
+   *
+   *                   |--> agg1 --> sink1
+   * source --> agg0 --|
+   *                   |--> agg2 --> sink
+   *
+   * Nothing needs to be cached here because agg0 is an aggregator, which involves a data shuffle.
+   * When there is a shuffle, Spark knows to re-read from the shuffle data instead of the source.
+   * Aggregators and non-broadcast joins will shuffle data.
+   *
+   * Cache points can't be pre-computed because we don't know which joins are broadcast joins until the
+   * actual plugin is instantiated and the JoinDefinition is fetched from the plugin. This method assumes it
+   * will be called on stages in topological order, where any parent that is a joiner will be included in the
+   * provided shufflers set.
+   */
+  private boolean shouldCache(Dag dag, String stageName, Set<String> branchers, Set<String> shufflers) {
+    if (!branchers.contains(stageName) || shufflers.contains(stageName)) {
+      return false;
     }
 
-    // cache this stage if it is an input to a stage that has multiple inputs.
-    // otherwise the union computation may trigger recomputing this stage
-    for (String outputStageName : outputs) {
-      StageSpec outputStage = pipelinePhase.getStage(outputStageName);
-      //noinspection ConstantConditions
-      if (pipelinePhase.getStageInputs(outputStageName).size() > 1) {
-        return true;
-      }
-    }
-
-    return false;
+    // the stage is a non-shuffle stage with multiple outputs.
+    // check if there is a path from this stage back to a source without passing through another branch point
+    // or a shuffler. If so, this stage needs to be cached.
+    Set<String> stopNodes = new HashSet<>(branchers);
+    stopNodes.addAll(shufflers);
+    Set<String> parents = dag.parentsOf(stageName, stopNodes);
+    return !Sets.intersection(dag.getSources(), parents).isEmpty();
   }
 
   private EmittedRecords.Builder addEmitted(EmittedRecords.Builder builder, PipelinePhase pipelinePhase,
                                             StageSpec stageSpec, SparkCollection<RecordInfo<Object>> stageData,
+                                            Dag dag, Set<String> branchers, Set<String> shufflers,
                                             boolean hasErrors, boolean hasAlerts) {
-
-    if (hasErrors || hasAlerts || stageSpec.getOutputPorts().size() > 1) {
-      // need to cache, otherwise the stage can be computed once per type of emitted record
-      stageData = stageData.cache();
-    }
     builder.setRawData(stageData);
 
-    boolean shouldCache = shouldCache(pipelinePhase, stageSpec);
+    if (shouldCache(dag, stageSpec.getName(), branchers, shufflers)) {
+      stageData = stageData.cache();
+    }
 
     if (hasErrors) {
       SparkCollection<ErrorRecord<Object>> errors =
         stageData.flatMap(stageSpec, Compat.convert(new ErrorPassFilter<>()));
-      if (shouldCache) {
-        errors = errors.cache();
-      }
       builder.setErrors(errors);
     }
     if (hasAlerts) {
       SparkCollection<Alert> alerts = stageData.flatMap(stageSpec, Compat.convert(new AlertPassFilter()));
-      if (shouldCache) {
-        alerts = alerts.cache();
-      }
       builder.setAlerts(alerts);
     }
 
@@ -847,16 +866,10 @@ public abstract class SparkPipelineRunner {
       for (StageSpec.Port portSpec : stageSpec.getOutputPorts().values()) {
         String port = portSpec.getPort();
         SparkCollection<Object> portData = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>(port)));
-        if (shouldCache) {
-          portData = portData.cache();
-        }
         builder.addPort(port, portData);
       }
     } else {
       SparkCollection<Object> outputs = stageData.flatMap(stageSpec, Compat.convert(new OutputPassFilter<>()));
-      if (shouldCache) {
-        outputs = outputs.cache();
-      }
       builder.setOutput(outputs);
     }
 

@@ -117,8 +117,6 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
 
   @Override
   public void run(SparkExecutionPluginContext sparkContext, JavaRDD<StructuredRecord> input) throws Exception {
-    Preconditions.checkArgument(input.count() != 0, "Input RDD is empty.");
-
     final HashingTF tf = new HashingTF(100);
     JavaRDD<LabeledPoint> trainingData = input.map(new Function<StructuredRecord, LabeledPoint>() {
       @Override
@@ -133,7 +131,7 @@ public final class NaiveBayesTrainer extends SparkSink<StructuredRecord> {
       }
     });
 
-    trainingData.cache();
+    trainingData = trainingData.cache();
 
     final NaiveBayesModel model = NaiveBayes.train(trainingData.rdd(), 1.0);
 
