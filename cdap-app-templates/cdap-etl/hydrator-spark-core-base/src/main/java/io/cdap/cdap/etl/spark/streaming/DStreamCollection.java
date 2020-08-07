@@ -170,9 +170,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        // cache since the streaming sink function will check if the rdd is empty, which can cause recomputation
-        // and confusing metrics if its not cached.
-        Compat.foreachRDD(stream.cache(), new StreamingBatchSinkFunction<>(sec, stageSpec));
+        Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sec, stageSpec));
       }
     };
   }
@@ -194,7 +192,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        Compat.foreachRDD(stream.cache(), new StreamingSparkSinkFunction<T>(sec, stageSpec));
+        Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageSpec));
       }
     };
   }

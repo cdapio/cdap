@@ -215,9 +215,6 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
     JavaRDD<T> countedInput = rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(),
                                                               Constants.Metrics.RECORDS_IN, null));
     SparkConf sparkConf = jsc.getConf();
-    if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-      countedInput = countedInput.cache();
-    }
 
     return wrap(compute.transform(sparkPluginContext, countedInput)
                   .map(new CountingFunction<U>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_OUT,
@@ -276,9 +273,6 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
         JavaRDD<T> countedRDD =
           rdd.map(new CountingFunction<T>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, null));
         SparkConf sparkConf = jsc.getConf();
-        if (sparkConf.getBoolean(Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG, true)) {
-          countedRDD = countedRDD.cache();
-        }
         try {
           sink.run(sparkPluginContext, countedRDD);
         } catch (Exception e) {
