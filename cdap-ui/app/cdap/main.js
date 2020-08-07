@@ -72,6 +72,11 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
   introspectionQueryResultData,
 });
 
+const Lab = Loadable({
+  loader: () => import(/* webpackChunkMame: "Lab" */ 'components/Lab'),
+  loading: LoadingSVGCentered,
+});
+
 const client = new ApolloClient({
   uri: '/graphql',
   cache: new InMemoryCache({ fragmentMatcher }),
@@ -302,6 +307,22 @@ class CDAP extends Component {
                           experimentalComponent={<SchemaEditorDemo />}
                         />
                       );
+                    }}
+                  />
+                  <Route path="/lab" component={Lab} />
+                  <Route
+                    exact
+                    path="/lab-experiment-test"
+                    render={(props) => {
+                      if (!window.parent.Cypress) {
+                        return <Page404 {...props} />;
+                      }
+                      const LabExperimentTestComp = Loadable({
+                        loader: () =>
+                          import(/* webpackChunkName: "LabExperimentTest" */ 'components/Lab/LabExperimentTest'),
+                        loading: LoadingSVGCentered,
+                      });
+                      return <LabExperimentTestComp {...props} />;
                     }}
                   />
                   {/*

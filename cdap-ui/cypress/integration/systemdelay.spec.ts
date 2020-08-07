@@ -23,7 +23,7 @@ describe('System delay notification ', () => {
     });
 
     beforeEach(() => {
-        cy.visit('/cdap/ns/default/lab');
+        cy.visit('/cdap/lab');
         cy.get(`${dataCy(`${EXPERIMENT_ID}-switch`)} input`).should('have.value', 'true');
         // Makes max allowed delay for requests to be 0 i.e all requests would be considered slow.
         cy.get(`${dataCy(`${EXPERIMENT_ID}-field`)} input`).type('0');
@@ -68,7 +68,7 @@ describe('System delay notification ', () => {
             expect(isExperimentEnabled(EXPERIMENT_ID)).to.be.true;
             expect(window.localStorage.getItem(snoozeTimeLabel)).to.not.be.null;
         });
-        cy.visit('/cdap/ns/default/lab');
+        cy.visit('/cdap/lab');
         cy.get(`${dataCy(`${EXPERIMENT_ID}-switch`)} input`).should('have.value', 'true');
         delete window.localStorage[snoozeTimeLabel];
     });
