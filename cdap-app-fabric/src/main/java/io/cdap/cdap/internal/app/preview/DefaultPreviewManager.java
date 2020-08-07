@@ -133,6 +133,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   private final PreviewStore previewStore;
   private final PreviewRunStopper previewRunStopper;
   private final MessagingService messagingService;
+  private final PreviewDataCleanupService previewDataCleanupService;
   private Injector previewInjector;
   private PreviewDataSubscriberService dataSubscriberService;
   private PreviewTMSLogSubscriber logSubscriberService;
@@ -149,7 +150,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
                         @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
                         PreviewRequestQueue previewRequestQueue,
-                        PreviewRunStopper previewRunStopper, MessagingService messagingService) {
+                        PreviewRunStopper previewRunStopper, MessagingService messagingService,
+                        PreviewDataCleanupService previewDataCleanupService) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -163,6 +165,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.previewStore = new DefaultPreviewStore(previewLevelDBTableService);
     this.previewRunStopper = previewRunStopper;
     this.messagingService = messagingService;
+    this.previewDataCleanupService = previewDataCleanupService;
   }
 
   @Override
@@ -181,10 +184,12 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     logSubscriberService.startAndWait();
     dataSubscriberService = previewInjector.getInstance(PreviewDataSubscriberService.class);
     dataSubscriberService.startAndWait();
+    previewDataCleanupService.startAndWait();
   }
 
   @Override
   protected void shutDown() throws Exception {
+    stopQuietly(previewDataCleanupService);
     stopQuietly(dataSubscriberService);
     stopQuietly(logSubscriberService);
     logAppender.stop();
