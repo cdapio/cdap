@@ -34,6 +34,7 @@ import com.google.api.services.compute.model.Instance;
 import com.google.api.services.compute.model.Network;
 import com.google.api.services.compute.model.NetworkList;
 import com.google.api.services.compute.model.NetworkPeering;
+import com.google.cloud.dataproc.v1beta2.AutoscalingConfig;
 import com.google.cloud.dataproc.v1beta2.Cluster;
 import com.google.cloud.dataproc.v1beta2.ClusterConfig;
 import com.google.cloud.dataproc.v1beta2.ClusterControllerClient;
@@ -50,6 +51,7 @@ import com.google.cloud.dataproc.v1beta2.InstanceGroupConfig;
 import com.google.cloud.dataproc.v1beta2.NodeInitializationAction;
 import com.google.cloud.dataproc.v1beta2.SoftwareConfig;
 import com.google.cloud.dataproc.v1beta2.UpdateClusterRequest;
+import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
 import com.google.protobuf.FieldMask;
@@ -407,6 +409,17 @@ final class DataprocClient implements AutoCloseable {
           NodeInitializationAction.newBuilder()
             .setExecutableFile(action)
             .build());
+      }
+
+      // Set Auto Scaling Policy
+      String autoScalingPolicy = conf.getAutoScalingPolicy();
+      if (!Strings.isNullOrEmpty(autoScalingPolicy)) {
+        //Check if policy is URI or ID. If ID Convert to URI
+        if (!autoScalingPolicy.contains("/")) {
+          autoScalingPolicy = "projects/" + conf.getProjectId() + "/regions/" + conf.getRegion()
+            + "/autoscalingPolicies/" + autoScalingPolicy;
+        }
+        builder.setAutoscalingConfig(AutoscalingConfig.newBuilder().setPolicyUri(autoScalingPolicy).build());
       }
 
       if (conf.getEncryptionKeyName() != null) {
