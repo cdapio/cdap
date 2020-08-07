@@ -225,8 +225,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec,
-                                  final PairFlatMapFunction<T, Object, Object> sinkFunction) {
+  public Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
     return new Runnable() {
       @Override
       public void run() {

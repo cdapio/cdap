@@ -17,28 +17,25 @@
 package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.collect.ImmutableMap;
-import io.cdap.cdap.api.Admin;
-import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
-import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
-import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.common.Constants;
-import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.output.MultiOutputFormat;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.MRJobConfig;
 import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.function.PairFunction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
 /**
  * Handles writes to batch sinks. Maintains a mapping from sinks to their outputs and handles serialization and
@@ -155,16 +152,11 @@ public final class SparkBatchSinkFactory {
     }
 
     Set<String> lineageNames = new HashSet<>();
+    Map<String, OutputFormatProvider> outputFormats = new HashMap<>();
     for (String outputName : outputNames) {
       NamedOutputFormatProvider outputFormatProvider = outputFormatProviders.get(outputName);
       if (outputFormatProvider != null) {
-        Configuration hConf = new Configuration();
-        hConf.clear();
-        for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
-          hConf.set(entry.getKey(), entry.getValue());
-        }
-        hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
-        rdd.saveAsNewAPIHadoopDataset(hConf);
+        outputFormats.put(outputName, outputFormatProvider);
         lineageNames.add(outputFormatProvider.name);
       }
 
@@ -173,7 +165,37 @@ public final class SparkBatchSinkFactory {
         sec.saveAsDataset(rdd, datasetInfo.getDatasetName(), datasetInfo.getDatasetArgs());
       }
     }
+
+    if (outputFormats.isEmpty()) {
+      return lineageNames;
+    }
+
+    if (outputFormats.size() == 1) {
+      saveUsingOutputFormat(outputFormats.values().iterator().next(), rdd);
+      return lineageNames;
+    }
+
+    Configuration hConf = new Configuration();
+    hConf.clear();
+    Map<String, Set<String>> sinkOutputs = Collections.singletonMap(sinkName, outputFormats.keySet());
+    MultiOutputFormat.addOutputs(hConf, outputFormats, sinkOutputs);
+    hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, MultiOutputFormat.class.getName());
+    // MultiOutputFormat requires the key to be the sink name and the value to be the actual key-value to
+    // send to the delegate output format.
+    JavaPairRDD<String, KeyValue<K, V>> multiRDD =
+      rdd.mapToPair(kv -> new Tuple2<>(sinkName, new KeyValue<>(kv._1(), kv._2())));
+    multiRDD.saveAsNewAPIHadoopDataset(hConf);
     return lineageNames;
+  }
+
+  private void saveUsingOutputFormat(OutputFormatProvider outputFormatProvider, JavaPairRDD<?, ?> rdd) {
+    Configuration hConf = new Configuration();
+    hConf.clear();
+    for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
+      hConf.set(entry.getKey(), entry.getValue());
+    }
+    hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, outputFormatProvider.getOutputFormatClassName());
+    rdd.saveAsNewAPIHadoopDataset(hConf);
   }
 
   private void addStageOutput(String stageName, String outputName) {
