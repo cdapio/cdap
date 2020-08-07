@@ -27,6 +27,7 @@ import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.FileSet;
 import io.cdap.cdap.api.dataset.lib.FileSetProperties;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
 import io.cdap.cdap.etl.api.AlertPublisher;
@@ -40,11 +41,18 @@ import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.StreamingCompat;
+import io.cdap.cdap.etl.spark.batch.SparkPreparer;
+import io.cdap.cdap.etl.spark.streaming.SparkStreamingPreparer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileStatus;
@@ -60,7 +68,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.HashMap;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -185,12 +194,23 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                                    JavaSparkExecutionContext sec,
                                    @Nullable String checkpointDir,
                                    @Nullable JavaSparkContext context) throws Exception {
+
+    PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
+                                                                    pipelineSpec.isStageLoggingEnabled(),
+                                                                    pipelineSpec.isProcessTimingEnabled());
+    PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
+    MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
+                                                         sec.getLogicalStartTime(), sec,
+                                                         sec.getNamespace());
+    SparkStreamingPreparer preparer = new SparkStreamingPreparer(pluginContext, sec.getMetrics(), evaluator,
+                                                                 pipelineRuntime, sec);
     try {
-      SparkFieldLineageRecorder recorder = new SparkFieldLineageRecorder(sec, pipelinePhase, pipelineSpec);
+      SparkFieldLineageRecorder recorder = new SparkFieldLineageRecorder(sec, pipelinePhase, pipelineSpec, preparer);
       recorder.record();
     } catch (Exception e) {
       LOG.warn("Failed to emit field lineage operations for streaming pipeline", e);
     }
+    Set<String> uncombinableSinks = preparer.getUncombinableSinks();
 
     // the content in the function might not run due to spark checkpointing, currently just have the lineage logic
     // before anything is run
@@ -200,14 +220,17 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
         javaSparkContext, Durations.milliseconds(pipelineSpec.getBatchIntervalMillis()));
       SparkStreamingPipelineRunner runner = new SparkStreamingPipelineRunner(sec, jssc, pipelineSpec,
                                                                              pipelineSpec.isCheckpointsDisabled());
-      PipelinePluginContext pluginContext = new PipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
-                                                                      pipelineSpec.isStageLoggingEnabled(),
-                                                                      pipelineSpec.isProcessTimingEnabled());
+
       // TODO: figure out how to get partitions to use for aggregators and joiners.
       // Seems like they should be set at configure time instead of runtime? but that requires an API change.
       try {
-        runner.runPipeline(pipelinePhase, StreamingSource.PLUGIN_TYPE, sec, new HashMap<>(),
-                           pluginContext, new HashMap<>());
+        PhaseSpec phaseSpec = new PhaseSpec(sec.getApplicationSpecification().getName(), pipelinePhase,
+                                            Collections.emptyMap(), pipelineSpec.isStageLoggingEnabled(),
+                                            pipelineSpec.isProcessTimingEnabled());
+        boolean shouldConsolidateStages = Boolean.parseBoolean(
+          sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.FALSE.toString()));
+        runner.runPipeline(phaseSpec, StreamingSource.PLUGIN_TYPE, sec, Collections.emptyMap(),
+                           pluginContext, Collections.emptyMap(), uncombinableSinks, shouldConsolidateStages);
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

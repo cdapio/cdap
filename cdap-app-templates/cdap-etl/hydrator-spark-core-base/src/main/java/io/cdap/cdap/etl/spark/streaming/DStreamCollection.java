@@ -27,6 +27,7 @@ import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -45,16 +46,20 @@ import io.cdap.cdap.etl.spark.streaming.function.DynamicSparkCompute;
 import io.cdap.cdap.etl.spark.streaming.function.DynamicTransform;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingAlertPublishFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
+import io.cdap.cdap.etl.spark.streaming.function.StreamingMultiSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -109,6 +114,11 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
+  public <U> SparkCollection<U> map(Function<T, U> function) {
+    return wrap(stream.map(function));
+  }
+
+  @Override
   public <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function) {
     return wrap(stream.flatMap(function));
   }
@@ -139,8 +149,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
 
   @Override
-  public <U> SparkCollection<U> compute(final StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
-    final SparkCompute<T, U> wrappedCompute =
+  public <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception {
+    SparkCompute<T, U> wrappedCompute =
       new DynamicSparkCompute<>(new DynamicDriverContext(stageSpec, sec, new NoopStageStatisticsCollector()), compute);
     Transactionals.execute(sec, new TxRunnable() {
       @Override
@@ -156,20 +166,32 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec,
-                                  final PairFlatMapFunction<T, Object, Object> sinkFunction) {
+  public Runnable createStoreTask(StageSpec stageSpec,
+                                  PairFlatMapFunction<T, Object, Object> sinkFunction) {
     return new Runnable() {
       @Override
       public void run() {
         // cache since the streaming sink function will check if the rdd is empty, which can cause recomputation
         // and confusing metrics if its not cached.
-        Compat.foreachRDD(stream.cache(), new StreamingBatchSinkFunction<>(sinkFunction, sec, stageSpec));
+        Compat.foreachRDD(stream.cache(), new StreamingBatchSinkFunction<>(sec, stageSpec));
       }
     };
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec, SparkSink<T> sink) throws Exception {
+  public Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
+                                       Map<String, StageStatisticsCollector> collectors) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        Compat.foreachRDD((JavaDStream<RecordInfo<Object>>) stream,
+                          new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors));
+      }
+    };
+  }
+
+  @Override
+  public Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception {
     return new Runnable() {
       @Override
       public void run() {
@@ -179,7 +201,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public void publishAlerts(final StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
+  public void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
     Compat.foreachRDD((JavaDStream<Alert>) stream, new StreamingAlertPublishFunction(sec, stageSpec));
   }
 
@@ -194,7 +216,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<T> join(JoinRequest joinRequest) {
-    // TODO: (CDAP-16709) implement
+    // auto joins are implemented using the JoinerBridge to convert it into a BatchJoiner, so this should never happen
     throw new UnsupportedOperationException("auto join not supported");
   }
 

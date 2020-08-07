@@ -32,7 +32,6 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
-import io.cdap.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -72,9 +71,17 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    OutputFormatProvider outputFormatProvider =
-      new BasicOutputFormatProvider(TextOutputFormat.class.getCanonicalName(),
-                                    ImmutableMap.of(TextOutputFormat.OUTDIR, config.dirName));
+    OutputFormatProvider outputFormatProvider = new OutputFormatProvider() {
+      @Override
+      public String getOutputFormatClassName() {
+        return TextOutputFormat.class.getCanonicalName();
+      }
+
+      @Override
+      public Map<String, String> getOutputFormatConfiguration() {
+        return ImmutableMap.of(TextOutputFormat.OUTDIR, config.dirName);
+      }
+    };
 
     if (config.name != null) {
       Output output = Output.of(config.name, outputFormatProvider);

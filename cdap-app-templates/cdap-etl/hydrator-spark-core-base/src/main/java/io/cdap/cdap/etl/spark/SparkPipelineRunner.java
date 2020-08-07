@@ -19,6 +19,8 @@ package io.cdap.cdap.etl.spark;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.google.common.collect.Table;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -53,10 +55,13 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.NoopStageStatisticsCollector;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelinePhase;
+import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.Schemas;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.planner.CombinerDag;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.function.AlertPassFilter;
 import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
@@ -65,17 +70,20 @@ import io.cdap.cdap.etl.spark.function.ErrorTransformFunction;
 import io.cdap.cdap.etl.spark.function.InitialJoinFunction;
 import io.cdap.cdap.etl.spark.function.JoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.LeftJoinFlattenFunction;
+import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OutputPassFilter;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
+import io.cdap.cdap.etl.spark.streaming.function.RecordInfoWrapper;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -94,6 +102,9 @@ import javax.annotation.Nullable;
  */
 public abstract class SparkPipelineRunner {
   private static final Logger LOG = LoggerFactory.getLogger(SparkPipelineRunner.class);
+  private static final Set<String> UNCOMBINABLE_PLUGIN_TYPES = ImmutableSet.of(
+    BatchJoiner.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, Constants.Connector.PLUGIN_TYPE,
+    SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                                    StageStatisticsCollector collector) throws Exception;
@@ -107,16 +118,17 @@ public abstract class SparkPipelineRunner {
     SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
     StageStatisticsCollector collector) throws Exception;
 
-  public void runPipeline(PipelinePhase pipelinePhase, String sourcePluginType,
+  public void runPipeline(PhaseSpec phaseSpec, String sourcePluginType,
                           JavaSparkExecutionContext sec,
                           Map<String, Integer> stagePartitions,
                           PluginContext pluginContext,
-                          Map<String, StageStatisticsCollector> collectors) throws Exception {
-
+                          Map<String, StageStatisticsCollector> collectors,
+                          Set<String> uncombinableSinks,
+                          boolean consolidateStages) throws Exception {
+    PipelinePhase pipelinePhase = phaseSpec.getPhase();
+    BasicArguments arguments = new BasicArguments(sec);
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(new BasicArguments(sec),
-                                sec.getLogicalStartTime(), sec,
-                                sec.getNamespace());
+      new DefaultMacroEvaluator(arguments, sec.getLogicalStartTime(), sec, sec.getNamespace());
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
 
     // should never happen, but removes warning
@@ -124,10 +136,33 @@ public abstract class SparkPipelineRunner {
       throw new IllegalStateException("Pipeline phase has no connections.");
     }
 
+    Set<String> uncombinableStages = new HashSet<>(uncombinableSinks);
+    for (String uncombinableType : UNCOMBINABLE_PLUGIN_TYPES) {
+      pipelinePhase.getStagesOfType(uncombinableType).stream()
+        .map(StageSpec::getName)
+        .forEach(s -> uncombinableStages.add(s));
+    }
+
+    CombinerDag groupedDag = new CombinerDag(pipelinePhase.getDag(), uncombinableStages);
+    Map<String, Set<String>> groups = consolidateStages ? groupedDag.groupNodes() : Collections.emptyMap();
+    if (!groups.isEmpty()) {
+      LOG.debug("Stage consolidation is on.");
+      int groupNum = 1;
+      for (Set<String> group : groups.values()) {
+        LOG.debug("Group{}: {}", groupNum, group);
+        groupNum++;
+      }
+    }
+
     Collection<Runnable> sinkRunnables = new ArrayList<>();
-    for (String stageName : pipelinePhase.getDag().getTopologicalOrder()) {
+    for (String stageName : groupedDag.getTopologicalOrder()) {
+      if (groups.containsKey(stageName)) {
+        sinkRunnables.add(handleGroup(sec, phaseSpec, groups.get(stageName), groupedDag.getNodeInputs(stageName),
+                                      emittedRecords, collectors));
+        continue;
+      }
+
       StageSpec stageSpec = pipelinePhase.getStage(stageName);
-      //noinspection ConstantConditions
       String pluginType = stageSpec.getPluginType();
 
       EmittedRecords.Builder emittedBuilder = EmittedRecords.builder();
@@ -138,7 +173,7 @@ public abstract class SparkPipelineRunner {
       // an AlertPublisher
       boolean hasErrorOutput = false;
       boolean hasAlertOutput = false;
-      Set<String> outputs = pipelinePhase.getStageOutputs(stageSpec.getName());
+      Set<String> outputs = pipelinePhase.getStageOutputs(stageName);
       for (String output : outputs) {
         String outputPluginType = pipelinePhase.getStage(output).getPluginType();
         //noinspection ConstantConditions
@@ -251,7 +286,9 @@ public abstract class SparkPipelineRunner {
       } else if (SparkCompute.PLUGIN_TYPE.equals(pluginType)) {
 
         SparkCompute<Object, Object> sparkCompute = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        emittedBuilder = emittedBuilder.setOutput(stageData.compute(stageSpec, sparkCompute));
+        SparkCollection<Object> computed = stageData.compute(stageSpec, sparkCompute);
+        addEmitted(emittedBuilder, pipelinePhase, stageSpec, computed.map(new RecordInfoWrapper<>(stageName)),
+                   false, false);
 
       } else if (SparkSink.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -278,13 +315,17 @@ public abstract class SparkPipelineRunner {
 
         Integer numPartitions = stagePartitions.get(stageName);
         Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        emittedBuilder.setOutput(handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
-                                            stageSpec, plugin, numPartitions, collector));
+        SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
+                                                    stageSpec, plugin, numPartitions, collector);
+        addEmitted(emittedBuilder, pipelinePhase, stageSpec,
+                   joined.map(new RecordInfoWrapper<>(stageName)), false, false);
 
       } else if (Windower.PLUGIN_TYPE.equals(pluginType)) {
 
         Windower windower = pluginContext.newPluginInstance(stageName, macroEvaluator);
-        emittedBuilder = emittedBuilder.setOutput(stageData.window(stageSpec, windower));
+        SparkCollection<Object> windowed = stageData.window(stageSpec, windower);
+        addEmitted(emittedBuilder, pipelinePhase, stageSpec, windowed.map(new RecordInfoWrapper<>(stageName)),
+                   false, false);
 
       } else if (AlertPublisher.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -347,6 +388,44 @@ public abstract class SparkPipelineRunner {
     if (error != null) {
       Throwables.propagate(error);
     }
+  }
+
+  private Runnable handleGroup(JavaSparkExecutionContext sec, PhaseSpec phaseSpec, Set<String> groupStages,
+                               Set<String> groupInputs, Map<String, EmittedRecords> emittedRecords,
+                               Map<String, StageStatisticsCollector> collectors) {
+    /*
+        with a pipeline like:
+
+             |--> t1 --> k1
+        s1 --|
+             |--> k2
+                  ^
+            s2 ---|
+
+        the group will include stages t1, k1, and k2:
+
+        s1 --|
+             |--> group1
+        s2 --|
+
+        note that although s1 and s2 are both inputs to the group, the records for s2 should only be sent to
+        k2 and not to t1. Thus, every record must be tagged with the stage that it came from, so that they can
+        be sent to the right underlying stages.
+     */
+    SparkCollection<RecordInfo<Object>> fullInput = null;
+    for (String inputStage : groupInputs) {
+      SparkCollection<RecordInfo<Object>> inputData = emittedRecords.get(inputStage).rawData;
+      if (fullInput == null) {
+        fullInput = inputData;
+        continue;
+      }
+
+      fullInput = fullInput.union(inputData);
+    }
+
+    // Sets.intersection returns an unserializable Set, so copy it into a HashSet.
+    Set<String> groupSinks = new HashSet<>(Sets.intersection(groupStages, phaseSpec.getPhase().getSinks()));
+    return fullInput.createMultiStoreTask(phaseSpec, groupStages, groupSinks, collectors);
   }
 
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
@@ -743,6 +822,7 @@ public abstract class SparkPipelineRunner {
       // need to cache, otherwise the stage can be computed once per type of emitted record
       stageData = stageData.cache();
     }
+    builder.setRawData(stageData);
 
     boolean shouldCache = shouldCache(pipelinePhase, stageSpec);
 
@@ -787,15 +867,18 @@ public abstract class SparkPipelineRunner {
    * Holds all records emitted by a stage.
    */
   private static class EmittedRecords {
+    private final SparkCollection<RecordInfo<Object>> rawData;
     private final Map<String, SparkCollection<Object>> outputPortRecords;
     private final SparkCollection<Object> outputRecords;
     private final SparkCollection<ErrorRecord<Object>> errorRecords;
     private final SparkCollection<Alert> alertRecords;
 
-    private EmittedRecords(Map<String, SparkCollection<Object>> outputPortRecords,
+    private EmittedRecords(SparkCollection<RecordInfo<Object>> rawData,
+                           Map<String, SparkCollection<Object>> outputPortRecords,
                            SparkCollection<Object> outputRecords,
                            SparkCollection<ErrorRecord<Object>> errorRecords,
                            SparkCollection<Alert> alertRecords) {
+      this.rawData = rawData;
       this.outputPortRecords = outputPortRecords;
       this.outputRecords = outputRecords;
       this.errorRecords = errorRecords;
@@ -807,6 +890,7 @@ public abstract class SparkPipelineRunner {
     }
 
     private static class Builder {
+      private SparkCollection<RecordInfo<Object>> rawData;
       private Map<String, SparkCollection<Object>> outputPortRecords;
       private SparkCollection<Object> outputRecords;
       private SparkCollection<ErrorRecord<Object>> errorRecords;
@@ -814,6 +898,11 @@ public abstract class SparkPipelineRunner {
 
       private Builder() {
         outputPortRecords = new HashMap<>();
+      }
+
+      private Builder setRawData(SparkCollection<RecordInfo<Object>> rawData) {
+        this.rawData = rawData;
+        return this;
       }
 
       private Builder addPort(String port, SparkCollection<Object> records) {
@@ -837,7 +926,7 @@ public abstract class SparkPipelineRunner {
       }
 
       private EmittedRecords build() {
-        return new EmittedRecords(outputPortRecords, outputRecords, errorRecords, alertRecords);
+        return new EmittedRecords(rawData, outputPortRecords, outputRecords, errorRecords, alertRecords);
       }
     }
   }

@@ -16,19 +16,22 @@
 
 package io.cdap.cdap.etl.spark;
 
-import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
+import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
-import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.streaming.Windower;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -53,6 +56,8 @@ public interface SparkCollection<T> {
 
   SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec, StageStatisticsCollector collector);
 
+  <U> SparkCollection<U> map(Function<T, U> function);
+
   <U> SparkCollection<U> flatMap(StageSpec stageSpec, FlatMapFunction<T, U> function);
 
   SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
@@ -66,6 +71,9 @@ public interface SparkCollection<T> {
   <U> SparkCollection<U> compute(StageSpec stageSpec, SparkCompute<T, U> compute) throws Exception;
 
   Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction);
+
+  Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
+                                Map<String, StageStatisticsCollector> collectors);
 
   Runnable createStoreTask(StageSpec stageSpec, SparkSink<T> sink) throws Exception;
 
