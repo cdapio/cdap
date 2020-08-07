@@ -142,7 +142,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
         data-cy="system-delay-snackbar"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={this.props.showDelay}
-        message="Some system services are experiencing delays."
+        message="UI is experiencing slowness or is unable to communicate with server"
         ContentProps={{
           classes: {
             root: this.props.classes.snackbar,
@@ -155,7 +155,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
             onClick={this.doNotShowAgain}
             data-cy="do-not-show-delay-btn"
           >
-            Do not show again
+            Snooze for 1 hour
           </Button>
         }
       />
