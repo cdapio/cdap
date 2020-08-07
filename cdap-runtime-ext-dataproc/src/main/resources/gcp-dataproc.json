@@ -392,6 +392,20 @@
           "widget-attributes" : {}
         }
       ]
+    },
+    {
+      "label": "Experimental Features (BETA)",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Autoscaling Policy",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        }
+      ]
     }
   ]
 }

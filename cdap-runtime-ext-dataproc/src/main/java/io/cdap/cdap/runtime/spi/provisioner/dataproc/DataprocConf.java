@@ -95,6 +95,7 @@ final class DataprocConf {
   private final Map<String, String> clusterMetaData;
   private final List<String> networkTags;
   private final String initActions;
+  private final String autoScalingPolicy;
 
   private final boolean runtimeJobManagerEnabled;
 
@@ -106,7 +107,8 @@ final class DataprocConf {
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.publicKey, conf.imageVersion, conf.customImageUri, conf.clusterMetaData,
-         conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled, conf.clusterProperties);
+         conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled, conf.clusterProperties,
+         conf.autoScalingPolicy);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
@@ -120,7 +122,7 @@ final class DataprocConf {
                        @Nullable String imageVersion, @Nullable String customImageUri,
                        @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
-                       Map<String, String> clusterProperties) {
+                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -154,6 +156,7 @@ final class DataprocConf {
     this.initActions = initActions;
     this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.clusterProperties = clusterProperties;
+    this.autoScalingPolicy = autoScalingPolicy;
   }
 
   String getRegion() {
@@ -287,6 +290,11 @@ final class DataprocConf {
 
   Map<String, String> getClusterProperties() {
     return clusterProperties;
+  }
+
+  @Nullable
+  String getAutoScalingPolicy() {
+    return autoScalingPolicy;
   }
 
   /**
@@ -443,9 +451,9 @@ final class DataprocConf {
 
     String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
     List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
-      .map(String::trim)
-      .filter(s -> !s.isEmpty())
-      .collect(Collectors.toList()));
+                                                              .map(String::trim)
+                                                              .filter(s -> !s.isEmpty())
+                                                              .collect(Collectors.toList()));
 
     if (networkTags.size() > MAX_NETWORK_TAGS) {
       throw new IllegalArgumentException("Number of network tags cannot be more than " + MAX_NETWORK_TAGS);
@@ -453,6 +461,7 @@ final class DataprocConf {
 
     String initActions = getString(properties, "initActions");
     boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
+    String autoScalingPolicy = getString(properties, "autoScalingPolicy");
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
                             masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
@@ -461,7 +470,7 @@ final class DataprocConf {
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, publicKey,
                             imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
-                            runtimeJobManagerEnabled, clusterProps);
+                            runtimeJobManagerEnabled, clusterProps, autoScalingPolicy);
   }
 
   // the UI never sends nulls, it only sends empty strings.
