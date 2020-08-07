@@ -37,6 +37,7 @@ import io.cdap.cdap.etl.spark.batch.SparkBatchSinkContext;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 /**
@@ -49,6 +50,10 @@ public class SparkStreamingPreparer extends AbstractSparkPreparer {
                                 PipelineRuntime pipelineRuntime, JavaSparkExecutionContext context) {
     super(pluginContext, metrics, macroEvaluator, pipelineRuntime, context.getAdmin(), context);
     this.context = context;
+  }
+
+  public Set<String> getUncombinableSinks() {
+    return sinkFactory.getUncombinableSinks();
   }
 
   @Nullable

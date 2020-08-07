@@ -423,9 +423,9 @@ public abstract class SparkPipelineRunner {
       fullInput = fullInput.union(inputData);
     }
 
-    Set<String> groupSinks = Sets.intersection(groupStages, phaseSpec.getPhase().getSinks());
-    return fullInput.createMultiStoreTask(
-      groupSinks, Compat.convert(new MultiSinkFunction(sec, phaseSpec, groupStages, collectors)));
+    // Sets.intersection returns an unserializable Set, so copy it into a HashSet.
+    Set<String> groupSinks = new HashSet<>(Sets.intersection(groupStages, phaseSpec.getPhase().getSinks()));
+    return fullInput.createMultiStoreTask(phaseSpec, groupStages, groupSinks, collectors);
   }
 
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
