@@ -102,7 +102,7 @@ class HydratorPlusPlusTopPanelCtrl {
             payload: {
               status: statusRes.status,
             },
-          })
+          });
 
           if (statusRes.status === window.CaskCommon.PREVIEW_STATUS.RUNNING) {
             this.previewRunning = true;
