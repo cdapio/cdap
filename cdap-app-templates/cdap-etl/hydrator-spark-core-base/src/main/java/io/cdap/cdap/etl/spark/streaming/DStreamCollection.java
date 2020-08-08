@@ -166,8 +166,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(StageSpec stageSpec,
-                                  PairFlatMapFunction<T, Object, Object> sinkFunction) {
+  public Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
     return new Runnable() {
       @Override
       public void run() {
