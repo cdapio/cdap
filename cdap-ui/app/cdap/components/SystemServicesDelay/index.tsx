@@ -163,7 +163,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
         data-cy="system-delay-snackbar"
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={this.props.showDelay}
-        message="Some system services are experiencing delays."
+        message="UI is experiencing slowness or is unable to communicate with server"
         ContentProps={{
           classes: {
             root: this.props.classes.snackbar,
@@ -176,7 +176,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
             onClick={this.closeNotification}
             data-cy="snooze-system-delay-notification"
           >
-            Close
+            Snooze for 1 hour
           </Button>
         }
       />
