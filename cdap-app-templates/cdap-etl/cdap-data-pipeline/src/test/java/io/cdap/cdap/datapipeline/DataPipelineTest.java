@@ -2835,18 +2835,16 @@ public class DataPipelineTest extends HydratorTestBase {
       Assert.assertNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetOutput)).get());
     }
 
+    String name = backwardsCompatible ? null : expectedExternalDatasetOutput;
     ETLBatchConfig.Builder builder = ETLBatchConfig.builder();
     ETLBatchConfig etlConfig = builder
       .setEngine(engine)
         // TODO: test multiple inputs CDAP-5654
       .addStage(new ETLStage("source", MockExternalSource.getPlugin(expectedExternalDatasetInput,
                                                                     inputDir.getAbsolutePath())))
-      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(
-        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir1", outputSubDir1.getAbsolutePath())))
-      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(
-        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir2", outputSubDir2.getAbsolutePath())))
-      .addConnection("source", "sink1")
-      .addConnection("source", "sink2")
+      .addStage(new ETLStage("sink", MockExternalSink.getPlugin(name, "dir1", outputSubDir1.getAbsolutePath(),
+                                                                name, "dir2", outputSubDir2.getAbsolutePath())))
+      .addConnection("source", "sink")
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
