@@ -2685,6 +2685,14 @@
   </property>
 
   <property>
+    <name>app.program.runtime.monitor.compression.enabled</name>
+    <value>true</value>
+    <description>
+      Enable compression for runtime monitoring traffic
+    </description>
+  </property>
+
+  <property>
     <name>app.program.runtime.monitor.topics.configs</name>
     <value>audit.topic,data.event.topic,metadata.messaging.topic,metrics.topic.prefix:${metrics.messaging.topic.num},program.status.event.topic,log.tms.topic.prefix:${log.publish.num.partitions}</value>
     <description>

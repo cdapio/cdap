@@ -44,7 +44,6 @@ import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,13 +82,13 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
 
   @Inject
   RuntimeClientService(CConfiguration cConf, MessagingService messagingService,
-                       DiscoveryServiceClient discoveryServiceClient, ProgramRunId programRunId) {
+                       RuntimeClient runtimeClient, ProgramRunId programRunId) {
     super(RetryStrategies.fromConfiguration(cConf, "system.runtime.monitor."));
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.pollTimeMillis = cConf.getLong(Constants.RuntimeMonitor.POLL_TIME_MS);
     this.gracefulShutdownMillis = cConf.getLong(Constants.RuntimeMonitor.GRACEFUL_SHUTDOWN_MS);
     this.programRunId = programRunId;
-    this.runtimeClient = new RuntimeClient(discoveryServiceClient);
+    this.runtimeClient = runtimeClient;
     this.fetchLimit = cConf.getInt(Constants.RuntimeMonitor.BATCH_SIZE);
     this.programFinishTime = -1L;
     this.topicRelayers = RuntimeMonitors.createTopicConfigs(cConf).entrySet().stream()
