@@ -24,6 +24,7 @@ import java.io.Serializable;
  * the collection of the stage level statistics is disabled.
  */
 public class NoopStageStatisticsCollector implements StageStatisticsCollector, Serializable {
+  public static final StageStatisticsCollector INSTANCE = new NoopStageStatisticsCollector();
   private static final long serialVersionUID = -7897960584858589310L;
   
   @Override

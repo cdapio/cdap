@@ -18,21 +18,18 @@ package io.cdap.cdap.etl.spark.streaming;
 
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.schema.Schema;
-import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
-import io.cdap.cdap.api.dataset.DatasetProperties;
-import io.cdap.cdap.api.dataset.InstanceConflictException;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.streaming.StreamingSourceContext;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
+import io.cdap.cdap.etl.common.ExternalDatasets;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import org.apache.tephra.TransactionFailureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
-import java.util.Collections;
 import javax.annotation.Nullable;
 
 /**
@@ -53,34 +50,6 @@ public class DefaultStreamingSourceContext extends AbstractBatchContext implemen
   @Override
   public void registerLineage(String referenceName,
                               @Nullable Schema schema) throws DatasetManagementException, TransactionFailureException {
-    DatasetProperties datasetProperties;
-    if (schema == null) {
-      datasetProperties = DatasetProperties.EMPTY;
-    } else {
-      datasetProperties = DatasetProperties.of(Collections.singletonMap(DatasetProperties.SCHEMA, schema.toString()));
-    }
-
-    try {
-      if (!admin.datasetExists(referenceName)) {
-        admin.createDataset(referenceName, EXTERNAL_DATASET_TYPE, datasetProperties);
-      }
-    } catch (InstanceConflictException ex) {
-      // Might happen if there is executed in multiple drivers in parallel. A race condition exists between check
-      // for dataset existence and creation.
-      LOG.debug("Dataset with name {} already created. Hence not creating the external dataset.", referenceName);
-    }
-
-    // we cannot start transaction here, since all prepare run is running in its own transaction
-    Dataset ds = getDataset(referenceName);
-    try {
-      Class<? extends Dataset> dsClass = ds.getClass();
-      Method method = dsClass.getMethod("recordRead");
-      method.invoke(ds);
-    } catch (NoSuchMethodException e) {
-      LOG.warn("ExternalDataset '{}' does not have method 'recordRead()'. " +
-                 "Can't register read-only lineage for this dataset", referenceName);
-    } catch (Exception e) {
-      LOG.warn("Unable to register read access for dataset {}", referenceName);
-    }
+    ExternalDatasets.registerLineage(admin, referenceName, AccessType.READ, schema, () -> getDataset(referenceName));
   }
 }

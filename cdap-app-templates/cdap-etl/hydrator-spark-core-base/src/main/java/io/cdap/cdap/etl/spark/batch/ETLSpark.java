@@ -55,7 +55,6 @@ public class ETLSpark extends AbstractSpark {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(SetMultimap.class, new SetMultimapCodec<>())
     .registerTypeAdapter(DatasetInfo.class, new DatasetInfoTypeAdapter())
-    .registerTypeAdapter(OutputFormatProvider.class, new OutputFormatProviderTypeAdapter())
     .registerTypeAdapter(InputFormatProvider.class, new InputFormatProviderTypeAdapter())
     .registerTypeAdapter(FieldOperation.class, new FieldOperationTypeAdapter())
     .create();

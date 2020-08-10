@@ -95,6 +95,7 @@ import io.cdap.cdap.etl.mock.transform.DropNullTransform;
 import io.cdap.cdap.etl.mock.transform.FilterErrorTransform;
 import io.cdap.cdap.etl.mock.transform.FlattenErrorTransform;
 import io.cdap.cdap.etl.mock.transform.IdentityTransform;
+import io.cdap.cdap.etl.mock.transform.IntValueFilterTransform;
 import io.cdap.cdap.etl.mock.transform.NullFieldSplitterTransform;
 import io.cdap.cdap.etl.mock.transform.SleepTransform;
 import io.cdap.cdap.etl.mock.transform.StringValueFilterTransform;
@@ -698,12 +699,13 @@ public class DataPipelineTest extends HydratorTestBase {
   private void testErrorTransform(Engine engine) throws Exception {
     String source1TableName = "errTestIn1-" + engine;
     String source2TableName = "errTestIn2-" + engine;
-    String sink1TableName = "errTestOut1-" + engine;
-    String sink2TableName = "errTestOut2-" + engine;
 
     Schema inputSchema = Schema.recordOf("user",
                                          Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                                          Schema.Field.of("id", Schema.of(Schema.Type.INT)));
+    File baseOutput = TMP_FOLDER.newFolder();
+    String outputDir1 = new File(baseOutput, "output1").getAbsolutePath();
+    String outputDir2 = new File(baseOutput, "output2").getAbsolutePath();
     /*
      *
      * source1 --> filter1 --> filter2 --> agg1 --> agg2
@@ -731,8 +733,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("errorflatten", FlattenErrorTransform.getPlugin()))
       .addStage(new ETLStage("errorfilter", FilterErrorTransform.getPlugin(3)))
       .addStage(new ETLStage("dropnull", DropNullTransform.getPlugin("name")))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1TableName)))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2TableName)))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin("sink1", "sink1", outputDir1)))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin("sink2", "sink2", outputDir2)))
       .addConnection("source1", "filter1")
       .addConnection("source2", "dropnull")
       .addConnection("filter1", "filter2")
@@ -768,8 +770,8 @@ public class DataPipelineTest extends HydratorTestBase {
     MockSource.writeInput(source2Table, input);
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
 
     Schema flattenSchema =
@@ -790,15 +792,15 @@ public class DataPipelineTest extends HydratorTestBase {
         .set("errMsg", "bad val").set("errCode", 3).set("errStage", "agg2").build(),
       StructuredRecord.builder(flattenSchema).set("name", "April").set("id", 5)
         .set("errMsg", "Field name was not null").set("errCode", 5).set("errStage", "dropnull").build());
-    DataSetManager<Table> sink1Table = getDataset(sink1TableName);
-    Assert.assertEquals(expected, ImmutableSet.copyOf(MockSink.readOutput(sink1Table)));
+    Set<StructuredRecord> actual = new HashSet<>(MockExternalSink.readOutput(outputDir1, flattenSchema));
+    Assert.assertEquals(expected, actual);
 
     expected = ImmutableSet.of(
       StructuredRecord.builder(inputSchema).set("name", "Leo").set("id", 1).build(),
       StructuredRecord.builder(inputSchema).set("name", "Ralph").set("id", 2).build(),
       StructuredRecord.builder(inputSchema).set("name", "April").set("id", 5).build());
-    DataSetManager<Table> sink2Table = getDataset(sink2TableName);
-    Assert.assertEquals(expected, ImmutableSet.copyOf(MockSink.readOutput(sink2Table)));
+    actual = new HashSet<>(MockExternalSink.readOutput(outputDir2, inputSchema));
+    Assert.assertEquals(expected, actual);
 
     /*
      *
@@ -1913,6 +1915,9 @@ public class DataPipelineTest extends HydratorTestBase {
      *                                     |
      * source3 ----------------------------|
      */
+    File outputDir = TMP_FOLDER.newFolder();
+    String output1 = new File(outputDir, "sink1").getAbsolutePath();
+    String output2 = new File(outputDir, "sink2").getAbsolutePath();
     Schema schema = Schema.recordOf(
       "testRecord",
       Schema.Field.of("name", Schema.of(Schema.Type.STRING))
@@ -1928,8 +1933,8 @@ public class DataPipelineTest extends HydratorTestBase {
       .addStage(new ETLStage("source3", MockSource.getPlugin(source3Name, schema)))
       .addStage(new ETLStage("transform1", IdentityTransform.getPlugin()))
       .addStage(new ETLStage("transform2", IdentityTransform.getPlugin()))
-      .addStage(new ETLStage("sink1", MockSink.getPlugin(sink1Name)))
-      .addStage(new ETLStage("sink2", MockSink.getPlugin(sink2Name)))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(sink1Name, sink1Name, output1)))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(sink2Name, sink2Name, output2)))
       .addConnection("source1", "transform1")
       .addConnection("source2", "transform1")
       .addConnection("transform1", "sink1")
@@ -1959,19 +1964,17 @@ public class DataPipelineTest extends HydratorTestBase {
     MockSource.writeInput(inputManager, ImmutableList.of(recordJane));
 
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
 
     // sink1 should get records from source1 and source2
-    DataSetManager<Table> sinkManager = getDataset(sink1Name);
     Set<StructuredRecord> expected = ImmutableSet.of(recordSamuel, recordBob);
-    Set<StructuredRecord> actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    Set<StructuredRecord> actual = Sets.newHashSet(MockExternalSink.readOutput(output1, schema));
     Assert.assertEquals(expected, actual);
 
     // sink2 should get all records
-    sinkManager = getDataset(sink2Name);
     expected = ImmutableSet.of(recordSamuel, recordBob, recordJane);
-    actual = Sets.newHashSet(MockSink.readOutput(sinkManager));
+    actual = Sets.newHashSet(MockExternalSink.readOutput(output2, schema));
     Assert.assertEquals(expected, actual);
 
     validateMetric(1, appId, "source1.records.out");
@@ -2841,18 +2844,16 @@ public class DataPipelineTest extends HydratorTestBase {
       Assert.assertNull(getDataset(NamespaceId.DEFAULT.dataset(expectedExternalDatasetOutput)).get());
     }
 
+    String name = backwardsCompatible ? null : expectedExternalDatasetOutput;
     ETLBatchConfig.Builder builder = ETLBatchConfig.builder();
     ETLBatchConfig etlConfig = builder
       .setEngine(engine)
         // TODO: test multiple inputs CDAP-5654
       .addStage(new ETLStage("source", MockExternalSource.getPlugin(expectedExternalDatasetInput,
                                                                     inputDir.getAbsolutePath())))
-      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin(
-        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir1", outputSubDir1.getAbsolutePath())))
-      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin(
-        backwardsCompatible ? null : expectedExternalDatasetOutput, "dir2", outputSubDir2.getAbsolutePath())))
-      .addConnection("source", "sink1")
-      .addConnection("source", "sink2")
+      .addStage(new ETLStage("sink", MockExternalSink.getPlugin(name, "dir1", outputSubDir1.getAbsolutePath(),
+                                                                name, "dir2", outputSubDir2.getAbsolutePath())))
+      .addConnection("source", "sink")
       .build();
 
     AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, etlConfig);
@@ -2872,9 +2873,9 @@ public class DataPipelineTest extends HydratorTestBase {
     // Create input files
     MockExternalSource.writeInput(new File(inputDir, inputFile).getAbsolutePath(), allInput);
 
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
     WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
-    workflowManager.start();
-    workflowManager.waitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
     List<RunRecord> history = workflowManager.getHistory();
     // there should be only one completed run
     Assert.assertEquals(1, history.size());
@@ -3518,6 +3519,117 @@ public class DataPipelineTest extends HydratorTestBase {
     validateMetric(1, appId, "joiner.records.out");
     validateMetric(1, appId, "sink1.records.in");
     validateMetric(1, appId, "sink2.records.in");
+  }
+
+  @Test
+  public void testStageConsolidation() throws Exception {
+    /*
+                                   |non-null port --> sink1
+        items1 --> null splitter --|
+                                   |null port--> sink2
+                                                   ^
+                 |--> filter out id == 0  ---------|
+        items2 --|    |
+                 |    |--> error collector --> sink3
+                 |
+                 |                 |--> filter out id == 1 --> sink4
+                 |--> aggregator --|
+                                   |--> filter out id == 2 --> sink5
+     */
+    Schema schema = Schema.recordOf("item", Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+    String input1Name = UUID.randomUUID().toString();
+    String input2Name = UUID.randomUUID().toString();
+    File outputDir = TMP_FOLDER.newFolder();
+    String output1 = new File(outputDir, "output1").getAbsolutePath();
+    String output2 = new File(outputDir, "output2").getAbsolutePath();
+    String output3 = new File(outputDir, "output3").getAbsolutePath();
+    String output4 = new File(outputDir, "output4").getAbsolutePath();
+    String output5 = new File(outputDir, "output5").getAbsolutePath();
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .setEngine(Engine.SPARK)
+      .addStage(new ETLStage("items1", MockSource.getPlugin(input1Name, schema)))
+      .addStage(new ETLStage("items2", MockSource.getPlugin(input2Name, schema)))
+      .addStage(new ETLStage("nullSplitter", NullFieldSplitterTransform.getPlugin("id")))
+      .addStage(new ETLStage("filter0", IntValueFilterTransform.getPlugin("id", 0)))
+      .addStage(new ETLStage("collector", FlattenErrorTransform.getPlugin()))
+      .addStage(new ETLStage("filter1", IntValueFilterTransform.getPlugin("id", 1)))
+      .addStage(new ETLStage("filter2", IntValueFilterTransform.getPlugin("id", 2)))
+      .addStage(new ETLStage("identityAggregator", IdentityAggregator.getPlugin()))
+      .addStage(new ETLStage("sink1", MockExternalSink.getPlugin("s1", "s1", output1)))
+      .addStage(new ETLStage("sink2", MockExternalSink.getPlugin("s2", "s2", output2)))
+      .addStage(new ETLStage("sink3", MockExternalSink.getPlugin("s3", "s3", output3)))
+      .addStage(new ETLStage("sink4", MockExternalSink.getPlugin("s4", "s4", output4)))
+      .addStage(new ETLStage("sink5", MockExternalSink.getPlugin("s5", "s5", output5)))
+      .addConnection("items1", "nullSplitter")
+      .addConnection("nullSplitter", "sink1", "non-null")
+      .addConnection("nullSplitter", "sink2", "null")
+      .addConnection("items2", "filter0")
+      .addConnection("items2", "identityAggregator")
+      .addConnection("filter0", "sink2")
+      .addConnection("filter0", "collector")
+      .addConnection("identityAggregator", "filter1")
+      .addConnection("identityAggregator", "filter2")
+      .addConnection("collector", "sink3")
+      .addConnection("filter1", "sink4")
+      .addConnection("filter2", "sink5")
+      .setProperties(Collections.singletonMap(io.cdap.cdap.etl.common.Constants.SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG,
+                                              "false"))
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app("StageConsolidationTest");
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    // write input data
+    StructuredRecord itemNull = StructuredRecord.builder(schema).build();
+    StructuredRecord item0 = StructuredRecord.builder(schema).set("id", 0).build();
+    StructuredRecord item1 = StructuredRecord.builder(schema).set("id", 1).build();
+    StructuredRecord item2 = StructuredRecord.builder(schema).set("id", 2).build();
+    StructuredRecord item3 = StructuredRecord.builder(schema).set("id", 3).build();
+    DataSetManager<Table> items1Manager = getDataset(input1Name);
+    DataSetManager<Table> items2Manager = getDataset(input2Name);
+    MockSource.writeInput(items1Manager, Arrays.asList(itemNull, item3));
+    MockSource.writeInput(items2Manager, Arrays.asList(item0, item1, item2));
+
+    // run pipeline
+    Map<String, String> args = Collections.singletonMap(io.cdap.cdap.etl.common.Constants.CONSOLIDATE_STAGES, "true");
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForRun(args, ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+
+    Schema errorSchema =
+      Schema.recordOf("erroritem",
+                      Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of("errMsg", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+                      Schema.Field.of("errCode", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+                      Schema.Field.of("errStage", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    StructuredRecord expectedError = StructuredRecord.builder(errorSchema)
+      .set("id", 0)
+      .set("errMsg", IntValueFilterTransform.ERROR_MESSAGE)
+      .set("errCode", IntValueFilterTransform.ERROR_CODE)
+      .set("errStage", "filter0")
+      .build();
+
+    Set<StructuredRecord> sink1Expected = Collections.singleton(item3);
+    Set<StructuredRecord> sink2Expected = new HashSet<>(Arrays.asList(itemNull, item1, item2));
+    Set<StructuredRecord> sink3Expected = Collections.singleton(expectedError);
+    Set<StructuredRecord> sink4Expected = new HashSet<>(Arrays.asList(item0, item2));
+    Set<StructuredRecord> sink5Expected = new HashSet<>(Arrays.asList(item0, item1));
+
+    Assert.assertEquals(sink1Expected, new HashSet<>(MockExternalSink.readOutput(output1, schema)));
+    Assert.assertEquals(sink2Expected, new HashSet<>(MockExternalSink.readOutput(output2, schema)));
+    Assert.assertEquals(sink3Expected, new HashSet<>(MockExternalSink.readOutput(output3, errorSchema)));
+    Assert.assertEquals(sink4Expected, new HashSet<>(MockExternalSink.readOutput(output4, schema)));
+    Assert.assertEquals(sink5Expected, new HashSet<>(MockExternalSink.readOutput(output5, schema)));
+
+    // check output
+    validateMetric(2, appId, "nullSplitter.records.in");
+    validateMetric(1, appId, "nullSplitter.records.out.null");
+    validateMetric(1, appId, "nullSplitter.records.out.non-null");
+    validateMetric(2, appId, "filter0.records.out");
+    validateMetric(1, appId, "filter0.records.error");
+    validateMetric(3, appId, "identityAggregator.records.in");
+    validateMetric(3, appId, "identityAggregator.records.out");
   }
 
   private long getMetric(ApplicationId appId, String metric) {

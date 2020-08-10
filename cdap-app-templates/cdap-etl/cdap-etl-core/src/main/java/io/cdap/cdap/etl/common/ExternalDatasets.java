@@ -22,19 +22,27 @@ import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Output;
 import io.cdap.cdap.api.data.batch.OutputFormatProvider;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
 import io.cdap.cdap.api.dataset.DatasetProperties;
+import io.cdap.cdap.api.dataset.InstanceConflictException;
+import io.cdap.cdap.etl.api.lineage.AccessType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
+import javax.annotation.Nullable;
 
 /**
  * This class is used to create external datasets to track external sources/sinks.
  */
 public final class ExternalDatasets {
-
+  private static final Logger LOG = LoggerFactory.getLogger(ExternalDatasets.class);
   private static final String EXTERNAL_DATASET_TYPE = "externalDataset";
 
   /**
@@ -133,6 +141,62 @@ public final class ExternalDatasets {
       return Output.ofDataset(outputName, Collections.unmodifiableMap(arguments)).alias(output.getAlias());
     } catch (DatasetManagementException e) {
       throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Register lineage for this Spark program using the given reference name
+   *
+   * @param referenceName reference name used for source
+   * @param accessType the access type of the lineage
+   * @throws DatasetManagementException thrown if there was an error in creating reference dataset
+   */
+  public static void registerLineage(Admin admin, String referenceName,
+                                     AccessType accessType, @Nullable Schema schema,
+                                     Supplier<Dataset> datasetSupplier) throws DatasetManagementException {
+    DatasetProperties datasetProperties;
+    if (schema == null) {
+      datasetProperties = DatasetProperties.EMPTY;
+    } else {
+      datasetProperties = DatasetProperties.of(Collections.singletonMap(DatasetProperties.SCHEMA, schema.toString()));
+    }
+    try {
+      if (!admin.datasetExists(referenceName)) {
+        admin.createDataset(referenceName, EXTERNAL_DATASET_TYPE, datasetProperties);
+      }
+    } catch (InstanceConflictException ex) {
+      // Might happen if this is executed in parallel across multiple pipeline runs.
+    }
+
+    // we cannot instantiate ExternalDataset here - it is in CDAP data-fabric,
+    // and this code (the pipeline app) cannot depend on that. Thus, use reflection
+    // to invoke a method on the dataset.
+    Dataset ds = datasetSupplier.get();
+    Class<? extends Dataset> dsClass = ds.getClass();
+
+    switch (accessType) {
+      case READ:
+        invokeMethod(referenceName, ds, dsClass, "recordRead", accessType);
+        break;
+      case WRITE:
+        invokeMethod(referenceName, ds, dsClass, "recordWrite", accessType);
+        break;
+      default:
+        LOG.warn("Failed to register lineage because of unknown access type {}", accessType);
+    }
+  }
+
+  private static void invokeMethod(String referenceName, Dataset ds, Class<? extends Dataset> dsClass,
+                                   String methodName, AccessType accessType) {
+    try {
+      Method method = dsClass.getMethod(methodName);
+      method.invoke(ds);
+    } catch (NoSuchMethodException e) {
+      // should never happen unless somebody changes ExternalDataset in cdap-data-fabric
+      LOG.warn("ExternalDataset '{}' does not have method '{}'. " +
+                 "Can't register {} lineage for this dataset", referenceName, methodName, accessType);
+    } catch (Exception e) {
+      LOG.warn("Unable to register {} access for dataset {}", accessType, referenceName);
     }
   }
 

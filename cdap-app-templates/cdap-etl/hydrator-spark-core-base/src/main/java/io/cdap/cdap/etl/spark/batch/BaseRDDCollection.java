@@ -19,10 +19,9 @@ package io.cdap.cdap.etl.spark.batch;
 import com.google.common.base.Throwables;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.data.DatasetContext;
-import io.cdap.cdap.api.data.format.StructuredRecord;
-import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
-import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.api.AlertPublisher;
 import io.cdap.cdap.etl.api.AlertPublisherContext;
@@ -30,10 +29,13 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultAlertPublisherContext;
 import io.cdap.cdap.etl.common.DefaultStageMetrics;
+import io.cdap.cdap.etl.common.ExternalDatasets;
+import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
@@ -53,6 +55,7 @@ import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
+import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
@@ -65,13 +68,14 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
 import org.apache.spark.sql.Column;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.Tuple2;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 
@@ -84,6 +88,7 @@ import javax.annotation.Nullable;
  * @param <T> type of object in the collection
  */
 public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(BaseRDDCollection.class);
   private static final Gson GSON = new Gson();
   protected final JavaSparkExecutionContext sec;
   protected final JavaSparkContext jsc;
@@ -138,6 +143,11 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
                                                                   StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return wrap(rdd.flatMap(Compat.convert(new MultiOutputTransformFunction<T>(pluginFunctionContext))));
+  }
+
+  @Override
+  public <U> SparkCollection<U> map(Function<T, U> function) {
+    return wrap(rdd.map(function));
   }
 
   @Override
@@ -215,15 +225,42 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   }
 
   @Override
-  public Runnable createStoreTask(final StageSpec stageSpec,
-                                  final PairFlatMapFunction<T, Object, Object> sinkFunction) {
+  public Runnable createStoreTask(StageSpec stageSpec, PairFlatMapFunction<T, Object, Object> sinkFunction) {
     return new Runnable() {
       @Override
       public void run() {
         JavaPairRDD<Object, Object> sinkRDD = rdd.flatMapToPair(sinkFunction);
-        sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName(), Object.class, Object.class);
+        for (String outputName : sinkFactory.writeFromRDD(sinkRDD, sec, stageSpec.getName())) {
+          recordLineage(outputName);
+        }
       }
     };
+  }
+
+  @Override
+  public Runnable createMultiStoreTask(PhaseSpec phaseSpec, Set<String> group, Set<String> sinks,
+                                       Map<String, StageStatisticsCollector> collectors) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        PairFlatMapFunction<T, String, KeyValue<Object, Object>> multiSinkFunction =
+          (PairFlatMapFunction<T, String, KeyValue<Object, Object>>)
+            Compat.convert(new MultiSinkFunction(sec, phaseSpec, group, collectors));
+        JavaPairRDD<String, KeyValue<Object, Object>> taggedOutput = rdd.flatMapToPair(multiSinkFunction);
+        for (String outputName : sinkFactory.writeCombinedRDD(taggedOutput, sec, sinks)) {
+          recordLineage(outputName);
+        }
+      }
+    };
+  }
+
+  private void recordLineage(String name) {
+    try {
+      ExternalDatasets.registerLineage(sec.getAdmin(), name, AccessType.WRITE, null,
+                                       () -> datasetContext.getDataset(name));
+    } catch (DatasetManagementException e) {
+      LOG.warn("Unable to register dataset lineage for {}", name);
+    }
   }
 
   @Override

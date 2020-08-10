@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.etl.mock.batch;
 
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.annotation.Plugin;
 import io.cdap.cdap.api.data.batch.Output;
@@ -32,7 +31,6 @@ import io.cdap.cdap.etl.api.batch.BatchSink;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.format.StructuredRecordStringConverter;
-import io.cdap.cdap.internal.app.runtime.batch.BasicOutputFormatProvider;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
@@ -68,14 +66,18 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
     private String name;
     private String alias;
     private String dirName;
+
+    @Nullable
+    private String name2;
+    @Nullable
+    private String alias2;
+    @Nullable
+    private String dirName2;
   }
 
   @Override
   public void prepareRun(BatchSinkContext context) {
-    OutputFormatProvider outputFormatProvider =
-      new BasicOutputFormatProvider(TextOutputFormat.class.getCanonicalName(),
-                                    ImmutableMap.of(TextOutputFormat.OUTDIR, config.dirName));
-
+    OutputFormatProvider outputFormatProvider = new Provider(config.dirName);
     if (config.name != null) {
       Output output = Output.of(config.name, outputFormatProvider);
       output.alias(config.alias);
@@ -83,12 +85,39 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
     } else {
       context.addOutput(Output.of(config.alias, outputFormatProvider));
     }
+    if (config.name2 != null) {
+      context.addOutput(Output.of(config.name2, new Provider(config.dirName2)).alias(config.alias2));
+    } else if (config.alias2 != null) {
+      context.addOutput(Output.of(config.alias2, new Provider(config.dirName2)));
+    }
   }
 
   @Override
   public void transform(StructuredRecord input, Emitter<KeyValue<NullWritable, String>> emitter)
     throws Exception {
     emitter.emit(new KeyValue<>(NullWritable.get(), StructuredRecordStringConverter.toJsonString(input)));
+  }
+
+  /**
+   * Output format provider that uses TextOutputFormat to write to a given directory.
+   */
+  public static class Provider implements OutputFormatProvider {
+    private final String dirName;
+
+
+    public Provider(String dirName) {
+      this.dirName = dirName;
+    }
+
+    @Override
+    public String getOutputFormatClassName() {
+      return TextOutputFormat.class.getCanonicalName();
+    }
+
+    @Override
+    public Map<String, String> getOutputFormatConfiguration() {
+      return Collections.singletonMap(TextOutputFormat.OUTDIR, dirName);
+    }
   }
 
   /**
@@ -106,6 +135,22 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
     }
     properties.put("alias", alias);
     properties.put("dirName", dirName);
+    return new ETLPlugin(PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties, null);
+  }
+
+
+  /**
+   * Returns {@link ETLPlugin} for MockExternalSink that writes the data to two different directories.
+   */
+  public static ETLPlugin getPlugin(String name1, String alias1, String dir1,
+                                    String name2, String alias2, String dir2) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("name", name1);
+    properties.put("alias", alias1);
+    properties.put("dirName", dir1);
+    properties.put("name2", name2);
+    properties.put("alias2", alias2);
+    properties.put("dirName2", dir2);
     return new ETLPlugin(PLUGIN_NAME, BatchSink.PLUGIN_TYPE, properties, null);
   }
 
@@ -138,6 +183,9 @@ public class MockExternalSink extends BatchSink<StructuredRecord, NullWritable, 
     properties.put("name", new PluginPropertyField("name", "", "string", false, false));
     properties.put("alias", new PluginPropertyField("alias", "", "string", true, false));
     properties.put("dirName", new PluginPropertyField("dirName", "", "string", true, false));
+    properties.put("name2", new PluginPropertyField("name2", "", "string", false, false));
+    properties.put("alias2", new PluginPropertyField("alias2", "", "string", false, false));
+    properties.put("dirName2", new PluginPropertyField("dirName2", "", "string", false, false));
     return new PluginClass(BatchSink.PLUGIN_TYPE, PLUGIN_NAME, "",
                            MockExternalSink.class.getName(), "config", properties);
   }
