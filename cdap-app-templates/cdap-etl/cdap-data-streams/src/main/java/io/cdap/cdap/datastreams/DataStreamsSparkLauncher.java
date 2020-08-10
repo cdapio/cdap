@@ -101,9 +101,6 @@ public class DataStreamsSparkLauncher extends AbstractSpark {
     sparkConf.set("spark.spark.streaming.blockInterval", String.valueOf(spec.getBatchIntervalMillis() / 5));
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
 
-    //Setting Kryo as default serializer
-    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-
     // spark... makes you set this to at least the number of receivers (streaming sources)
     // because it holds one thread per receiver, or one core in distributed mode.
     // so... we have to set this hacky master variable based on the isUnitTest setting in the config
