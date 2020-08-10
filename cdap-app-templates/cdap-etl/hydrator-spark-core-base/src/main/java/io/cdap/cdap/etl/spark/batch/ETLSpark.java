@@ -102,10 +102,6 @@ public class ETLSpark extends AbstractSpark {
     // to make sure fields that are the same but different casing are treated as different fields in auto-joins
     // see CDAP-17024
     sparkConf.set("spark.sql.caseSensitive", "true");
-
-    //Setting Kryo as default serializer
-    sparkConf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
