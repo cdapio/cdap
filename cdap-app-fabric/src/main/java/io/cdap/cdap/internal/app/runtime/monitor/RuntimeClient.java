@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.internal.remote.RemoteClient;
@@ -38,10 +39,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * The client for talking to the {@link RuntimeServer}.
@@ -50,10 +53,12 @@ public class RuntimeClient {
 
   static final int CHUNK_SIZE = 1 << 15;  // 32K
 
+  private final boolean compression;
   private final RemoteClient remoteClient;
 
   @Inject
-  RuntimeClient(DiscoveryServiceClient discoveryClient) {
+  RuntimeClient(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
+    this.compression = cConf.getBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.RUNTIME,
                                          new DefaultHttpRequestConfig(false),
                                          Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
@@ -100,7 +105,7 @@ public class RuntimeClient {
       urlConn.setChunkedStreamingMode(CHUNK_SIZE);
       urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, "avro/binary");
 
-      try (OutputStream os = urlConn.getOutputStream()) {
+      try (OutputStream os = openOutputStream(urlConn)) {
         writeMessages(messages, EncoderFactory.get().directBinaryEncoder(os, null));
       }
 
@@ -115,6 +120,18 @@ public class RuntimeClient {
     } finally {
       urlConn.disconnect();
     }
+  }
+
+  /**
+   * Opens a {@link OutputStream} to the given {@link URLConnection}. If {@link #compression} is {@code true},
+   * the ouptut stream will be wrapped with a {@link GZIPOutputStream} with appropriate request header set.
+   */
+  private OutputStream openOutputStream(URLConnection urlConn) throws IOException {
+    if (!compression) {
+      return urlConn.getOutputStream();
+    }
+    urlConn.setRequestProperty(HttpHeaders.CONTENT_ENCODING, "gzip");
+    return new GZIPOutputStream(urlConn.getOutputStream());
   }
 
   /**

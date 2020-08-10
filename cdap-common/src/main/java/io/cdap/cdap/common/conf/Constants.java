@@ -866,6 +866,8 @@ public final class Constants {
     public static final String BIND_PORT = "app.program.runtime.monitor.server.bind.port";
     public static final String SSL_ENABLED = "app.program.runtime.monitor.server.ssl.enabled";
 
+    public static final String COMPRESSION_ENABLED = "app.program.runtime.monitor.compression.enabled";
+
     // Configuration key for specifying the base URL for sending monitoring messages.
     // If it is missing from the configuration, SSH tunnel will be used.
     public static final String MONITOR_URL = "app.program.runtime.monitor.url";

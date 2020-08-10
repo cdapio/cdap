@@ -45,9 +45,12 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,21 +59,36 @@ import java.util.stream.IntStream;
 /**
  * Unit test for {@link RuntimeServer} and {@link RuntimeClient}.
  */
+@RunWith(Parameterized.class)
 public class RuntimeClientServerTest {
+
+  @Parameterized.Parameters(name = "{index}: compression = {0}")
+  public static Collection<Object[]> parameters() {
+    return Arrays.asList(new Object[][]{
+      {false},
+      {true},
+    });
+  }
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
   private final List<String> logEntries = new ArrayList<>();
+  private final boolean compression;
   private CConfiguration cConf;
   private MessagingService messagingService;
   private RuntimeServer runtimeServer;
   private RuntimeClient runtimeClient;
 
+  public RuntimeClientServerTest(boolean compression) {
+    this.compression = compression;
+  }
+
   @Before
   public void beforeTest() throws Exception {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+    cConf.setBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED, compression);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -137,7 +155,9 @@ public class RuntimeClientServerTest {
     TopicId topicId = NamespaceId.SYSTEM.topic("topic");
 
     List<Message> messages = new ArrayList<>();
-    messages.add(createMessage(RuntimeClient.CHUNK_SIZE * 2));
+    for (int i = 0; i < 10; i++) {
+      messages.add(createMessage(RuntimeClient.CHUNK_SIZE * 2));
+    }
 
     runtimeClient.sendMessages(programRunId, topicId, messages.iterator());
     assertMessages(topicId, messages);
