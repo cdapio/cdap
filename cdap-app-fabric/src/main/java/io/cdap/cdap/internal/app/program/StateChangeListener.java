@@ -18,7 +18,9 @@ package io.cdap.cdap.internal.app.program;
 
 import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
+import io.cdap.cdap.common.lang.Delegator;
 import io.cdap.cdap.internal.app.runtime.AbstractListener;
+import io.cdap.cdap.internal.app.runtime.distributed.AbstractTwillProgramController;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,13 +35,12 @@ public class StateChangeListener extends AbstractListener {
   private static final Logger LOG = LoggerFactory.getLogger(StateChangeListener.class);
 
   private final ProgramRunId programRunId;
-  private final String twillRunId;
+  private final ProgramController programController;
   private final ProgramStateWriter programStateWriter;
 
-  public StateChangeListener(final ProgramRunId programRunId, @Nullable final String twillRunId,
-                             final ProgramStateWriter programStateWriter) {
-    this.programRunId = programRunId;
-    this.twillRunId = twillRunId;
+  public StateChangeListener(ProgramController programController, ProgramStateWriter programStateWriter) {
+    this.programRunId = programController.getProgramRunId();
+    this.programController = programController;
     this.programStateWriter = programStateWriter;
   }
 
@@ -70,7 +71,7 @@ public class StateChangeListener extends AbstractListener {
   @Override
   public void alive() {
     LOG.trace("Program {} is alive.", programRunId);
-    programStateWriter.running(programRunId, twillRunId);
+    programStateWriter.running(programRunId, getTwillRunId());
   }
 
   @Override
@@ -101,5 +102,18 @@ public class StateChangeListener extends AbstractListener {
   public void error(Throwable cause) {
     LOG.trace("Program {} stopped with error: {}", programRunId, cause);
     programStateWriter.error(programRunId, cause);
+  }
+
+  @Nullable
+  private String getTwillRunId() {
+    ProgramController programController = this.programController;
+    while (programController instanceof Delegator) {
+      //noinspection unchecked
+      programController = ((Delegator<ProgramController>) programController).getDelegate();
+    }
+    if (programController instanceof AbstractTwillProgramController) {
+      return ((AbstractTwillProgramController) programController).getTwillRunId().getId();
+    }
+    return null;
   }
 }

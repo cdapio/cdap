@@ -18,6 +18,7 @@ package io.cdap.cdap.common.options;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -76,7 +77,7 @@ public final class OptionsParser {
 
     if (parsedOptions.containsKey("help") && !declaredOptions.containsKey("help")) {
       printUsage(declaredOptions, appName, appVersion, out);
-      return null;
+      return Collections.emptyList();
     }
 
     for (String name : parsedOptions.keySet()) {

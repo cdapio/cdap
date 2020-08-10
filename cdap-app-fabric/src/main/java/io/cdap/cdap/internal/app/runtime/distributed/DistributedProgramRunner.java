@@ -17,11 +17,9 @@
 package io.cdap.cdap.internal.app.runtime.distributed;
 
 import ch.qos.logback.classic.Level;
-import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.annotation.TransactionControl;
@@ -99,6 +97,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
 
@@ -204,7 +203,8 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       final Map<String, LocalizeResource> localizeResources = new HashMap<>(launchConfig.getExtraResources());
       final List<String> additionalClassPaths = new ArrayList<>();
       addContainerJars(cConf, localizeResources, additionalClassPaths);
-      addAdditionalLogAppenderJars(cConf, tempDir, localizeResources);
+      addAdditionalLogAppenderJars(cConf, tempDir, localizeResources,
+                                   SystemArguments.getProfileProvisioner(oldOptions.getArguments().asMap()));
 
       prepareHBaseDDLExecutorResources(tempDir, cConf, localizeResources);
 
@@ -249,117 +249,114 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
                               options, ProgramOptions.class,
                               File.createTempFile("program.options", ".json", tempDir))));
 
-      Callable<ProgramController> callable = new Callable<ProgramController>() {
-        @Override
-        public ProgramController call() throws Exception {
-          ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
-          ProgramTwillApplication twillApplication = new ProgramTwillApplication(
-            programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
-            localizeResources, createEventHandler(cConf, programRunId, options));
+      Callable<ProgramController> callable = () -> {
+        ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
+        ProgramTwillApplication twillApplication = new ProgramTwillApplication(
+          programRunId, options, launchConfig.getRunnables(), launchConfig.getLaunchOrder(),
+          localizeResources, createEventHandler(cConf, programRunId, options));
 
-          TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
+        TwillPreparer twillPreparer = twillRunner.prepare(twillApplication);
 
-          // Also add the configuration files to container classpath so that the
-          // TwillAppLifecycleEventHandler can get it. This can be removed when TWILL-246 is fixed.
-          // Only ON_PREMISE mode will be using EventHandler
-          twillPreparer.withResources(configResources);
+        // Also add the configuration files to container classpath so that the
+        // TwillAppLifecycleEventHandler can get it. This can be removed when TWILL-246 is fixed.
+        // Only ON_PREMISE mode will be using EventHandler
+        twillPreparer.withResources(configResources);
 
-          Map<String, String> userArgs = options.getUserArguments().asMap();
+        Map<String, String> userArgs = options.getUserArguments().asMap();
 
-          // Setup log level
-          twillPreparer.setLogLevels(transformLogLevels(SystemArguments.getLogLevels(userArgs)));
+        // Setup log level
+        twillPreparer.setLogLevels(transformLogLevels(SystemArguments.getLogLevels(userArgs)));
 
-          // Set the configuration for the twill application
-          Map<String, String> twillConfigs = new HashMap<>();
-          if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
-            twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
-                             cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
-          }
-          // Add the one from the runtime arguments
-          twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(userArgs));
-          twillPreparer.withConfiguration(twillConfigs);
-
-          // Setup per runnable configurations
-          for (Map.Entry<String, RunnableDefinition> entry : launchConfig.getRunnables().entrySet()) {
-            String runnable = entry.getKey();
-            RunnableDefinition runnableDefinition = entry.getValue();
-            if (runnableDefinition.getMaxRetries() != null) {
-              twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
-            }
-            twillPreparer.setLogLevels(runnable, transformLogLevels(runnableDefinition.getLogLevels()));
-            twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
-          }
-
-          if (options.isDebug()) {
-            twillPreparer.enableDebugging();
-          }
-
-          logProgramStart(program, options);
-
-          LOG.info("Starting {} with debugging enabled: {}, logback: {}",
-                   program.getId(), options.isDebug(), logbackURI);
-
-          // Add scheduler queue name if defined
-          String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
-          if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
-            LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
-            twillPreparer.setSchedulerQueue(schedulerQueueName);
-          }
-
-          if (logbackURI != null) {
-            twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
-          }
-
-          addLogHandler(twillPreparer, cConf);
-
-          // Setup the environment for the container logback.xml
-          twillPreparer.withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
-
-          // Add dependencies
-          Set<Class<?>> extraDependencies = addExtraDependencies(cConf,
-                                                                 new HashSet<>(launchConfig.getExtraDependencies()));
-          twillPreparer.withDependencies(extraDependencies);
-
-          // Add the additional classes to the classpath that comes from the container jar setting
-          twillPreparer.withClassPaths(additionalClassPaths);
-
-          twillPreparer.withClassPaths(launchConfig.getExtraClasspath());
-          twillPreparer.withEnv(launchConfig.getExtraEnv());
-
-          // Add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the twill container.
-          // The Yarn app classpath goes last
-          List<String> yarnAppClassPath = Arrays.asList(
-            hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
-                                    YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
-          twillPreparer
-            .withApplicationClassPaths(yarnAppClassPath)
-            .withClassPaths(yarnAppClassPath);
-
-          twillPreparer
-            .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
-            .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
-            // Use the MainClassLoader for class rewriting
-            .setClassLoader(MainClassLoader.class.getName());
-
-          // Invoke the before launch hook
-          beforeLaunch(program, options);
-
-          TwillController twillController;
-          // Change the context classloader to the combine classloader of this ProgramRunner and
-          // all the classloaders of the dependencies classes so that Twill can trace classes.
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
-            DistributedProgramRunner.this.getClass().getClassLoader(),
-            extraDependencies.stream().map(Class::getClassLoader)::iterator));
-          try {
-            twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
-                                                  TimeUnit.SECONDS);
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
-          return createProgramController(addCleanupListener(twillController, program, tempDir),
-                                         new ProgramDescriptor(program.getId(), program.getApplicationSpecification()),
-                                         ProgramRunners.getRunId(options));
+        // Set the configuration for the twill application
+        Map<String, String> twillConfigs = new HashMap<>();
+        if (DistributedProgramRunner.this instanceof LongRunningDistributedProgramRunner) {
+          twillConfigs.put(Configs.Keys.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL,
+                           cConf.get(Constants.AppFabric.YARN_ATTEMPT_FAILURES_VALIDITY_INTERVAL));
         }
+        // Add the one from the runtime arguments
+        twillConfigs.putAll(SystemArguments.getTwillApplicationConfigs(userArgs));
+        twillPreparer.withConfiguration(twillConfigs);
+
+        // Setup per runnable configurations
+        for (Map.Entry<String, RunnableDefinition> entry : launchConfig.getRunnables().entrySet()) {
+          String runnable = entry.getKey();
+          RunnableDefinition runnableDefinition = entry.getValue();
+          if (runnableDefinition.getMaxRetries() != null) {
+            twillPreparer.withMaxRetries(runnable, runnableDefinition.getMaxRetries());
+          }
+          twillPreparer.setLogLevels(runnable, transformLogLevels(runnableDefinition.getLogLevels()));
+          twillPreparer.withConfiguration(runnable, runnableDefinition.getTwillRunnableConfigs());
+        }
+
+        if (options.isDebug()) {
+          twillPreparer.enableDebugging();
+        }
+
+        logProgramStart(program, options);
+
+        LOG.info("Starting {} with debugging enabled: {}, logback: {}",
+                 program.getId(), options.isDebug(), logbackURI);
+
+        // Add scheduler queue name if defined
+        String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
+        if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
+          LOG.info("Setting scheduler queue for app {} as {}", program.getId(), schedulerQueueName);
+          twillPreparer.setSchedulerQueue(schedulerQueueName);
+        }
+
+        if (logbackURI != null) {
+          twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
+        }
+
+        addLogHandler(twillPreparer, cConf);
+
+        // Setup the environment for the container logback.xml
+        twillPreparer.withEnv(Collections.singletonMap("CDAP_LOG_DIR", ApplicationConstants.LOG_DIR_EXPANSION_VAR));
+
+        // Add dependencies
+        Set<Class<?>> extraDependencies = addExtraDependencies(cConf,
+                                                               new HashSet<>(launchConfig.getExtraDependencies()));
+        twillPreparer.withDependencies(extraDependencies);
+
+        // Add the additional classes to the classpath that comes from the container jar setting
+        twillPreparer.withClassPaths(additionalClassPaths);
+
+        twillPreparer.withClassPaths(launchConfig.getExtraClasspath());
+        twillPreparer.withEnv(launchConfig.getExtraEnv());
+
+        // Add the YARN_APPLICATION_CLASSPATH so that yarn classpath are included in the twill container.
+        // The Yarn app classpath goes last
+        List<String> yarnAppClassPath = Arrays.asList(
+          hConf.getTrimmedStrings(YarnConfiguration.YARN_APPLICATION_CLASSPATH,
+                                  YarnConfiguration.DEFAULT_YARN_APPLICATION_CLASSPATH));
+        twillPreparer
+          .withApplicationClassPaths(yarnAppClassPath)
+          .withClassPaths(yarnAppClassPath);
+
+        twillPreparer
+          .withBundlerClassAcceptor(launchConfig.getClassAcceptor())
+          .withApplicationArguments(PROGRAM_OPTIONS_FILE_NAME)
+          // Use the MainClassLoader for class rewriting
+          .setClassLoader(MainClassLoader.class.getName());
+
+        // Invoke the before launch hook
+        beforeLaunch(program, options);
+
+        TwillController twillController;
+        // Change the context classloader to the combine classloader of this ProgramRunner and
+        // all the classloaders of the dependencies classes so that Twill can trace classes.
+        ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(new CombineClassLoader(
+          DistributedProgramRunner.this.getClass().getClassLoader(),
+          extraDependencies.stream().map(Class::getClassLoader)::iterator));
+        try {
+          twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
+                                                TimeUnit.SECONDS);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader);
+        }
+        return createProgramController(addCleanupListener(twillController, program, tempDir),
+                                       new ProgramDescriptor(program.getId(), program.getApplicationSpecification()),
+                                       ProgramRunners.getRunId(options));
       };
 
       ProgramRunId programRunId = program.getId().run(ProgramRunners.getRunId(options));
@@ -375,11 +372,20 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
    * Adds a {@link LocalizeResource} if extra log appender is being configured.
    */
   private void addAdditionalLogAppenderJars(CConfiguration cConf, File tempDir,
-                                            Map<String, LocalizeResource> localizeResources) throws IOException {
+                                            Map<String, LocalizeResource> localizeResources,
+                                            String provisioner) throws IOException {
     String provider = cConf.get(Constants.Logging.LOG_APPENDER_PROVIDER);
     if (Strings.isNullOrEmpty(provider)) {
       return;
     }
+    // If the log appender provider doesn't support the provisioner for the program execution, unset the config.
+    Collection<String> provisioners = cConf.getTrimmedStringCollection(Constants.Logging.LOG_APPENDER_PROVISIONERS);
+    if (!provisioners.contains(provisioner)) {
+      cConf.unset(Constants.Logging.LOG_APPENDER_PROVIDER);
+      return;
+    }
+
+    LOG.debug("Configure log appender provider to {}", provider);
 
     String localizedDir = "log-appender-ext";
     File logAppenderArchive = new File(tempDir, localizedDir + ".zip");
@@ -572,19 +578,22 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
   }
 
   private Map<String, LogEntry.Level> transformLogLevels(Map<String, Level> logLevels) {
-    return Maps.transformValues(logLevels, new Function<Level, LogEntry.Level>() {
-      @Override
-      public LogEntry.Level apply(Level level) {
-        // Twill LogEntry.Level doesn't have ALL and OFF, so map them to lowest and highest log level respectively
-        if (level.equals(Level.ALL)) {
-          return LogEntry.Level.TRACE;
-        }
-        if (level.equals(Level.OFF)) {
-          return LogEntry.Level.FATAL;
-        }
-        return LogEntry.Level.valueOf(level.toString());
-      }
-    });
+    return logLevels.entrySet().stream()
+      .collect(Collectors.toMap(Map.Entry::getKey, e -> convertLogLevel(e.getValue())));
+  }
+
+  /**
+   * Converts a logback {@link Level} into twill {@link LogEntry.Level}.
+   */
+  private LogEntry.Level convertLogLevel(Level level) {
+    // Twill LogEntry.Level doesn't have ALL and OFF, so map them to lowest and highest log level respectively
+    if (level.equals(Level.ALL)) {
+      return LogEntry.Level.TRACE;
+    }
+    if (level.equals(Level.OFF)) {
+      return LogEntry.Level.FATAL;
+    }
+    return LogEntry.Level.valueOf(level.toString());
   }
 
   private File saveCConf(CConfiguration cConf, File file) throws IOException {

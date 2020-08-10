@@ -24,7 +24,6 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
-import com.google.inject.Provider;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.app.MainClassLoader;
@@ -33,6 +32,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.IOModule;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -46,8 +46,7 @@ import io.cdap.cdap.data2.transaction.DelegatingTransactionSystemClientService;
 import io.cdap.cdap.data2.transaction.TransactionSystemClientService;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
-import io.cdap.cdap.master.environment.DefaultMasterEnvironmentContext;
-import io.cdap.cdap.master.environment.MasterEnvironmentExtensionLoader;
+import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
@@ -66,7 +65,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 import javax.annotation.Nullable;
 import javax.sql.DataSource;
 
@@ -92,7 +90,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    * @param <T> type of the master main class
    * @throws Exception if execution failed
    */
-  protected static <T extends AbstractServiceMain> void main(Class<T> mainClass, String[] args) throws Exception {
+  protected static <E extends EnvironmentOptions, T extends AbstractServiceMain<E>>
+  void main(Class<T> mainClass, String[] args) throws Exception {
     ClassLoader classLoader = MainClassLoader.createFromContext();
     if (classLoader == null) {
       LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
@@ -145,20 +144,9 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     Configuration hConf = new Configuration();
 
-    MasterEnvironmentExtensionLoader envExtLoader = new MasterEnvironmentExtensionLoader(cConf);
-    masterEnv = envExtLoader.get(options.getEnvProvider());
-
-    if (masterEnv == null) {
-      throw new IllegalArgumentException("Unable to find a MasterEnvironment implementation with name "
-                                           + options.getEnvProvider());
-    }
-
-    MasterEnvironmentContext masterEnvContext = new DefaultMasterEnvironmentContext(cConf);
-    try {
-      masterEnv.initialize(masterEnvContext);
-    } catch (Exception e) {
-      throw new RuntimeException("Exception raised when initializing master environment for " + masterEnv.getName(), e);
-    }
+    masterEnv = MasterEnvironments.setMasterEnvironment(MasterEnvironments.create(cConf, options.getEnvProvider()));
+    MasterEnvironmentContext masterEnvContext = MasterEnvironments.createContext(cConf, hConf, masterEnv.getName());
+    masterEnv.initialize(masterEnvContext);
 
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf, hConf, sConf));
@@ -312,23 +300,4 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
    */
   @Nullable
   protected abstract LoggingContext getLoggingContext(T options);
-
-  /**
-   * The class bridge a {@link Supplier} to Guice {@link Provider}.
-   *
-   * @param <T> type of the object provided by this {@link Provider}
-   */
-  protected static final class SupplierProviderBridge<T> implements Provider<T> {
-
-    private final Supplier<T> supplier;
-
-    SupplierProviderBridge(Supplier<T> supplier) {
-      this.supplier = supplier;
-    }
-
-    @Override
-    public T get() {
-      return supplier.get();
-    }
-  }
 }

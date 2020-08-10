@@ -24,20 +24,20 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.KafkaClientModule;
+import io.cdap.cdap.common.guice.SupplierProviderBridge;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
-import io.cdap.cdap.common.namespace.NamespacePathLocator;
-import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
-import io.cdap.cdap.common.namespace.NoLookupNamespacePathLocator;
 import io.cdap.cdap.common.namespace.guice.NamespaceQueryAdminModule;
 import io.cdap.cdap.data.runtime.ConstantTransactionSystemClient;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
+import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
 import io.cdap.cdap.data2.audit.AuditModule;
 import io.cdap.cdap.data2.metadata.writer.FieldLineageWriter;
 import io.cdap.cdap.data2.metadata.writer.LineageWriter;
@@ -52,12 +52,13 @@ import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.runtime.workflow.MessagingWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.logging.guice.KafkaLogAppenderModule;
+import io.cdap.cdap.logging.guice.RemoteLogAppenderModule;
 import io.cdap.cdap.logging.guice.TMSLogAppenderModule;
+import io.cdap.cdap.master.environment.MasterEnvironments;
+import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
-import io.cdap.cdap.proto.NamespaceMeta;
-import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
@@ -65,6 +66,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.guice.SecureStoreClientModule;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
+import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
 import io.cdap.cdap.security.impersonation.UGIProvider;
@@ -73,9 +75,10 @@ import io.cdap.cdap.spi.metadata.noop.NoopMetadataStorage;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.api.ServiceAnnouncer;
+import org.apache.twill.discovery.DiscoveryService;
+import org.apache.twill.discovery.DiscoveryServiceClient;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nullable;
 
@@ -141,12 +144,15 @@ public class DistributedProgramContainerModule extends AbstractModule {
 
     modules.add(new ConfigModule(cConf, hConf));
     modules.add(new IOModule());
+    modules.add(new DFSLocationModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new MessagingClientModule());
     modules.add(new AuditModule());
     modules.add(new AuthorizationEnforcementModule().getDistributedModules());
     modules.add(new SecureStoreClientModule());
     modules.add(new MetadataReaderWriterModules().getDistributedModules());
+    modules.add(new NamespaceQueryAdminModule());
+    modules.add(new DataSetsModules().getDistributedModules());
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
@@ -169,6 +175,8 @@ public class DistributedProgramContainerModule extends AbstractModule {
       }
     });
 
+    addDataFabricModules(modules);
+
     switch (clusterMode) {
       case ON_PREMISE:
         addOnPremiseModules(modules);
@@ -183,72 +191,77 @@ public class DistributedProgramContainerModule extends AbstractModule {
     return modules;
   }
 
-  private void addOnPremiseModules(List<Module> modules) {
-    String instanceId = programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
+  /**
+   * Adds guice modules that are related to data fabric.
+   */
+  private void addDataFabricModules(List<Module> modules) {
+    if (cConf.getBoolean(Constants.Transaction.TX_ENABLED)) {
+      String instanceId = programOpts.getArguments().getOption(ProgramOptionConstants.INSTANCE_ID);
+      modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
+      modules.add(new SystemDatasetRuntimeModule().getDistributedModules());
+    } else {
+      modules.add(new DataSetServiceModules().getStandaloneModules());
+      modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
+          bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
+        }
+      }));
+    }
 
-    modules.add(new ZKClientModule());
-    modules.add(new ZKDiscoveryModule());
-    modules.add(new DFSLocationModule());
-    modules.add(new KafkaClientModule());
-    modules.add(new KafkaLogAppenderModule());
-    modules.add(new DataFabricModules(generateClientId(programRunId, instanceId)).getDistributedModules());
-    modules.add(new DataSetsModules().getDistributedModules());
-    modules.add(new NamespaceQueryAdminModule());
+    if (cConf.getBoolean(Constants.Explore.EXPLORE_ENABLED)) {
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
+          bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
+        }
+      });
+    } else {
+      modules.add(new AbstractModule() {
+        @Override
+        protected void configure() {
+          // Bind to unsupported/no-op class implementations
+          bind(ExploreClient.class).to(UnsupportedExploreClient.class);
+        }
+      });
+    }
+  }
+
+  private void addOnPremiseModules(List<Module> modules) {
+    // If MasterEnvironment is not available, assuming it is the old hadoop stack with ZK, Kafka
+    MasterEnvironment masterEnv = MasterEnvironments.getMasterEnvironment();
+
+    if (masterEnv == null) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+      modules.add(new KafkaClientModule());
+      modules.add(new KafkaLogAppenderModule());
+      return;
+    }
+
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        // bind explore client to ProgramDiscoveryExploreClient which is aware of the programId
-        bind(ExploreClient.class).to(ProgramDiscoveryExploreClient.class).in(Scopes.SINGLETON);
+        bind(DiscoveryService.class)
+          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
+        bind(DiscoveryServiceClient.class)
+          .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
+
+        bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
     });
+    modules.add(new RemoteLogAppenderModule());
   }
 
   private void addIsolatedModules(List<Module> modules) {
     modules.add(new RemoteExecutionDiscoveryModule());
     modules.add(new TMSLogAppenderModule());
-    modules.add(new DFSLocationModule());
-    modules.add(new DataSetsModules().getStandaloneModules());
-    modules.add(new DataSetServiceModules().getStandaloneModules());
-    modules.add(Modules.override(new DataFabricModules().getInMemoryModules()).with(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Use the ConstantTransactionSystemClient in isolated mode, basically there is no transaction.
-        bind(TransactionSystemClient.class).to(ConstantTransactionSystemClient.class).in(Scopes.SINGLETON);
-      }
-    }));
-
-    // In isolated mode, ignore the namespace mapping
     modules.add(new AbstractModule() {
       @Override
       protected void configure() {
-        bind(NamespacePathLocator.class).to(NoLookupNamespacePathLocator.class);
-      }
-    });
-
-    modules.add(new AbstractModule() {
-      @Override
-      protected void configure() {
-        // Bind to unsupported/no-op class implementations for features that are not supported in isolated cluster mode
-        bind(ExploreClient.class).to(UnsupportedExploreClient.class);
         bind(OwnerAdmin.class).to(NoOpOwnerAdmin.class);
-
-        // This is just for Dataset Service to check if a namespace exists
-        bind(NamespaceQueryAdmin.class).toInstance(new NamespaceQueryAdmin() {
-          @Override
-          public List<NamespaceMeta> list() {
-            return Collections.singletonList(get(programRunId.getNamespaceId()));
-          }
-
-          @Override
-          public NamespaceMeta get(NamespaceId namespaceId) {
-            return new NamespaceMeta.Builder().setName(namespaceId).build();
-          }
-
-          @Override
-          public boolean exists(NamespaceId namespaceId) {
-            return programRunId.getNamespaceId().equals(namespaceId);
-          }
-        });
       }
     });
   }

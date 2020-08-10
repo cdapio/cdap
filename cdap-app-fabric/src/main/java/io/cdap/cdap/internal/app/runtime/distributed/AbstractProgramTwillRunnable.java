@@ -23,8 +23,10 @@ import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -81,6 +83,7 @@ import java.lang.reflect.Type;
 import java.net.ProxySelector;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
@@ -416,7 +419,10 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
     MetricsCollectionService metricsCollectionService = injector.getInstance(MetricsCollectionService.class);
     services.add(metricsCollectionService);
-    services.add(injector.getInstance(LogAppenderLoaderService.class));
+
+    if (ProgramRunners.getClusterMode(programOptions) != ClusterMode.ON_PREMISE) {
+      services.add(injector.getInstance(LogAppenderLoaderService.class));
+    }
 
     if (ProgramRunners.getClusterMode(programOptions) == ClusterMode.ON_PREMISE) {
       addOnPremiseServices(injector, programOptions, metricsCollectionService, services);
@@ -427,20 +433,20 @@ public abstract class AbstractProgramTwillRunnable<T extends ProgramRunner> impl
 
   private void addOnPremiseServices(Injector injector, ProgramOptions programOptions,
                                     MetricsCollectionService metricsCollectionService, Collection<Service> services) {
-    services.add(injector.getInstance(ZKClientService.class));
-    services.add(injector.getInstance(KafkaClientService.class));
-    services.add(injector.getInstance(BrokerService.class));
+    for (Class<? extends Service> cls : Arrays.asList(ZKClientService.class,
+                                                      KafkaClientService.class, BrokerService.class)) {
+      Binding<? extends Service> binding = injector.getExistingBinding(Key.get(cls));
+      if (binding != null) {
+        services.add(binding.getProvider().get());
+      }
+    }
     services.add(new ProgramRunnableResourceReporter(programOptions.getProgramId(), metricsCollectionService, context));
   }
 
   private void startCoreServices() {
-    try {
-      // Starts the core services
-      for (Service service : coreServices) {
-        service.startAndWait();
-      }
-    } catch (Exception e) {
-      throw e;
+    // Starts the core services
+    for (Service service : coreServices) {
+      service.startAndWait();
     }
   }
 
