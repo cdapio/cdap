@@ -129,10 +129,14 @@ $border-color: $grey-05;
 
     &.active,
     &:hover {
-      background-color: $grey-05;
+      background-color: $grey-10;
 
       &:after {
         display: none;
+      }
+
+      &:before {
+        border-color: $grey-10;
       }
     }
 
@@ -161,7 +165,7 @@ $border-color: $grey-05;
     position: relative;
 
     &:after {
-      right: -18px;
+      right: -16px;
     }
 
     .run-configs-btn {

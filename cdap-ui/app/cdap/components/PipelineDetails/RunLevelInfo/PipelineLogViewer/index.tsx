@@ -87,7 +87,7 @@ const LogViewerContainer: React.FC<ILogViewerProps> = ({
   return (
     <div className={classes.portalContainer} ref={backgroundElem} onClick={handleBackgroundClick}>
       <div className={classes.logsContainer}>
-        <LogViewer dataFetcher={dataFetcher} />
+        <LogViewer dataFetcher={dataFetcher} onClose={toggleLogViewer} />
       </div>
     </div>
   );

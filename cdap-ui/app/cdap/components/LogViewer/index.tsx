@@ -83,6 +83,7 @@ const styles = (theme): StyleRules => {
 interface ILogViewerProps extends WithStyles<typeof styles> {
   dataFetcher: DataFetcher;
   stopPoll?: boolean;
+  onClose?: () => void;
 }
 
 interface ILogViewerState {
@@ -349,7 +350,9 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
   }
 
   private cleanUpWatchers = () => {
-    this.io.disconnect();
+    if (this.io) {
+      this.io.disconnect();
+    }
     this.stopScrollWatch();
     this.stopPoll();
   };
@@ -443,6 +446,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
           isPolling={this.state.isPolling}
           getLatestLogs={this.getLatestLogs}
           setSystemLogs={this.setIncludeSystemLogs}
+          onClose={this.props.onClose}
         />
         <div className={classes.logsTableHeader}>
           <div className={classes.cell}>Time</div>

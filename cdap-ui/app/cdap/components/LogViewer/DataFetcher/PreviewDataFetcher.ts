@@ -73,7 +73,7 @@ class PreviewDataFetcher implements DataFetcher {
       params.fromOffset = this.lastLog.offset;
     }
 
-    return MyPreviewApi.nextLogs(params).map((res) => {
+    return MyPreviewApi.nextLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.lastLog = res[res.length - 1];
       }
@@ -89,7 +89,7 @@ class PreviewDataFetcher implements DataFetcher {
       params.fromOffset = this.firstLog.offset;
     }
 
-    return MyPreviewApi.prevLogs(params).map((res) => {
+    return MyPreviewApi.prevLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.firstLog = res[0];
       }
@@ -101,7 +101,7 @@ class PreviewDataFetcher implements DataFetcher {
   public getFirst = (): Observable<ILogResponse[]> => {
     const params = this.getBaseParams();
 
-    return MyPreviewApi.nextLogs(params).map((res) => {
+    return MyPreviewApi.nextLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.firstLog = res[0];
         this.lastLog = res[res.length - 1];
@@ -114,7 +114,7 @@ class PreviewDataFetcher implements DataFetcher {
   public getLast = (): Observable<ILogResponse[]> => {
     const params = this.getBaseParams();
 
-    return MyPreviewApi.prevLogs(params).map((res) => {
+    return MyPreviewApi.prevLogs(params).map((res = []) => {
       if (res.length > 0) {
         this.firstLog = res[0];
         this.lastLog = res[res.length - 1];
