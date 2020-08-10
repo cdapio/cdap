@@ -1571,6 +1571,14 @@
   </property>
 
   <property>
+    <name>app.program.log.appender.provisioners</name>
+    <value>native</value>
+    <description>
+      Comma-separated list of provisioners to enable log appender provider for program executions
+    </description>
+  </property>
+
+  <property>
     <name>log.buffer.recovery.batch.size</name>
     <value>5000</value>
     <description>

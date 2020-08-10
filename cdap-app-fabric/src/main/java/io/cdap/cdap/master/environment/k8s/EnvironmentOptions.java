@@ -18,6 +18,8 @@ package io.cdap.cdap.master.environment.k8s;
 
 import io.cdap.cdap.common.options.Option;
 
+import javax.annotation.Nullable;
+
 /**
  * Options for a MasterEnvironment.
  */
@@ -28,11 +30,21 @@ public class EnvironmentOptions {
   @Option(name = "conf", usage = "Directory path for CDAP configuration files")
   private String extraConfPath;
 
+  @Option(name = "runnableClass", usage = "MasterEnvironmentRunnable class")
+  private String runnableClass;
+
+  @Nullable
   public String getEnvProvider() {
     return envProvider;
   }
 
+  @Nullable
   public String getExtraConfPath() {
     return extraConfPath;
+  }
+
+  @Nullable
+  public String getRunnableClass() {
+    return runnableClass;
   }
 }

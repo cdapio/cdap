@@ -19,6 +19,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramStateWriter;
 import io.cdap.cdap.common.runtime.RuntimeModule;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
@@ -44,7 +45,18 @@ public final class ProgramRunnerRuntimeModule extends RuntimeModule {
 
   @Override
   public Module getDistributedModules() {
-    return Modules.combine(new DistributedProgramRunnerModule(),
+    return getDistributedModules(false);
+  }
+
+  /**
+   * Creates a guice module for distributed mode.
+   *
+   * @param publishProgramState if {@code true}, program state will be published from the {@link ProgramRunner} upon
+   *                            program state change. It only applies to {@link ProgramRunner} created for "native"
+   *                            cluster execution. It doesn't applies to remote execution.
+   */
+  public Module getDistributedModules(boolean publishProgramState) {
+    return Modules.combine(new DistributedProgramRunnerModule(publishProgramState),
                            new RemoteExecutionProgramRunnerModule(),
                            new ProgramStateWriterModule());
   }

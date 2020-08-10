@@ -18,6 +18,7 @@ package io.cdap.cdap.app.guice;
 import com.google.inject.PrivateModule;
 import com.google.inject.Scopes;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Names;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.app.runtime.ProgramRunnerFactory;
 import io.cdap.cdap.app.runtime.ProgramRuntimeProvider;
@@ -36,6 +37,12 @@ import org.apache.twill.api.TwillRunner;
  */
 final class DistributedProgramRunnerModule extends PrivateModule {
 
+  private final boolean publishProgramState;
+
+  DistributedProgramRunnerModule(boolean publishProgramState) {
+    this.publishProgramState = publishProgramState;
+  }
+
   @Override
   protected void configure() {
 
@@ -44,6 +51,7 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     bind(ProgramRuntimeProvider.Mode.class).toInstance(ProgramRuntimeProvider.Mode.DISTRIBUTED);
     // Bind and expose ProgramRunnerFactory. It is used in both program deployment and program execution.
     // Should get refactory by CDAP-5506
+    bindConstant().annotatedWith(Names.named("publishProgramState")).to(publishProgramState);
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
     expose(ProgramRunnerFactory.class);
 
