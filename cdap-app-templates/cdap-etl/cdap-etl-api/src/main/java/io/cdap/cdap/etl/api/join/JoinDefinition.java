@@ -42,13 +42,19 @@ public class JoinDefinition {
   private final List<JoinStage> stages;
   private final JoinCondition condition;
   private final Schema outputSchema;
+  private final JoinDistribution distribution;
 
   private JoinDefinition(List<JoinField> selectedFields, List<JoinStage> stages,
-                         JoinCondition condition, Schema outputSchema) {
+                         JoinCondition condition, Schema outputSchema, JoinDistribution distribution) {
     this.stages = Collections.unmodifiableList(stages);
     this.selectedFields = Collections.unmodifiableList(new ArrayList<>(selectedFields));
     this.condition = condition;
     this.outputSchema = outputSchema;
+    this.distribution = distribution;
+  }
+
+  public JoinDistribution getDistribution() {
+    return distribution;
   }
 
   public List<JoinField> getSelectedFields() {
@@ -83,12 +89,14 @@ public class JoinDefinition {
     private JoinCondition condition;
     private String schemaName;
     private Schema outputSchema;
+    private JoinDistribution distribution;
 
     private Builder() {
       stages = new ArrayList<>();
       selectedFields = new ArrayList<>();
       schemaName = null;
       condition = null;
+      distribution = null;
     }
 
     public Builder select(List<JoinField> selectedFields) {
@@ -122,10 +130,27 @@ public class JoinDefinition {
     }
 
     /**
+     * Set the distribution factor and stage name of the skewed stage. This should be set if the join being performed
+     * is skewed (ie. joining a large dataset with a small dataset) and the "small" dataset is too large to broadcast
+     * . The specified skewed stage must be marked as "required" and neither stage should be broadcast for
+     * distribution to work.
+     *
+     * @param size      The number of distributions to split each key into. Note that the smaller dataset will grow by
+     *                  this factor, values greater than 20 are not recommended
+     * @param stageName The name of the input stage that contains the skewed data, this stage must be marked as
+     *                  "required"
+     * @return
+     */
+    public Builder setDistributionFactor(int size, String stageName) {
+      this.distribution = new JoinDistribution(size, stageName);
+      return this;
+    }
+
+    /**
      * Set the output schema for the join. This should only be set if the input JoinStages do not contain known
      * schemas. The most common scenario here is when the input schemas are not known when the pipeline is deployed
      * due to macros.
-     *
+     * <p>
      * When all input schemas are known, if the expected output schema differs from this schema, an error
      * will be thrown.
      */
@@ -161,12 +186,16 @@ public class JoinDefinition {
         validateSchemaCompatibility(generatedOutputSchema, outputSchema, errors);
       }
 
+      if (distribution != null) {
+        errors.addAll(distribution.validate(stages));
+      }
+
       if (!errors.isEmpty()) {
         throw new InvalidJoinException(errors);
       }
 
       return new JoinDefinition(selectedFields, stages, condition,
-                                outputSchema == null ? generatedOutputSchema : outputSchema);
+        outputSchema == null ? generatedOutputSchema : outputSchema, distribution);
     }
 
     @Nullable
@@ -247,16 +276,16 @@ public class JoinDefinition {
           errors.add(new OutputSchemaError(
             expectedField.getName(), expectedFieldSchema.getDisplayName(),
             String.format("Provided schema does not match expected schema. " +
-                            "Field '%s' is a '%s' but is expected to be a '%s'",
-                          expectedField.getName(), expectedFieldSchema.getDisplayName(),
-                          providedFieldSchema.getDisplayName())));
+                "Field '%s' is a '%s' but is expected to be a '%s'",
+              expectedField.getName(), expectedFieldSchema.getDisplayName(),
+              providedFieldSchema.getDisplayName())));
           continue;
         }
         if (expectedIsNullable && !providedIsNullable) {
           errors.add(new OutputSchemaError(
             expectedField.getName(), expectedFieldSchema.getDisplayName(),
             String.format("Provided schema does not match expected schema. Field '%s' should be nullable",
-                          expectedField.getName())));
+              expectedField.getName())));
         }
       }
 
@@ -272,11 +301,10 @@ public class JoinDefinition {
           errors.add(new OutputSchemaError(
             fieldName, null,
             String.format("The output schema contains extra field '%s' that not in the list of selected fields.",
-                          fieldName),
+              fieldName),
             "Select it from one of the inputs, or remove it from the output schema."));
         }
       }
     }
   }
-
 }
