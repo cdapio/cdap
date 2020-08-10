@@ -669,6 +669,15 @@ class HydratorPlusPlusTopPanelCtrl {
       });
   }
 
+  resetButtonsAndStopPoll() {
+    // stop timer, run/stop button, pollId, and stop polling when pipeline is stopped or complete
+    this.stopTimer();
+    this.previewLoading = false;
+    this.previewRunning = false;
+    this.dataSrc.stopPoll(this.pollId);
+    this.pollId = null;
+  }
+
   stopPreview(silentMode = false) {
     if (!this.currentPreviewId || !this.previewRunning || this.loadingLabel === 'Stopping') {
       return;
@@ -680,32 +689,40 @@ class HydratorPlusPlusTopPanelCtrl {
     };
     this.previewLoading = true;
     this.loadingLabel = 'Stopping';
+    const pipelineName = this.HydratorPlusPlusConfigStore.getName();
+    const pipelinePreviewPlaceholder = `The preview of the pipeline${pipelineName.length > 0? ` "${pipelineName}"` : ''}`;
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
         .then(
           () => {
-            this.stopTimer();
+            this.resetBtnsAndStopPoll();
             this.updateTimerLabelAndTitle();
-            this.previewLoading = false;
-            this.previewRunning = false;
-            this.dataSrc.stopPoll(this.pollId);
-            this.pollId = null;
 
             if (silentMode) {
               return;
             }
-            let pipelinePreviewPlaceholder = 'The preview of the pipeline';
-            const pipelineName = this.HydratorPlusPlusConfigStore.getName();
-            if (pipelineName.length > 0) {
-              pipelinePreviewPlaceholder += ` "${pipelineName}"`;
-            }
+
             this.myAlertOnValium.show({
               type: 'success',
               content: `${pipelinePreviewPlaceholder} was stopped.`
             });
           },
           (err) => {
+            // If error is due to run already having completed, reset UI as if stop succeeded
+            if (err.statusCode === 400) {
+              this.resetButtonsAndStopPoll();
+              this.updateTimerLabelAndTitle();
+              if (silentMode) {
+                return;
+              }
+              this.myAlertOnValium.show({
+                type: 'success',
+                content: `${pipelinePreviewPlaceholder} was stopped.`
+              });
+              return;
+            }
+            // If backend returns error while stopping, still show preview run button to retry stopping
             this.previewLoading = false;
             this.previewRunning = true;
             if (silentMode) {
@@ -739,20 +756,13 @@ class HydratorPlusPlusTopPanelCtrl {
         COMPLETED,
         DEPLOY_FAILED,
         RUN_FAILED,
-        KILLED,
         KILLED_BY_TIMER,
       } = window.CaskCommon.PREVIEW_STATUS;
       this.updateTimerLabelAndTitle(res);
       if ([RUNNING, INIT, ACQUIRED, WAITING].indexOf(res.status) === -1) {
-        this.stopTimer();
-        this.previewRunning = false;
-        this.dataSrc.stopPoll(res.__pollId__);
-        this.pollId = null;
-        let pipelinePreviewPlaceholder = 'The preview of the pipeline';
+        this.resetButtonsAndStopPoll();
         let pipelineName = this.HydratorPlusPlusConfigStore.getName();
-        if (pipelineName.length > 0) {
-          pipelinePreviewPlaceholder += ` "${pipelineName}"`;
-        }
+        const pipelinePreviewPlaceholder = `The preview of the pipeline${pipelineName.length > 0? ` "${pipelineName}"` : ''}`;
         if (res.status === COMPLETED || res.status === KILLED_BY_TIMER) {
           this.myAlertOnValium.show({
             type: 'success',
