@@ -15,11 +15,11 @@
  */
 
 class WranglerModalController {
-  constructor(rPlugin, $uibModalInstance, EventPipe, $scope, myHelpers) {
+  constructor(rPlugin, $uibModalInstance, $scope, myHelpers) {
     this.node = rPlugin;
     this.workspaceId = myHelpers.objectQuery(this.node, 'properties', 'workspaceId');
     this.$uibModalInstance = $uibModalInstance;
-    this.EventPipe = EventPipe;
+    this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
     this.onSubmit = this.onSubmit.bind(this);
     this.modalClosed = false;
     $scope.$on('modal.closing', (e, reason) => {
@@ -44,7 +44,7 @@ class WranglerModalController {
     this.node.properties.workspaceId = workspaceId;
     this.node.properties.directives = directives.join('\n');
     this.modalClosed = true;
-    this.EventPipe.emit('schema.import', schema);
+    this.eventEmitter.emit('schema.import', schema);
 
     this.$uibModalInstance.close('ADD_TO_PIPELINE');
   }

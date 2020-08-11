@@ -51,6 +51,8 @@ angular.module(PKG.name + '.commons')
         var newDataset;
         var modalOpen = false;
 
+        var eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+
         var showPopupFunc = function(schema, oldDatasetName) {
           let sinkName = $scope.stageName;
           let confirmModal = $uibModal.open({
@@ -72,7 +74,7 @@ angular.module(PKG.name + '.commons')
 
               if (!schema) {
                 $scope.schemaError = true;
-                EventPipe.emit('schema.clear');
+                eventEmitter.emit('schema.clear');
               } else {
                 $scope.schemaError = false;
                 EventPipe.emit('dataset.selected', schema, null, true, $scope.model);

@@ -424,7 +424,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
   }
   schemaClear() {
-    this.EventPipe.emit('schema.clear');
+    this.eventEmitter.emit('schema.clear');
   }
   importFiles(files) {
     let reader = new FileReader();
@@ -432,22 +432,14 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     reader.onload = (evt) => {
       let data = evt.target.result;
-      if (this.showNewSchemaEditor) {
-        this.eventEmitter.emit('schema.import', data);
-      } else {
-        this.EventPipe.emit('schema.import', data);
-      }
+      this.eventEmitter.emit('schema.import', data);
     };
   }
   onSchemaImportLinkClick() {
     this.$timeout(() => document.getElementById('schema-import-link').click());
   }
   exportSchema() {
-    if (this.showNewSchemaEditor) {
-      this.eventEmitter.emit('schema.export');
-    } else {
-      this.EventPipe.emit('schema.export');
-    }
+    this.eventEmitter.emit('schema.export');
   }
 
   validateSchema() {

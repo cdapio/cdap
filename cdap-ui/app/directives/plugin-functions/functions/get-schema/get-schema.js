@@ -23,7 +23,7 @@ angular.module(PKG.name + '.commons')
         node: '=',
         fnConfig: '='
       },
-      controller: function ($scope, $uibModal, EventPipe, myPipelineApi) {
+      controller: function ($scope, $uibModal, myPipelineApi) {
         var vm = this;
         var fnConfig = $scope.fnConfig;
         var methodName = fnConfig['plugin-method'] || 'getSchema';
@@ -99,7 +99,6 @@ angular.module(PKG.name + '.commons')
           });
 
           modal.result.then(function (obj) {
-            EventPipe.emit('schema.import', JSON.stringify(obj.schema));
             ee.emit('schema.import', JSON.stringify(obj.schema));
             $scope.node.plugin.properties.importQuery = obj.query;
           });
