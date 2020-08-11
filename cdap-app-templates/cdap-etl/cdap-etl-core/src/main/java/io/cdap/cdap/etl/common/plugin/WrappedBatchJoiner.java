@@ -24,6 +24,7 @@ import io.cdap.cdap.etl.api.batch.BatchJoinerContext;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
 import io.cdap.cdap.etl.common.TypeChecker;
 
+import java.util.Collection;
 import java.util.concurrent.Callable;
 
 /**
@@ -89,10 +90,21 @@ public class WrappedBatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> extends BatchJoiner
   }
 
   @Override
+  @Deprecated
   public JOIN_KEY joinOn(String stageName, INPUT_RECORD inputRecord) throws Exception {
     operationTimer.start();
     try {
       return caller.call(() -> joiner.joinOn(stageName, inputRecord));
+    } finally {
+      operationTimer.reset();
+    }
+  }
+
+  @Override
+  public Collection<JOIN_KEY> getJoinKeys(String stageName, INPUT_RECORD inputRecord) throws Exception {
+    operationTimer.start();
+    try {
+      return caller.call(() -> joiner.getJoinKeys(stageName, inputRecord));
     } finally {
       operationTimer.reset();
     }
