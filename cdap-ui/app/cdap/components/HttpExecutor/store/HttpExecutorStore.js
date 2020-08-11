@@ -128,6 +128,7 @@ const addRequestLog = (state) => {
   localStorage.setItem(REQUEST_HISTORY, JSON.stringify(localStorageHistories));
   return {
     ...state,
+    selectedRequest: newCall,
     requestLog: newRequestLog,
   };
 };
