@@ -169,33 +169,47 @@ public class RuntimeHandler extends AbstractHttpHandler {
       inputStream.setDelegate(new ByteBufInputStream(buffer));
       try {
         try {
-          if (items < 0) {
-            // Read the initial array block
-            inputStream.mark(buffer.readableBytes());
-            items = decoder.readArrayStart();
-          }
-
-          // Decode element in the current array block
-          while (items > 0) {
-            inputStream.mark(buffer.readableBytes());
-            payload = decoder.readBytes(payload);
-            payloads.add(Bytes.toBytes(payload));
-            items--;
-          }
-
-          if (!payloads.isEmpty()) {
-            try {
-              payloadProcessor.process(payloads.iterator());
-              payloads.clear();
-            } catch (IOException e) {
-              // If we cannot process, just continue to keep buffering messages and retry at the next/finished called.
-              LOG.debug("Failed to process payload for topic {}. Will be retried", topicId, e);
+          while (inputStream.available() > 0) {
+            if (items < 0) {
+              // Read the initial array block
+              inputStream.mark(buffer.readableBytes());
+              items = decoder.readArrayStart();
             }
-          }
 
-          // Read the next array block
-          inputStream.mark(buffer.readableBytes());
-          items = decoder.arrayNext();
+            // Decode element in the current array block
+            while (items > 0) {
+              inputStream.mark(buffer.readableBytes());
+
+              // Read the payload size. If the buffer doesn't have that many bytes available, skip the decoding since
+              // more bytes need to be received.
+              long len = decoder.readLong();
+              try {
+                if (inputStream.available() < len) {
+                  return;
+                }
+              } finally {
+                inputStream.reset();
+              }
+
+              payload = decoder.readBytes(payload);
+              payloads.add(Bytes.toBytes(payload));
+              items--;
+            }
+
+            if (!payloads.isEmpty()) {
+              try {
+                payloadProcessor.process(payloads.iterator());
+                payloads.clear();
+              } catch (IOException e) {
+                // If we cannot process, just continue to keep buffering messages and retry at the next/finished called.
+                LOG.debug("Failed to process payload for topic {}. Will be retried", topicId, e);
+              }
+            }
+
+            // Read the next array block
+            inputStream.mark(buffer.readableBytes());
+            items = decoder.arrayNext();
+          }
         } catch (EOFException e) {
           inputStream.reset();
         }

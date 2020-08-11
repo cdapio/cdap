@@ -29,8 +29,11 @@ import io.cdap.cdap.common.discovery.URIScheme;
 import io.cdap.cdap.common.http.CommonNettyHttpServiceBuilder;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.http.ChannelPipelineModifier;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
+import io.netty.channel.ChannelPipeline;
+import io.netty.handler.codec.http.HttpContentDecompressor;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -59,6 +62,12 @@ public class RuntimeServer extends AbstractIdleService {
       .setExceptionHandler(new HttpExceptionHandler())
       .setHandlerHooks(Collections.singleton(new MetricsReporterHook(metricsCollectionService,
                                                                      Constants.Service.RUNTIME)))
+      .setChannelPipelineModifier(new ChannelPipelineModifier() {
+        @Override
+        public void modify(ChannelPipeline pipeline) {
+          pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+        }
+      })
       .setHost(cConf.get(Constants.RuntimeMonitor.BIND_ADDRESS))
       .setPort(cConf.getInt(Constants.RuntimeMonitor.BIND_PORT));
 
