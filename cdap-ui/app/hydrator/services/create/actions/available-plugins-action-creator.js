@@ -60,16 +60,35 @@ class PipelineAvailablePluginsActions {
     let availablePluginsMap = {};
     let pluginsList = [];
 
-    stages.forEach((stage) => {
-      let pluginInfo = this._createPluginInfo(stage.plugin);
-      availablePluginsMap[pluginInfo.key] = {
-        pluginInfo: stage.plugin
-      };
+    this.api.getAllArtifacts({ namespace })
+      .$promise
+      .then((res) => {
+        // create map for all available artifacts
+        const artifactsMap = {};
+        res.forEach((artifact) => {
+          const artifactKey = this._getArtifactKey(artifact);
+          artifactsMap[artifactKey] = artifact;
+        });
 
-      pluginsList.push(pluginInfo);
-    });
+        stages.forEach((stage) => {
+          const stageArtifact = this.myHelpers.objectQuery(stage, 'plugin', 'artifact');
+          const artifactKey = this._getArtifactKey(stageArtifact);
+          if (!artifactsMap[artifactKey]) {
+            return;
+          }
 
-    this._fetchInfo(availablePluginsMap, namespace, pluginsList);
+          let pluginInfo = this._createPluginInfo(stage.plugin);
+          availablePluginsMap[pluginInfo.key] = {
+            pluginInfo: stage.plugin
+          };
+
+          pluginsList.push(pluginInfo);
+        });
+
+        this._fetchInfo(availablePluginsMap, namespace, pluginsList);
+      });
+
+
   }
 
   fetchPluginsForUpgrade(extensionsParams) {
