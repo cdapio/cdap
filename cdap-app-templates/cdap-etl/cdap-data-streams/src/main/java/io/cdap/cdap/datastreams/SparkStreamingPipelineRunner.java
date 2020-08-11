@@ -26,10 +26,8 @@ import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.api.batch.BatchAutoJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
 import io.cdap.cdap.etl.api.batch.BatchJoinerRuntimeContext;
-import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
-import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.streaming.StreamingContext;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.common.DefaultAutoJoinerContext;
@@ -60,6 +58,7 @@ import org.apache.spark.streaming.api.java.JavaStreamingContext;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Driver for running pipelines using Spark Streaming.
@@ -143,7 +142,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
                                                PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
                                                StageSpec stageSpec, Object plugin, Integer numPartitions,
-                                               StageStatisticsCollector collector) throws Exception {
+                                               StageStatisticsCollector collector,
+                                               Set<String> shufflers) throws Exception {
     String stageName = stageSpec.getName();
     BatchJoiner<?, ?, ?> joiner;
     if (plugin instanceof BatchAutoJoiner) {
@@ -176,6 +176,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
     BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
     joiner.initialize(joinerRuntimeContext);
-    return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector).cache();
+    shufflers.add(stageName);
+    return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector);
   }
 }
