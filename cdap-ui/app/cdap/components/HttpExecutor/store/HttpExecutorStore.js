@@ -128,6 +128,7 @@ const addRequestLog = (state) => {
   localStorage.setItem(REQUEST_HISTORY, JSON.stringify(localStorageHistories));
   return {
     ...state,
+    selectedRequest: newCall,
     requestLog: newRequestLog,
   };
 };
@@ -141,7 +142,7 @@ const deleteRequestLog = (state, requestID) => {
   // Delete the request log from local state
   const dateID = getDateID(new Date(requestID));
   const requestsGroup = getRequestsByDate(requestLog, dateID);
-  const requestToDelete = requestsGroup.findIndex((data) => data.requestID === requestID);
+  const requestToDelete = requestsGroup.findIndex((data) => data.timestamp === requestID);
   const newRequestLog = requestLog.set(dateID, requestsGroup.delete(requestToDelete));
 
   // Delete the specified request log from local storage
