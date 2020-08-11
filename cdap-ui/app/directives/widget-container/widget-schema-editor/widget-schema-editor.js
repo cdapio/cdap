@@ -34,6 +34,8 @@ angular.module(PKG.name + '.commons')
         var watchProperty = null;
         var schemaExportTimeout = null;
 
+        var eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
+
         $scope.fields = 'SHOW';
 
         if ($scope.config) {
@@ -220,7 +222,7 @@ angular.module(PKG.name + '.commons')
 
         initialize($scope.model);
 
-        EventPipe.on('schema.clear', function () {
+        function onSchemaClear() {
           var schema;
           try {
             schema = JSON.parse($scope.model);
@@ -228,11 +230,13 @@ angular.module(PKG.name + '.commons')
               return value.readonly;
             });
             $scope.model = JSON.stringify(schema);
-          } catch(e) {
-            $scope.model = JSON.stringify({ fields: []});
+          } catch (e) {
+            $scope.model = JSON.stringify({ fields: [] });
           }
           initialize($scope.model);
-        });
+        }
+
+        eventEmitter.on('schema.clear', onSchemaClear);
 
         EventPipe.on('dataset.selected', function (schema) {
           try {
@@ -361,8 +365,7 @@ angular.module(PKG.name + '.commons')
           });
         }
 
-        EventPipe.on('schema.export', exportSchema);
-        EventPipe.on('schema.import', function (data) {
+        function onSchemaImport(data) {
           var fields = [];
           try {
             fields = JSON.parse(data);
@@ -377,12 +380,15 @@ angular.module(PKG.name + '.commons')
             fields: fields
           };
           initialize(JSON.stringify(schema));
-        });
+        }
+
+        eventEmitter.on('schema.export', exportSchema);
+        eventEmitter.on('schema.import', onSchemaImport);
 
         $scope.$on('$destroy', function() {
-          EventPipe.cancelEvent('schema.export');
-          EventPipe.cancelEvent('schema.import');
-          EventPipe.cancelEvent('schema.clear');
+          eventEmitter.off('schema.import', onSchemaImport);
+          eventEmitter.off('schema.clear', onSchemaClear);
+          eventEmitter.off('schema.export', exportSchema);
           EventPipe.cancelEvent('dataset.selected');
           URL.revokeObjectURL($scope.url);
 

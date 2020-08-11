@@ -138,14 +138,23 @@ function getNodeSelectorFromNodeIndentifier(node: INodeIdentifier) {
 
 function generateDraftFromPipeline(pipeline) {
   return cy.fixture(pipeline).then((pipeline_for_draft) => {
-    const draftId = `${pipeline_for_draft.name}-${Date.now()}`;
-    const pipelineName = draftId;
+    const draftId = uuidV4();
+    const pipelineName = `${pipeline_for_draft.name}-${Date.now()}`;
     pipeline_for_draft.__ui__ = { draftId, lastSaved: Date.now() };
     pipeline_for_draft.name = pipelineName;
     const pipelineDraft = {
       hydratorDrafts: { default: { [draftId]: pipeline_for_draft } },
     };
     return { pipelineDraft, pipelineName };
+  });
+}
+
+function setDefaultOldSchemaEditor() {
+  const SCHEMA_LAB_ID = 'schema-editor';
+
+  // set default schema editor to use old schema editor
+  cy.window().then((win) => {
+    win.localStorage.setItem(SCHEMA_LAB_ID, 'false');
   });
 }
 
@@ -159,4 +168,5 @@ export {
   dataCy,
   generateDraftFromPipeline,
   getNodeSelectorFromNodeIndentifier,
+  setDefaultOldSchemaEditor,
 };

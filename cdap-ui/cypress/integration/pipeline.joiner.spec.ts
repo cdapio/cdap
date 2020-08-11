@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { loginIfRequired, getGenericEndpoint, getArtifactsPoll } from '../helpers';
+import { loginIfRequired, getGenericEndpoint, getArtifactsPoll, dataCy, setDefaultOldSchemaEditor } from '../helpers';
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
 import { INodeInfo, INodeIdentifier } from '../typings';
 import { dataCy } from '../helpers';
@@ -43,6 +43,14 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
         };
       });
     });
+  });
+
+  beforeEach(() => {
+    setDefaultOldSchemaEditor();
+  });
+
+  afterEach(() => {
+    cy.clearLocalStorage();
   });
 
   beforeEach(() => {
@@ -186,9 +194,8 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
     });
 
     // Check the output schema
-    cy.get(getSchemaBtn)
-      .click()
-      .contains('Get Schema');
+    cy.get(getSchemaBtn).click();
+    cy.get(getSchemaBtn).contains('Get Schema');
 
     cy.get('[data-cy="plugin-output-schema-container"]')
       .scrollIntoView()

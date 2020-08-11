@@ -16,7 +16,7 @@
 
 import { loginIfRequired, getArtifactsPoll } from '../helpers';
 import { INodeInfo, INodeIdentifier } from '../typings';
-import { dataCy } from '../helpers';
+import { dataCy, setDefaultOldSchemaEditor } from '../helpers';
 import {
   DEFAULT_GCP_PROJECTID,
   DEFAULT_GCP_SERVICEACCOUNT_PATH,
@@ -40,6 +40,14 @@ describe('Output Schema', () => {
         };
       });
     });
+  });
+
+  beforeEach(() => {
+    setDefaultOldSchemaEditor();
+  });
+
+  afterEach(() => {
+    cy.clearLocalStorage();
   });
 
   const schemaFieldSuffix = '-schema-field';

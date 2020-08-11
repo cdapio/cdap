@@ -1,4 +1,4 @@
-import {getArtifactsPoll, getGenericEndpoint, loginIfRequired} from '../helpers';
+import { getArtifactsPoll, getGenericEndpoint, loginIfRequired, setDefaultOldSchemaEditor } from '../helpers';
 import {DEFAULT_BIGQUERY_DATASET, DEFAULT_BIGQUERY_TABLE, DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH} from '../support/constants';
 import {INodeIdentifier, INodeInfo} from '../typings';
 import {dataCy} from '../helpers';
@@ -51,6 +51,14 @@ describe('Plugin properties', () => {
       });
     });
     cy.visit('/pipelines/ns/default/studio');
+  });
+
+  beforeEach(() => {
+    setDefaultOldSchemaEditor();
+  });
+
+  afterEach(() => {
+    cy.clearLocalStorage();
   });
 
   beforeEach(() => {

@@ -150,8 +150,7 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
   }
 
   eventEmitter.on('dataset.selected', handleDatasetSelected);
-
-  EventPipe.on('schema.export', exportSchema);
+  eventEmitter.on('schema.export', exportSchema);
 
   function clearSchema() {
     vm.schemas = [HydratorPlusPlusNodeService.getOutputSchemaObj('')];
@@ -218,17 +217,13 @@ function ComplexSchemaEditorController($scope, EventPipe, $timeout, myAlertOnVal
     reRenderComplexSchema();
   }
   eventEmitter.on('schema.clear', clearSchema);
-  EventPipe.on('schema.clear', clearSchema);
-
   eventEmitter.on('schema.import', onSchemaImport);
-  EventPipe.on('schema.import', onSchemaImport);
 
   $scope.$on('$destroy', () => {
     eventEmitter.off('dataset.selected', handleDatasetSelected);
     eventEmitter.off('schema.clear', clearSchema);
-    EventPipe.cancelEvent('schema.export');
-    EventPipe.cancelEvent('schema.import');
-    EventPipe.cancelEvent('schema.clear');
+    eventEmitter.off('schema.export', exportSchema);
+    eventEmitter.off('schema.import', onSchemaImport);
     URL.revokeObjectURL($scope.url);
     $timeout.cancel(schemaExportTimeout);
     $timeout.cancel(clearDOMTimeoutTick1);

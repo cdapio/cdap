@@ -181,7 +181,8 @@ angular.module(PKG.name + '.commons')
           });
 
           modal.result.then(function (obj) {
-            EventPipe.emit('schema.import', obj.schemas);
+            var ee = window.CaskCommon.ee(window.CaskCommon.ee);
+            ee.emit('schema.import', obj.schemas);
           });
         };
 

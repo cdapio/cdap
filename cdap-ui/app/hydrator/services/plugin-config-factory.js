@@ -14,7 +14,7 @@
  * the License.
  */
 class HydratorPlusPlusPluginConfigFactory {
-  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium, HydratorPlusPlusNodeService, EventPipe) {
+  constructor ($q, myHelpers, myPipelineApi, $state, myAlertOnValium, HydratorPlusPlusNodeService) {
     this.$q = $q;
     this.myHelpers = myHelpers;
     this.myPipelineApi = myPipelineApi;
@@ -24,7 +24,6 @@ class HydratorPlusPlusPluginConfigFactory {
     this.data = {};
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.HydratorPlusPlusNodeService = HydratorPlusPlusNodeService;
-    this.EventPipe = EventPipe;
     this.eventEmitter = window.CaskCommon.ee(window.CaskCommon.ee);
   }
   fetchWidgetJson(artifactName, artifactVersion, artifactScope, key) {
@@ -353,13 +352,8 @@ class HydratorPlusPlusPluginConfigFactory {
             });
           }
           if (schemas.length) {
-            if (window.localStorage.getItem('schema-editor') === 'true') {
-              this.eventEmitter.emit('schema.import', schemas);
-            } else {
-              this.EventPipe.emit('schema.import', schemas);
-            }
+            this.eventEmitter.emit('schema.import', schemas);
           } else if (!this.myHelpers.objectQuery(widgetJson, 'outputs', 0, 'name')) {
-            this.EventPipe.emit('schema.clear');
             this.eventEmitter.emit('schema.clear', schemas);
           }
         }
