@@ -167,9 +167,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     bindPreviewRunner(binder());
     expose(PreviewRunner.class);
 
-    // This binding is temporary. Will be removed after TMS migration.
-    bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
-    expose(PreviewStore.class);
     bind(Scheduler.class).to(NoOpScheduler.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);

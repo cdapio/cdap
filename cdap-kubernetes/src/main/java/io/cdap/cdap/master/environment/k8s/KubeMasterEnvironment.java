@@ -50,7 +50,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,8 +76,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String POD_INFO_DIR = "master.environment.k8s.pod.info.dir";
   private static final String POD_NAME_FILE = "master.environment.k8s.pod.name.file";
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
-  private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
-  private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
 
   private static final String DEFAULT_NAMESPACE = "default";
   private static final String DEFAULT_INSTANCE_LABEL = "cdap.instance";
@@ -86,13 +83,10 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
   private static final String DEFAULT_POD_NAME_FILE = "pod.name";
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
-  private static final String DEFAULT_POD_KILLER_SELECTOR = "cdap.container=preview";
-  private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
 
   private KubeDiscoveryService discoveryService;
-  private PodKillerTask podKillerTask;
   private KubeTwillRunnerService twillRunner;
 
   @Override
@@ -125,30 +119,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     discoveryService = new KubeDiscoveryService(namespace, "cdap-" + instanceName + "-", podLabels,
                                                 podInfo.getOwnerReferences());
 
-    // Optionally creates the pod killer task
-    String podKillerSelector = conf.getOrDefault(POD_KILLER_SELECTOR, DEFAULT_POD_KILLER_SELECTOR);
-    if (!Strings.isNullOrEmpty(podKillerSelector)) {
-      long delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
-      String confDelay = conf.get(POD_KILLER_DELAY_MILLIS);
-      if (!Strings.isNullOrEmpty(confDelay)) {
-        try {
-          delayMillis = Long.parseLong(confDelay);
-          if (delayMillis <= 0) {
-            delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
-            LOG.warn("Only positive value is allowed for configuration {}. Defaulting to {}",
-                     POD_KILLER_DELAY_MILLIS, delayMillis);
-          }
-        } catch (NumberFormatException e) {
-          LOG.warn("Invalid value for configuration {}. Expected a positive integer, but get {}.",
-                   POD_KILLER_DELAY_MILLIS, confDelay);
-        }
-      }
-
-      podKillerTask = new PodKillerTask(namespace, podKillerSelector, delayMillis);
-      LOG.info("Created pod killer task on namespace {}, with selector {} and delay {}",
-               namespace, podKillerSelector, delayMillis);
-    }
-
     twillRunner = new KubeTwillRunnerService(namespace, discoveryService, podInfo, resourcePrefix, conf,
                                              Collections.singletonMap(instanceLabel, instanceName));
     LOG.info("Kubernetes environment initialized with pod labels {}", podLabels);
@@ -178,11 +148,6 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   @Override
   public Supplier<TwillRunnerService> getTwillRunnerSupplier() {
     return () -> twillRunner;
-  }
-
-  @Override
-  public Optional<MasterEnvironmentTask> getTask() {
-    return Optional.ofNullable(podKillerTask);
   }
 
   private PodInfo getPodInfo(Map<String, String> conf) throws IOException, ApiException {
@@ -241,12 +206,17 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     List<V1EnvVar> envs = container.getEnv();
 
+    String apiVersion = pod.getApiVersion();
+    String kind = pod.getKind();
+    String name = pod.getMetadata().getName();
+    String uid = pod.getMetadata().getUid();
+
     // Use the same service account and the runtime class as the current process for now.
     // Ideally we should use a more restricted role.
     String serviceAccountName = pod.getSpec().getServiceAccountName();
     String runtimeClassName = pod.getSpec().getRuntimeClassName();
-    return new PodInfo(podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
-                       podNameFile.getName(), namespace, podLabels, ownerReferences,
+    return new PodInfo(apiVersion, kind, name, uid, podLabelsFile.getParentFile().getAbsolutePath(),
+                       podLabelsFile.getName(), podNameFile.getName(), namespace, podLabels, ownerReferences,
                        serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
                        envs == null ? Collections.emptyList() : envs);

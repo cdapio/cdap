@@ -78,10 +78,11 @@ class DeploymentTwillPreparer extends AbstractKubeTwillPreparer {
   private final URI appSpec;
   private final URI programOptions;
 
-  DeploymentTwillPreparer(ApiClient apiClient, String kubeNamespace, PodInfo podInfo, TwillSpecification spec,
-                          RunId twillRunId, V1ObjectMeta resourceMeta, Map<String, String> cConf,
-                          KubeTwillControllerFactory controllerFactory) {
-    super(apiClient, kubeNamespace, podInfo, spec, twillRunId, resourceMeta, cConf, controllerFactory);
+  DeploymentTwillPreparer(Map<String, String> cConf, ApiClient apiClient, String kubeNamespace, PodInfo podInfo,
+                          TwillSpecification spec, RunId twillRunId, String resourcePrefix,
+                          Map<String, String> extraLabels, KubeTwillControllerFactory controllerFactory) {
+    super(cConf, apiClient, kubeNamespace, podInfo, spec, twillRunId, resourcePrefix, extraLabels, V1Deployment.class,
+          controllerFactory);
     this.podInfo = podInfo;
     RuntimeSpecification runtimeSpecification = spec.getRunnables().values().iterator().next();
     ResourceSpecification resourceSpecification = runtimeSpecification.getResourceSpecification();
@@ -98,11 +99,13 @@ class DeploymentTwillPreparer extends AbstractKubeTwillPreparer {
   }
 
   @Override
-  protected void createKubeResources(V1ObjectMeta resourceMeta, V1ResourceRequirements resourceRequirements,
-                                     List<V1EnvVar> envVars, long timeout,
-                                     TimeUnit timeoutUnit) throws IOException, ApiException {
+  protected V1ObjectMeta createKubeResources(V1ObjectMeta resourceMeta, V1ResourceRequirements resourceRequirements,
+                                             List<V1EnvVar> envVars, long timeout, TimeUnit timeoutUnit)
+    throws IOException, ApiException {
     V1ConfigMap configMap = createConfigMap(resourceMeta);
-    createDeployment(resourceMeta, resourceRequirements, envVars, configMap, timeoutUnit.toMillis(timeout));
+    V1Deployment deployment = createDeployment(resourceMeta, resourceRequirements, envVars, configMap,
+                                               timeoutUnit.toMillis(timeout));
+    return deployment.getMetadata();
   }
 
   private V1Deployment createDeployment(V1ObjectMeta resourceMeta, V1ResourceRequirements resourceRequirements,

@@ -43,6 +43,8 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -58,6 +60,7 @@ import javax.annotation.Nullable;
  * Default implementation of the {@link PreviewStore} that stores data in a level db table.
  */
 public class DefaultPreviewStore implements PreviewStore {
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultPreviewStore.class);
   private static final DatasetId PREVIEW_TABLE_ID = NamespaceId.SYSTEM.dataset("preview.table");
   private static final byte[] TRACER = Bytes.toBytes("t");
   private static final byte[] PROPERTY = Bytes.toBytes("p");
@@ -273,6 +276,10 @@ public class DefaultPreviewStore implements PreviewStore {
         Map<byte[], byte[]> columns = indexRow.getColumns();
         AppRequest request = gson.fromJson(Bytes.toString(columns.get(CONFIG)), AppRequest.class);
         ApplicationId applicationId = gson.fromJson(Bytes.toString(columns.get(APPID)), ApplicationId.class);
+        if (applicationId == null || request == null) {
+          continue;
+        }
+        LOG.debug("Adding ApplicationId: {}, AppRequest: {} to waiting queue.", applicationId, gson.toJson(request));
         result.add(new PreviewRequest(applicationId, request));
       }
     } catch (IOException e) {
