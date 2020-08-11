@@ -21,10 +21,12 @@ import { AddRowButton } from 'components/AbstractWidget/SchemaEditor/RowButtons/
 import { RemoveRowButton } from 'components/AbstractWidget/SchemaEditor/RowButtons/RemoveRowButton';
 import { FieldPropertiesPopoverButton } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/FieldAttributesPopoverButton';
 import If from 'components/If';
-import { IComplexTypeNames, ISimpleType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import { Nullable } from 'components/AbstractWidget/SchemaEditor/RowButtons/Nullable';
 import { IOnchangeHandler } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
-import { AvroSchemaTypesEnum } from '../SchemaConstants';
+import {
+  AvroSchemaTypesEnum,
+  InternalTypesEnum,
+} from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 /**
  * Generic row buttons (add, nullable & remove buttons)
  * Based on the availability of handlers for each action each
@@ -50,8 +52,9 @@ interface IRowButtonsProps {
   onRemove?: () => void;
   onChange?: IOnchangeHandler;
   typeProperties?: Record<string, string>;
-  type?: ISimpleType | IComplexTypeNames;
+  type?: AvroSchemaTypesEnum;
   disabled?: boolean;
+  internalType?: InternalTypesEnum;
 }
 
 function RowButtons({
@@ -63,6 +66,7 @@ function RowButtons({
   onChange,
   typeProperties,
   disabled = false,
+  internalType,
 }: IRowButtonsProps) {
   return (
     <RowButtonWrapper disabled={disabled}>
@@ -79,7 +83,9 @@ function RowButtons({
         condition={
           type === AvroSchemaTypesEnum.RECORD ||
           type === AvroSchemaTypesEnum.ENUM ||
-          type === AvroSchemaTypesEnum.DECIMAL
+          type === AvroSchemaTypesEnum.DECIMAL ||
+          internalType === InternalTypesEnum.RECORD_COMPLEX_TYPE_ROOT ||
+          internalType === InternalTypesEnum.RECORD_SIMPLE_TYPE
         }
       >
         <FieldPropertiesPopoverButton
@@ -89,6 +95,7 @@ function RowButtons({
           onChange={disabled ? undefined : onChange}
           typeProperties={typeProperties}
           disabled={disabled}
+          internalType={internalType}
         />
       </If>
     </RowButtonWrapper>

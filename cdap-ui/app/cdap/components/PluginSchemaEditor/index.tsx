@@ -24,7 +24,7 @@ import { getDefaultEmptyAvroSchema } from 'components/AbstractWidget/SchemaEdito
 import PropTypes from 'prop-types';
 import LoadingSVG from 'components/LoadingSVG';
 import If from 'components/If';
-import TextboxOnValium from 'components/TextboxOnValium';
+import Textbox from 'components/AbstractWidget/FormInputs/TextBox';
 import { RefreshableSchemaEditor } from 'components/PluginSchemaEditor/RefreshableSchemaEditor';
 import ConfigurableTab from 'components/ConfigurableTab';
 import classnames from 'classnames';
@@ -33,7 +33,8 @@ import { FieldsListBase } from 'components/AbstractWidget/SchemaEditor/FieldsLis
 import Alert from 'components/Alert';
 import { isObject } from 'vega-lite/build/src/util';
 import { isMacro } from 'services/helpers';
-import DownloadFile from 'services/download-file';
+import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
+import isEqual from 'lodash/isEqual';
 
 const styles = (theme): StyleRules => {
   return {
@@ -120,6 +121,7 @@ interface IPluginSchemaEditorProps extends WithStyles<typeof styles> {
   onSchemaChange: (schemas: IPluginSchema[]) => void;
   schemaTitle?: string;
   isSchemaMacro?: boolean;
+  errors: Record<string, Record<string, string>>;
 }
 
 class PluginSchemaEditorBase extends React.PureComponent<
@@ -178,7 +180,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
   }
 
   public shouldComponentUpdate(nextProps: IPluginSchemaEditorProps, nextState) {
-    const { disabled, isSchemaMacro, actionsDropdownMap, schemas } = nextProps;
+    const { disabled, isSchemaMacro, actionsDropdownMap, schemas, errors } = nextProps;
     const { schemaRowCount, loading, mode, error } = nextState;
     const newActions = Object.values(actionsDropdownMap)
       .filter((value) => typeof value === 'string')
@@ -193,7 +195,8 @@ class PluginSchemaEditorBase extends React.PureComponent<
       disabled !== this.props.disabled ||
       isSchemaMacro !== this.props.isSchemaMacro ||
       newActions !== existingActions ||
-      newSchemas !== existingSchemas;
+      newSchemas !== existingSchemas ||
+      !isEqual(errors, this.props.errors);
 
     const didStateChange =
       schemaRowCount !== this.state.schemaRowCount ||
@@ -311,18 +314,18 @@ class PluginSchemaEditorBase extends React.PureComponent<
     if (hasError) {
       return;
     }
-    this.setState({ schemas: newSchemas, loading: true }, () => {
+    this.setState({ loading: true }, () => {
+      const schemasForPlugin = newSchemas.map((s) => {
+        if (typeof s.schema !== 'string') {
+          s.schema = JSON.stringify(s.schema);
+        }
+        return s;
+      });
+      this.props.onSchemaChange(schemasForPlugin);
       setTimeout(() => {
         this.setState({
           loading: false,
         });
-        const schemasForPlugin = newSchemas.map((s) => {
-          if (typeof s.schema !== 'string') {
-            s.schema = JSON.stringify(s.schema);
-          }
-          return s;
-        });
-        this.props.onSchemaChange(schemasForPlugin);
       }, 1000);
     });
   };
@@ -335,19 +338,13 @@ class PluginSchemaEditorBase extends React.PureComponent<
     specificAction.onClick();
     if (value === SchemaActionsEnum.CLEAR) {
       specificAction.onClick();
-      this.setState(
-        {
-          loading: true,
-          schemas: [{ name: 'etlSchemaBody', schema: '' }],
-        },
-        () => {
-          setTimeout(() => {
-            this.setState({
-              loading: false,
-            });
-          }, 1000);
-        }
-      );
+      this.setState({ loading: true }, () => {
+        setTimeout(() => {
+          this.setState({
+            loading: false,
+          });
+        }, 1000);
+      });
     } else if (value === SchemaActionsEnum.MACRO) {
       const newState = {
         mode:
@@ -359,15 +356,16 @@ class PluginSchemaEditorBase extends React.PureComponent<
             ? [{ name: 'etlSchemaBody', schema: '${}' }]
             : [{ name: 'etlSchemaBody', schema: '' }],
       };
-      this.setState(newState);
+      this.setState({ mode: newState.mode });
+      this.props.onSchemaChange(newState.schemas);
     }
   };
 
-  private santizeSchemasForEditor = (schemas = this.state.schemas) => {
+  private santizeSchemasForEditor = (schemas = this.props.schemas): ISchemaType[] => {
     return (schemas || []).map((s) => {
       const newSchema = {
         name: s.name,
-        schema: s.schema,
+        schema: null,
       };
       if (typeof s.schema === 'string') {
         try {
@@ -375,6 +373,8 @@ class PluginSchemaEditorBase extends React.PureComponent<
         } catch (e) {
           return { ...getDefaultEmptyAvroSchema() };
         }
+      } else {
+        newSchema.schema = s.schema;
       }
       return newSchema;
     });
@@ -397,6 +397,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
                 newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
                 this.props.onSchemaChange(newSchemas);
               }}
+              errors={
+                this.props.errors && this.props.errors[s.name] ? this.props.errors[s.name] : null
+              }
             />
           </fieldset>
         ),
@@ -423,10 +426,10 @@ class PluginSchemaEditorBase extends React.PureComponent<
     ) {
       return null;
     }
-    if (this.state.schemas.length > 1) {
+    if (this.props.schemas.length > 1) {
       return this.renderSchemaIntabs();
     }
-    if (!this.state.schemas.length && this.props.disabled) {
+    if (!this.props.schemas.length && this.props.disabled) {
       return `No ${this.props.schemaTitle} available`;
     }
     return this.santizeSchemasForEditor().map((schema, i) => (
@@ -442,6 +445,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
             newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
             this.props.onSchemaChange(newSchemas);
           }}
+          errors={this.props.errors ? this.props.errors.noSchemaSection : null}
         />
       </fieldset>
     ));
@@ -455,21 +459,17 @@ class PluginSchemaEditorBase extends React.PureComponent<
     ) {
       return null;
     }
-    const macro = this.state.schemas[0].schema;
+    const macro = this.props.schemas[0].schema;
     if (this.props.disabled) {
       return macro;
     }
     return (
-      <TextboxOnValium
+      <Textbox
         disabled={this.props.disabled}
         value={macro}
         className={this.props.classes.macroTextBox}
-        onKeyUp={() => ({})}
         onChange={(value) => {
           const newSchemas = [{ name: 'etlSchemaBody', schema: value }];
-          this.setState({
-            schemas: newSchemas,
-          });
           this.props.onSchemaChange(newSchemas);
         }}
       />
@@ -538,5 +538,6 @@ const PluginSchemaEditor = (props) => {
   actionsDropdownMap: PropTypes.array,
   schemaTitle: PropTypes.string,
   isSchemaMacro: PropTypes.func,
+  errors: PropTypes.object,
 };
 export { PluginSchemaEditor };

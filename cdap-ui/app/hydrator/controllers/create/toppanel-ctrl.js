@@ -291,9 +291,31 @@ class HydratorPlusPlusTopPanelCtrl {
     minutes = minutes < 10 ? '0' + minutes : minutes;
 
     this.displayDuration = {
-      minutes: minutes,
-      seconds: seconds
+      minutes: minutes || '--',
+      seconds: seconds || '--',
     };
+  }
+
+  updateTimerLabelAndTitle(res) {
+    // set default
+    if (!res) {
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.DURATION;
+      this.queueStatus = '';
+      return;
+    }
+
+    const { WAITING, ACQUIRED, INIT, RUNNING } = window.CaskCommon.PREVIEW_STATUS;
+    if (res.status === WAITING && res.positionInWaitingQueue > 0) {
+      const runsAheadInQueue = res.positionInWaitingQueue;
+      this.queueStatus = `${runsAheadInQueue} ${runsAheadInQueue === 1? 'run' : 'runs'} ahead in queue`;
+      this.timerLabel = `${runsAheadInQueue} ${this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.PENDING}`;
+    } else if ([ WAITING, ACQUIRED, INIT, RUNNING ].includes(res.status) && this.loadingLabel !== 'Stopping') {
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.RUNNING;
+      this.queueStatus = '';
+    } else {
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.DURATION;
+      this.queueStatus = '';
+    }
   }
 
   fetchMacros() {
