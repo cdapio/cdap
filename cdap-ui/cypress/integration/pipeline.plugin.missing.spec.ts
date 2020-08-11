@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the 'License'); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,7 +20,7 @@ let headers = {};
 
 
 describe('Creating a pipeline with missing artifacts', () => {
-  const pipelineName = `test-missing-artifact-${Date.now()}`; 
+  const pipelineName = `test-missing-artifact-${Date.now()}`;
   // Uses API call to login instead of logging in manually through UI
   before(() => {
     loginIfRequired().then(() => {

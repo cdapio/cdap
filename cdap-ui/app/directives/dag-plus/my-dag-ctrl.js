@@ -592,7 +592,6 @@ angular.module(PKG.name + '.commons')
           }
           vm.instance.makeTarget(node.name, targetOptions);
         }
-        let key = generatePluginMapKey(node);
         node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) ;
       });
     }
@@ -1688,7 +1687,7 @@ angular.module(PKG.name + '.commons')
     let subAvailablePlugins = AvailablePluginsStore.subscribe(() => {
       vm.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
       $scope.nodes.forEach(node => {
-        let key = generatePluginMapKey(node);
+        const key = generatePluginMapKey(node);
         node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) ;
       });
       if (!_.isEmpty(vm.pluginsMap)) {
