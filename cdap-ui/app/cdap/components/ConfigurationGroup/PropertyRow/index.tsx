@@ -202,6 +202,7 @@ class PropertyRowView extends React.Component<IPropertyRowProps, IState> {
             classes={widgetClasses}
             disabled={disabled}
             errors={errors}
+            hideDescription={widgetCategory === PLUGIN}
           />
           <If condition={pluginProperty.macroSupported && widgetCategory !== PLUGIN}>
             <MacroIndicator
