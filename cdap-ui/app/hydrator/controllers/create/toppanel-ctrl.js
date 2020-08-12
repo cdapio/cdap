@@ -94,7 +94,7 @@ class HydratorPlusPlusTopPanelCtrl {
         previewId : this.currentPreviewId
       }).$promise.then(
         (statusRes) => {
-          this.previewStartTime = statusRes.startTime;
+          this.previewStartTime = statusRes.submitTime;
           this.previewLoading = false;
 
           this.previewStore.dispatch({
