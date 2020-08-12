@@ -504,9 +504,6 @@ class PluginSchemaEditorBase extends React.PureComponent<
 
   public renderHeader = () => {
     const { classes, schemaTitle, disabled } = this.props;
-    if (!this.actions) {
-      return null;
-    }
     return (
       <div
         className={classnames(classes.header, {
@@ -514,7 +511,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
         })}
       >
         <div className={classes.title}>{schemaTitle || 'Schema'}</div>
-        <If condition={this.actions.length > 0}>
+        <If condition={this.actions && this.actions.length > 0}>
           <Select
             classes={{ root: classes.actionsDropdown }}
             value={''}
