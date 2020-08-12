@@ -14,11 +14,12 @@
  * the License.
  */
 
-import IconButton from '@material-ui/core/IconButton';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import Tooltip from '@material-ui/core/Tooltip';
+
+import IconButton from '@material-ui/core/IconButton';
 import IconSVG from 'components/IconSVG';
 import React from 'react';
+import Tooltip from '@material-ui/core/Tooltip';
 
 const styles = (theme): StyleRules => {
   return {
@@ -70,6 +71,7 @@ const JSONImportButtonView: React.FC<IJSONImportButtonProps> = ({
         type="file"
         className={classes.fileInput}
         onChange={processFileUpload()}
+        data-cy="plugin-json-uploader"
       />
       <label htmlFor="raised-button-file">
         <Tooltip
@@ -84,6 +86,7 @@ const JSONImportButtonView: React.FC<IJSONImportButtonProps> = ({
               aria-label="save"
               component="span"
               color="primary"
+              data-cy="plugin-json-import-btn"
             >
               <IconSVG name="icon-import" className={classes.importIcon} />
             </IconButton>

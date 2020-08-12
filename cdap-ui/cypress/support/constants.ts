@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 function getRandomArbitrary(min = 1, max = 10000) {
   return Math.floor(Math.random() * (max - min) + min);

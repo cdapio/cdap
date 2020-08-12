@@ -180,6 +180,7 @@
                   <exclude>**/storybook-static/**</exclude>
                   <exclude>**/*.snap</exclude>
                   <exclude>**/*.rst</exclude>
+                  <exclude>**/cypress/fixtures/**</exclude>
                 </excludes>
               </configuration>
             </execution>

@@ -14,11 +14,13 @@
  * the License.
  */
 
-import IconButton from '@material-ui/core/IconButton';
+import * as React from 'react';
+
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
-import * as React from 'react';
+import IconButton from '@material-ui/core/IconButton';
 
 const styles = (): StyleRules => {
   return {
@@ -42,10 +44,10 @@ const WidgetActionButtonsView: React.FC<IWidgetActionButtonsProps> = ({
 }) => {
   return (
     <div className={classes.widgetActionButtons}>
-      <IconButton onClick={addWidgetToGroup}>
+      <IconButton onClick={addWidgetToGroup} data-cy="add-widget-btn">
         <AddIcon fontSize="small" />
       </IconButton>
-      <IconButton onClick={deleteWidgetFromGroup} color="secondary">
+      <IconButton onClick={deleteWidgetFromGroup} color="secondary" data-cy="delete-widget-btn">
         <DeleteIcon fontSize="small" />
       </IconButton>
     </div>

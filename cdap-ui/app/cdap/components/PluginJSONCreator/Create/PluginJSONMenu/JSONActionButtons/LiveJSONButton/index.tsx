@@ -58,6 +58,7 @@ export const LiveJSONButtonView = ({ classes, liveViewMode, switchToJSONView }) 
         onClick={switchToJSONView}
         disableRipple
         disableFocusRipple
+        data-cy="open-live-view-btn"
       >
         <CodeIcon />
       </IconButton>

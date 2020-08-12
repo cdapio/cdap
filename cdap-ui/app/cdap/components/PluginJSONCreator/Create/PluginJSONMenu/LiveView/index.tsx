@@ -86,7 +86,9 @@ const LiveViewView: React.FC<ILiveViewProps> = ({
   return (
     <div>
       <div className={classes.liveViewtopPanel}>
-        <div className={classes.currentFilename}>{JSONFilename}</div>
+        <div className={classes.currentFilename} data-cy="plugin-json-filename">
+          {JSONFilename}
+        </div>
         <div className={classes.collapseLiveViewButton}>
           <CollapseLiveViewButton collapseLiveView={collapseLiveView} />
         </div>

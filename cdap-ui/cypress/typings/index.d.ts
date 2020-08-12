@@ -1,4 +1,3 @@
-export { }
 export interface INodeInfo {
   nodeName: string;
   nodeType: string;
@@ -203,6 +202,14 @@ declare global {
        */
       assert_runtime_args_row: (row: number, key: string, value: string, macro?: boolean) => void;
       compareSnapshot: (s: string) => any;
+
+      /**
+       * Uploads a plugin json from fixtures to input file element.
+       *
+       * @fileName - Name of the file from fixture folder including extension.
+       * @selector - data-cy selector to query for the input[type="file"] element.
+      */
+      upload_plugin_json: (filename: string, selector: string) => Chainable<JQuery<HTMLElement>>;
 
       /**
        * Cleans up secure keys after executing the tests. This is to remove state

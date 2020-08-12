@@ -104,9 +104,10 @@ export default function MultiSelect({
       inputProps={{
         'data-cy': dataCy,
       }}
+      data-cy={`multiselect-${dataCy}`}
     >
       {options.map((opt) => (
-        <MenuItem value={opt.id} key={opt.id}>
+        <MenuItem value={opt.id} key={opt.id} data-cy={`multioption-${opt.label}`}>
           <Checkbox checked={selectionsSet.has(opt.id)} color="primary" />
           <ListItemText primary={opt.label} />
         </MenuItem>
