@@ -121,4 +121,10 @@ public interface PreviewStore {
    */
   @Nullable
   byte[] getPreviewRequestPollerInfo(ApplicationId applicationId);
+
+  /**
+   * Deletes the preview data older than ttl.
+   * @param ttlInSeconds ttl in seconds
+   */
+  void deleteExpiredData(long ttlInSeconds);
 }
