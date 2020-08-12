@@ -851,6 +851,7 @@ public final class Constants {
    * Runtime Monitor constants.
    */
   public static final class RuntimeMonitor {
+    public static final String SERVICE_DESCRIPTION = "Service for the program runtime system.";
     public static final String POLL_TIME_MS = "app.program.runtime.monitor.polltime.ms";
     public static final String BATCH_SIZE = "app.program.runtime.monitor.batch.size";
     public static final String TOPICS_CONFIGS = "app.program.runtime.monitor.topics.configs";
