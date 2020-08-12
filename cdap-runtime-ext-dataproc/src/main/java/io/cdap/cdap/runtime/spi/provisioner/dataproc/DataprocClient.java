@@ -76,6 +76,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -465,6 +466,13 @@ final class DataprocClient implements AutoCloseable {
         .filter(c -> c.getStatus().getState() == ClusterStatus.State.RUNNING)
         .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
                                                           " does not exist or not in running state"));
+      Map<String, String> existingLabels = cluster.getLabelsMap();
+      // If the labels to set are already exist, no need to update the cluster labels.
+      if (labels.entrySet().stream().allMatch(e -> Objects.equals(e.getValue(), existingLabels.get(e.getKey())))) {
+        return;
+      }
+      Map<String, String> labelsToSet = new HashMap<>(existingLabels);
+      labelsToSet.putAll(labels);
 
       FieldMask updateMask = FieldMask.newBuilder().addPaths("labels").build();
       OperationFuture<Cluster, ClusterOperationMetadata> operationFuture =
@@ -473,7 +481,7 @@ final class DataprocClient implements AutoCloseable {
                                     .setProjectId(conf.getProjectId())
                                     .setRegion(conf.getRegion())
                                     .setClusterName(clusterName)
-                                    .setCluster(cluster.toBuilder().putAllLabels(labels))
+                                    .setCluster(cluster.toBuilder().putAllLabels(labelsToSet))
                                     .setUpdateMask(updateMask)
                                     .build());
 
@@ -819,7 +827,8 @@ final class DataprocClient implements AutoCloseable {
     long ts;
     try {
       ts = DATE_FORMAT.parse(instance.getCreationTimestamp()).getTime();
-    } catch (ParseException e) {
+    } catch (ParseException | NumberFormatException e) {
+      LOG.debug("Fail to parse creation ts {}", instance.getCreationTimestamp(), e);
       ts = -1L;
     }
 

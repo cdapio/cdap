@@ -26,6 +26,8 @@ import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerSpecification;
 import io.cdap.cdap.runtime.spi.ssh.SSHKeyPair;
 import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -36,6 +38,8 @@ import java.util.concurrent.TimeUnit;
  * Provisioner for connecting an existing Dataproc cluster.
  */
 public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
+
+  private static final Logger LOG = LoggerFactory.getLogger(ExistingDataprocProvisioner.class);
 
   private static final ProvisionerSpecification SPEC = new ProvisionerSpecification(
     "gcp-existing-dataproc", "Existing Dataproc",
@@ -86,7 +90,17 @@ public class ExistingDataprocProvisioner extends AbstractDataprocProvisioner {
 
     String clusterName = contextProperties.get(CLUSTER_NAME);
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
-      client.updateClusterLabels(clusterName, getSystemLabels());
+      try {
+        client.updateClusterLabels(clusterName, getSystemLabels());
+      } catch (DataprocRuntimeException e) {
+        // It's ok not able to update the labels
+        // Only log the stacktrace if trace log level is enabled
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Cannot update cluster labels due to {}", e.getMessage(), e);
+        } else {
+          LOG.debug("Cannot update cluster labels due to {}", e.getMessage());
+        }
+      }
       return client.getCluster(clusterName)
         .filter(c -> c.getStatus() == ClusterStatus.RUNNING)
         .orElseThrow(() -> new DataprocRuntimeException("Dataproc cluster " + clusterName +
