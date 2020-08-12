@@ -146,12 +146,12 @@ const RequestRowView: React.FC<IRequestRowProps> = ({
     setRequestHistoryView(req);
   };
 
-  const isSelectedRequest = selectedRequest && request.timestamp === selectedRequest.timestamp;
+  const isSelectedRequest = selectedRequest && request.id === selectedRequest.id;
 
   return (
     <div>
       <div
-        data-cy={`request-row-${request.timestamp}`}
+        data-cy={`request-row-${request.id}`}
         className={classnames(classes.requestRow, {
           [classes.selectedRequestRow]: isSelectedRequest,
         })}
@@ -212,7 +212,7 @@ const RequestRowView: React.FC<IRequestRowProps> = ({
         </div>
       </div>
       <DeleteDialog
-        requestID={request.timestamp}
+        request={request}
         open={deleteDialogOpen}
         handleClose={() => setDeleteDialogOpen(false)}
       />

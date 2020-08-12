@@ -85,6 +85,7 @@ const addRequestLog = (state) => {
     response,
     statusCode,
     timestamp: new Date().toLocaleString(),
+    id: uuidV4(),
   };
 
   // Update the component view in real-time, since we cannot listen to local storage's change
@@ -133,16 +134,16 @@ const addRequestLog = (state) => {
   };
 };
 
-const deleteRequestLog = (state, requestID) => {
-  if (!requestID) {
+const deleteRequestLog = (state, request) => {
+  if (!request) {
     return;
   }
   const { requestLog } = state;
 
   // Delete the request log from local state
-  const dateID = getDateID(new Date(requestID));
+  const dateID = getDateID(new Date(request.timestamp));
   const requestsGroup = getRequestsByDate(requestLog, dateID);
-  const requestToDelete = requestsGroup.findIndex((data) => data.timestamp === requestID);
+  const requestToDelete = requestsGroup.findIndex((req) => req.id === request.id);
   const newRequestLog = requestLog.set(dateID, requestsGroup.delete(requestToDelete));
 
   // Delete the specified request log from local storage
@@ -231,7 +232,7 @@ const http = (state = defaultInitialState, action = defaultAction) => {
         saveCalls: !state.saveCalls,
       };
     case HttpExecutorActions.deleteRequestLog:
-      return deleteRequestLog(state, action.payload.requestID);
+      return deleteRequestLog(state, action.payload.request);
     case HttpExecutorActions.clearAllRequestLog:
       return clearAllRequestLog(state);
     default:

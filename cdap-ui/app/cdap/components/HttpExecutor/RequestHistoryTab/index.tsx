@@ -41,6 +41,7 @@ import { connect } from 'react-redux';
 export const REQUEST_HISTORY = 'RequestHistory';
 
 export interface IRequestHistory {
+  id: string;
   timestamp: string;
   method: RequestMethod;
   path: string;
