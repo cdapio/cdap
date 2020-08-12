@@ -49,7 +49,7 @@ angular.module(PKG.name + '.services')
         loadArtifact: myHelpers.getConfig('POST', 'REQUEST', loadArtifactPath, false, {contentType: 'application/java-archive'}),
         loadJson: myHelpers.getConfig('PUT', 'REQUEST', loadArtifactJSON, false, {contentType: 'application/json'}),
         save: myHelpers.getConfig('PUT', 'REQUEST', pipelinePath, false, {contentType: 'application/json'}),
-        getAllArtifacts:myHelpers.getConfig('GET', 'REQUEST', artifactsBasePath, true),
+        getAllArtifacts: myHelpers.getConfig('GET', 'REQUEST', artifactsBasePath, true),
 
         fetchArtifacts: myHelpers.getConfig('GET', 'REQUEST', artifactsPath, true),
         fetchExtensions: myHelpers.getConfig('GET', 'REQUEST', extensionsFetchPath, true),
