@@ -27,6 +27,7 @@ import io.cdap.cdap.api.workflow.ConditionSpecification;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.util.RESTClient;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProgramNotFoundException;
 import io.cdap.cdap.common.UnauthenticatedException;
@@ -211,18 +212,25 @@ public class ProgramClient {
    * @throws IOException if a network error occurred
    * @throws ProgramNotFoundException if the program with specified name could not be found
    * @throws UnauthenticatedException if the request is not authorized successfully in the gateway server
+   * @throws BadRequestException if an attempt is made to stop a program that is either not running or
+   *                             was started by a workflow
    */
-  public void stop(ProgramId programId) throws IOException, ProgramNotFoundException, UnauthenticatedException,
-    UnauthorizedException {
+  public void stop(ProgramId programId)
+      throws IOException, ProgramNotFoundException, UnauthenticatedException,
+      UnauthorizedException, BadRequestException {
     String path = String.format("apps/%s/versions/%s/%s/%s/stop", programId.getApplication(), programId.getVersion(),
                                 programId.getType().getCategoryName(), programId.getProgram());
     URL url = config.resolveNamespacedURLV3(programId.getNamespaceId(), path);
     //Required to add body even if runtimeArgs is null to avoid 411 error for Http POST
     HttpRequest.Builder request = HttpRequest.post(url).withBody("");
     HttpResponse response = restClient.execute(request.build(), config.getAccessToken(),
-                                               HttpURLConnection.HTTP_NOT_FOUND);
+                                               HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_BAD_REQUEST);
     if (response.getResponseCode() == HttpURLConnection.HTTP_NOT_FOUND) {
       throw new ProgramNotFoundException(programId);
+    }
+
+    if (response.getResponseCode() == HttpURLConnection.HTTP_BAD_REQUEST) {
+      throw new BadRequestException(response.getResponseCode() + ": " + response.getResponseBodyAsString());
     }
   }
 
@@ -252,7 +260,7 @@ public class ProgramClient {
    */
   public void stopAll(NamespaceId namespace)
     throws IOException, UnauthenticatedException, InterruptedException, TimeoutException, UnauthorizedException,
-    ApplicationNotFoundException {
+    ApplicationNotFoundException, BadRequestException {
 
     List<ApplicationRecord> allApps = applicationClient.list(namespace);
     for (ApplicationRecord applicationRecord : allApps) {
