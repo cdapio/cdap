@@ -54,13 +54,16 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
@@ -73,42 +76,80 @@ public class AbstractProgramRuntimeServiceTest {
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
 
+  @Test
+  public void testConcurrentStartLimit() throws Exception {
+    Semaphore proceed = new Semaphore(0);
+    Set<String> threadNames = ConcurrentHashMap.newKeySet();
+
+    // Creates a runner factory that block start until a signal is received
+    ProgramRunnerFactory runnerFactory = programType -> (program, options) -> {
+      threadNames.add(Thread.currentThread().getName());
+      proceed.acquireUninterruptibly();
+
+      ProgramId programId = program.getId();
+
+      Service service = new FastService();
+      ProgramController controller = new ProgramControllerServiceAdapter(service,
+                                                                         programId.run(RunIds.generate()));
+      service.start();
+      return controller;
+    };
+
+    Program program = createDummyProgram();
+    ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
+                                                         NamespaceId.DEFAULT.artifact("test", "1.0"));
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.setInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS, 2);
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(cConf,
+                                                                         runnerFactory, program, null, null);
+    runtimeService.startAndWait();
+    try {
+      List<ProgramController> controllers = new ArrayList<>();
+      for (int i = 0; i < 5; i++) {
+        controllers.add(runtimeService.run(descriptor, new SimpleProgramOptions(program.getId()),
+                                           RunIds.generate()).getController());
+      }
+
+      // There should be 2 program start threads running only
+      Tasks.waitFor(2, proceed::getQueueLength, 2, TimeUnit.SECONDS);
+      try {
+        // Shouldn't never have more than 2
+        Tasks.waitFor(true, () -> proceed.getQueueLength() > 2, 2, TimeUnit.SECONDS);
+        Assert.fail("Shouldn't have more than 2 program starting");
+      } catch (TimeoutException e) {
+        // expected
+      }
+
+      // Let all start to proceed. They should have all finished pretty quickly
+      proceed.release(5);
+      Tasks.waitFor(true,
+                    () -> controllers.stream()
+                      .map(ProgramController::getState)
+                      .allMatch(ProgramController.State.COMPLETED::equals),
+                    5, TimeUnit.SECONDS);
+
+      Assert.assertEquals(2, threadNames.size());
+    } finally {
+      runtimeService.stopAndWait();
+    }
+  }
+
   @Test (timeout = 5000)
   public void testDeadlock() throws IOException, ExecutionException, InterruptedException, TimeoutException {
     // This test is for testing condition in (CDAP-3579)
     // The race condition is if a program finished very fast such that inside the AbstractProgramRuntimeService is
     // still in the run method, it holds the object lock, making the callback from the listener block forever.
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
-    final Program program = createDummyProgram();
-    final ProgramRuntimeService runtimeService =
-      new AbstractProgramRuntimeService(CConfiguration.create(), runnerFactory, null, new NoOpProgramStateWriter()) {
-      @Override
-      public ProgramLiveInfo getLiveInfo(ProgramId programId) {
-        return new ProgramLiveInfo(programId, "runtime") { };
-      }
-
-      @Override
-      protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
-                                      ProgramDescriptor programDescriptor,
-                                      ArtifactDetail artifactDetail, File tempDir) throws IOException {
-        return program;
-      }
-
-      @Override
-      protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException, ArtifactNotFoundException {
-        io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
-          "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
-        return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
-                                  new ArtifactMeta(ArtifactClasses.builder().build()));
-      }
-    };
-
+    Program program = createDummyProgram();
+    ProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
+                                                                         runnerFactory, program, null, null);
     runtimeService.startAndWait();
     try {
       ProgramDescriptor descriptor = new ProgramDescriptor(program.getId(), null,
                                                            NamespaceId.DEFAULT.artifact("test", "1.0"));
-      final ProgramController controller =
-        runtimeService.run(descriptor, new SimpleProgramOptions(program.getId()), RunIds.generate()).getController();
+      ProgramController controller = runtimeService.run(descriptor, new SimpleProgramOptions(program.getId()),
+                                                        RunIds.generate()).getController();
       Tasks.waitFor(ProgramController.State.COMPLETED, controller::getState,
                     5, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
 
@@ -131,7 +172,7 @@ public class AbstractProgramRuntimeServiceTest {
 
     ProgramRunnerFactory runnerFactory = createProgramRunnerFactory();
     TestProgramRuntimeService runtimeService = new TestProgramRuntimeService(CConfiguration.create(),
-                                                                             runnerFactory, null, extraInfo);
+                                                                             runnerFactory, null, null, extraInfo);
     runtimeService.startAndWait();
 
     // The lookup will get deadlock for CDAP-3716
@@ -360,12 +401,15 @@ public class AbstractProgramRuntimeServiceTest {
    */
   private static final class TestProgramRuntimeService extends AbstractProgramRuntimeService {
 
+    private final Program program;
     private final RuntimeInfo extraInfo;
 
     protected TestProgramRuntimeService(CConfiguration cConf, ProgramRunnerFactory programRunnerFactory,
+                                        @Nullable Program program,
                                         @Nullable ArtifactRepository artifactRepository,
                                         @Nullable RuntimeInfo extraInfo) {
       super(cConf, programRunnerFactory, artifactRepository, new NoOpProgramStateWriter());
+      this.program = program;
       this.extraInfo = extraInfo;
     }
 
@@ -386,6 +430,24 @@ public class AbstractProgramRuntimeServiceTest {
         return extraInfo;
       }
       return null;
+    }
+
+    @Override
+    protected Program createProgram(CConfiguration cConf, ProgramRunner programRunner,
+                                    ProgramDescriptor programDescriptor,
+                                    ArtifactDetail artifactDetail, File tempDir) {
+      if (program == null) {
+        throw new IllegalArgumentException("No program is available");
+      }
+      return program;
+    }
+
+    @Override
+    protected ArtifactDetail getArtifactDetail(ArtifactId artifactId) throws IOException {
+      io.cdap.cdap.api.artifact.ArtifactId id = new io.cdap.cdap.api.artifact.ArtifactId(
+        "dummy", new ArtifactVersion("1.0"), ArtifactScope.USER);
+      return new ArtifactDetail(new ArtifactDescriptor(id, Locations.toLocation(TEMP_FOLDER.newFile())),
+                                new ArtifactMeta(ArtifactClasses.builder().build()));
     }
   }
 }
