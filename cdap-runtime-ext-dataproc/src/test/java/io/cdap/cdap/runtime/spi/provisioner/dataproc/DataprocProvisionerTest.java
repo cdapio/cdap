@@ -137,6 +137,8 @@ public class DataprocProvisionerTest {
     props.put(DataprocConf.CUSTOM_IMAGE_URI,
         customURI);
     props.put("accountKey", "key");
+    props.put("projectId", "my project");
+    props.put("zone", "region1-a");
 
     DataprocConf conf = DataprocConf.create(props);
     Assert.assertEquals(customURI, conf.getCustomImageUri());
