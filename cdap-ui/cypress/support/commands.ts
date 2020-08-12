@@ -664,6 +664,32 @@ Cypress.Commands.add(
 );
 
 /**
+ * Uploads a plugin json from fixtures to input file element.
+ *
+ * @fileName - Name of the file from fixture folder including extension
+ * @selector - data-cy selector to query for the input[type="file"] element.
+ */
+Cypress.Commands.add('upload_plugin_json', (fileName, selector) => {
+  return cy.get(dataCy(selector), { timeout: 60000 }).then((subject) => {
+    return cy.fixture(fileName).then((pluginJSON) => {
+      const el = subject[0];
+      const JSONContent =
+        typeof pluginJSON === 'string' ? pluginJSON : JSON.stringify(pluginJSON, undefined, 2);
+      const blob = new Blob([JSONContent], { type: 'application/json' });
+      return cy.window().then((win) => {
+        const testFile = new win.File([blob], fileName, {
+          type: 'application/json',
+        });
+        const dataTransfer = new win.DataTransfer();
+        dataTransfer.items.add(testFile);
+        el.files = dataTransfer.files;
+        return cy.wrap(subject).trigger('change', { force: true });
+      });
+    });
+  });
+});
+
+/**
  * Cleans up secure keys after executing the tests. This is to remove state
  *  from individual tests.
  *

@@ -54,6 +54,7 @@ const styles = (theme): StyleRules => {
 };
 
 interface IFilterPanelProps extends WithStyles<typeof styles> {
+  filterIndex: number;
   filterID: string;
   addFilter: () => void;
   deleteFilter: () => void;
@@ -63,6 +64,7 @@ interface IFilterPanelProps extends WithStyles<typeof styles> {
 
 const FilterPanelView: React.FC<IFilterPanelProps> = ({
   classes,
+  filterIndex,
   filterID,
   addFilter,
   deleteFilter,
@@ -72,30 +74,34 @@ const FilterPanelView: React.FC<IFilterPanelProps> = ({
   const { filterToName } = useFilterState();
 
   return (
-    <div className={classes.filterContainer}>
-      <ExpansionPanel expanded={filterExpanded} onChange={switchEditFilter}>
+    <div className={classes.filterContainer} data-cy={`filter-panel-${filterIndex}`}>
+      <ExpansionPanel
+        expanded={filterExpanded}
+        onChange={switchEditFilter}
+        data-cy={`open-filter-panel-${filterIndex}`}
+      >
         <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />} id="panel1c-header">
           <Typography className={classes.heading}>{filterToName.get(filterID)}</Typography>
         </ExpansionPanelSummary>
         <ExpansionPanelActions className={classes.filterContent}>
           <If condition={filterExpanded}>
             <div className={classes.filterInput}>
-              <FilterNameInput filterID={filterID} />
+              <FilterNameInput filterID={filterID} data-cy="filter-name" />
             </div>
-            <div className={classes.filterInput}>
+            <div className={classes.filterInput} data-cy="filter-showlist-input">
               <FilterShowlistInput filterID={filterID} />
             </div>
-            <div className={classes.filterInput}>
+            <div className={classes.filterInput} data-cy="filter-condition-input">
               <FilterConditionInput filterID={filterID} />
             </div>
           </If>
         </ExpansionPanelActions>
       </ExpansionPanel>
       <div>
-        <IconButton onClick={addFilter}>
+        <IconButton onClick={addFilter} data-cy="add-filter-btn">
           <AddIcon fontSize="small" />
         </IconButton>
-        <IconButton onClick={deleteFilter} color="secondary">
+        <IconButton onClick={deleteFilter} color="secondary" data-cy="delete-filter-btn">
           <DeleteIcon fontSize="small" />
         </IconButton>
       </div>

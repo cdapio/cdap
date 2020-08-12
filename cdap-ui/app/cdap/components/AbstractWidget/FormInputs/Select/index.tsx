@@ -137,6 +137,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
       displayEmpty={!isNilOrEmptyString(placeholder)}
       inputRef={inputRef}
       classes={classes}
+      data-cy={`select-${dataCy}`}
       {...widgetProps}
     >
       {optionValues.map((opt) => {
@@ -145,6 +146,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
             value={opt.value}
             key={opt.value}
             disabled={opt.disabled || !isNilOrEmptyString(opt.placeholder)}
+            data-cy={`option-${opt.value}`}
           >
             {opt.label}
           </OptionItem>

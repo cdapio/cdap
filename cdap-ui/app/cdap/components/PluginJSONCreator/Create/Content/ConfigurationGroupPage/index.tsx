@@ -122,7 +122,12 @@ const ConfigurationGroupPage = () => {
         <Heading type={HeadingTypes.h3} label="Configuration Groups" />
         <br />
         <If condition={configurationGroups.size === 0}>
-          <Button variant="contained" color="primary" onClick={addConfigurationGroup(0)}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={addConfigurationGroup(0)}
+            data-cy="add-configuration-group-btn"
+          >
             Add Configuration Group
           </Button>
         </If>
@@ -130,6 +135,7 @@ const ConfigurationGroupPage = () => {
           <GroupPanel
             key={groupID}
             groupID={groupID}
+            groupIndex={i}
             configurationGroupExpanded={activeGroupIndex === i}
             switchEditConfigurationGroup={switchEditConfigurationGroup(i)}
             addConfigurationGroup={addConfigurationGroup(i)}

@@ -119,7 +119,7 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
           toggle={closeWidgetAttributes}
           headerText={'Widget Attributes'}
         >
-          <div className={classes.setAttributes}>
+          <div className={classes.setAttributes} data-cy="widget-attributes-dialog">
             <WidgetInfoInput widgetID={widgetID} />
             <If condition={attributeFields && attributeFields.length > 0}>
               <div className={classes.widgetAttributesTitle}>
@@ -130,24 +130,27 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
               <LoadingSVGCentered />
             </If>
             <If condition={!loading}>
-              {attributeFields.map((field, fieldIndex) => {
-                return (
-                  <WidgetAttributeInput
-                    key={fieldIndex}
-                    widgetType={widgetType}
-                    field={field}
-                    widgetID={widgetID}
-                    localWidgetToAttributes={localWidgetToAttributes}
-                    setLocalWidgetToAttributes={setLocalWidgetToAttributes}
-                  />
-                );
-              })}
+              <div data-cy="widget-attributes-inputs">
+                {attributeFields.map((field, fieldIndex) => {
+                  return (
+                    <WidgetAttributeInput
+                      key={fieldIndex}
+                      widgetType={widgetType}
+                      field={field}
+                      widgetID={widgetID}
+                      localWidgetToAttributes={localWidgetToAttributes}
+                      setLocalWidgetToAttributes={setLocalWidgetToAttributes}
+                    />
+                  );
+                })}
+              </div>
             </If>
             <div className={classes.actionButtons}>
               <Button
                 color="primary"
                 onClick={() => closeWidgetAttributes()}
                 className={classes.cancelButton}
+                data-cy="close-widget-attributes-btn"
               >
                 Cancel
               </Button>
@@ -157,6 +160,7 @@ const WidgetAttributesPanelView: React.FC<IWidgetAttributesPanelProps> = ({
                 color="primary"
                 onClick={saveWidgetToAttributes()}
                 className={classes.saveButton}
+                data-cy="save-widget-attributes-btn"
               >
                 Save
               </Button>

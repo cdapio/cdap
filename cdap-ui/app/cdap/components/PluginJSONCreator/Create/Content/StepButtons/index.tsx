@@ -82,7 +82,12 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
   return (
     <div className={classes.root}>
       <If condition={activeStep > 0}>
-        <Button color="primary" onClick={handlePreviousClick} className={classes.actionButton}>
+        <Button
+          color="primary"
+          onClick={handlePreviousClick}
+          className={classes.actionButton}
+          data-cy="previous-step-btn"
+        >
           Previous
         </Button>
       </If>
@@ -92,6 +97,7 @@ const StepButtonsView: React.FC<IStepButtonProps> = ({
           color="primary"
           onClick={handleNextClick}
           disabled={nextDisabled}
+          data-cy="next-step-btn"
           className={classes.actionButton}
         >
           Next

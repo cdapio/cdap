@@ -14,11 +14,13 @@
  * the License.
  */
 
-import IconButton from '@material-ui/core/IconButton';
+import * as React from 'react';
+
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+
 import AddIcon from '@material-ui/icons/Add';
 import DeleteIcon from '@material-ui/icons/Delete';
-import * as React from 'react';
+import IconButton from '@material-ui/core/IconButton';
 
 const styles = (): StyleRules => {
   return {
@@ -40,10 +42,14 @@ const GroupActionButtonsView: React.FC<IGroupActionButtonsProps> = ({
 }) => {
   return (
     <div className={classes.groupActionButtons}>
-      <IconButton onClick={onAddConfigurationGroup}>
+      <IconButton onClick={onAddConfigurationGroup} data-cy="add-configuration-group-btn">
         <AddIcon fontSize="small" />
       </IconButton>
-      <IconButton onClick={onDeleteConfigurationGroup} color="secondary">
+      <IconButton
+        onClick={onDeleteConfigurationGroup}
+        color="secondary"
+        data-cy="delete-configuration-group-btn"
+      >
         <DeleteIcon fontSize="small" />
       </IconButton>
     </div>

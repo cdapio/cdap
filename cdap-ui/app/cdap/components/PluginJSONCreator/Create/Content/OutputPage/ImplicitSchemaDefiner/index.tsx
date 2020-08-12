@@ -14,11 +14,12 @@
  * the License.
  */
 
-import Button from '@material-ui/core/Button';
+import * as React from 'react';
+
 import Alert from 'components/Alert';
+import Button from '@material-ui/core/Button';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import { useOutputState } from 'components/PluginJSONCreator/Create';
-import * as React from 'react';
 
 export enum SchemaStatus {
   Normal = 'Normal',
@@ -74,7 +75,7 @@ const ImplicitSchemaDefiner = () => {
         value={localSchema}
         onChange={onSchemaChange}
       />
-      <Button variant="contained" color="primary" onClick={saveSchema} data-cy="save-schema-button">
+      <Button variant="contained" color="primary" onClick={saveSchema} data-cy="save-schema-btn">
         Save
       </Button>
       <Alert
