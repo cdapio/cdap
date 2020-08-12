@@ -44,6 +44,7 @@ import io.cdap.cdap.gateway.handlers.MonitorHandler;
 import io.cdap.cdap.internal.app.runtime.distributed.AppFabricServiceManager;
 import io.cdap.cdap.internal.app.runtime.distributed.TransactionServiceManager;
 import io.cdap.cdap.internal.app.runtime.monitor.NonHadoopAppFabricServiceManager;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeServiceManager;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.logging.run.LogSaverServiceManager;
 import io.cdap.cdap.messaging.distributed.MessagingServiceManager;
@@ -122,6 +123,8 @@ public class MonitorHandlerModule extends AbstractModule {
       .toProvider(new NonHadoopMasterServiceManagerProvider(ExploreServiceManager.class));
     mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE)
       .toProvider(new NonHadoopMasterServiceManagerProvider(MessagingServiceManager.class));
+    mapBinder.addBinding(Constants.Service.RUNTIME)
+      .toProvider(new NonHadoopMasterServiceManagerProvider(RuntimeServiceManager.class));
 
     // The ServiceStore uses a special non-TX KV Table.
     bindDatasetModule(binder, new InMemoryKVTableDefinition.Module());
@@ -144,6 +147,7 @@ public class MonitorHandlerModule extends AbstractModule {
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE).to(MetadataServiceManager.class);
     mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE).to(ExploreServiceManager.class);
     mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE).to(MessagingServiceManager.class);
+    mapBinder.addBinding(Constants.Service.RUNTIME).to(RuntimeServiceManager.class);
 
     // The ServiceStore uses a special non-TX KV Table.
     bindDatasetModule(binder, new HBaseKVTableDefinition.Module());
