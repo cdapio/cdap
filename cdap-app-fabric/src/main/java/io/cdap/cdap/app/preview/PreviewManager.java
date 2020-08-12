@@ -71,6 +71,7 @@ public interface PreviewManager {
    * @param applicationId the id of the preview application
    * @return the {@link ProgramRunId} associated with the preview or {@code null} if there is no run record
    */
+  @Nullable
   ProgramRunId getRunId(ApplicationId applicationId) throws Exception;
 
   /**

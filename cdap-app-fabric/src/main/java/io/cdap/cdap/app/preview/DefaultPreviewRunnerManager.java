@@ -107,7 +107,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     this.secureStore = secureStore;
     this.discoveryService = discoveryService;
     this.transactionSystemClient = transactionSystemClient;
-    this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.CACHE_SIZE, 10);
+    this.maxConcurrentPreviews = previewCConf.getInt(Constants.Preview.POLLER_COUNT, 10);
     this.previewRunnerServices = ConcurrentHashMap.newKeySet();
     this.previewRunnerModule = previewRunnerModule;
     this.previewLevelDBTableService = previewLevelDBTableService;

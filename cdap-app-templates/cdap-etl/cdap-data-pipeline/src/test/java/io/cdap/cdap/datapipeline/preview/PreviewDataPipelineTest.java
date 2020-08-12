@@ -31,7 +31,6 @@ import io.cdap.cdap.api.metrics.MetricDataQuery;
 import io.cdap.cdap.api.metrics.MetricTimeSeries;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewStatus;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.datapipeline.DataPipelineApp;
@@ -244,13 +243,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
     deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
-    boolean exceptionThrown = false;
-    try {
-      previewManager.getRunId(previewId);
-    } catch (NotFoundException e) {
-      exceptionThrown = true;
-    }
-    Assert.assertTrue(exceptionThrown || sleepInMillis != null);
+    Assert.assertTrue(previewManager.getRunId(previewId) == null || sleepInMillis != null);
   }
 
   @Test

@@ -224,8 +224,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
         // status is WAITING but application is not present in in-memory queue
         position = 0;
       }
-      status = new PreviewStatus(status.getStatus(), status.getThrowable(), status.getStartTime(),
-                                 status.getEndTime(), position);
+      status = new PreviewStatus(status.getStatus(), status.getSubmitTime(), status.getThrowable(),
+                                 status.getStartTime(), status.getEndTime(), position);
     }
     return status;
   }
@@ -238,7 +238,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                                                   status.getStatus().name()));
     }
     if (status.getStatus() == PreviewStatus.Status.WAITING) {
-      previewStore.setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.KILLED, null, null, null));
+      previewStore.setPreviewStatus(applicationId, new PreviewStatus(PreviewStatus.Status.KILLED,
+                                                                     status.getSubmitTime(), null, null, null));
       return;
     }
     previewRunStopper.stop(applicationId);
@@ -251,11 +252,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
 
   @Override
   public ProgramRunId getRunId(ApplicationId applicationId) throws Exception {
-    ProgramRunId programRunId = previewStore.getProgramRunId(applicationId);
-    if (programRunId == null) {
-      throw new NotFoundException(applicationId);
-    }
-    return programRunId;
+    return previewStore.getProgramRunId(applicationId);
   }
 
   @Override
