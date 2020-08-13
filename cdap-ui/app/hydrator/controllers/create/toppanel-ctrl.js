@@ -696,7 +696,7 @@ class HydratorPlusPlusTopPanelCtrl {
         .$promise
         .then(
           () => {
-            this.resetBtnsAndStopPoll();
+            this.resetButtonsAndStopPoll();
             this.updateTimerLabelAndTitle();
 
             if (silentMode) {
