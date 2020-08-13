@@ -110,6 +110,10 @@ describe('Running preview with joiner plugin in pipeline studio', () => {
     // Start and then immediately stop preview
     cy.get(dataCy('run-preview-btn')).click();
     cy.get(dataCy('stop-preview-btn')).click();
+    // Check for successful stop banner
+    cy.get(dataCy('valium-banner-hydrator')).within(() => {
+      cy.get('.alert-success').should('be.visible');
+    });
     cy.get(dataCy('run-preview-btn'), { timeout: 35000 }).should('exist');
     cy.get(
       dataCy(`plugin-node-${sourceNode1.nodeName}-${sourceNode1.nodeType}-${sourceNode1.nodeId}`)
