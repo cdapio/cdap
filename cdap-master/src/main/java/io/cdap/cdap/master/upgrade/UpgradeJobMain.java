@@ -15,16 +15,19 @@
  */
 package io.cdap.cdap.master.upgrade;
 
+import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.client.ApplicationClient;
 import io.cdap.cdap.client.NamespaceClient;
 import io.cdap.cdap.client.ProgramClient;
 import io.cdap.cdap.client.ScheduleClient;
 import io.cdap.cdap.client.config.ClientConfig;
 import io.cdap.cdap.client.config.ConnectionConfig;
+import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.service.RetryStrategy;
+import io.cdap.cdap.gateway.handlers.ProgramLifecycleHttpHandler;
 import io.cdap.cdap.proto.ApplicationRecord;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramStatus;
@@ -33,6 +36,8 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.proto.id.WorkflowId;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -49,6 +54,7 @@ public class UpgradeJobMain {
 
   private static final int DEFAULT_READ_TIMEOUT_MILLIS = 90 * 1000;
   private static final String SCHEDULED = "SCHEDULED";
+  private static final Logger LOG = LoggerFactory.getLogger(UpgradeJobMain.class);
 
   public static void main(String[] args) {
     if (args.length != 2) {
@@ -66,8 +72,8 @@ public class UpgradeJobMain {
         .setConnectionConfig(connectionConfig)
         .build();
     RetryStrategy retryStrategy =
-      RetryStrategies.timeLimit(30, TimeUnit.SECONDS,
-                                RetryStrategies.exponentialDelay(10, 500, TimeUnit.MILLISECONDS));
+      RetryStrategies.timeLimit(120, TimeUnit.SECONDS,
+                                RetryStrategies.exponentialDelay(500, 5000, TimeUnit.MILLISECONDS));
 
     try {
       Retries.callWithRetries(
@@ -85,6 +91,7 @@ public class UpgradeJobMain {
     ScheduleClient scheduleClient = new ScheduleClient(clientConfig);
     ProgramClient programClient = new ProgramClient(clientConfig);
     NamespaceClient namespaceClient = new NamespaceClient(clientConfig);
+    boolean shouldRetry = false;
 
     List<NamespaceId> namespaceIdList =
       namespaceClient.list().stream().map(NamespaceMeta::getNamespaceId).collect(Collectors.toList());
@@ -94,6 +101,7 @@ public class UpgradeJobMain {
       for (ApplicationRecord record : applicationClient.list(namespaceId)) {
         ApplicationId applicationId =
           new ApplicationId(namespaceId.getNamespace(), record.getName(), record.getAppVersion());
+        LOG.debug("Trying to stop schedule and workflows for application " + applicationId);
         List<WorkflowId> workflowIds =
           applicationClient.get(applicationId).getPrograms().stream()
             .filter(programRecord -> programRecord.getType().equals(ProgramType.WORKFLOW))
@@ -112,12 +120,26 @@ public class UpgradeJobMain {
             }
           }
           // Need to stop workflows first or else the program will fail to stop below
-          if (programClient.getStatus(workflowId).equals(ProgramStatus.RUNNING.toString())) {
-            programClient.stop(workflowId);
+          if (!programClient.getStatus(workflowId).equals(ProgramStatus.STOPPED.toString())) {
+            try {
+              programClient.stop(workflowId);
+            } catch (BadRequestException e) {
+              // There might be race condition between checking if the program is in RUNNING state and stopping it.
+              // This can cause programClient.stop to throw BadRequestException so verifying if the program
+              // transitioned to stop state since it was checked earlier or not.
+              if (!programClient.getStatus(workflowId).equals(ProgramStatus.STOPPED.toString())) {
+                // Pipeline still in running state. Continue with stopping rest of the pipelines in this namespace and
+                // next retry should try to stop/verify status for this pipeline.
+                shouldRetry = true;
+              }
+            }
           }
         }
       }
-
+      // At least one pipeline is still in running state so retry to verify pipeline status .
+      if (shouldRetry) {
+        throw new RetryableException("At least one pipeline in namespace " + namespaceId + " is still running.");
+      }
       // All schedules are stopped, now stop all programs
       programClient.stopAll(namespaceId);
     }
