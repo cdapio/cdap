@@ -100,15 +100,6 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
     this.setState(parse(this.props.value));
   }
 
-  private handleInputChange = (type: StateKeys, e) => {
-    this.setState(
-      {
-        [type]: e.target.value,
-      } as Pick<IKeyValueState, StateKeys>,
-      this.serializeChange
-    );
-  };
-
   private handleCheckboxChange = (type: StateKeys, e) => {
     this.setState(
       {
