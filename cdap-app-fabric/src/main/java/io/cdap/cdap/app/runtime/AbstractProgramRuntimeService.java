@@ -458,9 +458,15 @@ public abstract class AbstractProgramRuntimeService extends AbstractIdleService 
 
   @Override
   protected void startUp() throws Exception {
+    // Limits to at max poolSize number of concurrent program launch.
+    // Also don't keep a thread around if it is idle for more than 60 seconds.
     int poolSize = cConf.getInt(Constants.AppFabric.PROGRAM_LAUNCH_THREADS);
-    executor = new ThreadPoolExecutor(0, poolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
-                                      new ThreadFactoryBuilder().setNameFormat("program-start-%d").build());
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(poolSize, poolSize, 60, TimeUnit.SECONDS,
+                                                         new LinkedBlockingQueue<>(),
+                                                         new ThreadFactoryBuilder()
+                                                           .setNameFormat("program-start-%d").build());
+    executor.allowCoreThreadTimeOut(true);
+    this.executor = executor;
   }
 
   @Override

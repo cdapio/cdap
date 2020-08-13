@@ -488,7 +488,6 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         } catch (Exception e) {
           throw new RuntimeException("Failed to create controller for " + programRunId, e);
         }
-        RemoteExecutionTwillController finalController = controller;
 
         // Execute the startup task if provided
         if (startupTask != null) {
@@ -546,8 +545,8 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
         }
 
         LOG.debug("Created controller for program run {}", programRunId);
-        controllers.put(programRunId, finalController);
-        return finalController;
+        controllers.put(programRunId, controller);
+        return controller;
       } finally {
         controllersLock.unlock();
       }
