@@ -84,21 +84,15 @@ Improvements
 
 - :cask-issue:`CDAP-16676` - Upgrade to use Dataproc API v1beta2 to allow endpoint config
 
-- :cask-issue:`CDAP-16709` - Implemented performance improvements to joiner plugins to cap the required memory to 
-around 4gb per executor instead of scaling up as the skewness of the join goes up. Joins can now also be performed 
-in-memory if one side is small, and behavior on null keys can be chosen by the user.
+- :cask-issue:`CDAP-16709` - Implemented performance improvements to joiner plugins to cap the required memory to around 4gb per executor instead of scaling up as the skewness of the join goes up. Joins can now also be performed in-memory if one side is small, and behavior on null keys can be chosen by the user.
 
 - :cask-issue:`CDAP-16815` - Added a metric records.updated in BigQuery sink. This counts the total of all the inserts, updates and upserts into the sink.
 
 - :cask-issue:`CDAP-16929` - Added the ability to select a Custom Dataproc Image. The complete URI for the custom image should be specified.
 
-- :cask-issue:`CDAP-16975` - UI now adds the latest version of plugin, among the list of different versions of the 
-plugin, when added from the sidepanel in pipeline studio. If the user has already chosen a specific version 
-(older version) it defaults to that instead of the latest.
+- :cask-issue:`CDAP-16975` - UI now adds the latest version of plugin, among the list of different versions of the plugin, when added from the sidepanel in pipeline studio. If the user has already chosen a specific version (older version) it defaults to that instead of the latest.
 
-- :cask-issue:`CDAP-16976` - UI resets the default version of plugins for specific user during upgrade. When users 
-upgrade from 6.1.2 to 6.1.3 or later UI will reset the default version of plugin the user has already chosen. Post 
-upgrade if the user uses the same plugin UI will choose the latest version of the same plugin.
+- :cask-issue:`CDAP-16976` - UI resets the default version of plugins for specific user during upgrade. When users upgrade from 6.1.2 to 6.1.3 or later UI will reset the default version of plugin the user has already chosen. Post upgrade if the user uses the same plugin UI will choose the latest version of the same plugin.
 
 - :cask-issue:`CDAP-17000` - Changed default value of spark.network.timeout to 10 minutes to make pipeline execution more stable for shuffle heavy pipelines.
 
@@ -154,8 +148,7 @@ Bug Fixes
 
 - :cask-issue:`CDAP-17045` - Fixes the bug to allow large pipelines with `-` in the name to properly render in UI.
 
-- :cask-issue:`CDAP-17074` - Improved state transitions for starting pipelines in the App Fabric system service to 
-increase stability if the service restarts unexpectedly.
+- :cask-issue:`CDAP-17074` - Improved state transitions for starting pipelines in the App Fabric system service to increase stability if the service restarts unexpectedly.
 
 - :cask-issue:`CDAP-17097` - Fixed a bug that caused splitter transforms to be unable to fetch their output ports and schemas.
 
