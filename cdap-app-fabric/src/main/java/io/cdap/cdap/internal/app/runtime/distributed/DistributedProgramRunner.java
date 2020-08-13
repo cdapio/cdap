@@ -95,6 +95,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -294,9 +295,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
 
         logProgramStart(program, options);
 
-        LOG.info("Starting {} with debugging enabled: {}, logback: {}",
-                 program.getId(), options.isDebug(), logbackURI);
-
         // Add scheduler queue name if defined
         String schedulerQueueName = options.getArguments().getOption(Constants.AppFabric.APP_SCHEDULER_QUEUE);
         if (schedulerQueueName != null && !schedulerQueueName.isEmpty()) {
@@ -351,6 +349,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
         try {
           twillController = twillPreparer.start(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS),
                                                 TimeUnit.SECONDS);
+
+          // Block on the twill controller until it is in running state or terminated (due to failure)
+          CountDownLatch latch = new CountDownLatch(1);
+          twillController.onRunning(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+          twillController.onTerminated(latch::countDown, Threads.SAME_THREAD_EXECUTOR);
+          latch.await(cConf.getLong(Constants.AppFabric.PROGRAM_MAX_START_SECONDS), TimeUnit.SECONDS);
         } finally {
           ClassLoaders.setContextClassLoader(oldClassLoader);
         }
@@ -497,7 +501,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
     Cancellable saveContextCancellable =
       LoggingContextAccessor.setLoggingContext(loggingContext);
     String userArguments = Joiner.on(", ").withKeyValueSeparator("=").join(options.getUserArguments());
-    LOG.info("Starting {} Program '{}' with Arguments [{}]", program.getType(), program.getName(), userArguments);
+
+    LOG.info("Starting {} Program '{}' with Arguments [{}], with debugging {}",
+             program.getType(), program.getName(), userArguments, options.isDebug());
     saveContextCancellable.cancel();
   }
 
