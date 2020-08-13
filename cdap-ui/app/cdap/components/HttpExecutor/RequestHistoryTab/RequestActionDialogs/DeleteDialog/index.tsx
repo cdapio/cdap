@@ -16,16 +16,17 @@
 
 import ConfirmationModal from 'components/ConfirmationModal';
 import HttpExecutorActions from 'components/HttpExecutor/store/HttpExecutorActions';
+import { IRequestHistory } from 'components/HttpExecutor/RequestHistoryTab';
 import React from 'react';
 import { connect } from 'react-redux';
 
 const mapDispatch = (dispatch) => {
   return {
-    deleteRequestLog: (requestID: string) => {
+    deleteRequestLog: (request: IRequestHistory) => {
       dispatch({
         type: HttpExecutorActions.deleteRequestLog,
         payload: {
-          requestID,
+          request,
         },
       });
     },
@@ -33,20 +34,20 @@ const mapDispatch = (dispatch) => {
 };
 
 interface IDeleteDialogProps {
-  requestID: string;
+  request: IRequestHistory;
   open: boolean;
   handleClose: () => void;
-  deleteRequestLog: (requestID: string) => void;
+  deleteRequestLog: (request: IRequestHistory) => void;
 }
 
 const DeleteDialogView: React.FC<IDeleteDialogProps> = ({
-  requestID,
+  request,
   open,
   handleClose,
   deleteRequestLog,
 }) => {
   const onDeleteClick = () => {
-    deleteRequestLog(requestID);
+    deleteRequestLog(request);
     handleClose();
   };
 

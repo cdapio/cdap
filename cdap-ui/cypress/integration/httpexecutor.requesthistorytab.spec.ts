@@ -20,34 +20,37 @@ let headers = {};
 const { dataCy } = Helpers;
 
 const MOCK_LOCAL_STORAGE = JSON.stringify([
-    {
-      method: 'GET',
-      path: 'hello.com',
-      body: 'hello',
-      headers: { pairs: [{ key: '', value: '', uniqueId: '6fd93a6e-5b2f-47aa-8143-157629bdf457' }] },
-      response: 'Problem accessing: /v3/hello.com. Reason: Not Found',
-      statusCode: 404,
-      timestamp: '7/5/2020, 6:54:19 PM',
-    },
-    {
-      method: 'DELETE',
-      path: 'hello2.com',
-      body: 'hello2',
-      headers: { pairs: [{ key: '', value: '', uniqueId: '6fd93a6e-5b2f-47aa-8143-157629bdf457' }] },
-      response: 'Problem accessing: /v3/hello2.com. Reason: Not Found',
-      statusCode: 404,
-      timestamp: '7/6/2020, 6:54:19 PM',
-    },
-    {
-      method: 'POST',
-      path: 'hello3.com',
-      body: 'hello3',
-      headers: { pairs: [{ key: '', value: '', uniqueId: '6fd93a6e-5b2f-47aa-8143-157629bdf457' }] },
-      response: 'Problem accessing: /v3/hello3.com. Reason: Not Found',
-      statusCode: 409,
-      timestamp: '7/7/2020, 6:54:19 PM',
-    }
-  ]);
+  {
+    id: '1',
+    method: 'GET',
+    path: 'hello.com',
+    body: 'hello',
+    headers: { pairs: [{ key: '', value: '', uniqueId: '6fd93a6e-5b2f-47aa-8143-157629bdf457' }] },
+    response: 'Problem accessing: /v3/hello.com. Reason: Not Found',
+    statusCode: 404,
+    timestamp: '7/5/2020, 6:54:19 PM',
+  },
+  {
+    id: '2',
+    method: 'DELETE',
+    path: 'hello2.com',
+    body: 'hello2',
+    headers: { pairs: [{ key: '', value: '', uniqueId: '6fd93a6e-5b2f-47aa-8143-157629bdf457' }] },
+    response: 'Problem accessing: /v3/hello2.com. Reason: Not Found',
+    statusCode: 404,
+    timestamp: '7/6/2020, 6:54:19 PM',
+  },
+  {
+    id: '3',
+    method: 'POST',
+    path: 'hello3.com',
+    body: 'hello3',
+    headers: { pairs: [{ key: '', value: '', uniqueId: '6fd93a6e-5b2f-47aa-8143-157629bdf457' }] },
+    response: 'Problem accessing: /v3/hello3.com. Reason: Not Found',
+    statusCode: 409,
+    timestamp: '7/7/2020, 6:54:19 PM',
+  },
+]);
 
 describe('RequestHistoryTab in httpExecutor', () => {
   // Uses API call to login instead of logging in manually through UI
@@ -73,23 +76,23 @@ describe('RequestHistoryTab in httpExecutor', () => {
 
     it('should show populate requestHistoryTab with existing items in localStorage', () => {
       JSON.parse(MOCK_LOCAL_STORAGE).forEach((req) => {
-        const timestamp = req.timestamp;
+        const ID = req.id;
 
-        cy.get(dataCy(`request-row-${timestamp}`)).should('exist');
+        cy.get(dataCy(`request-row-${ID}`)).should('exist');
 
-        cy.get(`${dataCy(`request-row-${timestamp}`)} ${dataCy('request-path')}`)
+        cy.get(`${dataCy(`request-row-${ID}`)} ${dataCy('request-path')}`)
           .invoke('text')
           .should((text) => {
             expect(text).to.eq(req.path);
           });
-        cy.get(`${dataCy(`request-row-${timestamp}`)} ${dataCy('request-method')}`)
+        cy.get(`${dataCy(`request-row-${ID}`)} ${dataCy('request-method')}`)
           .invoke('text')
           .should((text) => {
             expect(text).to.eq(req.method);
           });
 
         // Check if main page has been populated correctly
-        cy.get(dataCy(`request-row-${timestamp}`)).click();
+        cy.get(dataCy(`request-row-${ID}`)).click();
         cy.get(dataCy('request-method-selector'))
           .invoke('val')
           .should((val) => {
