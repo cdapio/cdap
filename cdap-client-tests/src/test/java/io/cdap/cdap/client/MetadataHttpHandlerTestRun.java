@@ -47,6 +47,7 @@ import io.cdap.cdap.data2.metadata.dataset.SortInfo;
 import io.cdap.cdap.data2.metadata.system.AbstractSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.system.DatasetSystemMetadataProvider;
 import io.cdap.cdap.internal.app.deploy.Specifications;
+import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.metadata.MetadataHttpHandler;
 import io.cdap.cdap.proto.DatasetInstanceConfiguration;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -554,12 +555,12 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
     Assert.assertEquals(ImmutableSet.of(AllProgramsApp.class.getSimpleName()),
                         getTags(app, MetadataScope.SYSTEM));
     // verify program system metadata, we now have profile as system metadata for workflow
-    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime", null, null);
-    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime", null, null);
-    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null, ProfileId.NATIVE);
-    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null, ProfileId.NATIVE);
+    assertProgramSystemMetadata(app.worker(AllProgramsApp.NoOpWorker.NAME), "Realtime", null);
+    assertProgramSystemMetadata(app.service(AllProgramsApp.NoOpService.NAME), "Realtime", null);
+    assertProgramSystemMetadata(app.mr(AllProgramsApp.NoOpMR.NAME), "Batch", null);
+    assertProgramSystemMetadata(app.spark(AllProgramsApp.NoOpSpark.NAME), "Batch", null);
     assertProgramSystemMetadata(app.workflow(AllProgramsApp.NoOpWorkflow.NAME), "Batch",
-                                AllProgramsApp.NoOpWorkflow.DESCRIPTION, ProfileId.NATIVE);
+                                AllProgramsApp.NoOpWorkflow.DESCRIPTION);
 
     // update dataset properties to add the workflow.local.dataset property to it.
     try {
@@ -1120,18 +1121,18 @@ public class MetadataHttpHandlerTestRun extends MetadataTestBase {
   }
 
   private void assertProgramSystemMetadata(ProgramId programId, String mode,
-                                           @Nullable String description,
-                                           @Nullable ProfileId profileId) throws Exception {
+                                           @Nullable String description) throws Exception {
     ImmutableMap.Builder<String, String> properties = ImmutableMap.<String, String>builder()
       .put(MetadataConstants.ENTITY_NAME_KEY, programId.getEntityName())
       .put(AbstractSystemMetadataWriter.VERSION_KEY, ApplicationId.DEFAULT_VERSION);
     if (description != null) {
       properties.put(MetadataConstants.DESCRIPTION_KEY, description);
     }
-    if (profileId != null) {
-      properties.put("profile", profileId.getScopedName());
+    if (SystemArguments.isProfileAllowed(programId.getType())) {
+      String profileScope = ProfileId.NATIVE.getScopedName();
+      properties.put("profile", profileScope);
       // need to wait for the profile id to come up since we are updating it asyncly
-      Tasks.waitFor(profileId.getScopedName(), () -> getProperties(programId, MetadataScope.SYSTEM).get("profile"),
+      Tasks.waitFor(profileScope, () -> getProperties(programId, MetadataScope.SYSTEM).get("profile"),
                     10, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
     }
     Assert.assertEquals(properties.build(), removeCreationTime(getProperties(programId, MetadataScope.SYSTEM)));
