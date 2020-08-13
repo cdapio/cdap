@@ -50,6 +50,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
   public static final RouteDestination METRICS_PROCESSOR = new RouteDestination(Constants.Service.METRICS_PROCESSOR);
   public static final RouteDestination DATASET_EXECUTOR = new RouteDestination(Constants.Service.DATASET_EXECUTOR);
   public static final RouteDestination MESSAGING = new RouteDestination(Constants.Service.MESSAGING_SERVICE);
+  public static final RouteDestination RUNTIME = new RouteDestination(Constants.Service.RUNTIME);
   public static final RouteDestination DONT_ROUTE = new RouteDestination(Constants.Router.DONT_ROUTE_SERVICE);
 
   /**
@@ -172,6 +173,7 @@ public final class RouterPathLookup extends AbstractHttpHandler {
         case Constants.Service.METADATA_SERVICE: return METADATA_SERVICE;
         case Constants.Service.EXPLORE_HTTP_USER_SERVICE: return EXPLORE_HTTP_USER_SERVICE;
         case Constants.Service.MESSAGING_SERVICE: return MESSAGING;
+        case Constants.Service.RUNTIME: return RUNTIME;
         default: return null;
       }
     } else if (uriParts.length == 7 && uriParts[3].equals("data") && uriParts[4].equals("datasets") &&

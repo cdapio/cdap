@@ -147,7 +147,6 @@ public class MonitorHandlerModule extends AbstractModule {
     mapBinder.addBinding(Constants.Service.METADATA_SERVICE).to(MetadataServiceManager.class);
     mapBinder.addBinding(Constants.Service.EXPLORE_HTTP_USER_SERVICE).to(ExploreServiceManager.class);
     mapBinder.addBinding(Constants.Service.MESSAGING_SERVICE).to(MessagingServiceManager.class);
-    mapBinder.addBinding(Constants.Service.RUNTIME).to(RuntimeServiceManager.class);
 
     // The ServiceStore uses a special non-TX KV Table.
     bindDatasetModule(binder, new HBaseKVTableDefinition.Module());
