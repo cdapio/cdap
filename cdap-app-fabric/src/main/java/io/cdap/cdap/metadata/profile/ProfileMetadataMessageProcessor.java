@@ -193,7 +193,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                       "Ignoring the message {}", programId.getParent(), programId, message);
           return;
         }
-        if (SystemArguments.isProfileAllowed(programId.getType())) {
+        if (PROFILE_ALLOWED_PROGRAM_TYPES.contains(programId.getType())) {
           collectProgramProfileMetadata(programId, null, updates);
         }
         break;
