@@ -48,7 +48,7 @@ const CLEAN_CHECK_COUNT = 3;
 const styles = (theme): StyleRules => {
   return {
     snackbar: {
-      backgroundColor: theme.palette.grey[300],
+      backgroundColor: theme.palette.grey[600],
       color: 'black',
     },
   };
