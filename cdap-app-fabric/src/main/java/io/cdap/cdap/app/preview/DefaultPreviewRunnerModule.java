@@ -28,7 +28,6 @@ import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.deploy.ManagerFactory;
 import io.cdap.cdap.app.guice.AppFabricServiceRuntimeModule;
 import io.cdap.cdap.app.store.Store;
-import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.config.PreferencesService;
@@ -56,7 +55,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
@@ -181,9 +179,6 @@ public class DefaultPreviewRunnerModule extends PrivateModule implements Preview
     bindPreviewRunner(binder());
     expose(PreviewRunner.class);
 
-    // This binding is temporary. Will be removed after TMS migration.
-    bind(PreviewStore.class).to(DefaultPreviewStore.class).in(Scopes.SINGLETON);
-    expose(PreviewStore.class);
     bind(Scheduler.class).to(NoOpScheduler.class);
 
     bind(DataTracerFactory.class).to(DefaultDataTracerFactory.class);
