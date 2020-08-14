@@ -40,7 +40,7 @@ describe('FunctionDropdownArgumentsRow', () => {
       });
 
       it('should parse a string with one argument', () => {
-        expect(parse('myAlias:myFunc(field1,a,true)')).toEqual({
+        expect(parse(`myAlias:myFunc(field1,${encodeURIComponent('a')},true)`)).toEqual({
           alias: 'myAlias',
           func: 'myFunc',
           field: 'field1',
@@ -50,7 +50,7 @@ describe('FunctionDropdownArgumentsRow', () => {
       });
 
       it('should parse a string with multiple arguments', () => {
-        expect(parse('myAlias:myFunc(field1,a,b,c,true)')).toEqual({
+        expect(parse(`myAlias:myFunc(field1,${encodeURIComponent('a,b,c')},true)`)).toEqual({
           alias: 'myAlias',
           func: 'myFunc',
           field: 'field1',
@@ -60,7 +60,7 @@ describe('FunctionDropdownArgumentsRow', () => {
       });
 
       it('should parse an argument with a colon', () => {
-        expect(parse('myAlias:myFunc(field1,a:b,c,true)')).toEqual({
+        expect(parse(`myAlias:myFunc(field1,${encodeURIComponent('a:b,c')},true)`)).toEqual({
           alias: 'myAlias',
           func: 'myFunc',
           field: 'field1',
@@ -70,7 +70,7 @@ describe('FunctionDropdownArgumentsRow', () => {
       });
 
       it('should treat an invalid ignoreNulls value as the default (true)', () => {
-        expect(parse('myAlias:myFunc(field1,a,b,c,hjg)')).toEqual({
+        expect(parse(`myAlias:myFunc(field1,${encodeURIComponent('a,b,c')},hjg)`)).toEqual({
           alias: 'myAlias',
           func: 'myFunc',
           field: 'field1',
@@ -80,7 +80,7 @@ describe('FunctionDropdownArgumentsRow', () => {
       });
 
       it('should handle a missing closing parentheses', () => {
-        expect(parse('myAlias:myFunc(field1,a,b,c,true')).toEqual({
+        expect(parse(`myAlias:myFunc(field1,${encodeURIComponent('a,b,c')},true`)).toEqual({
           alias: 'myAlias',
           func: '',
           field: '',
@@ -90,7 +90,7 @@ describe('FunctionDropdownArgumentsRow', () => {
       });
 
       it('should handle a missing opening parentheses', () => {
-        expect(parse('myAlias:myFuncfield1,a,b,c,true)')).toEqual({
+        expect(parse(`myAlias:myFuncfield1,${encodeURIComponent('a,b,c')},true)`)).toEqual({
           alias: 'myAlias',
           func: '',
           field: '',
@@ -134,7 +134,7 @@ describe('FunctionDropdownArgumentsRow', () => {
             ignoreNulls: true,
             arguments: 'a',
           })
-        ).toBe('myAlias:myFunc(field1,a,true)');
+        ).toBe(`myAlias:myFunc(field1,${encodeURIComponent('a')},true)`);
       });
 
       it('should serialize inputs with multiple arguments', () => {
@@ -146,7 +146,7 @@ describe('FunctionDropdownArgumentsRow', () => {
             ignoreNulls: true,
             arguments: 'a,b,c',
           })
-        ).toBe('myAlias:myFunc(field1,a,b,c,true)');
+        ).toBe(`myAlias:myFunc(field1,${encodeURIComponent('a,b,c')},true)`);
       });
 
       it('should handle arguments with leading an trailing spaces', () => {
@@ -158,7 +158,7 @@ describe('FunctionDropdownArgumentsRow', () => {
             ignoreNulls: true,
             arguments: '  a,b,c  ',
           })
-        ).toBe('myAlias:myFunc(field1,a,b,c,true)');
+        ).toBe(`myAlias:myFunc(field1,${encodeURIComponent('a,b,c')},true)`);
       });
 
       it('should serialize false ignoreNulls', () => {
@@ -170,7 +170,7 @@ describe('FunctionDropdownArgumentsRow', () => {
             ignoreNulls: false,
             arguments: 'a,b,c',
           })
-        ).toBe('myAlias:myFunc(field1,a,b,c,false)');
+        ).toBe(`myAlias:myFunc(field1,${encodeURIComponent('a,b,c')},false)`);
       });
 
       it('should return an empty string if the alias is not provided', () => {
