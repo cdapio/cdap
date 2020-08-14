@@ -45,7 +45,7 @@ export function parse(value) {
 
   let args = '';
   if (params.length > 2) {
-    args = params.slice(1, params.length - 1).join(',');
+    args = decodeURIComponent(params.slice(1, params.length - 1).join(','));
   }
 
   return {
@@ -65,7 +65,8 @@ export function serialize(fields) {
   }
 
   const trimmedArgs = args && args.trim();
-  const argumentString = trimmedArgs && trimmedArgs.length > 0 ? `,${trimmedArgs}` : '';
+  const argumentString =
+    trimmedArgs && trimmedArgs.length > 0 ? `,${encodeURIComponent(trimmedArgs)}` : '';
 
   const updatedValue = `${alias}:${func}(${field}${argumentString},${!!ignoreNulls})`;
   return updatedValue;
