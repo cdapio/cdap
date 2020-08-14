@@ -42,6 +42,10 @@ describe('Output Schema', () => {
     });
   });
 
+  before(() => {
+    cy.cleanup_pipelines(headers, PIPELINE_NAME);
+  })
+
   const schemaFieldSuffix = '-schema-field';
 
   const projection: INodeInfo = { nodeName: 'Projection', nodeType: 'transform' };
