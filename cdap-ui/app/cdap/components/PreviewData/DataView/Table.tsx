@@ -62,9 +62,10 @@ export const styles = (theme): StyleRules => ({
     textAlign: 'left',
     height: '40px',
     lineHeight: '40px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     padding: '0px 10px',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   },
 
   // TO DO: Currently the width is fixed. Future plan is to let users vary the column widths
