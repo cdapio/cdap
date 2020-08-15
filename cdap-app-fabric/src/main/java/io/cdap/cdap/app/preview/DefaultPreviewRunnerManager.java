@@ -82,11 +82,11 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
   private final DatasetFramework datasetFramework;
   private final SecureStore secureStore;
   private final TransactionSystemClient transactionSystemClient;
-  private Injector previewInjector;
   private final PreviewRunnerModule previewRunnerModule;
   private final Map<String, PreviewRunnerService> previewPollers;
   private final LevelDBTableService previewLevelDBTableService;
   private final PreviewRequestFetcherFactory previewRequestFetcherFactory;
+  private PreviewRunner runner;
 
   @Inject
   DefaultPreviewRunnerManager(
@@ -114,7 +114,14 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
 
   @Override
   protected void startUp() throws Exception {
-    previewInjector = createPreviewInjector();
+    Injector previewInjector = createPreviewInjector();
+
+    // Starts common services
+    runner = previewInjector.getInstance(PreviewRunner.class);
+    if (runner instanceof Service) {
+      ((Service) runner).startAndWait();
+    }
+
     // Create and start the preview poller services.
     for (int i = 0; i < maxConcurrentPreviews; i++) {
       String pollerInfo = UUID.randomUUID().toString();
@@ -126,21 +133,17 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
       pollerService.startAndWait();
       previewPollers.put(pollerInfo, pollerService);
     }
-    PreviewRunner runner = previewInjector.getInstance(PreviewRunner.class);
-    if (runner instanceof Service) {
-      ((Service) runner).startAndWait();
-    }
   }
 
   @Override
   protected void shutDown() throws Exception {
-    PreviewRunner runner = previewInjector.getInstance(PreviewRunner.class);
-    if (runner instanceof Service) {
-      stopQuietly((Service) runner);
-    }
-
+    // Should stop the polling service, hence individual preview runs, before stopping the top level preview runner.
     for (Service pollerService : previewPollers.values()) {
       stopQuietly(pollerService);
+    }
+
+    if (runner instanceof Service) {
+      stopQuietly((Service) runner);
     }
   }
 
@@ -161,8 +164,7 @@ public class DefaultPreviewRunnerManager extends AbstractIdleService implements 
     service.stopAndWait();
     String newRunnerId = UUID.randomUUID().toString();
     PreviewRunnerService newService = new PreviewRunnerService(
-      previewCConf, previewInjector.getInstance(PreviewRunner.class),
-      previewRequestFetcherFactory.create(Bytes.toBytes(newRunnerId)));
+      previewCConf, runner, previewRequestFetcherFactory.create(Bytes.toBytes(newRunnerId)));
     newService.startAndWait();
     previewPollers.put(newRunnerId, newService);
   }
