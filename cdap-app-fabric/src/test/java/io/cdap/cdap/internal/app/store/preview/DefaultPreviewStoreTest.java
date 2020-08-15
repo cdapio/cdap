@@ -171,4 +171,49 @@ public class DefaultPreviewStoreTest {
     allWaiting = store.getAllInWaitingState();
     Assert.assertEquals(0, allWaiting.size());
   }
+
+  @Test
+  public void testPreviewTTL() throws Exception {
+    PreviewConfig previewConfig = new PreviewConfig("WordCount", ProgramType.WORKFLOW, null, null);
+    AppRequest<?> testRequest = new AppRequest<>(new ArtifactSummary("test", "1.0"), null, previewConfig);
+
+    String firstApplication = RunIds.generate(System.currentTimeMillis() - 5000).getId();
+    ApplicationId firstApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), firstApplication);
+
+    String secondApplication = RunIds.generate(System.currentTimeMillis() - 4000).getId();
+    ApplicationId secondApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), secondApplication);
+
+    String thirdApplication = RunIds.generate(System.currentTimeMillis()).getId();
+    ApplicationId thirdApplicationId = new ApplicationId(NamespaceMeta.DEFAULT.getName(), thirdApplication);
+
+    store.add(firstApplicationId, testRequest);
+    store.add(secondApplicationId, testRequest);
+    store.add(thirdApplicationId, testRequest);
+
+    // set poller info so that it gets removed from WAITING state
+    store.setPreviewRequestPollerInfo(firstApplicationId, null);
+
+    // put data for the first application
+    store.put(firstApplicationId, "mytracer", "key1", "value1");
+    store.put(firstApplicationId, "mytracer", "key1", 2);
+
+    // get the data for first application and logger name "mytracer"
+    Map<String, List<JsonElement>> firstApplicationData = store.get(firstApplicationId, "mytracer");
+    // key1 and key2 are two keys inserted for the first application.
+    Assert.assertEquals(1, firstApplicationData.size());
+    Assert.assertEquals("value1", firstApplicationData.get("key1").get(0).getAsString());
+    Assert.assertEquals(2, firstApplicationData.get("key1").get(1).getAsInt());
+
+    // secondApplication and thirdApplication are in waiting state
+    Assert.assertEquals(2, store.getAllInWaitingState().size());
+    // Delete data for firstApplication as well as secondApplication
+    store.deleteExpiredData(2);
+
+    firstApplicationData = store.get(firstApplicationId, "mytracer");
+    Assert.assertEquals(0, firstApplicationData.size());
+
+    // only thirdApplication should be in waiting now
+    Assert.assertEquals(1, store.getAllInWaitingState().size());
+    Assert.assertEquals(thirdApplicationId, store.getAllInWaitingState().iterator().next().getProgram().getParent());
+  }
 }
