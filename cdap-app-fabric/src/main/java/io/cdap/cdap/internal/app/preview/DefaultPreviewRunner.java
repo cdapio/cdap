@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.common.util.concurrent.Uninterruptibles;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -33,7 +32,6 @@ import io.cdap.cdap.app.runtime.ProgramController;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
@@ -46,10 +44,8 @@ import io.cdap.cdap.internal.app.runtime.AbstractListener;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramNotificationSubscriberService;
-import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.appender.LogAppenderInitializer;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.BasicThrowable;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.artifact.AppRequest;
@@ -57,7 +53,6 @@ import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.table.StructuredTableRegistry;
 import io.cdap.cdap.store.StoreDefinition;
@@ -66,8 +61,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -102,7 +95,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   private final DataTracerFactory dataTracerFactory;
   private final NamespaceAdmin namespaceAdmin;
   private final MetricsCollectionService metricsCollectionService;
-  private final MetricsQueryHelper metricsQueryHelper;
   private final ProgramNotificationSubscriberService programNotificationSubscriberService;
   private final LevelDBTableService levelDBTableService;
   private final StructuredTableAdmin structuredTableAdmin;
@@ -118,7 +110,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
                        ProgramLifecycleService programLifecycleService,
                        PreviewStore previewStore, DataTracerFactory dataTracerFactory,
                        NamespaceAdmin namespaceAdmin,
-                       MetricsCollectionService metricsCollectionService, MetricsQueryHelper metricsQueryHelper,
+                       MetricsCollectionService metricsCollectionService,
                        ProgramNotificationSubscriberService programNotificationSubscriberService,
                        LevelDBTableService levelDBTableService,
                        StructuredTableAdmin structuredTableAdmin,
@@ -134,7 +126,6 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
     this.dataTracerFactory = dataTracerFactory;
     this.namespaceAdmin = namespaceAdmin;
     this.metricsCollectionService = metricsCollectionService;
-    this.metricsQueryHelper = metricsQueryHelper;
     this.programNotificationSubscriberService = programNotificationSubscriberService;
     this.levelDBTableService = levelDBTableService;
     this.structuredTableAdmin = structuredTableAdmin;
@@ -260,7 +251,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
         // Timeout, kill the preview
         timeout.set(true);
         try {
-          stopPreview(programId.getParent());
+          stopPreview(programId);
         } catch (Exception ex) {
           LOG.warn("Failed to stop preview upon timeout of {} minutes", timeoutMins, ex);
         }
@@ -275,37 +266,8 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
   }
 
   @Override
-  public PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException {
-    PreviewStatus status = previewStore.getPreviewStatus(applicationId);
-    if (status == null) {
-      throw new NotFoundException(applicationId);
-    }
-    return status;
-  }
-
-  @Override
-  public void stopPreview(ApplicationId applicationId) throws Exception {
-    ProgramRunId programRunId = getRunRecord(applicationId).getProgramRunId();
-    programLifecycleService.stop(programRunId.getParent());
-  }
-
-  @Override
-  public Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) {
-    return previewStore.get(applicationId, tracerName);
-  }
-
-  @Override
-  public RunRecordDetail getRunRecord(ApplicationId applicationId) throws Exception {
-    ProgramRunId runId = previewStore.getProgramRunId(applicationId);
-    if (runId == null) {
-      throw new NotFoundException(applicationId);
-    }
-    return programLifecycleService.getRunRecordMeta(runId);
-  }
-
-  @Override
-  public MetricsQueryHelper getMetricsQueryHelper() {
-    return metricsQueryHelper;
+  public void stopPreview(ProgramId programId) throws Exception {
+    programLifecycleService.stop(programId);
   }
 
   @Override

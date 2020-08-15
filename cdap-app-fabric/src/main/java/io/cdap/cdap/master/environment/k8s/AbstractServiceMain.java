@@ -25,6 +25,7 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -149,6 +150,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
     List<Module> modules = new ArrayList<>();
     modules.add(new ConfigModule(cConf, hConf, sConf));
+    modules.add(new PreviewConfigModule(cConf, hConf, sConf));
     modules.add(new IOModule());
     modules.add(new MetricsClientRuntimeModule().getDistributedModules());
     modules.add(new AbstractModule() {

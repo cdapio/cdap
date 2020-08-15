@@ -127,72 +127,72 @@ public class PreviewDataStreamsTest extends HydratorTestBase {
 
     // Start the preview and get the corresponding PreviewRunner.
     ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
-    final PreviewRunner previewRunner = previewManager.getRunner();
 
     // Wait for the preview to be running and wait until the records are processed in the sink.
     Tasks.waitFor(true, new Callable<Boolean>() {
       @Override
       public Boolean call() throws Exception {
-        Map<String, List<JsonElement>> data = previewRunner.getData(previewId, "sink");
+        Map<String, List<JsonElement>> data = previewManager.getData(previewId, "sink");
         return data != null && data.get(DATA_TRACER_PROPERTY) != null && data.get(DATA_TRACER_PROPERTY).size() == 3;
       }
     }, 1, TimeUnit.MINUTES);
 
     // check data in source and transform
-    checkPreviewStore(previewRunner, previewId, "source", 3);
-    checkPreviewStore(previewRunner, previewId, "transform", 3);
+    checkPreviewStore(previewManager, previewId, "source", 3);
+    checkPreviewStore(previewManager, previewId, "transform", 3);
 
     // Wait for the pipeline to be shutdown by timer.
     TimeUnit.MINUTES.sleep(1);
     Tasks.waitFor(PreviewStatus.Status.KILLED_BY_TIMER, new Callable<PreviewStatus.Status>() {
       @Override
       public PreviewStatus.Status call() throws Exception {
-        return previewRunner.getStatus(previewId).getStatus();
+        return previewManager.getStatus(previewId).getStatus();
       }
     }, 1, TimeUnit.MINUTES);
 
     // Validate the metrics for preview
-    validateMetric(3, previewId, "source.records.out", previewRunner);
-    validateMetric(3, previewId, "transform.records.in", previewRunner);
-    validateMetric(3, previewId, "transform.records.out", previewRunner);
-    validateMetric(3, previewId, "sink.records.in", previewRunner);
-    validateMetric(3, previewId, "sink.records.out", previewRunner);
+    validateMetric(3, previewId, "source.records.out", previewManager);
+    validateMetric(3, previewId, "transform.records.in", previewManager);
+    validateMetric(3, previewId, "transform.records.out", previewManager);
+    validateMetric(3, previewId, "sink.records.in", previewManager);
+    validateMetric(3, previewId, "sink.records.out", previewManager);
 
     // Check the sink table is not created in the real space.
     DataSetManager<Table> sinkManager = getDataset(sinkTableName);
     Assert.assertNull(sinkManager.get());
   }
 
-  private void checkPreviewStore(PreviewRunner previewRunner, ApplicationId previewId, String tracerName,
+  private void checkPreviewStore(PreviewManager previewManager, ApplicationId previewId, String tracerName,
                                  int expectedNumber) throws NotFoundException {
-    Map<String, List<JsonElement>> result = previewRunner.getData(previewId, tracerName);
+    Map<String, List<JsonElement>> result = previewManager.getData(previewId, tracerName);
     Assert.assertTrue(!result.isEmpty());
     Assert.assertEquals(expectedNumber, result.get(DATA_TRACER_PROPERTY).size());
   }
 
   private void validateMetric(long expected, ApplicationId previewId,
-                              String metric, PreviewRunner runner) throws TimeoutException, InterruptedException {
+                              String metric, PreviewManager previewManager)
+    throws TimeoutException, InterruptedException {
     Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.NAMESPACE, previewId.getNamespace(),
                                                Constants.Metrics.Tag.APP, previewId.getEntityName(),
                                                Constants.Metrics.Tag.SPARK, DataStreamsSparkLauncher.NAME);
     String metricName = "user." + metric;
-    long value = getTotalMetric(tags, metricName, runner);
+    long value = getTotalMetric(tags, metricName, previewManager);
 
     // Min sleep time is 10ms, max sleep time is 1 seconds
     long sleepMillis = TimeUnit.SECONDS.toMillis(1);
     Stopwatch stopwatch = new Stopwatch().start();
     while (value < expected && stopwatch.elapsedTime(TimeUnit.SECONDS) < 5) {
       TimeUnit.MILLISECONDS.sleep(sleepMillis);
-      value = getTotalMetric(tags, metricName, runner);
+      value = getTotalMetric(tags, metricName, previewManager);
     }
     // wait for won't throw an exception if the metric count is greater than expected
     Assert.assertEquals(expected, value);
   }
 
-  private long getTotalMetric(Map<String, String> tags, String metricName, PreviewRunner runner) {
+  private long getTotalMetric(Map<String, String> tags, String metricName, PreviewManager previewManager) {
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
                                                 tags, new ArrayList<String>());
-    Collection<MetricTimeSeries> result = runner.getMetricsQueryHelper().getMetricStore().query(query);
+    Collection<MetricTimeSeries> result = previewManager.getMetricsQueryHelper().getMetricStore().query(query);
     if (result.isEmpty()) {
       return 0;
     }

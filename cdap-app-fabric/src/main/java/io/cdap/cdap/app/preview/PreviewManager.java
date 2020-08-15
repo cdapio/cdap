@@ -15,10 +15,18 @@
  */
 package io.cdap.cdap.app.preview;
 
+import com.google.gson.JsonElement;
+import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.read.LogReader;
+import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ProgramRunId;
+
+import java.util.List;
+import java.util.Map;
 
 /**
  * Interface used for managing the preview runs.
@@ -35,10 +43,40 @@ public interface PreviewManager {
   ApplicationId start(NamespaceId namespace, AppRequest<?> request) throws Exception;
 
   /**
-   * Get the {@link PreviewRunner} responsible for managing the preview.
-   * @return the {@link PreviewRunner} associated with the preview
+   * Get the status of the preview.
+   * @param applicationId id of the preview application for which preview status is to be returned
+   * @return the status of the preview
+   * @throws NotFoundException if preview application is not found
    */
-  PreviewRunner getRunner();
+  PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException;
+
+  /**
+   * Stop the preview run represented by this {@link ApplicationId}.
+   * @param applicationId id of the preview
+   * @throws Exception thrown when any error in stopping the preview run
+   */
+  void stopPreview(ApplicationId applicationId) throws Exception;
+
+  /**
+   * Get the data associated with the preview run represented by this {@link PreviewRunner}.
+   * @param applicationId the id of the preview application
+   * @param tracerName the name of the tracer used for preview
+   * @return the {@link Map} of properties associated with the tracer for a given preview
+   */
+  Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName);
+
+  /**
+   * Get the run id of the program executed as a part of preview.
+   * @param applicationId the id of the preview application
+   * @return the {@link ProgramRunId} associated with the preview or {@code null} if there is no run record
+   */
+  ProgramRunId getRunId(ApplicationId applicationId) throws Exception;
+
+  /**
+   * Get the helper object to query for metrics for the preview run.
+   * @return the {@link MetricsQueryHelper} associated with the preview
+   */
+  MetricsQueryHelper getMetricsQueryHelper();
 
   /**
    * Returns a {@link LogReader} for reading logs for the given preview.
