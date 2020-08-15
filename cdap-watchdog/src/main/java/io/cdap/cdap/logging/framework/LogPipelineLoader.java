@@ -159,6 +159,10 @@ public class LogPipelineLoader {
     // This shouldn't happen since the cdap pipeline is packaged in the jar.
     Preconditions.checkState(systemPipeline != null, "Missing cdap system pipeline configuration");
 
+    if (cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR) == null) {
+      return Collections.singleton(systemPipeline);
+    }
+
     List<File> files = DirUtils.listFiles(new File(cConf.get(Constants.Logging.PIPELINE_CONFIG_DIR)), "xml");
     return Stream.concat(Stream.of(systemPipeline), files.stream().map(this::toURL).filter(Objects::nonNull))::iterator;
   }
