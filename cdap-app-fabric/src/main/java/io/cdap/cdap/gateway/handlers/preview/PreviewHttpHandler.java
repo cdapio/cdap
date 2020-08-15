@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.common.BadRequestException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.CaseInsensitiveEnumTypeAdapterFactory;
@@ -40,7 +41,6 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.codec.BasicThrowableCodec;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -58,7 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -108,7 +107,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                    @PathParam("preview-id") String previewId) throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    previewManager.getRunner(application).stopPreview();
+    previewManager.getRunner().stopPreview(application);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -118,7 +117,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                         @PathParam("preview-id") String previewId)  throws Exception {
     NamespaceId namespace = new NamespaceId(namespaceId);
     ApplicationId application = namespace.app(previewId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getStatus()));
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner().getStatus(application)));
   }
 
   @GET
@@ -134,9 +133,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                       @PathParam("namespace-id") String namespaceId,
                       @PathParam("preview-id") String previewId,
                       @PathParam("tracer-id") String tracerId) throws Exception {
-    NamespaceId namespace = new NamespaceId(namespaceId);
-    ApplicationId application = namespace.app(previewId);
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner(application).getData(tracerId)));
+    ApplicationId previewAppId = validateAndGetAppId(namespaceId, previewId);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(previewManager.getRunner().getData(previewAppId, tracerId)));
   }
 
   @POST
@@ -144,8 +142,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
   public void getTracersData(FullHttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
                              @PathParam("preview-id") String previewId) throws Exception {
-    NamespaceId namespace = new NamespaceId(namespaceId);
-    ApplicationId application = namespace.app(previewId);
+    ApplicationId application = validateAndGetAppId(namespaceId, previewId);
+
     Map<String, List<String>> previewRequest;
     try (Reader reader = new InputStreamReader(new ByteBufInputStream(request.content()), StandardCharsets.UTF_8)) {
       previewRequest = GSON.fromJson(reader, STRING_LIST_MAP_TYPE);
@@ -163,7 +161,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
 
     Map<String, Map<String, List<JsonElement>>> result = new HashMap<>();
     for (String tracerName : tracerNames) {
-      result.put(tracerName, previewManager.getRunner(application).getData(tracerName));
+      result.put(tracerName, previewManager.getRunner().getData(application, tracerName));
     }
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(result));
   }
@@ -178,7 +176,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                              @QueryParam("filter") @DefaultValue("") String filterStr,
                              @QueryParam("format") @DefaultValue("text") String format,
                              @QueryParam("suppress") List<String> suppress) throws Exception {
-    sendLogs(responder, namespaceId, previewId,
+    sendLogs(namespaceId, previewId,
              info -> doGetLogs(info.getLogReader(), responder, info.getLoggingContext(),
                                fromTimeSecsParam, toTimeSecsParam, escape, filterStr,
                                info.getRunRecord(), format, suppress));
@@ -195,7 +193,7 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                                  @QueryParam("filter") @DefaultValue("") String filterStr,
                                  @QueryParam("format") @DefaultValue("text") String format,
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
-    sendLogs(responder, namespaceId, previewId,
+    sendLogs(namespaceId, previewId,
              info -> doPrev(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
                             fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
@@ -211,26 +209,18 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                                  @QueryParam("filter") @DefaultValue("") String filterStr,
                                  @QueryParam("format") @DefaultValue("text") String format,
                                  @QueryParam("suppress") List<String> suppress) throws Exception {
-    sendLogs(responder, namespaceId, previewId,
+    sendLogs(namespaceId, previewId,
              info -> doNext(info.getLogReader(), responder, info.getLoggingContext(), maxEvents,
                             fromOffsetStr, escape, filterStr, info.getRunRecord(), format, suppress));
   }
 
-  private void sendLogs(HttpResponder responder, String namespaceId, String previewId,
-                        Consumer<LogReaderInfo> logsResponder) throws Exception {
-    ProgramRunId runId = getProgramRunId(namespaceId, previewId);
-    if (runId == null) {
-      responder.sendStatus(HttpResponseStatus.OK);
-      return;
-    }
-    RunRecordDetail runRecord = getRunRecord(namespaceId, previewId);
-    if (runRecord == null) {
-      responder.sendStatus(HttpResponseStatus.OK);
-      return;
-    }
-    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runId, runRecord.getSystemArgs());
-    LogReader logReader = previewManager.getLogReader(runId.getParent().getParent());
-    logsResponder.accept(new LogReaderInfo(logReader, loggingContext, runRecord));
+  private void sendLogs(String namespaceId, String previewId, Consumer<LogReaderInfo> logsResponder) throws Exception {
+    ApplicationId applicationId = new ApplicationId(namespaceId, previewId);
+    RunRecordDetail runRecordDetail = previewManager.getRunner().getRunRecord(applicationId);
+    LoggingContext loggingContext = LoggingContextHelper.getLoggingContextWithRunId(runRecordDetail.getProgramRunId(),
+                                                                                    runRecordDetail.getSystemArgs());
+    LogReader logReader = previewManager.getLogReader();
+    logsResponder.accept(new LogReaderInfo(logReader, loggingContext, runRecordDetail));
   }
 
   @POST
@@ -240,7 +230,9 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                      @PathParam("preview-id") String previewId,
                      @QueryParam("target") String target,
                      @QueryParam("tag") List<String> tags) throws Exception {
-    MetricsQueryHelper helper = getMetricsQueryHelper(namespaceId, previewId);
+    validateAndGetAppId(namespaceId, previewId);
+
+    MetricsQueryHelper helper = getMetricsQueryHelper();
     if (target == null) {
       responder.sendJson(HttpResponseStatus.BAD_REQUEST, "Required target param is missing");
       return;
@@ -275,7 +267,10 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
                     @QueryParam("metric") List<String> metrics,
                     @QueryParam("groupBy") List<String> groupBy,
                     @QueryParam("tag") List<String> tags) throws Exception {
-    MetricsQueryHelper helper = getMetricsQueryHelper(namespaceId, previewId);
+    // Check if valid application id
+    validateAndGetAppId(namespaceId, previewId);
+
+    MetricsQueryHelper helper = getMetricsQueryHelper();
     try {
       Map<String, List<String>> queryParameters = new QueryStringDecoder(request.uri()).parameters();
       if (queryParameters.isEmpty()) {
@@ -301,18 +296,8 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
     }
   }
 
-  @Nullable
-  private ProgramRunId getProgramRunId(String namespaceId, String previewId) throws Exception {
-     return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getProgramRunId();
-  }
-
-  @Nullable
-  private RunRecordDetail getRunRecord(String namespaceId, String previewId) throws Exception {
-    return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getRunRecord();
-  }
-
-  private MetricsQueryHelper getMetricsQueryHelper(String namespaceId, String previewId) throws Exception {
-    return previewManager.getRunner(new ApplicationId(namespaceId, previewId)).getMetricsQueryHelper();
+  private MetricsQueryHelper getMetricsQueryHelper() {
+    return previewManager.getRunner().getMetricsQueryHelper();
   }
 
   private List<String> overrideTags(List<String> tags, String namespaceId, String previewId) {
@@ -350,6 +335,14 @@ public class PreviewHttpHandler extends AbstractLogHttpHandler {
         tags.put(MetricsQueryHelper.APP_STRING, previewId);
       }
     }
+  }
+
+  // Create the application ID for the supplied namespace and preview if its valid.
+  // Validity is verified by checking its status in the store.
+  private ApplicationId validateAndGetAppId(String namespace, String preview) throws NotFoundException {
+    ApplicationId applicationId = new ApplicationId(namespace, preview);
+    previewManager.getRunner().getStatus(applicationId);
+    return applicationId;
   }
 
   /**
