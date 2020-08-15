@@ -43,7 +43,9 @@ import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -71,6 +73,18 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     deleteAllArtifact();
   }
 
+  @BeforeClass
+  public static void initPreviewService() throws Exception {
+    // Start the preview service main, which will use its own local datadir, thus should fetch artifact location
+    // from appFabric when running a preview
+    startService(PreviewServiceMain.class);
+  }
+
+  @AfterClass
+  public static void afterPreviewService() throws Exception {
+    stopService(PreviewServiceMain.class);
+  }
+
   @Test
   public void testPreviewSimpleApp() throws Exception {
     // Build the app
@@ -81,10 +95,6 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     String artifactName = PreviewTestApp.class.getSimpleName();
     String artifactVersion = "1.0.0-SNAPSHOT";
     deployArtifact(appJar, artifactName, artifactVersion);
-
-    // Start the preview service main, which will use its own local datadir, thus should fetch artifact location
-    // from appFabric when running a preview
-    startService(PreviewServiceMain.class);
 
     // Run a preview
     ArtifactSummary artifactSummary = new ArtifactSummary(artifactName, artifactVersion);
@@ -108,9 +118,6 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     Assert.assertEquals(Collections.singletonMap(PreviewTestApp.TRACER_KEY,
                                                  Collections.singletonList(PreviewTestApp.TRACER_VAL)),
                         tracerData);
-
-    // Stop the preview service main to
-    stopService(PreviewServiceMain.class);
 
     // Clean up
     deleteArtfiact(artifactName, artifactVersion);
@@ -146,9 +153,6 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
         .build(), getHttpRequestConfig());
     Assert.assertEquals(HttpURLConnection.HTTP_OK, response.getResponseCode());
 
-    // Start preview service
-    startService(PreviewServiceMain.class);
-
     // Run a preview
     String expectedOutput = "output_value";
     ArtifactId appArtifactId = new ArtifactId(appArtifactName, new ArtifactVersion(artifactVersion),
@@ -176,8 +180,6 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
     Assert.assertEquals(Collections.singletonMap(PreviewTestAppWithPlugin.TRACER_KEY,
                                                  Collections.singletonList(expectedOutput)),
                         tracerData);
-
-    stopService(PreviewServiceMain.class);
   }
 
   /**
@@ -260,5 +262,4 @@ public class PreviewServiceMainTest extends MasterServiceMainTestBase {
   private HttpRequestConfig getHttpRequestConfig() {
     return new HttpRequestConfig(0, 0, false);
   }
-
 }

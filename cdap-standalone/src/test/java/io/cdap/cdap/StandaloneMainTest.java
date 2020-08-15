@@ -21,7 +21,7 @@ import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import io.cdap.cdap.internal.app.preview.PreviewRunnerServiceStopper;
+import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
 import org.junit.Assert;
@@ -38,10 +38,10 @@ public class StandaloneMainTest {
     Assert.assertNotNull(sdk.getInjector().getInstance(PreviewHttpHandler.class));
     PreviewManager previewManager = sdk.getInjector().getInstance(PreviewManager.class);
     PreviewRunnerManager previewRunnerManager = sdk.getInjector().getInstance(PreviewRunnerManager.class);
-    PreviewRunnerServiceStopper previewRunnerServiceStopper
-      = sdk.getInjector().getInstance(PreviewRunnerServiceStopper.class);
+    PreviewRunStopper previewRunStopper
+      = sdk.getInjector().getInstance(PreviewRunStopper.class);
 
-    Assert.assertSame(previewRunnerManager, previewRunnerServiceStopper);
+    Assert.assertSame(previewRunnerManager, previewRunStopper);
     TransactionManager txManager = sdk.getInjector().getInstance(TransactionManager.class);
     txManager.startAndWait();
     ((Service) previewManager).startAndWait();

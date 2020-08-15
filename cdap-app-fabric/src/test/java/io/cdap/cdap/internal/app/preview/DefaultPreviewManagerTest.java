@@ -40,7 +40,6 @@ import io.cdap.cdap.data.runtime.DataSetsModules;
 import io.cdap.cdap.data.runtime.TransactionExecutorModule;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
-import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.guice.LogReaderRuntimeModules;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
@@ -92,7 +91,6 @@ public class DefaultPreviewManagerTest {
       new AppFabricServiceRuntimeModule().getInMemoryModules(),
       new ProgramRunnerRuntimeModule().getInMemoryModules(),
       new NonCustomLocationUnitTestModule(),
-      new LocalLogAppenderModule(),
       new LogReaderRuntimeModules().getInMemoryModules(),
       new MetricsClientRuntimeModule().getInMemoryModules(),
       new ExploreClientModule(),
@@ -112,7 +110,7 @@ public class DefaultPreviewManagerTest {
           bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
           bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
           // bind PreviewRunnerStopper to Mock implementation
-          bind(PreviewRunnerServiceStopper.class).toInstance(runnerId -> {
+          bind(PreviewRunStopper.class).toInstance(runnerId -> {
 
           });
         }
