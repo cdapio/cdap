@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common.output;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.JobStatus;
 import org.apache.hadoop.mapreduce.OutputCommitter;
@@ -23,6 +24,11 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorCompletionService;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Delegates to other record writers.
@@ -36,42 +42,34 @@ public class MultiOutputCommitter extends OutputCommitter {
 
   @Override
   public void setupJob(JobContext jobContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      entry.getValue().setupJob(MultiOutputFormat.getNamedJobContext(jobContext, entry.getKey()));
-    }
+    delegateInParallel((name, delegate) -> {
+      JobContext namedContext = MultiOutputFormat.getNamedJobContext(jobContext, name);
+      delegate.setupJob(namedContext);
+    });
   }
 
   @Override
   public void commitJob(JobContext jobContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      entry.getValue().commitJob(MultiOutputFormat.getNamedJobContext(jobContext, entry.getKey()));
-    }
+    delegateInParallel((name, delegate) -> {
+      JobContext namedContext = MultiOutputFormat.getNamedJobContext(jobContext, name);
+      delegate.commitJob(namedContext);
+    });
   }
 
   @Override
   public void abortJob(JobContext jobContext, JobStatus.State state) throws IOException {
-    IOException ex = null;
-    for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      try {
-        entry.getValue().abortJob(MultiOutputFormat.getNamedJobContext(jobContext, entry.getKey()), state);
-      } catch (IOException e) {
-        if (ex == null) {
-          ex = e;
-        } else {
-          ex.addSuppressed(e);
-        }
-      }
-    }
-    if (ex != null) {
-      throw ex;
-    }
+    delegateInParallel((name, delegate) -> {
+      JobContext namedContext = MultiOutputFormat.getNamedJobContext(jobContext, name);
+      delegate.abortJob(namedContext, state);
+    });
   }
 
   @Override
   public void setupTask(TaskAttemptContext taskContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      entry.getValue().setupTask(MultiOutputFormat.getNamedTaskContext(taskContext, entry.getKey()));
-    }
+    delegateInParallel((name, delegate) -> {
+      TaskAttemptContext namedContext = MultiOutputFormat.getNamedTaskContext(taskContext, name);
+      delegate.setupTask(namedContext);
+    });
   }
 
   @Override
@@ -86,28 +84,18 @@ public class MultiOutputCommitter extends OutputCommitter {
 
   @Override
   public void commitTask(TaskAttemptContext taskContext) throws IOException {
-    for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      entry.getValue().commitTask(MultiOutputFormat.getNamedTaskContext(taskContext, entry.getKey()));
-    }
+    delegateInParallel((name, delegate) -> {
+      TaskAttemptContext namedContext = MultiOutputFormat.getNamedTaskContext(taskContext, name);
+      delegate.commitTask(namedContext);
+    });
   }
 
   @Override
   public void abortTask(TaskAttemptContext taskContext) throws IOException {
-    IOException ex = null;
-    for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      try {
-        entry.getValue().abortTask(MultiOutputFormat.getNamedTaskContext(taskContext, entry.getKey()));
-      } catch (IOException e) {
-        if (ex == null) {
-          ex = e;
-        } else {
-          ex.addSuppressed(e);
-        }
-      }
-    }
-    if (ex != null) {
-      throw ex;
-    }
+    delegateInParallel((name, delegate) -> {
+      TaskAttemptContext namedContext = MultiOutputFormat.getNamedTaskContext(taskContext, name);
+      delegate.abortTask(namedContext);
+    });
   }
 
   @Override
@@ -122,8 +110,58 @@ public class MultiOutputCommitter extends OutputCommitter {
 
   @Override
   public void recoverTask(TaskAttemptContext taskContext) throws IOException {
+    delegateInParallel((name, delegate) -> {
+      TaskAttemptContext namedContext = MultiOutputFormat.getNamedTaskContext(taskContext, name);
+      delegate.recoverTask(namedContext);
+    });
+  }
+
+  private void delegateInParallel(DelegateFunction delegateFunction) throws IOException {
+    ThreadFactory threadFactory = new ThreadFactoryBuilder().setNameFormat("multi-output-committer-%d").build();
+    int numThreads = Math.min(10, delegates.size());
+    ExecutorService executorService = Executors.newFixedThreadPool(numThreads, threadFactory);
+    ExecutorCompletionService<Void> ecs = new ExecutorCompletionService<>(executorService);
+
     for (Map.Entry<String, OutputCommitter> entry : delegates.entrySet()) {
-      entry.getValue().recoverTask(MultiOutputFormat.getNamedTaskContext(taskContext, entry.getKey()));
+      String delegateName = entry.getKey();
+      OutputCommitter delegate = entry.getValue();
+      ecs.submit(() -> {
+        delegateFunction.call(delegateName, delegate);
+        return null;
+      });
     }
+
+    IOException exc = null;
+    for (int i = 0; i < delegates.size(); i++) {
+      try {
+        ecs.take().get();
+      } catch (InterruptedException e) {
+        executorService.shutdownNow();
+        Thread.currentThread().interrupt();
+        return;
+      } catch (ExecutionException e) {
+        Throwable cause = e.getCause();
+        if (exc != null) {
+          exc.addSuppressed(cause);
+        } else if (cause instanceof IOException) {
+          exc = (IOException) cause;
+        } else {
+          exc = new IOException(cause);
+        }
+      }
+    }
+
+    executorService.shutdownNow();
+    if (exc != null) {
+      throw exc;
+    }
+  }
+
+  /**
+   * A function to perform on a delegate OutputCommitter.
+   */
+  private interface DelegateFunction {
+
+    void call(String delegateName, OutputCommitter delegate) throws IOException;
   }
 }

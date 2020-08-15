@@ -27,10 +27,10 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import scala.Tuple2;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -96,9 +96,10 @@ public final class SparkBatchSourceFactory {
         sourceName + " has no input. Please check that the source calls setInput at some input.");
     }
 
-    JavaPairRDD<K, V> inputRDD = JavaPairRDD.fromJavaRDD(jsc.<Tuple2<K, V>>emptyRDD());
-    for (String inputName : inputNames) {
-      inputRDD = inputRDD.union(createInputRDD(sec, jsc, inputName, keyClass, valueClass));
+    Iterator<String> inputsIter = inputNames.iterator();
+    JavaPairRDD<K, V> inputRDD = createInputRDD(sec, jsc, inputsIter.next(), keyClass, valueClass);
+    while (inputsIter.hasNext()) {
+      inputRDD = inputRDD.union(createInputRDD(sec, jsc, inputsIter.next(), keyClass, valueClass));
     }
     return inputRDD;
   }
