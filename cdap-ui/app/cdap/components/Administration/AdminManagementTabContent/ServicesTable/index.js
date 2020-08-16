@@ -48,6 +48,7 @@ const DEFAULTSERVICES = [
   'metrics',
   'metrics.processor',
   'transaction',
+  'runtime',
 ];
 const tableHeaders = [
   {
