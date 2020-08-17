@@ -544,12 +544,14 @@ Cypress.Commands.add('get_pipeline_stage_json', (stageName: string) => {
 });
 
 Cypress.Commands.add('open_node_property', (element: INodeIdentifier) => {
+  cy.get('.hydrator-modal').should('not.be.visible');
   const { nodeName, nodeType, nodeId } = element;
   const elementId = `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
   cy.get(`${elementId} .node .node-metadata .node-version`).invoke('hide');
   cy.get(`${elementId} .node .node-configure-btn`)
     .invoke('show')
     .click();
+  cy.get('.hydrator-modal').should('be.visible');
 });
 
 Cypress.Commands.add('close_node_property', () => {
