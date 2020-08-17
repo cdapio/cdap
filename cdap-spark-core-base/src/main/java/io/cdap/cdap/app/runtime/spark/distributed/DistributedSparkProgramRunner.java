@@ -145,8 +145,6 @@ public final class DistributedSparkProgramRunner extends DistributedProgramRunne
 
     Map<String, String> extraEnv = new HashMap<>();
     extraEnv.put(Constants.SPARK_COMPAT_ENV, sparkCompat.getCompat());
-    extraEnv.put(SparkPackageUtils.SPARK_YARN_MODE, "true");
-    extraEnv.putAll(SparkPackageUtils.getSparkClientEnv());
 
     if (sparkCompat.getCompat().equals(SparkCompat.SPARK2_2_11.getCompat())) {
       // No need to rewrite YARN client

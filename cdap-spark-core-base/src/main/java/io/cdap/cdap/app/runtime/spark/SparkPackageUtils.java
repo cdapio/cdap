@@ -229,6 +229,7 @@ public final class SparkPackageUtils {
     File sparkDefaultConfFile = saveSparkDefaultConf(sparkConf,
                                                      File.createTempFile(SPARK_DEFAULTS_CONF, null, tempDir));
     localizeResources.put(SPARK_DEFAULTS_CONF, new LocalizeResource(sparkDefaultConfFile));
+    env.putAll(getSparkClientEnv());
 
     // Shallow copy all files under directory defined by $HADOOP_CONF_DIR and the explore conf directory
     // If $HADOOP_CONF_DIR is not defined, use the location of "yarn-site.xml" to determine the directory
@@ -384,12 +385,14 @@ public final class SparkPackageUtils {
   /**
    * Returns the Spark environment setup via the start up script.
    */
-  public static synchronized Map<String, String> getSparkEnv() {
+  private static synchronized Map<String, String> getSparkEnv() {
     if (sparkEnv != null) {
       return sparkEnv;
     }
 
-    Map<String, String> env = new LinkedHashMap<>();
+    Map<String, String> env = new LinkedHashMap<>(System.getenv());
+
+    // Overwrite the system environments with the one set up by the startup script in functions.sh
     for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
       if (entry.getKey().startsWith(SPARK_ENV_PREFIX)) {
         env.put(entry.getKey().substring(SPARK_ENV_PREFIX.length()), entry.getValue());
@@ -409,19 +412,13 @@ public final class SparkPackageUtils {
   /**
    * Returns the environment for the Spark client container.
    */
-  public static Map<String, String> getSparkClientEnv() {
+  private static Map<String, String> getSparkClientEnv() {
     Map<String, String> env = new LinkedHashMap<>(getSparkEnv());
 
     // The spark-defaults.conf will be localized to container
     // and we shouldn't have SPARK_HOME set
     env.put(SPARK_CONF_DIR, "$PWD");
     env.remove(SPARK_HOME);
-
-    // Spark using YARN and it is needed for both Workflow and Spark runner. We need to set it
-    // because inside Spark code, it will set and unset the SPARK_YARN_MODE system properties, causing
-    // fork in distributed mode not working. Setting it in the environment, which Spark uses for defaults,
-    // so it can't be unset by Spark
-    env.put(SPARK_YARN_MODE, "true");
 
     return Collections.unmodifiableMap(env);
   }
