@@ -57,7 +57,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   protected List<io.cdap.cdap.etl.proto.v1.ETLStage> transforms;
 
   // For serialization purpose for upgrade compatibility.
-  protected List<String> comments;
+  protected List<Object> comments;
 
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections, Resources resources,
                       Resources driverResources, Resources clientResources,
@@ -83,7 +83,7 @@ public class ETLConfig extends Config implements UpgradeableConfig {
   protected ETLConfig(Set<ETLStage> stages, Set<Connection> connections,
                       Resources resources, Resources driverResources, Resources clientResources,
                       @Nullable Boolean stageLoggingEnabled, @Nullable Boolean processTimingEnabled,
-                      @Nullable Integer numOfRecordsPreview, Map<String, String> properties, List<String> comments) {
+                      @Nullable Integer numOfRecordsPreview, Map<String, String> properties, List<Object> comments) {
     this(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
         numOfRecordsPreview, properties);
     this.comments = comments;
