@@ -54,6 +54,9 @@ final class DataprocConf {
   static final String IMAGE_VERSION = "imageVersion";
   static final String CUSTOM_IMAGE_URI = "customImageUri";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
+  // The property name for the GCE cluster meta data
+  // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
+  static final String CLUSTER_MEATA_DATA = "clusterMetaData";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -456,7 +459,7 @@ final class DataprocConf {
     String gcpCmekBucket = getString(properties, "gcsBucket");
 
     Map<String, String> clusterMetaData = Collections.unmodifiableMap(
-      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterMetaData"), ";", "\\|"));
+      DataprocUtils.parseKeyValueConfig(getString(properties, CLUSTER_MEATA_DATA), ";", "\\|"));
 
     String networkTagsProperty = Optional.ofNullable(getString(properties, "networkTags")).orElse("");
     List<String> networkTags = Collections.unmodifiableList(Arrays.stream(networkTagsProperty.split(","))
