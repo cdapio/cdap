@@ -18,13 +18,9 @@ package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.util.concurrent.AbstractScheduledService;
 import com.google.inject.Inject;
-import com.google.inject.name.Named;
-import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
-import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import org.apache.twill.common.Threads;
 
 import java.util.concurrent.Executors;
@@ -41,9 +37,8 @@ public class PreviewDataCleanupService extends AbstractScheduledService {
   private ScheduledExecutorService executor;
 
   @Inject
-  PreviewDataCleanupService(@Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService previewLevelDBTableService,
-                            CConfiguration cConf) {
-    this.previewStore = new DefaultPreviewStore(previewLevelDBTableService);
+  PreviewDataCleanupService(CConfiguration cConf, PreviewStore previewStore) {
+    this.previewStore = previewStore;
     this.cleanUpInterval = cConf.getLong(Constants.Preview.DATA_CLEANUP_INTERVAL_SECONDS);
     this.ttl = cConf.getLong(Constants.Preview.DATA_TTL_SECONDS);
   }

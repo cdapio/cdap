@@ -24,7 +24,6 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.app.preview.DefaultPreviewRunnerModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.app.preview.PreviewStatus;

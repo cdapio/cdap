@@ -17,6 +17,10 @@
 package io.cdap.cdap.app.preview;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.binder.LinkedBindingBuilder;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -47,7 +51,6 @@ public class PreviewConfigModule extends AbstractModule {
   private final CConfiguration previewCConf;
   private final Configuration previewHConf;
   private final SConfiguration previewSConf;
-  private final LevelDBTableService previewLevelDBTableService;
 
   public PreviewConfigModule(CConfiguration cConf, Configuration hConf, SConfiguration sConf) {
     previewCConf = CConfiguration.copy(cConf);
@@ -60,7 +63,7 @@ public class PreviewConfigModule extends AbstractModule {
       .forEach(key -> previewCConf.set(key, localhost));
 
     Path previewDataDir = Paths.get(cConf.get(Constants.CFG_LOCAL_DATA_DIR), "preview").toAbsolutePath();
-    Path previewDir = null;
+    Path previewDir;
     try {
       previewDir = Files.createDirectories(previewDataDir);
     } catch (IOException e) {
@@ -86,9 +89,6 @@ public class PreviewConfigModule extends AbstractModule {
                      previewDir.resolve("fs").toUri().toString());
 
     previewSConf = SConfiguration.copy(sConf);
-
-    this.previewLevelDBTableService = new LevelDBTableService();
-    this.previewLevelDBTableService.setConfiguration(previewCConf);
   }
 
   @Override
@@ -96,8 +96,20 @@ public class PreviewConfigModule extends AbstractModule {
     bind(CConfiguration.class).annotatedWith(Names.named(PREVIEW_CCONF)).toInstance(previewCConf);
     bind(Configuration.class).annotatedWith(Names.named(PREVIEW_HCONF)).toInstance(previewHConf);
     bind(SConfiguration.class).annotatedWith(Names.named(PREVIEW_SCONF)).toInstance(previewSConf);
+  }
 
-    bind(LevelDBTableService.class)
-      .annotatedWith(Names.named(PREVIEW_LEVEL_DB)).toInstance(previewLevelDBTableService);
+  /**
+   * Provider method to provide a singleton {@link LevelDBTableService}. A provider method is used instead of
+   * instance binding with the {@link LinkedBindingBuilder#toInstance(Object)} method so that the
+   * {@link LevelDBTableService#setConfiguration(CConfiguration)} is only called once from this method using
+   * the preview cConf.
+   */
+  @Provides
+  @Singleton
+  @Named(PREVIEW_LEVEL_DB)
+  private LevelDBTableService provideLevelDBTableService(@Named(PREVIEW_CCONF) CConfiguration cConf) {
+    LevelDBTableService tableService = new LevelDBTableService();
+    tableService.setConfiguration(cConf);
+    return tableService;
   }
 }

@@ -20,11 +20,13 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.table.Row;
 import io.cdap.cdap.api.dataset.table.Scanner;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.app.store.preview.PreviewStore;
@@ -88,7 +90,7 @@ public class DefaultPreviewStore implements PreviewStore {
   private final LevelDBTableService service;
 
   @Inject
-  public DefaultPreviewStore(LevelDBTableService service) {
+  DefaultPreviewStore(@Named(PreviewConfigModule.PREVIEW_LEVEL_DB) LevelDBTableService service) {
     try {
       this.service = service;
       service.ensureTableExists(PREVIEW_TABLE_ID.getDataset());

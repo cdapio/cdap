@@ -510,7 +510,7 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
   private long getTotalMetric(Map<String, String> tags, String metricName, PreviewManager previewManager) {
     MetricDataQuery query = new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,
-                                                tags, new ArrayList<String>());
+                                                tags, new ArrayList<>());
     Collection<MetricTimeSeries> result = previewManager.getMetricsQueryHelper().getMetricStore().query(query);
     if (result.isEmpty()) {
       return 0;

@@ -35,6 +35,8 @@ public final class PodInfo {
   private final String podInfoDir;
   private final String labelsFile;
   private final String nameFile;
+  private final String uid;
+  private final String uidFile;
   private final String namespace;
   private final Map<String, String> labels;
   private final List<V1OwnerReference> ownerReferences;
@@ -46,8 +48,8 @@ public final class PodInfo {
   private final List<V1VolumeMount> containerVolumeMounts;
   private final List<V1EnvVar> containerEnvironments;
 
-  public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String namespace,
-                 Map<String, String> labels, List<V1OwnerReference> ownerReferences,
+  public PodInfo(String name, String podInfoDir, String labelsFile, String nameFile, String uid, String uidFile,
+                 String namespace, Map<String, String> labels, List<V1OwnerReference> ownerReferences,
                  String serviceAccountName, String runtimeClassName, List<V1Volume> volumes, String containerLabelName,
                  String containerImage, List<V1VolumeMount> containerVolumeMounts,
                  List<V1EnvVar> containerEnvironments) {
@@ -55,6 +57,8 @@ public final class PodInfo {
     this.podInfoDir = podInfoDir;
     this.labelsFile = labelsFile;
     this.nameFile = nameFile;
+    this.uid = uid;
+    this.uidFile = uidFile;
     this.namespace = namespace;
     this.labels = labels;
     this.ownerReferences = Collections.unmodifiableList(new ArrayList<>(ownerReferences));
@@ -81,6 +85,14 @@ public final class PodInfo {
 
   public String getNameFile() {
     return nameFile;
+  }
+
+  public String getUid() {
+    return uid;
+  }
+
+  public String getUidFile() {
+    return uidFile;
   }
 
   public String getNamespace() {

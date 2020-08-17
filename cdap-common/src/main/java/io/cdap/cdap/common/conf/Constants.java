@@ -340,6 +340,16 @@ public final class Constants {
     public static final String MESSAGING_TOPIC = "preview.messaging.topic";
     public static final String DATA_CLEANUP_INTERVAL_SECONDS = "preview.data.cleanup.interval.seconds";
     public static final String DATA_TTL_SECONDS = "preview.data.ttl.seconds";
+
+    public static final String CONTAINER_COUNT = "preview.runner.container.count";
+    public static final String CONTAINER_DISK_SIZE_GB = "preview.runner.container.disk.size.gb";
+    public static final String CONTAINER_MEMORY_MB = "preview.runner.container.memory.mb";
+    public static final String CONTAINER_CORES = "preview.runner.container.num.cores";
+
+    public static final String CONTAINER_CPU_MULTIPLIER = "preview.runner.container.cpu.multiplier";
+    public static final String CONTAINER_MEMORY_MULTIPLIER = "preview.runner.container.memory.multiplier";
+    public static final String CONTAINER_HEAP_RESERVED_RATIO = "preview.runner.container.java.heap.memory.ratio";
+    public static final String CONTAINER_PRIORITY_CLASS_NAME = "preview.runner.container.priority.class.name";
   }
 
   /**

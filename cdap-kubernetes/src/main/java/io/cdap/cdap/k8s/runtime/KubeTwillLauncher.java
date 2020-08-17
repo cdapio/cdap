@@ -20,9 +20,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
+import io.cdap.cdap.master.environment.k8s.PodInfo;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
+import io.kubernetes.client.ApiClient;
+import io.kubernetes.client.apis.CoreV1Api;
+import io.kubernetes.client.models.V1DeleteOptions;
+import io.kubernetes.client.models.V1Preconditions;
+import io.kubernetes.client.util.Config;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.RuntimeSpecification;
 import org.apache.twill.api.TwillRunnable;
@@ -31,6 +37,8 @@ import org.apache.twill.internal.RunIds;
 import org.apache.twill.internal.TwillRuntimeSpecification;
 import org.apache.twill.internal.json.TwillRuntimeSpecificationAdapter;
 import org.apache.twill.internal.utils.Instances;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
@@ -45,6 +53,8 @@ import java.util.Map;
  * A {@link MasterEnvironmentRunnable} for running {@link TwillRunnable} in the current process.
  */
 public class KubeTwillLauncher implements MasterEnvironmentRunnable {
+
+  private static final Logger LOG = LoggerFactory.getLogger(KubeTwillLauncher.class);
 
   private final MasterEnvironmentContext context;
   private final KubeMasterEnvironment masterEnv;
@@ -82,6 +92,7 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
       runnableArgs = map.getOrDefault(runnableName, Collections.emptyList());
     }
 
+    PodInfo podInfo = masterEnv.getPodInfo();
     try {
       TwillRuntimeSpecification twillRuntimeSpec = TwillRuntimeSpecificationAdapter.create()
         .fromJson(runtimeConfigDir.resolve(Constants.Files.TWILL_SPEC).toFile());
@@ -107,9 +118,14 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
         }
       }
     } finally {
-      TwillRunnable runnable = twillRunnable;
-      if (runnable != null) {
-        runnable.destroy();
+      try {
+        TwillRunnable runnable = twillRunnable;
+        if (runnable != null) {
+          runnable.destroy();
+        }
+      } finally {
+        // Delete the pod itself to avoid pod goes into CrashLoopBackoff
+        deletePod(podInfo);
       }
     }
   }
@@ -120,6 +136,19 @@ public class KubeTwillLauncher implements MasterEnvironmentRunnable {
     TwillRunnable runnable = this.twillRunnable;
     if (runnable != null) {
       runnable.stop();
+    }
+  }
+
+
+  private void deletePod(PodInfo podInfo) {
+    try {
+      ApiClient apiClient = Config.defaultClient();
+      CoreV1Api api = new CoreV1Api(apiClient);
+      V1DeleteOptions delOptions = new V1DeleteOptions().preconditions(new V1Preconditions().uid(podInfo.getUid()));
+      api.deleteNamespacedPodAsync(podInfo.getName(), podInfo.getNamespace(), null, delOptions,
+                                   null, null, null, null, new ApiCallbackAdapter<>());
+    } catch (Exception e) {
+      LOG.warn("Failed to delete pod {} with uid {}", podInfo.getName(), podInfo.getUid(), e);
     }
   }
 }

@@ -115,7 +115,7 @@ import java.util.stream.Collectors;
  * Most of these operations are no-ops as many of these methods and pretty closely coupled to the Hadoop implementation
  * and have no analogy in Kubernetes.
  */
-class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwillPreparer> {
+class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillPreparer.class);
 
@@ -139,6 +139,7 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwil
   private final TwillSpecification twillSpec;
   private final String resourcePrefix;
   private final Map<String, String> extraLabels;
+  private String schedulerQueue;
 
   KubeTwillPreparer(MasterEnvironmentContext masterEnvContext, ApiClient apiClient, String kubeNamespace,
                     PodInfo podInfo, TwillSpecification spec, RunId twillRunId, Location appLocation,
@@ -208,8 +209,8 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwil
   }
 
   @Override
-  public TwillPreparer setSchedulerQueue(String name) {
-    // no-op
+  public TwillPreparer setSchedulerQueue(String schedulerQueue) {
+    this.schedulerQueue = schedulerQueue;
     return this;
   }
 
@@ -473,7 +474,7 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwil
     V1Deployment deployment = buildDeployment(metadata, runtimeSpec, runtimeConfigLocation);
 
     deployment = appsApi.createNamespacedDeployment(kubeNamespace, deployment, "true", null, null);
-    LOG.info("Created deployment {} in Kubernetes", metadata.getName());
+    LOG.info("Created Deployment {} in Kubernetes", metadata.getName());
     return deployment.getMetadata();
   }
 
@@ -489,7 +490,7 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwil
     V1StatefulSet statefulSet = buildStatefulSet(metadata, runtimeSpec, runtimeConfigLocation, statefulRunnable);
 
     statefulSet = appsApi.createNamespacedStatefulSet(kubeNamespace, statefulSet, "true", null, null);
-    LOG.info("Created deployment {} in Kubernetes", metadata.getName());
+    LOG.info("Created StatefulSet {} in Kubernetes", metadata.getName());
     return statefulSet.getMetadata();
   }
 
@@ -701,7 +702,11 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwil
     // Add all environments for the runnable
     environs.putAll(environments.get(runnableName));
 
-    return new V1PodSpecBuilder()
+    V1PodSpecBuilder podSpecBuilder = new V1PodSpecBuilder();
+    if (schedulerQueue != null) {
+      podSpecBuilder = podSpecBuilder.withPriorityClassName(schedulerQueue);
+    }
+    return podSpecBuilder
       .withServiceAccountName(podInfo.getServiceAccountName())
       .withRuntimeClassName(podInfo.getRuntimeClassName())
       .addAllToVolumes(podInfo.getVolumes())
@@ -776,7 +781,11 @@ class KubeTwillPreparer implements TwillPreparer, StatefulTwillPreparer<KubeTwil
                           .path(podInfo.getNameFile()))
           .addItemsItem(new V1DownwardAPIVolumeFile()
                           .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.labels"))
-                          .path(podInfo.getLabelsFile())));
+                          .path(podInfo.getLabelsFile()))
+          .addItemsItem(new V1DownwardAPIVolumeFile()
+                          .fieldRef(new V1ObjectFieldSelector().fieldPath("metadata.uid"))
+                          .path(podInfo.getUidFile()))
+      );
   }
 
   /**

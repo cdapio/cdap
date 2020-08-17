@@ -21,6 +21,7 @@ import com.squareup.okhttp.Call;
 import io.cdap.cdap.k8s.common.AbstractWatcherThread;
 import io.cdap.cdap.master.environment.k8s.KubeMasterEnvironment;
 import io.cdap.cdap.master.environment.k8s.PodInfo;
+import io.cdap.cdap.master.spi.twill.ExtendedTwillContext;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
 import io.kubernetes.client.apis.CustomObjectsApi;
@@ -44,6 +45,9 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -56,7 +60,7 @@ import javax.annotation.Nullable;
 /**
  * An implementation of {@link TwillContext} for k8s environment.
  */
-public class KubeTwillContext implements TwillContext, Closeable {
+public class KubeTwillContext implements ExtendedTwillContext, Closeable {
 
   private static final Logger LOG = LoggerFactory.getLogger(KubeTwillContext.class);
 
@@ -70,6 +74,7 @@ public class KubeTwillContext implements TwillContext, Closeable {
   private final int instanceId;
   private final CompletableFuture<AtomicInteger> instancesFuture;
   private final Cancellable instanceWatcherCancellable;
+  private final String uid;
 
   public KubeTwillContext(RuntimeSpecification runtimeSpec, RunId appRunId, RunId runId,
                           String[] appArguments, String[] arguments,
@@ -97,6 +102,8 @@ public class KubeTwillContext implements TwillContext, Closeable {
     this.instanceId = instanceId;
     this.instancesFuture = new CompletableFuture<>();
     this.instanceWatcherCancellable = startInstanceWatcher(podInfo, instancesFuture);
+    this.uid = new String(Files.readAllBytes(Paths.get(podInfo.getPodInfoDir(), podInfo.getUidFile())),
+                          StandardCharsets.UTF_8);
   }
 
   @Override
@@ -188,6 +195,12 @@ public class KubeTwillContext implements TwillContext, Closeable {
     if (!instancesFuture.isDone()) {
       instancesFuture.complete(new AtomicInteger());
     }
+  }
+
+  @Nullable
+  @Override
+  public String getUID() {
+    return uid;
   }
 
   /**
