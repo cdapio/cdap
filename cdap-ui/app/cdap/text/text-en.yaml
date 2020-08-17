@@ -197,6 +197,7 @@ features:
       remote_system_operation: Remote System Operation
       requested: Requested
       setBtn: Set
+      runtime: Runtime
       transaction: Transaction
       viewlogs: View Logs
     systemMetrics: System metrics
