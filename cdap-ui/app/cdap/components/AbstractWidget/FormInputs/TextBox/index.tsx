@@ -18,10 +18,12 @@ import React from 'react';
 import { objectQuery } from 'services/helpers';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
+import Input from '@material-ui/core/Input';
 import InputBase from '@material-ui/core/InputBase';
 
 interface ITextBoxWidgetProps {
   placeholder?: string;
+  enableUnderline?: boolean;
 }
 
 interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {
@@ -57,8 +59,12 @@ const TextBox: React.FC<ITextBoxProps> = ({
   };
 
   const placeholder = objectQuery(widgetProps, 'placeholder');
+  const enableUnderline = objectQuery(widgetProps, 'enableUnderline');
+
+  const InputComponent = enableUnderline ? Input : InputBase;
+
   return (
-    <InputBase
+    <InputComponent
       fullWidth
       value={value}
       onChange={onChangeHandler}
