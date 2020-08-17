@@ -433,6 +433,9 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Disable implicit transaction
       result.set(Constants.AppFabric.PROGRAM_TRANSACTION_CONTROL, TransactionControl.EXPLICIT.name());
 
+      // Disable transaction support
+      result.setBoolean(Constants.Transaction.TX_ENABLED, false);
+
       // Disable explore
       result.set(Constants.Explore.EXPLORE_ENABLED, Boolean.FALSE.toString());
 
