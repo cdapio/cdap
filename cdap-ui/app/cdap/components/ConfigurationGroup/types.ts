@@ -15,7 +15,7 @@
  */
 
 export interface IWidgetProperty {
-  name: string;
+  name?: string;
   label?: string;
   'widget-type'?: string;
   'widget-attributes'?: any;

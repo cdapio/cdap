@@ -57,7 +57,7 @@ const styles = (theme): StyleRules => {
 interface IActionButtonProps extends WithStyles<typeof styles> {
   icon: React.ReactNode;
   text: string;
-  loading: boolean;
+  loading?: boolean;
   disabled: boolean;
   onClick: () => void;
 }

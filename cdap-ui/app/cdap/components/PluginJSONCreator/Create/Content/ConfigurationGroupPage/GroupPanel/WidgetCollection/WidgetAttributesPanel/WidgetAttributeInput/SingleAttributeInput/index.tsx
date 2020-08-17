@@ -46,7 +46,6 @@ export const SingleAttributeInput = ({
       return (
         <WidgetWrapper
           widgetProperty={{
-            field,
             name: field,
             'widget-type': widgetType,
             'widget-attributes': {},

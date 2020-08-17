@@ -61,7 +61,6 @@ const ImplicitSchemaDefiner = () => {
     <div data-cy="implicit-schema-definer">
       <WidgetWrapper
         widgetProperty={{
-          field: 'schema',
           name: 'schema',
           'widget-type': 'json-editor',
           'widget-attributes': {

@@ -178,10 +178,8 @@ const SecureKeyListView: React.FC<ISecureKeyListProps> = ({
                   </CustomTableCell>
                   <CustomTableCell className={classes.actionButtonsCell}>
                     <SecureKeyActionButtons
-                      state={state}
                       openDeleteDialog={openDeleteDialog}
                       keyIndex={keyIndex}
-                      keyID={keyID}
                     />
                   </CustomTableCell>
                 </TableRow>
