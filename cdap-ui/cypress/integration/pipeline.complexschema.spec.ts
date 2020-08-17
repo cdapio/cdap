@@ -42,10 +42,6 @@ describe('Output Schema', () => {
     });
   });
 
-  before(() => {
-    cy.cleanup_pipelines(headers, PIPELINE_NAME);
-  })
-
   const schemaFieldSuffix = '-schema-field';
 
   const projection: INodeInfo = { nodeName: 'Projection', nodeType: 'transform' };
@@ -59,6 +55,7 @@ describe('Output Schema', () => {
 
   beforeEach(() => {
     getArtifactsPoll(headers);
+    cy.cleanup_pipelines(headers, PIPELINE_NAME);
   });
 
   after(() => {
@@ -134,7 +131,7 @@ describe('Output Schema', () => {
       });
   });
 
-  it.only('Should work if the output schema is a macro', () => {
+  it.only('Should create and deploy pipeline when output schema is a macro', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.create_simple_pipeline().then(({ sourceNodeId, transformNodeId, sinkNodeId }) => {
       const sourceProperties = {
