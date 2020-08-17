@@ -18,9 +18,10 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { Modal } from 'reactstrap';
 import IconSVG from 'components/IconSVG';
+import { ALERT_STATUS } from 'services/AlertStatus';
 
 require('./Alert.scss');
-const SUCCESS_CLOSE_TIMEOUT = 3000;
+const CLOSE_TIMEOUT = 3000;
 
 export default class Alert extends Component {
   state = {
@@ -38,13 +39,10 @@ export default class Alert extends Component {
     type: PropTypes.oneOf(['success', 'error', 'info']),
   };
 
-  successTimeout = null;
+  alertTimeout = null;
 
   componentDidMount() {
-    if (this.state.type === 'success') {
-      clearTimeout(this.successTimeout);
-      this.successTimeout = setTimeout(this.onClose, SUCCESS_CLOSE_TIMEOUT);
-    }
+    this.resetTimeout();
   }
 
   componentWillReceiveProps(nextProps) {
@@ -61,11 +59,15 @@ export default class Alert extends Component {
         element,
       });
     }
-    if (this.state.type === 'success') {
-      clearTimeout(this.successTimeout);
-      this.successTimeout = setTimeout(this.onClose, SUCCESS_CLOSE_TIMEOUT);
-    }
+    this.resetTimeout();
   }
+
+  resetTimeout = () => {
+    if (this.state.type === ALERT_STATUS.Success || this.state.type === ALERT_STATUS.Info) {
+      clearTimeout(this.alertTimeout);
+      this.alertTimeout = setTimeout(this.onClose, CLOSE_TIMEOUT);
+    }
+  };
 
   onClose = () => {
     this.setState({
