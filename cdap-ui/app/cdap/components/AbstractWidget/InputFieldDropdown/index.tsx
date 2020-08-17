@@ -30,6 +30,7 @@ const delimiter = ',';
 interface IInputFieldWidgetProps {
   multiselect?: boolean;
   allowedTypes?: string[];
+  enableUnderline?: boolean;
 }
 
 interface IInputFieldProps extends IWidgetProps<IInputFieldWidgetProps> {}
@@ -103,6 +104,8 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
   // TODO: Add support for disallowedTypes (https://issues.cask.co/browse/CDAP-16144)
   const allowedTypes: string[] = widgetProps.allowedTypes || [];
 
+  const enableUnderline = widgetProps.enableUnderline || false;
+
   const fieldValues = getFields(inputSchema, allowedTypes);
 
   const newValue = value
@@ -135,6 +138,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
   }
   const selectWidgetProps = {
     options: fieldValues,
+    enableUnderline,
   };
   return (
     <Select
@@ -143,6 +147,7 @@ const InputFieldDropdown: React.FC<IInputFieldProps> = ({
       widgetProps={selectWidgetProps}
       disabled={disabled}
       dataCy={dataCy}
+      placeholder="Select input field"
     />
   );
 };

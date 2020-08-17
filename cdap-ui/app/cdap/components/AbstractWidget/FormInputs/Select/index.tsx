@@ -14,8 +14,8 @@
  * the License.
  */
 import Select, { SelectProps } from '@material-ui/core/Select';
-
 import { IWidgetProps } from 'components/AbstractWidget';
+import Input from '@material-ui/core/Input';
 import InputBase from '@material-ui/core/InputBase';
 import MenuItem from '@material-ui/core/MenuItem';
 import React from 'react';
@@ -78,6 +78,7 @@ interface ISelectWidgetProps extends SelectProps {
   inline?: boolean;
   native?: boolean;
   default?: string;
+  enableUnderline?: boolean;
 }
 
 interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {
@@ -109,6 +110,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
   const inline = objectQuery(widgetProps, 'inline') || false;
   const native = objectQuery(widgetProps, 'native') || false;
   const MenuProps = objectQuery(widgetProps, 'MenuProps') || {};
+  const enableUnderline = objectQuery(widgetProps, 'enableUnderline') || false;
   const OptionItem = native ? 'option' : dense ? DenseMenuItem : MenuItem;
   const SelectComponent = inline ? InlineSelect : Select;
   let optionValues = options.map((opt) => {
@@ -118,12 +120,14 @@ const CustomSelect: React.FC<ISelectProps> = ({
     optionValues = [{ placeholder, value: '', label: placeholder }, ...optionValues];
   }
 
+  const InputComponent = enableUnderline ? Input : CustomizedInput;
+
   return (
     <SelectComponent
       fullWidth
       value={value}
       onChange={onChangeHandler}
-      input={<CustomizedInput />}
+      input={<InputComponent />}
       readOnly={disabled}
       inputProps={{
         'data-cy': dataCy,

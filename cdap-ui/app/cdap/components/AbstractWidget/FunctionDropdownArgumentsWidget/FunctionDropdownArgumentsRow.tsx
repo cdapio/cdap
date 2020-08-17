@@ -78,6 +78,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
 > {
   public static defaultProps = {
     placeholders: {
+      func: 'function',
       field: 'field',
       alias: 'alias',
       arguments: 'arguments',
@@ -150,8 +151,10 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
           value={this.state.func}
           onChange={this.handleWidgetChange.bind(this, 'func')}
           disabled={this.props.disabled}
+          placeholder={this.props.placeholders.func}
           widgetProps={{
             options: dropdownOptions,
+            enableUnderline: true,
           }}
         />
 
@@ -162,7 +165,9 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
             onChange={this.handleWidgetChange.bind(this, 'field')}
             onKeyPress={this.handleKeyPress}
             value={this.state.field}
-            widgetProps={{}}
+            widgetProps={{
+              enableUnderline: true,
+            }}
           />
         </If>
 
@@ -187,6 +192,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
           disabled={this.props.disabled}
           widgetProps={{
             placeholder: this.props.placeholders.arguments,
+            enableUnderline: true,
           }}
         />
 
@@ -214,6 +220,7 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
           disabled={this.props.disabled}
           widgetProps={{
             placeholder: this.props.placeholders.alias,
+            enableUnderline: true,
           }}
         />
       </div>
