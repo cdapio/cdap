@@ -181,7 +181,11 @@ export default class SystemPrefsAccordion extends Component {
 
     return (
       <div className="admin-config-container-content system-prefs-container-content">
-        <button className="btn btn-secondary" onClick={this.togglePrefsModal}>
+        <button
+          className="btn btn-secondary"
+          onClick={this.togglePrefsModal}
+          data-cy="edit-system-prefs-btn"
+        >
           {T.translate(`${PREFIX}.create`)}
         </button>
         <ViewAllLabel
@@ -215,6 +219,7 @@ export default class SystemPrefsAccordion extends Component {
         className={classnames('admin-config-container system-prefs-container', {
           expanded: this.props.expanded,
         })}
+        data-cy="system-prefs-accordion"
       >
         {this.renderLabel()}
         {this.renderContent()}
