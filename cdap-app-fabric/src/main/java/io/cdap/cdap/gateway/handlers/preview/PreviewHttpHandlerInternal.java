@@ -31,7 +31,6 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 
@@ -52,12 +51,13 @@ public class PreviewHttpHandlerInternal extends AbstractHttpHandler {
 
   @POST
   @Path("/requests/pull")
-  public void poll(FullHttpRequest request, HttpResponder responder) throws Exception {
+  public void poll(FullHttpRequest request, HttpResponder responder) {
     byte[] pollerInfo = Bytes.toBytes(request.content().nioBuffer());
-    Optional<PreviewRequest> previewRequestOptional = previewManager.poll(pollerInfo);
-    if (previewRequestOptional.isPresent()) {
-      LOG.info("Received poller info is {}", Bytes.toString(pollerInfo));
-      responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewRequestOptional.get()));
+    PreviewRequest previewRequest = previewManager.poll(pollerInfo).orElse(null);
+
+    if (previewRequest != null) {
+      LOG.debug("Send preview request {} to poller {}", previewRequest.getProgram(), Bytes.toString(pollerInfo));
+      responder.sendString(HttpResponseStatus.OK, GSON.toJson(previewRequest));
     } else {
       responder.sendStatus(HttpResponseStatus.OK);
     }

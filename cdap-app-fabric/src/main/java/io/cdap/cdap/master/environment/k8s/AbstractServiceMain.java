@@ -163,7 +163,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
       }
     });
     modules.add(getLogAppenderModule());
-    modules.addAll(getServiceModules(masterEnv, options));
+    modules.addAll(getServiceModules(masterEnv, options, cConf));
 
     injector = Guice.createInjector(modules);
 
@@ -278,7 +278,7 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
   /**
    * Returns a {@link List} of Guice {@link Module} that this specific for this master service.
    */
-  protected abstract List<Module> getServiceModules(MasterEnvironment masterEnv, T options);
+  protected abstract List<Module> getServiceModules(MasterEnvironment masterEnv, T options, CConfiguration cConf);
 
   /**
    * Adds {@link Service} to run.

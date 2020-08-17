@@ -14,13 +14,31 @@
  * the License.
  */
 
-package io.cdap.cdap.app.preview;
+package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
-import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
+import org.apache.twill.api.TwillRunnerService;
 
 /**
- * It is just a tagging interface for guice binding of {@link DefaultPreviewRunnerManager}.
+ * A Guava {@link Service} that wraps the {@link TwillRunnerService#start()} and {@link TwillRunnerService#stop()}
+ * calls.
  */
-public interface PreviewRunnerManager extends PreviewRunStopper, Service {
+final class TwillRunnerServiceWrapper extends AbstractIdleService {
+
+  private final TwillRunnerService twillRunner;
+
+  TwillRunnerServiceWrapper(TwillRunnerService twillRunner) {
+    this.twillRunner = twillRunner;
+  }
+
+  @Override
+  protected void startUp() {
+    twillRunner.start();
+  }
+
+  @Override
+  protected void shutDown() {
+    twillRunner.stop();
+  }
 }

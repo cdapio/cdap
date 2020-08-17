@@ -33,8 +33,8 @@ import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
-import io.cdap.cdap.app.preview.PreviewHttpModule;
 import io.cdap.cdap.app.preview.PreviewHttpServer;
+import io.cdap.cdap.app.preview.PreviewManagerModule;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
 import io.cdap.cdap.app.store.ServiceStore;
@@ -541,7 +541,7 @@ public class StandaloneMain {
       new AuthorizationModule(),
       new AuthorizationEnforcementModule().getStandaloneModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
-      new PreviewHttpModule(),
+      new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getStandaloneModules(),
       new MessagingServerRuntimeModule().getStandaloneModules(),
       new AppFabricServiceRuntimeModule().getStandaloneModules(),

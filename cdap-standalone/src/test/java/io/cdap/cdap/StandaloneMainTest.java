@@ -17,10 +17,9 @@
 package io.cdap.cdap;
 
 import com.google.common.util.concurrent.Service;
-import io.cdap.cdap.app.preview.PreviewManager;
+import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionManager;
@@ -35,18 +34,16 @@ public class StandaloneMainTest {
   @Test
   public void testInjector() {
     StandaloneMain sdk = StandaloneMain.create(CConfiguration.create(), new Configuration());
-    Assert.assertNotNull(sdk.getInjector().getInstance(PreviewHttpHandler.class));
-    PreviewManager previewManager = sdk.getInjector().getInstance(PreviewManager.class);
+    PreviewHttpServer previewHttpServer = sdk.getInjector().getInstance(PreviewHttpServer.class);
     PreviewRunnerManager previewRunnerManager = sdk.getInjector().getInstance(PreviewRunnerManager.class);
-    PreviewRunStopper previewRunStopper
-      = sdk.getInjector().getInstance(PreviewRunStopper.class);
+    PreviewRunStopper previewRunStopper = sdk.getInjector().getInstance(PreviewRunStopper.class);
 
     Assert.assertSame(previewRunnerManager, previewRunStopper);
     TransactionManager txManager = sdk.getInjector().getInstance(TransactionManager.class);
     txManager.startAndWait();
-    ((Service) previewManager).startAndWait();
+    previewHttpServer.startAndWait();
     ((Service) previewRunnerManager).startAndWait();
     ((Service) previewRunnerManager).stopAndWait();
-    ((Service) previewManager).stopAndWait();
+    previewHttpServer.stopAndWait();
   }
 }

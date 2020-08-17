@@ -14,14 +14,22 @@
  * the License.
  */
 
-package io.cdap.cdap.app.preview;
+package io.cdap.cdap.master.spi.twill;
 
-import com.google.inject.Module;
+import org.apache.twill.api.TwillContext;
+
+import javax.annotation.Nullable;
 
 /**
- * A factory for creating guice {@link Module} for preview runner.
+ * Extends the {@link TwillContext} to add extra functionalities for CDAP.
  */
-public interface PreviewRunnerModuleFactory {
+public interface ExtendedTwillContext extends TwillContext {
 
-  PreviewRunnerModule create();
+  /**
+   * Returns an unique ID of the current container.
+   *
+   * @return the unique ID, or {@code null} if there is no unique ID in the current execution environment.
+   */
+  @Nullable
+  String getUID();
 }

@@ -16,20 +16,18 @@
 
 package io.cdap.cdap.internal.app.runtime.k8s;
 
+import javax.annotation.Nullable;
+
 /**
  * Poller information holder.
  */
 public class PreviewRequestPollerInfo {
+
   private final int instanceId;
   private final String instanceUid;
 
-  public PreviewRequestPollerInfo(String instanceName, String instanceUid) {
-    // Since preview runners are launched as statefulsets in K8s, container name for the
-    // preview runner is of the form preview-runner-<ordinal> where ordinal is numeric value such
-    // as 0, 1, 2..
-    // We need to just pass the ordinal as instance id so that correct pod can be killed.
-    String[] parts = instanceName.split("-");
-    this.instanceId = Integer.parseInt(parts[parts.length - 1]);
+  public PreviewRequestPollerInfo(int instanceId, @Nullable String instanceUid) {
+    this.instanceId = instanceId;
     this.instanceUid = instanceUid;
   }
 
@@ -37,7 +35,16 @@ public class PreviewRequestPollerInfo {
     return instanceId;
   }
 
+  @Nullable
   public String getInstanceUid() {
     return instanceUid;
+  }
+
+  @Override
+  public String toString() {
+    return "PreviewRequestPollerInfo{" +
+      "instanceId=" + instanceId +
+      ", instanceUid='" + instanceUid + '\'' +
+      '}';
   }
 }

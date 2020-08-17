@@ -25,6 +25,7 @@ import com.google.inject.Module;
 import com.google.inject.Scopes;
 import io.cdap.cdap.app.guice.EntityVerifierModule;
 import io.cdap.cdap.app.store.Store;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
@@ -70,7 +71,8 @@ public class MetadataServiceMain extends AbstractServiceMain<EnvironmentOptions>
   }
 
   @Override
-  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new MessagingClientModule(),
       new NamespaceQueryAdminModule(),

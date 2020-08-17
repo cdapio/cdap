@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.preview;
 
 import com.google.common.base.Charsets;
 import com.google.gson.Gson;
+import com.google.inject.Inject;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
@@ -35,22 +36,27 @@ import java.util.Optional;
  * Fetch preview requests from remote server.
  */
 public class RemotePreviewRequestFetcher implements PreviewRequestFetcher {
-  private final RemoteClient remoteClientInternal;
-  private final byte[] pollerInfo;
   private static final Gson GSON = new Gson();
 
-  public RemotePreviewRequestFetcher(DiscoveryServiceClient discoveryServiceClient, byte[] pollerInfo) {
+  private final RemoteClient remoteClientInternal;
+  private final PreviewRequestPollerInfoProvider pollerInfoProvider;
+
+  @Inject
+  RemotePreviewRequestFetcher(DiscoveryServiceClient discoveryServiceClient,
+                              PreviewRequestPollerInfoProvider pollerInfoProvider) {
     this.remoteClientInternal = new RemoteClient(discoveryServiceClient, Constants.Service.PREVIEW_HTTP,
                                                  new DefaultHttpRequestConfig(false),
                                                  Constants.Gateway.INTERNAL_API_VERSION_3 + "/previews");
-    this.pollerInfo = pollerInfo;
+    this.pollerInfoProvider = pollerInfoProvider;
   }
 
   @Override
   public Optional<PreviewRequest> fetch() throws IOException {
-    HttpRequest.Builder builder = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull");
-    builder.withBody(ByteBuffer.wrap(pollerInfo));
-    HttpResponse httpResponse = remoteClientInternal.execute(builder.build());
+    HttpRequest request = remoteClientInternal.requestBuilder(HttpMethod.POST, "requests/pull")
+      .withBody(ByteBuffer.wrap(pollerInfoProvider.get()))
+      .build();
+
+    HttpResponse httpResponse = remoteClientInternal.execute(request);
     if (httpResponse.getResponseCode() == 200) {
       PreviewRequest previewRequest = GSON.fromJson(httpResponse.getResponseBodyAsString(), PreviewRequest.class);
       return Optional.ofNullable(previewRequest);

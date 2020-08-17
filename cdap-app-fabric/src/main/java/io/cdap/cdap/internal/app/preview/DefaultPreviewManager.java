@@ -69,7 +69,6 @@ import io.cdap.cdap.internal.app.namespace.StorageProviderNamespaceAdmin;
 import io.cdap.cdap.internal.app.runtime.monitor.LogAppenderLogProcessor;
 import io.cdap.cdap.internal.app.runtime.monitor.RemoteExecutionLogProcessor;
 import io.cdap.cdap.internal.app.store.DefaultStore;
-import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.logging.appender.LogAppender;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
 import io.cdap.cdap.logging.read.FileLogReader;
@@ -149,7 +148,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration previewCConf,
                         @Named(PreviewConfigModule.PREVIEW_HCONF) Configuration previewHConf,
                         @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
-                        PreviewRequestQueue previewRequestQueue,
+                        PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
                         PreviewRunStopper previewRunStopper, MessagingService messagingService,
                         PreviewDataCleanupService previewDataCleanupService) {
     this.previewCConf = previewCConf;
@@ -162,7 +161,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.authorizerInstantiator = authorizerInstantiator;
     this.previewLevelDBTableService = previewLevelDBTableService;
     this.previewRequestQueue = previewRequestQueue;
-    this.previewStore = new DefaultPreviewStore(previewLevelDBTableService);
+    this.previewStore = previewStore;
     this.previewRunStopper = previewRunStopper;
     this.messagingService = messagingService;
     this.previewDataCleanupService = previewDataCleanupService;

@@ -18,12 +18,17 @@ package io.cdap.cdap.internal.app.store.preview;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.reflect.TypeToken;
+import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewStatus;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
@@ -31,12 +36,15 @@ import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.RunId;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -48,12 +56,20 @@ import java.util.Map;
  */
 public class DefaultPreviewStoreTest {
 
+  @ClassRule
+  public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
+
   private static final Gson GSON = new Gson();
   private static DefaultPreviewStore store;
 
   @BeforeClass
-  public static void beforeClass() {
-    Injector injector = AppFabricTestHelper.getInjector();
+  public static void beforeClass() throws IOException {
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
+
+    Injector injector = Guice.createInjector(
+      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create())
+    );
     store = injector.getInstance(DefaultPreviewStore.class);
   }
 
