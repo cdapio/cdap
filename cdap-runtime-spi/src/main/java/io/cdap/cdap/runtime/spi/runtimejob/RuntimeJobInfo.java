@@ -20,6 +20,8 @@ import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import org.apache.twill.api.LocalFile;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Runtime job information. The instance of this interface will be provided to
@@ -41,4 +43,11 @@ public interface RuntimeJobInfo {
    * Returns a program run info.
    */
   ProgramRunInfo getProgramRunInfo();
+
+  /**
+   * Returns a set of properties for the JVM process that runs the {@link RuntimeJob}.
+   */
+  default Map<String, String> getJvmProperties() {
+    return Collections.emptyMap();
+  }
 }
