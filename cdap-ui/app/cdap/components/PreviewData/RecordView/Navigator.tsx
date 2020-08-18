@@ -38,7 +38,7 @@ const styles = (theme): StyleRules => ({
 interface IRecordNavigatorProps extends WithStyles<typeof styles> {
   selectedRecord: number;
   numRecords: number;
-  updateRecord: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  updateRecord: (newVal: string) => void;
   prevOperation: () => void;
   nextOperation: () => void;
 }

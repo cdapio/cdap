@@ -19,6 +19,8 @@ import { SchemaEditor } from 'components/AbstractWidget/SchemaEditor';
 import If from 'components/If';
 import LoadingSVG from 'components/LoadingSVG';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
+import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
+
 const styles = (): StyleRules => {
   return {
     container: {
@@ -33,7 +35,7 @@ interface IPluginSchema {
 }
 
 interface IRefreshableSchemaEditor extends WithStyles<typeof styles> {
-  schema: IPluginSchema;
+  schema: ISchemaType;
   onChange: (schemas: IPluginSchema) => void;
   disabled?: boolean;
   visibleRows?: number;
