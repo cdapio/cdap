@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.1.4</version>
+    <version>6.1.5-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-common</artifactId>
@@ -211,7 +211,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.8.2</version>
+      <version>6.1.5-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -238,7 +238,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
+        <version>6.1.5-SNAPSHOT</version>
         <executions>
           <execution>
             <id>test-jar</id>

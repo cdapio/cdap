@@ -22,7 +22,7 @@
 
   <groupId>io.cdap.cdap</groupId>
   <artifactId>cdap</artifactId>
-  <version>6.1.4</version>
+  <version>6.1.5-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Cask Data Application Platform (CDAP)</name>
   <description>Data Application Platform for Hadoop</description>
@@ -1609,7 +1609,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
-          <version>3.7.0</version>
+          <version>6.1.5-SNAPSHOT</version>
           <configuration>
             <source>1.8</source>
             <target>1.8</target>
@@ -1618,7 +1618,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-surefire-plugin</artifactId>
-          <version>2.19.1</version>
+          <version>6.1.5-SNAPSHOT</version>
           <configuration>
             <argLine>-Xmx3500m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -XX:+HeapDumpOnOutOfMemoryError</argLine>
             <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
@@ -1645,19 +1645,19 @@
             <dependency>
               <groupId>org.apache.maven.surefire</groupId>
               <artifactId>surefire-junit47</artifactId>
-              <version>2.14</version>
+              <version>6.1.5-SNAPSHOT</version>
             </dependency>
           </dependencies>
         </plugin>
         <plugin>
           <groupId>org.apache.rat</groupId>
           <artifactId>apache-rat-plugin</artifactId>
-          <version>0.13</version>
+          <version>6.1.5-SNAPSHOT</version>
           <dependencies>
             <dependency>
               <groupId>org.apache.maven.doxia</groupId>
               <artifactId>doxia-core</artifactId>
-              <version>1.6</version>
+              <version>6.1.5-SNAPSHOT</version>
               <exclusions>
                 <exclusion>
                   <groupId>xerces</groupId>
@@ -1712,7 +1712,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-checkstyle-plugin</artifactId>
-          <version>2.17</version>
+          <version>6.1.5-SNAPSHOT</version>
           <executions>
             <execution>
               <id>validate</id>
@@ -1734,7 +1734,7 @@
             <dependency>
               <groupId>com.puppycrawl.tools</groupId>
               <artifactId>checkstyle</artifactId>
-              <version>6.19</version>
+              <version>6.1.5-SNAPSHOT</version>
             </dependency>
           </dependencies>
         </plugin>
@@ -1743,7 +1743,7 @@
         <plugin>
           <groupId>net.alchim31.maven</groupId>
           <artifactId>scala-maven-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>6.1.5-SNAPSHOT</version>
           <configuration>
             <args>
               <arg>-target:jvm-1.7</arg>
@@ -1779,7 +1779,7 @@
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-gpg-plugin</artifactId>
-          <version>1.5</version>
+          <version>6.1.5-SNAPSHOT</version>
           <configuration>
             <passphrase>${gpg.passphrase}</passphrase>
             <useAgent>${gpg.useagent}</useAgent>
@@ -1797,7 +1797,7 @@
         <plugin>
           <groupId>org.sonatype.plugins</groupId>
           <artifactId>nexus-staging-maven-plugin</artifactId>
-          <version>1.6.2</version>
+          <version>6.1.5-SNAPSHOT</version>
           <extensions>true</extensions>
           <configuration>
             <nexusUrl>https://oss.sonatype.org</nexusUrl>
@@ -1831,7 +1831,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-deploy-plugin</artifactId>
-        <version>2.8</version>
+        <version>6.1.5-SNAPSHOT</version>
       </plugin>
       <plugin>
         <groupId>org.sonatype.plugins</groupId>
@@ -1861,7 +1861,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.14.1</version>
+              <version>6.1.5-SNAPSHOT</version>
               <configuration>
                 <groups>${testcase.groups}</groups>
               </configuration>
@@ -1883,7 +1883,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.14.1</version>
+              <version>6.1.5-SNAPSHOT</version>
               <configuration>
                 <groups>${testcase.groups}</groups>
               </configuration>
@@ -1902,7 +1902,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-source-plugin</artifactId>
-              <version>2.2.1</version>
+              <version>6.1.5-SNAPSHOT</version>
               <configuration>
                 <excludeResources>true</excludeResources>
               </configuration>
@@ -1919,7 +1919,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>2.9.1</version>
+              <version>6.1.5-SNAPSHOT</version>
               <configuration>
                 <stylesheetfile>cdap-distributions/src/javadoc/stylesheet.css</stylesheetfile>
                 <bottom>
@@ -1952,17 +1952,17 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
         </plugins>
       </build>
@@ -1999,7 +1999,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-jar-plugin</artifactId>
-              <version>2.4</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>jar</id>
@@ -2017,7 +2017,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-dependency-plugin</artifactId>
-              <version>2.8</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <!-- Copy runtime dependencies -->
                 <execution>
@@ -2061,7 +2061,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-resources-plugin</artifactId>
-              <version>2.6</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>copy-third-party-licenses</id>
@@ -2135,7 +2135,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <!--This is for workaround a bug in resource-plugin that it doesn't preserve file permission-->
                 <!--http://jira.codehaus.org/browse/MRESOURCES-132-->
@@ -2163,7 +2163,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>buildnumber-maven-plugin</artifactId>
-            <version>1.3</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>create-timestamp</id>
@@ -2192,7 +2192,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>1.9</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>regex-properties</id>
@@ -2232,12 +2232,12 @@
           <plugin>
             <groupId>org.codehaus.gmaven</groupId>
             <artifactId>gmaven-plugin</artifactId>
-            <version>1.5</version>
+            <version>6.1.5-SNAPSHOT</version>
             <dependencies>
               <dependency>
                 <groupId>org.codehaus.groovy</groupId>
                 <artifactId>groovy-all</artifactId>
-                <version>1.5.8</version>
+                <version>6.1.5-SNAPSHOT</version>
               </dependency>
             </dependencies>
             <executions>
@@ -2274,7 +2274,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-resources-plugin</artifactId>
-              <version>2.6</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>copy-rpm-scripts</id>
@@ -2302,7 +2302,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>rename-rpm-service</id>
@@ -2358,7 +2358,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-resources-plugin</artifactId>
-              <version>2.6</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>copy-deb-staging</id>
@@ -2405,7 +2405,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-antrun-plugin</artifactId>
-              <version>1.7</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>rename-deb-service</id>
@@ -2461,7 +2461,7 @@
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>exec-maven-plugin</artifactId>
-              <version>1.3.1</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>rpm-package</id>
@@ -2515,7 +2515,7 @@
             <plugin>
               <groupId>org.codehaus.mojo</groupId>
               <artifactId>exec-maven-plugin</artifactId>
-              <version>1.3.1</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>deb-package</id>
@@ -2568,7 +2568,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-assembly-plugin</artifactId>
-              <version>2.4</version>
+              <version>6.1.5-SNAPSHOT</version>
               <executions>
                 <execution>
                   <id>tgz-package</id>
@@ -2600,7 +2600,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>findbugs-maven-plugin</artifactId>
-            <version>3.0.5</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>findbugs-check</id>
@@ -2717,7 +2717,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-javadoc-plugin</artifactId>
-              <version>3.1.0</version>
+              <version>6.1.5-SNAPSHOT</version>
               <configuration>
                 <additionalparam>-Xdoclint:none</additionalparam>
                 <failOnError>false</failOnError>
@@ -2726,7 +2726,7 @@
             <plugin>
               <groupId>org.apache.maven.plugins</groupId>
               <artifactId>maven-site-plugin</artifactId>
-              <version>3.7.1</version>
+              <version>6.1.5-SNAPSHOT</version>
             </plugin>
           </plugins>
         </pluginManagement>
@@ -2741,7 +2741,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>2.9.1</version>
+        <version>6.1.5-SNAPSHOT</version>
         <configuration>
           <additionalparam>-Xdoclint:none</additionalparam>
           <failOnError>false</failOnError>

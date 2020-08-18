@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.1.4</version>
+    <version>6.1.5-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-api-spark</artifactId>
@@ -184,13 +184,13 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>6.1.5-SNAPSHOT</version>
       </plugin>
       <!-- copy the source from cdap-api-spark-base in order to compile everything as scala 2.10 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
-        <version>2.6</version>
+        <version>6.1.5-SNAPSHOT</version>
         <executions>
           <execution>
             <id>copy-api-base</id>
@@ -212,7 +212,7 @@
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
-        <version>3.0.0</version>
+        <version>6.1.5-SNAPSHOT</version>
         <executions>
           <execution>
             <id>add-source</id>
@@ -245,7 +245,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>copy-api-base</id>
@@ -258,7 +258,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>mkdir-symlink-dir</id>

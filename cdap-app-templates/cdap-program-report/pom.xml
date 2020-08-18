@@ -22,7 +22,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap-app-templates</artifactId>
-    <version>6.1.4</version>
+    <version>6.1.5-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -125,7 +125,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro</artifactId>
-      <version>1.7.6</version>
+      <version>6.1.5-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>org.mortbay.jetty</groupId>
@@ -136,7 +136,7 @@
     <dependency>
       <groupId>org.apache.avro</groupId>
       <artifactId>avro-mapred</artifactId>
-      <version>1.7.7</version>
+      <version>6.1.5-SNAPSHOT</version>
       <classifier>hadoop2</classifier>
       <exclusions>
         <exclusion>
@@ -148,7 +148,7 @@
     <dependency>
       <groupId>com.databricks</groupId>
       <artifactId>spark-avro_2.11</artifactId>
-      <version>4.0.0</version>
+      <version>6.1.5-SNAPSHOT</version>
       <exclusions>
         <exclusion>
           <groupId>org.scala-lang</groupId>
@@ -309,7 +309,7 @@
         <plugin>
           <groupId>org.apache.felix</groupId>
           <artifactId>maven-bundle-plugin</artifactId>
-          <version>3.3.0</version>
+          <version>6.1.5-SNAPSHOT</version>
           <extensions>true</extensions>
           <configuration>
             <archive>
@@ -338,12 +338,12 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>6.1.5-SNAPSHOT</version>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>6.1.5-SNAPSHOT</version>
       </plugin>
     </plugins>
   </build>

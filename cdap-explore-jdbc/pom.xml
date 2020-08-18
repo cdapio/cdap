@@ -24,7 +24,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.1.4</version>
+    <version>6.1.5-SNAPSHOT</version>
   </parent>
 
   <artifactId>cdap-explore-jdbc</artifactId>
@@ -134,7 +134,7 @@
       <!-- TODO: Remove this CDAP-4054 -->
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
-      <version>1.1.1</version>
+      <version>6.1.5-SNAPSHOT</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -144,7 +144,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-shade-plugin</artifactId>
-        <version>3.2.1</version>
+        <version>6.1.5-SNAPSHOT</version>
         <executions>
           <execution>
             <phase>package</phase>

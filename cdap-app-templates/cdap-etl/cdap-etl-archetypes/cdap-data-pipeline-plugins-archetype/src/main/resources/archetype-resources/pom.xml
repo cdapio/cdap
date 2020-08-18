@@ -231,7 +231,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.7.0</version>
+        <version>3.7.1-SNAPSHOT</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -240,7 +240,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.14.1</version>
+        <version>3.7.1-SNAPSHOT</version>
         <configuration>
           <argLine>-Xmx5000m -Djava.awt.headless=true -XX:+UseG1GC -XX:OnOutOfMemoryError="kill -9 %p" -Djava.net.preferIPv4Stack=true</argLine>
           <reuseForks>false</reuseForks>
@@ -263,7 +263,7 @@
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>3.3.0</version>
+        <version>3.7.1-SNAPSHOT</version>
         <extensions>true</extensions>
         <configuration>
           <instructions>
@@ -286,7 +286,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
+        <version>3.7.1-SNAPSHOT</version>
         <executions>
           <!-- Create the config file for artifact which can be used to deploy the artifact.
                Sets the parents field to system:cdap-etl-batch and system:cdap-etl-realtime with whatever

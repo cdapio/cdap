@@ -20,7 +20,7 @@
 
   <groupId>io.cdap.hydrator</groupId>
   <artifactId>hydrator-plugins</artifactId>
-  <version>1.7.0</version>
+  <version>1.7.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Hydrator Plugin Collection</name>
   <description>A collection of plugins for Cask Hydrator.</description>
@@ -159,7 +159,7 @@
       <dependency>
         <groupId>javax.annotation</groupId>
         <artifactId>jsr250-api</artifactId>
-        <version>1.0</version>
+        <version>1.7.1-SNAPSHOT</version>
       </dependency>
       <dependency>
         <groupId>io.cdap.cdap</groupId>
@@ -630,7 +630,7 @@
       <dependency>
         <groupId>org.apache.spark</groupId>
         <artifactId>spark-streaming-twitter_2.10</artifactId>
-        <version>1.6.2</version>
+        <version>1.7.1-SNAPSHOT</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -644,7 +644,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.7.0</version>
+        <version>1.7.1-SNAPSHOT</version>
         <configuration>
           <source>1.8</source>
           <target>1.8</target>
@@ -653,7 +653,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>2.14.1</version>
+        <version>1.7.1-SNAPSHOT</version>
         <configuration>
           <argLine>-Xmx3g -Djava.awt.headless=true -XX:+UseG1GC -Djava.net.preferIPv4Stack=true</argLine>
           <redirectTestOutputToFile>${surefire.redirectTestOutputToFile}</redirectTestOutputToFile>
@@ -677,19 +677,19 @@
           <dependency>
             <groupId>org.apache.maven.surefire</groupId>
             <artifactId>surefire-junit47</artifactId>
-            <version>2.14</version>
+            <version>1.7.1-SNAPSHOT</version>
           </dependency>
         </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.rat</groupId>
         <artifactId>apache-rat-plugin</artifactId>
-        <version>0.10</version>
+        <version>1.7.1-SNAPSHOT</version>
         <dependencies>
           <dependency>
             <groupId>org.apache.maven.doxia</groupId>
             <artifactId>doxia-core</artifactId>
-            <version>1.6</version>
+            <version>1.7.1-SNAPSHOT</version>
             <exclusions>
               <exclusion>
                 <groupId>xerces</groupId>
@@ -739,7 +739,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>2.17</version>
+        <version>1.7.1-SNAPSHOT</version>
         <executions>
           <execution>
             <id>validate</id>
@@ -762,14 +762,14 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>6.19</version>
+            <version>1.7.1-SNAPSHOT</version>
           </dependency>
         </dependencies>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-antrun-plugin</artifactId>
-        <version>1.7</version>
+        <version>1.7.1-SNAPSHOT</version>
         <executions>
           <!-- Create the config file for artifact which can be used to deploy the artifact.
                Sets the parents field to system:cdap-etl-batch and system:cdap-etl-realtime with whatever
@@ -869,7 +869,7 @@
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
             <artifactId>nexus-staging-maven-plugin</artifactId>
-            <version>1.6.2</version>
+            <version>1.7.1-SNAPSHOT</version>
             <extensions>true</extensions>
             <configuration>
               <nexusUrl>https://oss.sonatype.org</nexusUrl>
@@ -880,7 +880,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-source-plugin</artifactId>
-            <version>2.2.1</version>
+            <version>1.7.1-SNAPSHOT</version>
             <configuration>
               <excludeResources>true</excludeResources>
             </configuration>
@@ -899,7 +899,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-javadoc-plugin</artifactId>
-            <version>2.9.1</version>
+            <version>1.7.1-SNAPSHOT</version>
             <configuration>
               <links>
                 <link>http://download.oracle.com/javase/${jee.version}/docs/api/</link>
@@ -923,7 +923,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-gpg-plugin</artifactId>
-            <version>1.5</version>
+            <version>1.7.1-SNAPSHOT</version>
             <configuration>
               <passphrase>${gpg.passphrase}</passphrase>
               <useAgent>${gpg.useagent}</useAgent>

@@ -20,7 +20,7 @@
   <parent>
     <artifactId>cdap</artifactId>
     <groupId>io.cdap.cdap</groupId>
-    <version>6.1.4</version>
+    <version>6.1.5-SNAPSHOT</version>
   </parent>
   <modelVersion>4.0.0</modelVersion>
 
@@ -165,7 +165,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
-        <version>2.4</version>
+        <version>6.1.5-SNAPSHOT</version>
         <executions>
           <execution>
             <id>test-jar</id>
@@ -189,12 +189,12 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-jar-plugin</artifactId>
-            <version>2.4</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>
-            <version>2.8</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>copy-dependencies</id>
@@ -214,7 +214,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-shade-plugin</artifactId>
-            <version>3.2.1</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>hbase-compat-fat-jar</id>
@@ -288,12 +288,12 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
         </plugins>
       </build>
@@ -306,12 +306,12 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
-            <version>2.6</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-antrun-plugin</artifactId>
-            <version>1.7</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
         </plugins>
       </build>
@@ -324,7 +324,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.3.1</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
 
           <!-- Extra deployment for rpm package. -->
@@ -332,7 +332,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>deploy-rpm</id>
@@ -365,7 +365,7 @@
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>exec-maven-plugin</artifactId>
-            <version>1.3.1</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
 
           <!-- Extra deployment for deb package -->
@@ -373,7 +373,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>deploy-deb</id>
@@ -405,7 +405,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-assembly-plugin</artifactId>
-            <version>2.4</version>
+            <version>6.1.5-SNAPSHOT</version>
           </plugin>
 
           <!-- Extra deployment for tgz package -->
@@ -413,7 +413,7 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-deploy-plugin</artifactId>
-            <version>2.8</version>
+            <version>6.1.5-SNAPSHOT</version>
             <executions>
               <execution>
                 <id>deploy-tgz</id>
