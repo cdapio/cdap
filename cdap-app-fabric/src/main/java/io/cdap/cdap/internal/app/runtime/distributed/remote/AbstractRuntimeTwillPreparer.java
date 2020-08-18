@@ -482,8 +482,8 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
     Set<Class<?>> classes = Sets.newIdentityHashSet();
     classes.addAll(dependencies);
 
+    ClassLoader classLoader = getClassLoader();
     try {
-      ClassLoader classLoader = getClassLoader();
       for (RuntimeSpecification spec : twillSpec.getRunnables().values()) {
         classes.add(classLoader.loadClass(spec.getRunnableSpecification().getClassName()));
       }
@@ -494,6 +494,18 @@ abstract class AbstractRuntimeTwillPreparer implements TwillPreparer {
       }
     } catch (ClassNotFoundException e) {
       throw new IOException("Cannot create application jar", e);
+    }
+
+    // Optionally add the custom classloader class
+    if (classLoaderClassName != null) {
+      try {
+        classes.add(classLoader.loadClass(classLoaderClassName));
+      } catch (ClassNotFoundException e) {
+        // Don't throw if the classloader class is not found, as it can be available
+        // in the target cluster with appropriate classpath setting
+        LOG.debug("Cannot load custom classloader class '{}' when preparing for application launch",
+                  classLoaderClassName);
+      }
     }
 
     // The location name is computed from the MD5 of all the classes names

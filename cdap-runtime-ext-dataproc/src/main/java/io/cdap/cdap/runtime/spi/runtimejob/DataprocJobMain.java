@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -32,7 +33,10 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -40,6 +44,11 @@ import java.util.zip.ZipInputStream;
  * Main class that will be called from dataproc driver.
  */
 public class DataprocJobMain {
+
+  public static final String RUNTIME_JOB_CLASS = "runtimeJobClass";
+  public static final String SPARK_COMPAT = "sparkCompat";
+  public static final String ARCHIVE = "archive";
+  public static final String PROPERTY_PREFIX = "prop";
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocJobMain.class);
 
@@ -50,18 +59,29 @@ public class DataprocJobMain {
    * @throws Exception any exception while running the job
    */
   public static void main(String[] args) throws Exception {
-    if (args.length < 2) {
-      throw new RuntimeException("An implementation of RuntimeJob classname and spark compat should be provided as " +
-                                   "job arguments.");
+    Map<String, Collection<String>> arguments = fromPosixArray(args);
+
+    if (!arguments.containsKey(RUNTIME_JOB_CLASS)) {
+      throw new RuntimeException("Missing --" + RUNTIME_JOB_CLASS + " argument for the RuntimeJob classname");
+    }
+    if (!arguments.containsKey(SPARK_COMPAT)) {
+      throw new RuntimeException("Missing --" + SPARK_COMPAT + " argument for the spark compat version");
     }
 
     Thread.setDefaultUncaughtExceptionHandler((t, e) -> LOG.error("Uncaught exception from thread {}", t, e));
 
-    // expand archive jars. This is needed because of CDAP-16456
-    expandArchives(Arrays.asList(args).subList(2, args.length));
+    // Get the Java properties
+    for (Map.Entry<String, Collection<String>> entry : arguments.entrySet()) {
+      if (entry.getKey().startsWith(PROPERTY_PREFIX)) {
+        System.setProperty(entry.getKey().substring(PROPERTY_PREFIX.length()), entry.getValue().iterator().next());
+      }
+    }
 
-    String runtimeJobClassName = args[0];
-    String sparkCompat = args[1];
+    // expand archive jars. This is needed because of CDAP-16456
+    expandArchives(arguments.getOrDefault(ARCHIVE, Collections.emptySet()));
+
+    String runtimeJobClassName = arguments.get(RUNTIME_JOB_CLASS).iterator().next();
+    String sparkCompat = arguments.get(SPARK_COMPAT).iterator().next();
 
     ClassLoader cl = DataprocJobMain.class.getClassLoader();
     if (!(cl instanceof URLClassLoader)) {
@@ -78,7 +98,7 @@ public class DataprocJobMain {
     // Don't close the classloader since this is the main classloader,
     // which can be used for shutdown hook execution.
     // Closing it too early can result in NoClassDefFoundError in shutdown hook execution.
-    URLClassLoader newCL = new URLClassLoader(urls, cl.getParent());
+    ClassLoader newCL = createContainerClassLoader(urls);
     try {
       Thread.currentThread().setContextClassLoader(newCL);
 
@@ -212,5 +232,53 @@ public class DataprocJobMain {
     Files.deleteIfExists(archiveFile);
     Files.move(targetDir, archiveFile);
     LOG.debug("Archive expanded to {}", targetDir);
+  }
+
+  /**
+   * Converts a POSIX compliant program argument array to a String-to-String Map.
+   * @param args Array of Strings where each element is a POSIX compliant program argument (Ex: "--os=Linux" )
+   * @return Map of argument Keys and Values (Ex: Key = "os" and Value = "Linux").
+   */
+  private static Map<String, Collection<String>> fromPosixArray(String[] args) {
+    Map<String, Collection<String>> result = new LinkedHashMap<>();
+    for (String arg : args) {
+      int idx = arg.indexOf('=');
+      int keyOff = arg.startsWith("--") ? "--".length() : 0;
+      String key = idx < 0 ? arg.substring(keyOff) : arg.substring(keyOff, idx);
+      String value = idx < 0 ? "" : arg.substring(idx + 1);
+      // Remote quote from the value if it is quoted
+      if (value.length() >= 2 && value.charAt(0) == '"' && value.charAt(value.length() - 1) == '"') {
+        value = value.substring(1, value.length() - 1);
+      }
+
+      result.computeIfAbsent(key, k -> new ArrayList<>()).add(value);
+    }
+    return result;
+  }
+
+  /**
+   * Creates a {@link ClassLoader} for the the job execution.
+   */
+  private static ClassLoader createContainerClassLoader(URL[] classpath) {
+    String containerClassLoaderName = System.getProperty(Constants.TWILL_CONTAINER_CLASSLOADER);
+    URLClassLoader classLoader = new URLClassLoader(classpath, DataprocJobMain.class.getClassLoader().getParent());
+    if (containerClassLoaderName == null) {
+      return classLoader;
+    }
+
+    try {
+      @SuppressWarnings("unchecked")
+      Class<? extends ClassLoader> cls = (Class<? extends ClassLoader>) classLoader.loadClass(containerClassLoaderName);
+
+      // Instantiate with constructor (URL[] classpath, ClassLoader parentClassLoader)
+      return cls.getConstructor(URL[].class, ClassLoader.class).newInstance(classpath, classLoader.getParent());
+    } catch (ClassNotFoundException e) {
+      throw new RuntimeException("Failed to load container class loader class " + containerClassLoaderName, e);
+    } catch (NoSuchMethodException e) {
+      throw new RuntimeException("Container class loader must have a public constructor with " +
+                                   "parameters (URL[] classpath, ClassLoader parent)", e);
+    } catch (InstantiationException | InvocationTargetException | IllegalAccessException e) {
+      throw new RuntimeException("Failed to create container class loader of class " + containerClassLoaderName, e);
+    }
   }
 }
