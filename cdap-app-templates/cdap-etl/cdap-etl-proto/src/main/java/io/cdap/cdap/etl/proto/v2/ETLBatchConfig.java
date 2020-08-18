@@ -59,7 +59,7 @@ public final class ETLBatchConfig extends ETLConfig {
                          @Nullable Integer numOfRecordsPreview,
                          @Nullable Integer maxConcurrentRuns,
                          Map<String, String> engineProperties,
-                         Boolean service, List<String> comments) {
+                         Boolean service, List<Object> comments) {
     super(stages, connections, resources, driverResources, clientResources, stageLoggingEnabled, processTimingEnabled,
           numOfRecordsPreview, engineProperties, comments);
     this.postActions = ImmutableList.copyOf(postActions);
@@ -206,7 +206,7 @@ public final class ETLBatchConfig extends ETLConfig {
     private List<ETLStage> endingActions;
     private Integer maxConcurrentRuns;
     // Only used for upgrade purpose.
-    private List<String> comments;
+    private List<Object> comments;
 
     private Builder() {
       this(null);
