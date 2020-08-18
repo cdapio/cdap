@@ -24,16 +24,21 @@ import org.apache.twill.api.LocalFile;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Default implementation of {@link RuntimeJobInfo}.
  */
-public class DefaultRuntimeInfo implements RuntimeJobInfo {
+public class DefaultRuntimeJobInfo implements RuntimeJobInfo {
 
   private final ProgramRunInfo info;
   private final Collection<? extends LocalFile> files;
+  private final Map<String, String> jvmProperties;
 
-  public DefaultRuntimeInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files) {
+
+  public DefaultRuntimeJobInfo(ProgramRunId programRunId, Collection<? extends LocalFile> files,
+                               Map<String, String> jvmProperties) {
     this.info = new ProgramRunInfo.Builder()
       .setNamespace(programRunId.getNamespace())
       .setApplication(programRunId.getApplication())
@@ -42,6 +47,7 @@ public class DefaultRuntimeInfo implements RuntimeJobInfo {
       .setProgram(programRunId.getProgram())
       .setRun(programRunId.getRun()).build();
     this.files = Collections.unmodifiableCollection(new ArrayList<>(files));
+    this.jvmProperties = Collections.unmodifiableMap(new LinkedHashMap<>(jvmProperties));
   }
 
   @Override
@@ -57,5 +63,10 @@ public class DefaultRuntimeInfo implements RuntimeJobInfo {
   @Override
   public String getRuntimeJobClassname() {
     return DefaultRuntimeJob.class.getName();
+  }
+
+  @Override
+  public Map<String, String> getJvmProperties() {
+    return jvmProperties;
   }
 }
