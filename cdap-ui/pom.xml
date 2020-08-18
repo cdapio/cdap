@@ -23,7 +23,7 @@
   <parent>
     <groupId>io.cdap.cdap</groupId>
     <artifactId>cdap</artifactId>
-    <version>6.2.2-SNAPSHOT</version>
+    <version>6.2.2</version>
   </parent>
 
   <artifactId>cdap-ui</artifactId>
