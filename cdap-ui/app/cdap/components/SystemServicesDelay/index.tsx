@@ -42,7 +42,7 @@ interface ISystemDelayState {
 const EXPERIMENT_ID = 'system-delay-notification';
 const snoozeTimelabel = `${EXPERIMENT_ID}-snoozetime`;
 const HEALTH_CHECK_INTERVAL = 12000;
-const DEFAULT_DELAY_TIME = 5000;
+const DEFAULT_DELAY_TIME = 10000;
 const CLEAN_CHECK_COUNT = 3;
 
 const styles = (theme): StyleRules => {
