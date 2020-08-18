@@ -16,11 +16,13 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeInfo;
+import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJobInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobInfo;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobManager;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.twill.api.LocalFile;
@@ -38,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -80,16 +83,63 @@ class RuntimeJobTwillPreparer extends AbstractRuntimeTwillPreparer {
                                                false, null));
       }
 
-      DefaultRuntimeInfo defaultRuntimeInfo = createRuntimeJobInfo(runtimeSpec, localizeFiles);
+      RuntimeJobInfo runtimeJobInfo = createRuntimeJobInfo(runtimeSpec, localizeFiles,
+                                                           jvmOptions.getRunnableExtraOptions(runtimeSpec.getName()));
       LOG.info("Starting runnable {} for runId {} with job manager.", runtimeSpec.getName(), getProgramRunId());
       // launch job using job manager
-      jobManager.launch(defaultRuntimeInfo);
+      jobManager.launch(runtimeJobInfo);
     }
   }
 
-  private DefaultRuntimeInfo createRuntimeJobInfo(RuntimeSpecification runtimeSpec, Map<String, LocalFile> localFiles) {
-    return new DefaultRuntimeInfo(getProgramRunId(),
-                                  Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream())
-                                    .collect(Collectors.toList()));
+  private RuntimeJobInfo createRuntimeJobInfo(RuntimeSpecification runtimeSpec,
+                                              Map<String, LocalFile> localFiles, String jvmOpts) {
+
+    Map<String, String> jvmProperties = parseJvmProperties(jvmOpts);
+    LOG.info("JVM properties {}", jvmProperties);
+
+    return new DefaultRuntimeJobInfo(getProgramRunId(),
+                                     Stream.concat(localFiles.values().stream(), runtimeSpec.getLocalFiles().stream())
+                                    .collect(Collectors.toList()), jvmProperties);
+  }
+
+  /**
+   * Parses a jvm options string (e.g. {@code -XYZ -Dkey=value}) and extracts key/value properties provided by the
+   * {@code -D} options.
+   */
+  @VisibleForTesting
+  static Map<String, String> parseJvmProperties(String jvmOpts) {
+    Map<String, String> jvmProperties = new LinkedHashMap<>();
+    int idx = jvmOpts.indexOf("-D");
+    while (idx >= 0) {
+      int equalIdx = jvmOpts.indexOf('=', idx);
+      if (equalIdx < 0) {
+        throw new IllegalArgumentException("Java properties must be in -Dkey=value format: " + jvmOpts);
+      }
+      String key = jvmOpts.substring(idx + 2, equalIdx);
+
+      // Reached end of string, the value must be empty
+      if (equalIdx + 1 == jvmOpts.length()) {
+        jvmProperties.put(key, "");
+        break;
+      }
+      int startIdx = equalIdx + 1;
+      int endIdx;
+      // Quoted value
+      if (jvmOpts.charAt(startIdx) == '"') {
+        startIdx++;
+        endIdx = jvmOpts.indexOf('"', startIdx);
+        if (endIdx < 0) {
+          throw new IllegalArgumentException("Missing end quote in Java property " + key + ": " + jvmOpts);
+        }
+      } else {
+        endIdx = jvmOpts.indexOf(' ', equalIdx);
+        if (endIdx < 0) {
+          endIdx = jvmOpts.length();
+        }
+      }
+      jvmProperties.put(key, jvmOpts.substring(startIdx, endIdx));
+      idx = jvmOpts.indexOf("-D", endIdx);
+    }
+    return jvmProperties;
   }
 }

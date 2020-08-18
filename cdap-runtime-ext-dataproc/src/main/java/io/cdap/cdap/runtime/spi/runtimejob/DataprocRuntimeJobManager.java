@@ -66,8 +66,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and
@@ -186,7 +184,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       }
 
       // step 3: build the hadoop job request to be submitted to dataproc
-      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo.getRuntimeJobClassname(), runInfo, uploadedFiles);
+      SubmitJobRequest request = getSubmitJobRequest(runtimeJobInfo, uploadedFiles);
 
       // step 4: submit hadoop job to dataproc
       Job job = getJobControllerClient().submitJob(request);
@@ -332,15 +330,21 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   /**
    * Creates and returns dataproc job submit request.
    */
-  private SubmitJobRequest getSubmitJobRequest(String jobMainClassName,
-                                               ProgramRunInfo runInfo, List<LocalFile> localFiles) {
+  private SubmitJobRequest getSubmitJobRequest(RuntimeJobInfo runtimeJobInfo, List<LocalFile> localFiles) {
+    ProgramRunInfo runInfo = runtimeJobInfo.getProgramRunInfo();
     String runId = runInfo.getRun();
 
     // The DataprocJobMain argument is <class-name> <spark-compat> <list of archive files...>
-    List<String> arguments = Stream.concat(
-      Stream.of(jobMainClassName, provisionerContext.getSparkCompat().getCompat()),
-      localFiles.stream().filter(LocalFile::isArchive).map(LocalFile::getName)
-    ).collect(Collectors.toList());
+    List<String> arguments = new ArrayList<>();
+    arguments.add("--" + DataprocJobMain.RUNTIME_JOB_CLASS + "=" + runtimeJobInfo.getRuntimeJobClassname());
+    arguments.add("--" + DataprocJobMain.SPARK_COMPAT + "=" + provisionerContext.getSparkCompat().getCompat());
+    localFiles.stream()
+      .filter(LocalFile::isArchive)
+      .map(f -> "--" + DataprocJobMain.ARCHIVE + "=" + f.getName())
+      .forEach(arguments::add);
+    for (Map.Entry<String, String> entry : runtimeJobInfo.getJvmProperties().entrySet()) {
+      arguments.add("--" + DataprocJobMain.PROPERTY_PREFIX + entry.getKey() + "=\"" + entry.getValue() + "\"");
+    }
 
     Map<String, String> properties = new LinkedHashMap<>();
     properties.put(CDAP_RUNTIME_NAMESPACE, runInfo.getNamespace());
