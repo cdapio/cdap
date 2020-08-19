@@ -14,12 +14,12 @@
  * the License.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import If from 'components/If';
 import DataTable from 'components/PreviewData/DataView/Table';
+import ConfigurableTab from 'components/ConfigurableTab';
 import { ITableData } from 'components/PreviewData';
 import { INode } from 'components/PreviewData/utilities';
-import Heading, { HeadingTypes } from 'components/Heading';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
 import T from 'i18n-react';
@@ -45,6 +45,14 @@ export const styles = (theme): StyleRules => ({
     padding: '10px',
     borderRight: `1px solid ${theme.palette.grey[400]}`,
     height: 'inherit',
+    '& .table-pane': {
+      overflow: 'scroll',
+      minWidth: '100%',
+    },
+    '& .cask-tab-headers': {
+      overflowX: 'auto',
+      overflowY: 'hidden',
+    },
   },
   tableContainer: {
     overflow: 'scroll',
@@ -56,6 +64,9 @@ export const styles = (theme): StyleRules => ({
     paddingBottom: '5px',
     paddingLeft: '10px',
     margin: '0 -10px',
+  },
+  headerBumper: {
+    height: '50px', // Height of horizontal tabs, to align tables if there are multiple inputs or outputs
   },
 });
 
@@ -71,8 +82,70 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
   selectedNode,
   previewStatus,
 }) => {
-  const inputs = tableData.inputs;
-  const outputs = tableData.outputs;
+  const [activeTab, setActiveTab] = useState(null);
+
+  const handleTabClick = (id) => {
+    setActiveTab(id);
+  };
+
+  const getTabConfig = (stagesInfo, isInput: boolean) => {
+    const tabs = stagesInfo.map(([stageName, recordInfo], index) => {
+      return {
+        id: index + 1,
+        name: stageName,
+        content: (
+          <DataTable
+            headers={recordInfo.schemaFields}
+            records={recordInfo.records}
+            isInput={isInput}
+            previewStatus={previewStatus}
+          />
+        ),
+        paneClassName: 'table-pane',
+      };
+    });
+    return {
+      defaultTab: 1,
+      layout: 'horizontal',
+      tabs,
+    };
+  };
+
+  const getTabs = (config) => {
+    return <ConfigurableTab tabConfig={config} onTabClick={handleTabClick} activeTab={activeTab} />;
+  };
+
+  const getTables = (stagesData, isInput: boolean) => {
+    const stagesToRender = isInput ? stagesData.inputs : stagesData.outputs;
+    const adjacentStages = isInput ? stagesData.outputs : stagesData.inputs;
+    const showTabs = stagesToRender.length > 1;
+
+    if (showTabs) {
+      return getTabs(getTabConfig(stagesToRender, isInput));
+    }
+    return stagesToRender.map(([tableKey, tableValue], i) => {
+      const headers = tableValue.schemaFields;
+      const records = tableValue.records;
+      return (
+        <div key={`${isInput ? 'input' : 'output'}-table-${i}`} className={classes.tableContainer}>
+          {showTabs ? null : (
+            <div
+              className={classnames({
+                [classes.headerBumper]: adjacentStages.length > 1,
+              })}
+            />
+          )}
+          <DataTable
+            headers={headers}
+            records={records}
+            isInput={isInput}
+            previewStatus={previewStatus}
+          />
+        </div>
+      );
+    });
+  };
+
   return (
     <div className={classes.outerContainer}>
       <If condition={!selectedNode.isSource && !selectedNode.isCondition}>
@@ -82,21 +155,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
           })}
         >
           <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.inputHeader`)}</h2>
-          {inputs.map(([tableKey, tableValue], i) => {
-            const inputHeaders = tableValue.schemaFields;
-            const inputRecords = tableValue.records;
-            return (
-              <div key={`input-table-${i}`} className={classes.tableContainer}>
-                {inputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
-                <DataTable
-                  headers={inputHeaders}
-                  records={inputRecords}
-                  isInput={true}
-                  previewStatus={previewStatus}
-                />
-              </div>
-            );
-          })}
+          {getTables(tableData, true)}
         </div>
       </If>
       <If condition={!selectedNode.isSink && !selectedNode.isCondition}>
@@ -106,21 +165,7 @@ const TableContainer: React.FC<IPreviewTableContainerProps> = ({
           })}
         >
           <h2 className={classes.h2Title}>{T.translate(`${I18N_PREFIX}.outputHeader`)}</h2>
-          {outputs.map(([tableKey, tableValue], j) => {
-            const outputHeaders = tableValue.schemaFields;
-            const outputRecords = tableValue.records;
-            return (
-              <div key={`output-table-${j}`} className={classes.tableContainer}>
-                {outputs.length > 1 ? <Heading type={HeadingTypes.h3} label={tableKey} /> : null}
-                <DataTable
-                  headers={outputHeaders}
-                  records={outputRecords}
-                  isInput={false}
-                  previewStatus={previewStatus}
-                />
-              </div>
-            );
-          })}
+          {getTables(tableData, false)}
         </div>
       </If>
       <If condition={selectedNode.isCondition}>
