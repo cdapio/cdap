@@ -398,7 +398,10 @@ class PluginSchemaEditorBase extends React.PureComponent<
               disabled={this.props.disabled}
               onChange={({ avroSchema }) => {
                 const newSchemas = [...this.props.schemas];
-                newSchemas[i] = avroSchema;
+                newSchemas[i] = {
+                  name: avroSchema.name,
+                  schema: JSON.stringify(avroSchema.schema),
+                };
                 newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
                 this.props.onSchemaChange(newSchemas);
               }}

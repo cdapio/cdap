@@ -36,7 +36,7 @@ interface IPluginSchema {
 
 interface IRefreshableSchemaEditor extends WithStyles<typeof styles> {
   schema: ISchemaType;
-  onChange: (schemas: IPluginSchema) => void;
+  onChange: (props: { avroSchema: ISchemaType }) => void;
   disabled?: boolean;
   visibleRows?: number;
   errors?: Record<string, string>;
