@@ -790,6 +790,7 @@ final class MapReduceRuntimeService extends AbstractExecutionThreadService {
     classes.add(MapperWrapper.class);
     classes.add(ReducerWrapper.class);
     classes.add(SLF4JBridgeHandler.class);
+    classes.add(MapReduceContainerLauncher.class);
 
     // We only need to trace the Input/OutputFormat class due to MAPREDUCE-5957 so that those classes are included
     // in the job.jar and be available in the MR system classpath before our job classloader (ApplicationClassLoader)
