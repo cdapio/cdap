@@ -30,6 +30,22 @@ Cask Data Application Platform Release Notes
    :backlinks: none
    :depth: 2
 
+`Release 6.1.4 <http://docs.cask.co/cdap/6.1.4/index.html>`__
+=============================================================
+
+Summary
+-------
+
+New Features
+------------
+
+Performance Improvements
+------------------------
+
+Bug Fixes
+---------
+
+
 `Release 6.1.3 <http://docs.cask.co/cdap/6.1.3/index.html>`__
 =============================================================
 
