@@ -48,7 +48,7 @@ public class MapReduceContainerLauncher {
   public static void launch(String mainClassName, String[] args) throws Exception {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new ArrayList<URL>());
+    List<URL> urls = ClassLoaders.getClassLoaderURLs(systemClassLoader, new ArrayList<>());
 
     // Remove the URL that contains the given main classname to avoid infinite recursion.
     // This is needed because we generate a class with the same main classname in order to intercept the main()
@@ -114,10 +114,9 @@ public class MapReduceContainerLauncher {
       mainMethod.invoke(null, new Object[]{args});
       LOG.info("Main method returned {}", mainClassName);
     } catch (Throwable t) {
-      // LOG the exception since this exception will be propagated back to JVM
-      // and kill the main thread (hence the JVM process).
-      // If we don't log it here as ERROR, it will be logged by UncaughtExceptionHandler as DEBUG level
-      LOG.error("Exception raised when calling {}.main(String[]) method", mainClassName, t);
+      // print to System.err since the logger may not have been redirected yet
+      System.err.println(String.format("Exception raised when calling %s.main(String[]) method", mainClassName));
+      t.printStackTrace();
       throw t;
     }
   }
