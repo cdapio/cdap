@@ -36,14 +36,116 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
+1. **Features**
+    - Added a new log viewer which enables users to see the most recent logs.
+    - Added revamped preview tab with Record view for large schemas.
+    - Added URI as option in CDAP CLI.
+
+2. **Performance Improvements**
+    - Improved spark pipeline performance by adding an experimental setting `spark.cdap.pipeline.consolidate.stages` to consolidate multiple pipeline branches into single operation.
+    - Improved the scalability of the preview system when running in Kubernetes environment by separating out preview runs in their own individual pods.
+    - Improved schema editor performance for large schemas (>5K fields).
+
 New Features
 ------------
+
+- :cask-issue:`CDAP-16980` - New Log Viewer feature which enables users to see the most recent logs.
+
+- :cask-issue:`CDAP-16836` - Added new options in CDAP CLI to take URI instead of host and port combination.
+
+- :cask-issue:`CDAP-16690` - Added revamped preview tab with new Record view for large schemas.
 
 Performance Improvements
 ------------------------
 
+- :cask-issue:`PLUGIN-282` - Added new Data Cacher plugin to allow users to manually cache data at certain points in a pipeline.
+
+- :cask-issue:`PLUGIN-174` - Enabled macro for Hostname, port and database name in database-specific plugins.
+
+- :cask-issue:`CDAP-17179` - Added new properties `Filesystem properties` and `Output File Prefix` for GCS Sink.
+
+- :cask-issue:`CDAP-17130` - Added joiner distribution support to MapReduce and streaming pipelines.
+
+- :cask-issue:`CDAP-17123` - Make "records.updated" metric available for GCS Batch Sink plugin.
+
+- :cask-issue:`CDAP-17095` - Added Distribution to AutoJoiner API to increase performance for skewed joins.
+
+- :cask-issue:`CDAP-17078` - Added an experimental setting to consolidate multiple pipeline branches into single operations in Spark pipelines. This can improve performance in pipelines by avoiding recomputation. This can be turned on by setting a preference or runtime argument for 'spark.cdap.pipeline.consolidate.stages' to 'true'.
+
+- :cask-issue:`CDAP-17077` - Changed the auto-caching strategy in Spark pipelines to default to using disk only caching instead of memory due to common out of memory failures. Also changed the caching strategy to only cache at places that would prevent sources from being recomputed instead of the more aggressive caching previously done.
+
+- :cask-issue:`CDAP-16712` - Improved the scalability of the preview system when running in Kubernetes environment by separating out preview runs in their own individual pods. Preview manager pod now only responsible for handling preview REST api.
+
+- :cask-issue:`CDAP-16697` - Created Best Practices guide for Spark engine tuning.
+
+- :cask-issue:`CDAP-16682` - When the backend is slow to respond to requests from UI, we now show a snackbar saying there's a delay.
+
+- :cask-issue:`CDAP-16668` - Added support for creating autoscale dataproc cluster.
+
+- :cask-issue:`CDAP-16850` - Introduced new schema editor for plugins in pipelines. The schema editor in addition to supporting large schemas (>5k fields) supports the ability to edit attributes for decimal types (precision & scale).
+
+- :cask-issue:`CDAP-17015` - Updated Preview to show number of preview runnings pending before current run (if there are any runs pending). The number of pending runs is shown under the timer in the UI.
+
 Bug Fixes
 ---------
+
+- :cask-issue:`PLUGIN-372` - Fixed user experience issue where Bigtable sink and source plugins may fail deployment if they are unable to connect to the Bigtable service.
+
+- :cask-issue:`PLUGIN-369` - Fixed a bug where customer credential information has shown up in the validation logs.
+
+- :cask-issue:`PLUGIN-367` - Fixed bug where blog file input formats are being split up in Hadoop jobs.
+
+- :cask-issue:`PLUGIN-245` - Fixed bigquery sink with macro table key validation.
+
+- :cask-issue:`PLUGIN-206` - Fixed a region error message discrepancy of BigQuery service API on their end.
+
+- :cask-issue:`PLUGIN-202` - Improved validations on GCS plugins to check for permissions on buckets, and improved error messages for users unable to access a GCS bucket.
+
+- :cask-issue:`CDAP-17171` - Fixed horizontal tab styling to handle mac system setting "scrolling always on" in chrome.
+
+- :cask-issue:`CDAP-17166` - Fixed a bug that caused the setting for the number of executors in streaming pipelines to be ignored.
+
+- :cask-issue:`CDAP-17161` - Reduced memory footprint for program execution monitoring.
+
+- :cask-issue:`CDAP-17154` - Fixed a race condition that caused runtime monitoring not working properly when there are concurrent launching of programs, which result in program state not able to transit and missing metadata.
+
+- :cask-issue:`CDAP-17153` - Modified preview tab so that multiple input or outputs are shown with tabs in table mode.
+
+- :cask-issue:`CDAP-17141` - Fixed bug that allowed user to make unsaved config changes by disabling pipeline config button in Preview mode when run is in progress.
+
+- :cask-issue:`CDAP-17140` - Fixed bug so error banner for deploy failure shows failure details from backend status message, if they exist.
+
+- :cask-issue:`CDAP-17139` - Fixed styling of preview tab so that side by side tables and record tables are aligned.
+
+- :cask-issue:`CDAP-17135` - Fixed a race condition in stopping Spark program in Standalone that can cause stop to hang.
+
+- :cask-issue:`CDAP-17133` - Fixed tab styles for users on Mac with system preferences set to show scrollbars always in Chrome.
+
+- :cask-issue:`CDAP-17117` - Fixed styling bug so header of preview tab does not scroll with table.
+
+- :cask-issue:`CDAP-17097` - Fixed a bug that caused splitter transforms to be unable to fetch their output ports and schemas.
+
+- :cask-issue:`CDAP-17074` - Improved state transitions for starting pipelines in app fabric to increase stability if app fabric unexpectedly restarts.
+
+- :cask-issue:`CDAP-17057` - Fixed bug that did not allow users to make further changes to preferences when saving preferences returned an error.
+
+- :cask-issue:`CDAP-17045` - Fixed the bug to allow large pipelines with `-` in the name to properly overflow in the UI.
+
+- :cask-issue:`CDAP-17044` - Validated Columns names for big query sink.
+
+- :cask-issue:`CDAP-17043` - Fixed the bug for showing dropdown menu for wrangler tabs to be correct. Existing dropdown overlapped with other UI elements hindering the usage of UI.
+
+- :cask-issue:`CDAP-16930` - Missing plugins in a pipeline would have properties button disabled with a tooltip.
+
+- :cask-issue:`CDAP-16754` - Preview shows logical types in iso format.
+
+- :cask-issue:`CDAP-16747` - Modified loading screen for preview tab.
+
+- :cask-issue:`CDAP-16414` - GraphQL errors now use standard page level error or error banner based on severity to display the errors.
+
+- :cask-issue:`CDAP-15869` - Preview displays logical types as strings.
+
+- :cask-issue:`CDAP-12499` - Clarified error message for when branches of a conditional are used as inputs to the same node.
 
 
 `Release 6.1.3 <http://docs.cask.co/cdap/6.1.3/index.html>`__
