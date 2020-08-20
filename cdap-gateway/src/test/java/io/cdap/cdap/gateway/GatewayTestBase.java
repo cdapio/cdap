@@ -268,6 +268,6 @@ public abstract class GatewayTestBase {
         List<RunRecord> records = GSON.fromJson(EntityUtils.toString(response.getEntity()), RUN_RECORDS_TYPE);
         return records.size();
       }
-    }, 10, TimeUnit.SECONDS);
+    }, 30, TimeUnit.SECONDS);
   }
 }
