@@ -37,7 +37,7 @@ const CustomTooltip = withStyles((theme) => {
   };
 })(Tooltip);
 
-const CustomizedInput = withStyles(() => {
+const CustomizedInputBase = withStyles(() => {
   return {
     input: {
       padding: '7px 18px 7px 12px',
@@ -48,6 +48,18 @@ const CustomizedInput = withStyles(() => {
     },
   };
 })(InputBase);
+
+const CustomizedInput = withStyles(() => {
+  return {
+    input: {
+      padding: '7px 18px 7px 12px',
+      '&:focus': {
+        backgroundColor: 'transparent',
+        outline: `1px solid ${blue[100]}`,
+      },
+    },
+  };
+})(Input);
 
 const DenseMenuItem = withStyles(() => {
   return {
@@ -120,7 +132,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
     optionValues = [{ placeholder, value: '', label: placeholder }, ...optionValues];
   }
 
-  const InputComponent = enableUnderline ? Input : CustomizedInput;
+  const InputComponent = enableUnderline ? CustomizedInput : CustomizedInputBase;
 
   return (
     <SelectComponent
