@@ -127,7 +127,7 @@ Cask Data Application Platform Distributed Dependencies
    "format-orc-2.3.7.jar","2.3.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "format-parquet-2.3.7.jar","2.3.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "format-text-2.3.7.jar","2.3.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
-   "google-cloud-0.14.7.jar","0.14.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
+   "google-cloud-0.14.8.jar","0.14.8","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "hbase-plugins-2.3.7.jar","2.3.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "http-plugins-2.3.7.jar","2.3.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"
    "hydrator-common-2.3.7.jar","2.3.7","\-","Apache License, Version 2.0","http://www.apache.org/licenses/LICENSE-2.0.html"

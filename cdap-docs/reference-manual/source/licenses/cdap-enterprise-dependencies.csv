@@ -121,7 +121,7 @@ format-json-2.3.7.jar
 format-orc-2.3.7.jar
 format-parquet-2.3.7.jar
 format-text-2.3.7.jar
-google-cloud-0.14.7.jar
+google-cloud-0.14.8.jar
 hbase-plugins-2.3.7.jar
 http-plugins-2.3.7.jar
 hydrator-common-2.3.7.jar
