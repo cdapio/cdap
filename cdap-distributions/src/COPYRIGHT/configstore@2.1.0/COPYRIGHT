@@ -1,25 +1,114 @@
-BSD 2-Clause License
+# configstore [![Build Status](https://travis-ci.org/yeoman/configstore.svg?branch=master)](https://travis-ci.org/yeoman/configstore)
 
-Copyright (c) Google
-All rights reserved.
+> Easily load and persist config without having to think about where and how
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Config is stored in a JSON file located in `$XDG_CONFIG_HOME` or `~/.config`.<br>
+Example: `~/.config/configstore/some-id.json`
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
 
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+## Usage
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```js
+const Configstore = require('configstore');
+const pkg = require('./package.json');
+
+// create a Configstore instance with an unique ID e.g.
+// package name and optionally some default values
+const conf = new Configstore(pkg.name, {foo: 'bar'});
+
+console.log(conf.get('foo'));
+//=> 'bar'
+
+conf.set('awesome', true);
+console.log(conf.get('awesome'));
+//=> true
+
+// use dot-notation to access nested properties
+conf.set('bar.baz', true);
+console.log(conf.get('bar'));
+//=> {baz: true}
+
+conf.delete('awesome');
+console.log(conf.get('awesome'));
+//=> undefined
+```
+
+
+## API
+
+### Configstore(packageName, [defaults], [options])
+
+Returns a new instance.
+
+#### packageName
+
+Type: `string`
+
+Name of your package.
+
+#### defaults
+
+Type: `Object`
+
+Default config.
+
+#### options
+
+##### globalConfigPath
+
+Type: `boolean`<br>
+Default: `false`
+
+Store the config at `$CONFIG/package-name/config.json` instead of the default `$CONFIG/configstore/package-name.json`. This is not recommended as you might end up conflicting with other tools, rendering the "without having to think" idea moot.
+
+### Instance
+
+You can use [dot-notation](https://github.com/sindresorhus/dot-prop) in a `key` to access nested properties.
+
+### .set(key, value)
+
+Set an item.
+
+### .set(object)
+
+Set multiple items at once.
+
+### .get(key)
+
+Get an item.
+
+### .has(key)
+
+Check if an item exists.
+
+### .delete(key)
+
+Delete an item.
+
+### .clear()
+
+Delete all items.
+
+### .size
+
+Get the item count.
+
+### .path
+
+Get the path to the config file. Can be used to show the user where the config file is located or even better open it for them.
+
+### .all
+
+Get all the config as an object or replace the current config with an object:
+
+```js
+conf.all = {
+	hello: 'world'
+};
+```
+
+
+## License
+
+[BSD license](http://opensource.org/licenses/bsd-license.php)<br>
+Copyright Google

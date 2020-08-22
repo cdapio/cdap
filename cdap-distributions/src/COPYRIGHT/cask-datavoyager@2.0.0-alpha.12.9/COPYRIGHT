@@ -1,27 +1,149 @@
-Copyright (c) 2015, University of Washington Interactive Data Lab.
-All rights reserved.
+# Voyager 2
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
+Voyager 2 is a data exploration tool that blends manual and automated chart specification. Voyager 2 combines PoleStar, a traditional chart specification tool inspired by Tableau and Polaris (research project that led to the birth of Tableau), with two partial chart specification interfaces: (1) *wildcards* let users specify multiple charts in parallel,(2) *related views* suggest visualizations relevant to the currently specified chart.  With Voyager 2, we aim to  help analysts engage in both breadth-oriented exploration and depth-oriented question answering.
 
-* Redistributions of source code must retain the above copyright notice, this
-  list of conditions and the following disclaimer.
+For more information about Voyager 2's design, please read our [CHI paper](http://idl.cs.washington.edu/papers/voyager2) and other related papers ([1](http://idl.cs.washington.edu/papers/compassql/), [2](http://idl.cs.washington.edu/papers/voyager/), [3](http://idl.cs.washington.edu/papers/vega-lite/)).
 
-* Redistributions in binary form must reproduce the above copyright notice,
-  this list of conditions and the following disclaimer in the documentation
-  and/or other materials provided with the distribution.
+# Cask Fork
 
-* Neither the name of the University of Washington Interactive Data Lab
-  nor the names of its contributors may be used to endorse or promote products 
-  derived from this software without specific prior written permission.
+This is a fork for Cask's version of Voyager. We have basically built an adapter around the base voyager to extract out things that is not needed in a generic external environment. It makes sense for voyager as a project to come with all it can so that it can be embedded in any environment however the environment that we are using at Cask doesn't require the entire package. Hence the trim down version. The differences between voyager and the fork are,
 
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- Does not include normalize css
+- Has an adapter that contains modified version of app-root and store.
+  - `app-root` does not contain `Header` and `Footer` by default.
+  - `store` does not include `redux-action-log` and `loggerMiddleware` as we don't want to log anything in production environment yet & `redux-action-log` is not being used anymore (previously used in Footer).
+- `lib-adapter-voyager` introduces a new API `onComponentWillUnmount` for components embedding `voyager`. This is useful if voyager is repeatedly mounted and unmounted several times during the lifecycle of the application. This is to unsubscribe main listener from the store.
+
+**WARNING**:
+
+This repository now hosts the ongoing migration of Voyager 2 to a React/Redux application, which is **not yet ready** for general use. See below for older, more stable versions of the code.
+
+## Demos and Older Codebase
+
+Since this new version of Voyager is not ready for demo / usage yet, you can access the demo and older versions of Voyager built in AngularJS at the following URL.
+
+- The __Voyager 2__ visualization tool, which blends manual and automated chart specification – demo at http://vega.github.io/voyager2 and source code at https://github.com/vega/voyager2
+- The __Voyager 1__ visualization browser -- demo at http://uwdata.github.io/voyager and source code in the `vy1` branch of this repository.
+
+## Basic Setup
+
+For basic setup for local development or installation, we use [yarn](https://yarnpkg.com/en/) for package management. Installing dependencies can be done with:
+
+```
+yarn
+```
+
+Once the installation is complete, use `yarn test` to run the included tests.
+
+To build a deployable version of the code, run `yarn build`.
+
+Please see [our contributing documentation](.github/CONTRIBUTING.md) for more info about setup and coding conventions if you are interested in contributing to this project.
+
+## Build Outputs
+
+There are 3 artifacts build using `yarn build`:
+
+* Stand alone version of voyager in `dist/`. This distribution can be hosted on a web server to deploy Voyager.
+* Compiled Javscript and `.d.js` declaration files for a subset of the Voyager source code in `build/src/`. These declarations and sources can be included in other packages that use Voyager as a dependency. See [voyager-server](https://github.com/vega/voyager-server) for an example.
+* Embeddable Voyager build in `build/`. See below for more details on embedding Voyager in other applications.
+
+## Embed Voyager (`datavoyager` library)
+
+Voyager can be embedded in another web application. The following sections document how to use it.
+
+### Installation
+
+Using npm or yarn? Add the following to your package.json then run `npm install datavoyager` or `yarn add datavoyager`.
+
+If you want to use the latest development version, you may want to clone and [link](https://docs.npmjs.com/cli/link) Voyager.
+
+### Example Use
+
+Instantiation
+
+```js
+const libVoyager = require('voyager');
+
+const container = document.getElementById("voyager-embed");
+const config = undefined;
+const data = undefined;
+const voyagerInstance = libVoyager.CreateVoyager(container, config, data)
+```
+
+Initializing with data
+
+```js
+const data: any = {
+  "values": [
+    {"fieldA": "A", "fieldB": 28}, {"fieldA": "B", "fieldB": 55}, {"fieldA": "C", "fieldB": 43},
+    {"fieldA": "D", "fieldB": 91}, {"fieldA": "E", "fieldB": 81}, {"fieldA": "F", "fieldB": 53},
+    {"fieldA": "G", "fieldB": 19}, {"fieldA": "H", "fieldB": 87}, {"fieldA": "I", "fieldB": 52}
+  ]
+};
+
+const voyagerInstance = libVoyager.CreateVoyager(container, undefined, data)
+```
+
+Updating Data
+
+```js
+
+const voyagerInstance = libVoyager.CreateVoyager(container, undefined, undefined)
+
+const data: any = {
+  "values": [
+    {"fieldA": "A", "fieldB": 28}, {"fieldA": "B", "fieldB": 55}, {"fieldA": "C", "fieldB": 43},
+    {"fieldA": "D", "fieldB": 91}, {"fieldA": "E", "fieldB": 81}, {"fieldA": "F", "fieldB": 53},
+    {"fieldA": "G", "fieldB": 19}, {"fieldA": "H", "fieldB": 87}, {"fieldA": "I", "fieldB": 52}
+  ]
+};
+
+voyagerInstance.updateData(data);
+```
+
+### CSS
+
+You currently also need to include the CSS. Note that this has not yet been optimized for embedding (it will take over the whole screen)
+
+```html
+<link rel="stylesheet" type="text/css" href="./node_modules/voyager/lib/style.css">
+```
+
+## API
+
+The voyager _module_ exposes 1 function.
+
+#### CreateVoyager(container, config, data)
+
+```js
+/**
+ * Create an instance of the voyager application and return it.
+ *
+ * @param {Container} container css selector or HTMLElement that will be the parent
+ *                              element of the application
+ * @param {Object|undefined}    config    Optional: configuration options
+ * @param {Array|undefined}     data      Optional: data object. Can be a string or an array of objects.
+ */
+```
+
+Please see [`src/lib-voyager.tsx`](src/lib-voyager.tsx) to see the exposed public methods.
+
+## Voyager-server Mode
+
+Computationally expensive portions of the Voyager process can be configured to run on a server.
+
+To get this running in a local development environment, first clone and install the dependencies of the [voyager-server](https://github.com/vega/voyager-server) project.
+
+In voyager-server directory, `yarn start` will start the server running on port `3000`.
+
+With voyager-server now running, we can start voyager in server mode by running:
+
+```
+yarn start:server
+```
+
+This will run Voyager in "server-mode" sending requests to voyager-server, which it expects, by default, to be at [http://localhost:3000](http://localhost:3000).
+
+The server url is controlled by the `SERVER` environment variable.
+
+See [voyager-server](https://github.com/vega/voyager-server) for more information on what portions of the functionality the server handles.

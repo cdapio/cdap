@@ -1,19 +1,53 @@
-The MIT License (MIT)
+change-emitter
+==============
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+[![build status](https://img.shields.io/travis/acdlite/change-emitter/master.svg?style=flat-square)](https://travis-ci.org/acdlite/change-emitter)
+[![npm version](https://img.shields.io/npm/v/change-emitter.svg?style=flat-square)](https://www.npmjs.com/package/change-emitter)
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Listen for changes. Like an event emitter that only emits a single event type. Really tiny.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+I extracted this from Redux's `createStore()` because I found it to be useful in other contexts. Use it where you want the most minimal event subscription implementation possible.
+
+## Usage
+
+```js
+import { createChangeEmitter } from 'change-emitter'
+
+const emitter = createChangeEmitter()
+
+// Called `listen` instead of `subscribe` to avoid confusion with observable spec
+const unlisten = emitter.listen((...args) => {
+  console.log(args)
+})
+
+emitter.emit(1, 2, 3) // logs `[1, 2, 3]`
+unlisten()
+emitter.emit(4, 5, 6) // doesn't log
+```
+
+## Larger example
+
+Here's a (partial) implementation of Redux's `createStore`:
+
+```js
+const createStore = (reducer, initialState) => {
+  let state = initialState
+  const emitter = createChangeEmitter()
+
+  function dispatch(action) {
+    state = reducer(state, action)
+    emitter.emit()
+    return action
+  }
+
+  function getState() {
+    return state
+  }
+
+  return {
+    dispatch,
+    getState,
+    subscribe: emitter.listen
+  }
+}
+```
