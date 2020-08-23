@@ -1,12 +1,14 @@
 # UAParser.js
 
-<img align="right" src="https://raw.githubusercontent.com/faisalman/ua-parser-js/gh-pages/images/logo.png"> A JavaScript-based User-Agent string parser. Can be used either in browser (client-side) or in node.js (server-side) environment. Also available as jQuery/Zepto plugin, Bower/Meteor package, & RequireJS/AMD module. This library aims to identify detailed type of web browser, layout engine, operating system, cpu architecture, and device type/model, entirely from user-agent string with a relatively small footprint (~17KB when minified / ~6KB gzipped). Written in vanilla JavaScript, which means it doesn't require any other library and can be used independently. However, it's not recommended to use this library as browser detection since the result may not be more accurate than using feature detection.
+<img align="right" src="https://raw.githubusercontent.com/faisalman/ua-parser-js/gh-pages/images/logo.png"> A JavaScript-based User-Agent string parser. Can be used either in browser (client-side) or in node.js (server-side) environment. Also available as jQuery/Zepto plugin, Bower/Meteor package, & RequireJS/AMD module. This library aims to identify detailed type of web browser, layout engine, operating system, cpu architecture, and device type/model, entirely from user-agent string with a relatively small footprint (~11KB when minified / ~4KB gzipped). Written in vanilla JavaScript, which means it doesn't require any other library and can be used independently. However, it's not recommended to use this library as browser detection since the result may not be more accurate than using feature detection.
 
 [![Build Status](https://travis-ci.org/faisalman/ua-parser-js.svg?branch=master)](https://travis-ci.org/faisalman/ua-parser-js)
 [![NPM downloads](https://img.shields.io/npm/dw/ua-parser-js.svg)](https://www.npmjs.com/package/ua-parser-js)
 [![NPM](https://img.shields.io/npm/v/ua-parser-js.svg)](https://www.npmjs.com/package/ua-parser-js)
 [![Bower](https://img.shields.io/bower/v/ua-parser-js.svg)](https://bower.io/)
 [![CDNJS](https://img.shields.io/cdnjs/v/UAParser.js.svg)](https://cdnjs.com/libraries/UAParser.js)
+[![Gratipay](https://img.shields.io/gratipay/team/UAParser.js.svg)](https://gratipay.com/UAParser.js)
+[![Flattr this](http://api.flattr.com/button/flattr-badge-large.png)](http://flattr.com/thing/3867907/faisalmanua-parser-js-on-GitHub)
 
 * Author    : Faisal Salman <<f@faisalman.com>>
 * Demo      : http://faisalman.github.io/ua-parser-js
@@ -25,21 +27,17 @@
 * `getBrowser()`
     * returns `{ name: '', version: '' }`
 
-```sh
+```
 # Possible 'browser.name':
-2345Explorer, Amaya, Android Browser, Arora, Avant, BIDUBrowser, Baidu,
-Basilisk, Blazer, Bolt, Bowser, Camino, Chimera, Chrome Headless,
-Chrome WebView, Chrome, Chromium, Comodo Dragon, Dillo, Dolphin, Doris, Edge,
-Epiphany, Facebook, Falkon, Fennec, Firebird, Firefox, Flock, GSA, GoBrowser,
-ICE Browser, IE, IEMobile, IceApe, IceCat, IceDragon, Iceape, Iceweasel,
-Iridium, Iron, Jasmine, K-Meleon, Kindle, Konqueror, LBBROWSER Line, Links,
-Lunascape, Lynx, MIUI Browser, Maemo Browser, Maemo, Maxthon, MetaSr Midori,
-Minimo, Mobile Safari, Mosaic, Mozilla, NetFront, NetSurf, Netfront, Netscape,
-NokiaBrowser, Oculus Browser, OmniWeb, Opera Coast, Opera Mini, Opera Mobi,
-Opera Tablet, Opera, PaleMoon, PhantomJS, Phoenix, Polaris, Puffin, QQ,
-QQBrowser, QQBrowserLite, Quark, QupZilla, RockMelt, Safari, Samsung Browser, 
-SeaMonkey, Silk, Skyfire, Sleipnir, Slim, SlimBrowser, Swiftfox, Tizen Browser,
-UCBrowser, Vivaldi, Waterfox, WeChat, Yandex, baidu, iCab, w3m, ...
+Amaya, Android Browser, Arora, Avant, Baidu, Blazer, Bolt, Bowser, Camino, Chimera, 
+Chrome [WebView], Chromium, Comodo Dragon, Conkeror, Dillo, Dolphin, Doris, Edge, 
+Epiphany, Fennec, Firebird, Firefox, Flock, GoBrowser, iCab, ICE Browser, IceApe, 
+IceCat, IceDragon, Iceweasel, IE[Mobile], Iron, Jasmine, K-Meleon, Konqueror, Kindle, 
+Links, Lunascape, Lynx, Maemo, Maxthon, Midori, Minimo, MIUI Browser, [Mobile] Safari, 
+Mosaic, Mozilla, Netfront, Netscape, NetSurf, Nokia, OmniWeb, Opera [Mini/Mobi/Tablet], 
+PhantomJS, Phoenix, Polaris, QQBrowser, QQBrowserLite, Quark, RockMelt, Silk, Skyfire, 
+SeaMonkey, Sleipnir, SlimBrowser, Swiftfox, Tizen, UCBrowser, Vivaldi, w3m, Waterfox, 
+WeChat, Yandex
 
 # 'browser.version' determined dynamically
 ```
@@ -47,15 +45,15 @@ UCBrowser, Vivaldi, Waterfox, WeChat, Yandex, baidu, iCab, w3m, ...
 * `getDevice()`
     * returns `{ model: '', type: '', vendor: '' }` 
 
-```sh
+```
 # Possible 'device.type':
 console, mobile, tablet, smarttv, wearable, embedded
 
 # Possible 'device.vendor':
-Acer, Alcatel, Amazon, Apple, Archos, Asus, BenQ, BlackBerry, Dell, Essential,
-GeeksPhone, Google, HP, HTC, Huawei, Jolla, Lenovo, LG, Meizu, Microsoft, Motorola,
-Nexian, Nintendo, Nokia, Nvidia, OnePlus, Ouya, Palm, Panasonic, Pebble, Polytron,
-RIM, Samsung, Sharp, Siemens, Sony[Ericsson], Sprint, Xbox, Xiaomi, ZTE, ...
+Acer, Alcatel, Amazon, Apple, Archos, Asus, BenQ, BlackBerry, Dell, GeeksPhone, 
+Google, HP, HTC, Huawei, Jolla, Lenovo, LG, Meizu, Microsoft, Motorola, Nexian, 
+Nintendo, Nokia, Nvidia, OnePlus, Ouya, Palm, Panasonic, Pebble, Polytron, RIM, 
+Samsung, Sharp, Siemens, Sony[Ericsson], Sprint, Xbox, Xiaomi, ZTE
 
 # 'device.model' determined dynamically
 ```
@@ -63,10 +61,10 @@ RIM, Samsung, Sharp, Siemens, Sony[Ericsson], Sprint, Xbox, Xiaomi, ZTE, ...
 * `getEngine()`
     * returns `{ name: '', version: '' }`
 
-```sh
+```
 # Possible 'engine.name'
-Amaya, Blink, EdgeHTML, Gecko, Goanna, iCab, KHTML, Links, Lynx, NetFront, NetSurf,
-Presto, Tasman, Trident, w3m, WebKit
+Amaya, EdgeHTML, Gecko, iCab, KHTML, Links, Lynx, NetFront, NetSurf, Presto, 
+Tasman, Trident, w3m, WebKit
 
 # 'engine.version' determined dynamically
 ```
@@ -74,14 +72,14 @@ Presto, Tasman, Trident, w3m, WebKit
 * `getOS()`
     * returns `{ name: '', version: '' }`
 
-```sh
+```
 # Possible 'os.name'
 AIX, Amiga OS, Android, Arch, Bada, BeOS, BlackBerry, CentOS, Chromium OS, Contiki,
-Fedora, Firefox OS, FreeBSD, Debian, DragonFly, Fuchsia, Gentoo, GNU, Haiku, Hurd, iOS, 
+Fedora, Firefox OS, FreeBSD, Debian, DragonFly, Gentoo, GNU, Haiku, Hurd, iOS, 
 Joli, Linpus, Linux, Mac OS, Mageia, Mandriva, MeeGo, Minix, Mint, Morph OS, NetBSD, 
 Nintendo, OpenBSD, OpenVMS, OS/2, Palm, PC-BSD, PCLinuxOS, Plan9, Playstation, QNX, RedHat, 
 RIM Tablet OS, RISC OS, Sailfish, Series40, Slackware, Solaris, SUSE, Symbian, Tizen, 
-Ubuntu, Unix, VectorLinux, WebOS, Windows [Phone/Mobile], Zenwalk, ...
+Ubuntu, UNIX, VectorLinux, WebOS, Windows [Phone/Mobile], Zenwalk
 
 # 'os.version' determined dynamically
 ```
@@ -89,7 +87,7 @@ Ubuntu, Unix, VectorLinux, WebOS, Windows [Phone/Mobile], Zenwalk, ...
 * `getCPU()`
     * returns `{ architecture: '' }`
 
-```sh
+```
 # Possible 'cpu.architecture'
 68k, amd64, arm[64], avr, ia[32/64], irix[64], mips[64], pa-risc, ppc, sparc[64]
 ```
@@ -233,12 +231,16 @@ $ bower install ua-parser-js
 $ meteor add faisalman:ua-parser-js
 ```
 
-## Using TypeScript
+## Using CLI
 
 ```sh
-$ npm install --save @types/ua-parser-js
-# Download TS type definition from DefinitelyTyped repository:
-# https://github.com/DefinitelyTyped/DefinitelyTyped/tree/master/types/ua-parser-js
+$ node ua-parser.min.js "Mozilla/4.0 (compatible; MSIE 4.01; Windows 98)"
+# multiple args
+$ node ua-parser.min.js "Opera/1.2" "Opera/3.4"
+# piped args
+$ echo "Opera/1.2" | node ua-parser.min.js
+# log file
+$ cat ua.log | node ua-parser.min.js
 ```
 
 ## Using jQuery/Zepto ($.ua)
@@ -308,29 +310,21 @@ $ npm run build
 
 Do you use & like UAParser.js but you don’t find a way to show some love? If yes, please consider donating to support this project. Otherwise, no worries, regardless of whether there is support or not, I will keep maintaining this project. Still, if you buy me a cup of coffee I would be more than happy though :)
 
-[![Support via PayPal](https://cdn.rawgit.com/twolfson/paypal-github-button/1.0.0/dist/button.svg)](https://www.paypal.me/faisalman/)
+[![Support via Pledgie](https://pledgie.com/campaigns/34252.png?skin_name=chrome)](https://pledgie.com/campaigns/34252)
 
 
 # License
 
-MIT License
+Dual licensed under GPLv2 or MIT
 
-Copyright (c) 2012-2019 Faisal Salman <<f@faisalman.com>>
+Copyright © 2012-2016 Faisal Salman <<fyzlman@gmail.com>>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of 
+this software and associated documentation files (the "Software"), to deal in 
+the Software without restriction, including without limitation the rights to use, 
+copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the 
+Software, and to permit persons to whom the Software is furnished to do so, 
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
+The above copyright notice and this permission notice shall be included in all 
 copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.

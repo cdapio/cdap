@@ -1,18 +1,62 @@
-This software is released under the MIT license:
+buffer-equal
+============
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
+Return whether two buffers are equal.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+[![build status](https://secure.travis-ci.org/substack/node-buffer-equal.png)](http://travis-ci.org/substack/node-buffer-equal)
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+example
+=======
+
+``` js
+var bufferEqual = require('buffer-equal');
+
+console.dir(bufferEqual(
+    new Buffer([253,254,255]),
+    new Buffer([253,254,255])
+));
+console.dir(bufferEqual(
+    new Buffer('abc'),
+    new Buffer('abcd')
+));
+console.dir(bufferEqual(
+    new Buffer('abc'),
+    'abc'
+));
+```
+
+output:
+
+```
+true
+false
+undefined
+```
+
+methods
+=======
+
+``` js
+var bufferEqual = require('buffer-equal')
+```
+
+bufferEqual(a, b)
+-----------------
+
+Return whether the two buffers `a` and `b` are equal.
+
+If `a` or `b` is not a buffer, return `undefined`.
+
+install
+=======
+
+With [npm](http://npmjs.org) do:
+
+```
+npm install buffer-equal
+```
+
+license
+=======
+
+MIT

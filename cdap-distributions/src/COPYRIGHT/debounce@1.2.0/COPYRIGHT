@@ -1,21 +1,69 @@
-MIT License
 
-Copyright (c) 2012-2018 The Debounce Contributors. See CONTRIBUTORS.
+# debounce
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+  Useful for implementing behavior that should only happen after a repeated
+  action has completed.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+## Installation
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+    $ component install component/debounce
+
+  Or in node:
+
+    $ npm install debounce
+
+## Example
+
+```js
+var debounce = require('debounce');
+window.onresize = debounce(resize, 200);
+
+function resize(e) {
+  console.log('height', window.innerHeight);
+  console.log('width', window.innerWidth);
+}
+```
+
+To later clear the timer and cancel currently scheduled executions:
+```
+window.onresize.clear();
+```
+
+To execute any pending invocations and reset the timer:
+```
+window.onresize.flush();
+```
+
+Alternately, if using newer syntax:
+
+```js
+import { debounce } from "debounce";
+```
+
+## API
+
+### debounce(fn, wait, [ immediate || false ])
+
+  Creates and returns a new debounced version of the passed function that
+  will postpone its execution until after wait milliseconds have elapsed
+  since the last time it was invoked.
+
+  Pass `true` for the `immediate` parameter to cause debounce to trigger
+  the function on the leading edge instead of the trailing edge of the wait
+  interval. Useful in circumstances like preventing accidental double-clicks
+  on a "submit" button from firing a second time.
+
+  The debounced function returned has a property 'clear' that is a 
+  function that will clear any scheduled future executions of your function.
+
+  The debounced function returned has a property 'flush' that is a 
+  function that will immediately execute the function if and only if execution is scheduled,
+  and reset the execution timer for subsequent invocations of the debounced
+  function.
+
+## License
+
+  MIT
+
+  Original implementation is from [`underscore.js`](http://underscorejs.org/)
+  which also has an MIT license.

@@ -1,73 +1,63 @@
-<!DOCTYPE html>
-<html id="home" lang="en">
-<head>
-<title>MIT License</title>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="X-UA-Compatible" content="ie=edge">
-<meta name="description" content="The MIT License is a permissive free software license originating at the Massachusetts Institute of Technology. As a permissive license, it puts only very limited restriction on reuse and has, therefore, an excellent license compatibility.">
-<!--
-Welcome fellow open source developer. This project is here for you to
-link to if you're like me and keep forgetting to include the
-MIT-license.txt file.
+# delegate
 
-Fork this project and send a pull request on:
+Lightweight event delegation.
 
-https://github.com/remy/mit-license
+## Install
 
-By adding a new JSON file to the users directory, it will yield an
-MIT License on a CNAME, for example:
+You can get it on npm.
 
-{ "copyright": "Remy Sharp, https://remysharp.com" }
+```
+npm install delegate --save
+```
 
-Means visiting https://rem.mit-license.org/ shows "Remy Sharp" as the
-copyright holder. Namespaces will be on a first come first serve basis,
-and I'm open to folk joining the GitHub project.
+Or bower, too.
 
-For more options see the README in the github hosted project.
+```
+bower install delegate --save
+```
 
-Hope you find this useful too!
+If you're not into package management, just [download a ZIP](https://github.com/zenorocha/delegate/archive/master.zip) file.
 
-- @rem
+## Setup
 
--->
-<!-- for HTML5 el styling -->
-<script>
-document.createElement('article');
-document.createElement('footer');
-</script>
-<link rel="stylesheet" href="/themes/default.css">
-</head>
+###### Node (Browserify)
 
-<body>
-<article>
+```js
+var delegate = require('delegate');
+```
 
-<h1>The MIT License (MIT)</h1>
+###### Browser (Standalone)
 
-<p>Copyright © 2019 <a href="http://zenorocha.com">Zeno Rocha</a> &lt;<a href="/cdn-cgi/l/email-protection#19717059637c77766b767a7178377a7674"><span class="__cf_email__" data-cfemail="a7cfcee7ddc2c9c8d5c8c4cfc689c4c8ca">[email&#160;protected]</span></a>&gt;</p>
+```html
+<script src="dist/delegate.js"></script>
+```
 
-<p>Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the “Software”), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:</p>
+## Usage
 
-<p>The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.</p>
+### Add event delegation
 
-<p>THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.</p>
-</article>
-<footer>
-<p><a target="_blank" rel="noopener" href="https://github.com/remy/mit-license">Fork this project to create your own MIT license that you can always link to.</a></p>
-</footer>
+```js
+delegate(document.body, '.btn', 'click', function(e) {
+    console.log(e.delegateTarget);
+}, false);
+```
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+### Remove event delegation
 
-</html>
+```js
+var delegation = delegate('.btn', 'click', function(e) {
+    console.log(e.delegateTarget);
+}, false);
+
+delegation.destroy();
+```
+
+## Browser Support
+
+| <img src="https://clipboardjs.com/assets/images/chrome.png" width="48px" height="48px" alt="Chrome logo"> | <img src="https://clipboardjs.com/assets/images/edge.png" width="48px" height="48px" alt="Edge logo"> | <img src="https://clipboardjs.com/assets/images/firefox.png" width="48px" height="48px" alt="Firefox logo"> | <img src="https://clipboardjs.com/assets/images/ie.png" width="48px" height="48px" alt="Internet Explorer logo"> | <img src="https://clipboardjs.com/assets/images/opera.png" width="48px" height="48px" alt="Opera logo"> | <img src="https://clipboardjs.com/assets/images/safari.png" width="48px" height="48px" alt="Safari logo"> |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| Latest ✔ | Latest ✔ | Latest ✔ | 9+ ✔ | Latest ✔ | Latest ✔ |
+
+## License
+
+[MIT License](http://zenorocha.mit-license.org/) © Zeno Rocha
