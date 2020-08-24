@@ -21,6 +21,7 @@ import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -90,5 +91,16 @@ public class MockProvisionerContext implements ProvisionerContext {
   @Override
   public RuntimeMonitorType getRuntimeMonitorType() {
     return null;
+  }
+
+  @Override
+  public ProvisionerMetrics getMetrics(Map<String, String> context) {
+    return new ProvisionerMetrics() {
+      @Override
+      public void count(String metricName, int delta) {}
+
+      @Override
+      public void gauge(String metricName, long value) {}
+    };
   }
 }

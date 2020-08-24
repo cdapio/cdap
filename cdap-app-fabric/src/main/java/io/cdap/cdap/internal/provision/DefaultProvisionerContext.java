@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.internal.provision;
 
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
@@ -24,6 +26,7 @@ import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.ProgramRun;
 import io.cdap.cdap.runtime.spi.provisioner.Provisioner;
 import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import org.apache.twill.filesystem.LocationFactory;
 
@@ -45,10 +48,12 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final String cdapVersion;
   private final LocationFactory locationFactory;
   private final RuntimeMonitorType runtimeMonitorType;
+  private final MetricsCollectionService metricsCollectionService;
+  private final String provisionerName;
 
-  DefaultProvisionerContext(ProgramRunId programRunId, Map<String, String> properties,
+  DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
                             SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory,
-                            RuntimeMonitorType runtimeMonitorType) {
+                            RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -65,6 +70,8 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.locationFactory = locationFactory;
     this.cdapVersion = ProjectInfo.getVersion().toString();
     this.runtimeMonitorType = runtimeMonitorType;
+    this.metricsCollectionService = metricsCollectionService;
+    this.provisionerName = provisionerName;
   }
 
   @Override
@@ -106,5 +113,16 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   @Override
   public RuntimeMonitorType getRuntimeMonitorType() {
     return runtimeMonitorType;
+  }
+
+  @Override
+  public ProvisionerMetrics getMetrics(Map<String, String> context) {
+    Map<String, String> tags = new HashMap<>(context);
+    tags.put(Constants.Metrics.Tag.NAMESPACE, programRunInfo.getNamespace());
+    tags.put(Constants.Metrics.Tag.RUN_ID, programRunInfo.getRun());
+    tags.put(Constants.Metrics.Tag.PROGRAM, programRunInfo.getProgram());
+    tags.put(Constants.Metrics.Tag.APP, programRunInfo.getApplication());
+    tags.put(Constants.Metrics.Tag.PROVISIONER, provisionerName);
+    return new DefaultProvisionerMetrics(metricsCollectionService.getContext(tags));
   }
 }

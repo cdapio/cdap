@@ -79,4 +79,9 @@ public interface ProvisionerContext {
    * Returns the runtime monitor type for this provisioner.
    */
   RuntimeMonitorType getRuntimeMonitorType();
+
+  /**
+   * Returns a {@link ProvisionerMetrics} object configured based on {@code context}.
+   */
+  ProvisionerMetrics getMetrics(Map<String, String> context);
 }
