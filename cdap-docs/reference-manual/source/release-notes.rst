@@ -36,15 +36,19 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
-1. **Features**
-    - Added a new log viewer which enables users to see the most recent logs.
-    - Added revamped preview tab with Record view for large schemas.
-    - Added URI as option in CDAP CLI.
+This release provides performance and scalability improvements that increase developer productivity and optimize pipeline runtime performance.
+The release includes scaled-up previews that support up to 50 concurrent runs, capabilities to handle large and complex schemas in Pipeline Studio, an enhanced log viewer, and other critical improvements and fixes.
+Some of the highlights are:
 
-2. **Performance Improvements**
-    - Improved spark pipeline performance by adding an experimental setting `spark.cdap.pipeline.consolidate.stages` to consolidate multiple pipeline branches into single operation.
-    - Improved the scalability of the preview system when running in Kubernetes environment by separating out preview runs in their own individual pods.
-    - Improved schema editor performance for large schemas (>5K fields).
+1. **Features**
+    - Added support to create autoscaling Dataproc clusters.
+    - Added schema support feature in the UI to edit precision and scale.
+    - Improved memory performance in pipelines by utilizing disk only auto-caching strategy.
+
+2. **Performance and Scalability Improvements**
+    - Supported 50 users running previews at the same time.
+    - Supported large and deeply nested schemas (>5K fields with 20+ levels of nesting).
+    - Added ability to optimize the performance of some pipelines with a new, experimental setting 'spark.cdap.pipeline.consolidate.stages'.
 
 New Features
 ------------
