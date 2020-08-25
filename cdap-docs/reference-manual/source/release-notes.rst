@@ -36,9 +36,7 @@ Cask Data Application Platform Release Notes
 Summary
 -------
 
-This release provides performance and scalability improvements that increase developer productivity and optimize pipeline runtime performance.
-The release includes scaled-up previews that support up to 50 concurrent runs, capabilities to handle large and complex schemas in Pipeline Studio, an enhanced log viewer, and other critical improvements and fixes.
-Some of the highlights are:
+This release provides performance and scalability improvements that increase developer productivity and optimize pipeline runtime performance. The release includes scaled-up previews that support up to 50 concurrent runs, capabilities to handle large and complex schemas in Pipeline Studio, an enhanced log viewer, and other critical improvements and fixes. Some of the highlights are:
 
 1. **Features**
     - Added support to create autoscaling Dataproc clusters.
@@ -59,7 +57,7 @@ New Features
 
 - :cask-issue:`CDAP-16690` - Added revamped preview tab with new Record view for large schemas.
 
-Performance Improvements
+Performance and Scalability Improvements
 ------------------------
 
 - :cask-issue:`PLUGIN-282` - Added new Data Cacher plugin to allow users to manually cache data at certain points in a pipeline.
