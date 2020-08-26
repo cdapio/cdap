@@ -24,7 +24,7 @@ import { objectQuery } from 'services/helpers';
 interface ITextBoxWidgetProps {
   placeholder?: string;
   default?: string;
-  enableUnderline?: boolean;
+  enableUnderline?: boolean; // TODO Add to all widgets
 }
 
 interface ITextBoxProps extends IWidgetProps<ITextBoxWidgetProps> {
