@@ -64,11 +64,11 @@ Performance and Scalability Improvements
 
 - :cask-issue:`PLUGIN-174` - Enabled macro for Hostname, port and database name in database-specific plugins.
 
-- :cask-issue:`CDAP-17179` - Added new properties `Filesystem properties` and `Output File Prefix` for GCS Sink.
+- :cask-issue:`CDAP-17179` - Added new properties `Filesystem properties` and `Output File Prefix` for Google Cloud Storage Sink.
 
 - :cask-issue:`CDAP-17130` - Added joiner distribution support to MapReduce and streaming pipelines.
 
-- :cask-issue:`CDAP-17123` - Make "records.updated" metric available for GCS Batch Sink plugin.
+- :cask-issue:`CDAP-17123` - Make "records.updated" metric available for Google Cloud Storage Batch Sink plugin.
 
 - :cask-issue:`CDAP-17095` - Added Distribution to AutoJoiner API to increase performance for skewed joins.
 
@@ -91,17 +91,17 @@ Performance and Scalability Improvements
 Bug Fixes
 ---------
 
-- :cask-issue:`PLUGIN-372` - Fixed user experience issue where Bigtable sink and source plugins may fail deployment if they are unable to connect to the Bigtable service.
+- :cask-issue:`PLUGIN-372` - Fixed user experience issue where Google Cloud Bigtable sink and source plugins may fail deployment if they are unable to connect to the Google Cloud Bigtable service.
 
 - :cask-issue:`PLUGIN-369` - Fixed a bug where customer credential information has shown up in the validation logs.
 
 - :cask-issue:`PLUGIN-367` - Fixed bug where blog file input formats are being split up in Hadoop jobs.
 
-- :cask-issue:`PLUGIN-245` - Fixed bigquery sink with macro table key validation.
+- :cask-issue:`PLUGIN-245` - Fixed Google Cloud BigQuery sink with macro table key validation.
 
-- :cask-issue:`PLUGIN-206` - Fixed a region error message discrepancy of BigQuery service API on their end.
+- :cask-issue:`PLUGIN-206` - Fixed a region error message discrepancy of Google Cloud BigQuery service API on their end.
 
-- :cask-issue:`PLUGIN-202` - Improved validations on GCS plugins to check for permissions on buckets, and improved error messages for users unable to access a GCS bucket.
+- :cask-issue:`PLUGIN-202` - Improved validations on Google Cloud Storage plugins to check for permissions on buckets, and improved error messages for users unable to access a Google Cloud Storage bucket.
 
 - :cask-issue:`CDAP-17171` - Fixed horizontal tab styling to handle mac system setting "scrolling always on" in chrome.
 
