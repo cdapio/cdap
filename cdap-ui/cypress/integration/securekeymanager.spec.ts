@@ -14,10 +14,8 @@
  * the License.
  */
 
-import * as Helpers from '../helpers';
+import { loginIfRequired, dataCy  } from '../helpers';
 let headers = {};
-
-const { dataCy } = Helpers;
 
 const MOCK_SECURE_KEYS: any[] = [
   {
@@ -40,10 +38,12 @@ const MOCK_SECURE_KEYS: any[] = [
   },
 ];
 
-describe('Secure Key Manager Page', () => {
+const maybeDescribe = Cypress.env('cdap_environment') === 'cluster' ? describe.skip : describe;
+
+maybeDescribe('Secure Key Manager Page', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
-    Helpers.loginIfRequired().then(() => {
+    loginIfRequired().then(() => {
       cy.getCookie('CDAP_Auth_Token').then((cookie) => {
         if (!cookie) {
           return;

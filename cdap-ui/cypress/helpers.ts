@@ -135,6 +135,16 @@ function getNodeSelectorFromNodeIndentifier(node: INodeIdentifier) {
   const { nodeName, nodeType, nodeId } = node;
   return `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
 }
+
+function setDefaultOldSchemaEditor() {
+  const SCHEMA_LAB_ID = 'schema-editor';
+
+  // set default schema editor to use old schema editor
+  cy.window().then((win) => {
+    win.localStorage.setItem(SCHEMA_LAB_ID, 'false');
+  });
+}
+
 export {
   loginIfRequired,
   getArtifactsPoll,
@@ -144,4 +154,5 @@ export {
   getConditionNodeEndpoint,
   dataCy,
   getNodeSelectorFromNodeIndentifier,
+  setDefaultOldSchemaEditor,
 };

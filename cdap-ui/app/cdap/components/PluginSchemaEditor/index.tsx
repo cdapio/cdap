@@ -124,6 +124,8 @@ interface IPluginSchemaEditorProps extends WithStyles<typeof styles> {
   errors: Record<string, Record<string, string>>;
 }
 
+const EXPERIMENT_ID = 'schema-editor';
+
 class PluginSchemaEditorBase extends React.PureComponent<
   IPluginSchemaEditorProps,
   IPluginSchemaEditorState
@@ -156,14 +158,17 @@ class PluginSchemaEditorBase extends React.PureComponent<
 
   constructor(props) {
     super(props);
-    if (!this.props.disabled) {
+
+    const isExperimentEnabled = window.localStorage.getItem(EXPERIMENT_ID) === 'true';
+
+    if (!this.props.disabled && isExperimentEnabled) {
       this.ee.on('schema.import', this.onSchemaImport);
       this.ee.on('dataset.selected', this.onSchemaImport);
     }
     const doesActionDropdownHasExport = Object.keys(this.props.actionsDropdownMap).find(
       (key) => key.toLowerCase() === 'export'
     );
-    if (doesActionDropdownHasExport) {
+    if (doesActionDropdownHasExport && isExperimentEnabled) {
       // Schema can be exported on detailed view even if it is disabled.
       this.ee.on('schema.export', this.onSchemaExport);
     }
@@ -213,7 +218,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
   public componentWillUnmount() {
     this.ee.off('schema.import', this.onSchemaImport);
     this.ee.off('schema.export', this.onSchemaExport);
-    this.ee.on('dataset.selected', this.onSchemaImport);
+    this.ee.off('dataset.selected', this.onSchemaImport);
     window.removeEventListener('resize', this.calculateSchemaRowCount);
   }
 
