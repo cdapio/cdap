@@ -19,9 +19,6 @@ import MoreVertical from '@material-ui/icons/MoreVert';
 import { IconWrapper } from 'components/AbstractWidget/SchemaEditor/RowButtons/IconWrapper';
 import Popover from '@material-ui/core/Popover';
 import makeStyles from '@material-ui/core/styles/makeStyles';
-import { ISimpleType, IComplexTypeNames } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
-import { isFlatRowTypeComplex } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
-import { RecordEnumTypeAttributes } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/RecordEnumAttributes';
 import { DecimalTypeAttributes } from 'components/AbstractWidget/SchemaEditor/RowButtons/FieldAttributes/DecimalAttributes';
 import If from 'components/If';
 import { ITypeProperties } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
@@ -68,7 +65,6 @@ function FieldPropertiesPopoverButton({
   onChange,
   typeProperties,
   disabled,
-  internalType,
 }: IFieldPropertiesPopoverButtonProps) {
   const [anchorEl, setAnchorEl] = React.useState(null);
 
@@ -83,12 +79,6 @@ function FieldPropertiesPopoverButton({
   const open = Boolean(anchorEl);
   const id = open ? 'simple-popover' : null;
   const classes = useStyles({});
-  // Show doc and aliases for record types, fields in a record and enums.
-  const isValidFieldInRecord =
-    internalType === InternalTypesEnum.RECORD_COMPLEX_TYPE_ROOT ||
-    internalType === InternalTypesEnum.RECORD_SIMPLE_TYPE;
-  const isValidRecord = type === AvroSchemaTypesEnum.RECORD;
-  const isValidEnum = type === AvroSchemaTypesEnum.ENUM;
   // Show precision and scale attributes for decimal type.
   const isDecimal = type === AvroSchemaTypesEnum.DECIMAL;
   return (
@@ -112,16 +102,6 @@ function FieldPropertiesPopoverButton({
         }}
       >
         <fieldset className={classes.popoverContainer} disabled={disabled}>
-          <If condition={(isValidFieldInRecord || isValidRecord || isValidEnum) && !isDecimal}>
-            <React.Fragment>
-              <strong>Attributes</strong>
-              <RecordEnumTypeAttributes
-                typeProperties={typeProperties}
-                onChange={disabled ? undefined : onChange}
-                handleClose={handleClose}
-              />
-            </React.Fragment>
-          </If>
           <If condition={isDecimal}>
             <React.Fragment>
               <strong>Attributes</strong>
