@@ -13,7 +13,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import { IInternalFieldType } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
 import {
   ISchemaType,
   IDisplayType,
@@ -33,7 +32,9 @@ import {
   InternalTypesEnum,
   defaultFieldType,
   AvroSchemaTypesEnum,
+  getDefaultEmptyAvroSchema,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import { objectQuery } from 'services/helpers';
 
 type ITypeProperties = Record<string, any>;
 
@@ -412,7 +413,10 @@ function parseSubTree(field: IFieldType | IFieldTypeNullable): INode {
  */
 function parseSchema(avroSchema: ISchemaType): INode {
   const name = avroSchema.name || 'etlSchemaBody';
-  const fields = avroSchema.schema.fields;
+  let fields = objectQuery(avroSchema, 'schema', 'fields');
+  if (!fields) {
+    fields = getDefaultEmptyAvroSchema().schema.fields;
+  }
   const root: INode = {
     name,
     internalType: InternalTypesEnum.SCHEMA, // The 'schema' is only used for top level schema.
