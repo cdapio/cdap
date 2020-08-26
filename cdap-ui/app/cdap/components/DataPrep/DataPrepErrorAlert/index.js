@@ -17,8 +17,7 @@
 import React, { Component } from 'react';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
-
-require('./DataPrepErrorAlert.scss');
+import Alert from 'components/Alert';
 
 export default class DataPrepErrorAlert extends Component {
   constructor(props) {
@@ -61,12 +60,12 @@ export default class DataPrepErrorAlert extends Component {
     }
 
     return (
-      <div className="dataprep-error-alert-container">
-        <div className="error-content">{this.state.showError}</div>
-        <div className="close-icon">
-          <span className="fa fa-times" onClick={this.dismissError} />
-        </div>
-      </div>
+      <Alert
+        showAlert={true}
+        type="error"
+        message={this.state.showError}
+        onClose={this.dismissError}
+      />
     );
   }
 }
