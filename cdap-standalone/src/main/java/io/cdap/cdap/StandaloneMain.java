@@ -243,8 +243,6 @@ public class StandaloneMain {
     // Workaround for release of file descriptors opened by URLClassLoader - https://issues.cask.co/browse/CDAP-2841
     URLConnections.setDefaultUseCaches(false);
 
-    cleanupTempDir();
-
     ConfigurationLogger.logImportantConfig(cConf);
 
     if (messagingService instanceof Service) {
@@ -382,7 +380,9 @@ public class StandaloneMain {
       halt = true;
       LOG.error("Exception during shutdown", e);
     } finally {
-      cleanupTempDir();
+      File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                             cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+      cleanupTempDir(tmpDir);
     }
 
     // We can't do much but exit. Because there was an exception, some non-daemon threads may still be running.
@@ -392,10 +392,7 @@ public class StandaloneMain {
     }
   }
 
-  private void cleanupTempDir() {
-    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
-                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
-
+  private static void cleanupTempDir(File tmpDir) {
     if (!tmpDir.isDirectory()) {
       return;
     }
@@ -487,6 +484,12 @@ public class StandaloneMain {
 
     //Run dataset service on random port
     List<Module> modules = createPersistentModules(cConf, hConf);
+
+    // Cleans up the temporary directory which might contain unnecessary files from previous CDAP standalone runs
+    // This happens here instead of in startup because it needs to happen before Authorizer is created, see CDAP-17239
+    File tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    cleanupTempDir(tmpDir);
 
     return new StandaloneMain(modules, cConf);
   }
