@@ -100,7 +100,7 @@ class HydratorPlusPlusTopPanelCtrl {
             payload: {
               status: statusRes.status,
             },
-          })
+          });
 
           const { WAITING, ACQUIRED, INIT, RUNNING } = window.CaskCommon.PREVIEW_STATUS; 
           this.updateTimerLabelAndTitle(statusRes);
@@ -305,7 +305,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.displayDuration = {
       minutes: !minutes ? '--' : minutes,
       seconds: !seconds ? '--' : seconds,
-    }
+    };
   }
 
   updateTimerLabelAndTitle(res) {

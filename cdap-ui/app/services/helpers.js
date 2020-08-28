@@ -220,7 +220,7 @@ angular.module(PKG.name+'.services')
   }
 
   function extractErrorMessage(errObj) {
-    let  errorMsg = objectQuery(errObj, 'data') || objectQuery(errObj, 'response') || err;
+    let  errorMsg = objectQuery(errObj, 'data') || objectQuery(errObj, 'response') || errObj;
     if (typeof errorMsg !== 'string') {
       errorMsg = JSON.stringify(errorMsg);
     }

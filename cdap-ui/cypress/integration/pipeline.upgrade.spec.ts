@@ -14,14 +14,13 @@
  * the License.
  */
 
-import * as Helpers from '../helpers';
-import { dataCy, generateDraftFromPipeline } from '../helpers';
+import { dataCy, generateDraftFromPipeline, loginIfRequired, getArtifactsPoll } from '../helpers';
 
 let headers = {};
 describe('Pipeline Upgrade should work fine', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
-    Helpers.loginIfRequired().then(() => {
+    loginIfRequired().then(() => {
       cy.getCookie('CDAP_Auth_Token').then((cookie) => {
         if (!cookie) {
           return;
@@ -39,7 +38,7 @@ describe('Pipeline Upgrade should work fine', () => {
   });
 
   beforeEach(() => {
-    Helpers.getArtifactsPoll(headers);
+    getArtifactsPoll(headers);
   });
 
   it('should not show upgrade modal on uploading pipeline with valid plugin versions', () => {
@@ -74,7 +73,6 @@ describe('Pipeline Upgrade should work fine', () => {
   });
 
   it('should upgrade pipelines that are saved in drafts', () => {
-
     generateDraftFromPipeline('draft_for_upgrade.json').then(({ pipelineDraft, pipelineName }) => {
       cy.upload_draft_via_api(headers, pipelineDraft);
       cy.visit('/cdap/ns/default/pipelines/drafts');
