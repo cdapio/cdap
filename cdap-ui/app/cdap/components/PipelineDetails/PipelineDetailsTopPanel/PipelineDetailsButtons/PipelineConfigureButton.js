@@ -21,6 +21,7 @@ import IconSVG from 'components/IconSVG';
 import PipelineConfigurations from 'components/PipelineConfigurations';
 import T from 'i18n-react';
 import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
+import Popover from '@material-ui/core/Popover';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -36,17 +37,18 @@ export default class PipelineConfigureButton extends Component {
     showModeless: false,
   };
 
-  getRuntimeArgumentsAndToggleModeless = () => {
+  getRuntimeArgumentsAndToggleModeless = (e) => {
     if (!this.state.showModeless) {
-      fetchAndUpdateRuntimeArgs().subscribe(this.toggleModeless);
+      fetchAndUpdateRuntimeArgs().subscribe(this.toggleModeless.bind(this, e.currentTarget));
     } else {
-      this.toggleModeless();
+      this.toggleModeless(e.currentTarget);
     }
   };
 
-  toggleModeless = () => {
+  toggleModeless = (anchorEl) => {
     this.setState({
       showModeless: !this.state.showModeless,
+      anchorEl,
     });
   };
 
@@ -72,14 +74,26 @@ export default class PipelineConfigureButton extends Component {
         })}
       >
         {this.renderConfigureButton()}
-        {this.state.showModeless ? (
+        <Popover
+          open={this.state.showModeless}
+          anchorEl={this.state.anchorEl}
+          onClose={this.toggleModeless}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+        >
           <PipelineConfigurations
             onClose={this.toggleModeless}
             isDetailView={true}
             pipelineType={this.props.pipelineType}
             pipelineName={this.props.pipelineName}
           />
-        ) : null}
+        </Popover>
       </div>
     );
   }
