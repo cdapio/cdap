@@ -1,5 +1,3 @@
-import { INodeIdentifier } from './typings';
-
 /*
  * Copyright © 2018 Cask Data, Inc.
  *
@@ -15,6 +13,8 @@ import { INodeIdentifier } from './typings';
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+import { INodeIdentifier } from './typings';
 
 const username = Cypress.env('username') || 'admin';
 const password = Cypress.env('password') || 'admin';
@@ -135,6 +135,20 @@ function getNodeSelectorFromNodeIndentifier(node: INodeIdentifier) {
   const { nodeName, nodeType, nodeId } = node;
   return `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
 }
+
+function generateDraftFromPipeline(pipeline) {
+  return cy.fixture(pipeline).then((pipeline_for_draft) => {
+    const draftId = `${pipeline_for_draft.name}-${Date.now()}`;
+    const pipelineName = draftId;
+    pipeline_for_draft.__ui__ = { draftId, lastSaved: Date.now() };
+    pipeline_for_draft.name = pipelineName;
+    const pipelineDraft = {
+      hydratorDrafts: { default: { [draftId]: pipeline_for_draft } },
+    };
+    return { pipelineDraft, pipelineName };
+  });
+}
+
 export {
   loginIfRequired,
   getArtifactsPoll,
@@ -143,5 +157,6 @@ export {
   getGenericEndpoint,
   getConditionNodeEndpoint,
   dataCy,
+  generateDraftFromPipeline,
   getNodeSelectorFromNodeIndentifier,
 };
