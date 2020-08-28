@@ -58,7 +58,7 @@ New Features
 - :cask-issue:`CDAP-16690` - Added revamped preview tab with new Record view for large schemas.
 
 Performance and Scalability Improvements
-------------------------
+----------------------------------------
 
 - :cask-issue:`PLUGIN-282` - Added new Data Cacher plugin to allow users to manually cache data at certain points in a pipeline.
 
