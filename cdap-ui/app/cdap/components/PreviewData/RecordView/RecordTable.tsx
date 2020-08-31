@@ -15,40 +15,45 @@
  */
 
 import React from 'react';
-import VirtualScroll from 'components/VirtualScroll';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
-import Grid from '@material-ui/core/Grid';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableHead from '@material-ui/core/TableHead';
+import TableRow from '@material-ui/core/TableRow';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
-import { styles as tableStyles } from 'components/PreviewData/DataView/Table';
+import { CustomTableCell, styles as tableStyles } from 'components/PreviewData/DataView/Table';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import Heading, { HeadingTypes } from 'components/Heading';
 
 const I18N_PREFIX = 'features.PreviewData.RecordView.RecordTable';
 
-// Info about rows in record table
-// Max number of visible rows
-const visibleChildCount = 25;
-// Height of row in px
-const childHeight = 40;
-// number of rows in dom but not in viewport
-const childrenUnderFold = 10;
-
 const styles = (theme): StyleRules => ({
   ...tableStyles(theme),
   recordCell: {
-    width: '50%',
+    minWidth: '50%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+    borderLeft: `1px solid ${theme.palette.grey['500']}`,
     '&:first-of-type': {
-      borderRight: `1px solid ${theme.palette.grey['500']}`,
       fontWeight: 500,
+      borderLeft: 'none',
+    },
+  },
+  recordRow: {
+    '&:nth-of-type(odd)': {
+      backgroundColor: theme.palette.grey['600'],
     },
   },
   recordContainer: {
     width: '100%',
     padding: '10px',
+    overflowX: 'auto',
+  },
+  table: {
+    backgroundColor: theme.palette.white['50'],
   },
 });
 
@@ -103,44 +108,6 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
     );
   };
 
-  const renderList = (visibleNodeCount: number, startNode: number) => {
-    if (!record) {
-      return;
-    }
-    return headers.slice(startNode, startNode + visibleNodeCount).map((fieldName, i) => {
-      const processedFieldName = format(fieldName);
-      const processedValue = format(record[fieldName]);
-      return (
-        <React.Fragment>
-          <Grid
-            container
-            direction="row"
-            wrap="nowrap"
-            className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
-            key={`gridrow-${i}`}
-          >
-            <Grid
-              item
-              className={classnames(classes.cell, classes.recordCell)}
-              title={processedFieldName}
-              data-cy={`fieldname-${processedFieldName}`}
-            >
-              {processedFieldName}
-            </Grid>
-            <Grid
-              item
-              className={classnames(classes.cell, classes.recordCell)}
-              title={processedValue}
-              data-cy={`value-${processedValue}`}
-            >
-              {processedValue}
-            </Grid>
-          </Grid>
-        </React.Fragment>
-      );
-    });
-  };
-
   // When the selected record number is out of range
   if (!record) {
     return noRecordMsg();
@@ -148,33 +115,32 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
 
   return (
     <div className={classnames(classes.root, classes.recordContainer)}>
-      <Grid container direction="column" wrap="nowrap">
-        <Grid item>
-          <Grid
-            container
-            direction="row"
-            justify="center"
-            alignItems="center"
-            className={classes.headerRow}
-          >
-            <Grid item className={classnames(classes.cell, classes.recordCell)}>
+      <Table className={classes.table}>
+        <TableHead>
+          <TableRow className={classes.row}>
+            <CustomTableCell className={classes.recordCell}>
               {T.translate(`${I18N_PREFIX}.fieldName`)}
-            </Grid>
-            <Grid item className={classnames(classes.cell, classes.recordCell)}>
+            </CustomTableCell>
+            <CustomTableCell className={classes.recordCell}>
               {T.translate(`${I18N_PREFIX}.value`)}
-            </Grid>
-          </Grid>
-        </Grid>
-        <Grid item>
-          <VirtualScroll
-            itemCount={() => headers.length}
-            visibleChildCount={visibleChildCount}
-            childHeight={childHeight}
-            renderList={renderList}
-            childrenUnderFold={childrenUnderFold}
-          />
-        </Grid>
-      </Grid>
+            </CustomTableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {headers.map((fieldName, i) => {
+            return (
+              <TableRow className={classnames(classes.row, classes.recordRow)} key={`tr-${i}`}>
+                <CustomTableCell className={classes.recordCell}>
+                  {format(fieldName)}
+                </CustomTableCell>
+                <CustomTableCell className={classes.recordCell}>
+                  {format(record[fieldName])}
+                </CustomTableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 };
