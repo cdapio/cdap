@@ -62,6 +62,11 @@ describe('Page level error because of ', () => {
   });
 
   it('no namespace in pipeline list page should show 404', () => {
+    // Need to turn off automatic test failure due to unhandled error handling. 
+    // (CDAP-16414) We throw an error in DeployedPipelineView when there are graphQL errors. The errors are caught by Error Boundary. 
+    cy.on('uncaught:exception', (err, runnable) => {
+      return false;
+    })
     // Go to Pipelines list
     cy.visit(`/cdap/ns/${FAKE_NAMESPACE}/pipelines`);
     cy.get(SELECTOR_404_MSG).should('exist');
