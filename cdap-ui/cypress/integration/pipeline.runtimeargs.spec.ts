@@ -14,8 +14,7 @@
  * the License.
  */
 
-import { loginIfRequired, getArtifactsPoll } from '../helpers';
-import { dataCy } from '../helpers';
+import { loginIfRequired, getArtifactsPoll, dataCy } from '../helpers';
 import {
   RUNTIME_ARGS_DEPLOYED_SELECTOR,
   RUNTIME_ARGS_KEY_SELECTOR,

@@ -131,9 +131,12 @@ angular.module(PKG.name + '.feature.hydrator')
                 if (isVersionInRange) {
                   $stateParams.data.artifact.version = rCDAPVersion;
                 } else {
-                  defer.resolve(false);
+                  defer.resolve({ valid: false });
                 }
-                defer.resolve($stateParams.data);
+                defer.resolve({
+                  config: $stateParams.data,
+                  valid: true
+                });
                 return defer.promise;
               }
               if ($stateParams.draftId) {
@@ -150,52 +153,52 @@ angular.module(PKG.name + '.feature.hydrator')
                       if (isVersionInRange) {
                         draft.artifact.version = rCDAPVersion;
                       } else {
-                        defer.resolve(false);
+                        defer.resolve({ valid: false, config: draft, upgrade: true });
                         return;
                       }
-                      defer.resolve(draft);
+                      defer.resolve({ valid: true, config: draft });
                     } else {
-                      defer.resolve(false);
+                      defer.resolve({ valid: false });
                     }
                   });
               } else if ($stateParams.configParams) {
                 // This is being used while adding a dataset/stream as source/sink from metadata to pipeline studio
                 try {
                   let config = JSON.parse($stateParams.configParams);
-                  defer.resolve(config);
+                  defer.resolve({ valid: true, config });
                 } catch (e) {
-                  defer.resolve(false);
+                  defer.resolve({ valid: false });
                 }
               } else if ($stateParams.workspaceId) {
                 // This is being used by dataprep to pipelines transition
                 try {
                   let configParams = $window.localStorage.getItem($stateParams.workspaceId);
                   let config = JSON.parse(configParams);
-                  defer.resolve(config);
+                  defer.resolve({ valid: true, config });
                 } catch (e) {
-                  defer.resolve(false);
+                  defer.resolve({ valid: false });
                 }
                 $window.localStorage.removeItem($stateParams.workspaceId);
               } else if ($stateParams.rulesengineid) {
                 try {
                   let configParams = $window.localStorage.getItem($stateParams.rulesengineid);
                   let config = JSON.parse(configParams);
-                  defer.resolve(config);
+                  defer.resolve({ valid: true, config });
                 } catch (e) {
-                  defer.resolve(false);
+                  defer.resolve({ valid: false });
                 }
                 $window.localStorage.removeItem($stateParams.rulesengineid);
               } else if ($stateParams.cloneId) {
                 try {
                   let configParams = $window.localStorage.getItem($stateParams.cloneId);
                   let config = JSON.parse(configParams);
-                  defer.resolve(config);
+                  defer.resolve({ valid: true, config });
                 } catch (e) {
-                  defer.resolve(false);
+                  defer.resolve({ valid: false });
                 }
                 $window.localStorage.removeItem($stateParams.cloneId);
               } else {
-                defer.resolve(false);
+                defer.resolve({ valid: false });
               }
               return defer.promise;
             },

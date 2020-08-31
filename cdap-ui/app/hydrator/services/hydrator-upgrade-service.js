@@ -268,7 +268,7 @@ class HydratorUpgradeService {
     };
   }
 
-  openUpgradeModal(jsonData) {
+  openUpgradeModal(jsonData, isImport = true) {
     if (typeof jsonData === 'string') {
       try {
         jsonData = JSON.parse(jsonData);
@@ -312,6 +312,9 @@ class HydratorUpgradeService {
       resolve: {
         rPipelineConfig: function () {
           return jsonData;
+        },
+        rIsImport: function() {
+          return isImport;
         }
       }
     });

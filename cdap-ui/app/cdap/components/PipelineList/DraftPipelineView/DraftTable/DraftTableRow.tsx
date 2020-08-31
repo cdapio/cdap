@@ -42,7 +42,7 @@ export default class DraftTableRow extends React.PureComponent<IProps> {
     });
 
     return (
-      <a href={link} className="grid-row">
+      <a href={link} className="grid-row" data-cy={`draft-${draft.name}`}>
         <div className="name" title={draft.name}>
           {draft.name}
         </div>
