@@ -83,6 +83,11 @@ const fragmentMatcher = new IntrospectionFragmentMatcher({
   introspectionQueryResultData,
 });
 
+const Lab = Loadable({
+  loader: () => import(/* webpackChunkMame: "Lab" */ 'components/Lab'),
+  loading: LoadingSVGCentered,
+});
+
 const client = new ApolloClient({
   uri: '/graphql',
   cache: new InMemoryCache({ fragmentMatcher }),
@@ -288,6 +293,44 @@ class CDAP extends Component {
                   <DAG {...props} />
                 </ErrorBoundary>
               )}
+            />
+            <Route
+              exact
+              path="/schema"
+              render={(props) => {
+                const SchemaEditorDemo = Loadable({
+                  loader: () =>
+                    import(
+                      /* webpackChunkName: "SchemaEditor" */ 'components/AbstractWidget/SchemaEditor/SchemaEditorDemo'
+                    ),
+                  loading: LoadingSVGCentered,
+                });
+                return (
+                  <ToggleExperiment
+                    name="schema-editor"
+                    defaultComponent={<Page404 {...props} />}
+                    experimentalComponent={<SchemaEditorDemo />}
+                  />
+                );
+              }}
+            />
+            <Route path="/lab" component={Lab} />
+            <Route
+              exact
+              path="/lab-experiment-test"
+              render={(props) => {
+                if (!window.parent.Cypress) {
+                  return <Page404 {...props} />;
+                }
+                const LabExperimentTestComp = Loadable({
+                  loader: () =>
+                    import(
+                      /* webpackChunkName: "LabExperimentTest" */ 'components/Lab/LabExperimentTest'
+                    ),
+                  loading: LoadingSVGCentered,
+                });
+                return <LabExperimentTestComp {...props} />;
+              }}
             />
             {/*
               Eventually handling 404 should move to the error boundary and all container components will have the error object.
