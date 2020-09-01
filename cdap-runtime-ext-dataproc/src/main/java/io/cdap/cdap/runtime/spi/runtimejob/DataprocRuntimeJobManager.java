@@ -189,9 +189,13 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       // step 4: submit hadoop job to dataproc
       Job job = getJobControllerClient().submitJob(request);
       LOG.debug("Successfully submitted hadoop job {} to cluster {}.", job.getReference().getJobId(), clusterName);
+      DataprocUtils.emitMetric(provisionerContext, region,
+                               "provisioner.submitJob.response.count");
     } catch (Exception e) {
       // delete all uploaded gcs files in case of exception
       DataprocUtils.deleteGCSPath(getStorageClient(), bucket, runRootPath);
+      DataprocUtils.emitMetric(provisionerContext, region,
+                               "provisioner.submitJob.response.count", e);
       throw new Exception(String.format("Error while launching job %s on cluster %s",
                                         getJobId(runInfo), clusterName), e);
     } finally {

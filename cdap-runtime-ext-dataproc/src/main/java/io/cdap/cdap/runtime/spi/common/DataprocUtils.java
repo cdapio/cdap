@@ -17,11 +17,16 @@
 package io.cdap.cdap.runtime.spi.common;
 
 import com.google.api.gax.paging.Page;
+import com.google.api.gax.rpc.ApiException;
+import com.google.api.gax.rpc.StatusCode;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageBatch;
 import com.google.common.base.Splitter;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.io.CharStreams;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerContext;
+import io.cdap.cdap.runtime.spi.provisioner.ProvisionerMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -227,6 +232,35 @@ public final class DataprocUtils {
       throw new IllegalArgumentException("Unable to get project id from the environment. "
                                            + "Please explicitly set the project id and account key.", e);
     }
+  }
+
+  /**
+   * Emit a dataproc metric.
+   **/
+  public static void emitMetric(ProvisionerContext context, String region,
+                                String metricName, @Nullable Exception e) {
+    StatusCode.Code statusCode;
+    if (e == null) {
+      statusCode = StatusCode.Code.OK;
+    } else {
+      Throwable cause = e.getCause();
+      if (cause instanceof ApiException) {
+        ApiException apiException = (ApiException) cause;
+        statusCode = apiException.getStatusCode().getCode();
+      } else {
+        statusCode = StatusCode.Code.INTERNAL;
+      }
+    }
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put("reg", region)
+      .put("sc", statusCode.toString())
+      .build();
+    ProvisionerMetrics metrics = context.getMetrics(tags);
+    metrics.count(metricName, 1);
+  }
+
+  public static void emitMetric(ProvisionerContext context, String region, String  metricName) {
+    emitMetric(context, region, metricName, null);
   }
 
   /**

@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.app.runtime.ProgramOptions;
@@ -120,13 +121,15 @@ public class ProvisioningService extends AbstractIdleService {
   private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private final ProvisionerStore provisionerStore;
   private final TransactionRunner transactionRunner;
+  private final MetricsCollectionService metricsCollectionService;
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
                       ProvisionerConfigProvider provisionerConfigProvider,
                       ProvisionerNotifier provisionerNotifier, LocationFactory locationFactory,
                       SecureStore secureStore, ProgramStateWriter programStateWriter,
-                      ProvisionerStore provisionerStore, TransactionRunner transactionRunner) {
+                      ProvisionerStore provisionerStore, TransactionRunner transactionRunner,
+                      MetricsCollectionService metricsCollectionService) {
     this.cConf = cConf;
     this.provisionerProvider = provisionerProvider;
     this.provisionerConfigProvider = provisionerConfigProvider;
@@ -138,6 +141,7 @@ public class ProvisioningService extends AbstractIdleService {
     this.programStateWriter = programStateWriter;
     this.provisionerStore = provisionerStore;
     this.transactionRunner = transactionRunner;
+    this.metricsCollectionService = metricsCollectionService;
     this.taskStateCleanup = programRunId -> {
       try {
         provisionerStore.deleteTaskInfo(programRunId);
@@ -204,7 +208,7 @@ public class ProvisioningService extends AbstractIdleService {
           Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS), null, null);
       }
       context = createContext(programRunId, userId, properties, defaultSSHContext,
-                              SystemArguments.getRuntimeMonitorType(cConf, programOptions));
+                              SystemArguments.getRuntimeMonitorType(cConf, programOptions), name);
     } catch (InvalidMacroException e) {
       // This shouldn't happen
       runWithProgramLogging(programRunId, systemArgs,
@@ -373,11 +377,12 @@ public class ProvisioningService extends AbstractIdleService {
    */
   public Optional<RuntimeJobManager> getRuntimeJobManager(ProgramRunId programRunId, ProgramOptions programOptions) {
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
-    Provisioner provisioner = provisionerInfo.get().provisioners.get(SystemArguments.getProfileProvisioner(systemArgs));
+    String name = SystemArguments.getProfileProvisioner(systemArgs);
+    Provisioner provisioner = provisionerInfo.get().provisioners.get(name);
     String user = programOptions.getArguments().getOption(ProgramOptionConstants.USER_ID);
     Map<String, String> properties = SystemArguments.getProfileProperties(systemArgs);
     ProvisionerContext context = createContext(programRunId, user, properties, null,
-                                               SystemArguments.getRuntimeMonitorType(cConf, programOptions));
+                                               SystemArguments.getRuntimeMonitorType(cConf, programOptions), name);
     return provisioner.getRuntimeJobManager(context);
   }
 
@@ -559,14 +564,14 @@ public class ProvisioningService extends AbstractIdleService {
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     ProgramOptions programOptions = taskInfo.getProgramOptions();
     Map<String, String> systemArgs = programOptions.getArguments().asMap();
-
     ProvisionerContext context;
+    String name = SystemArguments.getProfileProvisioner(systemArgs);
     try {
       SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                     locationFactory.create(taskInfo.getSecureKeysDir()),
                                                     createSSHKeyPair(taskInfo));
       context = createContext(programRunId, taskInfo.getUser(), taskInfo.getProvisionerProperties(), sshContext,
-                              SystemArguments.getRuntimeMonitorType(cConf, programOptions));
+                              SystemArguments.getRuntimeMonitorType(cConf, programOptions), name);
     } catch (IOException e) {
       runWithProgramLogging(taskInfo.getProgramRunId(), systemArgs,
                             () -> LOG.error("Failed to load ssh key. The run will be marked as failed.", e));
@@ -616,11 +621,13 @@ public class ProvisioningService extends AbstractIdleService {
 
     ProgramRunId programRunId = taskInfo.getProgramRunId();
     Map<String, String> systemArgs = taskInfo.getProgramOptions().getArguments().asMap();
+    String name = SystemArguments.getProfileProvisioner(systemArgs);
+
     try {
       SSHContext sshContext = new DefaultSSHContext(Networks.getAddress(cConf, Constants.NETWORK_PROXY_ADDRESS),
                                                     null, sshKeyPair);
       context = createContext(programRunId, taskInfo.getUser(), properties, sshContext,
-                              SystemArguments.getRuntimeMonitorType(cConf, taskInfo.getProgramOptions()));
+                              SystemArguments.getRuntimeMonitorType(cConf, taskInfo.getProgramOptions()), name);
     } catch (InvalidMacroException e) {
       runWithProgramLogging(programRunId, systemArgs,
                             () -> LOG.error("Could not evaluate macros while deprovisoning. "
@@ -730,10 +737,11 @@ public class ProvisioningService extends AbstractIdleService {
   }
 
   private ProvisionerContext createContext(ProgramRunId programRunId, String userId, Map<String, String> properties,
-                                           @Nullable SSHContext sshContext, RuntimeMonitorType runtimeMonitorType) {
+                                           @Nullable SSHContext sshContext, RuntimeMonitorType runtimeMonitorType,
+                                           String provisionerName) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
-    return new DefaultProvisionerContext(programRunId, evaluated, sparkCompat, sshContext, locationFactory,
-                                         runtimeMonitorType);
+    return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat, sshContext,
+                                         locationFactory, runtimeMonitorType, metricsCollectionService);
   }
 
   /**
