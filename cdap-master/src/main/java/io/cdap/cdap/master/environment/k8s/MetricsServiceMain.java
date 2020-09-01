@@ -65,7 +65,8 @@ public class MetricsServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   }
 
   @Override
-  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       new NamespaceQueryAdminModule(),
       new AuthorizationEnforcementModule().getDistributedModules(),

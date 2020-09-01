@@ -17,6 +17,8 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewRequestQueueState;
@@ -53,7 +55,8 @@ public class DefaultPreviewRequestQueue implements PreviewRequestQueue {
   private final RetryStrategy retryStrategy;
 
   @Inject
-  public DefaultPreviewRequestQueue(CConfiguration cConf, PreviewStore previewStore) {
+  DefaultPreviewRequestQueue(@Named(PreviewConfigModule.PREVIEW_CCONF) CConfiguration cConf,
+                             PreviewStore previewStore) {
     this.previewStore = previewStore;
     this.capacity = cConf.getInt(Constants.Preview.WAITING_QUEUE_CAPACITY, 50);
     this.waitTimeOut = cConf.getLong(Constants.Preview.WAITING_QUEUE_TIMEOUT_SECONDS, 60);

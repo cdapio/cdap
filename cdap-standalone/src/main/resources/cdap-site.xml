@@ -87,16 +87,6 @@
     </description>
   </property>
 
-  <property>
-    <name>preview.cache.size</name>
-    <value>10</value>
-    <description>
-      Number of preview runs for which data will be stored in memory. When size exceeds,
-      data for the oldest run will be removed from memory and no longer retrievable.
-    </description>
-  </property>
-
-
   <!-- Datasets Configuration -->
 
   <property>

@@ -3098,6 +3098,47 @@
   </property>
 
   <property>
+    <name>preview.poller.count</name>
+    <value>10</value>
+    <description>
+      Number of pollers in each preview runner process
+    </description>
+  </property>
+
+  <property>
+    <name>preview.runner.container.disk.size.gb</name>
+    <value>10</value>
+    <description>
+      Size of the stateful disk for the preview runner
+    </description>
+  </property>
+
+  <property>
+    <name>preview.runner.container.count</name>
+    <value>0</value>
+    <description>
+      Number of preview runner containers for preview execution. If it is set to 0, preview execution will be
+      running in the same process as the preview manager.
+    </description>
+  </property>
+
+  <property>
+    <name>preview.runner.container.memory.mb</name>
+    <value>756</value>
+    <description>
+      Memory in megabytes for each preview runner container
+    </description>
+  </property>
+
+  <property>
+    <name>preview.runner.container.num.cores</name>
+    <value>1</value>
+    <description>
+      Number of virtual cores for the preview runner
+    </description>
+  </property>
+
+  <property>
     <name>service.retry.policy.base.delay.ms</name>
     <value>100</value>
     <description>

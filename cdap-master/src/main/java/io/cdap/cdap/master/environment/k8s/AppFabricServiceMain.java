@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Injector;
@@ -29,6 +28,7 @@ import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.store.ServiceStore;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.SupplierProviderBridge;
@@ -81,7 +81,8 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
   }
 
   @Override
-  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
       // Always use local table implementations, which use LevelDB.
       // In K8s, there won't be HBase and the cdap-site should be set to use SQL store for StructuredTable.
@@ -153,26 +154,4 @@ public class AppFabricServiceMain extends AbstractServiceMain<EnvironmentOptions
                                      Constants.Service.APP_FABRIC_HTTP);
   }
 
-  /**
-   * A Guava {@link Service} that wraps the {@link TwillRunnerService#start()} and {@link TwillRunnerService#stop()}
-   * calls.
-   */
-  private static final class TwillRunnerServiceWrapper extends AbstractIdleService {
-
-    private final TwillRunnerService twillRunner;
-
-    private TwillRunnerServiceWrapper(TwillRunnerService twillRunner) {
-      this.twillRunner = twillRunner;
-    }
-
-    @Override
-    protected void startUp() {
-      twillRunner.start();
-    }
-
-    @Override
-    protected void shutDown() {
-      twillRunner.stop();
-    }
-  }
 }

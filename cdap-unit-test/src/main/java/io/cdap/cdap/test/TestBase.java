@@ -52,12 +52,11 @@ import io.cdap.cdap.app.guice.AuthorizationModule;
 import io.cdap.cdap.app.guice.MonitorHandlerModule;
 import io.cdap.cdap.app.guice.ProgramRunnerRuntimeModule;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
-import io.cdap.cdap.app.preview.PreviewHttpModule;
+import io.cdap.cdap.app.preview.PreviewHttpServer;
 import io.cdap.cdap.app.preview.PreviewManager;
-import io.cdap.cdap.app.preview.PreviewRequestQueue;
+import io.cdap.cdap.app.preview.PreviewManagerModule;
 import io.cdap.cdap.app.preview.PreviewRunnerManager;
 import io.cdap.cdap.app.preview.PreviewRunnerManagerModule;
-import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -84,9 +83,7 @@ import io.cdap.cdap.explore.executor.ExploreExecutorService;
 import io.cdap.cdap.explore.guice.ExploreClientModule;
 import io.cdap.cdap.explore.guice.ExploreRuntimeModule;
 import io.cdap.cdap.gateway.handlers.AuthorizationHandler;
-import io.cdap.cdap.internal.app.preview.DefaultPreviewRequestQueue;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
-import io.cdap.cdap.internal.app.store.preview.DefaultPreviewStore;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.MockProvisionerModule;
 import io.cdap.cdap.logging.guice.LocalLogAppenderModule;
@@ -190,7 +187,6 @@ public class TestBase {
 
   static Injector injector;
   private static CConfiguration cConf;
-  private static CConfiguration previewCConf;
   private static int nestedStartCount;
   private static boolean firstInit = true;
   private static MetricsCollectionService metricsCollectionService;
@@ -209,7 +205,7 @@ public class TestBase {
   private static MessagingService messagingService;
   private static Scheduler programScheduler;
   private static MessagingContext messagingContext;
-  private static PreviewManager previewManager;
+  private static PreviewHttpServer previewHttpServer;
   private static PreviewRunnerManager previewRunnerManager;
   private static MetadataService metadataService;
   private static MetadataSubscriberService metadataSubscriberService;
@@ -231,12 +227,9 @@ public class TestBase {
 
     cConf = createCConf(localDataDir);
 
-    previewCConf = createPreviewConf(cConf);
+    CConfiguration previewCConf = createPreviewConf(cConf);
     LevelDBTableService previewLevelDBTableService = new LevelDBTableService();
     previewLevelDBTableService.setConfiguration(previewCConf);
-
-    PreviewStore previewStore = new DefaultPreviewStore(previewLevelDBTableService);
-    PreviewRequestQueue previewRequestQueue = new DefaultPreviewRequestQueue(previewCConf, previewStore);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -287,12 +280,11 @@ public class TestBase {
       new AuthorizationEnforcementModule().getInMemoryModules(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
-      new PreviewHttpModule(),
+      new PreviewManagerModule(false),
       new PreviewRunnerManagerModule().getInMemoryModules(),
       new MockProvisionerModule(),
       new AbstractModule() {
         @Override
-        @SuppressWarnings("deprecation")
         protected void configure() {
           install(new FactoryModuleBuilder().implement(ApplicationManager.class, DefaultApplicationManager.class)
                     .build(ApplicationManagerFactory.class));
@@ -378,13 +370,11 @@ public class TestBase {
     secureStoreManager = injector.getInstance(SecureStoreManager.class);
     messagingContext = new MultiThreadMessagingContext(messagingService);
     firstInit = false;
-    previewManager = injector.getInstance(PreviewManager.class);
+    previewHttpServer = injector.getInstance(PreviewHttpServer.class);
+    previewHttpServer.startAndWait();
     fieldLineageAdmin = injector.getInstance(FieldLineageAdmin.class);
     lineageAdmin = injector.getInstance(LineageAdmin.class);
     metadataSubscriberService.startAndWait();
-    if (previewManager instanceof Service) {
-      ((Service) previewManager).startAndWait();
-    }
     previewRunnerManager = injector.getInstance(PreviewRunnerManager.class);
     if (previewRunnerManager instanceof Service) {
       ((Service) previewRunnerManager).startAndWait();
@@ -524,9 +514,7 @@ public class TestBase {
       ((Service) previewRunnerManager).stopAndWait();
     }
 
-    if (previewManager instanceof Service) {
-      ((Service) previewManager).stopAndWait();
-    }
+    previewHttpServer.stopAndWait();
 
     if (cConf.getBoolean(Constants.Security.Authorization.ENABLED)) {
       InstanceId instance = new InstanceId(cConf.get(Constants.INSTANCE_NAME));
@@ -1003,7 +991,7 @@ public class TestBase {
    * Returns a {@link PreviewManager} to interact with preview.
    */
   protected static PreviewManager getPreviewManager() {
-    return previewManager;
+    return previewHttpServer.getPreviewManager();
   }
 
   /**

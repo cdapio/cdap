@@ -22,10 +22,8 @@ import org.apache.twill.api.TwillRunnable;
 /**
  * Extension interface for {@link TwillPreparer} to implement if it supports stateful execution of
  * {@link TwillRunnable}.
- *
- * @param <T> type of the {@link TwillPreparer} implementing this interface
  */
-public interface StatefulTwillPreparer<T extends TwillPreparer> {
+public interface StatefulTwillPreparer extends TwillPreparer {
 
   /**
    * Declares the given runnable with stateful execution.
@@ -35,5 +33,5 @@ public interface StatefulTwillPreparer<T extends TwillPreparer> {
    * @param statefulDisk an optional list of {@link StatefulDisk} available for the runnable container
    * @return this {@link TwillPreparer}
    */
-  T withStatefulRunnable(String runnableName, boolean orderedStart, StatefulDisk... statefulDisk);
+  StatefulTwillPreparer withStatefulRunnable(String runnableName, boolean orderedStart, StatefulDisk... statefulDisk);
 }

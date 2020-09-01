@@ -29,7 +29,8 @@ import java.util.Optional;
 public class DirectPreviewRequestFetcher implements PreviewRequestFetcher {
   private final PreviewRequestQueue previewRequestQueue;
 
-  public DirectPreviewRequestFetcher(PreviewRequestQueue previewRequestQueue) {
+  @Inject
+  DirectPreviewRequestFetcher(PreviewRequestQueue previewRequestQueue) {
     this.previewRequestQueue = previewRequestQueue;
   }
 

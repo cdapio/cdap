@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.preview;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Inject;
@@ -30,18 +31,17 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandler;
-import io.cdap.cdap.gateway.handlers.preview.PreviewHttpHandlerInternal;
 import io.cdap.cdap.internal.app.services.AppFabricServer;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.Set;
 
 /**
  * HTTP Server for preview.
@@ -57,15 +57,14 @@ public class PreviewHttpServer extends AbstractIdleService {
 
   @Inject
   PreviewHttpServer(CConfiguration cConf, SConfiguration sConf,
-                    DiscoveryService discoveryService, PreviewHttpHandler previewHttpHandler,
-                    PreviewHttpHandlerInternal previewHttpHandlerInternal,
+                    DiscoveryService discoveryService, Set<HttpHandler> httpHandlers,
                     MetricsCollectionService metricsCollectionService,
                     PreviewManager previewManager) {
     this.discoveryService = discoveryService;
     NettyHttpService.Builder builder = new CommonNettyHttpServiceBuilder(cConf, Constants.Service.PREVIEW_HTTP)
       .setHost(cConf.get(Constants.Preview.ADDRESS))
       .setPort(cConf.getInt(Constants.Preview.PORT))
-      .setHttpHandlers(Arrays.asList(previewHttpHandler, previewHttpHandlerInternal))
+      .setHttpHandlers(httpHandlers)
       .setConnectionBacklog(cConf.getInt(Constants.Preview.BACKLOG_CONNECTIONS))
       .setExecThreadPoolSize(cConf.getInt(Constants.Preview.EXEC_THREADS))
       .setBossThreadPoolSize(cConf.getInt(Constants.Preview.BOSS_THREADS))
@@ -79,6 +78,14 @@ public class PreviewHttpServer extends AbstractIdleService {
 
     this.httpService = builder.build();
     this.previewManager = previewManager;
+  }
+
+  /**
+   * Returns the {@link PreviewManager} used by this server for serving HTTP requests.
+   */
+  @VisibleForTesting
+  public PreviewManager getPreviewManager() {
+    return previewManager;
   }
 
   /**

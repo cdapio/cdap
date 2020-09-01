@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
@@ -42,6 +43,23 @@ public class MasterEnvironmentMain {
   private static final Logger LOG = LoggerFactory.getLogger(MasterEnvironmentMain.class);
 
   public static void main(String[] args) throws Exception {
+    MainClassLoader classLoader = MainClassLoader.createFromContext();
+    if (classLoader == null) {
+      LOG.warn("Failed to create CDAP system ClassLoader. AuthEnforce annotation will not be rewritten.");
+      doMain(args);
+    } else {
+      LOG.debug("Using {} as the system ClassLoader", classLoader);
+      Thread.currentThread().setContextClassLoader(classLoader);
+      Class<?> mainClass = classLoader.loadClass(MasterEnvironmentMain.class.getName());
+      mainClass.getMethod("doMain", String[].class).invoke(null, new Object[]{args});
+    }
+  }
+
+  /**
+   * The actual main method that get invoke through reflection from the {@link #main(String[])} method.
+   */
+  @SuppressWarnings("unused")
+  public static void doMain(String[] args) throws Exception {
     try {
       // System wide setup
       Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
