@@ -18,7 +18,7 @@
  * various utility functions
  */
 angular.module(PKG.name+'.services')
-  .factory('myHelpers', function(myCdapUrl, $window){
+  .factory('myHelpers', function(myCdapUrl, $window, GLOBALS){
 
    /**
     * set a property deep in an object
@@ -233,9 +233,10 @@ angular.module(PKG.name+'.services')
     return window.CaskCommon.IsValidNS(namespace)
       .then(validNamespace => {
         if (!validNamespace) {
+          // Match error.data to NotFoundException from backend
           const error = {
             statusCode: 404,
-            data: `Namespace '${namespace}' does not exist.`
+            data: GLOBALS.pageLevelErrors['INVALID-NAMESPACE'](namespace)
           };
           window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
         }
