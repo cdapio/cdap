@@ -14,27 +14,27 @@
   the License.
 -->
 
-<div class="config-table source-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSource">
+<div ng-class="{'config-table': true, 'source-table': !HydratorPlusPlusNodeConfigCtrl.state.noconfig}" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSource">
   <div>
     <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
   </div>
 
-  <div>
+  <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.noconfig">
     <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
-<div class="config-table transform-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
-  <div>
-    <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
+<div ng-class="{'config-table': true, 'transform-table': !HydratorPlusPlusNodeConfigCtrl.state.noconfig}" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
+  <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.noconfig">
+    <div  class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
 
   <div>
     <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
   </div>
 
-  <div>
-    <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
+  <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.noconfig">
+    <div  class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
@@ -44,8 +44,8 @@
   </div>
 </div>
 
-<div class="config-table sink-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">
-  <div>
+<div ng-class="{'config-table': true, 'sink-table': !HydratorPlusPlusNodeConfigCtrl.state.noconfig}" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">
+  <div ng-if="!HydratorPlusPlusNodeConfigCtrl.state.noconfig">
     <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
 
