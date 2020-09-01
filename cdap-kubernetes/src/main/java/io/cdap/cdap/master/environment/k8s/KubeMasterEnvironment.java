@@ -77,6 +77,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String CONTAINER_LABEL = "master.environment.k8s.container.label";
   private static final String POD_INFO_DIR = "master.environment.k8s.pod.info.dir";
   private static final String POD_NAME_FILE = "master.environment.k8s.pod.name.file";
+  private static final String POD_UID_FILE = "master.environment.k8s.pod.uid.file";
   private static final String POD_LABELS_FILE = "master.environment.k8s.pod.labels.file";
   private static final String POD_KILLER_SELECTOR = "master.environment.k8s.pod.killer.selector";
   private static final String POD_KILLER_DELAY_MILLIS = "master.environment.k8s.pod.killer.delay.millis";
@@ -86,8 +87,8 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   private static final String DEFAULT_CONTAINER_LABEL = "cdap.container";
   private static final String DEFAULT_POD_INFO_DIR = "/etc/podinfo";
   private static final String DEFAULT_POD_NAME_FILE = "pod.name";
+  private static final String DEFAULT_POD_UID_FILE = "pod.uid";
   private static final String DEFAULT_POD_LABELS_FILE = "pod.labels.properties";
-  private static final String DEFAULT_POD_KILLER_SELECTOR = "cdap.container=preview";
   private static final long DEFAULT_POD_KILLER_DELAY_MILLIS = TimeUnit.HOURS.toMillis(1L);
 
   private static final Pattern LABEL_PATTERN = Pattern.compile("(cdap\\..+?)=\"(.*)\"");
@@ -127,7 +128,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                                                 podInfo.getOwnerReferences());
 
     // Optionally creates the pod killer task
-    String podKillerSelector = conf.getOrDefault(POD_KILLER_SELECTOR, DEFAULT_POD_KILLER_SELECTOR);
+    String podKillerSelector = conf.get(POD_KILLER_SELECTOR);
     if (!Strings.isNullOrEmpty(podKillerSelector)) {
       long delayMillis = DEFAULT_POD_KILLER_DELAY_MILLIS;
       String confDelay = conf.get(POD_KILLER_DELAY_MILLIS);
@@ -229,7 +230,13 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     File podNameFile = new File(podInfoDir, conf.getOrDefault(POD_NAME_FILE, DEFAULT_POD_NAME_FILE));
     String podName = Files.lines(podNameFile.toPath()).findFirst().orElse(null);
     if (Strings.isNullOrEmpty(podName)) {
-      throw new IOException("Failed to get pod name from file " + podName);
+      throw new IOException("Failed to get pod name from file " + podNameFile);
+    }
+
+    File podUidFile = new File(podInfoDir, conf.getOrDefault(POD_UID_FILE, DEFAULT_POD_UID_FILE));
+    String podUid = Files.lines(podUidFile.toPath()).findFirst().orElse(null);
+    if (Strings.isNullOrEmpty(podUid)) {
+      throw new IOException("Failed to get pod uid from file " + podUidFile);
     }
 
     // Query pod information.
@@ -265,7 +272,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
     String serviceAccountName = pod.getSpec().getServiceAccountName();
     String runtimeClassName = pod.getSpec().getRuntimeClassName();
     return new PodInfo(podName, podLabelsFile.getParentFile().getAbsolutePath(), podLabelsFile.getName(),
-                       podNameFile.getName(), namespace, podLabels, ownerReferences,
+                       podNameFile.getName(), podUid, podUidFile.getName(), namespace, podLabels, ownerReferences,
                        serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
                        envs == null ? Collections.emptyList() : envs);

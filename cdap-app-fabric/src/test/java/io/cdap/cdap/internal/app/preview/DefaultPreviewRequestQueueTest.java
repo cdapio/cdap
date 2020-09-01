@@ -20,8 +20,11 @@ import com.google.gson.JsonElement;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.name.Names;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewRequest;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
 import io.cdap.cdap.app.preview.PreviewStatus;
@@ -29,7 +32,8 @@ import io.cdap.cdap.app.store.preview.PreviewStore;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.conf.SConfiguration;
+import io.cdap.cdap.data2.dataset2.lib.table.leveldb.LevelDBTableService;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
@@ -66,7 +70,7 @@ public class DefaultPreviewRequestQueueTest {
     cConf.setInt(Constants.Preview.WAITING_QUEUE_CAPACITY, 2);
 
     Injector injector = Guice.createInjector(
-      new ConfigModule(cConf, new Configuration()),
+      new PreviewConfigModule(cConf, new Configuration(), SConfiguration.create()),
       new AbstractModule() {
         @Override
         protected void configure() {
@@ -74,7 +78,8 @@ public class DefaultPreviewRequestQueueTest {
         }
       }
     );
-
+    injector.getInstance(Key.get(LevelDBTableService.class, Names.named(PreviewConfigModule.PREVIEW_LEVEL_DB)));
+    injector.getInstance(Key.get(LevelDBTableService.class, Names.named(PreviewConfigModule.PREVIEW_LEVEL_DB)));
     previewRequestQueue = injector.getInstance(DefaultPreviewRequestQueue.class);
   }
 

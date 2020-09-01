@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.k8s.runtime;
 
+import io.cdap.cdap.master.spi.twill.ExtendedTwillController;
 import io.kubernetes.client.ApiCallback;
 import io.kubernetes.client.ApiClient;
 import io.kubernetes.client.ApiException;
@@ -24,13 +25,13 @@ import io.kubernetes.client.apis.CoreV1Api;
 import io.kubernetes.client.models.V1DeleteOptions;
 import io.kubernetes.client.models.V1Deployment;
 import io.kubernetes.client.models.V1ObjectMeta;
+import io.kubernetes.client.models.V1Preconditions;
 import io.kubernetes.client.models.V1StatefulSet;
 import io.kubernetes.client.models.V1Status;
 import org.apache.twill.api.Command;
 import org.apache.twill.api.ResourceReport;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.ServiceController;
-import org.apache.twill.api.TwillController;
 import org.apache.twill.api.logging.LogEntry;
 import org.apache.twill.api.logging.LogHandler;
 import org.apache.twill.discovery.DiscoveryServiceClient;
@@ -56,7 +57,7 @@ import javax.annotation.Nullable;
 /**
  * Kubernetes version of a TwillController.
  */
-class KubeTwillController implements TwillController {
+class KubeTwillController implements ExtendedTwillController {
 
   private final String kubeNamespace;
   private final RunId runId;
@@ -143,6 +144,30 @@ class KubeTwillController implements TwillController {
   @Override
   public Future<String> restartInstances(String runnable, Set<Integer> instanceIds) {
     return doRestartInstances(runnable, instanceIds);
+  }
+
+  @Override
+  public Future<String> restartInstance(String runnable, int instanceId, String uid) {
+    CompletableFuture<String> resultFuture = new CompletableFuture<>();
+    CoreV1Api api = new CoreV1Api(apiClient);
+
+    // Only support for stateful set for now
+    if (!V1StatefulSet.class.equals(resourceType)) {
+      resultFuture.completeExceptionally(
+        new UnsupportedOperationException("Instance restart by instance id is only supported for statefulsets"));
+      return resultFuture;
+    }
+
+    V1DeleteOptions deleteOptions = new V1DeleteOptions().preconditions(new V1Preconditions().uid(uid));
+    String podName = String.format("%s-%d", meta.getName(), instanceId);
+
+    try {
+      api.deleteNamespacedPodAsync(podName, kubeNamespace, null, deleteOptions, null, null, null, null,
+                                   createCallbackFutureAdapter(resultFuture, r -> runnable));
+    } catch (ApiException e) {
+      resultFuture.completeExceptionally(e);
+    }
+    return resultFuture;
   }
 
   @Override

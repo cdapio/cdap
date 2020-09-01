@@ -51,7 +51,8 @@ public class MessagingServiceMain extends AbstractServiceMain<EnvironmentOptions
   }
 
   @Override
-  protected List<Module> getServiceModules(MasterEnvironment masterEnv, EnvironmentOptions options) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options, CConfiguration cConf) {
     // We use the "local" module in K8s, as PV will be used as the persistent storage.
     return Arrays.asList(
       new NamespaceQueryAdminModule(),

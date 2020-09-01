@@ -16,12 +16,9 @@
 
 package io.cdap.cdap.app.preview;
 
-import com.google.inject.Exposed;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
-import com.google.inject.Provides;
 import com.google.inject.Scopes;
-import com.google.inject.Singleton;
 import com.google.inject.assistedinject.FactoryModuleBuilder;
 import com.google.inject.name.Names;
 import io.cdap.cdap.common.runtime.RuntimeModule;
@@ -35,7 +32,6 @@ import io.cdap.cdap.internal.app.preview.PreviewRequestFetcher;
 import io.cdap.cdap.internal.app.preview.PreviewRunStopper;
 import io.cdap.cdap.internal.app.preview.PreviewRunnerService;
 import io.cdap.cdap.internal.app.preview.RemotePreviewRequestFetcher;
-import org.apache.twill.discovery.DiscoveryServiceClient;
 
 /**
  * Guice module to provide bindings for {@link PreviewRunnerManager} service.
@@ -59,7 +55,9 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
-        bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
+
+        bind(PreviewRequestFetcher.class).to(DirectPreviewRequestFetcher.class).in(Scopes.SINGLETON);
+
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunStopper.class).to(DefaultPreviewRunnerManager.class);
         expose(PreviewRunStopper.class);
@@ -69,13 +67,6 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(PreviewRunnerService.class, PreviewRunnerService.class)
                   .build(PreviewRunnerServiceFactory.class));
-      }
-
-      @Provides
-      @Singleton
-      @Exposed
-      PreviewRequestFetcher getPreviewRequestQueueFetcher(PreviewRequestQueue previewRequestQueue) {
-        return new DirectPreviewRequestFetcher(previewRequestQueue);
       }
     };
   }
@@ -91,7 +82,8 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         bind(DatasetFramework.class)
           .annotatedWith(Names.named(DataSetsModules.BASE_DATASET_FRAMEWORK))
           .to(RemoteDatasetFramework.class);
-        bind(PreviewRunnerModule.class).to(DefaultPreviewRunnerModule.class);
+
+        bind(PreviewRequestFetcher.class).to(RemotePreviewRequestFetcher.class).in(Scopes.SINGLETON);
 
         bind(DefaultPreviewRunnerManager.class).in(Scopes.SINGLETON);
         bind(PreviewRunnerManager.class).to(DefaultPreviewRunnerManager.class);
@@ -100,13 +92,6 @@ public class PreviewRunnerManagerModule extends RuntimeModule {
         install(new FactoryModuleBuilder()
                   .implement(PreviewRunnerService.class, PreviewRunnerService.class)
                   .build(PreviewRunnerServiceFactory.class));
-      }
-
-      @Provides
-      @Singleton
-      @Exposed
-      PreviewRequestFetcher getPreviewRequestQueueFetcher(DiscoveryServiceClient discoveryServiceClient) {
-        return new RemotePreviewRequestFetcher(discoveryServiceClient, new byte[0]);
       }
     };
   }
