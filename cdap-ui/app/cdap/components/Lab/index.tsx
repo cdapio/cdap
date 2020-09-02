@@ -198,4 +198,4 @@ function loadDefaultExperiments() {
 
 const StyledLab = withStyles(styles)(Lab);
 export default StyledLab;
-export { loadDefaultExperiments };
+export { loadDefaultExperiments, IExperiment };

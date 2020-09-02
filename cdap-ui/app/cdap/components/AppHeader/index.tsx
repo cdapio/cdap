@@ -36,6 +36,7 @@ import ThemeWrapper from 'components/ThemeWrapper';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import SystemServicesDelay from 'components/SystemServicesDelay';
 import ExperimentalFeature from 'components/Lab/ExperimentalFeature';
+import { loadDefaultExperiments } from 'components/Lab';
 
 require('styles/bootstrap_4_patch.scss');
 

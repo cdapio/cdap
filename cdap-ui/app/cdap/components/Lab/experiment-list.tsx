@@ -14,7 +14,9 @@
  * the License.
  */
 
-export default [
+import { IExperiment } from 'components/Lab';
+
+const experimentsList: IExperiment[] = [
   {
     name: 'CDAP Common',
     description: `This is a common flag that developers can use to hide or show features. The flag is stored in browser's local storage with experiment ID as the name.`,
@@ -63,8 +65,9 @@ export default [
   {
     name: 'Schema Editor',
     description: 'New SchemaEditor. Includes complete rewrite in React + perf improvements',
-    id: 'schema-editor',
+    experimentId: 'schema-editor',
     screenshot: null,
-    value: true,
+    enabled: true,
   },
 ];
+export default experimentsList;
