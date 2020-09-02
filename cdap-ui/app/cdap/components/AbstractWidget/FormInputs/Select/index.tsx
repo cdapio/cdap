@@ -14,13 +14,27 @@
  * the License.
  */
 import React from 'react';
-import Select from '@material-ui/core/Select';
+import Select, { SelectProps } from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import InputBase from '@material-ui/core/InputBase';
 import { IWidgetProps } from 'components/AbstractWidget';
 import { objectQuery } from 'services/helpers';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
 import withStyles from '@material-ui/core/styles/withStyles';
+import { blue } from 'components/ThemeWrapper/colors';
+import { isNilOrEmptyString } from 'services/helpers';
+import Tooltip from '@material-ui/core/Tooltip';
+
+const CustomTooltip = withStyles((theme) => {
+  return {
+    tooltip: {
+      backgroundColor: theme.palette.grey[200],
+      color: (theme.palette as any).white[50],
+      fontSize: '12px',
+      wordBreak: 'break-word',
+    },
+  };
+})(Tooltip);
 
 const CustomizedInput = withStyles(() => {
   return {
@@ -28,21 +42,46 @@ const CustomizedInput = withStyles(() => {
       padding: '7px 18px 7px 12px',
       '&:focus': {
         backgroundColor: 'transparent',
+        outline: `1px solid ${blue[100]}`,
       },
     },
   };
 })(InputBase);
+
+const DenseMenuItem = withStyles(() => {
+  return {
+    root: {
+      minHeight: 'unset',
+      paddingTop: '3px',
+      paddingBottom: '3px',
+    },
+  };
+})(MenuItem);
+
+const InlineSelect = withStyles(() => {
+  return {
+    root: {
+      display: 'inline-block',
+    },
+  };
+})(Select);
 
 interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
   label: string;
 }
 
-interface ISelectWidgetProps {
+interface ISelectWidgetProps extends SelectProps {
   options: ISelectOptions[] | string[] | number[];
+  dense?: boolean;
+  inline?: boolean;
 }
 
-interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {}
+interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {
+  placeholder?: string;
+  inputRef?: (ref: React.ReactNode) => void;
+  classes?: any;
+}
 
 const CustomSelect: React.FC<ISelectProps> = ({
   value,
@@ -50,6 +89,10 @@ const CustomSelect: React.FC<ISelectProps> = ({
   widgetProps,
   disabled,
   dataCy,
+  inputRef,
+  placeholder,
+  classes,
+  ...restProps
 }: ISelectProps) => {
   const onChangeHandler = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const v = event.target.value;
@@ -59,12 +102,20 @@ const CustomSelect: React.FC<ISelectProps> = ({
   };
 
   const options = objectQuery(widgetProps, 'options') || objectQuery(widgetProps, 'values') || [];
-  const optionValues = options.map((opt) => {
+  const dense = objectQuery(widgetProps, 'dense') || false;
+  const inline = objectQuery(widgetProps, 'inline') || false;
+  const native = objectQuery(widgetProps, 'native') || false;
+  const OptionItem = native ? 'option' : dense ? DenseMenuItem : MenuItem;
+  const SelectComponent = inline ? InlineSelect : Select;
+  let optionValues = options.map((opt) => {
     return ['string', 'number'].indexOf(typeof opt) !== -1 ? { value: opt, label: opt } : opt;
   });
+  if (!isNilOrEmptyString(placeholder)) {
+    optionValues = [{ placeholder, value: '', label: placeholder }, ...optionValues];
+  }
 
   return (
-    <Select
+    <SelectComponent
       fullWidth
       value={value}
       onChange={onChangeHandler}
@@ -73,13 +124,38 @@ const CustomSelect: React.FC<ISelectProps> = ({
       inputProps={{
         'data-cy': dataCy,
       }}
+      MenuProps={{
+        getContentAnchorEl: null,
+        anchorOrigin: {
+          vertical: 'bottom',
+          horizontal: 'left',
+        },
+      }}
+      displayEmpty={!isNilOrEmptyString(placeholder)}
+      inputRef={inputRef}
+      classes={classes}
+      {...widgetProps}
     >
-      {optionValues.map((opt) => (
-        <MenuItem value={opt.value} key={opt.value} disabled={opt.disabled}>
-          {opt.label}
-        </MenuItem>
-      ))}
-    </Select>
+      {optionValues.map((opt) => {
+        const option = (
+          <OptionItem
+            value={opt.value}
+            key={opt.value}
+            disabled={opt.disabled || !isNilOrEmptyString(opt.placeholder)}
+          >
+            {opt.label}
+          </OptionItem>
+        );
+        if (opt.tooltip) {
+          return (
+            <CustomTooltip title={opt.tooltip} placement={opt.tooltipPlacement || 'left'}>
+              <span>{option}</span>
+            </CustomTooltip>
+          );
+        }
+        return option;
+      })}
+    </SelectComponent>
   );
 };
 

@@ -20,13 +20,13 @@
   </div>
 
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
+    <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
 <div class="config-table transform-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isTransform && HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name !== 'Validator'">
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
+    <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
 
   <div>
@@ -34,7 +34,7 @@
   </div>
 
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
+    <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
   </div>
 </div>
 
@@ -46,7 +46,7 @@
 
 <div class="config-table sink-table" ng-if="HydratorPlusPlusNodeConfigCtrl.state.isSink">
   <div>
-    <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
+    <div class="output-schema-container" ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-input-schema.html'"></div>
   </div>
 
   <div>
@@ -55,7 +55,7 @@
         <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-properties-template.html'"></div>
       </div>
 
-      <div class="col-xs-12 sink-output-schema" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaExists || HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.implicitSchema">
+      <div class="col-xs-12 sink-output-schema output-schema-container" ng-if="HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.isOutputSchemaExists || HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.implicitSchema">
         <div ng-include="'/assets/features/hydrator/templates/partial/node-config-modal/node-config/plugin-edit-output-schema.html'"></div>
       </div>
     </div>

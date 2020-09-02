@@ -480,6 +480,24 @@ function extractErrorMessage(errObj) {
   return objectQuery(errObj, 'response', 'message') || objectQuery(errObj, 'response');
 }
 
+function connectWithStore(store, WrappedComponent, ...args) {
+  const ConnectedWrappedComponent = connect(...args)(WrappedComponent);
+  // eslint-disable-next-line react/display-name
+  return function(props) {
+    return <ConnectedWrappedComponent {...props} store={store} />;
+  };
+}
+
+function dumbestClone(jsonObj) {
+  let result;
+  try {
+    result = JSON.parse(JSON.stringify(jsonObj));
+  } catch (e) {
+    return jsonObj;
+  }
+  return result;
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -520,4 +538,6 @@ export {
   removeEmptyJsonValues,
   handlePageLevelError,
   extractErrorMessage,
+  connectWithStore,
+  dumbestClone,
 };
