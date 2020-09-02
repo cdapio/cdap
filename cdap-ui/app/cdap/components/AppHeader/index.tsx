@@ -34,7 +34,6 @@ import { objectQuery } from 'services/helpers';
 import { NamespaceLinkContext } from 'components/AppHeader/NamespaceLinkContext';
 import ThemeWrapper from 'components/ThemeWrapper';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import { loadDefaultExperiments } from 'components/Lab';
 import SystemServicesDelay from 'components/SystemServicesDelay';
 import ExperimentalFeature from 'components/Lab/ExperimentalFeature';
 

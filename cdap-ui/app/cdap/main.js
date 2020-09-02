@@ -294,26 +294,6 @@ class CDAP extends Component {
                 </ErrorBoundary>
               )}
             />
-            <Route
-              exact
-              path="/schema"
-              render={(props) => {
-                const SchemaEditorDemo = Loadable({
-                  loader: () =>
-                    import(
-                      /* webpackChunkName: "SchemaEditor" */ 'components/AbstractWidget/SchemaEditor/SchemaEditorDemo'
-                    ),
-                  loading: LoadingSVGCentered,
-                });
-                return (
-                  <ToggleExperiment
-                    name="schema-editor"
-                    defaultComponent={<Page404 {...props} />}
-                    experimentalComponent={<SchemaEditorDemo />}
-                  />
-                );
-              }}
-            />
             <Route path="/lab" component={Lab} />
             <Route
               exact

@@ -186,26 +186,6 @@ export default class Home extends Component {
           <Route path="/ns/:namespace/replication" component={Replicator} />
           <Route
             exact
-            path="/ns/:namespace/vs"
-            render={(props) => {
-              const VirtualScrollDemo = Loadable({
-                loader: () =>
-                  import(
-                    /* webpackChunkName: "VirtualScrollDemo" */ 'components/VirtualScroll/demo'
-                  ),
-                loading: LoadingSVGCentered,
-              });
-              return (
-                <ToggleExperiment
-                  experimentId="virtual-scroll-demo"
-                  defaultComponent={<Page404 {...props} />}
-                  experimentalComponent={<VirtualScrollDemo />}
-                />
-              );
-            }}
-          />
-          <Route
-            exact
             path="/ns/:namespace/logs/program/:appId/:programType/:programId/:runId"
             component={LogViewerPage}
           />
