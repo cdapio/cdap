@@ -24,6 +24,7 @@ import { humanReadableDate } from 'services/helpers';
 import numeral from 'numeral';
 
 const AXIS_BUFFER = 1.1;
+const MIN_Y_AXIS = 1;
 
 export function renderGraph(selector, containerWidth, containerHeight, data, viewByOption) {
   let margin = {
@@ -62,9 +63,9 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
     .paddingInner(0)
     .paddingOuter(0);
 
-  let yLeft = d3.scaleLinear().rangeRound([height, 0]);
+  let yLeft = d3.scaleLinear().range([height, 0]);
 
-  let yRight = d3.scaleLinear().rangeRound([height, 0]);
+  let yRight = d3.scaleLinear().range([height, 0]);
 
   // SETTING DOMAINS
   x.domain(data.map((d) => d.time));
@@ -80,8 +81,12 @@ export function renderGraph(selector, containerWidth, containerHeight, data, vie
   }
 
   let yRightMax = d3.max(data, (d) => d.delay);
-  yLeft.domain([0, yLeftMax * AXIS_BUFFER]);
-  yRight.domain([0, yRightMax * AXIS_BUFFER]);
+
+  yLeftMax = Math.max(yLeftMax, MIN_Y_AXIS);
+  yRightMax = Math.max(yRightMax, MIN_Y_AXIS);
+
+  yLeft.domain([0, yLeftMax * AXIS_BUFFER]).nice();
+  yRight.domain([0, yRightMax * AXIS_BUFFER]).nice();
 
   // RENDER AXIS
   let barPadding = 2;
