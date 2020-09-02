@@ -48,7 +48,7 @@ export default class SortableStickyGrid extends Component {
     gridHeaders: PropTypes.arrayOf(
       PropTypes.shape({
         label: PropTypes.string,
-        property: PropTypes.string,
+        property: PropTypes.oneOfType([PropTypes.string, PropTypes.func]),
       })
     ),
     renderGridHeader: PropTypes.func,
