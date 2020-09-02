@@ -92,7 +92,7 @@ class HydratorPlusPlusTopPanelCtrl {
         previewId : this.currentPreviewId
       }).$promise.then(
         (statusRes) => {
-          this.previewStartTime = statusRes.startTime;
+          this.previewStartTime = statusRes.submitTime;
           this.previewLoading = false;
 
           this.previewStore.dispatch({
@@ -143,7 +143,7 @@ class HydratorPlusPlusTopPanelCtrl {
 
     $scope.$on('$destroy', () => {
       unsub();
-      this.stopPreview();
+      this.stopPreview(true);
       this.previewStore.dispatch(
         this.previewActions.togglePreviewMode(false)
       );
@@ -303,15 +303,15 @@ class HydratorPlusPlusTopPanelCtrl {
 
   setDisplayDuration(minutes, seconds) {
     this.displayDuration = {
-      minutes: !minutes ? '--' : minutes,
-      seconds: !seconds ? '--' : seconds,
+      minutes: minutes || '--',
+      seconds: seconds || '--',
     };
   }
 
   updateTimerLabelAndTitle(res) {
     // set default
     if (!res) {
-      this.timerLabel = 'Duration';
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.DURATION;
       this.queueStatus = '';
       return;
     }
@@ -320,12 +320,12 @@ class HydratorPlusPlusTopPanelCtrl {
     if (res.status === WAITING && res.positionInWaitingQueue > 0) {
       const runsAheadInQueue = res.positionInWaitingQueue;
       this.queueStatus = `${runsAheadInQueue} ${runsAheadInQueue === 1? 'run' : 'runs'} ahead in queue`;
-      this.timerLabel = `${runsAheadInQueue} Pending`;
+      this.timerLabel = `${runsAheadInQueue} ${this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.PENDING}`;
     } else if ([ WAITING, ACQUIRED, INIT, RUNNING ].includes(res.status) && this.loadingLabel !== 'Stopping') {
-      this.timerLabel = 'Running';
+      this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.RUNNING;
       this.queueStatus = '';
     } else {
-    this.timerLabel = 'Duration';
+    this.timerLabel = this.GLOBALS.en.hydrator.studio.PREVIEW.timerLabels.DURATION;
     this.queueStatus = '';
     }
   }
@@ -670,8 +670,17 @@ class HydratorPlusPlusTopPanelCtrl {
       });
   }
 
-  stopPreview() {
-    if (!this.currentPreviewId) {
+  resetButtonsAndStopPoll() {
+    // stop timer, run/stop button, pollId, and stop polling when pipeline is stopped or complete
+    this.stopTimer();
+    this.previewLoading = false;
+    this.previewRunning = false;
+    this.dataSrc.stopPoll(this.pollId);
+    this.pollId = null;
+  }
+
+  stopPreview(silentMode = false) {
+    if (!this.currentPreviewId || !this.previewRunning || this.loadingLabel === 'Stopping') {
       return;
     }
     let params = {
@@ -681,14 +690,46 @@ class HydratorPlusPlusTopPanelCtrl {
     };
     this.previewLoading = true;
     this.loadingLabel = 'Stopping';
-    this.stopTimer();
-    this.updateTimerLabelAndTitle();
+    const pipelineName = this.HydratorPlusPlusConfigStore.getName();
+    const pipelinePreviewPlaceholder = `The preview of the pipeline${pipelineName.length > 0? ` "${pipelineName}"` : ''}`;
     this.myPipelineApi
         .stopPreview(params, {})
         .$promise
-        .then(() => {
-          this.previewLoading = false;
-          this.previewRunning = false;
+        .then(
+          () => {
+            this.resetButtonsAndStopPoll();
+            this.updateTimerLabelAndTitle();
+
+            if (silentMode) {
+              return;
+            }
+
+            this.myAlertOnValium.show({
+              type: 'success',
+              content: `${pipelinePreviewPlaceholder} was stopped.`
+            });
+          },
+          (err) => {
+            // If error is due to run already having completed, reset UI as if stop succeeded
+            if (err.statusCode === 400) {
+              this.resetButtonsAndStopPoll();
+              this.updateTimerLabelAndTitle();
+              if (silentMode) {
+                return;
+              }
+              this.myAlertOnValium.show({
+                type: 'success',
+                content: `${pipelinePreviewPlaceholder} was stopped.`
+              });
+              return;
+            }
+            // If backend returns error while stopping, still show preview run button to retry stopping
+            this.previewLoading = false;
+            this.previewRunning = true;
+            if (silentMode) {
+              return;
+            }
+            this.myAlertOnValium.show({type: 'danger', content: err.data});
         });
   }
 
@@ -699,6 +740,7 @@ class HydratorPlusPlusTopPanelCtrl {
       _cdapNsPath: '/previews/' + previewId + '/status',
       interval: 1000
     }, (res) => {
+      this.pollId = res.__pollId__;
       if (this.previewStore) {
         this.previewStore.dispatch({
           type: this.PREVIEWSTORE_ACTIONS.SET_PREVIEW_STATUS,
@@ -715,38 +757,29 @@ class HydratorPlusPlusTopPanelCtrl {
         COMPLETED,
         DEPLOY_FAILED,
         RUN_FAILED,
-        KILLED,
         KILLED_BY_TIMER,
       } = window.CaskCommon.PREVIEW_STATUS;
       this.updateTimerLabelAndTitle(res);
       if ([RUNNING, INIT, ACQUIRED, WAITING].indexOf(res.status) === -1) {
-        this.stopTimer();
-        this.previewRunning = false;
-        this.dataSrc.stopPoll(res.__pollId__);
-        let pipelinePreviewPlaceholder = 'The preview of the pipeline';
+        this.resetButtonsAndStopPoll();
         let pipelineName = this.HydratorPlusPlusConfigStore.getName();
-        if (pipelineName.length > 0) {
-          pipelinePreviewPlaceholder += ` "${pipelineName}"`;
-        }
+        const pipelinePreviewPlaceholder = `The preview of the pipeline${pipelineName.length > 0? ` "${pipelineName}"` : ''}`;
         if (res.status === COMPLETED || res.status === KILLED_BY_TIMER) {
           this.myAlertOnValium.show({
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (res.status === KILLED) {
-          this.myAlertOnValium.show({
-            type: 'success',
-            content: `${pipelinePreviewPlaceholder} was stopped.`
-          });
         } else if (res.status === DEPLOY_FAILED || res.status === RUN_FAILED) {
+          let failureMsg = this.myHelpers.objectQuery(res, 'throwable', 'message') || `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`;
           this.myAlertOnValium.show({
             type: 'danger',
-            content: `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`
+            content: failureMsg,
           });
         }
       }
     }, (err) => {
       this.stopTimer();
+      this.updateTimerLabelAndTitle();
       let errorMsg = this.myHelpers.extractErrorMessage(err);
       this.myAlertOnValium.show({
         type: 'danger',
@@ -754,6 +787,7 @@ class HydratorPlusPlusTopPanelCtrl {
       });
       this.previewRunning = false;
       this.dataSrc.stopPoll(poll.__pollId__);
+      this.pollId = null;
     });
   }
 

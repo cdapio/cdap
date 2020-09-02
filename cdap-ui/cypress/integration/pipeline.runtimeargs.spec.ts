@@ -26,8 +26,6 @@ const PIPELINE_RUN_TIMEOUT = 360000;
 const RUNTIME_ARGS_PREVIEW_SELECTOR = 'runtimeargs-preview';
 
 const RUNTIME_ARGS_MODELESS_LOADING_SELECTOR = 'runtime-args-modeless-loading';
-const PREVIEW_FAILED_BANNER_MSG =
-  'The preview of the pipeline "Airport_test_macros" has failed. Please check the logs for more information.';
 const PREVIEW_SUCCESS_BANNER_MSG =
   'The preview of the pipeline "Airport_test_macros" has completed successfully.';
 const SINK_PATH_VAL = '/tmp/cdap-ui-integration-fixtures';
@@ -140,10 +138,10 @@ describe('Creating pipeline with macros ', () => {
     cy.get(
       `${dataCy(RUNTIME_ARGS_PREVIEW_SELECTOR)} ${dataCy(2)} ${dataCy(RUNTIME_ARGS_KEY_SELECTOR)}`
     ).should('not.exist');
-    // running pipeline with fake runtime arguments
+    // running pipeline with fake runtime arguments should fail with error banner
     cy.get(dataCy('preview-configure-run-btn')).click();
-    cy.get(`${dataCy('valium-banner-hydrator')}`).contains(PREVIEW_FAILED_BANNER_MSG, {
-      timeout: PIPELINE_RUN_TIMEOUT,
+    cy.get(`${dataCy('valium-banner-hydrator')}`).within(() => {
+      cy.get('.alert-danger').should('be.visible');
     });
     cy.get(`${dataCy('valium-banner-hydrator')} button`).click();
   });
