@@ -24,9 +24,11 @@ import TableRow from '@material-ui/core/TableRow';
 import Paper from '@material-ui/core/Paper';
 import Switch from '@material-ui/core/Switch';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
-import { Typography } from '@material-ui/core';
+import { Typography, TextField } from '@material-ui/core';
 import NewReleasesRoundedIcon from '@material-ui/icons/NewReleasesRounded';
 import experimentsList from './experiment-list';
+import If from 'components/If';
+import { getExperimentValue } from 'services/helpers';
 
 const styles = (): StyleRules => {
   return {
@@ -66,33 +68,47 @@ const styles = (): StyleRules => {
 
 interface ILabProps extends WithStyles<typeof styles> {}
 interface IExperiment {
-  id: string;
-  value: boolean;
+  experimentId: string;
+  enabled: boolean;
   screenshot: string | null;
   name: string;
   description: string;
+  showValue?: boolean;
+  valueLabel?: string;
+  valueType?: string;
 }
 interface ILabState {
   experiments: IExperiment[];
 }
 
 class Lab extends React.Component<ILabProps, ILabState> {
-  public componentWillMount() {
-    experimentsList.forEach((experiment) => {
-      experiment.value = window.localStorage.getItem(experiment.id) === 'true' ? true : false;
+  public componentDidMount() {
+    experimentsList.forEach((experiment: IExperiment) => {
+      // If experiment preference is present in storage, use it.
+      // If not, use the default value and set it in storage and use it.
+      const experimentStatusFromStorage = window.localStorage.getItem(experiment.experimentId);
+      if (experimentStatusFromStorage === null) {
+        window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
+      } else {
+        experiment.enabled = experimentStatusFromStorage === 'true';
+      }
     });
-    this.state = { experiments: experimentsList };
+    this.setState({ experiments: experimentsList });
   }
 
   public updatePreference = (event: React.ChangeEvent<HTMLInputElement>) => {
     const experiments = this.state.experiments.map((experiment: IExperiment) => {
-      if (experiment.id === event.target.name) {
-        experiment.value = !experiment.value;
-        window.localStorage.setItem(event.target.name, experiment.value.toString());
+      if (experiment.experimentId === event.target.name) {
+        experiment.enabled = !experiment.enabled;
+        window.localStorage.setItem(event.target.name, experiment.enabled.toString());
       }
       return experiment;
     });
     this.setState({ experiments });
+  };
+
+  public updateExperimentValue = (event: React.ChangeEvent<HTMLInputElement>) => {
+    window.localStorage.setItem(event.target.name, event.target.value);
   };
 
   public render() {
@@ -117,39 +133,53 @@ class Lab extends React.Component<ILabProps, ILabState> {
               </TableRow>
             </TableHead>
             <TableBody>
-              {this.state.experiments.map((experiment: IExperiment) => (
-                <TableRow key={experiment.id}>
-                  <TableCell>
-                    {experiment.screenshot ? (
-                      <img className={classes.screenshot} src={experiment.screenshot} />
-                    ) : (
-                      <NewReleasesRoundedIcon className={classes.defaultExperimentIcon} />
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="h5">{experiment.name}</Typography>
-                    <br />
-                    <Typography variant="body1">{experiment.description}</Typography>
-                    <br />
-                    <Typography variant="caption">ID: {experiment.id}</Typography>
-                  </TableCell>
-                  <TableCell className={classes.switchCell}>
-                    <FormControlLabel
-                      label={experiment.value ? 'Enabled' : 'Disabled'}
-                      control={
-                        <Switch
-                          data-cy={`${experiment.id}-switch`}
-                          name={experiment.id}
-                          color="primary"
-                          onChange={this.updatePreference}
-                          checked={experiment.value}
-                          value={experiment.value}
-                        />
-                      }
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+              {this.state &&
+                this.state.experiments.map((experiment: IExperiment) => (
+                  <TableRow key={experiment.experimentId}>
+                    <TableCell>
+                      {experiment.screenshot ? (
+                        <img className={classes.screenshot} src={experiment.screenshot} />
+                      ) : (
+                        <NewReleasesRoundedIcon className={classes.defaultExperimentIcon} />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="h5">{experiment.name}</Typography>
+                      <br />
+                      <Typography variant="body1">{experiment.description}</Typography>
+                      <br />
+                      <Typography variant="caption">ID: {experiment.experimentId}</Typography>
+                      <br />
+                      <If condition={experiment.showValue}>
+                        <TextField
+                          data-cy={`${experiment.experimentId}-field`}
+                          variant="outlined"
+                          margin="dense"
+                          label={experiment.valueLabel || 'Experiment value'}
+                          type={experiment.valueType}
+                          onChange={this.updateExperimentValue}
+                          name={`${experiment.experimentId}-value`}
+                          defaultValue={getExperimentValue(experiment.experimentId)}
+                        ></TextField>
+                      </If>
+                    </TableCell>
+                    <TableCell className={classes.switchCell}>
+                      <FormControlLabel
+                        label={experiment.enabled ? 'Enabled' : 'Disabled'}
+                        control={
+                          <Switch
+                            data-cy={`${experiment.experimentId}-switch`}
+                            name={experiment.experimentId}
+                            color="primary"
+                            onChange={this.updatePreference}
+                            checked={experiment.enabled}
+                            value={experiment.enabled}
+                          />
+                        }
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
             </TableBody>
           </Table>
         </Paper>
@@ -160,12 +190,12 @@ class Lab extends React.Component<ILabProps, ILabState> {
 
 function loadDefaultExperiments() {
   experimentsList.forEach((experiment) => {
-    if (window.localStorage.getItem(experiment.id) === null) {
-      window.localStorage.setItem(experiment.id, experiment.value.toString());
+    if (window.localStorage.getItem(experiment.experimentId) === null) {
+      window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
     }
   });
 }
 
 const StyledLab = withStyles(styles)(Lab);
 export default StyledLab;
-export { loadDefaultExperiments };
+export { loadDefaultExperiments, IExperiment };
