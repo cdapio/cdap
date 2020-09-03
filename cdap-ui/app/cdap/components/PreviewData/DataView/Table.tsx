@@ -62,6 +62,7 @@ export const styles = (theme): StyleRules => ({
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     padding: '0 10px',
+    whiteSpace: 'nowrap',
   },
 
   // TO DO: Currently the width is fixed. Future plan is to let users vary the column widths
