@@ -541,6 +541,117 @@ function isExperimentEnabled(experimentID) {
   return window.localStorage.getItem(`${experimentID}`) === 'true';
 }
 
+/**
+ *
+ * @param nodes - List of plugins being pasted
+ * @param availablePlugins - List of available plugins for which UI already has widget json
+ * @param oldNameToNewNameMap - Map of old plugin names to new name the plugins are renamed to
+ *
+ * TL;DR- CDAP-17252: Fix copy/pasting nodes/connections in pipeline studio
+ *
+ * When we copy/paste nodes/connections in plugin studio we need to make sure the new nodes
+ * pasted are unique (different name) and the corresponding connections have new names.
+ *
+ * Renaming nodes will lead to incosistent states in plugins where names of previous stages are used.
+ * Plugins like joiner needs to use the stage name in some of its properties and chaning the name
+ * will cause the state of the plugin to be broken.
+ *
+ * This function targets widgets that uses input stage names in plugin properties.
+ *
+ * We cycle through the node widget json and modify those properties that use specific widgets
+ * (reference node names) and replace the old node names with new names that we UI generated.
+ *
+ * This is only for those subset of nodes that are being copy/pasted.
+ *
+ */
+function sanitizeNodeNamesInPluginProperties(nodes, availablePlugins, oldNameToNewNameMap) {
+  const widgetsToWatch = ['join-types', 'sql-conditions', 'sql-select-fields', 'multiple-input-stage-selector'];
+  const widgetToMapperFn = {
+    'join-types': (propertyValue, oldNameToNewNameMap) => {
+      const stageNames = propertyValue.split(',').map(input => input.trim());
+      const newStageNames = stageNames.map(stage => {
+        if (stage in oldNameToNewNameMap) {
+          return oldNameToNewNameMap[stage];
+        }
+        return stage;
+      });
+      return newStageNames.join(',');
+    },
+    'sql-select-fields': (propertyValue, oldNameToNewNameMap, nodes) => {
+      const entries = propertyValue.split(',');
+      const newEntries = entries.map(entry => {
+        const split = entry.split(' as ');
+        const fieldInfo = split[0].split('.');
+        if (fieldInfo.length > 1) {
+          const stageName = fieldInfo[0];
+          const fieldName = fieldInfo[1];
+          if (stageName in oldNameToNewNameMap) {
+            return `${oldNameToNewNameMap[stageName]}.${fieldName} as ${split[1]}`;
+          }
+        }
+        return entry;
+      });
+      return newEntries.join(',');
+    },
+    'sql-conditions': (propertyValue, oldNameToNewNameMap) => {
+      const conditions = propertyValue.split('&').map(condition => condition.trim());
+      const newConditions = conditions.map(condition => {
+        const newCondition = condition.split('=').map(field => {
+          const splitField = field.trim().split('.');
+          const stageName = splitField[0];
+          if (stageName in oldNameToNewNameMap) {
+            return [oldNameToNewNameMap[stageName], splitField[1]].join('.');
+          }
+          return field;
+        });
+        return newCondition.join('=');
+      });
+      return newConditions.join('&');
+    },
+    'multiple-input-stage-selector': (propertyValue, oldNameToNewNameMap) => {
+      const stages = propertyValue.split(',');
+      const newStages = stages.map(stage => {
+        if (stage in oldNameToNewNameMap) {
+          return oldNameToNewNameMap[stage];
+        }
+        return stage;
+      });
+      return newStages.join(',');
+    },
+  };
+  const newNodes = nodes.map(node => {
+    const { type, plugin } = node;
+    const pluginKey = `${plugin.name}-${type}`;
+    const { name, version, scope } = plugin.artifact;
+    const artifactKey = `${name}-${version}-${scope}`;
+    const key = `${pluginKey}-${artifactKey}`;
+    if (key in availablePlugins.plugins.pluginsMap) {
+      const pluginObj = availablePlugins.plugins.pluginsMap[key];
+      if (!pluginObj) {
+        return node;
+      }
+      const widgets = availablePlugins.plugins.pluginsMap[key].widgets;
+      if (!widgets) {
+        return node;
+      }
+      widgets['configuration-groups'].forEach(group => {
+        group.properties.forEach(property => {
+          const widget = property['widget-type'];
+          const propertyValue = plugin.properties[property.name];
+          if (
+            widgetsToWatch.indexOf(widget) !== -1 &&
+            !isNilOrEmpty(propertyValue)
+          ) {
+            plugin.properties[property.name] = widgetToMapperFn[widget](propertyValue, oldNameToNewNameMap);
+          }
+        });
+      });
+    }
+    return node;
+  });
+  return newNodes;
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -586,4 +697,5 @@ export {
   categorizeGraphQlErrors,
   getExperimentValue,
   isExperimentEnabled,
+  sanitizeNodeNamesInPluginProperties,
 };
