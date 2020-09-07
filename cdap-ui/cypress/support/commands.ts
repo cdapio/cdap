@@ -391,7 +391,7 @@ Cypress.Commands.add('select_connection', (from: INodeIdentifier, to: INodeIdent
       toNodeElement = tElement;
       const sourceName = fromNodeElement[0].getAttribute('id');
       const targetName = toNodeElement[0].getAttribute('id');
-      const connectionSelector = `.jsplumb-connector.connection-id-${sourceName}-${targetName}`;
+      const connectionSelector = `.jsplumb-connector.connection-id-endpoint_${sourceName}-${targetName}`;
       cy.get(connectionSelector).then((connElement) => {
         (connElement[0] as any)._jsPlumb._jsPlumb.instance.fire(
           'click',
