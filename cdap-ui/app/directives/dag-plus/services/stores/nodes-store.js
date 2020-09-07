@@ -127,11 +127,10 @@ class DAGPlusPlusNodesStore {
 
   addNode(nodeConfig) {
     if (!nodeConfig.name) {
-      // name is used for id in html and html ids with space are invalid
-      // and not supported by spec. document.querySelector will not work
-      // for ids with spaces.
-      let label = nodeConfig.plugin.label.replace(/[ \/]/g, '-');
-      nodeConfig.name = label + '-' + this.uuid.v4();
+      nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
+    }
+    if (!nodeConfig.id) {
+      nodeConfig.id = nodeConfig.plugin.label.replace(/[ \/]/g, '-');
     }
     this.addStateToHistory();
     switch (this.GLOBALS.pluginConvert[nodeConfig.type]) {
@@ -146,8 +145,8 @@ class DAGPlusPlusNodesStore {
         break;
     }
     this.state.nodes.push(nodeConfig);
-    if (!this.adjacencyMap[nodeConfig.name]) {
-      this.adjacencyMap[nodeConfig.name] = [];
+    if (!this.adjacencyMap[nodeConfig.id]) {
+      this.adjacencyMap[nodeConfig.id] = [];
     }
     this.emitChange();
   }
@@ -162,7 +161,7 @@ class DAGPlusPlusNodesStore {
     this.emitChange();
   }
   removeNode(node) {
-    let match = this.state.nodes.filter(n => n.name === node)[0];
+    let match = this.state.nodes.filter(n => n.id === node)[0];
     this.addStateToHistory();
     switch (this.GLOBALS.pluginConvert[match.type]) {
       case 'source':
@@ -207,8 +206,8 @@ class DAGPlusPlusNodesStore {
       if (!node.type) {
         node.type = node.plugin.type;
       }
-      if (!this.adjacencyMap[node.name]) {
-        this.adjacencyMap[node.name] = [];
+      if (!this.adjacencyMap[node.id]) {
+        this.adjacencyMap[node.id] = [];
       }
     });
     this.state.nodes = nodes;
@@ -234,10 +233,12 @@ class DAGPlusPlusNodesStore {
     this.addStateToHistory();
     this.state.connections.push(connection);
     const {from, to} = connection;
-    if (!this.adjacencyMap[from]) {
-      this.adjacencyMap[from] = [to];  
+    const sourceNodeId = this.state.nodes.find(node => node.name === from);
+    const targetNodeId = this.state.nodes.find(node => node.name === to);
+    if (!this.adjacencyMap[sourceNodeId.id]) {
+      this.adjacencyMap[sourceNodeId.id] = [targetNodeId.id];
     } else {
-      this.adjacencyMap[from].push(to);
+      this.adjacencyMap[sourceNodeId.id].push(targetNodeId.id);
     }
     this.emitChange();
   }
@@ -246,10 +247,12 @@ class DAGPlusPlusNodesStore {
       this.adjacencyMap[key] = [];
     });
     connections.forEach(({from, to}) => {
-      if (!this.adjacencyMap[from]) {
-        this.adjacencyMap[from] = [to];
+      const sourceNodeId = this.state.nodes.find(node => node.name === from);
+      const targetNodeId = this.state.nodes.find(node => node.name === to);
+      if (!this.adjacencyMap[sourceNodeId.id]) {
+        this.adjacencyMap[sourceNodeId.id] = [targetNodeId.id];
       } else {
-        this.adjacencyMap[from].push(to);
+        this.adjacencyMap[sourceNodeId.id].push(targetNodeId.id);
       }
     });
     this.addStateToHistory();
@@ -260,7 +263,9 @@ class DAGPlusPlusNodesStore {
     this.addStateToHistory();
     let index = this.state.connections.indexOf(connection);
     const {from, to} = connection;
-    this.adjacencyMap[from] = this.adjacencyMap[from].filter(target => target !== to);
+    const sourceNodeId = this.state.nodes.find(node => node.name === from);
+    const targetNodeId = this.state.nodes.find(node => node.name === to);
+    this.adjacencyMap[sourceNodeId.id] = this.adjacencyMap[sourceNodeId.id].filter(target => target !== targetNodeId.id);
     this.state.connections.splice(index, 1);
     this.emitChange();
   }
@@ -272,7 +277,9 @@ class DAGPlusPlusNodesStore {
       this.adjacencyMap[key] = [];
     });
     connections.forEach(({from, to}) => {
-      this.adjacencyMap[from].push(to);
+      const sourceNodeId = this.state.nodes.find(node => node.name === from);
+      const targetNodeId = this.state.nodes.find(node => node.name === to);
+      this.adjacencyMap[sourceNodeId.id].push(targetNodeId.id);
     });
     this.state.connections = connections;
     this.emitChange();
@@ -284,17 +291,19 @@ class DAGPlusPlusNodesStore {
     this.state.comments = comments ? comments : [];
     this.adjacencyMap = {};
     nodes.forEach(node => {
-      let nodeName = node;
-      if (typeof nodeName === 'object' && typeof nodeName.name === 'string') {
-        nodeName = node.name;
+      let nodeId = node;
+      if (typeof nodeId === 'object' && typeof nodeId.id === 'string') {
+        nodeId = node.id;
       }
-      if (!nodeName) {
+      if (!nodeId) {
         return;
       }
-      this.adjacencyMap[nodeName] = [];
+      this.adjacencyMap[nodeId] = [];
     });
     connections.forEach(({from, to}) => {
-      this.adjacencyMap[from].push(to);
+      const sourceNodeId = this.state.nodes.find(node => node.name === from);
+      const targetNodeId = this.state.nodes.find(node => node.name === to);
+      this.adjacencyMap[sourceNodeId.id].push(targetNodeId.id);
     });
     this.emitChange();
   }
