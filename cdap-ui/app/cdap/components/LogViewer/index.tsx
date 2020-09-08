@@ -22,7 +22,6 @@ import Alert from 'components/Alert';
 import DataFetcher from 'components/LogViewer/DataFetcher';
 import LogRow from 'components/LogViewer/LogRow';
 import debounce from 'lodash/debounce';
-import TopPanel, { TOP_PANEL_HEIGHT } from 'components/LogViewer/TopPanel';
 import LogLevel from 'components/LogViewer/LogLevel';
 import { extractErrorMessage } from 'services/helpers';
 import LoadingSVG from 'components/LoadingSVG';
