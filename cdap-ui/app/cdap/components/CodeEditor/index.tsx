@@ -145,7 +145,7 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
               if (typeof this.props.prettyPrintFunction === 'function') {
                 code = this.props.prettyPrintFunction(code);
               }
-              this.props.onChange(code);
+              this.editor.getSession().setValue(code);
             }}
           >
             Tidy
