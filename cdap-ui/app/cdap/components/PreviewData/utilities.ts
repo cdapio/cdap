@@ -30,6 +30,7 @@ export interface IConnection {
 }
 
 export interface INode {
+  name?: string;
   plugin?: any;
   isSource?: boolean;
   isSink?: boolean;
@@ -100,7 +101,7 @@ export function fetchPreview(
     previewId,
   };
 
-  const selectedStageName = selectedNode.plugin.label;
+  const selectedStageName = selectedNode.name;
 
   const adjacencyMap = getAdjacencyMap(connections);
   const { tracers, previousStages } = getTracersAndPreviousStageInfo(
@@ -186,7 +187,7 @@ function getTracersAndPreviousStageInfo(
 }
 
 function getRecords(res, selectedNode: INode, previousStages: IPreviousStageInfo) {
-  const selectedStageName = selectedNode.plugin.label;
+  const selectedStageName = selectedNode.name;
   const isSource = selectedNode.isSource;
   const isSink = selectedNode.isSink;
 
