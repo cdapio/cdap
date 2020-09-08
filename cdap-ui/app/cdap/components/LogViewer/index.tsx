@@ -15,15 +15,19 @@
  */
 
 import * as React from 'react';
-import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { ILogResponse, LogLevel as LogLevelEnum } from 'components/LogViewer/types';
+import TopPanel, { TOP_PANEL_HEIGHT } from 'components/LogViewer/TopPanel';
+import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import Alert from 'components/Alert';
 import DataFetcher from 'components/LogViewer/DataFetcher';
 import LogRow from 'components/LogViewer/LogRow';
 import debounce from 'lodash/debounce';
 import TopPanel, { TOP_PANEL_HEIGHT } from 'components/LogViewer/TopPanel';
 import LogLevel from 'components/LogViewer/LogLevel';
 import { extractErrorMessage } from 'services/helpers';
-import Alert from 'components/Alert';
+import LoadingSVG from 'components/LoadingSVG';
+import Heading, { HeadingTypes } from 'components/Heading';
+import T from 'i18n-react';
 
 export function logsTableGridStyle(theme): StyleRules {
   return {
@@ -64,12 +68,23 @@ const styles = (theme): StyleRules => {
       height: '1px',
       content: '',
     },
+    initLoadingContainer: {
+      textAlign: 'center',
+      paddingTop: '25px',
+    },
+    noLogsContainer: {
+      paddingTop: '25px',
+    },
+    noLogsMessage: {
+      textAlign: 'center',
+    },
   };
 };
 
 interface ILogViewerProps extends WithStyles<typeof styles> {
   dataFetcher: DataFetcher;
   stopPoll?: boolean;
+  onClose?: () => void;
 }
 
 interface ILogViewerState {
@@ -77,6 +92,7 @@ interface ILogViewerState {
   isFetching: boolean;
   isPolling: boolean;
   error?: string;
+  initLoading: boolean;
 }
 
 const MAX_LOG_ROWS = 100;
@@ -103,6 +119,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
     isFetching: true,
     isPolling: true,
     error: null,
+    initLoading: true,
   };
 
   public componentDidMount() {
@@ -117,6 +134,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
     this.setState(
       {
         logs: response,
+        initLoading: false,
       },
       () => {
         if (!this.state.isPolling) {
@@ -333,7 +351,9 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
   }
 
   private cleanUpWatchers = () => {
-    this.io.disconnect();
+    if (this.io) {
+      this.io.disconnect();
+    }
     this.stopScrollWatch();
     this.stopPoll();
   };
@@ -345,6 +365,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
       {
         isFetching: true,
         isPolling: true,
+        initLoading: true,
       },
       () => {
         this.props.dataFetcher.getLast().subscribe(this.processFirstResponse, this.processError);
@@ -359,6 +380,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
       {
         isFetching: true,
         isPolling: true,
+        initLoading: true,
       },
       () => {
         this.props.dataFetcher
@@ -375,6 +397,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
       {
         isFetching: true,
         isPolling: true,
+        initLoading: true,
       },
       () => {
         this.props.dataFetcher
@@ -383,6 +406,37 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
       }
     );
   };
+
+  private renderContent() {
+    const { classes } = this.props;
+    if (this.state.initLoading) {
+      return (
+        <div className={classes.initLoadingContainer}>
+          <LoadingSVG />
+        </div>
+      );
+    }
+
+    if (this.state.logs.length === 0) {
+      return (
+        <div className={classes.noLogsContainer}>
+          <Heading
+            type={HeadingTypes.h4}
+            label={T.translate('features.LogViewer.noLogsMessage')}
+            className={classes.noLogsMessage}
+          />
+        </div>
+      );
+    }
+
+    return (
+      <React.Fragment>
+        {this.state.logs.map((logObj, i) => {
+          return <LogRow key={`${logObj.offset}-${i}`} logObj={logObj} />;
+        })}
+      </React.Fragment>
+    );
+  }
 
   public render() {
     const { classes } = this.props;
@@ -393,6 +447,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
           isPolling={this.state.isPolling}
           getLatestLogs={this.getLatestLogs}
           setSystemLogs={this.setIncludeSystemLogs}
+          onClose={this.props.onClose}
         />
         <div className={classes.logsTableHeader}>
           <div className={classes.cell}>Time</div>
@@ -403,9 +458,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
         </div>
         <div className={classes.logsContainer} ref={this.logsContainer}>
           <div ref={this.topIndicator} className={classes.indicator} />
-          {this.state.logs.map((logObj, i) => {
-            return <LogRow key={`${logObj.offset}-${i}`} logObj={logObj} />;
-          })}
+          {this.renderContent()}
           <div ref={this.bottomIndicator} className={classes.indicator} id="bottom" />
         </div>
 
