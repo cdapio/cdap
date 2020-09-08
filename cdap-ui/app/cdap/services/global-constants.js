@@ -25,6 +25,9 @@ const pluginLabels = {
 };
 const NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double'];
 const GLOBALS = {
+  pageLevelErrors: {
+    'INVALID-NAMESPACE': (invalidNS) => { return `\'namespace:${invalidNS}' was not found.`}
+  },
   etlBatch: 'cdap-etl-batch',
   etlRealtime: 'cdap-etl-realtime',
   etlDataStreams: 'cdap-data-streams',
