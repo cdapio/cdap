@@ -22,29 +22,35 @@ class TrackerLineageController{
     this.LineageActions = LineageActions;
     LineageStore.setDefaults();
 
+    // id comes from TIME_OPTIONS in FieldLevelLineage store
     this.timeRangeOptions = [
       {
         label: 'Last 7 days',
+        id: 'last7d',
         start: 'now-7d',
         end: 'now'
       },
       {
         label: 'Last 14 days',
+        id: 'last14d',
         start: 'now-14d',
         end: 'now'
       },
       {
         label: 'Last month',
+        id: 'lastMonth',
         start: 'now-30d',
         end: 'now'
       },
       {
         label: 'Last 6 months',
+        id: 'last6M',
         start: 'now-180d',
         end: 'now'
       },
       {
         label: 'Last 12 months',
+        id: 'lastYear',
         start: 'now-365d',
         end: 'now'
       }
@@ -66,11 +72,13 @@ class TrackerLineageController{
     this.selectedTimeRange = this.findTimeRange();
     this.getLineage(this.$state.params.entityType, this.$state.params.entityId);
 
-    this.fieldLevelLineageLink = window.getAbsUIUrl({
+    this.fieldLevelLineageLinkBase = window.getAbsUIUrl({
       namespaceId: this.$state.params.namespace,
       entityType: 'datasets',
       entityId: this.$state.params.entityId
     }).concat('/fields');
+
+    this.fieldLevelLineageLink = window.buildCustomUrl(this.fieldLevelLineageLinkBase, this.getTimeRangeParams());
   }
 
   findTimeRange() {
@@ -84,7 +92,7 @@ class TrackerLineageController{
       this.customTimeRange.endTime = new Date(parseInt(this.$state.params.end, 10) * 1000);
     }
 
-    return match.length > 0 ? match[0] : { label: 'Custom' };
+    return match.length > 0 ? match[0] : { label: 'Custom', id: 'CUSTOM' };
   }
 
   goToCustomTimeRangeEntityDetailView() {
@@ -97,6 +105,17 @@ class TrackerLineageController{
   selectCustom() {
     this.isCustom = true;
     this.selectedTimeRange.label = 'Custom';
+    this.selectedTimeRange.id = 'CUSTOM';
+  }
+
+  getTimeRangeParams() {
+    let params = {};
+    params.time = this.selectedTimeRange.id;
+    if (this.selectedTimeRange.id === 'CUSTOM') {
+      params.start = this.$state.params.start;
+      params.end = this.$state.params.end;
+    }
+    return params;
   }
 
   getLineage(entityType, entityId) {
