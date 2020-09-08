@@ -41,6 +41,7 @@ const styles = (theme): StyleRules => ({
     width: '50%',
     overflow: 'hidden',
     textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
     '&:first-of-type': {
       borderRight: `1px solid ${theme.palette.grey['500']}`,
       fontWeight: 500,
