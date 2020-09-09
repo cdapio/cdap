@@ -63,8 +63,6 @@ describe('Navbar tests', () => {
     cy.get('[data-cy="navbar-hamburger-icon"]').click();
     cy.contains(Theme.featureNames.pipelines);
     cy.contains(Theme.featureNames.dataPrep);
-    cy.contains(Theme.featureNames.analytics);
-    cy.contains(Theme.featureNames.rulesEngine);
     cy.contains(Theme.featureNames.metadata);
   });
   it('Should have the drawer invisible by default', () => {
@@ -99,8 +97,6 @@ describe('Navbar tests', () => {
     cy.get('[data-cy="navbar-hamburger-icon"]').click();
     cy.contains(Theme.featureNames.pipelines);
     cy.contains(Theme.featureNames.dataPrep);
-    cy.contains(Theme.featureNames.analytics);
-    cy.contains(Theme.featureNames.rulesEngine);
     cy.contains(Theme.featureNames.metadata);
     cy.contains(Theme.featureNames.pipelineStudio);
     cy.get('[data-cy="navbar-hamburger-icon"]').click();
@@ -127,7 +123,6 @@ describe('Navbar tests', () => {
 
     assetFeatureHighlight('navbar-pipelines-link');
     assetFeatureHighlight('navbar-pipeline-studio-link');
-    assetFeatureHighlight('navbar-experiments-link');
     assetFeatureHighlight('navbar-metadata-link');
     assetFeatureHighlight('navbar-project-admin-link');
   });
