@@ -592,7 +592,6 @@ angular.module(PKG.name + '.commons')
           }
           vm.instance.makeTarget(node.name, targetOptions);
         }
-        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) ;
       });
     }
 
