@@ -1645,7 +1645,7 @@ angular.module(PKG.name + '.commons')
           let newName = `${node.plugin.label.replace(/[ \/]/g, '-')}`;
           const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
             .filter(filteredNode => {
-              return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
+              return [filteredNode.plugin.label, filteredNode.name, filteredNode.id].indexOf(newName) !== -1;
             });
           const randIndex = Math.floor(Math.random() * 100);
           newName = filteredNodes.length > 0 ? `${newName}${randIndex}` : newName;
@@ -1671,12 +1671,18 @@ angular.module(PKG.name + '.commons')
             to: oldNameToNewNameMap[to] || to,
           });
         });
-        const newNodes = window.CaskCommon.CDAPHelpers.sanitizeNodeNamesInPluginProperties(
+        /**
+         * Commenting this out as this introduces a lot of changes behind
+         * the scenes without the user knowing about it.
+         * https://issues.cask.co/browse/CDAP-17252 - Will revamp this as part of this change.
+         */
+        /* const newNodes = window.CaskCommon.CDAPHelpers.sanitizeNodeNamesInPluginProperties(
           nodes,
           AvailablePluginsStore.getState(),
           oldNameToNewNameMap
         );
-        return {nodes: newNodes, connections};
+        */
+        return {nodes , connections};
       } catch (e) {
         console.log('error parsing node config', e);
       }

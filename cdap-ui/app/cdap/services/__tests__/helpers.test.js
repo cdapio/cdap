@@ -72,7 +72,7 @@ describe('Unit Tests for Helpers: "getArtifactNameAndVersion"', () => {
   });
 
 });
-describe('Unit Tests for Helpers: "Sanitize nodes for copy/paste"', () => {
+describe.skip('Unit Tests for Helpers: "Sanitize nodes for copy/paste"', () => {
   const availablePlugins = {
     plugins: {
       pluginsMap: {
