@@ -81,7 +81,7 @@ angular.module(PKG.name + '.commons')
     vm.selectNode = (event, node) => {
       if (vm.isDisabled) { return; }
       const isMultipleNodesDragged = document.querySelectorAll('.jsplumb-drag-selected');
-      const isNodeAlreadyInSelection = vm.selectedNode.find(selectedNode => selectedNode.name === node.name);
+      const isNodeAlreadyInSelection = vm.selectedNode.find(selectedNode => selectedNode.id === node.id);
       event.stopPropagation();
 
       /**
@@ -127,7 +127,7 @@ angular.module(PKG.name + '.commons')
         .map(({source, target}) => {
           return {
             from: source.getAttribute('data-nodeid'),
-            to: target.id
+            to: target.getAttribute('data-nodeid'),
           };
         }).map(({from, to}) => {
           const originalConnection = connectionsMap[`${from}###${to}`];
@@ -139,11 +139,11 @@ angular.module(PKG.name + '.commons')
     };
     vm.deleteSelectedNodes = () => vm.onKeyboardDelete();
     vm.onPluginContextMenuOpen = (nodeId) => {
-      const isNodeAlreadySelected = vm.selectedNode.find(n => n.name === nodeId);
+      const isNodeAlreadySelected = vm.selectedNode.find(n => n.id === nodeId);
       if (isNodeAlreadySelected) {
         return;
       }
-      const node = DAGPlusPlusNodesStore.getNodes().find(n => n.name === nodeId);
+      const node = DAGPlusPlusNodesStore.getNodes().find(n => n.id === nodeId);
       if (!node) {
         return;
       }
@@ -154,7 +154,7 @@ angular.module(PKG.name + '.commons')
       if (!vm.selectedNode.length) {
         return false;
       }
-      return vm.selectedNode.filter(node => node.name === nodeName).length > 0;
+      return vm.selectedNode.filter(node => node.id === nodeName).length > 0;
     };
 
     /**
@@ -203,7 +203,7 @@ angular.module(PKG.name + '.commons')
           vm.selectionBox.isSelectionInProgress = true;
         }
         const selectedNodes = $scope.nodes.filter(node => {
-          if (selected.indexOf(node.name) !== -1) {
+          if (selected.indexOf(node.id) !== -1) {
             return true;
           }
           return false;
@@ -227,7 +227,7 @@ angular.module(PKG.name + '.commons')
         vm.highlightSelectedNodeConnections();
       },
       end: () => {
-        const nodesToAddToDrag = vm.selectedNode.map(node => node.name);
+        const nodesToAddToDrag = vm.selectedNode.map(node => node.id);
         vm.instance.addToDragSelection(nodesToAddToDrag);
       },
       toggleSelectionMode: () => {
@@ -246,15 +246,15 @@ angular.module(PKG.name + '.commons')
 
     vm.highlightSelectedNodeConnections = () => {
       const selectedNodesMap = {};
-      vm.selectedNode.forEach(node => selectedNodesMap[node.name] = true);
+      vm.selectedNode.forEach(node => selectedNodesMap[node.id] = true);
       const adjacencyMap = DAGPlusPlusNodesStore.getAdjacencyMap();
       clearConnectionsSelection();
-      vm.selectedNode.forEach(({name}) => {
-        const connectedNodes = adjacencyMap[name];
+      vm.selectedNode.forEach(({id, name}) => {
+        const connectedNodes = adjacencyMap[id];
         if (!Array.isArray(connectedNodes)) {
           return;
         }
-        const connectionsFromSource = vm.instance.getConnections({sourceId: name});
+        const connectionsFromSource = vm.instance.getConnections({sourceId: id});
         connectedNodes.forEach(nodeId => {
           if (!selectedNodesMap[nodeId]) {
             return;
@@ -297,6 +297,7 @@ angular.module(PKG.name + '.commons')
       return {
         stages: this.selectedNode.map((node) => {
           return {
+            id: node.id,
             name: node.name,
             icon: node.icon,
             type: node.type,
@@ -571,7 +572,7 @@ angular.module(PKG.name + '.commons')
         node.isPluginAvailable = ispluginsMapAvailable ?
             Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) : true;
         if (node.type === 'condition') {
-          initConditionNode(node.name);
+          initConditionNode(node.id);
         } else if (node.type === 'splittertransform') {
           initSplitterNode(node);
         } else {
@@ -590,7 +591,7 @@ angular.module(PKG.name + '.commons')
           if (vm.isDisabled) {
             targetOptions.connectionsDetachable = false;
           }
-          vm.instance.makeTarget(node.name, targetOptions);
+          vm.instance.makeTarget(node.id, targetOptions);
         }
       });
     }
@@ -599,7 +600,7 @@ angular.module(PKG.name + '.commons')
       if (normalNodes.indexOf(node.name) !== -1) {
         return;
       }
-      addEndpointForNormalNode('endpoint_' + node.name);
+      addEndpointForNormalNode('endpoint_' + node.id);
       if (!_.isEmpty(vm.pluginsMap) && !vm.isDisabled) {
         addErrorAlertEndpoints(node);
       }
@@ -620,7 +621,7 @@ angular.module(PKG.name + '.commons')
         let splitterPorts = splitterNodesPorts[node.name];
         if (!_.isEmpty(splitterPorts)) {
           angular.forEach(splitterPorts, (port) => {
-            let portElId = 'endpoint_' + node.name + '_port_' + port;
+            let portElId = 'endpoint_' + node.id + '_port_' + port;
             deleteEndpoints(portElId);
           });
           DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
@@ -641,12 +642,12 @@ angular.module(PKG.name + '.commons')
       }
 
       angular.forEach(splitterPorts, (port) => {
-        let portElId = 'endpoint_' + node.name + '_port_' + port;
+        let portElId = 'endpoint_' + node.id + '_port_' + port;
         deleteEndpoints(portElId);
       });
 
       angular.forEach(node.outputSchema, (outputSchema) => {
-        addEndpointForSplitterNode('endpoint_' + node.name + '_port_' + outputSchema.name);
+        addEndpointForSplitterNode('endpoint_' + node.id + '_port_' + outputSchema.name);
       });
 
       DAGPlusPlusNodesActionsFactory.setConnections($scope.connections);
@@ -694,24 +695,24 @@ angular.module(PKG.name + '.commons')
         }
 
         let connObj = {
-          target: conn.to
+          target: targetNode.id
         };
 
         if (conn.hasOwnProperty('condition')) {
-          connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}_condition_${conn.condition}`)[0];
+          connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}_condition_${conn.condition}`)[0];
         } else if (conn.hasOwnProperty('port')) {
-          connObj.source = vm.instance.getEndpoint(`endpoint_${conn.from}_port_${conn.port}`);
+          connObj.source = vm.instance.getEndpoint(`endpoint_${sourceNode.id}_port_${conn.port}`);
         } else if (targetNode.type === 'errortransform' || targetNode.type === 'alertpublisher') {
           if (!_.isEmpty(vm.pluginsMap) && !vm.isDisabled) {
             addConnectionToErrorsAlerts(conn, sourceNode, targetNode);
             return;
           }
         } else {
-          connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}`)[0];
+          connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}`)[0];
         }
 
         if (connObj.source && connObj.target) {
-          connObj.cssClass = `connection-id-${conn.from}-${conn.to}`;
+          connObj.cssClass = `connection-id-${sourceNode.name}-${targetNode.name}`;
           let newConn = vm.instance.connect(connObj);
           if (
             targetNode.type === 'condition' ||
@@ -728,10 +729,10 @@ angular.module(PKG.name + '.commons')
 
     function addErrorAlertEndpoints(node) {
       if (vm.shouldShowAlertsPort(node)) {
-        addEndpointForNormalNode('endpoint_' + node.name + '_alert', vm.alertEndpointStyle);
+        addEndpointForNormalNode('endpoint_' + node.id + '_alert', vm.alertEndpointStyle);
       }
       if (vm.shouldShowErrorsPort(node)) {
-        addEndpointForNormalNode('endpoint_' + node.name + '_error', vm.errorEndpointStyle);
+        addEndpointForNormalNode('endpoint_' + node.id + '_error', vm.errorEndpointStyle);
       }
     }
 
@@ -741,11 +742,11 @@ angular.module(PKG.name + '.commons')
       };
 
       if (targetNode.type === 'errortransform' && vm.shouldShowErrorsPort(sourceNode)) {
-        connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}_error`)[0];
+        connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}_error`)[0];
       } else if (targetNode.type === 'alertpublisher' && vm.shouldShowAlertsPort(sourceNode)) {
-        connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}_alert`)[0];
+        connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}_alert`)[0];
       } else {
-        connObj.source = vm.instance.getEndpoints(`endpoint_${conn.from}`)[0];
+        connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}`)[0];
         // this is for backwards compability with old pipelines where we don't specify
         // emit-alerts and emit-error in the plugin config yet. In those cases we should
         // still connect to the Error Collector/Alert Publisher using the normal endpoint
@@ -755,7 +756,7 @@ angular.module(PKG.name + '.commons')
       let defaultConnectorSettings = vm.defaultDagSettings.Connector;
       connObj.connector = [defaultConnectorSettings[0], Object.assign({}, defaultConnectorSettings[1], { midpoint: 0 })];
 
-      connObj.cssClass = `connection-id-${conn.from}-${conn.to}`;
+      connObj.cssClass = `connection-id-${sourceNode.name}-${targetNode.name}`;
       vm.instance.connect(connObj);
     };
 
@@ -815,16 +816,32 @@ angular.module(PKG.name + '.commons')
     };
 
     function addConnection(newConnObj) {
+      // source is always a specific endpoint on the right of the node
+      // target is always a contionous endpoint on the left of the node.
+      const sourceNodeId = newConnObj.source.getAttribute('data-nodeid');
+      const targetNodeId = newConnObj.target.getAttribute('data-nodeid');
+      const sourceDOMID = newConnObj.source.getAttribute('id');
+      const targetDOMID = newConnObj.target.getAttribute('id');
+      /**
+       * We set the connection to be between nodes which refers to the node name.
+       * we need the DOM ID for jsplumb and selecting nodes and connections
+       * We are not using name today because node names can have anything including
+       * space or any special character which is not allowed in for DOM 'id' attribute.
+       */
       let connection = {
-        from: newConnObj.sourceId,
-        to: newConnObj.targetId
+        from: sourceNodeId,
+        to: targetNodeId,
       };
 
       const source = newConnObj.source.getAttribute('data-nodetype');
-      const fromNodeId = newConnObj.source.getAttribute('data-nodeid');
-      connection.from = fromNodeId;
-      newConnObj.connection.connector.canvas.classList.add(`connection-id-${connection.from}-${connection.to}`);
+      newConnObj.connection.connector.canvas.classList.add(`connection-id-${sourceDOMID}-${targetDOMID}`);
 
+      /**
+       * If the connection is from a condition or a splitter transform
+       * we need information on the source of this connection. For condition
+       * it could yes/no ports or for the splitter transform it needs to be
+       * the port name (null/non-null or custom ports)
+       */
       if (source === 'splitter') {
         connection.port = newConnObj.source.getAttribute('data-portname');
       } else if (source.indexOf('condition') !== -1) {
@@ -839,8 +856,10 @@ angular.module(PKG.name + '.commons')
       if (!detachedConnObj.source || typeof detachedConnObj.source !== 'object') {
         return;
       }
-      const nodeId = detachedConnObj.source.getAttribute('data-nodeid');
-      connObj.sourceId = nodeId;
+      const sourceNodeId = detachedConnObj.source.getAttribute('data-nodeid');
+      const targetNodeId = detachedConnObj.target.getAttribute('data-nodeid');
+      connObj.sourceId = sourceNodeId;
+      connObj.targetId = targetNodeId;
       var connectionIndex = _.findIndex($scope.connections, function (conn) {
         return conn.from === connObj.sourceId && conn.to === connObj.targetId;
       });
@@ -997,25 +1016,25 @@ angular.module(PKG.name + '.commons')
     function disableAllEndpoints() {
       angular.forEach($scope.nodes, function (node) {
         if (node.plugin.type === 'condition') {
-          let endpoints = [`endpoint_${node.name}_condition_true`, `endpoint_${node.name}_condition_false`];
+          let endpoints = [`endpoint_${node.id}_condition_true`, `endpoint_${node.id}_condition_false`];
           angular.forEach(endpoints, (endpoint) => {
             disableEndpoints(endpoint);
           });
         } else if (node.plugin.type === 'splittertransform')  {
           let portNames = node.outputSchema.map(port => port.name);
-          let endpoints = portNames.map(portName => `endpoint_${node.name}_port_${portName}`);
+          let endpoints = portNames.map(portName => `endpoint_${node.id}_port_${portName}`);
           angular.forEach(endpoints, (endpoint) => {
             // different from others because the name here is the uuid of the splitter endpoint,
             // not the id of DOM element
             disableEndpoint(endpoint);
           });
         } else {
-          disableEndpoints('endpoint_' + node.name);
+          disableEndpoints('endpoint_' + node.id);
           if (vm.shouldShowAlertsPort(node)) {
-            disableEndpoints('endpoint_' + node.name + '_alert');
+            disableEndpoints('endpoint_' + node.id + '_alert');
           }
           if (vm.shouldShowErrorsPort(node)) {
-            disableEndpoints('endpoint_' + node.name + '_error');
+            disableEndpoints('endpoint_' + node.id + '_error');
           }
         }
       });
@@ -1062,7 +1081,7 @@ angular.module(PKG.name + '.commons')
 
       // else check if the connection is valid
       var sourceNode = $scope.nodes.find(node => node.name === connObj.sourceId);
-      var targetNode = $scope.nodes.find( node => node.name === connObj.targetId);
+      var targetNode = $scope.nodes.find( node => node.id === connObj.targetId);
 
       var valid = true;
 
@@ -1157,8 +1176,8 @@ angular.module(PKG.name + '.commons')
           localY = currentCoordinates.y;
 
           dragged = true;
-          const nodeName = drag.el.getAttribute('id');
-          const isNodeAlreadySelected = vm.selectedNode.find(selectedNode => selectedNode.name === nodeName);
+          const nodeId = drag.el.getAttribute('id');
+          const isNodeAlreadySelected = vm.selectedNode.find(selectedNode => selectedNode.id === nodeId);
           if (!isNodeAlreadySelected) {
             vm.instance.clearDragSelection();
           }
@@ -1199,7 +1218,7 @@ angular.module(PKG.name + '.commons')
       if (event.target.className.indexOf('endpoint-circle') === -1) { return; }
       vm.clearSelectedNodes();
 
-      let sourceElem = node.name;
+      let sourceElem = node.id;
       let endpoints = vm.instance.getEndpoints(sourceElem);
 
       if (!endpoints) { return; }
@@ -1327,7 +1346,7 @@ angular.module(PKG.name + '.commons')
 
       const newNodes = angular.copy(nodes);
       newNodes.forEach(node => {
-        DAGPlusPlusNodesActionsFactory.removeNode(node.name);
+        DAGPlusPlusNodesActionsFactory.removeNode(node.id);
 
         if (Object.keys(splitterNodesPorts).indexOf(node.name) !== -1) {
           delete splitterNodesPorts[node.name];
@@ -1335,7 +1354,7 @@ angular.module(PKG.name + '.commons')
         let nodeType = node.plugin.type || node.type;
         if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
           let portNames = node.outputSchema.map(port => port.name);
-          let endpoints = portNames.map(portName => `endpoint_${node.name}_port_${portName}`);
+          let endpoints = portNames.map(portName => `endpoint_${node.id}_port_${portName}`);
           angular.forEach(endpoints, (endpoint) => {
             deleteEndpoints(endpoint);
           });
@@ -1345,8 +1364,8 @@ angular.module(PKG.name + '.commons')
         selectedConnections = selectedConnections.filter(function(selectedConnObj) {
           return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
         });
-        vm.instance.unmakeTarget(node.name);
-        vm.instance.remove(node.name);
+        vm.instance.unmakeTarget(node.id);
+        vm.instance.remove(node.id);
       });
       vm.instance.bind('connectionDetached', removeConnection);
 
@@ -1626,7 +1645,7 @@ angular.module(PKG.name + '.commons')
           let newName = `${node.plugin.label.replace(/[ \/]/g, '-')}`;
           const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
             .filter(filteredNode => {
-              return filteredNode.plugin.label ? filteredNode.plugin.label.startsWith(newName) : false;
+              return [filteredNode.plugin.label, filteredNode.name, filteredNode.id].indexOf(newName) !== -1;
             });
           const randIndex = Math.floor(Math.random() * 100);
           newName = filteredNodes.length > 0 ? `${newName}${randIndex}` : newName;
@@ -1640,7 +1659,8 @@ angular.module(PKG.name + '.commons')
           oldNameToNewNameMap[node.name] = newName;
           node.plugin.label = newName;
           return Object.assign({}, node, {
-            name: oldNameToNewNameMap[node.name]
+            name: oldNameToNewNameMap[node.name],
+            id: oldNameToNewNameMap[node.name]
           }, iconConfiguration);
         });
         connections = connections.map((connection) => {
@@ -1651,7 +1671,18 @@ angular.module(PKG.name + '.commons')
             to: oldNameToNewNameMap[to] || to,
           });
         });
-        return {nodes, connections};
+        /**
+         * Commenting this out as this introduces a lot of changes behind
+         * the scenes without the user knowing about it.
+         * https://issues.cask.co/browse/CDAP-17252 - Will revamp this as part of this change.
+         */
+        /* const newNodes = window.CaskCommon.CDAPHelpers.sanitizeNodeNamesInPluginProperties(
+          nodes,
+          AvailablePluginsStore.getState(),
+          oldNameToNewNameMap
+        );
+        */
+        return {nodes , connections};
       } catch (e) {
         console.log('error parsing node config', e);
       }

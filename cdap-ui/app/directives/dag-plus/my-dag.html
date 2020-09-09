@@ -121,14 +121,17 @@
           The condition on ng-click is to prevent user from being able to click
           if the DAG is disabled. It will prevent the highlighting of nodes on select
         -->
-        <div ng-repeat="node in nodes" class="box {{node.type}}" ng-style="node._uiPosition"
+        <div ng-repeat="node in nodes"
+               class="box {{node.type}}"
+               ng-style="node._uiPosition"
                data-type="{{node.type}}"
-               id="{{node.name}}"
+               id="{{node.id}}"
+               data-nodeid="{{node.name}}"
                data-cy="plugin-node-{{node.plugin.name}}-{{node.type}}-{{$index}}"
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
-                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.name),
+                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.id),
                }"
                ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
           <div class="node"
@@ -138,7 +141,7 @@
             <div class="endpoint-circle"
                   ng-if="node.type !== 'splittertransform'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled, 'endpoint-circle-right': node.type === 'condition'}"
-                  ng-attr-id="{{node.type === 'condition' ? 'endpoint_' + node.name + '_condition_true' : 'endpoint_' + node.name}}"
+                  ng-attr-id="{{node.type === 'condition' ? 'endpoint_' + node.id + '_condition_true' : 'endpoint_' + node.id}}"
                   data-nodeid="{{node.name}}"
                   data-nodetype="{{node.type === 'condition' ? 'condition-true' : 'regular'}}"
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
@@ -167,7 +170,7 @@
                   ng-if="node.type === 'condition'"
                   ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                   ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
-                  ng-attr-id="{{'endpoint_' + node.name + '_condition_false'}}"
+                  ng-attr-id="{{'endpoint_' + node.id + '_condition_false'}}"
                   data-nodeid="{{node.name}}"
                   data-nodetype="condition-false"
                   data-cy="plugin-endpoint-{{node.plugin.name}}-{{node.type}}-false">
@@ -233,7 +236,7 @@
                 <div class="endpoint-circle endpoint-circle-bottom"
                       ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                       ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
-                      ng-attr-id="{{'endpoint_' + node.name + '_alert'}}"
+                      ng-attr-id="{{'endpoint_' + node.id + '_alert'}}"
                       data-nodeid="{{node.name}}"
                       data-nodetype="alert">
                   <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
@@ -244,7 +247,7 @@
                 <div class="endpoint-circle endpoint-circle-bottom"
                       ng-class="{'disabled': DAGPlusPlusCtrl.isDisabled}"
                       ng-mouseup="DAGPlusPlusCtrl.selectEndpoint($event, node)"
-                      ng-attr-id="{{'endpoint_' + node.name + '_error'}}"
+                      ng-attr-id="{{'endpoint_' + node.id + '_error'}}"
                       data-nodeid="{{node.name}}"
                       data-nodetype="error">
                   <div class="endpoint-caret" ng-if="!DAGPlusPlusCtrl.isDisabled"></div>
@@ -290,7 +293,7 @@
           </div>
           <div ng-if="!DAGPlusPlusCtrl.isDisabled">
             <plugin-context-menu
-              node-id="'{{node.name}}'"
+              node-id="'{{node.id}}'"
               get-plugin-configuration="DAGPlusPlusCtrl.getPluginConfiguration"
               get-selected-connections="DAGPlusPlusCtrl.getSelectedConnections"
               get-selected-nodes="DAGPlusPlusCtrl.getSelectedNodes"
