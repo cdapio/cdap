@@ -60,16 +60,35 @@ class PipelineAvailablePluginsActions {
     let availablePluginsMap = {};
     let pluginsList = [];
 
-    stages.forEach((stage) => {
-      let pluginInfo = this._createPluginInfo(stage.plugin);
-      availablePluginsMap[pluginInfo.key] = {
-        pluginInfo: stage.plugin
-      };
+    this.api.getAllArtifacts({ namespace })
+      .$promise
+      .then((res) => {
+        // create map for all available artifacts
+        const artifactsMap = {};
+        res.forEach((artifact) => {
+          const artifactKey = this._getArtifactKey(artifact);
+          artifactsMap[artifactKey] = artifact;
+        });
 
-      pluginsList.push(pluginInfo);
-    });
+        stages.forEach((stage) => {
+          const stageArtifact = this.myHelpers.objectQuery(stage, 'plugin', 'artifact');
+          const artifactKey = this._getArtifactKey(stageArtifact);
+          if (!artifactsMap[artifactKey]) {
+            return;
+          }
 
-    this._fetchInfo(availablePluginsMap, namespace, pluginsList);
+          let pluginInfo = this._createPluginInfo(stage.plugin);
+          availablePluginsMap[pluginInfo.key] = {
+            pluginInfo: stage.plugin
+          };
+
+          pluginsList.push(pluginInfo);
+        });
+
+        this._fetchInfo(availablePluginsMap, namespace, pluginsList);
+      });
+
+
   }
 
   fetchPluginsForUpgrade(extensionsParams) {
@@ -126,20 +145,25 @@ class PipelineAvailablePluginsActions {
   _fetchInfo(availablePluginsMap, namespace, plugins) {
     const reqBody = plugins.map((plugin) => plugin.info);
 
+    const getKeyFromPluginProps = (pluginProperties) => {
+      const key = this.myHelpers.objectQuery(pluginProperties, '0');
+      return key ? key.split('.')[1] : '';
+    };
+
     this.api.fetchAllPluginsProperties({ namespace }, reqBody)
       .$promise
       .then((res) => {
-        res.forEach((plugin, index) => {
-          let pluginProperties = Object.keys(plugin.properties);
+        res.forEach((plugin) => {
+          const pluginProperties = Object.keys(plugin.properties);
           if (pluginProperties.length === 0) { return; }
 
-          let pluginKey = pluginProperties[0].split('.')[1];
-          let key = plugins[index].key;
+          const pluginKey = getKeyFromPluginProps(pluginProperties);
+          const key = `${pluginKey}-${this._getArtifactKey(plugin)}`;
 
           availablePluginsMap[key].doc = plugin.properties[`doc.${pluginKey}`];
 
           let parsedWidgets;
-          let widgets = plugin.properties[`widgets.${pluginKey}`];
+          const widgets = plugin.properties[`widgets.${pluginKey}`];
 
           if (widgets) {
             try {
@@ -161,11 +185,10 @@ class PipelineAvailablePluginsActions {
   }
 
   _createPluginInfo(plugin) {
-    let pluginKey = `${plugin.name}-${plugin.type}`;
+    const pluginKey = `${plugin.name}-${plugin.type}`;
+    const availablePluginKey = `${pluginKey}-${this._getArtifactKey(plugin.artifact)}`;
 
-    let availablePluginKey = `${plugin.name}-${plugin.type}-${plugin.artifact.name}-${plugin.artifact.version}-${plugin.artifact.scope}`;
-
-    let info = Object.assign({}, plugin.artifact, {
+    const info = Object.assign({}, plugin.artifact, {
       properties: [
         `widgets.${pluginKey}`,
         `doc.${pluginKey}`
@@ -176,6 +199,14 @@ class PipelineAvailablePluginsActions {
       info,
       key: availablePluginKey
     };
+  }
+
+  /**
+   *
+   * @param { name, version, scope } artifact
+   */
+  _getArtifactKey(artifact) {
+    return `${artifact.name}-${artifact.version}-${artifact.scope}`;
   }
 
   _prepareInfoRequest(namespace, pluginsList) {

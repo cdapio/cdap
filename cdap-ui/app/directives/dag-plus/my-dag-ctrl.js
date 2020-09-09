@@ -165,14 +165,14 @@ angular.module(PKG.name + '.commons')
      * dragging for the diagram-container and allow the <selection-box> to take
      * over the user selection
      *
-     * isMultiSelectEnabled - 
+     * isMultiSelectEnabled -
      *   This flag is used when user clicks on command/ctrl and manually selects
      * individual nodes. This is a separate flag as when user selects a node we should
      * be able to differentiate between the normal selection (just clicking on a node)
      * vs command+click in which case the nodes selection behavior is slightly different.
      * The difference should be evident in the vm.selectNodes function
      *
-     * isSelectionInProgress - 
+     * isSelectionInProgress -
      *   This flag is used to track if the user is currently selecting a bunch of nodes.
      * We need this flag to be able to easily go between selecting nodes and then clicking
      * on canvas to reset all the selection. This should be more evident in vm.handleCanvasClick
@@ -211,9 +211,9 @@ angular.module(PKG.name + '.commons')
 
         /**
          * This has to be efficient for us to be able to handle large pipelines.
-         * 
+         *
          * Current implementation:
-         * 
+         *
          * I/P : nodes selected
          * 1. Get selected nodes from selection box.
          * 2. Get the adjacency map for the current graph
@@ -221,7 +221,7 @@ angular.module(PKG.name + '.commons')
          * 4. In the iteration if both the current selected node and the nodes connected to it are
          *    in the list of selected nodes then select the connection. This is where we use the
          *    selectedNodesMap to make a lookup.
-         * 
+         *
          */
         vm.selectedNode = selectedNodes;
         vm.highlightSelectedNodeConnections();
@@ -569,7 +569,7 @@ angular.module(PKG.name + '.commons')
         const ispluginsMapAvailable = Object.keys(vm.pluginsMap).length;
         // If pluginsMap is not available yet, consider the plugin to be valid until we know otherwise
         node.isPluginAvailable = ispluginsMapAvailable ?
-            Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) : true;
+            Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) : true;
         if (node.type === 'condition') {
           initConditionNode(node.name);
         } else if (node.type === 'splittertransform') {
@@ -592,6 +592,7 @@ angular.module(PKG.name + '.commons')
           }
           vm.instance.makeTarget(node.name, targetOptions);
         }
+        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'widgets')) ;
       });
     }
 
@@ -1685,6 +1686,10 @@ angular.module(PKG.name + '.commons')
 
     let subAvailablePlugins = AvailablePluginsStore.subscribe(() => {
       vm.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
+      $scope.nodes.forEach(node => {
+        const key = generatePluginMapKey(node);
+        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) ;
+      });
       if (!_.isEmpty(vm.pluginsMap)) {
         addErrorAlertsEndpointsAndConnections();
       }
