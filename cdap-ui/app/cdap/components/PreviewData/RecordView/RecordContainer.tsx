@@ -31,7 +31,7 @@ const I18N_PREFIX = 'features.PreviewData.RecordView.RecordContainer';
 const styles = (theme): StyleRules => ({
   ...tableStyles(theme),
   recordMargin: {
-    marginBottom: '35px', // from tab height
+    marginBottom: '50px', // from tab height
   },
   recordInnerContainer: {
     overflow: 'scroll',
@@ -43,8 +43,14 @@ const styles = (theme): StyleRules => ({
     borderBottom: `1px solid ${theme.palette.grey[400]}`,
     borderRight: `1px solid ${theme.palette.grey[400]}`,
     height: 'inherit',
-    '& .record-pane': { width: '100%' },
-    '& .cask-tab-headers': { overflowX: 'scroll' },
+    overflowX: 'hidden',
+    '& .record-pane': {
+      width: '100%',
+    },
+    '& .cask-tab-headers': {
+      overflowX: 'auto',
+      overflowY: 'hidden',
+    },
   },
   recordHeader: {
     paddingTop: '10px',
@@ -105,6 +111,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
             selectedRecord={selectedRecord}
             isInput={isInput}
             previewStatus={previewStatus}
+            className={classes.recordTab}
           />
         ),
         paneClassName: 'record-pane',
@@ -119,6 +126,28 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
 
   const getTabs = (config) => {
     return <ConfigurableTab tabConfig={config} onTabClick={handleTabClick} activeTab={activeTab} />;
+  };
+
+  const getRecords = (stagesData, isInput: boolean) => {
+    const stagesToRender = isInput ? stagesData.inputs : stagesData.outputs;
+    const showTabs = stagesToRender.length > 1;
+
+    if (showTabs) {
+      return getTabs(getTabConfig(stagesToRender, selectedRecord, isInput));
+    }
+    return stagesToRender.map(([stageName, stageInfo]) => {
+      const headers = stageInfo.schemaFields;
+      const record = stageInfo.records[selectedRecord - 1];
+      return (
+        <RecordTable
+          headers={headers}
+          record={record}
+          selectedRecord={selectedRecord}
+          isInput={isInput}
+          previewStatus={previewStatus}
+        />
+      );
+    });
   };
 
   return (
@@ -146,19 +175,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
             >
               {T.translate(`${I18N_PREFIX}.inputHeader`)}
             </h2>
-            {showInputTabs
-              ? getTabs(getTabConfig(inputs, selectedRecord, true))
-              : inputs.map(([stageName, stageInfo]) => {
-                  return (
-                    <RecordTable
-                      headers={stageInfo.schemaFields}
-                      record={stageInfo.records[selectedRecord - 1]}
-                      selectedRecord={selectedRecord}
-                      isInput={true}
-                      previewStatus={previewStatus}
-                    />
-                  );
-                })}
+            {getRecords(tableData, true)}
           </div>
         </If>
         <If condition={!selectedNode.isSink && !selectedNode.isCondition}>
@@ -174,19 +191,7 @@ const RecordViewBase: React.FC<IRecordViewContainerProps> = ({
             >
               {T.translate(`${I18N_PREFIX}.outputHeader`)}
             </h2>
-            {showOutputTabs
-              ? getTabs(getTabConfig(outputs, selectedRecord, false))
-              : outputs.map(([stageName, stageInfo]) => {
-                  return (
-                    <RecordTable
-                      headers={stageInfo.schemaFields}
-                      record={stageInfo.records[selectedRecord - 1]}
-                      selectedRecord={selectedRecord}
-                      isInput={false}
-                      previewStatus={previewStatus}
-                    />
-                  );
-                })}
+            {getRecords(tableData, false)}
           </div>
         </If>
         <If condition={selectedNode.isCondition}>

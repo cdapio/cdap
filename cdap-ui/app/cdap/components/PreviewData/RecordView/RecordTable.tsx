@@ -17,7 +17,6 @@
 import React from 'react';
 import VirtualScroll from 'components/VirtualScroll';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
-import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
@@ -51,7 +50,6 @@ const styles = (theme): StyleRules => ({
   recordContainer: {
     width: '100%',
     padding: '10px',
-    marginTop: 'unset',
   },
 });
 
@@ -150,7 +148,7 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
   }
 
   return (
-    <Paper className={classnames(classes.root, classes.recordContainer)}>
+    <div className={classnames(classes.root, classes.recordContainer)}>
       <Grid container direction="column" wrap="nowrap">
         <Grid item>
           <Grid
@@ -178,7 +176,7 @@ const RecordTableView: React.FC<IRecordTableProps> = ({
           />
         </Grid>
       </Grid>
-    </Paper>
+    </div>
   );
 };
 

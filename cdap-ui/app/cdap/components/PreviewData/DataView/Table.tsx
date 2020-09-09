@@ -59,10 +59,10 @@ export const styles = (theme): StyleRules => ({
   cell: {
     textAlign: 'left',
     lineHeight: '40px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    padding: '0 10px',
     whiteSpace: 'nowrap',
+    padding: '0px 10px',
+    textOverflow: 'ellipsis',
+    overflow: 'hidden',
   },
 
   // TO DO: Currently the width is fixed. Future plan is to let users vary the column widths
