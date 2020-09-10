@@ -15,6 +15,7 @@
  */
 
 import { INodeIdentifier } from './typings';
+const uuidV4 = require('uuid').v4;
 
 const username = Cypress.env('username') || 'admin';
 const password = Cypress.env('password') || 'admin';
