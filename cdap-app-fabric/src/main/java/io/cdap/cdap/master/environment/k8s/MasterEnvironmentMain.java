@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
+import com.google.common.util.concurrent.Uninterruptibles;
 import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.SConfiguration;
@@ -33,6 +34,8 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -60,6 +63,7 @@ public class MasterEnvironmentMain {
    */
   @SuppressWarnings("unused")
   public static void doMain(String[] args) throws Exception {
+    CountDownLatch shutdownLatch = new CountDownLatch(1);
     try {
       // System wide setup
       Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
@@ -106,6 +110,7 @@ public class MasterEnvironmentMain {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
           if (!completed.get()) {
             runnable.stop();
+            Uninterruptibles.awaitUninterruptibly(shutdownLatch, 30, TimeUnit.SECONDS);
           }
         }));
         runnable.run(runnableArgs);
@@ -116,6 +121,8 @@ public class MasterEnvironmentMain {
     } catch (Exception e) {
       LOG.error("Failed to execute with arguments {}", Arrays.toString(args), e);
       throw e;
+    } finally {
+      shutdownLatch.countDown();
     }
   }
 }
