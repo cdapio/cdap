@@ -288,17 +288,11 @@ class HydratorUpgradeService {
       if(stage.name.indexOf(' ') !== -1 || stage.name.indexOf('/') !== -1) {
         oldNameToNewNameMap[stage.name] = stage.name.replace(/[ \/]/g, '-');
         return Object.assign({}, stage, {
-          name: oldNameToNewNameMap[stage.name]
+          id: stage.name.replace(/[ \/]/g, '-')
         });
       }
-      return stage;
-    });
-    jsonData.config.connections = jsonData.config.connections.map((connection) => {
-      const from = connection.from;
-      const to = connection.to;
-      return Object.assign({}, connection, {
-        from: oldNameToNewNameMap[from] || from,
-        to: oldNameToNewNameMap[to] || to,
+      return Object.assign({}, stage, {
+        id: stage.name,
       });
     });
     this.$uibModal.open({

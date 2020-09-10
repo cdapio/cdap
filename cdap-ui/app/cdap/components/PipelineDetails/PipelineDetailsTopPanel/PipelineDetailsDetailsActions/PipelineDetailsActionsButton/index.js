@@ -49,13 +49,7 @@ const sanitizeConfig = (pipeline) => {
   });
   pipelineClone.config.stages = pipelineClone.config.stages.map((stage) => {
     return Object.assign({}, stage, {
-      name: stage.name.replace(/[ \/]/g, '-'),
-    });
-  });
-  pipelineClone.config.connections = pipelineClone.config.connections.map((conn) => {
-    return Object.assign({}, conn, {
-      from: conn.from.replace(/[ \/]/g, '-'),
-      to: conn.to.replace(/[ \/]/g, '-'),
+      id: stage.name.replace(/[ \/]/g, '-'),
     });
   });
 
