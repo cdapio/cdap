@@ -128,7 +128,6 @@ public final class SparkBatchSinkFactory {
     }
 
     Configuration hConf = new Configuration();
-    hConf.clear();
     Map<String, Set<String>> groupSinkOutputs = new HashMap<>();
     for (String sink : sinkNames) {
       groupSinkOutputs.put(sink, sinkOutputs.get(sink));
@@ -176,7 +175,6 @@ public final class SparkBatchSinkFactory {
     }
 
     Configuration hConf = new Configuration();
-    hConf.clear();
     Map<String, Set<String>> sinkOutputs = Collections.singletonMap(sinkName, outputFormats.keySet());
     MultiOutputFormat.addOutputs(hConf, outputFormats, sinkOutputs);
     hConf.set(MRJobConfig.OUTPUT_FORMAT_CLASS_ATTR, MultiOutputFormat.class.getName());
@@ -190,7 +188,6 @@ public final class SparkBatchSinkFactory {
 
   private void saveUsingOutputFormat(OutputFormatProvider outputFormatProvider, JavaPairRDD<?, ?> rdd) {
     Configuration hConf = new Configuration();
-    hConf.clear();
     for (Map.Entry<String, String> entry : outputFormatProvider.getOutputFormatConfiguration().entrySet()) {
       hConf.set(entry.getKey(), entry.getValue());
     }
