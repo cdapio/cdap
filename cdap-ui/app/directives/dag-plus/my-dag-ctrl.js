@@ -289,6 +289,11 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(highlightSelectedNodeConnectionsTimeout);
       highlightSelectedNodeConnectionsTimeout = $timeout(() => vm.highlightSelectedNodeConnections());
       vm.instance.clearDragSelection();
+      try {
+        $scope.$digest();
+      } catch(e) {
+        return;
+      }
     };
     vm.getPluginConfiguration = () => {
       if (!vm.selectedNode.length) {
@@ -562,6 +567,7 @@ angular.module(PKG.name + '.commons')
       el.style['transformOrigin'] = oString;
 
       instance.setZoom(zoom);
+      repaintEverything();
     }
 
     function initNodes() {
@@ -983,16 +989,17 @@ angular.module(PKG.name + '.commons')
 
     function deleteEndpoints(elementId) {
       vm.instance.unbind('connectionDetached');
-      let endpoint = vm.instance.getEndpoint(elementId);
+      let endpoint = vm.instance.getEndpoints(elementId);
 
-      if (endpoint && endpoint.connections) {
-        angular.forEach(endpoint.connections, (conn) => {
-          removeConnection(conn, false);
-          vm.instance.detach(conn);
+      if (endpoint) {
+        angular.forEach(endpoint, (ep) => {
+          angular.forEach(ep.connections, (conn) => {
+            removeConnection(conn, false);
+            vm.instance.detach(conn);
+          });
+          vm.instance.deleteEndpoint(ep);
         });
       }
-
-      vm.instance.deleteEndpoint(endpoint);
       vm.instance.bind('connectionDetached', removeConnection);
     }
 
@@ -1353,12 +1360,19 @@ angular.module(PKG.name + '.commons')
           delete splitterNodesPorts[node.name];
         }
         let nodeType = node.plugin.type || node.type;
-        if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
+        if (nodeType  === 'condition') {
+          conditionNodes = conditionNodes.filter(conditionNode => conditionNode !== node.name);
+          deleteEndpoints('endpoint_' + node.id + '_condition_true');
+          deleteEndpoints('endpoint_' + node.id + '_condition_false');
+        } else if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
           let portNames = node.outputSchema.map(port => port.name);
           let endpoints = portNames.map(portName => `endpoint_${node.id}_port_${portName}`);
           angular.forEach(endpoints, (endpoint) => {
             deleteEndpoints(endpoint);
           });
+        } else {
+          normalNodes = normalNodes.filter(normalNode => normalNode !== node.name);
+          deleteEndpoints('endpoint_' + node.id);
         }
 
         vm.instance.unbind('connectionDetached');
@@ -1372,9 +1386,10 @@ angular.module(PKG.name + '.commons')
         });
         vm.instance.unmakeTarget(node.id);
         vm.instance.remove(node.id);
+        $scope.connections = $scope.connections
+          .filter(connection => connection.from !== node.id && connection.to !== node.id);
       });
       vm.instance.bind('connectionDetached', removeConnection);
-
       vm.clearSelectedNodes();
     };
 
@@ -1625,6 +1640,7 @@ angular.module(PKG.name + '.commons')
         console.error('Unable to paste to canvas: '+ err);
       }
       config.nodes = config.stages;
+      config.connections = config.connections || [];
       delete config.stages;
       vm.onPipelineContextMenuPaste(config);
     };
@@ -1649,12 +1665,8 @@ angular.module(PKG.name + '.commons')
 
           // change name
           let newName = `${node.plugin.label.replace(/[ \/]/g, '-')}`;
-          const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
-            .filter(filteredNode => {
-              return [filteredNode.plugin.label, filteredNode.name, filteredNode.id].indexOf(newName) !== -1;
-            });
           const randIndex = Math.floor(Math.random() * 100);
-          newName = filteredNodes.length > 0 ? `${newName}${randIndex}` : newName;
+          newName = `${newName}${randIndex}`;
           let iconConfiguration = {};
           if (!node.icon) {
             iconConfiguration = Object.assign({}, {

@@ -117,11 +117,10 @@ describe('Creating a pipeline', () => {
     cy.contains('Send Email').click();
     // enter sender, recipients, subject, message
 
+    cy.wait(1000);
+    cy.get('[data-cy="configuration-group"]');
     cy.get('[data-cy="sender"]').within(() => {
-      cy.get('input')
-        .scrollIntoView()
-        .focus()
-        .type(TEST_SENDER);
+      cy.get('input').type(TEST_SENDER);
     });
     cy.get('[data-cy="recipients"]').within(() => {
       cy.get('input').type(TEST_RECIPIENT);
@@ -130,7 +129,7 @@ describe('Creating a pipeline', () => {
       cy.get('input').type(TEST_SUBJECT);
     });
     // validate and see error
-    cy.get('[data-cy="validate-btn"]').click();
+    cy.get('[data-cy="validate-btn"]').click({ timeout: 60000 });
 
     cy.contains('error found').should('exist');
 

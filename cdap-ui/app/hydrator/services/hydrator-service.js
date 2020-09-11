@@ -42,7 +42,7 @@ class HydratorPlusPlusHydratorService {
         type: stage.plugin.type,
         label: stage.plugin.label,
         icon: this.DAGPlusPlusFactory.getIcon(stage.plugin.name),
-        id: stage.id || `${stage.name.replace(/[ \/]/g, '-')}${Math.floor(Math.random() * 100)}`,
+        id: stage.id || `${stage.name.replace(/[ \/]/g, '-')}${this.uuid.v4()}`,
       });
       return nodeInfo;
     });

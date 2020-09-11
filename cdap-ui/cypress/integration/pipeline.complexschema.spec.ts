@@ -70,6 +70,10 @@ describe('Output Schema', () => {
     cy.clearLocalStorage();
   });
 
+  afterEach(() => {
+    cy.clearLocalStorage();
+  });
+
   after(() => {
     cy.cleanup_pipelines(headers, PIPELINE_NAME);
   });

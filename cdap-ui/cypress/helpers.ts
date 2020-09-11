@@ -137,15 +137,6 @@ function getNodeSelectorFromNodeIndentifier(node: INodeIdentifier) {
   return `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
 }
 
-function setDefaultOldSchemaEditor() {
-  const SCHEMA_LAB_ID = 'schema-editor';
-
-  // set default schema editor to use old schema editor
-  cy.window().then((win) => {
-    win.localStorage.setItem(SCHEMA_LAB_ID, 'false');
-  });
-}
-
 function generateDraftFromPipeline(pipeline) {
   return cy.fixture(pipeline).then((pipeline_for_draft) => {
     const draftId = uuidV4();
