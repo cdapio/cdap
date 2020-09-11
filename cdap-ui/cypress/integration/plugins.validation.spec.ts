@@ -55,14 +55,10 @@ describe('Plugin properties', () => {
 
   beforeEach(() => {
     setDefaultOldSchemaEditor();
+    getArtifactsPoll(headers);
   });
-
   afterEach(() => {
     cy.clearLocalStorage();
-  });
-
-  beforeEach(() => {
-    getArtifactsPoll(headers);
   });
 
   it('should be validated and errors found in properties', () => {

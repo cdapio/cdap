@@ -70,14 +70,10 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
 
   beforeEach(() => {
     setDefaultOldSchemaEditor();
+    getArtifactsPoll(headers);
   });
-
   afterEach(() => {
     cy.clearLocalStorage();
-  });
-
-  beforeEach(() => {
-    getArtifactsPoll(headers);
   });
 
   after(() => {
