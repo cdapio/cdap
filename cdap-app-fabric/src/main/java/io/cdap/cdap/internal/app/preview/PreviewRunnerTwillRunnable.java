@@ -144,6 +144,7 @@ public class PreviewRunnerTwillRunnable extends AbstractTwillRunnable {
 
   @Override
   public void stop() {
+    LOG.info("Stopping preview runner manager");
     previewRunnerManager.stop();
   }
 
