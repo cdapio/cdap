@@ -1,7 +1,7 @@
 import {getArtifactsPoll, getGenericEndpoint, loginIfRequired} from '../helpers';
 import {DEFAULT_BIGQUERY_DATASET, DEFAULT_BIGQUERY_TABLE, DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH} from '../support/constants';
 import {INodeIdentifier, INodeInfo} from '../typings';
-import {dataCy} from '../helpers';
+import {dataCy, setDefaultOldSchemaEditor} from '../helpers';
 
 const sourceNode: INodeInfo = {
   nodeName: 'BigQueryTable',
@@ -54,7 +54,11 @@ describe('Plugin properties', () => {
   });
 
   beforeEach(() => {
+    setDefaultOldSchemaEditor();
     getArtifactsPoll(headers);
+  });
+  afterEach(() => {
+    cy.clearLocalStorage();
   });
 
   it('should be validated and errors found in properties', () => {

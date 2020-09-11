@@ -69,7 +69,7 @@ function getSessionToken(headers) {
   return cy
     .request({
       method: 'GET',
-      url: `http://${Cypress.env('host')}:11011/sessionToken`,
+      url: `http://${Cypress.env('host')}:${Cypress.env('port')}/sessionToken`,
       failOnStatusCode: false,
       headers,
     })
@@ -149,6 +149,15 @@ function generateDraftFromPipeline(pipeline) {
   });
 }
 
+function setDefaultOldSchemaEditor() {
+  const SCHEMA_LAB_ID = 'schema-editor';
+
+  // set default schema editor to use old schema editor
+  cy.window().then((win) => {
+    win.localStorage.setItem(SCHEMA_LAB_ID, 'false');
+  });
+}
+
 export {
   loginIfRequired,
   getArtifactsPoll,
@@ -159,4 +168,5 @@ export {
   dataCy,
   generateDraftFromPipeline,
   getNodeSelectorFromNodeIndentifier,
+  setDefaultOldSchemaEditor,
 };
