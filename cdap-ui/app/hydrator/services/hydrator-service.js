@@ -41,7 +41,8 @@ class HydratorPlusPlusHydratorService {
       let nodeInfo = angular.extend(stage, {
         type: stage.plugin.type,
         label: stage.plugin.label,
-        icon: this.DAGPlusPlusFactory.getIcon(stage.plugin.name)
+        icon: this.DAGPlusPlusFactory.getIcon(stage.plugin.name),
+        id: stage.id || `${stage.name.replace(/[ \/]/g, '-')}${Math.floor(Math.random() * 100)}`,
       });
       return nodeInfo;
     });

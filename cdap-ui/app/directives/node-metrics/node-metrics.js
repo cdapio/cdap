@@ -31,7 +31,7 @@ angular.module(PKG.name+'.commons')
       $scope.timeout = null;
       $scope.$watch('metricsData', function () {
         $scope.timeout = $timeout(() => {
-          let nodeElem = document.getElementById($scope.node.name);
+          let nodeElem = document.getElementById($scope.node.id || $scope.node.name);
           let nodeMetricsElem = nodeElem.querySelector(`.metrics-content`);
           if (nodeMetricsElem && nodeMetricsElem.offsetWidth < nodeMetricsElem.scrollWidth) {
             $scope.showLabels = false;

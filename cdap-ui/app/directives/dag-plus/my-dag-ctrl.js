@@ -344,7 +344,7 @@ angular.module(PKG.name + '.commons')
         if ($scope.showMetrics) {
 
           angular.forEach($scope.nodes, function (node) {
-            var elem = angular.element(document.getElementById(node.name)).children();
+            var elem = angular.element(document.getElementById(node.id || node.name)).children();
 
             var scope = $rootScope.$new();
             scope.data = {
@@ -1226,7 +1226,8 @@ angular.module(PKG.name + '.commons')
       for (let i = 0; i < endpoints.length; i++) {
         let endpoint = endpoints[i];
         if (endpoint.connections && endpoint.connections.length > 0) {
-          if (endpoint.connections[0].sourceId === node.name) {
+          if (endpoint.connections[0].sourceId === node.id ||
+              endpoint.connections[0].sourceId === node.name) {
             toggleConnections(endpoint);
             break;
           }
@@ -1657,7 +1658,7 @@ angular.module(PKG.name + '.commons')
           }
 
           oldNameToNewNameMap[node.name] = newName;
-          node.plugin.label = newName;
+          node.plugin.label = `${node.plugin.label}${randIndex}`;
           return Object.assign({}, node, {
             name: oldNameToNewNameMap[node.name],
             id: oldNameToNewNameMap[node.name]
