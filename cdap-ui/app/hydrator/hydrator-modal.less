@@ -214,11 +214,9 @@
               }
               .bottompanel-body {
                 padding: 0 0 10px 0;
-                overflow-y: auto;
                 height: ~"calc(100vh - 180px)";
-                &.plugin-properties-tab {
-                  overflow-y: hidden;
-                }
+                overflow-y: auto;
+                overflow-x: hidden;
                 .reference-tab { padding: 0 10px; }
 
                 .btn-hydrator {
@@ -237,6 +235,7 @@
 
                 @media (min-width: @screen-lg-min) {
                   padding: 0;
+                  overflow-y: auto;
                   .no-plugin-properties-message { margin: 10px; }
                   > p,
                   .validator-plugin > div { padding: 20px 10px; }
