@@ -14,7 +14,11 @@
  * the License.
  */
 
+<<<<<<< HEAD
 import { loginIfRequired, getGenericEndpoint, getArtifactsPoll, dataCy, setDefaultOldSchemaEditor } from '../helpers';
+=======
+import { loginIfRequired, getGenericEndpoint, getArtifactsPoll, setDefaultOldSchemaEditor } from '../helpers';
+>>>>>>> de48021b6dd (Fixes e2e tests)
 import { DEFAULT_GCP_PROJECTID, DEFAULT_GCP_SERVICEACCOUNT_PATH } from '../support/constants';
 import { INodeInfo, INodeIdentifier } from '../typings';
 
@@ -70,14 +74,11 @@ describe('Creating pipeline with joiner in pipeline studio', () => {
 
   beforeEach(() => {
     setDefaultOldSchemaEditor();
+    getArtifactsPoll(headers);
   });
 
   afterEach(() => {
     cy.clearLocalStorage();
-  });
-
-  beforeEach(() => {
-    getArtifactsPoll(headers);
   });
 
   after(() => {

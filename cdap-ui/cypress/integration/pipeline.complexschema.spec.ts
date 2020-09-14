@@ -14,7 +14,7 @@
  * the License.
  */
 
-import { loginIfRequired, getArtifactsPoll } from '../helpers';
+import { loginIfRequired, getArtifactsPoll, setDefaultOldSchemaEditor } from '../helpers';
 import { INodeInfo, INodeIdentifier } from '../typings';
 import { dataCy, setDefaultOldSchemaEditor } from '../helpers';
 import {
@@ -62,7 +62,12 @@ describe('Output Schema', () => {
   const schemaRow3 = dataCy('schema-row-2');
 
   beforeEach(() => {
+    setDefaultOldSchemaEditor();
     getArtifactsPoll(headers);
+  });
+
+  afterEach(() => {
+    cy.clearLocalStorage();
   });
 
   after(() => {
