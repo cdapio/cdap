@@ -130,7 +130,7 @@ class DAGPlusPlusNodesStore {
       nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
     if (!nodeConfig.id) {
-      nodeConfig.id = nodeConfig.plugin.label.replace(/[ \/]/g, '-');
+      nodeConfig.id = nodeConfig.plugin.label.replace(/[ \/]/g, '-') + '-' + this.uuid.v4();
     }
     this.addStateToHistory();
     switch (this.GLOBALS.pluginConvert[nodeConfig.type]) {
@@ -151,7 +151,7 @@ class DAGPlusPlusNodesStore {
     this.emitChange();
   }
   updateNode(nodeId, config) {
-    var matchNode = this.state.nodes.filter( node => node.name === nodeId);
+    var matchNode = this.state.nodes.filter( node => node.id === nodeId);
     if (!matchNode.length) {
       return;
     }

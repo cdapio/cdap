@@ -1363,7 +1363,12 @@ angular.module(PKG.name + '.commons')
 
         vm.instance.unbind('connectionDetached');
         selectedConnections = selectedConnections.filter(function(selectedConnObj) {
-          return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
+          return (
+            selectedConnObj.source &&
+            selectedConnObj.target &&
+            selectedConnObj.source.getAttribute('data-nodeid') !== node.id &&
+            selectedConnObj.target.getAttribute('data-nodeid') !== node.id
+          );
         });
         vm.instance.unmakeTarget(node.id);
         vm.instance.remove(node.id);
