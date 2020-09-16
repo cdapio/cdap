@@ -28,6 +28,8 @@ public interface ValidatingOutputFormat extends OutputFormatProvider {
    * Validates configurations of output format.
    *
    * @param context format context
+   *
+   * @throws IllegalArgumentException incase of validation errors.
    */
   void validate(FormatContext context);
 }
