@@ -35,6 +35,12 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
       },
     });
   });
+  beforeEach(() => {
+    Helpers.setDefaultOldSchemaEditor();
+  });
+  afterEach(() => {
+    cy.clearLocalStorage();
+  });
 
   after(() => {
     cy.window().then((win) => {
@@ -153,7 +159,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
       cy.get('body').type('{esc}', { release: true });
       cy.select_from_to(sourceNodeId, sinkNodeId);
       cy.get(Helpers.getNodeSelectorFromNodeIndentifier(sourceNodeId)).rightclick();
-      cy.get('[data-cy="menu-item-plugin copy"]:visible').click();
+      cy.get('[data-cy="menu-item-plugin copy"]:visible').click({ force: true });
       cy.get('#dag-container').rightclick({ force: true });
       cy.get('[data-cy="menu-item-pipeline-node-paste"]').then((el) => {
         expect(el[0].getAttribute('aria-disabled')).to.eq('false');

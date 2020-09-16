@@ -289,6 +289,11 @@ angular.module(PKG.name + '.commons')
       $timeout.cancel(highlightSelectedNodeConnectionsTimeout);
       highlightSelectedNodeConnectionsTimeout = $timeout(() => vm.highlightSelectedNodeConnections());
       vm.instance.clearDragSelection();
+      try {
+        $scope.$digest();
+      } catch(e) {
+        return;
+      }
     };
     vm.getPluginConfiguration = () => {
       if (!vm.selectedNode.length) {
@@ -344,7 +349,7 @@ angular.module(PKG.name + '.commons')
         if ($scope.showMetrics) {
 
           angular.forEach($scope.nodes, function (node) {
-            var elem = angular.element(document.getElementById(node.name)).children();
+            var elem = angular.element(document.getElementById(node.id || node.name)).children();
 
             var scope = $rootScope.$new();
             scope.data = {
@@ -562,6 +567,7 @@ angular.module(PKG.name + '.commons')
       el.style['transformOrigin'] = oString;
 
       instance.setZoom(zoom);
+      repaintEverything();
     }
 
     function initNodes() {
@@ -983,16 +989,17 @@ angular.module(PKG.name + '.commons')
 
     function deleteEndpoints(elementId) {
       vm.instance.unbind('connectionDetached');
-      let endpoint = vm.instance.getEndpoint(elementId);
+      let endpoint = vm.instance.getEndpoints(elementId);
 
-      if (endpoint && endpoint.connections) {
-        angular.forEach(endpoint.connections, (conn) => {
-          removeConnection(conn, false);
-          vm.instance.detach(conn);
+      if (endpoint) {
+        angular.forEach(endpoint, (ep) => {
+          angular.forEach(ep.connections, (conn) => {
+            removeConnection(conn, false);
+            vm.instance.detach(conn);
+          });
+          vm.instance.deleteEndpoint(ep);
         });
       }
-
-      vm.instance.deleteEndpoint(endpoint);
       vm.instance.bind('connectionDetached', removeConnection);
     }
 
@@ -1226,7 +1233,8 @@ angular.module(PKG.name + '.commons')
       for (let i = 0; i < endpoints.length; i++) {
         let endpoint = endpoints[i];
         if (endpoint.connections && endpoint.connections.length > 0) {
-          if (endpoint.connections[0].sourceId === node.name) {
+          if (endpoint.connections[0].sourceId === node.id ||
+              endpoint.connections[0].sourceId === node.name) {
             toggleConnections(endpoint);
             break;
           }
@@ -1352,23 +1360,36 @@ angular.module(PKG.name + '.commons')
           delete splitterNodesPorts[node.name];
         }
         let nodeType = node.plugin.type || node.type;
-        if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
+        if (nodeType  === 'condition') {
+          conditionNodes = conditionNodes.filter(conditionNode => conditionNode !== node.name);
+          deleteEndpoints('endpoint_' + node.id + '_condition_true');
+          deleteEndpoints('endpoint_' + node.id + '_condition_false');
+        } else if (nodeType === 'splittertransform' && node.outputSchema && Array.isArray(node.outputSchema)) {
           let portNames = node.outputSchema.map(port => port.name);
           let endpoints = portNames.map(portName => `endpoint_${node.id}_port_${portName}`);
           angular.forEach(endpoints, (endpoint) => {
             deleteEndpoints(endpoint);
           });
+        } else {
+          normalNodes = normalNodes.filter(normalNode => normalNode !== node.name);
+          deleteEndpoints('endpoint_' + node.id);
         }
 
         vm.instance.unbind('connectionDetached');
         selectedConnections = selectedConnections.filter(function(selectedConnObj) {
-          return selectedConnObj.sourceId !== node.name && selectedConnObj.targetId !== node.name;
+          return (
+            selectedConnObj.source &&
+            selectedConnObj.target &&
+            selectedConnObj.source.getAttribute('data-nodeid') !== node.id &&
+            selectedConnObj.target.getAttribute('data-nodeid') !== node.id
+          );
         });
         vm.instance.unmakeTarget(node.id);
         vm.instance.remove(node.id);
+        $scope.connections = $scope.connections
+          .filter(connection => connection.from !== node.id && connection.to !== node.id);
       });
       vm.instance.bind('connectionDetached', removeConnection);
-
       vm.clearSelectedNodes();
     };
 
@@ -1619,6 +1640,7 @@ angular.module(PKG.name + '.commons')
         console.error('Unable to paste to canvas: '+ err);
       }
       config.nodes = config.stages;
+      config.connections = config.connections || [];
       delete config.stages;
       vm.onPipelineContextMenuPaste(config);
     };
@@ -1643,12 +1665,8 @@ angular.module(PKG.name + '.commons')
 
           // change name
           let newName = `${node.plugin.label.replace(/[ \/]/g, '-')}`;
-          const filteredNodes = HydratorPlusPlusConfigStore.getNodes()
-            .filter(filteredNode => {
-              return [filteredNode.plugin.label, filteredNode.name, filteredNode.id].indexOf(newName) !== -1;
-            });
           const randIndex = Math.floor(Math.random() * 100);
-          newName = filteredNodes.length > 0 ? `${newName}${randIndex}` : newName;
+          newName = `${newName}${randIndex}`;
           let iconConfiguration = {};
           if (!node.icon) {
             iconConfiguration = Object.assign({}, {
@@ -1657,7 +1675,7 @@ angular.module(PKG.name + '.commons')
           }
 
           oldNameToNewNameMap[node.name] = newName;
-          node.plugin.label = newName;
+          node.plugin.label = `${node.plugin.label}${randIndex}`;
           return Object.assign({}, node, {
             name: oldNameToNewNameMap[node.name],
             id: oldNameToNewNameMap[node.name]
