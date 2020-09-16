@@ -234,7 +234,7 @@ function getMapSubType(type, internalTypeName): INode {
  */
 function parseMapType(type): IOrderedChildren {
   const t = getNonNullableType(type);
-  const keysType = t.keys;
+  const keysType = t.keys || 'string';
   const valuesType = t.values;
   const result: Record<string, INode> = {};
   const mapKeysSubType = getMapSubType(keysType, {
