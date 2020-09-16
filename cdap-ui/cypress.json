@@ -2,6 +2,7 @@
   "baseUrl": "http://localhost:11011",
   "env": {
     "host": "localhost",
+    "port": "11011",
     "RETRIES": 3
   },
   "video": false,
