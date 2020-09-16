@@ -34,6 +34,7 @@ import {
   AvroSchemaTypesEnum,
   getDefaultEmptyAvroSchema,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import { objectQuery } from 'services/helpers';
 
 type ITypeProperties = Record<string, any>;
 
@@ -412,7 +413,7 @@ function parseSubTree(field: IFieldType | IFieldTypeNullable): INode {
  */
 function parseSchema(avroSchema: ISchemaType): INode {
   const name = avroSchema.name || 'etlSchemaBody';
-  let fields = avroSchema.schema.fields;
+  let fields = objectQuery(avroSchema, 'schema', 'fields');
   if (!fields) {
     fields = getDefaultEmptyAvroSchema().schema.fields;
   }
