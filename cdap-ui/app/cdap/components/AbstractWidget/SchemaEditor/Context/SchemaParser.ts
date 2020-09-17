@@ -34,6 +34,7 @@ import {
   AvroSchemaTypesEnum,
   getDefaultEmptyAvroSchema,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
+import { objectQuery } from 'services/helpers';
 
 type ITypeProperties = Record<string, any>;
 
@@ -233,7 +234,7 @@ function getMapSubType(type, internalTypeName): INode {
  */
 function parseMapType(type): IOrderedChildren {
   const t = getNonNullableType(type);
-  const keysType = t.keys;
+  const keysType = t.keys || 'string';
   const valuesType = t.values;
   const result: Record<string, INode> = {};
   const mapKeysSubType = getMapSubType(keysType, {
@@ -412,7 +413,7 @@ function parseSubTree(field: IFieldType | IFieldTypeNullable): INode {
  */
 function parseSchema(avroSchema: ISchemaType): INode {
   const name = avroSchema.name || 'etlSchemaBody';
-  let fields = avroSchema.schema.fields;
+  let fields = objectQuery(avroSchema, 'schema', 'fields');
   if (!fields) {
     fields = getDefaultEmptyAvroSchema().schema.fields;
   }

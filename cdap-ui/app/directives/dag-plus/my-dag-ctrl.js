@@ -1608,7 +1608,11 @@ angular.module(PKG.name + '.commons')
     };
 
     vm.onKeyboardCopy = function onKeyboardCopy() {
-      const stages = vm.getPluginConfiguration().stages;
+      const pluginConfig = vm.getPluginConfiguration();
+      if (!pluginConfig) {
+        return;
+      }
+      const stages = pluginConfig.stages;
       const connections =  vm.getSelectedConnections();
       vm.nodeMenuOpen = null;
       window.CaskCommon.Clipboard.copyToClipBoard(JSON.stringify({
