@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
+import com.google.common.net.HttpHeaders;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
@@ -25,34 +26,54 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.spark.SparkExecutionContext;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkDriverService;
+import io.cdap.cdap.common.ServiceUnavailableException;
+import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.common.http.HttpMethod;
 import org.apache.spark.SparkConf;
+import org.apache.spark.scheduler.EventLoggingListener;
+import org.apache.spark.scheduler.SparkListenerApplicationStart;
 import org.apache.spark.streaming.DStreamGraph;
 import org.apache.twill.common.Threads;
 import org.apache.twill.internal.ServiceListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Option;
 import scala.Tuple2;
 import scala.collection.parallel.TaskSupport;
 import scala.collection.parallel.ThreadPoolTaskSupport;
 import scala.collection.parallel.mutable.ParArray;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
 import java.net.URI;
+import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import javax.ws.rs.core.MediaType;
 
 /**
  * Util class for common functions needed for Spark implementation.
@@ -64,6 +85,7 @@ public final class SparkRuntimeUtils {
   public static final String PYSPARK_SECRET_FILE_NAME = "cdap.py4j.gateway.secret.txt";
 
   private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
+  private static final int CHUNK_SIZE = 1 << 15;  // 32K
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeUtils.class);
   private static final Gson GSON = new Gson();
 
@@ -174,6 +196,7 @@ public final class SparkRuntimeUtils {
     // (via SparkMainWraper).
     // We use a service listener so that it can handle all cases.
     final CountDownLatch mainThreadCallLatch = new CountDownLatch(1);
+    final CountDownLatch secStopLatch = new CountDownLatch(1);
     driverService.addListener(new ServiceListenerAdapter() {
 
       @Override
@@ -187,24 +210,28 @@ public final class SparkRuntimeUtils {
       }
 
       private void handleStopped() {
-        // Avoid interrupt/join on the current thread
-        if (Thread.currentThread() != mainThread) {
-          mainThread.interrupt();
-          // If it is spark streaming, wait for the user class call returns from the main thread.
-          if (SparkRuntimeEnv.getStreamingContext().isDefined()) {
-            Uninterruptibles.awaitUninterruptibly(mainThreadCallLatch);
+        try {
+          // Avoid interrupt/join on the current thread
+          if (Thread.currentThread() != mainThread) {
+            mainThread.interrupt();
+            // If it is spark streaming, wait for the user class call returns from the main thread.
+            if (SparkRuntimeEnv.getStreamingContext().isDefined()) {
+              Uninterruptibles.awaitUninterruptibly(mainThreadCallLatch);
+            }
           }
-        }
 
-        // Close the SparkExecutionContext (it will stop all the SparkContext and release all resources)
-        if (sec instanceof AutoCloseable) {
-          try {
-            ((AutoCloseable) sec).close();
-          } catch (Exception e) {
-            // Just log. It shouldn't throw, and if it does (due to bug), nothing much can be done
-            LOG.warn("Exception raised when calling {}.close() for program run {}.",
-                     sec.getClass().getName(), runtimeContext.getProgramRunId(), e);
+          // Close the SparkExecutionContext (it will stop all the SparkContext and release all resources)
+          if (sec instanceof AutoCloseable) {
+            try {
+              ((AutoCloseable) sec).close();
+            } catch (Exception e) {
+              // Just log. It shouldn't throw, and if it does (due to bug), nothing much can be done
+              LOG.warn("Exception raised when calling {}.close() for program run {}.",
+                       sec.getClass().getName(), runtimeContext.getProgramRunId(), e);
+            }
           }
+        } finally {
+          secStopLatch.countDown();
         }
       }
     }, Threads.SAME_THREAD_EXECUTOR);
@@ -232,9 +259,69 @@ public final class SparkRuntimeUtils {
         if (failure && driverService instanceof SparkDriverService) {
           ((SparkDriverService) driverService).stopWithoutComplete();
         } else {
-          driverService.stopAndWait();
+          driverService.stop();
+        }
+
+        // Wait for the spark execution context to stop to make sure everything related
+        // to the spark execution is shutdown properly before returning.
+        // When this method returns, the driver's main thread returns, which will have system services shutdown
+        // and process terminated. If system services stopped concurrently with the execution context, we may have some
+        // logs and tasks missing.
+        if (!Uninterruptibles.awaitUninterruptibly(secStopLatch, 30, TimeUnit.SECONDS)) {
+          LOG.warn("Failed to stop the spark execution context in 30 seconds");
         }
       }
+    };
+  }
+
+  /**
+   * Adds a {@link EventLoggingListener} to the Spark context.
+   *
+   * @param runtimeContext the {@link SparkRuntimeContext} for connecting to CDAP services
+   * @return A {@link Closeable} which should be called when the Spark application completed
+   */
+  public static Closeable addEventLoggingListener(SparkRuntimeContext runtimeContext) throws IOException {
+    // If upload event logs is not enabled, just return a dummy closeable
+    if (!runtimeContext.getCConfiguration().getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED)) {
+      return () -> { };
+    }
+
+    SparkConf sparkConf = new SparkConf();
+    sparkConf.set("spark.eventLog.enabled", Boolean.toString(true));
+    sparkConf.set("spark.eventLog.compress", Boolean.toString(true));
+
+    ProgramRunId programRunId = runtimeContext.getProgramRunId();
+
+    File eventLogDir = Files.createTempDirectory("spark-events").toFile();
+    LOG.debug("Spark events log directory for {} is {}", programRunId, eventLogDir);
+
+    // EventLoggingListener is Scala package private[spark] class.
+    // However, since JVM bytecode doesn't really have this type of cross package private support, the class
+    // is actually public class. This is why we can access it in Java code.
+    EventLoggingListener listener = new EventLoggingListener(Long.toString(System.currentTimeMillis()), Option.empty(),
+                                                             eventLogDir.toURI(), sparkConf) {
+      @Override
+      public void onApplicationStart(SparkListenerApplicationStart event) {
+        // Rewrite the application start event with identifiable names based on the program run id such that
+        // it can be tied back to the program run.
+        SparkListenerApplicationStart startEvent = new SparkListenerApplicationStart(
+          String.format("%s.%s.%s.%s",
+                        programRunId.getNamespace(),
+                        programRunId.getApplication(),
+                        programRunId.getType().getPrettyName().toLowerCase(),
+                        programRunId.getProgram()),
+          Option.apply(programRunId.getRun()),
+          event.time(), event.sparkUser(), event.appAttemptId(), event.driverLogs());
+        super.onApplicationStart(startEvent);
+      }
+    };
+    listener.start();
+    SparkRuntimeEnv.addSparkListener(listener);
+
+    return () -> {
+      listener.stop();
+      uploadEventLogs(eventLogDir, runtimeContext);
+      DirUtils.deleteDirectoryContents(eventLogDir);
     };
   }
 
@@ -261,5 +348,62 @@ public final class SparkRuntimeUtils {
         notifyStopped();
       }
     };
+  }
+
+  /**
+   * Uploads the spark event logs through the runtime service.
+   */
+  private static void uploadEventLogs(File eventLogDir, SparkRuntimeContext runtimeContext) throws IOException {
+
+    ProgramRunId programRunId = runtimeContext.getProgramRunId();
+
+    // Find the event file to upload. There should only be one for the current application.
+    File eventFile = Optional.ofNullable(eventLogDir.listFiles())
+      .map(Arrays::stream)
+      .flatMap(Stream::findFirst)
+      .orElse(null);
+
+    if (eventFile == null) {
+      // This shouldn't happen. If it does for some reason, just log and return.
+      LOG.warn("Cannot find event logs file in {} for program run {}", eventLogDir, programRunId);
+      return;
+    }
+
+    LOG.debug("Uploading event logs file {} for program run {}", eventFile, programRunId);
+
+    RemoteClient remoteClient = new RemoteClient(runtimeContext.getDiscoveryServiceClient(), Constants.Service.RUNTIME,
+                                                 new DefaultHttpRequestConfig(false),
+                                                 Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
+    String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/spark-event-logs/%s",
+                                programRunId.getNamespace(),
+                                programRunId.getApplication(),
+                                programRunId.getVersion(),
+                                programRunId.getType().getCategoryName(),
+                                programRunId.getProgram(),
+                                programRunId.getRun(),
+                                eventFile.getName());
+
+    Retries.runWithRetries(() -> {
+      // Stream out the messages
+      HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
+      try {
+        urlConn.setChunkedStreamingMode(CHUNK_SIZE);
+        urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM);
+
+        try (OutputStream os = urlConn.getOutputStream()) {
+          Files.copy(eventFile.toPath(), os);
+        }
+
+        if (urlConn.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
+          throw new ServiceUnavailableException("Runtime service is not available");
+        }
+
+        if (urlConn.getResponseCode() != 200) {
+          throw new IOException("Response code is not 200. Received " + urlConn.getResponseCode());
+        }
+      } finally {
+        urlConn.disconnect();
+      }
+    }, RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
   }
 }

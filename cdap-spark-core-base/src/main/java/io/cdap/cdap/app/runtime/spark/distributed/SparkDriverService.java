@@ -84,7 +84,7 @@ public class SparkDriverService extends AbstractExecutionThreadService {
    */
   public void stopWithoutComplete() {
     stopWithoutComplete = true;
-    stopAndWait();
+    stop();
   }
 
   @Override

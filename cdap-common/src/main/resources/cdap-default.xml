@@ -492,6 +492,23 @@
   </property>
 
   <property>
+    <name>app.program.spark.event.logs.enabled</name>
+    <value>false</value>
+    <description>
+      Enables spark event logs collection
+    </description>
+  </property>
+
+  <property>
+    <name>app.program.spark.event.logs.dir</name>
+    <value>spark-histories</value>
+    <description>
+      When ${app.program.spark.event.logs.enabled} is true, the directory under the ${root.namespace}
+      for storing the logs.
+    </description>
+  </property>
+
+  <property>
     <name>app.program.spark.yarn.client.rewrite.enabled</name>
     <value>true</value>
     <description>
