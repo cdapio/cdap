@@ -45,6 +45,8 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.avro.Schema;
 import org.apache.avro.io.Decoder;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +54,7 @@ import java.io.EOFException;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -59,6 +62,7 @@ import java.util.List;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
+import javax.ws.rs.core.MediaType;
 
 /**
  * The http handler for handling runtime requests from the program runtime.
@@ -67,18 +71,25 @@ import javax.ws.rs.PathParam;
   "/runtime/namespaces/{namespace}/apps/{app}/versions/{version}/{program-type}/{program}/runs/{run}")
 public class RuntimeHandler extends AbstractHttpHandler {
 
+  private static final Logger LOG = LoggerFactory.getLogger(RuntimeHandler.class);
+
   private final MessagingContext messagingContext;
   private final RuntimeRequestValidator requestValidator;
   private final RemoteExecutionLogProcessor logProcessor;
   private final String logsTopicPrefix;
+  private final boolean eventLogsEnabled;
+  private final Location eventLogsBaseLocation;
 
   @Inject
   RuntimeHandler(CConfiguration cConf, MessagingService messagingService,
-                 RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator) {
+                 RemoteExecutionLogProcessor logProcessor, RuntimeRequestValidator requestValidator,
+                 LocationFactory locationFactory) {
     this.requestValidator = requestValidator;
     this.logProcessor = logProcessor;
     this.messagingContext = new MultiThreadMessagingContext(messagingService);
     this.logsTopicPrefix = cConf.get(Constants.Logging.TMS_TOPIC_PREFIX);
+    this.eventLogsEnabled = cConf.getBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED);
+    this.eventLogsBaseLocation = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR));
   }
 
   @Override
@@ -92,6 +103,14 @@ public class RuntimeHandler extends AbstractHttpHandler {
     }
     if (schema.getType() != Schema.Type.ARRAY || schema.getElementType().getType() != Schema.Type.BYTES) {
       throw new IllegalStateException("MonitorRequest schema should be an array of bytes");
+    }
+
+    if (eventLogsEnabled) {
+      try {
+        eventLogsBaseLocation.mkdirs();
+      } catch (IOException e) {
+        throw new RuntimeException("Failed to create the spark event logs directory " + eventLogsBaseLocation, e);
+      }
     }
   }
 
@@ -136,12 +155,75 @@ public class RuntimeHandler extends AbstractHttpHandler {
   }
 
   /**
+   * Handles call for Spark event logs upload.
+   */
+  @Path("/spark-event-logs/{id}")
+  @POST
+  public BodyConsumer writeSparkEventLogs(HttpRequest request, HttpResponder responder,
+                                          @PathParam("namespace") String namespace,
+                                          @PathParam("app") String app,
+                                          @PathParam("version") String version,
+                                          @PathParam("program-type") String programType,
+                                          @PathParam("program") String program,
+                                          @PathParam("run") String run,
+                                          @PathParam("id") String id) throws Exception {
+    if (!eventLogsEnabled) {
+      throw new UnsupportedOperationException("Spark event logs collection is not enabled");
+    }
+
+    if (!MediaType.APPLICATION_OCTET_STREAM.equals(request.headers().get(HttpHeaderNames.CONTENT_TYPE))) {
+      throw new BadRequestException("Only application/octet-stream content type is supported.");
+    }
+    ApplicationId appId = new NamespaceId(namespace).app(app, version);
+    ProgramRunId programRunId = new ProgramRunId(appId,
+                                                 ProgramType.valueOfCategoryName(programType, BadRequestException::new),
+                                                 program, run);
+    requestValidator.validate(programRunId, request);
+
+    Location location = eventLogsBaseLocation.append(String.format("%s-%s-%s-%s-%s", namespace, app, program, run, id));
+    if (location.exists()) {
+      LOG.debug("Deleting event logs location {} for program run {}", location, programRunId);
+      location.delete(true);
+    }
+    OutputStream os = location.getOutputStream();
+
+    return new BodyConsumer() {
+      @Override
+      public void chunk(ByteBuf request, HttpResponder responder) {
+        try {
+          request.readBytes(os, request.readableBytes());
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to write spark event logs to " + location, e);
+        }
+      }
+
+      @Override
+      public void finished(HttpResponder responder) {
+        try {
+          os.close();
+        } catch (IOException e) {
+          throw new RuntimeException("Failed to close spark event logs output stream for " + location, e);
+        }
+      }
+
+      @Override
+      public void handleError(Throwable cause) {
+        LOG.error("Failed to write spark event logs for {}", programRunId, cause);
+        Closeables.closeQuietly(os);
+        try {
+          location.delete();
+        } catch (IOException e) {
+          LOG.error("Failed to delete obsolete event logs location {}", location, e);
+        }
+      }
+    };
+  }
+
+  /**
    * A {@link BodyConsumer} to consume request from program runtime for writing messages to TMS.
    * It decodes and write messages to TMS in a streaming micro-batching fashion.
    */
   private static final class MessageBodyConsumer extends BodyConsumer {
-
-    private static final Logger LOG = LoggerFactory.getLogger(MessageBodyConsumer.class);
 
     private final TopicId topicId;
     private final PayloadProcessor payloadProcessor;

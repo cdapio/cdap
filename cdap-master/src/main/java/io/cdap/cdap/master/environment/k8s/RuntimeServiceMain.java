@@ -23,6 +23,7 @@ import com.google.inject.Module;
 import io.cdap.cdap.app.guice.RuntimeServerModule;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.data.runtime.SystemDatasetRuntimeModule;
@@ -57,6 +58,7 @@ public class RuntimeServiceMain extends AbstractServiceMain<EnvironmentOptions> 
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options, CConfiguration cConf) {
     return Arrays.asList(
+      new DFSLocationModule(),
       new MessagingClientModule(),
       new SystemDatasetRuntimeModule().getStandaloneModules(),
       getDataFabricModule(),

@@ -35,6 +35,7 @@ import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
+import io.cdap.cdap.common.guice.LocalLocationModule;
 import io.cdap.cdap.common.metrics.NoOpMetricsCollectionService;
 import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.internal.app.program.MessagingProgramStateWriter;
@@ -113,6 +114,7 @@ public class RuntimeClientServiceTest {
     // Injector for the server side
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
+      new LocalLocationModule(),
       new MessagingServerRuntimeModule().getInMemoryModules(),
       new RuntimeServerModule() {
         @Override

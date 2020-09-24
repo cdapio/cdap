@@ -16,17 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark
 
-import java.io.Closeable
-import java.io.File
-import java.lang
-import java.net.URI
-import java.net.URL
-import java.util
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-
 import io.cdap.cdap.api._
 import io.cdap.cdap.api.app.ApplicationSpecification
 import io.cdap.cdap.api.data.batch.BatchWritable
@@ -60,7 +49,6 @@ import io.cdap.cdap.app.runtime.spark.preview.SparkDataTracer
 import io.cdap.cdap.app.runtime.spark.service.DefaultSparkHttpServiceContext
 import io.cdap.cdap.app.runtime.spark.service.SparkHttpServiceServer
 import io.cdap.cdap.common.conf.ConfigurationUtil
-import io.cdap.cdap.common.utils.DirUtils
 import io.cdap.cdap.data.LineageDatasetContext
 import io.cdap.cdap.data2.metadata.lineage.AccessType
 import io.cdap.cdap.internal.app.runtime.DefaultTaskLocalizationContext
@@ -74,6 +62,17 @@ import org.apache.spark.scheduler._
 import org.apache.tephra.TransactionAware
 import org.apache.twill.api.RunId
 import org.slf4j.LoggerFactory
+
+import java.io.Closeable
+import java.io.File
+import java.lang
+import java.net.URI
+import java.net.URL
+import java.util
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -109,6 +108,9 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
   private val authenticationContext = runtimeContext.getAuthenticationContext
   private val compilerCleanupManager = new SparkCompilerCleanupManager
   private val interpreterCount = new AtomicInteger(0)
+
+  // Optionally add the event logger based on the cConf in the runtime context
+  private val eventLoggerCloseable = SparkRuntimeUtils.addEventLoggingListener(runtimeContext)
 
   @volatile
   private var sparkHttpServiceServer: Option[SparkHttpServiceServer] = None
@@ -187,6 +189,7 @@ abstract class AbstractSparkExecutionContext(sparkClassLoader: SparkClassLoader,
         sparkDriveHttpService.stopAndWait()
       } finally {
         compilerCleanupManager.close()
+        eventLoggerCloseable.close()
       }
     }
   }

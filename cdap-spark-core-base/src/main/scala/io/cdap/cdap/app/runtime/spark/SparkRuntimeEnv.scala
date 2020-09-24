@@ -17,6 +17,7 @@
 package io.cdap.cdap.app.runtime.spark
 
 import com.google.common.reflect.TypeToken
+import javax.annotation.Nullable
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.scheduler.SparkListener
@@ -27,11 +28,10 @@ import org.slf4j.LoggerFactory
 import java.lang.Thread.UncaughtExceptionHandler
 import java.util
 import java.util.Properties
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
-import javax.annotation.Nullable
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable
@@ -50,9 +50,8 @@ object SparkRuntimeEnv {
   private val LOG = LoggerFactory.getLogger(SparkRuntimeEnv.getClass)
   private var stopped = false
   private val properties = new Properties
-  private val sparkContextLatch = new CountDownLatch(1)
-  private var sparkContext: Option[SparkContext] = None
-  private var streamingContext: Option[StreamingContext] = None
+  private val sparkContext = new CompletableFuture[SparkContext]()
+  private val streamingContext = new CompletableFuture[StreamingContext]()
   private val batchedWALs = new mutable.ListBuffer[AnyRef]
   private val rateControllers = new mutable.ListBuffer[AnyRef]
   private val pyMonitorThreads = new mutable.ListBuffer[Thread]
@@ -110,12 +109,11 @@ object SparkRuntimeEnv {
         throw new IllegalStateException("Spark program is already stopped")
       }
 
-      if (sparkContext.isDefined) {
+      if (sparkContext.isDone) {
         throw new IllegalStateException("SparkContext was already created")
       }
 
-      sparkContext = Some(context)
-      sparkContextLatch.countDown()
+      sparkContext.complete(context)
     }
 
     // For Spark 1.2, it doesn't support `spark.extraListeners` setting.
@@ -141,7 +139,7 @@ object SparkRuntimeEnv {
       }
 
       // Spark doesn't allow multiple StreamingContext instances concurrently, hence we don't need to check in here
-      streamingContext = Some(context)
+      streamingContext.complete(context)
     }
   }
 
@@ -199,9 +197,7 @@ object SparkRuntimeEnv {
     * @throws IllegalStateException if there is no SparkContext available.
     */
   def getContext: SparkContext = {
-    this.synchronized {
-      sparkContext.getOrElse(throw new IllegalStateException("SparkContext is not available"))
-    }
+    Option.apply(sparkContext.getNow(null)).getOrElse(throw new IllegalStateException("SparkContext is not available"))
   }
 
   /**
@@ -210,17 +206,14 @@ object SparkRuntimeEnv {
     * otherwise deadlock might occur.
     */
   def waitForContext: SparkContext = {
-    sparkContextLatch.await()
-    getContext
+    sparkContext.get
   }
 
   /**
     * Returns an [[scala.Option]] which contains the [[org.apache.spark.streaming.StreamingContext]] if there one.
     */
   def getStreamingContext: Option[StreamingContext] = {
-    this.synchronized {
-      streamingContext
-    }
+    Option.apply(streamingContext.getNow(null))
   }
 
   /**
@@ -231,12 +224,10 @@ object SparkRuntimeEnv {
     * @return `true` if successfully set the property; `false` otherwise
     */
   def setLocalProperty(key: String, value: String): Boolean = {
-    this.synchronized {
-      sparkContext.fold(false)(context => {
-        context.setLocalProperty(key, value)
-        true
-      })
-    }
+    Option.apply(sparkContext.getNow(null)).fold(false)(context => {
+      context.setLocalProperty(key, value)
+      true
+    })
   }
 
   /**
@@ -247,9 +238,7 @@ object SparkRuntimeEnv {
     */
   @Nullable
   def getLocalProperty(key: String): String = {
-    this.synchronized {
-      sparkContext.map(_.getLocalProperty(key)).orNull
-    }
+    Option.apply(sparkContext.getNow(null)).map(_.getLocalProperty(key)).orNull
   }
 
   /**
@@ -259,16 +248,14 @@ object SparkRuntimeEnv {
     * @return [[scala.Some]] [[org.apache.spark.SparkContext]] if there is a one
     */
   def stop(): Option[SparkContext] = {
-    var sc: Option[SparkContext] = None
-    var ssc: Option[StreamingContext] = None
-
     this.synchronized {
       if (!stopped) {
         stopped = true
-        sc = sparkContext
-        ssc = streamingContext
       }
     }
+
+    val sc = Option.apply(sparkContext.getNow(null))
+    val ssc = Option.apply(streamingContext.getNow(null))
 
     try {
       ssc.foreach(_.stop(false, false))
@@ -285,8 +272,8 @@ object SparkRuntimeEnv {
 
     this.synchronized {
       sparkListeners.clear()
-      sparkContext;
     }
+    sc
   }
 
   /**
