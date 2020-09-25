@@ -82,6 +82,7 @@ export default class CollapsibleSidebar extends Component {
       >
         <div className={classnames('collapsible-content', { 'show-content': this.state.expanded })}>
           <div
+            data-cy={this.props['data-cy']}
             className={classnames('collapsible-toggle-tab text-center', this.props.toggleTabClass)}
             onClick={this.onToggleClick}
           >
@@ -111,4 +112,5 @@ CollapsibleSidebar.propTypes = {
   children: PropTypes.any,
   onlyOneCanOpen: PropTypes.bool,
   onToggle: PropTypes.func,
+  'data-cy': PropTypes.string,
 };

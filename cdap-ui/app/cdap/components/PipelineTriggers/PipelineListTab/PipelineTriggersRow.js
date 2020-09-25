@@ -129,7 +129,11 @@ export default class PipelineTriggersRow extends Component {
 
     if (!this.props.isExpanded) {
       return (
-        <div className="pipeline-triggers-row" onClick={onToggle.bind(null, pipelineRow)}>
+        <div
+          className="pipeline-triggers-row"
+          onClick={onToggle.bind(null, pipelineRow)}
+          data-cy={`${pipelineRow}-collapsed`}
+        >
           <div className="caret-container">
             <IconSVG name="icon-caret-right" />
           </div>
@@ -141,7 +145,7 @@ export default class PipelineTriggersRow extends Component {
     let enabledButtonDisabled = !this.state.completed && !this.state.killed && !this.state.failed;
 
     return (
-      <div className="pipeline-triggers-expanded-row">
+      <div className="pipeline-triggers-expanded-row" data-cy={`${pipelineRow}-expanded`}>
         <div className="header-row" onClick={onToggle.bind(null, null)}>
           <div className="caret-container">
             <IconSVG name="icon-caret-down" />
@@ -184,6 +188,7 @@ export default class PipelineTriggersRow extends Component {
             className="btn btn-primary"
             disabled={enabledButtonDisabled}
             onClick={this.enableScheduleClick}
+            data-cy="enable-trigger-btn"
           >
             {T.translate(`${PREFIX}.buttonLabel`)}
           </button>

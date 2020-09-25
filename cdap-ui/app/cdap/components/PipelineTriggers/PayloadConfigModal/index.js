@@ -92,7 +92,11 @@ export default class PayloadConfigModal extends Component {
 
     return (
       <div className="payload-config-modal">
-        <button className="btn btn-link" onClick={this.toggle}>
+        <button
+          className="btn btn-link"
+          onClick={this.toggle}
+          data-cy={this.props.disabled ? 'view-payload-btn' : 'trigger-config-btn'}
+        >
           {label}
         </button>
         {this.renderModal()}
