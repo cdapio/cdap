@@ -129,6 +129,7 @@ function parseArrayType(type): IOrderedChildren {
   }
   return {
     [id]: {
+      name: t.items.name,
       internalType: InternalTypesEnum.ARRAY_COMPLEX_TYPE_ROOT,
       id,
       nullable,
@@ -199,6 +200,7 @@ function getMapSubType(type, internalTypeName): INode {
     const complexType = getComplexTypeName(type);
     const nullable = isNullable(type);
     return {
+      name: type.name,
       children: parseComplexType(type),
       id,
       internalType: internalTypeName.complexType,

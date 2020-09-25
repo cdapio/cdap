@@ -41,6 +41,7 @@ import {
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { INode } from 'components/AbstractWidget/SchemaEditor/Context/SchemaParser';
 import isEqual from 'lodash/isEqual';
+import { doesRecordTypeNameConformToSpec } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
 
 const styles = () => {
   return {
@@ -89,6 +90,13 @@ class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditor
   public componentDidMount() {
     if (this.validate) {
       this.validate(this.schema.getFlatSchema()[1], this.schema.getSchemaTree());
+    }
+    if (doesRecordTypeNameConformToSpec(this.schema.getFlatSchema())) {
+      this.props.onChange({
+        tree: this.schema.getSchemaTree(),
+        flat: this.schema.getFlatSchema(),
+        avroSchema: this.schema.getAvroSchema(),
+      });
     }
   }
 
