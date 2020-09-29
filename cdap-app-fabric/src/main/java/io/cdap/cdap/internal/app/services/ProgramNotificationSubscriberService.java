@@ -409,6 +409,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
       getEmitMetricsRunnable(programRunId, recordedRunRecord,
                              STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+
+      // emit provisioning time metric
+      long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+      SystemArguments
+        .getProfileIdFromArgs(programRunId.getNamespaceId(), recordedRunRecord.getSystemArgs())
+        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime));
+
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
                                                                                    recordedRunRecord.getStatus()));
@@ -670,6 +677,22 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
     metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PROGRAM_PROVISIONING_DELAY_SECONDS,
                                                     provisioningTime);
   }
+
+  /**
+   * Emit the pipeline run time metric. The tags are constructed with the program run id and program run status.
+   */
+  private void emitRunTimeMetric(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
+                                 long runTime) {
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace())
+      .put(Constants.Metrics.Tag.APP, programRunId.getApplication())
+      .put(Constants.Metrics.Tag.COMPONENT, Constants.Service.APP_FABRIC_HTTP)
+      .put(Constants.Metrics.Tag.STATUS, programRunStatus.name())
+      .build();
+    metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PROGRAM_RUN_TIME_SECONDS,
+                                                    runTime);
+  }
+
 
   /**
    * Returns an instance of {@link AppMetadataStore}.

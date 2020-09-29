@@ -78,6 +78,7 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.ProgramType;
@@ -150,7 +151,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
                         @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
                         PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
                         PreviewRunStopper previewRunStopper, MessagingService messagingService,
-                        PreviewDataCleanupService previewDataCleanupService) {
+                        PreviewDataCleanupService previewDataCleanupService,
+                        MetricsCollectionService metricsCollectionService) {
     this.previewCConf = previewCConf;
     this.previewHConf = previewHConf;
     this.previewSConf = previewSConf;
@@ -165,6 +167,7 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     this.previewRunStopper = previewRunStopper;
     this.messagingService = messagingService;
     this.previewDataCleanupService = previewDataCleanupService;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -172,7 +175,6 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
     previewInjector = createPreviewInjector();
     StoreDefinition.createAllTables(previewInjector.getInstance(StructuredTableAdmin.class),
                                     previewInjector.getInstance(StructuredTableRegistry.class), false);
-    metricsCollectionService = previewInjector.getInstance(MetricsCollectionService.class);
     metricsCollectionService.start();
     logAppender = previewInjector.getInstance(LogAppender.class);
     logAppender.start();
@@ -334,6 +336,11 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
             .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS))
             .toInstance(messagingService);
           expose(MessagingService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_TMS));
+
+          bind(MetricsCollectionService.class)
+            .annotatedWith(Names.named(PreviewConfigModule.GLOBAL_METRICS))
+            .toInstance(metricsCollectionService);
+          expose(MetricsCollectionService.class).annotatedWith(Names.named(PreviewConfigModule.GLOBAL_METRICS));
         }
       },
       new AbstractModule() {

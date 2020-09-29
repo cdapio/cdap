@@ -67,6 +67,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   private final int maxRetriesOnError;
   private int errorCount = 0;
   private String erroredMessageId = null;
+  private MetricsCollectionService metricsCollectionService;
 
   /**
    * Constructor.
@@ -74,7 +75,9 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   @Inject
   PreviewDataSubscriberService(CConfiguration cConf,
                                @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService,
-                               MetricsCollectionService metricsCollectionService, PreviewStore previewStore,
+                               @Named(PreviewConfigModule.GLOBAL_METRICS) MetricsCollectionService
+                                 metricsCollectionService,
+                               PreviewStore previewStore,
                                TransactionRunner transactionRunner) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Preview.MESSAGING_TOPIC)),
@@ -94,6 +97,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
     this.previewStore = previewStore;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnError = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -174,6 +178,21 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   }
 
   /**
+   * Emit the preview run time metric.
+   */
+  private void emitRunTimeMetric(PreviewStatus previewStatus, ApplicationId applicationId) {
+    long runTime = (previewStatus.getEndTime() - previewStatus.getStartTime()) / 1000;
+    Map<String, String> tags = ImmutableMap.<String, String>builder()
+      .put(Constants.Metrics.Tag.NAMESPACE, NamespaceId.SYSTEM.getNamespace())
+      .put(Constants.Metrics.Tag.APP, applicationId.getApplication())
+      .put(Constants.Metrics.Tag.COMPONENT, Constants.Service.PREVIEW_HTTP)
+      .put(Constants.Metrics.Tag.STATUS, previewStatus.getStatus().name())
+      .build();
+    metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PROGRAM_RUN_TIME_SECONDS,
+                                                    runTime);
+  }
+
+  /**
    * The {@link PreviewMessageProcessor} for processing preview data.
    */
   private final class PreviewDataProcessor implements PreviewMessageProcessor {
@@ -224,6 +243,9 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
         return;
       }
       previewStore.setPreviewStatus(applicationId, payload);
+      if (payload.getStatus().isEndState()) {
+        emitRunTimeMetric(payload, applicationId);
+      }
     }
   }
 
