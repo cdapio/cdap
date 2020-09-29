@@ -24,6 +24,7 @@ import com.google.inject.name.Named;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.app.preview.PreviewStatus;
@@ -32,6 +33,7 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -67,6 +69,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   private final int maxRetriesOnError;
   private int errorCount = 0;
   private String erroredMessageId = null;
+  private MetricsCollectionService metricsCollectionService;
 
   /**
    * Constructor.
@@ -74,7 +77,9 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   @Inject
   PreviewDataSubscriberService(CConfiguration cConf,
                                @Named(PreviewConfigModule.GLOBAL_TMS) MessagingService messagingService,
-                               MetricsCollectionService metricsCollectionService, PreviewStore previewStore,
+                               @Named(PreviewConfigModule.GLOBAL_METRICS) MetricsCollectionService
+                                 metricsCollectionService,
+                               PreviewStore previewStore,
                                TransactionRunner transactionRunner) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Preview.MESSAGING_TOPIC)),
@@ -94,6 +99,7 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
     this.previewStore = previewStore;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnError = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -174,6 +180,17 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
   }
 
   /**
+   * Emit the preview run time metric.
+   */
+  private void emitRunTimeMetric(PreviewStatus previewStatus, ApplicationId applicationId, ProgramRunId programRunId) {
+    long runTime = (previewStatus.getEndTime() - previewStatus.getStartTime()) / 1000;
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.STATUS, previewStatus.getStatus().name());
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+    metricsContext.gauge(Constants.Metrics.Preview.RUN_TIME_SECONDS, runTime);
+  }
+
+  /**
    * The {@link PreviewMessageProcessor} for processing preview data.
    */
   private final class PreviewDataProcessor implements PreviewMessageProcessor {
@@ -224,6 +241,9 @@ public class PreviewDataSubscriberService extends AbstractMessagingSubscriberSer
         return;
       }
       previewStore.setPreviewStatus(applicationId, payload);
+      if (payload.getStatus().isEndState()) {
+        emitRunTimeMetric(payload, applicationId, previewStore.getProgramRunId(applicationId));
+      }
     }
   }
 

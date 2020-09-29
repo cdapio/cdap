@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.preview;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
 import io.cdap.cdap.app.preview.PreviewRequestQueue;
@@ -80,11 +81,12 @@ public class DistributedPreviewManager extends DefaultPreviewManager implements 
                             @Named(PreviewConfigModule.PREVIEW_SCONF) SConfiguration previewSConf,
                             PreviewRequestQueue previewRequestQueue, PreviewStore previewStore,
                             PreviewRunStopper previewRunStopper, MessagingService messagingService,
+                            MetricsCollectionService metricsCollectionService,
                             PreviewDataCleanupService previewDataCleanupService,
                             TwillRunner twillRunner) {
     super(discoveryService, datasetFramework, transactionSystemClient, authorizerInstantiator, authorizationEnforcer,
           previewLevelDBTableService, previewCConf, previewHConf, previewSConf, previewRequestQueue, previewStore,
-          previewRunStopper, messagingService, previewDataCleanupService);
+          previewRunStopper, messagingService, previewDataCleanupService, metricsCollectionService);
 
     this.cConf = cConf;
     this.hConf = hConf;

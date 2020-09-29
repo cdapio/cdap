@@ -23,6 +23,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.schedule.SchedulableProgramType;
 import io.cdap.cdap.api.workflow.ScheduleProgramInfo;
 import io.cdap.cdap.api.workflow.WorkflowActionNode;
@@ -39,6 +40,7 @@ import io.cdap.cdap.common.utils.ProjectInfo;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
+import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
@@ -409,6 +411,13 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
 
       getEmitMetricsRunnable(programRunId, recordedRunRecord,
                              STATUS_METRICS_NAME.get(programRunStatus)).ifPresent(runnables::add);
+
+      // emit program run time metric.
+      long runTime = endTimeSecs - RunIds.getTime(programRunId.getRun(), TimeUnit.SECONDS);
+      SystemArguments
+        .getProfileIdFromArgs(programRunId.getNamespaceId(), recordedRunRecord.getSystemArgs())
+        .ifPresent(profileId -> emitRunTimeMetric(programRunId, programRunStatus, runTime));
+
       runnables.add(() -> {
         programCompletionNotifiers.forEach(notifier -> notifier.onProgramCompleted(programRunId,
                                                                                    recordedRunRecord.getStatus()));
@@ -669,6 +678,17 @@ public class ProgramNotificationSubscriberService extends AbstractNotificationSu
       .build();
     metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PROGRAM_PROVISIONING_DELAY_SECONDS,
                                                     provisioningTime);
+  }
+
+  /**
+   * Emit the program run time metric. The tags are constructed with the program run id and program run status.
+   */
+  private void emitRunTimeMetric(ProgramRunId programRunId, ProgramRunStatus programRunStatus,
+                                 long runTime) {
+    Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.STATUS, programRunStatus.name());
+    MetricsContext metricsContext = ProgramRunners.createProgramMetricsContext(programRunId, tags,
+                                                                               metricsCollectionService);
+    metricsContext.gauge(Constants.Metrics.Program.RUN_TIME_SECONDS, runTime);
   }
 
   /**
