@@ -59,7 +59,7 @@ const MOCK_EXPLICIT_OUTPUT = {
   'widget-type': 'schema',
   'widget-attributes': {
     'schema-default-type': 'string',
-    'schema-types': ['boolean', 'int', 'long', 'float', 'double', 'bytes', 'string'],
+    'schema-types': ['boolean', 'bytes', 'string', 'int', 'long', 'float', 'double'],
   },
 };
 
@@ -424,6 +424,7 @@ describe('Plugin Information Page', () => {
       const newSchemaTypes = MOCK_EXPLICIT_OUTPUT['widget-attributes']['schema-types'];
       cy.get(dataCy('multiselect-schema-types')).click();
       newSchemaTypes.forEach((type) => {
+        cy.get(dataCy(`multioption-${type}`)).scrollIntoView();
         cy.get(dataCy(`multioption-${type}`)).click();
       });
       cy.get('body').type('{esc}', { release: true }); // close the multiselect
@@ -431,6 +432,7 @@ describe('Plugin Information Page', () => {
       // Fill out schema default type
       const newSchemaDefaultType = MOCK_EXPLICIT_OUTPUT['widget-attributes']['schema-default-type'];
       cy.get(dataCy('select-schema-default-type')).click();
+      cy.get(dataCy(`option-${newSchemaDefaultType}`)).scrollIntoView();
       cy.get(dataCy(`option-${newSchemaDefaultType}`)).click();
 
       // Compare the live JSON code with our mock data
