@@ -93,7 +93,9 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.3.1</version>
+        <configuration>
+          <scalaVersion>${scala2.10.version}</scalaVersion>
+        </configuration>
       </plugin>
       <!-- copy the source from hydrator-spark-core-base in order to compile everything as scala 2.10 -->
       <plugin>

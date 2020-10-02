@@ -151,7 +151,9 @@
       <plugin>
         <groupId>net.alchim31.maven</groupId>
         <artifactId>scala-maven-plugin</artifactId>
-        <version>3.3.1</version>
+        <configuration>
+          <scalaVersion>${scala2.10.version}</scalaVersion>
+        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.felix</groupId>
