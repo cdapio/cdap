@@ -75,7 +75,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   }
 
   /**
-   * Returns the {@link MessageContext} that this service used for interacting with TMS.
+   * Returns the {@link MessagingContext} that this service used for interacting with TMS.
    */
   protected abstract MessagingContext getMessagingContext();
 
