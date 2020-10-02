@@ -40,7 +40,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import javax.annotation.Nullable;
-import javax.xml.ws.handler.MessageContext;
 
 /**
  * Abstract base class for implementing message polling logic for reading messages from TMS.
@@ -76,7 +75,7 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   }
 
   /**
-   * Returns the {@link MessageContext} that this service used for interacting with TMS.
+   * Returns the {@link MessagingContext} that this service used for interacting with TMS.
    */
   protected abstract MessagingContext getMessagingContext();
 

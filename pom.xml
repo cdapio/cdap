@@ -849,6 +849,10 @@
         <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -859,6 +863,10 @@
         <artifactId>hbase-client</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -879,6 +887,10 @@
         <version>${hbase10.version}</version>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
           </exclusion>
@@ -889,6 +901,10 @@
         <artifactId>hbase-server</artifactId>
         <version>${hbase10.version}</version>
         <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
@@ -1290,6 +1306,10 @@
         <scope>test</scope>
         <exclusions>
           <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
           </exclusion>
@@ -1513,6 +1533,12 @@
         <artifactId>tez-api</artifactId>
         <version>${tez.version}</version>
         <scope>provided</scope>
+        <exclusions>
+          <exclusion>
+            <groupId>jdk.tools</groupId>
+            <artifactId>jdk.tools</artifactId>
+          </exclusion>
+        </exclusions>
       </dependency>
       <dependency>
         <groupId>org.mockftpserver</groupId>
@@ -1686,11 +1712,12 @@
         <plugin>
           <groupId>net.alchim31.maven</groupId>
           <artifactId>scala-maven-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>4.4.0</version>
           <configuration>
             <args>
               <arg>-target:jvm-1.7</arg>
             </args>
+            <scala.version>2.11.12</scala.version>
           </configuration>
           <executions>
             <execution>
