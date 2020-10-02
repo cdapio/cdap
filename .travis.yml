@@ -23,7 +23,7 @@ branches:
   only:
     - develop
     - /^release\/.*$/
-    - feature/java11-compatible
+    - feature/test-java11-travis
 
 # The twill.zk.server.localhost property is to make the InMemoryZKServer used in unit-test not to bind to localhost
 # as it won't work in travis VM.
