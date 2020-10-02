@@ -1015,6 +1015,8 @@
           <exclusion>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
+          </exclusion>
+          <exclusion>
             <groupId>jdk.tools</groupId>
             <artifactId>jdk.tools</artifactId>
           </exclusion>
@@ -1036,10 +1038,10 @@
           <exclusion>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-=======
+          </exclusion>
+          <exclusion>
             <groupId>jdk.tools</groupId>
             <artifactId>jdk.tools</artifactId>
->>>>>>> 6764fb7b016 (Excludes the JDK tools.jar dependency from HBase)
           </exclusion>
           <exclusion>
             <groupId>commons-logging</groupId>
@@ -1963,7 +1965,7 @@
               <arg>-target:jvm-1.8</arg>
               <arg>-nobootcp</arg>
             </args>
-            <scala.version>2.11.12</scala.version>
+            <scalaVersion>${scala2.11.version}</scalaVersion>
           </configuration>
           <executions>
             <execution>
