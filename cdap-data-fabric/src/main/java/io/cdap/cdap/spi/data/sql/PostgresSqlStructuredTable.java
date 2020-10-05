@@ -459,6 +459,28 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public long count(Range keyRange) throws IOException {
+    LOG.trace("Table {}: count with range {}", tableSchema.getTableId(), keyRange);
+    String sql = getCountStatement(keyRange);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      setStatementFieldByRange(keyRange, statement);
+      LOG.trace("SQL statement: {}", statement);
+
+      statement.executeQuery();
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (!resultSet.next()) {
+          LOG.warn("Failed to get count from table {}", tableSchema.getTableId().getName());
+          return 0;
+        }
+        return resultSet.getLong(1);
+      }
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to get count from table %s",
+                                          tableSchema.getTableId().getName()), e);
+    }
+  }
+
+  @Override
   public void close() throws IOException {
     try {
       connection.close();
@@ -717,6 +739,15 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   private String getDeleteAllStatement(Range range) {
     StringBuilder statement = new StringBuilder("DELETE FROM ").append(tableSchema.getTableId().getName());
 
+    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+      statement.append(" WHERE ");
+      appendRange(statement, range);
+    }
+    return statement.toString();
+  }
+
+  private String getCountStatement(Range range) {
+    StringBuilder statement =  new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
     if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
       statement.append(" WHERE ");
       appendRange(statement, range);

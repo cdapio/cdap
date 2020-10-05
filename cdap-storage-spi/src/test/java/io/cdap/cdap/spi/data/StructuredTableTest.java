@@ -567,6 +567,19 @@ public abstract class StructuredTableTest {
     });
   }
 
+  @Test
+  public void testCount() throws Exception {
+    // Write records
+    int max = 5;
+    List<Collection<Field<?>>> fields = writeSimpleStructuredRows(max, "");
+    Assert.assertEquals(max, fields.size());
+    // Verify count
+    getTransactionRunner().run(context -> {
+      StructuredTable table = context.getTable(SIMPLE_TABLE);
+      Assert.assertEquals(max, table.count(Range.all()));
+    });
+  }
+
   private List<Collection<Field<?>>> writeSimpleStructuredRows(int max, String suffix) throws Exception {
     List<Collection<Field<?>>> expected = new ArrayList<>(max);
     // Write rows in reverse order to test sorting
