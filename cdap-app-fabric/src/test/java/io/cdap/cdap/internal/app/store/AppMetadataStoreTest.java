@@ -775,6 +775,12 @@ public abstract class AppMetadataStoreTest {
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
+    TransactionRunners.run(transactionRunner, context -> {
+      AppMetadataStore store = AppMetadataStore.create(context);
+      long count =  store.getApplicationCount(NamespaceId.DEFAULT.getNamespace());
+      Assert.assertEquals(20, count);
+    });
+
 
     // Batch read 30, expect to get back 20
     List<ApplicationId> appIds = new ArrayList<>();

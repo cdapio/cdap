@@ -224,6 +224,18 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public long count(Range keyRange) throws IOException {
+    LOG.trace("Table {}: count with range {}", schema.getTableId(), keyRange);
+    long count = 0;
+    try (Scanner scanner = getScanner(keyRange)) {
+      while (scanner.next() != null) {
+        count++;
+      }
+      return count;
+    }
+  }
+
+  @Override
   public void close() throws IOException {
     table.close();
   }

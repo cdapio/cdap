@@ -30,6 +30,7 @@ import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.data2.metadata.lineage.LineageTable;
@@ -108,6 +109,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnConflict;
+  private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final MetricsCollectionService metricsCollectionService;
 
   private String conflictMessageId = null;
   private int conflictCount = 0;
@@ -116,7 +119,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
                             MetricsCollectionService metricsCollectionService,
                             MetadataStorage metadataStorage,
-                            TransactionRunner transactionRunner) {
+                            TransactionRunner transactionRunner,
+                            NamespaceQueryAdmin namespaceQueryAdmin) {
     super(
       NamespaceId.SYSTEM.topic(cConf.get(Constants.Metadata.MESSAGING_TOPIC)),
       cConf.getInt(Constants.Metadata.MESSAGING_FETCH_SIZE),
@@ -136,6 +140,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.metadataStorage = metadataStorage;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
+    this.namespaceQueryAdmin = namespaceQueryAdmin;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -207,7 +213,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext);
+            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext,
+                                                       namespaceQueryAdmin,
+                                                       metricsCollectionService);
           default:
             return null;
         }

@@ -269,6 +269,10 @@ public class AppMetadataStore {
         StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
   }
 
+  public long getApplicationCount(String namespaceId) throws IOException {
+    return getApplicationSpecificationTable().count(getNamespaceRange(namespaceId));
+  }
+
   public List<ApplicationMeta> getAllAppVersions(String namespaceId, String appId) throws IOException {
     return scanWithRange(
       getNamespaceAndApplicationRange(namespaceId, appId),

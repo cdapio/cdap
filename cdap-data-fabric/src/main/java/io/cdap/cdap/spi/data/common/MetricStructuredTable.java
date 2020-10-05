@@ -262,6 +262,26 @@ public class MetricStructuredTable implements StructuredTable {
       throw e;
     }
   }
+  @Override
+  public long count(Range keyRange) throws IOException {
+    try {
+      long count = 0;
+      if (!emitTimeMetrics) {
+        count = structuredTable.count(keyRange);
+      } else {
+        long curTime = System.nanoTime();
+        count = structuredTable.count(keyRange);
+        long duration = System.nanoTime() - curTime;
+        metricsCollector.increment(metricPrefix + "count.time", duration);
+      }
+      metricsCollector.increment(metricPrefix + "count.count", 1L);
+      return count;
+    } catch (Exception e) {
+      metricsCollector.increment(metricPrefix + "count.error", 1L);
+      throw e;
+    }
+  }
+
 
   @Override
   public void close() throws IOException {

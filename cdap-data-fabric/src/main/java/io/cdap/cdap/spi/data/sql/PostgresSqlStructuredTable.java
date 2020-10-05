@@ -459,6 +459,28 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
+  public long count(Range keyRange) throws IOException {
+    LOG.trace("Table {}: count with range {}", tableSchema.getTableId(), keyRange);
+    String sql = getCountStatement(keyRange);
+    try (PreparedStatement statement = connection.prepareStatement(sql)) {
+      setStatementFieldByRange(keyRange, statement);
+      LOG.trace("SQL statement: {}", statement);
+
+      statement.executeQuery();
+      try (ResultSet resultSet = statement.executeQuery()) {
+        if (!resultSet.next()) {
+          throw new IOException(String.format("Failed to count from table %s",
+                                              tableSchema.getTableId().getName()));
+        }
+        return resultSet.getLong(1);
+      }
+    } catch (SQLException e) {
+      throw new IOException(String.format("Failed to count from table %s",
+                                          tableSchema.getTableId().getName()), e);
+    }
+  }
+
+  @Override
   public void close() throws IOException {
     try {
       connection.close();
@@ -722,6 +744,16 @@ public class PostgresSqlStructuredTable implements StructuredTable {
       appendRange(statement, range);
     }
     return statement.toString();
+  }
+
+  private String getCountStatement(Range range) {
+    StringBuilder statement =  new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
+    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+      statement.append(" WHERE ");
+      appendRange(statement, range);
+    }
+    return statement.toString();
+
   }
 
   private String getEqualsClause(Collection<Field<?>> keys) {
