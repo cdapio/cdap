@@ -70,7 +70,7 @@ function getSessionToken(headers) {
   return cy
     .request({
       method: 'GET',
-      url: `http://${Cypress.env('host')}:11011/sessionToken`,
+      url: `http://${Cypress.env('host')}:${Cypress.env('port')}/sessionToken`,
       failOnStatusCode: false,
       headers,
     })
