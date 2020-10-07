@@ -57,6 +57,10 @@ final class DataprocConf {
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String IMAGE_VERSION = "imageVersion";
   static final String CUSTOM_IMAGE_URI = "customImageUri";
+  // The property name for the serviceAccount that is passed to Dataproc when creating the Dataproc Cluster
+  // Dataproc will pass it to GCE when creating the GCE cluster.
+  // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
+  static final String SERVICE_ACCOUNT = "serviceAccount";
 
   private static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;
@@ -418,7 +422,7 @@ final class DataprocConf {
     long pollDeleteDelay = getLong(properties, "pollDeleteDelay", 30);
     long pollInterval = getLong(properties, "pollInterval", 2);
 
-    String serviceAccount = getString(properties, "serviceAccount");
+    String serviceAccount = getString(properties, SERVICE_ACCOUNT);
     boolean preferExternalIP = Boolean.parseBoolean(properties.get(PREFER_EXTERNAL_IP));
     // By default stackdriver is enabled. This is for backward compatibility
     boolean stackdriverLoggingEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_LOGGING_ENABLED,
