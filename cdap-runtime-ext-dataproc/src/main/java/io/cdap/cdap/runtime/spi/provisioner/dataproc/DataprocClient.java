@@ -114,8 +114,29 @@ final class DataprocClient implements AutoCloseable {
    * @throws GeneralSecurityException if the client is failed to authenticate
    */
   static DataprocClient fromConf(DataprocConf conf) throws IOException, GeneralSecurityException {
+    return fromConf(conf, true);
+  }
+
+  /**
+   * Creates a {@link DataprocClient} from the given {@link DataprocConf}.
+   *
+   * @param conf the configuration for the client
+   * @param requireNetwork if {@code true}, network information will be extracted from the given {@link DataprocConf}
+   *                       or will be derived from the environment.
+   *                       If {@code false}, the {@link DataprocClient} created won't be able to perform any operation
+   *                       that requires network information, such as cluster creation.
+   * @return a {@link DataprocClient} instance for using Dataproc API
+   * @throws IOException if failed to connect to GCP api during the client creation
+   * @throws GeneralSecurityException if the client is failed to authenticate
+   */
+  static DataprocClient fromConf(DataprocConf conf,
+                                 boolean requireNetwork) throws IOException, GeneralSecurityException {
     ClusterControllerClient client = getClusterControllerClient(conf);
     Compute compute = getCompute(conf);
+
+    if (!requireNetwork) {
+      return new DataprocClient(conf, client, compute, null);
+    }
 
     String network = conf.getNetwork();
     String systemNetwork = null;
@@ -288,7 +309,8 @@ final class DataprocClient implements AutoCloseable {
       .build();
   }
 
-  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute, Network network) {
+  private DataprocClient(DataprocConf conf, ClusterControllerClient client, Compute compute,
+                         @Nullable Network network) {
     this.conf = conf;
     this.client = client;
     this.compute = compute;
@@ -312,6 +334,13 @@ final class DataprocClient implements AutoCloseable {
   ClusterOperationMetadata createCluster(String name, String imageVersion, Map<String, String> labels,
                                          boolean privateInstance)
     throws RetryableProvisionException, InterruptedException, IOException {
+
+    if (network == null) {
+      // This shouldn't happen as the fromConf method should already check.
+      // This is to guard against programmatic bug that this client was created without network information and
+      // yet being used to create cluster.
+      throw new IllegalArgumentException("Missing network information");
+    }
 
     try {
       Map<String, String> metadata = new HashMap<>();
@@ -348,12 +377,12 @@ final class DataprocClient implements AutoCloseable {
 
       //Add any defined Network Tags
       clusterConfig.addAllTags(conf.getNetworkTags());
-      boolean internalIPOnly = isInternalIPOnly(privateInstance, publicKey != null);
+      boolean internalIPOnly = isInternalIPOnly(network, privateInstance, publicKey != null);
 
       // if public key is not null that means ssh is used to launch / monitor job on dataproc
       if (publicKey != null) {
         int maxTags = Math.max(0, DataprocConf.MAX_NETWORK_TAGS - clusterConfig.getTagsCount());
-        List<String> tags = getFirewallTargetTags(internalIPOnly);
+        List<String> tags = getFirewallTargetTags(network, internalIPOnly);
         if (tags.size() > maxTags) {
           LOG.warn("No more than 64 tags can be added. Firewall tags ignored: {}", tags.subList(maxTags, tags.size()));
         }
@@ -644,7 +673,7 @@ final class DataprocClient implements AutoCloseable {
    * @param sshRuntimeMonitor {@code true} if SSH is used for runtime monitoring
    * @return {@code true} for pribvate IP only Dataproc cluster
    */
-  private boolean isInternalIPOnly(boolean privateInstance, boolean sshRuntimeMonitor) {
+  private boolean isInternalIPOnly(Network network, boolean privateInstance, boolean sshRuntimeMonitor) {
     String systemProjectId = null;
     String systemNetwork = null;
     try {
@@ -697,7 +726,7 @@ final class DataprocClient implements AutoCloseable {
    * @return a {@link Collection} of tags that need to be added to the VM to have those firewall rules applies
    * @throws IOException If failed to discover those firewall rules
    */
-  private List<String> getFirewallTargetTags(boolean useInternalIP) throws IOException {
+  private List<String> getFirewallTargetTags(Network network, boolean useInternalIP) throws IOException {
     FirewallList firewalls = compute.firewalls().list(conf.getNetworkHostProjectID()).execute();
     List<String> tags = new ArrayList<>();
     Set<FirewallPort> requiredPorts = EnumSet.allOf(FirewallPort.class);
