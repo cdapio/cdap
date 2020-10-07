@@ -57,6 +57,10 @@ final class DataprocConf {
   // The property name for the GCE cluster meta data
   // It can be overridden by profile runtime arguments (system.profile.properties.clusterMetaData)
   static final String CLUSTER_MEATA_DATA = "clusterMetaData";
+  // The property name for the serviceAccount that is passed to Dataproc when creating the Dataproc Cluster
+  // Dataproc will pass it to GCE when creating the GCE cluster.
+  // It can be overridden by profile runtime arguments (system.profile.properties.serviceAccount)
+  static final String SERVICE_ACCOUNT = "serviceAccount";
 
   static final Pattern CLUSTER_PROPERTIES_PATTERN = Pattern.compile("^[a-zA-Z0-9\\-]+:");
   static final int MAX_NETWORK_TAGS = 64;

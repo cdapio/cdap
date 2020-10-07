@@ -117,12 +117,14 @@ public class DataprocProvisionerTest {
     String resourceMaxPercentKey = "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
     String resourceMaxPercentVal = "0.5";
     String clusterMetaData = "metadata-key1|metadata-val1;metadata-key2|metadata-val2";
+    String serviceAccount = "service-account-1";
 
     //default system properties defined by DataprocProvisioner
     provisionerSystemContext.addProperty(DataprocConf.NETWORK, "old-network");
     provisionerSystemContext.addProperty(DataprocConf.STACKDRIVER_LOGGING_ENABLED, "true");
     provisionerSystemContext
       .addProperty(DataprocConf.CLUSTER_MEATA_DATA, clusterMetaData);
+    provisionerSystemContext.addProperty(DataprocConf.SERVICE_ACCOUNT, serviceAccount);
 
     //default system properties defined by AbstractDataprocProvisioner
     provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
@@ -144,6 +146,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("true", properties.get(DataprocConf.STACKDRIVER_LOGGING_ENABLED));
     Assert.assertEquals(resourceMaxPercentVal, properties.get(resourceMaxPercentKey));
     Assert.assertEquals(clusterMetaData, properties.get(DataprocConf.CLUSTER_MEATA_DATA));
+    Assert.assertEquals(serviceAccount, properties.get(DataprocConf.SERVICE_ACCOUNT));
     Assert.assertEquals("job_manager", properties.get(DataprocConf.RUNTIME_JOB_MANAGER));
     Assert.assertNull(properties.get("non-system-default-key"));
   }

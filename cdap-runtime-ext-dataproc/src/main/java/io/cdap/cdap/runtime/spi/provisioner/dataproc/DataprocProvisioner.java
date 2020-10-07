@@ -228,7 +228,8 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
       DataprocConf.STACKDRIVER_MONITORING_ENABLED,
       DataprocConf.COMPONENT_GATEWAY_ENABLED,
       DataprocConf.IMAGE_VERSION,
-      DataprocConf.CLUSTER_MEATA_DATA
+      DataprocConf.CLUSTER_MEATA_DATA,
+      DataprocConf.SERVICE_ACCOUNT
     ).contains(property);
   }
 
