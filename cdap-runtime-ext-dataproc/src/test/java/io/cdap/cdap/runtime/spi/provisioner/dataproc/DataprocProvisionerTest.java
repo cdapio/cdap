@@ -112,9 +112,12 @@ public class DataprocProvisionerTest {
     MockProvisionerSystemContext provisionerSystemContext = new MockProvisionerSystemContext();
     String resourceMaxPercentKey = "capacity-scheduler:yarn.scheduler.capacity.maximum-am-resource-percent";
     String resourceMaxPercentVal = "0.5";
+    String serviceAccount = "service-account-1";
+
     provisionerSystemContext.addProperty(resourceMaxPercentKey, resourceMaxPercentVal);
     provisionerSystemContext.addProperty(DataprocConf.NETWORK, "old-network");
     provisionerSystemContext.addProperty(DataprocConf.STACKDRIVER_LOGGING_ENABLED, "true");
+    provisionerSystemContext.addProperty(DataprocConf.SERVICE_ACCOUNT, serviceAccount);
 
     DataprocProvisioner provisioner = new DataprocProvisioner();
     provisioner.initialize(provisionerSystemContext);
@@ -128,6 +131,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals(properties.get(DataprocConf.NETWORK), network);
     Assert.assertEquals(properties.get(DataprocConf.STACKDRIVER_LOGGING_ENABLED), "true");
     Assert.assertEquals(properties.get(resourceMaxPercentKey), resourceMaxPercentVal);
+    Assert.assertEquals(serviceAccount, properties.get(DataprocConf.SERVICE_ACCOUNT));
   }
 
   @Test
