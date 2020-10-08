@@ -31,7 +31,6 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
     cy.visit('/cdap', {
       onBeforeLoad: (win) => {
         win.sessionStorage.clear();
-        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
       },
     });
   });
@@ -40,12 +39,6 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
   });
   afterEach(() => {
     cy.clearLocalStorage();
-  });
-
-  after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
-    });
   });
 
   it('Should show plugin level context menu', () => {

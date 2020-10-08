@@ -42,7 +42,6 @@ describe('KeyValueDropdown Widgets', () => {
       cy.visit('/cdap', {
         onBeforeLoad: (win) => {
           win.sessionStorage.clear();
-          win.sessionStorage.setItem('pipelineConfigTesting', 'true');
         },
       });
     });
@@ -50,12 +49,6 @@ describe('KeyValueDropdown Widgets', () => {
 
   beforeEach(() => {
     getArtifactsPoll(headers);
-  });
-
-  after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
-    });
   });
 
   it('Should render KeyValueDropdown row', () => {

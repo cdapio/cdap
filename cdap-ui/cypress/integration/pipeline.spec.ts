@@ -50,7 +50,6 @@ describe('Creating a pipeline', () => {
       cy.visit('/cdap', {
         onBeforeLoad: (win) => {
           win.sessionStorage.clear();
-          win.sessionStorage.setItem('pipelineConfigTesting', 'true');
         },
       });
     });
@@ -63,12 +62,6 @@ describe('Creating a pipeline', () => {
   afterEach(() => {
     // Delete the pipeline to clean up
     cy.cleanup_pipelines(headers, TEST_PIPELINE_NAME);
-  });
-
-  after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
-    });
   });
 
   it('can configure simple pipeline, including post-run actions', () => {

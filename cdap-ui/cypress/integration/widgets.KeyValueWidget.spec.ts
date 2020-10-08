@@ -43,19 +43,12 @@ describe('KeyValue Widgets', () => {
     cy.visit('/cdap', {
       onBeforeLoad: (win) => {
         win.sessionStorage.clear();
-        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
       },
     });
   });
 
   beforeEach(() => {
     getArtifactsPoll(headers);
-  });
-
-  after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
-    });
   });
 
   it('Should render KeyValue row', () => {
