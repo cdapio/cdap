@@ -45,7 +45,6 @@ describe('Pipeline Studio', () => {
     cy.visit('/cdap', {
       onBeforeLoad: (win) => {
         win.sessionStorage.clear();
-        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
       },
     });
   });
@@ -55,9 +54,6 @@ describe('Pipeline Studio', () => {
   });
 
   after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
-    });
     // Delete the pipeline to clean up
     cy.cleanup_pipelines(headers, TEST_PIPELINE_NAME);
   });

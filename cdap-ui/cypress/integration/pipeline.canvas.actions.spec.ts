@@ -33,19 +33,12 @@ describe('Pipeline Canvas actions', () => {
     cy.visit('/cdap', {
       onBeforeLoad: (win) => {
         win.sessionStorage.clear();
-        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
       },
     });
   });
 
   beforeEach(() => {
     getArtifactsPoll(headers);
-  });
-
-  after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
-    });
   });
 
   it('Should correctly undo/redo actions done by the user', () => {

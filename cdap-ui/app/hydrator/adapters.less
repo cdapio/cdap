@@ -74,9 +74,13 @@ body.theme-cdap {
     }
 
     fieldset.view-plugin-json {
+      height: 100%;
+      .widget-json-editor, .textarea-container {
+        height: 100%;
+      }
       textarea {
         resize: none;
-        height: 60vh;
+        height: calc(100% - 15px);
       }
     }
 

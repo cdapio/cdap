@@ -35,7 +35,6 @@ describe('Creating a pipeline with missing artifacts', () => {
       cy.visit('/cdap', {
         onBeforeLoad: (win) => {
           win.sessionStorage.clear();
-          win.sessionStorage.setItem('pipelineConfigTesting', 'true');
         },
       });
     });

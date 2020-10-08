@@ -35,6 +35,7 @@ interface IFieldWrapperProps {
   children?: React.ReactNode;
   style?: any;
   className?: any;
+  dataCy?: string;
 }
 
 const CustomizedPaper = withStyles(() => {
@@ -64,6 +65,7 @@ const FieldWrapperBase = ({
   children,
   style = {},
   className,
+  dataCy,
 }: IFieldWrapperProps) => {
   /**
    * Based on the number of ancestors we indent the row accordingly. Each ancestor will
@@ -95,7 +97,7 @@ const FieldWrapperBase = ({
     };
   }
   return (
-    <CustomizedPaper elevation={2} style={customStyles} className={className}>
+    <CustomizedPaper elevation={2} style={customStyles} className={className} data-cy={dataCy}>
       <If condition={ancestors.length > 1}>
         <SchemaValidatorConsumer>
           {({ errorMap }) => {

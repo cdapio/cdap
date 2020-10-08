@@ -36,14 +36,7 @@ describe('CSV Widgets', () => {
     cy.visit('/cdap', {
       onBeforeLoad: (win) => {
         win.sessionStorage.clear();
-        win.sessionStorage.setItem('pipelineConfigTesting', 'true');
       },
-    });
-  });
-
-  after(() => {
-    cy.window().then((win) => {
-      win.sessionStorage.removeItem('pipelineConfigTesting');
     });
   });
 
