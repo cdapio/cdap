@@ -1391,6 +1391,10 @@ public abstract class AppFabricTestBase {
     Map<String, String> tags = new HashMap<>();
     tags.put(Constants.Metrics.Tag.PROFILE, Profile.NATIVE_NAME);
     tags.put(Constants.Metrics.Tag.PROFILE_SCOPE, EntityScope.SYSTEM.name());
+    return getTotalMetric(metricName, tags);
+  }
+
+  protected long getTotalMetric(String metricName, Map<String, String> tags) {
     MetricDataQuery query =
       new MetricDataQuery(0, 0, Integer.MAX_VALUE, "system." + metricName,
                           AggregationFunction.SUM, tags, Collections.emptyList());

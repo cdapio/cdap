@@ -110,6 +110,7 @@ public class MetricsQueryHelper {
       .put(Constants.Metrics.Tag.PROVISIONER, "provisioner")
 
       .put(Constants.Metrics.Tag.SPARK, "spark")
+      .put(Constants.Metrics.Tag.STATUS, "status")
 
       // put program related tag
       .put(Constants.Metrics.Tag.PROGRAM, "program")

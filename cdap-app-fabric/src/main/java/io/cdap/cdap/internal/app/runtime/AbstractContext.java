@@ -18,7 +18,6 @@ package io.cdap.cdap.internal.app.runtime;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -53,7 +52,6 @@ import io.cdap.cdap.api.metadata.MetadataWriter;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
-import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.api.plugin.PluginContext;
 import io.cdap.cdap.api.plugin.PluginProperties;
 import io.cdap.cdap.api.preview.DataTracer;
@@ -92,7 +90,6 @@ import io.cdap.cdap.data2.metadata.writer.MetadataPublisher;
 import io.cdap.cdap.data2.transaction.RetryingShortTransactionSystemClient;
 import io.cdap.cdap.data2.transaction.Transactions;
 import io.cdap.cdap.internal.app.preview.DataTracerFactoryProvider;
-import io.cdap.cdap.internal.app.program.ProgramTypeMetricTag;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoaders;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
@@ -290,13 +287,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private MetricsContext createProgramMetrics(ProgramRunId programRunId,
                                               @Nullable MetricsCollectionService metricsService,
                                               Map<String, String> metricsTags) {
-    Map<String, String> tags = Maps.newHashMap(metricsTags);
-    tags.put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace());
-    tags.put(Constants.Metrics.Tag.APP, programRunId.getApplication());
-    tags.put(ProgramTypeMetricTag.getTagName(programRunId.getType()), programRunId.getProgram());
-    tags.put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun());
-
-    return metricsService == null ? new NoopMetricsContext(tags) : metricsService.getContext(tags);
+    return ProgramRunners.createProgramMetricsContext(programRunId, metricsTags, metricsService);
   }
 
   /**

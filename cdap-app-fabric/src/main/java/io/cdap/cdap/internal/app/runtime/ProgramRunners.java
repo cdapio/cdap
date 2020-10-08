@@ -21,17 +21,24 @@ import ch.qos.logback.core.joran.util.ConfigurationWatchListUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.Service;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.metrics.MetricsContext;
+import io.cdap.cdap.api.metrics.NoopMetricsContext;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.app.runtime.ProgramRunner;
 import io.cdap.cdap.common.app.RunIds;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
+import io.cdap.cdap.internal.app.program.ProgramTypeMetricTag;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
+import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.filesystem.Location;
@@ -184,6 +191,26 @@ public final class ProgramRunners {
 
     // Default to ON_PREMISE for backward compatibility.
     return clusterMode == null ? ClusterMode.ON_PREMISE : ClusterMode.valueOf(clusterMode);
+  }
+
+  /**
+   * Create a {@link MetricsContext} for emitting program metrics.
+   * @param programRunId the {@link ProgramRunId} of the current execution
+   * @param metricsTags a set of extra tags to be used for creating the {@link MetricsContext}
+   * @param metricsCollectionService the underlying service for metrics publishing or {@code null} to suppress metrics
+   *                                 publishing
+   * @return a {@link MetricsContext} for emitting metrics for the current program context.
+   */
+  public static MetricsContext createProgramMetricsContext(ProgramRunId programRunId,
+                                                            Map<String, String> metricsTags,
+                                                            @Nullable MetricsCollectionService
+                                                             metricsCollectionService) {
+    Map<String, String> tags = Maps.newHashMap(metricsTags);
+    tags.put(Constants.Metrics.Tag.NAMESPACE, programRunId.getNamespace());
+    tags.put(Constants.Metrics.Tag.APP, programRunId.getApplication());
+    tags.put(ProgramTypeMetricTag.getTagName(programRunId.getType()), programRunId.getProgram());
+    tags.put(Constants.Metrics.Tag.RUN_ID, programRunId.getRun());
+    return metricsCollectionService == null ? new NoopMetricsContext(tags) : metricsCollectionService.getContext(tags);
   }
 
   private ProgramRunners() {
