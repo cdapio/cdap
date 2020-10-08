@@ -316,7 +316,8 @@ public class DataprocProvisioner implements Provisioner {
                                       DataprocConf.NETWORK_HOST_PROJECT_ID,
                                       DataprocConf.STACKDRIVER_LOGGING_ENABLED,
                                       DataprocConf.STACKDRIVER_MONITORING_ENABLED,
-                                      DataprocConf.IMAGE_VERSION);
+                                      DataprocConf.IMAGE_VERSION,
+                                      DataprocConf.SERVICE_ACCOUNT);
     for (String key : keys) {
       if (!contextProperties.containsKey(key)) {
         String value = systemContext.getProperties().get(key);

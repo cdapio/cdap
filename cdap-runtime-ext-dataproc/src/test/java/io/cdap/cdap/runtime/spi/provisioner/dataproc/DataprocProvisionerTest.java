@@ -101,6 +101,7 @@ public class DataprocProvisionerTest {
   public void testDataprocConf() {
     Map<String, String> props = new HashMap<>();
     props.put(DataprocConf.PROJECT_ID_KEY, "pid");
+    props.put(DataprocConf.SERVICE_ACCOUNT, "service-account-1");
     props.put("accountKey", "key");
     props.put("region", "region1");
     props.put("zone", "region1-a");
@@ -114,6 +115,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals(conf.getProjectId(), "pid");
     Assert.assertEquals(conf.getRegion(), "region1");
     Assert.assertEquals(conf.getZone(), "region1-a");
+    Assert.assertEquals("service-account-1", conf.getServiceAccount());
 
     Map<String, String> dataprocProps = conf.getDataprocProperties();
     Assert.assertEquals(3, dataprocProps.size());
@@ -121,6 +123,7 @@ public class DataprocProvisionerTest {
     Assert.assertEquals("100", dataprocProps.get("spark:spark.reducer.maxSizeInFlight"));
     Assert.assertEquals("xyz", dataprocProps.get("hadoop-env:MAPREDUCE_CLASSPATH"));
     Assert.assertEquals("true", dataprocProps.get("dataproc:am.primary_only"));
+
   }
 
   @Test
