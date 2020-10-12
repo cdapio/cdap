@@ -116,7 +116,6 @@ public class LimitingInputFormatTest {
     FileInputFormat.addInputPath(job, new Path(inputDir.toURI()));
 
     LimitingInputFormat<LongWritable, Text> inputFormat = new LimitingInputFormat<>();
-    inputFormat.setConf(hConf);
 
     List<InputSplit> splits = inputFormat.getSplits(job);
     Assert.assertEquals(1, splits.size());

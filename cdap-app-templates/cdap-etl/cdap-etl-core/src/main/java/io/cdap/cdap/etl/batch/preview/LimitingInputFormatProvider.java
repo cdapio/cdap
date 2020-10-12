@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,8 @@
 package io.cdap.cdap.etl.batch.preview;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
+import io.cdap.cdap.etl.batch.DelegatingInputFormat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,24 +26,15 @@ import java.util.Map;
 /**
  * An InputFormatProvider that limits how much data is read.
  */
-public class LimitingInputFormatProvider implements InputFormatProvider {
-  private final InputFormatProvider delegate;
-  private final int maxRecords;
+public class LimitingInputFormatProvider extends BasicInputFormatProvider {
 
   public LimitingInputFormatProvider(InputFormatProvider delegate, int maxRecords) {
-    this.delegate = delegate;
-    this.maxRecords = maxRecords;
+    super(LimitingInputFormat.class.getName(), getConfiguration(delegate, maxRecords));
   }
 
-  @Override
-  public String getInputFormatClassName() {
-    return LimitingInputFormat.class.getName();
-  }
-
-  @Override
-  public Map<String, String> getInputFormatConfiguration() {
+  private static Map<String, String> getConfiguration(InputFormatProvider delegate, int maxRecords) {
     Map<String, String> config = new HashMap<>(delegate.getInputFormatConfiguration());
-    config.put(LimitingInputFormat.DELEGATE_CLASS_NAME, delegate.getInputFormatClassName());
+    config.put(DelegatingInputFormat.DELEGATE_CLASS_NAME, delegate.getInputFormatClassName());
     config.put(LimitingInputFormat.MAX_RECORDS, String.valueOf(maxRecords));
     return config;
   }

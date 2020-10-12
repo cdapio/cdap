@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -114,6 +114,7 @@ public class SparkClassRewriter implements ClassRewriter {
   private static final Type STRUCTURED_RECORD_SERIALIZER_TYPE =
     Type.getObjectType("io/cdap/cdap/app/runtime/spark/serializer/StructuredRecordSerializer");
   private static final Type SPARK_DISK_STORE = Type.getObjectType("org/apache/spark/storage/DiskStore");
+  private static final Type SPARK_OUTPUT_METRICS = Type.getObjectType("org/apache/spark/executor/OutputMetrics");
 
   // Don't refer akka Remoting with the ".class" because in future Spark version, akka dependency is removed and
   // we don't want to force a dependency on akka.
@@ -224,8 +225,55 @@ public class SparkClassRewriter implements ClassRewriter {
       // Rewrite Spark DiskStore class and classes in the network package for Netty 4.1 compatibility
       return rewriteSparkNetworkClass(input);
     }
+    if (className.equals(SPARK_OUTPUT_METRICS.getClassName())) {
+      // Rewrite the Spark OutputMetrics to skip overwriting bytes written metrics with 0.
+      return rewriteOutputMetrics(SPARK_OUTPUT_METRICS, input);
+    }
 
     return null;
+  }
+
+  /**
+   * Rewrites the OutputMetrics#setBytesWritten method to skip recording zero (0) value to avoid overwriting
+   * meaningful bytes written metrics.
+   */
+  private byte[] rewriteOutputMetrics(Type type, InputStream byteCodeStream) throws IOException {
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
+
+    Method setBytesWrittenMethod = new Method("setBytesWritten", Type.VOID_TYPE, new Type[]{Type.LONG_TYPE});
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String descriptor,
+                                       String signature, String[] exceptions) {
+        MethodVisitor mv = super.visitMethod(access, name, descriptor, signature, exceptions);
+        if (!setBytesWrittenMethod.equals(new Method(name, descriptor))) {
+          return mv;
+        }
+
+        return new AdviceAdapter(Opcodes.ASM5, mv, access, name, descriptor) {
+
+          private final Label skipZeroLabel = newLabel();
+
+          @Override
+          protected void onMethodEnter() {
+            // if (bytesWritten != 0) {
+            //   original method
+            // }
+            loadArg(0);
+            push(0L);
+            ifCmp(Type.LONG_TYPE, EQ, skipZeroLabel);
+          }
+
+          @Override
+          protected void onMethodExit(int opcode) {
+            visitLabel(skipZeroLabel);
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
   }
 
   /**

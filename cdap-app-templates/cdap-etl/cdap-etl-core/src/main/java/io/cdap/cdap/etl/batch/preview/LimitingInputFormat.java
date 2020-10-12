@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,9 +16,8 @@
 
 package io.cdap.cdap.etl.batch.preview;
 
-import org.apache.hadoop.conf.Configurable;
+import io.cdap.cdap.etl.batch.DelegatingInputFormat;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -34,47 +33,20 @@ import java.util.List;
  * @param <K> type of key to read
  * @param <V> type of value to read
  */
-public class LimitingInputFormat<K, V> extends InputFormat<K, V> implements Configurable {
+public class LimitingInputFormat<K, V> extends DelegatingInputFormat<K, V> {
 
-  static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.preview.input.classname";
   static final String MAX_RECORDS = "io.cdap.pipeline.preview.max.records";
-
-  private Configuration conf;
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
+    Configuration conf = context.getConfiguration();
     int maxRecords = conf.getInt(MAX_RECORDS, 100);
-    List<InputSplit> splits = getDelegate().getSplits(context);
-    return Collections.singletonList(new LimitingInputSplit(getConf(), splits, maxRecords));
+    List<InputSplit> splits = super.getSplits(context);
+    return Collections.singletonList(new LimitingInputSplit(conf, splits, maxRecords));
   }
 
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split, TaskAttemptContext context) throws IOException {
-    return new LimitingRecordReader<>(getDelegate());
-  }
-
-  private InputFormat<K, V> getDelegate() throws IOException {
-    String delegateClassName = conf.get(DELEGATE_CLASS_NAME);
-    try {
-      //noinspection unchecked
-      InputFormat<K, V> kvInputFormat = (InputFormat<K, V>) conf.getClassLoader().loadClass(delegateClassName)
-        .newInstance();
-      if (kvInputFormat instanceof Configurable) {
-        ((Configurable) kvInputFormat).setConf(conf);
-      }
-      return kvInputFormat;
-    } catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-      throw new IOException("Unable to instantiate delegate input format " + delegateClassName, e);
-    }
-  }
-
-  @Override
-  public void setConf(Configuration conf) {
-    this.conf = conf;
-  }
-
-  @Override
-  public Configuration getConf() {
-    return conf;
+    return new LimitingRecordReader<>(getDelegate(context.getConfiguration()));
   }
 }
