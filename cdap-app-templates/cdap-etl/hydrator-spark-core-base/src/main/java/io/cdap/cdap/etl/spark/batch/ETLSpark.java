@@ -99,6 +99,8 @@ public class ETLSpark extends AbstractSpark {
     sparkConf.set("spark.sql.autoBroadcastJoinThreshold", "-1");
     sparkConf.set("spark.maxRemoteBlockSizeFetchToMem", String.valueOf(Integer.MAX_VALUE - 512));
     sparkConf.set("spark.network.timeout", "600s");
+    // Disable yarn app retries since spark already performs retries at a task level.
+    sparkConf.set("spark.yarn.maxAppAttempts", "1");
     // to make sure fields that are the same but different casing are treated as different fields in auto-joins
     // see CDAP-17024
     sparkConf.set("spark.sql.caseSensitive", "true");
