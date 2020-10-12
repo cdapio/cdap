@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 Cask Data, Inc.
+ * Copyright © 2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,21 +14,10 @@
  * the License.
  */
 
-/*
-  TODO: This is just a stub(mock) for jest to not invoke the actual socket connection.
-  This needs to be exported as a singleton class. Will do when we actually need to mock a function.
-*/
-
 jest.unmock('rxjs/Subject');
 jest.unmock('rxjs/add/operator/map');
 import { Subject } from 'rxjs/Subject';
 import 'rxjs/add/operator/map';
-
-const MyProgramApi = {
-  runRecords: [],
-  status: {},
-  __isError: false,
-};
 
 const LOGS_RESPONSE = [
   {
@@ -70,33 +59,9 @@ function getLogs() {
   return subject;
 }
 
-MyProgramApi.setRunRecords = function(records, isError) {
-  this.runRecords = records;
-  this.__isError = isError;
+const MyPreviewApi = {
+  nextLogs: getLogs,
+  prevLogs: getLogs,
 };
-MyProgramApi.setProgramStatus = function(status, isError) {
-  this.status = status;
-  this.__isError = isError;
-};
-MyProgramApi.generalGetter = function(property) {
-  return function() {
-    let subject = new Subject();
-    setTimeout(() => {
-      if (this.__isError) {
-        subject.error(this[property]);
-        return;
-      }
-      subject.next(this[property]);
-    });
-    return subject;
-  }.bind(this);
-};
-MyProgramApi.pollRuns = MyProgramApi.generalGetter('runRecords');
-MyProgramApi.runs = MyProgramApi.generalGetter('runRecords');
-MyProgramApi.pollStatus = MyProgramApi.generalGetter('status');
 
-// Logs
-MyProgramApi.nextLogs = getLogs;
-MyProgramApi.prevLogs = getLogs;
-
-module.exports = { MyProgramApi };
+module.exports = { MyPreviewApi };

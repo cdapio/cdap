@@ -28,7 +28,7 @@ interface ILog {
 
 export interface ILogResponse {
   log: ILog;
-  offset: 'string';
+  offset: string;
 }
 
 export interface IProgram {
