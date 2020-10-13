@@ -35,7 +35,7 @@ describe('Pipeline multi-select nodes + context menu for plugins & canvas', () =
     });
   });
   beforeEach(() => {
-    Helpers.setDefaultOldSchemaEditor();
+    Helpers.setNewSchemaEditor();
   });
   afterEach(() => {
     cy.clearLocalStorage();
