@@ -30,6 +30,7 @@ interface IVirtualScrollProps extends WithStyles<typeof styles> {
   childrenUnderFoldOnScroll?: number;
   headerEl?: React.ReactNode | Promise<React.ReactNode>;
   LoadingElement?: React.ReactNode;
+  dataCy?: string;
 }
 const styles = (): StyleRules => {
   return {
@@ -65,7 +66,7 @@ const VirtualScroll = ({
   childrenUnderFoldOnScroll = 50,
   headerEl = null,
   classes,
-  LoadingElement = () => 'Loading...',
+  dataCy,
 }: IVirtualScrollProps) => {
   const [scrollTop, ref] = useScroll();
   const itmCount = typeof itemCount === 'function' ? itemCount() : itemCount;
@@ -128,6 +129,7 @@ const VirtualScroll = ({
             willChange: 'transform',
             transform: `translateY(${offsetY}px)`,
           }}
+          data-cy={dataCy}
         >
           {headerEl}
           {list}
