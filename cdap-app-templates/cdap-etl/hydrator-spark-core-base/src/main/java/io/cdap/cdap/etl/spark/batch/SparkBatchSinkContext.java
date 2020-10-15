@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,14 +18,19 @@ package io.cdap.cdap.etl.spark.batch;
 
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.Output;
+import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.SparkClientContext;
 import io.cdap.cdap.etl.api.batch.BatchSinkContext;
 import io.cdap.cdap.etl.batch.AbstractBatchContext;
+import io.cdap.cdap.etl.batch.BasicOutputFormatProvider;
 import io.cdap.cdap.etl.batch.preview.NullOutputFormatProvider;
 import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.io.TrackingOutputFormat;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -52,6 +57,16 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
   @Override
   public void addOutput(Output output) {
     Output actualOutput = suffixOutput(getOutput(output));
+
+    // Wrap the output provider with tracking counter for metrics collection via MR counter.
+    if (actualOutput instanceof Output.OutputFormatProviderOutput) {
+      OutputFormatProvider provider = ((Output.OutputFormatProviderOutput) actualOutput).getOutputFormatProvider();
+      Map<String, String> conf = new HashMap<>(provider.getOutputFormatConfiguration());
+      conf.put(TrackingOutputFormat.DELEGATE_CLASS_NAME, provider.getOutputFormatClassName());
+      provider = new BasicOutputFormatProvider(TrackingOutputFormat.class.getName(), conf);
+      actualOutput = Output.of(actualOutput.getName(), provider).alias(actualOutput.getAlias());
+    }
+
     sinkFactory.addOutput(getStageName(), actualOutput);
   }
 
@@ -67,7 +82,6 @@ public class SparkBatchSinkContext extends AbstractBatchContext implements Batch
     String suffixedAlias = String.format("%s-%s", output.getAlias(), UUID.randomUUID());
     return output.alias(suffixedAlias);
   }
-
 
   /**
    * Get the output, if preview is enabled, return the output with a {@link NullOutputFormatProvider}.

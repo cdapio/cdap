@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,11 +18,11 @@ package io.cdap.cdap.etl.spark.batch;
 
 import com.google.common.base.Objects;
 import com.google.common.base.Throwables;
-import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.data.batch.Input;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.api.data.batch.Split;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
+import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -74,7 +74,7 @@ public final class SparkBatchSourceFactory {
     addStageInput(stageName, alias);
   }
 
-  private void addInput(String stageName, String alias, BasicInputFormatProvider inputFormatProvider) {
+  private void addInput(String stageName, String alias, InputFormatProvider inputFormatProvider) {
     duplicateAliasCheck(alias);
     inputFormatProviders.put(alias, inputFormatProvider);
     addStageInput(stageName, alias);
@@ -144,29 +144,4 @@ public final class SparkBatchSourceFactory {
     sourceInputs.put(stageName, inputs);
   }
 
-  static final class BasicInputFormatProvider implements InputFormatProvider {
-
-    private final String inputFormatClassName;
-    private final Map<String, String> configuration;
-
-    BasicInputFormatProvider(String inputFormatClassName, Map<String, String> configuration) {
-      this.inputFormatClassName = inputFormatClassName;
-      this.configuration = ImmutableMap.copyOf(configuration);
-    }
-
-    BasicInputFormatProvider() {
-      this.inputFormatClassName = "";
-      this.configuration = new HashMap<>();
-    }
-
-    @Override
-    public String getInputFormatClassName() {
-      return inputFormatClassName;
-    }
-
-    @Override
-    public Map<String, String> getInputFormatConfiguration() {
-      return configuration;
-    }
-  }
 }

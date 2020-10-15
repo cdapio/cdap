@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
+import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
 
 import java.lang.reflect.Type;
 import java.util.Map;
@@ -42,11 +43,11 @@ public class InputFormatProviderTypeAdapter implements JsonSerializer<InputForma
     JsonObject obj = json.getAsJsonObject();
     // if inputFormat is not present, return empty InputFormatProvider
     if (obj.get("inputFormatClass") == null) {
-      return new SparkBatchSourceFactory.BasicInputFormatProvider();
+      return new BasicInputFormatProvider();
     }
     String className = obj.get("inputFormatClass").getAsString();
     Map<String, String> conf = context.deserialize(obj.get("inputFormatConfig"), mapType);
-    return new SparkBatchSourceFactory.BasicInputFormatProvider(className, conf);
+    return new BasicInputFormatProvider(className, conf);
   }
 
   @Override
