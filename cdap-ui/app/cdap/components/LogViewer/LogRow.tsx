@@ -54,7 +54,7 @@ const LogRowView: React.FC<ILogRowProps> = ({ classes, logObj }) => {
   const logLevel = logObj.log.logLevel;
 
   return (
-    <div className={classes.root}>
+    <div className={classes.root} data-cy="log-viewer-row">
       <div className={classes.cell}>{displayTime}</div>
       <div
         className={classnames(classes.cell, {
@@ -64,7 +64,9 @@ const LogRowView: React.FC<ILogRowProps> = ({ classes, logObj }) => {
       >
         {logLevel}
       </div>
-      <div className={classes.cell}>{logObj.log.message}</div>
+      <div className={classes.cell} data-cy="log-message">
+        {logObj.log.message}
+      </div>
     </div>
   );
 };

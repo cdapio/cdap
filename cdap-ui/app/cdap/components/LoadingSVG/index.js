@@ -30,6 +30,7 @@ export default function LoadingSVG({ height = '30px', width = '24px' }) {
       height={height}
       viewBox="0 0 24 30"
       style={{ enableBackground: 'new 0 0 50 50' }}
+      data-cy="loading-indicator"
     >
       <rect x="0" y="10" width="4" height="10" fill="#333" opacity="0.2">
         <animate
