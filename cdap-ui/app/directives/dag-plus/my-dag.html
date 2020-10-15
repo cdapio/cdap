@@ -179,7 +179,7 @@
             <div ng-click="node.isPluginAvailable && !disableNodeClick && DAGPlusPlusCtrl.onNodeClick($event, node)">
               <div class="error-node-notification" ng-if="node.errorCount > 0" data-cy="node-badge">
                 <span class="badge" ng-class="{'badge-warning': !node.error, 'badge-danger': node.error}">
-                  <span>{{node.errorCount}}</span>
+                  <span data-cy="node-error-count">{{node.errorCount}}</span>
                 </span>
               </div>
             </div>

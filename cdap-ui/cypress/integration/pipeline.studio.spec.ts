@@ -15,6 +15,7 @@
  */
 
 import {
+  dataCy,
   loginIfRequired,
   getGenericEndpoint,
   getConditionNodeEndpoint,
@@ -201,5 +202,69 @@ describe('Pipeline Studio', () => {
     });
     cy.get('[data-testid="deploy-pipeline"]').click();
     cy.url({ timeout: 60000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
+  });
+
+  it('should show the number of unfilled fields on a source', () => {
+    // Go to Pipelines studio
+    cy.visit('/pipelines/ns/default/studio');
+
+    const sourceNode: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
+    cy.add_node_to_canvas(sourceNode);
+
+    cy.get(dataCy('plugin-node-BigQueryTable-batchsource-0')).within(() => {
+      cy.get(dataCy('node-error-count')).should('have.text', '3');
+    });
+  });
+
+  it('should save and reload a pipeline', () => {
+    const REFERENCE_NAME = 'TestReferenceName';
+    const DATASET = 'TestDataset';
+    const TABLE = 'TestTable';
+    // Go to Pipelines studio
+    cy.visit('/pipelines/ns/default/studio');
+    cy.create_simple_pipeline();
+
+    cy.get('.pipeline-name').click();
+    cy.get('#pipeline-name-input')
+      .type(TEST_PIPELINE_NAME)
+      .type('{enter}');
+
+    cy.get(dataCy('pipeline-draft-save-btn')).click();
+
+    // go to pipeline listing and select draft
+    cy.visit('/cdap/ns/default/pipelines');
+    cy.get(dataCy('pipeline-list-view-header')).contains('Drafts').click();
+    cy.get(dataCy('draft-pipeline-table')).contains(TEST_PIPELINE_NAME).click();
+
+    // Configure source
+    cy.get(dataCy('plugin-node-BigQueryTable-batchsource-0')).within(() => {
+      cy.get(dataCy('node-properties-btn')).invoke('show').click();
+    });
+
+    function setFieldText(id, value) {
+      cy.get(dataCy(id)).within(() => {
+        cy.get('input').clear().type(value);
+      });
+    }
+
+    setFieldText('referenceName', REFERENCE_NAME);
+    setFieldText('dataset', DATASET);
+    setFieldText('table', TABLE);
+
+    cy.get('[data-testid="close-config-popover"]').click();
+
+    cy.get(dataCy('pipeline-draft-save-btn')).click();
+
+    // go to pipeline listing and select draft (again)
+    cy.visit('/cdap/ns/default/pipelines');
+    cy.get(dataCy('pipeline-list-view-header')).contains('Drafts').click();
+    cy.get(dataCy('draft-pipeline-table')).contains(TEST_PIPELINE_NAME).click();
+
+    cy.get_pipeline_json().then((pipelineConfig) => {
+      const sourceProperties = pipelineConfig.config.stages[0].plugin.properties;
+      expect(sourceProperties.referenceName).eq(REFERENCE_NAME);
+      expect(sourceProperties.dataset).eq(DATASET);
+      expect(sourceProperties.table).eq(TABLE);
+    });
   });
 });
