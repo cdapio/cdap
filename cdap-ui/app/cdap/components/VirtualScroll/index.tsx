@@ -28,7 +28,6 @@ interface IVirtualScrollProps extends WithStyles<typeof styles> {
   childHeight: number;
   childrenUnderFold: number;
   childrenUnderFoldOnScroll?: number;
-  headerEl?: React.ReactNode | Promise<React.ReactNode>;
   LoadingElement?: React.ReactNode;
 }
 const styles = (): StyleRules => {
@@ -63,14 +62,12 @@ const VirtualScroll = ({
   childHeight,
   childrenUnderFold,
   childrenUnderFoldOnScroll = 50,
-  headerEl = null,
   classes,
   LoadingElement = () => 'Loading...',
 }: IVirtualScrollProps) => {
   const [scrollTop, ref] = useScroll();
   const itmCount = typeof itemCount === 'function' ? itemCount() : itemCount;
-  const headerHeight = headerEl ? childHeight : 0;
-  const totalHeight = itmCount * childHeight + headerHeight;
+  const totalHeight = itmCount * childHeight;
   const [list, setList] = useState<React.ReactNode>([]);
   const [promise, setPromise] = useState(null);
   const [scrollingChildrenUnderFold, setScrollingChildrenUnderFold] = useState(childrenUnderFold);
@@ -112,9 +109,7 @@ const VirtualScroll = ({
   }, [promise]);
 
   const containerHeight =
-    itmCount > visibleChildCount
-      ? visibleChildCount * childHeight + headerHeight
-      : itmCount * childHeight + headerHeight;
+    itmCount > visibleChildCount ? visibleChildCount * childHeight : itmCount * childHeight;
   return (
     <div style={{ height: containerHeight }} className={classes.root} ref={ref}>
       <div
@@ -129,7 +124,6 @@ const VirtualScroll = ({
             transform: `translateY(${offsetY}px)`,
           }}
         >
-          {headerEl}
           {list}
         </div>
         {promise ? <div className={classes.loading}>Loading...</div> : null}
