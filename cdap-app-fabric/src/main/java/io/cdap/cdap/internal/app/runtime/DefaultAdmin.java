@@ -72,12 +72,12 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
   @Override
   public void put(String namespace, String name, String data,
                   @Nullable String description, Map<String, String> properties) throws Exception {
-    secureStoreManager.put(namespace, name, data, description, properties);
+    Retries.runWithRetries(() -> secureStoreManager.put(namespace, name, data, description, properties), retryStrategy);
   }
 
   @Override
   public void delete(String namespace, String name) throws Exception {
-    secureStoreManager.delete(namespace, name);
+    Retries.runWithRetries(() -> secureStoreManager.delete(namespace, name), retryStrategy);
   }
 
   @Override
@@ -120,12 +120,7 @@ public class DefaultAdmin extends DefaultDatasetManager implements Admin {
     }
 
     try {
-      return Retries.callWithRetries(new Retries.Callable<Map<String, String>, Exception>() {
-        @Override
-        public Map<String, String> call() throws TopicNotFoundException, IOException {
-          return messagingAdmin.getTopicProperties(topic);
-        }
-      }, retryStrategy);
+      return Retries.callWithRetries(() -> messagingAdmin.getTopicProperties(topic), retryStrategy);
     } catch (TopicNotFoundException | IOException | RuntimeException | Error e) {
       throw e;
     } catch (Exception e) {
