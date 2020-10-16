@@ -118,7 +118,9 @@ public class RemoteClient {
     try {
       HttpResponse response = HttpRequests.execute(httpRequest, httpRequestConfig);
       switch (response.getResponseCode()) {
+        case HttpURLConnection.HTTP_BAD_GATEWAY:
         case HttpURLConnection.HTTP_UNAVAILABLE:
+        case HttpURLConnection.HTTP_GATEWAY_TIMEOUT:
           throw new ServiceUnavailableException(discoverableServiceName, response.getResponseBodyAsString());
         case HttpURLConnection.HTTP_FORBIDDEN:
           throw new UnauthorizedException(response.getResponseBodyAsString());

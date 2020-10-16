@@ -22,6 +22,7 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataException;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.metadata.AbstractMetadataClient;
 import io.cdap.cdap.common.metadata.MetadataRecord;
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class RemoteMetadataReader implements MetadataReader {
   private final AbstractMetadataClient metadataClient;
 
   @Inject
-  public RemoteMetadataReader(AbstractMetadataClient metadataClient) {
+  RemoteMetadataReader(AbstractMetadataClient metadataClient) {
     this.metadataClient = metadataClient;
   }
 
@@ -54,6 +55,8 @@ public class RemoteMetadataReader implements MetadataReader {
     Set<MetadataRecord> metadata;
     try {
       metadata = metadataClient.getMetadata(metadataEntity);
+    } catch (ServiceUnavailableException e) {
+      throw e;
     } catch (Exception e) {
       throw new MetadataException(e);
     }

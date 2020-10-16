@@ -35,7 +35,9 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractRetryableScheduledService extends AbstractScheduledService {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractRetryableScheduledService.class);
-  private static final Logger OUTAGE_LOG = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
+
+  // Use a per instance sampling logger such that each instance will have their own rate sampling.
+  private final Logger outageLog = Loggers.sampling(LOG, LogSamplers.limitRate(TimeUnit.SECONDS.toMillis(30)));
 
   private final RetryStrategy retryStrategy;
 
@@ -202,6 +204,6 @@ public abstract class AbstractRetryableScheduledService extends AbstractSchedule
    * Logs an exception raised by {@link #runTask()}.
    */
   protected void logTaskFailure(Throwable t) {
-    OUTAGE_LOG.warn("Failed to execute task for scheduled service {}", getServiceName(), t);
+    outageLog.warn("Failed to execute task for scheduled service {}", getServiceName(), t);
   }
 }
