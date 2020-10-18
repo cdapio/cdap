@@ -1,0 +1,74 @@
+[
+  {
+    "name": "etlSchemaBody",
+    "schema": {
+      "name": "etlSchemaBody",
+      "type": "record",
+      "fields": [
+        {
+          "name": "1svsd",
+          "type": "string"
+        },
+        {
+          "name": "sdvsdv",
+          "type": "string"
+        },
+        {
+          "name": "s",
+          "type": "string"
+        },
+        {
+          "name": "svsdfd",
+          "type": "string"
+        },
+        {
+          "name": "sv",
+          "type": "string"
+        },
+        {
+          "name": "ma",
+          "type": "string"
+        },
+        {
+          "name": "sdb",
+          "type": {
+            "type": "map",
+            "keys": {
+              "type": "map",
+              "keys": [
+                "string"
+              ],
+              "values": "string"
+            },
+            "values": "string"
+          }
+        },
+        {
+          "name": "sdv",
+          "type": {
+            "type": "record",
+            "name": "sdv",
+            "fields": [
+              {
+                "name": "fh",
+                "type": "string"
+              },
+              {
+                "name": "fvbfdv",
+                "type": "string"
+              },
+              {
+                "name": "dfvdhf",
+                "type": "string"
+              },
+              {
+                "name": "fb",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+]

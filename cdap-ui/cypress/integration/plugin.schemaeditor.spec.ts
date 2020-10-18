@@ -108,7 +108,7 @@ describe('Plugin Schema Editor', () => {
   };
   const removeField = (row) => {
     return cy.get(`[data-cy="schema-row-${row}"] [data-cy="schema-field-remove-button"]`).click();
-  }
+  };
 
   it('Should render default empty schema', () => {
     openProjectionTransform();
@@ -758,6 +758,123 @@ describe('Plugin Schema Editor', () => {
       cy.get('[data-cy="Output Schema"] [data-cy="schema-editor-fieldset-container"]').should(
         'be.disabled'
       );
+    });
+  });
+
+  describe('Should surface errors from stage validation', () => {
+    it('Should show validation for both input & output schemas', () => {
+      const file: INodeInfo = { nodeName: 'File', nodeType: 'batchsource' };
+      const fileId: INodeIdentifier = { ...file, nodeId: '0' };
+      const speechToText: INodeInfo = { nodeName: 'SpeechToText', nodeType: 'transform' };
+      const speechToTextId: INodeIdentifier = { ...speechToText, nodeId: '1' };
+      cy.visit('/pipelines/ns/default/studio');
+      cy.add_node_to_canvas(fileId);
+      cy.open_transform_panel();
+      cy.add_node_to_canvas(speechToTextId);
+      cy.connect_two_nodes(fileId, speechToTextId, Helpers.getGenericEndpoint);
+
+      cy.open_node_property(fileId);
+      cy.get(`[data-cy="schema-row-1"] input[placeholder="Field name"]`).type('{enter}');
+      addField(2, 'unknownfield');
+      addField(3, 'onemorefield');
+
+      cy.get('input[data-cy="referenceName"]').type('FileRef');
+      cy.get('input[data-cy="path"]').type('file_path');
+      cy.get('[data-cy="plugin-properties-validate-btn"]').click();
+      cy.get(`[data-cy="schema-row-2"] [data-cy="error-icon"]`).then((el) => {
+        expect(el).to.have.attr(
+          'title',
+          `The schema for the 'text' format must only contain the ''offset' and 'body' fields'. Remove additional field 'unknownfield'.`
+        );
+      });
+      cy.get(`[data-cy="schema-row-3"] [data-cy="error-icon"]`).then((el) => {
+        expect(el).to.have.attr(
+          'title',
+          `The schema for the 'text' format must only contain the ''offset' and 'body' fields'. Remove additional field 'onemorefield'.`
+        );
+      });
+      removeField(2);
+      removeField(2);
+      cy.close_node_property();
+
+      cy.open_node_property(speechToTextId);
+      cy.get('input[data-cy="audiofield"]').type('body');
+      cy.get('input[data-cy="samplerate"]').type('16000');
+      cy.get('[data-cy="plugin-properties-validate-btn"]').click();
+
+      cy.get('[data-cy="Input Schema"] [data-cy="schema-row-1"] [data-cy="error-icon"]').then(
+        (el) => {
+          expect(el).to.have.attr(
+            'title',
+            `Field 'body' is of unsupported type 'string'. Ensure it is of type 'bytes'.`
+          );
+        }
+      );
+      cy.get('[data-cy="configuration-group"]')
+        .scrollIntoView()
+        .contains(`Field 'body' is of unsupported type 'string'. Ensure it is of type 'bytes'.`);
+    });
+  });
+
+  describe('Should perform right client side validation', () => {
+    it('Should correctly validate invalid name', () => {
+      const invalidName = 'invalue@$RWEDSW#@$##!#$@#';
+      cy.visit('/pipelines/ns/default/studio');
+      openProjectionTransform();
+      addField(0, invalidName);
+      cy.get('[data-cy="schema-editor-fieldset-container"]').contains(
+        `invalid field name: ${invalidName}`
+      );
+      removeField(0);
+      addField(0, 'Name', 'record');
+      addField(1, invalidName);
+      cy.get('[data-cy="schema-row-0"] [data-cy="error-icon"]').then((el) => {
+        expect(el).to.have.attr('title', `invalid field name: ${invalidName}`);
+      });
+      cy.compareSnapshot('error_highlighted_output_schema');
+    });
+    it('Should surface right message while importing invalid json for schema', () => {
+      cy.visit('/pipelines/ns/default/studio');
+      openProjectionTransform();
+      cy.get(`[data-cy="schema-row-0"] [placeholder="Field name"]`)
+        .invoke('val')
+        .then((value) => {
+          expect(value).to.equal('');
+        })
+        .then(() => {
+          cy.fixture('plugin-schema/simple-schema.json').then((simpleSchema) => {
+            const strJson = JSON.stringify(simpleSchema);
+            cy.emit('schema.import', strJson + ';');
+            cy.get('[data-cy="alert"]').contains(`Unexpected token ; in JSON at position 346`);
+            cy.get('[data-cy="alert"] .icon-close').click();
+            cy.emit('schema.import', strJson);
+            cy.get(`[data-cy="schema-row-0"] [placeholder="Field name"]`)
+              .invoke('val')
+              .then((value) => {
+                expect(value).to.equal('arr5');
+              });
+          });
+        });
+    });
+    it('Should import schema with invalid name and surface right error message', () => {
+      cy.visit('/pipelines/ns/default/studio');
+      openProjectionTransform();
+      cy.get(`[data-cy="schema-row-0"] [placeholder="Field name"]`)
+        .invoke('val')
+        .then((value) => {
+          expect(value).to.equal('');
+        })
+        .then(() => {
+          cy.fixture('plugin-schema/error-schema.json').then((errorSchema) => {
+            cy.emit('schema.import', JSON.stringify(errorSchema));
+            cy.get('[data-cy="Output Schema"]').contains('invalid field name: 1svsd');
+            cy.close_node_property();
+            const projection: INodeInfo = { nodeName: 'Projection', nodeType: 'transform' };
+            const projectionId: INodeIdentifier = { ...projection, nodeId: '0' };
+            cy.open_node_property(projectionId);
+            cy.get('[data-cy="Output Schema"]').contains('invalid field name: 1svsd');
+          });
+        });
     });
   });
 });

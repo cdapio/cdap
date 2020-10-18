@@ -17,12 +17,9 @@
 import * as React from 'react';
 import {
   IFlattenRowType,
-  IFieldIdentifier,
-  IOnChangePayload,
   IRowOnChangeHandler,
 } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
 import {
-  schemaTypes,
   InternalTypesEnum,
   OperationTypesEnum,
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
@@ -258,7 +255,7 @@ class FieldRowBase extends React.Component<IFieldRowProps, IFieldRowState> {
                     title={errorMap[this.props.field.id]}
                     placement="right"
                   >
-                    <ErrorIcon className={classes.errorIcon} />
+                    <ErrorIcon data-cy="error-icon" className={classes.errorIcon} />
                   </Tooltip>
                 </If>
                 <If condition={typeof this.state.collapsed === 'boolean'} invisible>
