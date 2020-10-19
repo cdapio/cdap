@@ -27,11 +27,14 @@ import java.util.stream.Collectors;
  */
 public class Requirements {
 
-  public static final Requirements EMPTY = new Requirements(Collections.emptySet());
+  public static final Requirements EMPTY = new Requirements(Collections.emptySet(), Collections.emptySet());
 
   // currently this class only contains one set but we are using the object for storage during serialization so that we
   // can add more when needed in future
   private final Set<String> datasetTypes;
+
+  //Accelerators associated with this plugin
+  private final Set<String> accelerators;
 
   /**
    * Creates a {@link Requirements} object from the given {@link Set}. Note: Requirements are case insensitive and all
@@ -40,8 +43,14 @@ public class Requirements {
    * @param datasetTypes a {@link Set} containing dataset type requirements
    */
   public Requirements(Set<String> datasetTypes) {
+    this(datasetTypes, Collections.emptySet());
+  }
+
+  public Requirements(Set<String> datasetTypes, Set<String> accelerators) {
     this.datasetTypes = datasetTypes.isEmpty() ? Collections.emptySet() :
       Collections.unmodifiableSet(datasetTypes.stream().map(String::toLowerCase).collect(Collectors.toSet()));
+    this.accelerators = accelerators.isEmpty() ? Collections.emptySet() :
+      Collections.unmodifiableSet(accelerators.stream().map(String::toLowerCase).collect(Collectors.toSet()));
   }
 
   /**
@@ -60,22 +69,23 @@ public class Requirements {
       return false;
     }
     Requirements that = (Requirements) o;
-    return Objects.equals(datasetTypes, that.datasetTypes);
+    return Objects.equals(datasetTypes, that.datasetTypes) && Objects.equals(accelerators, that.accelerators);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(datasetTypes);
+    return Objects.hash(datasetTypes, accelerators);
   }
 
   @Override
   public String toString() {
     return "Requirements{" +
       "datasetTypes=" + datasetTypes +
+      "accelerators=" + accelerators +
       '}';
   }
 
   public boolean isEmpty() {
-    return datasetTypes.isEmpty();
+    return datasetTypes.isEmpty() && accelerators.isEmpty();
   }
 }

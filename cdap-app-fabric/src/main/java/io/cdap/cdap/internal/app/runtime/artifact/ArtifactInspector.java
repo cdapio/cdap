@@ -19,7 +19,6 @@ package io.cdap.cdap.internal.app.runtime.artifact;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Function;
 import com.google.common.base.Predicate;
-import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.AbstractIterator;
 import com.google.common.collect.ImmutableList;
@@ -79,6 +78,7 @@ import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -203,7 +203,7 @@ final class ArtifactInspector {
       }
 
       Schema configSchema = configType == Config.class ? null : schemaGenerator.generate(configType);
-      builder.addApp(new ApplicationClass(mainClassName, "", configSchema));
+      builder.addApp(new ApplicationClass(mainClassName, "", configSchema, getArtifactRequirements(app.getClass())));
     } catch (ClassNotFoundException e) {
       throw new InvalidArtifactException(String.format(
         "Could not find Application main class %s in artifact %s.", mainClassName, artifactId));
@@ -246,7 +246,7 @@ final class ArtifactInspector {
           String configField = getProperties(TypeToken.of(cls), pluginProperties);
           PluginClass pluginClass = new PluginClass(pluginAnnotation.type(), getPluginName(cls),
                                                     getPluginDescription(cls), cls.getName(),
-                                                    configField, pluginProperties, getPluginRequirements(cls));
+                                                    configField, pluginProperties, getArtifactRequirements(cls));
           builder.addPlugin(pluginClass);
         } catch (UnsupportedTypeException e) {
           LOG.warn("Plugin configuration type not supported. Plugin ignored. {}", cls, e);
@@ -381,14 +381,19 @@ final class ArtifactInspector {
    * not specify any {@link io.cdap.cdap.api.annotation.Requirements} then the {@link Requirements} will be empty.
    */
   @VisibleForTesting
-  Requirements getPluginRequirements(Class<?> cls) {
+  Requirements getArtifactRequirements(Class<?> cls) {
     io.cdap.cdap.api.annotation.Requirements annotation =
       cls.getAnnotation(io.cdap.cdap.api.annotation.Requirements.class);
     if (annotation == null) {
       return Requirements.EMPTY;
     }
-    return new Requirements(Arrays.stream(annotation.datasetTypes()).map(s -> s.trim().toLowerCase())
-                              .filter(s -> !Strings.isNullOrEmpty(s)).collect(Collectors.toSet()));
+    return new Requirements(getAnnotationValues(annotation.datasetTypes()),
+                            getAnnotationValues(annotation.accelerators()));
+  }
+
+  private Set<String> getAnnotationValues(String[] field) {
+    return Arrays.stream(field).map(String::trim).map(String::toLowerCase).filter(Objects::nonNull)
+      .filter(s -> !s.isEmpty()).collect(Collectors.toSet());
   }
 
   /**
