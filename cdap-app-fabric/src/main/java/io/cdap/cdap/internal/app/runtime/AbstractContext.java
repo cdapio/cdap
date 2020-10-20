@@ -31,7 +31,6 @@ import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.common.RuntimeArguments;
-import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.DatasetInstantiationException;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.api.dataset.lib.PartitionKey;
@@ -390,16 +389,13 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public <T extends Dataset> T getDataset(final String namespace, final String name,
                                           final Map<String, String> arguments,
                                           final AccessType accessType) throws DatasetInstantiationException {
-    return Retries.callWithRetries(new Retries.Callable<T, DatasetInstantiationException>() {
-      @Override
-      public T call() throws DatasetInstantiationException {
-        T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
-        if (dataset instanceof RuntimeProgramContextAware) {
-          DatasetId datasetId = new NamespaceId(namespace).dataset(name);
-          ((RuntimeProgramContextAware) dataset).setContext(createRuntimeProgramContext(datasetId));
-        }
-        return dataset;
+    return Retries.callWithRetries(() -> {
+      T dataset = datasetCache.getDataset(namespace, name, arguments, accessType);
+      if (dataset instanceof RuntimeProgramContextAware) {
+        DatasetId datasetId = new NamespaceId(namespace).dataset(name);
+        ((RuntimeProgramContextAware) dataset).setContext(createRuntimeProgramContext(datasetId));
       }
+      return dataset;
     }, retryStrategy);
   }
 
@@ -515,12 +511,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public List<SecureStoreMetadata> list(String namespace) throws Exception {
-    return secureStore.list(namespace);
+    return Retries.callWithRetries(() -> secureStore.list(namespace), retryStrategy);
   }
 
   @Override
   public SecureStoreData get(String namespace, String name) throws Exception {
-    return secureStore.get(namespace, name);
+    return Retries.callWithRetries(() -> secureStore.get(namespace, name), retryStrategy);
   }
 
   @Override
@@ -537,15 +533,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       Transactional txnl = retryOnConflict
         ? Transactions.createTransactionalWithRetry(transactional, RetryStrategies.retryOnConflict(20, 100))
         : transactional;
-      txnl.execute(new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
-          try {
-            runnable.run(context);
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
+      txnl.execute(context -> {
+        ClassLoader oldClassLoader1 = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
+        try {
+          runnable.run(context);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader1);
         }
       });
     } finally {
@@ -557,15 +550,12 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   public void execute(int timeoutInSeconds, final TxRunnable runnable) throws TransactionFailureException {
     ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getClass().getClassLoader());
     try {
-      transactional.execute(timeoutInSeconds, new TxRunnable() {
-        @Override
-        public void run(DatasetContext context) throws Exception {
-          ClassLoader oldClassLoader = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
-          try {
-            runnable.run(context);
-          } finally {
-            ClassLoaders.setContextClassLoader(oldClassLoader);
-          }
+      transactional.execute(timeoutInSeconds, context -> {
+        ClassLoader oldClassLoader1 = ClassLoaders.setContextClassLoader(getProgramInvocationClassLoader());
+        try {
+          runnable.run(context);
+        } finally {
+          ClassLoaders.setContextClassLoader(oldClassLoader1);
         }
       });
     } finally {
@@ -747,18 +737,20 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
-    return metadataReader.getMetadata(metadataEntity);
+    return Retries.callWithRetries(() -> metadataReader.getMetadata(metadataEntity), retryStrategy);
   }
 
   @Override
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
-    return metadataReader.getMetadata(scope, metadataEntity);
+    return Retries.callWithRetries(() -> metadataReader.getMetadata(scope, metadataEntity), retryStrategy);
   }
 
   @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties) {
-    metadataPublisher.publish(programRunId,
-                              new MetadataOperation.Put(metadataEntity, properties, Collections.emptySet()));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId,
+                                      new MetadataOperation.Put(metadataEntity, properties, Collections.emptySet())),
+      retryStrategy);
   }
 
   @Override
@@ -768,35 +760,50 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
 
   @Override
   public void addTags(MetadataEntity metadataEntity, Iterable<String> tags) {
-    metadataPublisher.publish(programRunId, new MetadataOperation.Put(
-      metadataEntity, Collections.emptyMap(), ImmutableSet.copyOf(tags)));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId, new MetadataOperation.Put(metadataEntity,
+                                                                              Collections.emptyMap(),
+                                                                              ImmutableSet.copyOf(tags))),
+      retryStrategy);
   }
 
   @Override
   public void removeMetadata(MetadataEntity metadataEntity) {
-    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAll(metadataEntity));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAll(metadataEntity)),
+      retryStrategy);
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity) {
-    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllProperties(metadataEntity));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllProperties(metadataEntity)),
+      retryStrategy);
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity, String... keys) {
-    metadataPublisher.publish(programRunId, new MetadataOperation.Delete(
-      metadataEntity, ImmutableSet.copyOf(keys), Collections.emptySet()));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId, new MetadataOperation.Delete(metadataEntity,
+                                                                                 ImmutableSet.copyOf(keys),
+                                                                                 Collections.emptySet())),
+      retryStrategy);
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity) {
-    metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllTags(metadataEntity));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId, new MetadataOperation.DeleteAllTags(metadataEntity)),
+      retryStrategy);
   }
 
   @Override
   public void removeTags(MetadataEntity metadataEntity, String... tags) {
-    metadataPublisher.publish(programRunId, new MetadataOperation.Delete(
-      metadataEntity, Collections.emptySet(), ImmutableSet.copyOf(tags)));
+    Retries.runWithRetries(
+      () -> metadataPublisher.publish(programRunId, new MetadataOperation.Delete(metadataEntity,
+                                                                                 Collections.emptySet(),
+                                                                                 ImmutableSet.copyOf(tags))),
+      retryStrategy);
   }
 
   /**
