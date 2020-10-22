@@ -69,7 +69,7 @@ function RowButtons({
   internalType,
 }: IRowButtonsProps) {
   return (
-    <RowButtonWrapper disabled={disabled}>
+    <RowButtonWrapper>
       <If condition={typeof onNullable === 'function'} invisible>
         <Nullable nullable={nullable} onNullable={disabled ? undefined : onNullable} />
       </If>

@@ -18,10 +18,13 @@
 
 .profile-customize-content {
   height: 100%;
-  min-height: inherit;
+  min-height: 300px;
+  max-height: 360px;
+  width: 350px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  cursor: pointer;
 
   .profile-customize-metadata {
     margin-bottom: 10px;
@@ -50,6 +53,9 @@
         background-color: $grey-08;
       }
     }
+  }
+  .profile-customize-footer {
+    margin-bottom: 20px;
   }
   .btn.btn-primary {
     margin-top: 10px;

@@ -159,7 +159,7 @@ const PluginListView: React.FC<IPluginListProps> = ({
     );
   }
 
-  const targetList = <SinkList title="Sinks" plugins={sinks} onPluginSelect={onPluginSelect} />;
+  const targetList = <SinkList plugins={sinks} onPluginSelect={onPluginSelect} />;
 
   return (
     <div className={classes.root}>

@@ -95,7 +95,11 @@ export default class ProfileCustomizeContent extends PureComponent {
 
   render() {
     if (this.state.loading) {
-      return <LoadingSVG />;
+      return (
+        <div className="profile-customize-content">
+          <LoadingSVG />
+        </div>
+      );
     }
     let groups = this.state.provisionerspec['configuration-groups'];
     let editablePropertiesFromProfile = this.props.provisioner.properties.filter(
@@ -178,7 +182,7 @@ export default class ProfileCustomizeContent extends PureComponent {
           </Accordion>
         </div>
         {this.props.disabled ? null : (
-          <div>
+          <div className="profile-customize-footer">
             {!editablePropertiesFromProfile.length ? (
               <small className="text-danger">
                 Properties of this profile cannot be customized.

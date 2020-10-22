@@ -17,8 +17,6 @@
 import React, { Component } from 'react';
 import { Provider } from 'react-redux';
 import PropTypes from 'prop-types';
-import { Observable } from 'rxjs/Observable';
-import { isDescendant } from 'services/helpers';
 import PipelineConfigurationsStore, {
   ACTIONS as PipelineConfigurationsActions,
 } from 'components/PipelineConfigurations/Store';
@@ -81,24 +79,9 @@ export default class PipelineConfigurations extends Component {
         this.storeSubscription();
       }
     });
-
-    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
-      if (
-        !this.configModeless ||
-        isDescendant(this.configModeless, e.target) ||
-        document.getElementsByClassName('post-run-actions-modal').length > 0
-      ) {
-        return;
-      }
-
-      this.props.onClose();
-    });
   }
 
   componentWillUnmount() {
-    if (this.documentClick$) {
-      this.documentClick$.unsubscribe();
-    }
     if (this.storeSubscription) {
       this.storeSubscription();
     }
@@ -151,10 +134,7 @@ export default class PipelineConfigurations extends Component {
     }
     return (
       <Provider store={PipelineConfigurationsStore}>
-        <div
-          className="pipeline-configurations-content modeless-container"
-          ref={(ref) => (this.configModeless = ref)}
-        >
+        <div className="pipeline-configurations-content" ref={(ref) => (this.configModeless = ref)}>
           {this.renderHeader()}
           <div className="pipeline-config-tabs-wrapper">
             <ConfigurableTab tabConfig={tabConfig} />

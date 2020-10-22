@@ -40,7 +40,7 @@ const PlusButtonModal = Loadable({
 });
 
 interface IHubButtonProps extends WithStyles<typeof styles> {
-  className: string;
+  className?: string;
   children: React.ReactNode;
 }
 interface IHubButtonState {

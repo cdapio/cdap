@@ -34,7 +34,7 @@ const styles = (theme): StyleRules => {
 
 // TODO: refactor props when types are extracted to separate file
 interface IPluginInfoProps extends WithStyles<typeof styles> {
-  type: 'string';
+  type: string;
   pluginInfo: any;
   pluginWidget: any;
 }

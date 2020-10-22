@@ -16,10 +16,17 @@
 
 import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
-import Popover from 'components/Popover';
+import Popover from '@material-ui/core/Popover';
 import ProfileCustomizeContent from 'components/PipelineDetails/ProfilesListView/ProfileCustomizePopover/ProfileCustomizeContent';
 import { getProfileNameWithScope } from 'components/Cloud/Profiles/Store/ActionCreator';
+import { withStyles } from '@material-ui/core/styles';
 require('./ProfileCustomizePopover.scss');
+
+const CustomizedPopover = withStyles({
+  paper: {
+    padding: '20px',
+  },
+})(Popover);
 
 export default class ProfileCustomizePopover extends PureComponent {
   static propTypes = {
@@ -37,9 +44,10 @@ export default class ProfileCustomizePopover extends PureComponent {
     showPopover: false,
   };
 
-  onTogglePopover = (showPopover) => {
+  onTogglePopover = (e) => {
     this.setState({
-      showPopover,
+      showPopover: !this.state.showPopover,
+      anchorEl: e.currentTarget,
     });
   };
 
@@ -53,34 +61,35 @@ export default class ProfileCustomizePopover extends PureComponent {
   render() {
     let { name, provisioner, scope, label: profileLabel } = this.props.profile;
     let profileName = getProfileNameWithScope(name, scope);
-    let customizeLink = () => <div className="btn-link">Customize</div>;
     return (
-      <Popover
-        target={customizeLink}
-        placement="left"
-        enableInteractionInPopover={true}
-        injectOnToggle={true}
-        className="profile-customize-popover"
-        bubbleEvent={false}
-        showPopover={this.state.showPopover}
-        onTogglePopover={this.onTogglePopover}
-        modifiers={{
-          offset: {
-            enabled: true,
-            offset: '70,0',
-          },
-        }}
-      >
-        <ProfileCustomizeContent
-          profileName={profileName}
-          profileLabel={profileLabel}
-          customizations={this.props.customizations}
-          provisioner={provisioner}
-          onSave={this.onProfileSelect.bind(this, profileName)}
-          disabled={this.props.disabled}
+      <div className="profile-customize-popover">
+        <div className="btn-link" onClick={this.onTogglePopover}>
+          Customize
+        </div>
+        <CustomizedPopover
+          open={this.state.showPopover}
+          anchorEl={this.state.anchorEl}
           onClose={this.onTogglePopover}
-        />
-      </Popover>
+          anchorOrigin={{
+            vertical: 'center',
+            horizontal: 'left',
+          }}
+          transformOrigin={{
+            vertical: 'center',
+            horizontal: 'right',
+          }}
+        >
+          <ProfileCustomizeContent
+            profileName={profileName}
+            profileLabel={profileLabel}
+            customizations={this.props.customizations}
+            provisioner={provisioner}
+            onSave={this.onProfileSelect.bind(this, profileName)}
+            disabled={this.props.disabled}
+            onClose={this.onTogglePopover}
+          />
+        </CustomizedPopover>
+      </div>
     );
   }
 }

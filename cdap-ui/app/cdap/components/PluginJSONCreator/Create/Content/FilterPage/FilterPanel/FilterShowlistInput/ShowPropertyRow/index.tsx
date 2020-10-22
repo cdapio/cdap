@@ -56,8 +56,8 @@ const styles = (): StyleRules => {
 interface IShowPropertyRowProps extends WithStyles<typeof styles> {
   showName: string;
   showType: string;
-  setShowName: () => void;
-  setShowType: () => void;
+  setShowName: (newVal: string) => void;
+  setShowType: (newVal: string) => void;
   addShowToFilter: () => void;
   deleteShowFromFilter: () => void;
 }

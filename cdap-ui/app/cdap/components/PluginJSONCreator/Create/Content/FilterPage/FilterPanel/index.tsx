@@ -59,7 +59,7 @@ interface IFilterPanelProps extends WithStyles<typeof styles> {
   addFilter: () => void;
   deleteFilter: () => void;
   filterExpanded: boolean;
-  switchEditFilter: () => void;
+  switchEditFilter: (event: any, expanded: boolean) => void;
 }
 
 const FilterPanelView: React.FC<IFilterPanelProps> = ({

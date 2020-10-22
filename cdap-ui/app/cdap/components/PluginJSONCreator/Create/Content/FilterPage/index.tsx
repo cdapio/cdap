@@ -105,7 +105,7 @@ const FilterPage = () => {
     };
   }
 
-  const switchEditFilter = (index) => (event, newExpanded) => {
+  const switchEditFilter = (index) => (event: any, newExpanded: boolean) => {
     if (newExpanded) {
       setActiveFilterIndex(index);
     } else {

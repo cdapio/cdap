@@ -82,7 +82,7 @@ const FieldWrapperBase = ({
   const thirdColumn = `96px`;
   const errorColumn = '10px';
   const secondColumn = `calc(100% - (${firstColumn} + ${thirdColumn} + ${errorColumn}))`;
-  let customStyles: Partial<CSSStyleDeclaration> = {
+  let customStyles: React.CSSProperties = {
     marginLeft: `${spacing === 0 ? 2 : spacing}px`,
     gridTemplateColumns: `${firstColumn} ${secondColumn} ${thirdColumn}`,
     width: `calc(100% - ${spacing + 5 /* box shadow */}px)`,
