@@ -30,6 +30,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 /**
  * App used in artifact inspector tests
  */
+@Requirements(accelerators = "cdc")
 public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   public static final String PLUGIN_DESCRIPTION = "some plugin";
   public static final String PLUGIN_NAME = "pluginA";
@@ -140,6 +141,42 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   @Description(PLUGIN_DESCRIPTION)
   @Requirements(datasetTypes = {"req1", "req2"})
   public static class NonTransactionalPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("AcceleratorPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements(accelerators = {"cdc"})
+  public static class AcceleratorPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("MultipleAcceleratorPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements(accelerators = {"cdc", "healthcare"})
+  public static class MultipleAcceleratorPlugin {
+    private PConfig pluginConf;
+
+    public double doSomething() {
+      return pluginConf.y;
+    }
+  }
+
+  @Plugin(type = PLUGIN_TYPE)
+  @Name("DatasetAndAcceleratorPlugin")
+  @Description(PLUGIN_DESCRIPTION)
+  @Requirements(datasetTypes = {Table.TYPE, "sometype"}, accelerators = {"cdc", "healthcare"})
+  public static class DatasetAndAcceleratorPlugin {
     private PConfig pluginConf;
 
     public double doSomething() {

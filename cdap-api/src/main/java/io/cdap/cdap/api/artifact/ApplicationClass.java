@@ -18,6 +18,7 @@ package io.cdap.cdap.api.artifact;
 
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.plugin.Requirements;
 
 import java.util.Objects;
 import javax.annotation.Nullable;
@@ -30,8 +31,14 @@ public final class ApplicationClass {
   private final String className;
   private final String description;
   private final Schema configSchema;
+  private final Requirements requirements;
 
   public ApplicationClass(String className, String description, @Nullable Schema configSchema) {
+    this(className, description, configSchema, Requirements.EMPTY);
+  }
+
+  public ApplicationClass(String className, String description, @Nullable Schema configSchema,
+                          Requirements requirements) {
     if (description == null) {
       throw new IllegalArgumentException("Application class description cannot be null");
     }
@@ -41,6 +48,7 @@ public final class ApplicationClass {
     this.className = className;
     this.description = description;
     this.configSchema = configSchema;
+    this.requirements = requirements;
   }
 
   /**
@@ -78,12 +86,13 @@ public final class ApplicationClass {
 
     return Objects.equals(description, that.description) &&
       Objects.equals(className, that.className) &&
-      Objects.equals(configSchema, that.configSchema);
+      Objects.equals(configSchema, that.configSchema) &&
+      Objects.equals(requirements, that.requirements);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(className, description, configSchema);
+    return Objects.hash(className, description, configSchema, requirements);
   }
 
   @Override
@@ -92,6 +101,7 @@ public final class ApplicationClass {
       "className='" + className + '\'' +
       ", description='" + description + '\'' +
       ", configSchema=" + configSchema +
+      ", requirements=" + requirements +
       '}';
   }
 }

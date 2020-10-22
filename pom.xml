@@ -1623,6 +1623,7 @@
                   <exclude>LICENSE*.txt</exclude>
                   <exclude>*.rst</exclude>
                   <exclude>*.md</exclude>
+                  <exclude>**/*.iml</exclude>
                   <exclude>**/*.md</exclude>
                   <exclude>logs/**</exclude>
                   <exclude>cdap-docs/**</exclude>

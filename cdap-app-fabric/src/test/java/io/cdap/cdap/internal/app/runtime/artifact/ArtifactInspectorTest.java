@@ -96,30 +96,40 @@ public class ArtifactInspectorTest {
   @Test
   public void testGetPluginRequirements() {
     // check that if a plugin does not specify requirement annotation then it has empty requirements
-    Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.AppPlugin.class).isEmpty());
+    Assert.assertTrue(artifactInspector.getArtifactRequirements(InspectionApp.AppPlugin.class).isEmpty());
 
     // check that if a plugin specify a requirement it is captured
     Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE)),
-                        artifactInspector.getPluginRequirements(InspectionApp.SingleRequirementPlugin.class));
+                        artifactInspector.getArtifactRequirements(InspectionApp.SingleRequirementPlugin.class));
 
     // check if a plugin specify a requirement annotation but it is empty the requirement captured is no requirement
-    Assert.assertTrue(artifactInspector.getPluginRequirements(InspectionApp.EmptyRequirementPlugin.class).isEmpty());
+    Assert
+      .assertTrue(artifactInspector.getArtifactRequirements(InspectionApp.EmptyRequirementPlugin.class).isEmpty());
 
     // check if a plugin specify multiple requirement all of them are captured
     Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, KeyValueTable.TYPE)),
-                        artifactInspector.getPluginRequirements(InspectionApp.MultipleRequirementsPlugin.class));
+                        artifactInspector.getArtifactRequirements(InspectionApp.MultipleRequirementsPlugin.class));
 
     // check if a plugin has specified empty string as requirement is captured as no requirements
     Assert.assertTrue(artifactInspector
-                        .getPluginRequirements(InspectionApp.SingleEmptyRequirementPlugin.class).isEmpty());
+                        .getArtifactRequirements(InspectionApp.SingleEmptyRequirementPlugin.class).isEmpty());
 
     // check if a plugin has specified empty string with a valid requirement only the valid requirement is captured
     Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE)),
-                        artifactInspector.getPluginRequirements(InspectionApp.ValidAndEmptyRequirementsPlugin.class));
+                        artifactInspector
+                          .getArtifactRequirements(InspectionApp.ValidAndEmptyRequirementsPlugin.class));
 
     // test that duplicate requirements are only stored once and the beginning and ending white spaces are trimmed
     Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, "duplicate")),
-                        artifactInspector.getPluginRequirements(InspectionApp.DuplicateRequirementsPlugin.class));
+                        artifactInspector.getArtifactRequirements(InspectionApp.DuplicateRequirementsPlugin.class));
+
+    //Test that accelerators in the Requirements annotation is being captured
+    Assert.assertEquals(new Requirements(ImmutableSet.of(), ImmutableSet.of("cdc")),
+                        artifactInspector.getArtifactRequirements(InspectionApp.AcceleratorPlugin.class));
+    Assert.assertEquals(new Requirements(ImmutableSet.of(), ImmutableSet.of("cdc", "healthcare")),
+                        artifactInspector.getArtifactRequirements(InspectionApp.MultipleAcceleratorPlugin.class));
+    Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, "sometype"), ImmutableSet.of("cdc", "healthcare")),
+                        artifactInspector.getArtifactRequirements(InspectionApp.DatasetAndAcceleratorPlugin.class));
   }
 
   @Test
@@ -137,7 +147,8 @@ public class ArtifactInspectorTest {
 
       // check app classes
       Set<ApplicationClass> expectedApps = ImmutableSet.of(new ApplicationClass(
-        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator(false).generate(InspectionApp.AConfig.class)));
+        InspectionApp.class.getName(), "", new ReflectionSchemaGenerator(false).generate(InspectionApp.AConfig.class),
+        new Requirements(Collections.emptySet(), Collections.singleton("cdc"))));
       Assert.assertEquals(expectedApps, classes.getApps());
 
       // check plugin classes

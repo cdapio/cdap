@@ -69,4 +69,10 @@ import java.lang.annotation.Target;
 public @interface Requirements {
 
   String[] datasetTypes() default {};
+
+  /**
+   * Names of associated add-ons or accelerators
+   * @return String array of accelerator names
+   */
+  String[] accelerators() default{};
 }

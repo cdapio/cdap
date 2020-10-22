@@ -83,12 +83,14 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
                           .getResponseCode());
     Set<PluginClass> plugins = getArtifactInfo(artifactId).getClasses().getPlugins();
     // Only four plugins which does not have transactions as requirement should be visible.
-    Assert.assertEquals(4, plugins.size());
+    Assert.assertEquals(6, plugins.size());
     Set<String> actualPluginClassNames = plugins.stream().map(PluginClass::getClassName).collect(Collectors.toSet());
     Set<String> expectedPluginClassNames = ImmutableSet.of(InspectionApp.AppPlugin.class.getName(),
                                                            InspectionApp.EmptyRequirementPlugin.class.getName(),
                                                            InspectionApp.SingleEmptyRequirementPlugin.class.getName(),
-                                                           InspectionApp.NonTransactionalPlugin.class.getName());
+                                                           InspectionApp.NonTransactionalPlugin.class.getName(),
+                                                           InspectionApp.AcceleratorPlugin.class.getName(),
+                                                           InspectionApp.MultipleAcceleratorPlugin.class.getName());
     Assert.assertEquals(expectedPluginClassNames, actualPluginClassNames);
   }
 }
