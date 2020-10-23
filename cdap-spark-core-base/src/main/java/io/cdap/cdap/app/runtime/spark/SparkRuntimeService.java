@@ -527,6 +527,13 @@ final class SparkRuntimeService extends AbstractExecutionThreadService {
       }
     }
 
+    //Configuration options for CDAP
+    String sparkCheckpointTempRewrite =
+      String.format("-D%s=%s", SparkRuntimeUtils.STREAMING_CHECKPOINT_REWRITE_ENABLED,
+                    cConf.get(SparkRuntimeUtils.SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED));
+    prependConfig(configs, "spark.driver.extraJavaOptions", sparkCheckpointTempRewrite, " ");
+    prependConfig(configs, "spark.executor.extraJavaOptions", sparkCheckpointTempRewrite, " ");
+
     // CDAP-5854: On Windows * is a reserved character which cannot be used in paths. So adding the below to
     // classpaths will fail. Please see CDAP-5854.
     // In local mode spark program runs under the same jvm as cdap master and these jars will already be in the

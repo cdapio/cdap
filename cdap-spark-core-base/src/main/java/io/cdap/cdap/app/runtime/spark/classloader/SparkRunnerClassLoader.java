@@ -82,12 +82,15 @@ public final class SparkRunnerClassLoader extends URLClassLoader {
     API_CLASSES = Collections.unmodifiableSet(apiClasses);
   }
 
-  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient) {
+  public SparkRunnerClassLoader(URL[] urls, @Nullable ClassLoader parent, boolean rewriteYarnClient,
+                                boolean rewriteCheckpointTempFileName) {
     super(urls, parent);
     // Copy from URLClassLoader, which also uses WeakHashMap
     this.closeables = new WeakHashMap<>();
     this.closeablesLock = new ReentrantLock();
-    this.rewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), rewriteYarnClient);
+    this.rewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name),
+                                           rewriteYarnClient,
+                                           rewriteCheckpointTempFileName);
   }
 
   @Override

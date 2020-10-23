@@ -84,6 +84,13 @@ public final class SparkRuntimeUtils {
   public static final String PYSPARK_PORT_FILE_NAME = "cdap.py4j.gateway.port.txt";
   public static final String PYSPARK_SECRET_FILE_NAME = "cdap.py4j.gateway.secret.txt";
 
+  // Configuration option used to supply rewriting behavior in Drivers and Executors.
+  // This configuration option is used in the SparkRuntimeService
+  public static final String STREAMING_CHECKPOINT_REWRITE_ENABLED = "streaming.checkpoint.rewrite.enabled";
+  // Configuration option used to control rewriting behavior in the cdap-site.xml file.
+  public static final String SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED =
+    "spark." + STREAMING_CHECKPOINT_REWRITE_ENABLED;
+
   private static final String LOCALIZED_RESOURCES = "spark.cdap.localized.resources";
   private static final int CHUNK_SIZE = 1 << 15;  // 32K
   private static final Logger LOG = LoggerFactory.getLogger(SparkRuntimeUtils.class);
