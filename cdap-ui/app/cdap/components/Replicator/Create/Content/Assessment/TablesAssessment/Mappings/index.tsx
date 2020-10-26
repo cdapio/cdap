@@ -27,6 +27,8 @@ import Supported, {
   SUPPORT,
 } from 'components/Replicator/Create/Content/Assessment/TablesAssessment/Mappings/Supported';
 import sortBy from 'lodash/sortBy';
+import { generateTableKey } from 'components/Replicator/utilities';
+import { List, Map } from 'immutable';
 
 const styles = (theme): StyleRules => {
   const headerHeight = '60px';
@@ -75,6 +77,14 @@ const styles = (theme): StyleRules => {
     separator: {
       marginLeft: '15px',
     },
+    columnAction: {
+      color: theme.palette.blue[100],
+      cursor: 'pointer',
+
+      '&:hover': {
+        textDecoration: 'underline',
+      },
+    },
     mappings: {
       padding: '10px 25px',
       height: `calc(100% - ${headerHeight})`,
@@ -114,7 +124,7 @@ const styles = (theme): StyleRules => {
           },
 
           '& .grid-row': {
-            gridTemplateColumns: '2fr 2fr 125px 25px 125px 3fr 200px',
+            gridTemplateColumns: '2fr 2fr 125px 25px 125px 3fr 200px 100px',
 
             '& > div:first-child:not($headerDataTypes)': {
               paddingLeft: '25px',
@@ -134,7 +144,7 @@ interface IMappingsProps extends ICreateContext, WithStyles<typeof styles> {
     database: string;
     table: string;
   };
-  onClose: () => void;
+  onClose: (rerunAssessment) => void;
 }
 
 function getPluginDisplayName(pluginInfo, pluginWidget) {
@@ -152,12 +162,16 @@ const MappingsView: React.FC<IMappingsProps> = ({
   sourcePluginWidget,
   targetPluginInfo,
   targetPluginWidget,
+  columns,
+  setColumns,
+  saveDraft,
 }) => {
-  const [columns, setColumns] = React.useState([]);
+  const [assessmentColumns, setAssessmentColumns] = React.useState([]);
   const [error, setError] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
+  const [rerunAssessment, setRerunAssessment] = React.useState(false);
 
-  React.useEffect(() => {
+  function assessTable() {
     const params = {
       namespace: getCurrentNamespace(),
       draftId,
@@ -183,7 +197,7 @@ const MappingsView: React.FC<IMappingsProps> = ({
           },
         ]);
 
-        setColumns(sortedColumns);
+        setAssessmentColumns(sortedColumns);
         setLoading(false);
       },
       (err) => {
@@ -191,7 +205,40 @@ const MappingsView: React.FC<IMappingsProps> = ({
         setLoading(false);
       }
     );
-  }, []);
+  }
+
+  React.useEffect(assessTable, []);
+
+  function deleteColumn(column) {
+    const key = generateTableKey(tableInfo);
+
+    const existingColumns = columns.get(key);
+    let updatedColumns;
+    if (existingColumns && existingColumns.size > 0) {
+      updatedColumns = existingColumns.filter((value) => {
+        return value.get('name') !== column.sourceName || value.get('type') !== column.sourceType;
+      });
+    } else {
+      const selectedColumns = assessmentColumns
+        .filter((col) => {
+          return !(col.sourceName !== column.sourceName || col.sourceType !== column.sourceType);
+        })
+        .map((col) => {
+          return Map({
+            name: col.sourceName,
+            type: col.sourceType,
+          });
+        });
+
+      updatedColumns = List(selectedColumns);
+    }
+
+    setColumns(columns.set(key, updatedColumns), () => {
+      setRerunAssessment(true);
+      setLoading(true);
+      saveDraft().subscribe(assessTable);
+    });
+  }
 
   const sourceType = getPluginDisplayName(sourcePluginInfo, sourcePluginWidget);
   const targetType = getPluginDisplayName(targetPluginInfo, targetPluginWidget);
@@ -200,7 +247,7 @@ const MappingsView: React.FC<IMappingsProps> = ({
     <div className={classes.root}>
       <div className={classes.header}>
         <div className={classes.backButtonContainer}>
-          <span className={classes.backButton} onClick={onClose}>
+          <span className={classes.backButton} onClick={onClose.bind(null, rerunAssessment)}>
             <span>&laquo;</span>
             <span>Back</span>
           </span>
@@ -254,11 +301,12 @@ const MappingsView: React.FC<IMappingsProps> = ({
                   <div>Target</div>
                   <div />
                   <div>Supported</div>
+                  <div />
                 </div>
               </div>
 
               <div className="grid-body">
-                {columns.map((row, i) => {
+                {assessmentColumns.map((row) => {
                   return (
                     <div className="grid-row" key={row.sourceName}>
                       <div>{row.sourceName}</div>
@@ -269,6 +317,16 @@ const MappingsView: React.FC<IMappingsProps> = ({
                       <div />
                       <div>
                         <Supported columnRow={row} />
+                      </div>
+                      <div>
+                        <If condition={row.support !== SUPPORT.yes}>
+                          <span
+                            className={classes.columnAction}
+                            onClick={deleteColumn.bind(null, row)}
+                          >
+                            Delete
+                          </span>
+                        </If>
                       </div>
                     </div>
                   );

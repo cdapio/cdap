@@ -39,9 +39,14 @@ export interface ITable {
 
 interface ITablesAssessmentProps extends WithStyles<typeof styles> {
   tables: ITable[];
+  runAssessment: () => void;
 }
 
-const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({ classes, tables }) => {
+const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({
+  classes,
+  tables,
+  runAssessment,
+}) => {
   const [openTable, setOpenTable] = React.useState(null);
   const [tablesWithIssues, setTablesWithIssues] = React.useState([]);
   const [tablesNoIssues, setTablesNoIssues] = React.useState([]);
@@ -62,6 +67,13 @@ const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({ classes, table
     setTablesNoIssues(updatedTablesNoIssues);
   }, [tables]);
 
+  function onMappingClose(rerunAssessment) {
+    setOpenTable(null);
+    if (rerunAssessment) {
+      runAssessment();
+    }
+  }
+
   return (
     <React.Fragment>
       <div className={classes.tableContainer}>
@@ -73,7 +85,7 @@ const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({ classes, table
       </div>
 
       <If condition={openTable}>
-        <Mappings tableInfo={openTable} onClose={() => setOpenTable(null)} />
+        <Mappings tableInfo={openTable} onClose={onMappingClose} />
       </If>
     </React.Fragment>
   );
