@@ -25,6 +25,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -68,6 +69,16 @@ public class DefaultStageMetrics implements StageMetrics, Externalizable {
         return null;
       }
     });
+  }
+
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    return metrics.child(tags);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return metrics.getTags();
   }
 
   @Override

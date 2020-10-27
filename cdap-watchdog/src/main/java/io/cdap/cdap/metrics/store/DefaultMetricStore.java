@@ -146,7 +146,8 @@ public class DefaultMetricStore implements MetricStore {
     aggs.put(BY_WORKER, new DefaultAggregation(
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKER, Constants.Metrics.Tag.DATASET,
-                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID),
+                       Constants.Metrics.Tag.RUN_ID, Constants.Metrics.Tag.INSTANCE_ID,
+                       Constants.Metrics.Tag.PROGRAM_ENTITY),
       // i.e. for worker only
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.APP,
                        Constants.Metrics.Tag.WORKER)));

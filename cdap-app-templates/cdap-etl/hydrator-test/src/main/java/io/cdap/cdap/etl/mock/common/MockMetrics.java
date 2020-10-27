@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.mock.common;
 import com.google.common.collect.Maps;
 import io.cdap.cdap.api.metrics.Metrics;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -40,6 +41,16 @@ public class MockMetrics implements Metrics {
   @Override
   public void gauge(String s, long l) {
     gauges.put(s, l);
+  }
+
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    return this;
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return Collections.emptyMap();
   }
 
   public int getCount(String metric) {

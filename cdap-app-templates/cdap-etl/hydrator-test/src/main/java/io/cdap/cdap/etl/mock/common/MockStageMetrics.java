@@ -16,7 +16,10 @@
 
 package io.cdap.cdap.etl.mock.common;
 
+import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.etl.api.StageMetrics;
+
+import java.util.Map;
 
 /**
  * Mock StageMetrics for unit tests
@@ -38,6 +41,16 @@ public class MockStageMetrics implements StageMetrics {
   @Override
   public void gauge(String s, long l) {
     mockMetrics.gauge(stageName + "." + s, l);
+  }
+
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    return mockMetrics.child(tags);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return mockMetrics.getTags();
   }
 
   @Override

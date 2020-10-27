@@ -16,7 +16,11 @@
 
 package io.cdap.cdap.etl.common;
 
+import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.etl.api.StageMetrics;
+
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * No op metrics implementation for tests.
@@ -33,6 +37,16 @@ public class NoopMetrics implements StageMetrics {
   @Override
   public void gauge(String s, long l) {
     // no-op
+  }
+
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    return this;
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return Collections.emptyMap();
   }
 
   @Override

@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api.metrics;
 
+import java.util.Map;
+
 /**
  * Defines a way to collect user-defined metrics.
  * To use it, just add a Metrics field in a CDAP application element and start using it.
@@ -34,5 +36,18 @@ public interface Metrics {
    * @param value The value to be set.
    */
   void gauge(String metricName, long value);
+
+  /**
+   * Get the child {@link Metrics} by adding specified tags to the current metrics context.
+   * @param tags to be added to the current metrics context
+   * @return an instance of {@link Metrics} which can be used to collect metrics with new child context.
+   * @throws IllegalArgumentException if any of the supplied tag name already exists in the current metrics context
+   */
+  Metrics child(Map<String, String> tags);
+
+  /**
+   * @return the tags that identifies the metrics context for this {@link Metrics} instance.
+   */
+  Map<String, String> getTags();
 }
 
