@@ -36,6 +36,9 @@
       ],
       "styles/*": [
         "./app/cdap/styles/*"
+      ],
+      "test-utils": [
+        "./jest/test-utils"
       ]
     }
   },
