@@ -209,6 +209,6 @@ public class TestFileLogging {
     LoggingContext loggingContext1 = new WorkerLoggingContext("TFL_NS_1", "APP_1", "WORKER_1", null, "INSTANCE1");
     events =
       Lists.newArrayList(logTail.getLog(loggingContext1, 0, Long.MAX_VALUE, Filter.EMPTY_FILTER));
-    Assert.assertEquals(100, events.size());
+    Assert.assertEquals(120, events.size());
   }
 }

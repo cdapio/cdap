@@ -123,7 +123,7 @@ public class LogMessage implements ILoggingEvent {
     if (args != null && argumentArray == null) {
       argumentArray = new Object[args.length];
       for (int i = 0; i < args.length; i++) {
-        argumentArray[i] = args[i].toString();
+        argumentArray[i] = java.util.Objects.toString(args[i]);
       }
     }
   }
