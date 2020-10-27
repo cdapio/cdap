@@ -33,9 +33,12 @@ import java.util.List;
  * @param <K> type of key to read
  * @param <V> type of value to read
  */
-public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
+public abstract class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
 
-  public static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.delegate.input.classname";
+  /**
+   * Returns the name of the config key to the delegating {@link InputFormat} class name configuration.
+   */
+  protected abstract String getDelegateClassNameKey();
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
@@ -55,7 +58,14 @@ public class DelegatingInputFormat<K, V> extends InputFormat<K, V> {
    * @throws IOException if failed to instantiate the input format class
    */
   protected final InputFormat<K, V> getDelegate(Configuration conf) throws IOException {
-    String delegateClassName = conf.get(DELEGATE_CLASS_NAME);
+    String delegateClassName = conf.get(getDelegateClassNameKey());
+    if (delegateClassName == null) {
+      throw new IllegalArgumentException("Missing configuration " + getDelegateClassNameKey()
+                                           + " for the InputFormat to use");
+    }
+    if (delegateClassName.equals(getClass().getName())) {
+      throw new IllegalArgumentException("Cannot delegate InputFormat to the same class " + delegateClassName);
+    }
     try {
       //noinspection unchecked
       InputFormat<K, V> inputFormat = (InputFormat<K, V>) conf.getClassLoader().loadClass(delegateClassName)

@@ -34,6 +34,13 @@ import java.io.IOException;
  */
 public class TrackingInputFormat<K, V> extends DelegatingInputFormat<K, V> {
 
+  public static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.tracking.input.classname";
+
+  @Override
+  protected String getDelegateClassNameKey() {
+    return DELEGATE_CLASS_NAME;
+  }
+
   @Override
   public RecordReader<K, V> createRecordReader(InputSplit split,
                                                TaskAttemptContext context) throws IOException, InterruptedException {

@@ -35,7 +35,13 @@ import java.util.List;
  */
 public class LimitingInputFormat<K, V> extends DelegatingInputFormat<K, V> {
 
+  static final String DELEGATE_CLASS_NAME = "io.cdap.pipeline.limiting.input.classname";
   static final String MAX_RECORDS = "io.cdap.pipeline.preview.max.records";
+
+  @Override
+  protected String getDelegateClassNameKey() {
+    return DELEGATE_CLASS_NAME;
+  }
 
   @Override
   public List<InputSplit> getSplits(JobContext context) throws IOException, InterruptedException {
