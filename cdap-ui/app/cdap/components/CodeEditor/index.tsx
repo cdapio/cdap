@@ -135,7 +135,7 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
   }
 
   public render() {
-    const { value, className, classes } = this.props;
+    const { value, className = 'ace-editor-ref', classes } = this.props;
     return (
       <div className={classes.root}>
         <div
