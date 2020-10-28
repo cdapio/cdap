@@ -38,9 +38,10 @@ public class SparkContainerClassLoader extends MainClassLoader {
    * @param urls the URLs from which to load classes and resources
    * @param parent the parent classloader for delegation
    */
-  public SparkContainerClassLoader(URL[] urls, ClassLoader parent) {
+  public SparkContainerClassLoader(URL[] urls, ClassLoader parent, boolean rewriteCheckpointTempFileName) {
     super(urls, parent);
-    this.sparkClassRewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), false);
+    this.sparkClassRewriter = new SparkClassRewriter(name -> ClassLoaders.openResource(this, name), false,
+                                                     rewriteCheckpointTempFileName);
   }
 
   @Override

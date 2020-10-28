@@ -49,7 +49,7 @@ public class SparkRunnerClassLoaderTest {
       final URL[] urlArray = urls.toArray(new URL[urls.size()]);
 
       SparkRunnerClassLoader firstCL = new SparkRunnerClassLoader(urlArray,
-                                                                  getClass().getClassLoader(), false);
+                                                                  getClass().getClassLoader(), false, false);
       // Load a class from the first CL.
       firstCL.loadClass("org.apache.spark.SparkContext");
 
@@ -60,7 +60,9 @@ public class SparkRunnerClassLoaderTest {
         @Override
         public void run() {
           SparkRunnerClassLoader secondCL = new SparkRunnerClassLoader(urlArray,
-                                                                       getClass().getClassLoader(), false);
+                                                                       getClass().getClassLoader(),
+                                                                       false,
+                                                                       false);
           try {
             latch.countDown();
             secondCL.loadClass("org.apache.spark.SparkContext");
@@ -98,7 +100,10 @@ public class SparkRunnerClassLoaderTest {
         List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
         final URL[] urlArray = urls.toArray(new URL[urls.size()]);
 
-        SparkRunnerClassLoader classLoader = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false);
+        SparkRunnerClassLoader classLoader = new SparkRunnerClassLoader(urlArray,
+                                                                        getClass().getClassLoader(),
+                                                                        false,
+                                                                        false);
 
         // Load the same class concurrently from two threads.
         CyclicBarrier barrier = new CyclicBarrier(2);
@@ -129,7 +134,7 @@ public class SparkRunnerClassLoaderTest {
     List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
     URL[] urlArray = urls.toArray(new URL[urls.size()]);
 
-    SparkRunnerClassLoader cl = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false);
+    SparkRunnerClassLoader cl = new SparkRunnerClassLoader(urlArray, getClass().getClassLoader(), false, false);
     InputStream is = cl.getResourceAsStream("org/apache/spark/SparkContext.class");
     Assert.assertNotNull(is);
 

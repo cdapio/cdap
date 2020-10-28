@@ -90,15 +90,20 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     Preconditions.checkArgument(type == ProgramType.SPARK, "Unsupported program type %s. Only %s is supported",
                                 type, ProgramType.SPARK);
 
+    CConfiguration conf = injector.getInstance(CConfiguration.class);
+
+    boolean rewriteCheckpointTempFileName =
+      conf.getBoolean(SparkRuntimeUtils.SPARK_STREAMING_CHECKPOINT_REWRITE_ENABLED);
+
     switch (mode) {
       case LOCAL:
         // Rewrite YarnClient based on config. The LOCAL runner is used in both SDK and distributed mode
         // The actual mode that Spark is running is determined by the cdap.spark.cluster.mode attribute
         // in the hConf
-        boolean rewriteYarnClient = injector.getInstance(CConfiguration.class)
-                                            .getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
+        boolean rewriteYarnClient = conf.getBoolean(Constants.AppFabric.SPARK_YARN_CLIENT_REWRITE);
         try {
-          SparkRunnerClassLoader classLoader = createClassLoader(filterScalaClasses, rewriteYarnClient);
+          SparkRunnerClassLoader classLoader = createClassLoader(filterScalaClasses, rewriteYarnClient,
+                                                                 rewriteCheckpointTempFileName);
           try {
             // Closing of the SparkRunnerClassLoader is done by the SparkProgramRunner when the program execution
             // finished.
@@ -121,7 +126,7 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
         // no SparkContext being created, hence no need to provide runtime isolation.
         // This also limits the amount of permgen usage to be constant in the CDAP master regardless of how
         // many Spark programs are running. We never need to close the SparkRunnerClassLoader until process shutdown.
-        ClassLoader classLoader = getDistributedRunnerClassLoader();
+        ClassLoader classLoader = getDistributedRunnerClassLoader(rewriteCheckpointTempFileName);
         return createSparkProgramRunner(createRunnerInjector(injector, classLoader),
                                         DistributedSparkProgramRunner.class.getName(),
                                         classLoader);
@@ -170,11 +175,11 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     });
   }
 
-  private synchronized ClassLoader getDistributedRunnerClassLoader() {
+  private synchronized ClassLoader getDistributedRunnerClassLoader(boolean rewriteCheckpointTempFileName) {
     try {
       if (distributedRunnerClassLoader == null) {
         // Never needs to rewrite yarn client in CDAP master, which is the only place using distributed program runner
-        distributedRunnerClassLoader = createClassLoader(true, false);
+        distributedRunnerClassLoader = createClassLoader(true, false, rewriteCheckpointTempFileName);
       }
       return distributedRunnerClassLoader;
     } catch (IOException e) {
@@ -290,7 +295,8 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
    * Returns an array of {@link URL} being used by the {@link ClassLoader} of this {@link Class}.
    */
   private synchronized SparkRunnerClassLoader createClassLoader(boolean filterScalaClasses,
-                                                                boolean rewriteYarnClient) throws IOException {
+                                                                boolean rewriteYarnClient,
+                                                                boolean rewriteCheckpointTempName) throws IOException {
     // Determine if needs to filter Scala classes or not.
     FilterClassLoader filteredBaseParent = new FilterClassLoader(getClass().getClassLoader(), createClassFilter());
     ClassLoader runnerParentClassLoader = filterScalaClasses
@@ -301,7 +307,9 @@ public abstract class SparkProgramRuntimeProvider implements ProgramRuntimeProvi
     }
 
     SparkRunnerClassLoader runnerClassLoader = new SparkRunnerClassLoader(classLoaderUrls,
-                                                                          runnerParentClassLoader, rewriteYarnClient);
+                                                                          runnerParentClassLoader,
+                                                                          rewriteYarnClient,
+                                                                          rewriteCheckpointTempName);
 
     if (providerSparkCompat != SparkCompat.SPARK1_2_10) {
       return runnerClassLoader;

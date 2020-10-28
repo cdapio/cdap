@@ -32,6 +32,7 @@ import io.cdap.cdap.internal.asm.Signatures;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -83,6 +84,7 @@ public class SparkClassRewriter implements ClassRewriter {
     Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkRuntimeEnv");
   private static final Type SPARK_RUNTIME_UTILS_TYPE =
     Type.getObjectType("io/cdap/cdap/app/runtime/spark/SparkRuntimeUtils");
+  private static final Type HADOOP_PATH_TYPE = Type.getObjectType("org/apache/hadoop/fs/Path");
   private static final Type SPARK_CONTEXT_TYPE = Type.getObjectType("org/apache/spark/SparkContext");
   private static final Type SPARK_STREAMING_CONTEXT_TYPE =
     Type.getObjectType("org/apache/spark/streaming/StreamingContext");
@@ -99,11 +101,15 @@ public class SparkClassRewriter implements ClassRewriter {
     Type.getObjectType("org/apache/spark/api/python/PythonWorkerFactory$MonitorThread");
   private static final Type SPARK_REDIRECT_THREAD = Type.getObjectType("org/apache/spark/util/RedirectThread");
   private static final Type SPARK_YARN_CLIENT_TYPE = Type.getObjectType("org/apache/spark/deploy/yarn/Client");
+  private static final Type CHECKPOINT_WRITE_HANDLER_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/CheckpointWriter$CheckpointWriteHandler");
   private static final Type SPARK_DSTREAM_GRAPH_TYPE = Type.getObjectType("org/apache/spark/streaming/DStreamGraph");
   private static final Type SPARK_BATCHED_WRITE_AHEAD_LOG_TYPE =
     Type.getObjectType("org/apache/spark/streaming/util/BatchedWriteAheadLog");
   private static final Type RATE_CONTROLLER_TYPE =
     Type.getObjectType("org/apache/spark/streaming/scheduler/RateController");
+  private static final Type SPARK_STREAMING_TIME_TYPE =
+    Type.getObjectType("org/apache/spark/streaming/Time");
   private static final Type SPARK_EXECUTOR_CLASSLOADER_TYPE =
     Type.getObjectType("org/apache/spark/repl/ExecutorClassLoader");
   private static final Type YARN_SPARK_HADOOP_UTIL_TYPE =
@@ -142,11 +148,14 @@ public class SparkClassRewriter implements ClassRewriter {
 
   private final Function<String, InputStream> resourceLookup;
   private final boolean rewriteYarnClient;
+  private final boolean rewriteCheckpointTempFileName;
   private final boolean distributed;
 
-  public SparkClassRewriter(Function<String, InputStream> resourceLookup, boolean rewriteYarnClient) {
+  public SparkClassRewriter(Function<String, InputStream> resourceLookup, boolean rewriteYarnClient,
+                            boolean rewriteCheckpointTempFileName) {
     this.resourceLookup = resourceLookup;
     this.rewriteYarnClient = rewriteYarnClient;
+    this.rewriteCheckpointTempFileName = rewriteCheckpointTempFileName;
     this.distributed = Boolean.parseBoolean(System.getenv("SPARK_YARN_MODE"));
   }
 
@@ -185,7 +194,7 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.equals(SPARK_PYTHON_WORKER_MONITOR_THREAD_TYPE.getClassName())) {
       return rewritePythonWorkerMonitorThread(input);
     }
-    if (className.equals(SPARK_YARN_CLIENT_TYPE.getClassName()) && rewriteYarnClient) {
+    if (rewriteYarnClient && className.equals(SPARK_YARN_CLIENT_TYPE.getClassName())) {
       // Rewrite YarnClient for workaround SPARK-13441.
       return rewriteClient(input);
     }
@@ -228,6 +237,10 @@ public class SparkClassRewriter implements ClassRewriter {
     if (className.equals(SPARK_OUTPUT_METRICS.getClassName())) {
       // Rewrite the Spark OutputMetrics to skip overwriting bytes written metrics with 0.
       return rewriteOutputMetrics(SPARK_OUTPUT_METRICS, input);
+    }
+    if (rewriteCheckpointTempFileName && className.startsWith(CHECKPOINT_WRITE_HANDLER_TYPE.getClassName())) {
+      // Rewrite the Spark CheckpointWriteHandler to add a timestamp to the temporary file used for checkpoints.
+      return rewriteTempFileNameForCheckpoint(input);
     }
 
     return null;
@@ -655,6 +668,108 @@ public class SparkClassRewriter implements ClassRewriter {
             } else {
               super.visitMethodInsn(opcode, owner, name, desc, itf);
             }
+          }
+        };
+      }
+    }, ClassReader.EXPAND_FRAMES);
+
+    return cw.toByteArray();
+  }
+
+  /**
+   * Rewrites the temporary file name used for checkpoints from checkpointDir/temp to
+   * checkpointDir/temp-(checkpoint_time_milliseconds).
+   *
+   * @param byteCodeStream {@link InputStream} for reading in the original bytecode.
+   * @return the rewritten bytecode
+   */
+  private byte[] rewriteTempFileNameForCheckpoint(InputStream byteCodeStream) throws IOException {
+    String checkpointTimeFieldName =
+      "org$apache$spark$streaming$CheckpointWriter$CheckpointWriteHandler$$checkpointTime";
+    Type stringType = Type.getType(String.class);
+    Type stringBuilderType = Type.getType(StringBuilder.class);
+
+    ClassReader cr = new ClassReader(byteCodeStream);
+    ClassWriter cw = new ClassWriter(0);
+
+    cr.accept(new ClassVisitor(Opcodes.ASM5, cw) {
+
+      boolean hasCheckpointTimeField = false;
+
+      @Override
+      public FieldVisitor visitField(int access, String name, String descriptor, String signature, Object value) {
+        //If we find a field with name `checkpointTime` and type Time, we can use this to rewrite the temp file name.
+        if (!hasCheckpointTimeField
+          && checkpointTimeFieldName.equals(name)
+          && SPARK_STREAMING_TIME_TYPE.getDescriptor().equals(descriptor)) {
+          hasCheckpointTimeField = true;
+        }
+
+        return super.visitField(access, name, descriptor, signature, value);
+      }
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+
+        MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
+
+        return new GeneratorAdapter(Opcodes.ASM5, mv, access, name, desc) {
+
+          boolean tempStringAddedToStack = false;
+          final Method hadoopPathConstructorMethod =
+            new Method("<init>", Type.VOID_TYPE, new Type[]{ stringType, stringType });
+
+          @Override
+          public void visitLdcInsn(Object value) {
+            // If we find this instruction, we update our atomic boolean to True:
+            //   LDC "temp"
+            // If this value is true, and the next instruction is the Path constructor, we need to
+            // concat the checkpoont time to this string
+            tempStringAddedToStack = "temp".equals(value);
+            super.visitLdcInsn(value);
+          }
+
+          @Override
+          public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
+
+            // If we see a call to the Path constructor with 2 String parameters, rewrite the second argument
+            // to add a timestamp.
+            // This will only rewrite if the element ad the top of the Stack is a String "temp" and there is a field in
+            // the class called checkpointTime of type Time.
+            if (tempStringAddedToStack && hasCheckpointTimeField
+              && opcode == Opcodes.INVOKESPECIAL
+              && Type.getObjectType(owner).equals(HADOOP_PATH_TYPE)
+              && hadoopPathConstructorMethod.equals(new Method(name, desc))) {
+
+              //Pop the LOC "temp" argument from the stack.
+              //super.visitInsn(Opcodes.POP);
+              pop();
+
+              //Build the string that replaces "temp" as "temp-" + currentTime.milliseconds().
+              //This function generates the following code:
+              //  new StringBuilder().append("temp-").append(checkpointTime.milliseconds()).toString();
+              newInstance(stringBuilderType);
+              dup();
+              invokeConstructor(stringBuilderType, Methods.getMethod(void.class, "<init>"));
+              push("temp-");
+              invokeVirtual(stringBuilderType,
+                            new Method("append", stringBuilderType, new Type[]{stringType}));
+              loadThis();
+              getField(CHECKPOINT_WRITE_HANDLER_TYPE, checkpointTimeFieldName, SPARK_STREAMING_TIME_TYPE);
+              invokeVirtual(SPARK_STREAMING_TIME_TYPE, new Method("milliseconds", Type.LONG_TYPE, EMPTY_ARGS));
+              invokeVirtual(stringBuilderType,
+                            new Method("append", stringBuilderType, new Type[]{Type.LONG_TYPE}));
+              invokeVirtual(stringBuilderType,
+                            new Method("toString", stringType, EMPTY_ARGS));
+
+              LOG.debug("Checkpoint temp file name rewriting is ENABLED");
+            }
+
+            //Reset atomic boolean to false after processing each method call.
+            tempStringAddedToStack = false;
+
+            // Call parent.
+            super.visitMethodInsn(opcode, owner, name, desc, itf);
           }
         };
       }

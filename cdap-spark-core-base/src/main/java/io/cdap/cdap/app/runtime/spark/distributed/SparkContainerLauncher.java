@@ -21,6 +21,7 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import io.cdap.cdap.app.runtime.spark.python.SparkPythonUtil;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.StandardOutErrorRedirector;
@@ -87,10 +88,14 @@ public final class SparkContainerLauncher {
     // This is to isolate the scala library from children
     ClassLoader parentClassLoader = new FilterClassLoader(systemClassLoader, KAFKA_FILTER);
 
+    boolean rewriteCheckpointTempFileName = Boolean.parseBoolean(
+      System.getProperty(SparkRuntimeUtils.STREAMING_CHECKPOINT_REWRITE_ENABLED, "false"));
+
     // Creates the SparkRunnerClassLoader for class rewriting and it will be used for the rest of the execution.
     // Use the extension classloader as the parent instead of the system classloader because
     // Spark classes are in the system classloader which we want to rewrite.
-    ClassLoader classLoader = new SparkContainerClassLoader(urls.toArray(new URL[urls.size()]), parentClassLoader);
+    ClassLoader classLoader = new SparkContainerClassLoader(urls.toArray(new URL[urls.size()]), parentClassLoader,
+                                                            rewriteCheckpointTempFileName);
 
     // Sets the context classloader and launch the actual Spark main class.
     Thread.currentThread().setContextClassLoader(classLoader);
