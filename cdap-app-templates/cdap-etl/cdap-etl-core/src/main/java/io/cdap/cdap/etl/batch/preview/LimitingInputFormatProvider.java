@@ -18,7 +18,6 @@ package io.cdap.cdap.etl.batch.preview;
 
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
 import io.cdap.cdap.etl.batch.BasicInputFormatProvider;
-import io.cdap.cdap.etl.batch.DelegatingInputFormat;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -34,7 +33,7 @@ public class LimitingInputFormatProvider extends BasicInputFormatProvider {
 
   private static Map<String, String> getConfiguration(InputFormatProvider delegate, int maxRecords) {
     Map<String, String> config = new HashMap<>(delegate.getInputFormatConfiguration());
-    config.put(DelegatingInputFormat.DELEGATE_CLASS_NAME, delegate.getInputFormatClassName());
+    config.put(LimitingInputFormat.DELEGATE_CLASS_NAME, delegate.getInputFormatClassName());
     config.put(LimitingInputFormat.MAX_RECORDS, String.valueOf(maxRecords));
     return config;
   }
