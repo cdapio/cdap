@@ -61,13 +61,6 @@ const experimentsList: IExperiment[] = [
     experimentId: 'schema-editor',
     screenshot: null,
     enabled: true,
-  },
-  {
-    name: 'Schema Editor',
-    description: 'New SchemaEditor. Includes complete rewrite in React + perf improvements',
-    experimentId: 'schema-editor',
-    screenshot: null,
-    enabled: true,
-  },
+  }
 ];
 export default experimentsList;
