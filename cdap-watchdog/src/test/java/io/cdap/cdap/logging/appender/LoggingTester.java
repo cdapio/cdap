@@ -109,6 +109,14 @@ public class LoggingTester {
       TimeUnit.MILLISECONDS.sleep(1);
     }
 
+    // Add logs with null parameter
+    LoggingContextAccessor.setLoggingContext(
+      replaceTag(loggingContextNs1, new Entry(ApplicationLoggingContext.TAG_RUN_ID, "NULL_PARAM")));
+    for (int i = 60; i < 80; ++i) {
+      logger.warn("NULL_PARAM Test log message {} {} {}", i, null, "arg2");
+      TimeUnit.MILLISECONDS.sleep(1);
+    }
+
     StatusPrinter.setPrintStream(new PrintStream(System.out, true));
     StatusPrinter.print((LoggerContext) LoggerFactory.getILoggerFactory());
   }
@@ -179,11 +187,13 @@ public class LoggingTester {
     // Try with a null runid, should return all events with or without runid
     LogCallback logCallback11 = new LogCallback();
     logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUN_ID, null)),
-                         ReadRange.LATEST, 35, Filter.EMPTY_FILTER, logCallback11);
+                         ReadRange.LATEST, 55, Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
-    Assert.assertEquals(35, events.size());
+    Assert.assertEquals(55, events.size());
     Assert.assertEquals("RUN2 Test log message 45 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("NULL Test log message 59 arg1 arg2", events.get(34).getLoggingEvent().getFormattedMessage());
+    Assert.assertEquals("NULL_PARAM Test log message 79 null arg2",
+                        events.get(54).getLoggingEvent().getFormattedMessage());
   }
 
   public void testGetPrev(LogReader logReader, LoggingContext loggingContext) throws Exception {
@@ -270,11 +280,13 @@ public class LoggingTester {
     // Try with a null runid, should return all events with or without runid
     LogCallback logCallback11 = new LogCallback();
     logReader.getLogPrev(replaceTag(loggingContext, new Entry(ApplicationLoggingContext.TAG_RUN_ID, null)),
-                         ReadRange.LATEST, 40, Filter.EMPTY_FILTER, logCallback11);
+                         ReadRange.LATEST, 60, Filter.EMPTY_FILTER, logCallback11);
     events = logCallback11.getEvents();
-    Assert.assertEquals(40, events.size());
+    Assert.assertEquals(60, events.size());
     Assert.assertEquals("RUN2 Test log message 40 arg1 arg2", events.get(0).getLoggingEvent().getFormattedMessage());
     Assert.assertEquals("NULL Test log message 59 arg1 arg2", events.get(39).getLoggingEvent().getFormattedMessage());
+    Assert.assertEquals("NULL_PARAM Test log message 79 null arg2",
+                        events.get(59).getLoggingEvent().getFormattedMessage());
   }
 
   /**

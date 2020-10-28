@@ -156,8 +156,8 @@ public class TestTMSLogging {
       partitionedFetchedLogs.put(topicId.getKey(), fetchedLogs);
     }
 
-    // LoggingTester emits 220 logs in total
-    Assert.assertEquals(220, totalFetchedLogs);
+    // LoggingTester emits 240 logs in total
+    Assert.assertEquals(240, totalFetchedLogs);
 
     // Read the partition that our LoggingContext maps to and filter the logs in there to the logs that correspond
     // to our LoggingContext.
