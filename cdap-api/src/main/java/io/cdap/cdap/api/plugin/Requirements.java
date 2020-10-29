@@ -60,6 +60,14 @@ public class Requirements {
     return datasetTypes;
   }
 
+  /**
+   *
+   * @return {@link Set} containing accelerator names or empty set
+   */
+  public Set<String> getAccelerators() {
+    return accelerators;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

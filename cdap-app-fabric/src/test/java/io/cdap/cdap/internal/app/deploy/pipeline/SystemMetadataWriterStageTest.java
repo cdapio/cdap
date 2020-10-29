@@ -20,15 +20,19 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
+import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowNodeType;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.Specifications;
@@ -51,8 +55,12 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tests for {@link SystemMetadataWriterStage}.
@@ -83,9 +91,10 @@ public class SystemMetadataWriterStageTest {
   public void testWorkflowTags() throws Exception {
     String appName = WorkflowAppWithFork.class.getSimpleName();
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    ApplicationClass applicationClass = new ApplicationClass(WorkflowAppWithFork.class.getName(), appName, null);
     String workflowName = WorkflowAppWithFork.WorkflowWithFork.class.getSimpleName();
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
-    ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName);
+    ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName, applicationClass);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
     SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataServiceClient);
     StageContext stageContext = new StageContext(Object.class);
@@ -108,15 +117,54 @@ public class SystemMetadataWriterStageTest {
                         metadataProperties.get("schedule:" + WorkflowAppWithFork.SCHED_NAME));
   }
 
+  @Test
+  public void testAcceleratorTags() throws Exception {
+    String appName = AppWithWorkflow.class.getSimpleName();
+    ApplicationId appId = NamespaceId.DEFAULT.app(appName);
+    String[] acceleratorTestNames = {"cdc", "healthcare"};
+    Requirements requirements = new Requirements(Collections.emptySet(), Stream.of(acceleratorTestNames).collect(
+      Collectors.toSet()));
+    ApplicationClass applicationClass = new ApplicationClass(AppWithWorkflow.class.getName(), appName, null,
+                                                             requirements);
+    String workflowName = AppWithWorkflow.SampleWorkflow.class.getSimpleName();
+    ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
+    ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName,
+                                                                    new AppWithWorkflow(), applicationClass);
+    WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
+    SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataServiceClient);
+    StageContext stageContext = new StageContext(Object.class);
+    systemMetadataWriterStage.process(stageContext);
+    systemMetadataWriterStage.process(appWithPrograms);
+
+    Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
+                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+    //Test that all test accelerators are present in the metadata
+    Map<String, String> metadataProperties = metadataStorage
+      .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
+    Set<String> acceleratorNames = Arrays
+      .stream(metadataProperties.get(AppSystemMetadataWriter.ACCELERATOR_TAG)
+                .split(AppSystemMetadataWriter.ACCELERATOR_DELIMITER)).collect(Collectors.toSet());
+    Assert.assertEquals(Arrays.stream(acceleratorTestNames).collect(Collectors.toSet()), acceleratorNames);
+  }
+
   @SuppressWarnings("unchecked")
   private ApplicationWithPrograms createAppWithWorkflow(ArtifactId artifactId, ApplicationId appId,
-                                                        String workflowName) throws IOException {
-    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
+                                                        String workflowName,
+                                                        ApplicationClass applicationClass) throws IOException {
     AbstractApplication app = new WorkflowAppWithFork();
+    return createAppWithWorkflow(artifactId, appId, workflowName, app, applicationClass);
+  }
+
+  private ApplicationWithPrograms createAppWithWorkflow(ArtifactId artifactId, ApplicationId appId,
+                                                        String workflowName,
+                                                        AbstractApplication app,
+                                                        ApplicationClass applicationClass) throws IOException {
+    LocationFactory locationFactory = new LocalLocationFactory(TEMP_FOLDER.newFolder());
     ApplicationSpecification appSpec = Specifications.from(app);
-    Location workflowJar = AppJarHelper.createDeploymentJar(locationFactory, WorkflowAppWithFork.class);
+    Location workflowJar = AppJarHelper.createDeploymentJar(locationFactory, app.getClass());
     ApplicationDeployable appDeployable = new ApplicationDeployable(artifactId, workflowJar,
-                                                                    appId, appSpec, null, ApplicationDeployScope.USER);
+                                                                    appId, appSpec, null, ApplicationDeployScope.USER,
+                                                                    applicationClass);
     return new ApplicationWithPrograms(appDeployable,
                                        ImmutableList.of(new ProgramDescriptor(appId.workflow(workflowName), appSpec)));
   }

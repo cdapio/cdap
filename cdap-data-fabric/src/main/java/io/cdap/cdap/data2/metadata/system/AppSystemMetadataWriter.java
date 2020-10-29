@@ -20,8 +20,10 @@ import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.internal.schedule.ScheduleCreationSpec;
@@ -33,21 +35,27 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * A {@link AbstractSystemMetadataWriter} for an {@link Id.Application application}.
  */
 public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
+  public static final String ACCELERATOR_TAG = "accelerator";
+  public static final String ACCELERATOR_DELIMITER = ",";
   private final ApplicationSpecification appSpec;
   private final ApplicationId appId;
+  private final ApplicationClass applicationClass;
   private final String creationTime;
 
   public AppSystemMetadataWriter(MetadataServiceClient metadataServiceClient, ApplicationId entityId,
-                                 ApplicationSpecification appSpec, String creationTime) {
+                                 ApplicationSpecification appSpec, ApplicationClass applicationClass,
+                                 String creationTime) {
     super(metadataServiceClient, entityId);
     this.appSpec = appSpec;
     this.appId = entityId;
+    this.applicationClass = applicationClass;
     this.creationTime = creationTime;
   }
 
@@ -72,7 +80,26 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
         existingPluginClasses.add(plugin.getPluginClass());
       }
     }
+    addAccelerators(appSpec, applicationClass, properties);
     return properties.build();
+  }
+
+  private void addAccelerators(ApplicationSpecification appSpec,
+                               ApplicationClass applicationClass,
+                               ImmutableMap.Builder<String, String> properties) {
+    //add from all plugins
+    Set<String> acceleratorSet = appSpec.getPlugins().values().stream()
+      .map(Plugin::getPluginClass)
+      .map(PluginClass::getRequirements)
+      .map(Requirements::getAccelerators)
+      .flatMap(Set::stream)
+      .collect(Collectors.toSet());
+    //add from application
+    acceleratorSet.addAll(applicationClass.getRequirements().getAccelerators());
+    if (acceleratorSet.isEmpty()) {
+      return;
+    }
+    properties.put(ACCELERATOR_TAG, String.join(ACCELERATOR_DELIMITER, acceleratorSet));
   }
 
   @Override

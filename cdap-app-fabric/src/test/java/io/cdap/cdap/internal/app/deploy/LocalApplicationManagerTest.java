@@ -20,6 +20,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.ConfigTestApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -95,9 +96,10 @@ public class LocalApplicationManagerTest {
 
     ArtifactId artifactId = new ArtifactId("dummy", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, jarLoc);
-
-    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   "some.class.name", null, null, null);
+    String className = "some.class.name";
+    ApplicationClass applicationClass = new ApplicationClass(className, "", null);
+    AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT, applicationClass, null,
+                                                   null, null);
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
@@ -109,8 +111,9 @@ public class LocalApplicationManagerTest {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, AllProgramsApp.class);
     ArtifactId artifactId = new ArtifactId("app", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    ApplicationClass applicationClass = new ApplicationClass(AllProgramsApp.class.getName(), "", null);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   AllProgramsApp.class.getName(), null, null, null);
+                                                   applicationClass, null, null, null);
     ApplicationWithPrograms input = AppFabricTestHelper.getLocalManager().deploy(info).get();
 
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
@@ -133,8 +136,9 @@ public class LocalApplicationManagerTest {
     ConfigTestApp.ConfigClass config = new ConfigTestApp.ConfigClass("myTable");
     ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    ApplicationClass applicationClass = new ApplicationClass(ConfigTestApp.class.getName(), "", null);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   ConfigTestApp.class.getName(), "MyApp", null, GSON.toJson(config));
+                                                   applicationClass, "MyApp", null, GSON.toJson(config));
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }
 
@@ -143,8 +147,9 @@ public class LocalApplicationManagerTest {
     Location deployedJar = AppJarHelper.createDeploymentJar(lf, ConfigTestApp.class);
     ArtifactId artifactId = new ArtifactId("configtest", new ArtifactVersion("1.0.0-SNAPSHOT"), ArtifactScope.USER);
     ArtifactDescriptor artifactDescriptor = new ArtifactDescriptor(artifactId, deployedJar);
+    ApplicationClass applicationClass = new ApplicationClass(ConfigTestApp.class.getName(), "", null);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, NamespaceId.DEFAULT,
-                                                   ConfigTestApp.class.getName(), "BadApp", null,
+                                                   applicationClass, "BadApp", null,
                                                    GSON.toJson("invalid"));
     AppFabricTestHelper.getLocalManager().deploy(info).get();
   }

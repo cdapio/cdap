@@ -55,7 +55,8 @@ public class SystemMetadataWriterStage extends AbstractStage<ApplicationWithProg
     List<MetadataMutation> mutations = new ArrayList<>();
 
     mutations.add(
-      new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, creationTime).getMetadataMutation());
+      new AppSystemMetadataWriter(metadataServiceClient, appId, appSpec, input.getApplicationClass(), creationTime)
+        .getMetadataMutation());
 
     // collect system metadata for programs
     collectProgramSystemMetadata(appId, ProgramType.MAPREDUCE, appSpec.getMapReduce().values(), mutations);
