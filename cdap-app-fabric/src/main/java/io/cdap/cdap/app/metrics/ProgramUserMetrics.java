@@ -16,10 +16,13 @@
 
 package io.cdap.cdap.app.metrics;
 
+import com.google.common.collect.Sets;
 import io.cdap.cdap.api.metrics.Metrics;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.common.conf.Constants;
+
+import java.util.Map;
 
 /**
  * Implementation of {@link Metrics} for user-defined metrics.
@@ -30,7 +33,15 @@ public class ProgramUserMetrics implements Metrics {
   private final MetricsContext metricsContext;
 
   public ProgramUserMetrics(MetricsContext metricsContext) {
-    this.metricsContext = metricsContext.childContext(Constants.Metrics.Tag.SCOPE, "user");
+    this(metricsContext, true);
+  }
+
+  public ProgramUserMetrics(MetricsContext metricsContext, boolean addUserScope) {
+    if (addUserScope) {
+      this.metricsContext = metricsContext.childContext(Constants.Metrics.Tag.SCOPE, "user");
+    } else {
+      this.metricsContext = metricsContext;
+    }
   }
 
   @Override
@@ -41,5 +52,21 @@ public class ProgramUserMetrics implements Metrics {
   @Override
   public void gauge(String metricName, long value) {
     metricsContext.gauge(metricName, value);
+  }
+
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    Sets.SetView<String> intersection = Sets.intersection(getTags().keySet(), tags.keySet());
+    if (!intersection.isEmpty()) {
+      throw new IllegalArgumentException(String.format("Tags with names '%s' already exists in the context. " +
+                                                         "Child Metrics cannot be created with duplicate tag names.",
+                                                       String.join(", ", intersection)));
+    }
+    return new ProgramUserMetrics(metricsContext.childContext(tags), false);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return metricsContext.getTags();
   }
 }

@@ -22,6 +22,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.util.Map;
 
 /**
  * A {@link Externalizable} implementation of {@link Metrics} used in Spark program execution.
@@ -54,6 +55,16 @@ public final class SparkUserMetrics implements Metrics, Externalizable {
   @Override
   public void gauge(String metricName, long value) {
     delegate.gauge(metricName, value);
+  }
+
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    return delegate.child(tags);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return delegate.getTags();
   }
 
   @Override

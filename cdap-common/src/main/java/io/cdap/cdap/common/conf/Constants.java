@@ -721,6 +721,7 @@ public final class Constants {
       // For program
       public static final String PROGRAM = "prg";
       public static final String PROGRAM_TYPE = "prt";
+      public static final String PROGRAM_ENTITY = "ent";
     }
 
     /**

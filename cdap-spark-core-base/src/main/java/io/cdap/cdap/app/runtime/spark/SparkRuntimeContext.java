@@ -126,6 +126,16 @@ public final class SparkRuntimeContext extends AbstractContext implements Metric
     getMetrics().gauge(metricName, value);
   }
 
+  @Override
+  public Metrics child(Map<String, String> tags) {
+    return getMetrics().child(tags);
+  }
+
+  @Override
+  public Map<String, String> getTags() {
+    return getMetrics().getTags();
+  }
+
   /**
    * Returns the {@link SparkSpecification} of the spark program of this context.
    */

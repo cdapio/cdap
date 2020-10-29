@@ -127,6 +127,20 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     collector = collectionService.getContext(new HashMap<String, String>());
     collector.increment("resources.total.storage", 10);
 
+    Metrics replicatorMetrics = new ProgramUserMetrics(
+      collectionService.getContext(getWorkerContext("childctx", "Replicator", "ReplicatorWorker", "somerunid",
+                                                    "instance1")));
+
+    Metrics tableMetrics = replicatorMetrics.child(ImmutableMap.of("ent", "mytable"));
+    tableMetrics.count("inserts", 10);
+    tableMetrics.count("ddls", 1);
+
+    try {
+      replicatorMetrics.child(ImmutableMap.of("ns", "anothernamespace"));
+      Assert.fail("Creating child Metrics with duplicate tag name 'ns' should have failed.");
+    } catch (IllegalArgumentException ignored) {
+
+    }
     // need a better way to do this
     TimeUnit.SECONDS.sleep(2);
   }
@@ -145,7 +159,8 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     // empty context
     verifySearchResultWithTags("/v3/metrics/search?target=tag", getSearchResultExpected("namespace", "myspace",
                                                                                         "namespace", "yourspace",
-                                                                                        "namespace", "system"));
+                                                                                        "namespace", "system",
+                                                                                        "namespace", "childctx"));
 
     // WordCount is in myspace, WCount in yourspace
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:myspace",
@@ -207,11 +222,13 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*",
                                //required
                                getSearchResultExpected("app", "WordCount1",
-                                                       "app", "WCount1"),
+                                                       "app", "WCount1",
+                                                       "app", "Replicator"),
                                //optional
                                getSearchResultExpected(
                                  "app", "WordCount1",
                                  "app", "WCount1",
+                                 "app", "Replicator",
                                  "component", "metrics",
                                  "component", "dataset.service",
                                  "component", "dataset.executor",
@@ -223,7 +240,8 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
                                getSearchResultExpected("service", "WCounter",
                                                        "service", "WordCounter",
                                                        "mapreduce", "ClassicWordCount",
-                                                       "worker", "WorkerWordCount"));
+                                                       "worker", "WorkerWordCount",
+                                                       "worker", "ReplicatorWorker"));
 
     verifySearchResultWithTags("/v3/metrics/search?target=tag&tag=namespace:*&tag=app:*&tag=service:*",
                                getSearchResultExpected("run", "run1"));
@@ -400,6 +418,17 @@ public class MetricsHandlerTest extends MetricsSuiteTestBase {
       "/v3/metrics/query?tag=namespace:myspace&tag=app:WordCount1&tag=service:WordCounter&tag=handler:collector" +
         "&metric=system.aa&metric=system.ab&metric=system.zz&start=" + start + "&end="
         + end, ImmutableList.of(1L, 1L, 1L), ImmutableList.of(1L, 1L, 1L));
+  }
+
+  @Test
+  public void testMetricsWithChildContext() throws Exception {
+    long start = (emitTs - 60 * 1000) / 1000;
+    long end = (emitTs + 300 * 1000) / 1000;
+
+    verifyRangeQueryResult(
+      "/v3/metrics/query?tag=namespace:childctx&tag=app:Replicator&tag=worker:ReplicatorWorker&tag=ent:mytable" +
+        "&metric=user.inserts&metric=user.ddls&start=" + start + "&end="
+        + end, ImmutableList.of(1L, 1L), ImmutableList.of(1L, 10L));
   }
 
   @Test
