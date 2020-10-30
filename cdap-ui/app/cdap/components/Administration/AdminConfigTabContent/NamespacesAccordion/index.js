@@ -27,12 +27,12 @@ import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
 import ViewAllLabel from 'components/ViewAllLabel';
 import T from 'i18n-react';
-import isEqual from 'lodash/isEqual';
 import SortableStickyGrid from 'components/SortableStickyGrid';
 import { Link } from 'react-router-dom';
 import uuidV4 from 'uuid/v4';
 import { Theme } from 'services/ThemeHelper';
 import If from 'components/If';
+
 require('./NamespacesAccordion.scss');
 
 const PREFIX = 'features.Administration.Accordions.Namespace';
@@ -84,7 +84,7 @@ export default class NamespacesAccordion extends Component {
   }
 
   componentWillReceiveProps(nextProps) {
-    if (!isEqual(this.props.namespaces, nextProps.namespaces)) {
+    if (nextProps.loading !== this.props.loading) {
       this.getNamespaceData(nextProps.namespaces);
     }
   }
@@ -112,6 +112,11 @@ export default class NamespacesAccordion extends Component {
     let namespacesInfo = [];
     let hasNewNamespaces = false;
 
+    if (!namespaces.length) {
+      this.setState({
+        loading: false,
+      });
+    }
     namespaces.forEach((namespace) => {
       searchParams.namespace = namespace.name;
       MySearchApi.search(searchParams).subscribe(
@@ -262,7 +267,10 @@ export default class NamespacesAccordion extends Component {
           viewAllState={this.state.viewAll}
           toggleViewAll={this.toggleViewAll}
         />
-        {this.renderGrid()}
+        <If condition={this.state.namespacesInfo.length}>{this.renderGrid()}</If>
+        <If condition={!this.state.namespacesInfo.length}>
+          <div className="grid-wrapper text-center">{T.translate(`${PREFIX}.noNamespace`)}</div>
+        </If>
         <ViewAllLabel
           arrayToLimit={this.state.namespacesInfo}
           limit={NUM_NS_TO_SHOW}

@@ -19,15 +19,13 @@ import React, { Component } from 'react';
 import { Route, Switch } from 'react-router-dom';
 import Page404 from 'components/404';
 import Loadable from 'react-loadable';
-import NamespaceStore, { isValidNamespace } from 'services/NamespaceStore';
+import NamespaceStore, { validateNamespace } from 'services/NamespaceStore';
 import NamespaceActions from 'services/NamespaceStore/NamespaceActions';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ConfigurationGroupKitchenSync from 'components/ConfigurationGroup/KitchenSync';
 import HomeActions from 'components/Home/HomeActions';
 import ToggleExperiment from 'components/Lab/ToggleExperiment';
-import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
-import { GLOBALS } from 'services/global-constants';
 require('./Home.scss');
 
 const EntityListView = Loadable({
@@ -124,31 +122,16 @@ export default class Home extends Component {
   constructor(props) {
     super(props);
     this.eventEmitter = ee(ee);
-  }
-
-  componentWillMount() {
     NamespaceStore.dispatch({
       type: NamespaceActions.selectNamespace,
       payload: {
         selectedNamespace: this.props.match.params.namespace,
       },
     });
+    validateNamespace(this.props.match.params.namespace);
   }
-  render() {
-    const { namespace } = this.props.match.params;
-    isValidNamespace(namespace)
-      .then((isValid) => {
-        if (!isValid) {
-          this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
-            statusCode: 404,
-            data: GLOBALS.pageLevelErrors['INVALID-NAMESPACE'](namespace),
-          });
-        }
-      })
-      .catch((err) => {
-        this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, err);
-      });
 
+  render() {
     return (
       <div>
         <Switch>

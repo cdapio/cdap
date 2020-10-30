@@ -55,8 +55,8 @@ angular.module(PKG.name + '.feature.tracker')
             window.CaskCommon.ee.emit(
               window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
           },
-          rValidNamespace: function ($stateParams, myNamespace, myHelpers) {
-            return myHelpers.validNamespaceResolver($stateParams, myNamespace);
+          rValidNamespace: function ($stateParams) {
+            return window.CaskCommon.validateNamespace($stateParams.namespace);
           },
         },
       })

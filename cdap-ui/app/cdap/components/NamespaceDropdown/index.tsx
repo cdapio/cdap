@@ -15,11 +15,10 @@
  */
 
 import PropTypes from 'prop-types';
-
 import React from 'react';
 import { Dropdown, DropdownMenu, DropdownToggle } from 'reactstrap';
 import AbstractWizard from 'components/AbstractWizard';
-import NamespaceStore, { INamespace } from 'services/NamespaceStore';
+import NamespaceStore, { INamespace, fetchNamespaceDetails } from 'services/NamespaceStore';
 import SetPreferenceAction from 'components/FastAction/SetPreferenceAction';
 import { PREFERENCES_LEVEL } from 'components/FastAction/SetPreferenceAction/SetPreferenceModal';
 import IconSVG from 'components/IconSVG';
@@ -141,10 +140,14 @@ export default class NamespaceDropdown extends React.PureComponent<
         selectedNamespace: name,
       },
     });
-    this.onNamespaceChange();
+    this.onNamespaceChange(name);
   };
 
-  private onNamespaceChange = () => {
+  private onNamespaceChange = (namespace) => {
+    // On namespace change, reset if there are any existing authorization
+    // message and recheck for the newly selected namespace.
+    this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, { reset: true });
+    fetchNamespaceDetails(namespace);
     if (this.props.onNamespaceChange) {
       this.props.onNamespaceChange();
     }

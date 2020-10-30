@@ -21,6 +21,9 @@ import { SYSTEM_NAMESPACE } from 'services/global-constants';
 import { MyNamespaceApi } from 'api/namespace';
 import { IAction } from 'services/redux-helpers';
 import find from 'lodash/find';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
+import { GLOBALS } from 'services/global-constants';
 
 export interface INamespace {
   name: string;
@@ -102,35 +105,57 @@ const getCurrentNamespace = () => {
   return namespace;
 };
 
-const isValidNamespace = async (namespace: string) => {
-  if (namespace === SYSTEM_NAMESPACE) {
-    return true;
-  }
-
-  if (namespace) {
-    const { namespaces: namespacesFromStore } = NamespaceStore.getState();
-    let validNamespaces;
-    if (namespacesFromStore.length) {
-      validNamespaces = namespacesFromStore;
-    } else {
-      validNamespaces = await MyNamespaceApi.list().toPromise();
-      NamespaceStore.dispatch({
-        type: NamespaceActions.updateNamespaces,
-        payload: {
-          namespaces: validNamespaces,
-        },
-      });
+const fetchNamespaceList = async () => {
+  const eventEmitter = ee(ee);
+  try {
+    const namespaceList = await MyNamespaceApi.list().toPromise();
+    if (Array.isArray(namespaceList) && namespaceList.length === 0) {
+      eventEmitter.emit(globalEvents.NONAMESPACE);
+      return Promise.reject();
     }
-    const validNs = validNamespaces.find((ns: INamespace) => ns.name === namespace);
-    return validNs;
+  } catch (e) {
+    // tslint:disable-next-line: no-console
+    console.log('Fetching namespace list fails: ', e);
+    return Promise.reject();
   }
-  return false;
+  return;
+};
+
+const fetchNamespaceDetails = async (namespace: string) => {
+  const eventEmitter = ee(ee);
+  try {
+    await MyNamespaceApi.get({ namespace }).toPromise();
+  } catch (err) {
+    if (err.statusCode > 400) {
+      let message;
+      switch (err.statusCode) {
+        case 403:
+          message = GLOBALS.pageLevelErrors['UNAUTHORIZED-NAMESPACE'](namespace);
+          break;
+        default:
+          message = GLOBALS.pageLevelErrors['UNKNOWN-NAMESPACE'](namespace);
+      }
+      eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
+        statusCode: err.statusCode,
+        data: message,
+      });
+      return Promise.reject(false);
+    }
+  }
+};
+
+const validateNamespace = async (namespace) => {
+  if (!namespace) {
+    return;
+  }
+  await fetchNamespaceList();
+  return await fetchNamespaceDetails(namespace);
 };
 
 const getValidNamespace = async (currentNs) => {
   const list = await MyNamespaceApi.list().toPromise();
   if (!list || list.length === 0) {
-    throw new Error('Unable to retrieve namespaces.');
+    return null;
   }
   const validNs = list.find((ns: INamespace) => ns.name === currentNs);
   if (!validNs) {
@@ -172,4 +197,10 @@ const getValidNamespace = async (currentNs) => {
 };
 
 export default NamespaceStore;
-export { getCurrentNamespace, isValidNamespace, getValidNamespace };
+export {
+  getCurrentNamespace,
+  validateNamespace,
+  getValidNamespace,
+  fetchNamespaceDetails,
+  fetchNamespaceList,
+};

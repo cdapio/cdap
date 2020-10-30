@@ -36,16 +36,18 @@
 <body ng-class="bodyClass" class="cdap-body-container" ng-controller="BodyCtrl as BodyCtrl" ng-keyup="onSearch($event)">
   <my-global-navbar></my-global-navbar>
   <main class="container" id="app-container">
-    <div ui-view></div>
+    <div ng-if="!BodyCtrl.pageLevelError" ui-view></div>
+    <page403 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode === 403"
+           message="BodyCtrl.pageLevelError.message"></page403>
+    <page404 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode === 404"
+            message="BodyCtrl.pageLevelError.message"></page404>
+    <page500 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode === 500"
+            message="BodyCtrl.pageLevelError.message"></page500>
   </main>
 
   <div class="alerts" id="alerts" data-cy="valium-banner-hydrator"></div>
   <loading-icon></loading-icon>
   <loading-indicator></loading-indicator>
-  <page404 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode === 404"
-           message="BodyCtrl.pageLevelError.message"></page404>
-  <page500 ng-if="BodyCtrl.pageLevelError && BodyCtrl.pageLevelError.errorCode !== 404"
-           message="BodyCtrl.pageLevelError.message"></page500>
   <status-alert-message></status-alert-message>
   <global-footer></global-footer>
   <auth-refresher></auth-refresher>

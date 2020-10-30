@@ -17,7 +17,7 @@
 import T from 'i18n-react';
 T.setTexts(require('../cdap/text/text-en.yaml'));
 var Store = require('../cdap/services/NamespaceStore').default;
-var IsValidNS = require('../cdap/services/NamespaceStore').isValidNamespace;
+var validateNamespace = require('../cdap/services/NamespaceStore').validateNamespace;
 var NameSpaceStoreActions = require('../cdap/services/NamespaceStore/NamespaceActions').default;
 var ResourceCenterButton = require('../cdap/components/ResourceCenterButton').default;
 var DataPrepHome = require('../cdap/components/DataPrepHome').default;
@@ -117,6 +117,7 @@ var SelectionBox = require('../cdap/components/SelectionBox').default;
 var Clipboard = require('../cdap/services/Clipboard');
 var Page404 = require('../cdap/components/404').default;
 var Page500 = require('../cdap/components/500').default;
+var Page403 = require('../cdap/components/AuthorizationErrorMessage').default;
 var WindowManager = require('../cdap/services/WindowManager').default;
 var { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } = require('../cdap/services/WindowManager');
 var PREVIEW_STATUS = require('../cdap/services/PreviewStatus').PREVIEW_STATUS;
@@ -216,8 +217,9 @@ export {
   Clipboard,
   Page404,
   Page500,
+  Page403,
   WindowManager,
-  IsValidNS,
+  validateNamespace,
   WINDOW_ON_FOCUS,
   WINDOW_ON_BLUR,
   PREVIEW_STATUS,

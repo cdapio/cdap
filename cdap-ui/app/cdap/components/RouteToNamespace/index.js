@@ -16,11 +16,13 @@
 
 import React, { Component } from 'react';
 import find from 'lodash/find';
-import NamespaceStore, { isValidNamespace, getValidNamespace } from 'services/NamespaceStore';
+import NamespaceStore, {
+  fetchNamespaceList,
+  getValidNamespace,
+  validateNamespace,
+} from 'services/NamespaceStore';
 import { Redirect } from 'react-router-dom';
-import globalEvents from 'services/global-events';
 import ee from 'event-emitter';
-import { GLOBALS } from 'services/global-constants';
 
 export default class RouteToNamespace extends Component {
   constructor(props) {
@@ -46,13 +48,10 @@ export default class RouteToNamespace extends Component {
 
   async setNamespace() {
     const selectedNamespace = await getValidNamespace();
-    const isvalid = await isValidNamespace(selectedNamespace);
-    if (!isvalid) {
-      this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, {
-        statusCode: 404,
-        data: GLOBALS.pageLevelErrors['INVALID-NAMESPACE'](selectedNamespace),
-      });
+    if (!selectedNamespace) {
+      return fetchNamespaceList();
     }
+    validateNamespace(selectedNamespace);
     localStorage.setItem('DefaultNamespace', selectedNamespace);
     this.setState({ selectedNamespace });
   }

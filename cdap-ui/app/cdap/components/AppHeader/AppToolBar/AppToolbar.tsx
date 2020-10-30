@@ -27,6 +27,8 @@ import { Theme } from 'services/ThemeHelper';
 import FeatureHeading from 'components/AppHeader/AppToolBar/FeatureHeading';
 import ProductEdition from 'components/AppHeader/AppToolBar/ProductEdition';
 import AppToolbarMenu from 'components/AppHeader/AppToolBar/AppToolbarMenu';
+import ee from 'event-emitter';
+import globalEvents from 'services/global-events';
 
 const styles = (theme) => {
   return {
@@ -59,6 +61,8 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
     anchorEl: null,
     aboutPageOpen: false,
   };
+
+  public eventEmitter = ee(ee);
 
   public render() {
     const { onMenuIconClick, classes } = this.props;
@@ -94,6 +98,9 @@ class AppToolbar extends React.PureComponent<IAppToolbarProps, IAppToolbarState>
             featureFlag={true}
             featureName={Theme.featureNames.systemAdmin}
             featureUrl={`/administration`}
+            // This is needed here when Authorization fails for all namespaces.
+            // In this case navigating to Admin section doesn't have restriction (yet).
+            onClick={() => this.eventEmitter.emit(globalEvents.PAGE_LEVEL_ERROR, { reset: true })}
           />
         </div>
         <AppToolbarMenu />
