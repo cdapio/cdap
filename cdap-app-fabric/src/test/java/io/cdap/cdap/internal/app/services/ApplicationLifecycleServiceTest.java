@@ -20,8 +20,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
+import io.cdap.cdap.AppWithWorkflow;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
+import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
@@ -30,10 +33,13 @@ import io.cdap.cdap.common.lang.ProgramResources;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.data2.metadata.system.AppSystemMetadataWriter;
+import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramRecord;
@@ -43,11 +49,15 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
+import io.cdap.cdap.spi.metadata.MetadataKind;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.Read;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
 import org.jboss.resteasy.util.HttpResponseCodes;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -58,9 +68,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.Manifest;
+import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 /**
@@ -70,12 +82,21 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
+  private static MetadataStorage metadataStorage;
+  private static MetadataSubscriberService metadataSubscriber;
 
   @BeforeClass
   public static void setup() throws Exception {
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    metadataStorage = getInjector().getInstance(MetadataStorage.class);
+    metadataSubscriber = getInjector().getInstance(MetadataSubscriberService.class);
+  }
+
+  @AfterClass
+  public static void stop() {
+    AppFabricTestHelper.shutdown();
   }
 
   // test that the call to deploy an artifact and application in a single step will delete the artifact
@@ -126,6 +147,38 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     stopProgram(Id.Program.fromEntityId(serviceId));
     waitState(serviceId, "STOPPED");
     deleteAppAndData(testNSAppId);
+  }
+
+  @Test
+  public void testAcceleratorMetaDataDeletion() throws Exception {
+    Class<AppWithWorkflow> appWithWorkflowClass = AppWithWorkflow.class;
+    Requirements declaredAnnotation = appWithWorkflowClass.getDeclaredAnnotation(Requirements.class);
+    Set<String> expected = Arrays.stream(declaredAnnotation.accelerators()).collect(Collectors.toSet());
+    Id.Artifact artifactId = Id.Artifact
+      .from(Id.Namespace.DEFAULT, appWithWorkflowClass.getSimpleName(), "1.0.0-SNAPSHOT");
+    Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appWithWorkflowClass);
+    File appJarFile = new File(tmpFolder.newFolder(),
+                               String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
+    Files.copy(Locations.newInputSupplier(appJar), appJarFile);
+    appJar.delete();
+    //deploy app
+    applicationLifecycleService
+      .deployAppAndArtifact(NamespaceId.DEFAULT, appWithWorkflowClass.getSimpleName(), artifactId, appJarFile, null,
+                            null, programId -> { }, true);
+    //Check for the accelerator metadata
+    ApplicationId appId = NamespaceId.DEFAULT.app(appWithWorkflowClass.getSimpleName());
+    Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
+                                                             MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
+    Map<String, String> metadataProperties = metadataStorage
+      .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
+    String acceleratorMetaData = metadataProperties.get(AppSystemMetadataWriter.ACCELERATOR_TAG);
+    Set<String> actual = Arrays.stream(acceleratorMetaData.split(AppSystemMetadataWriter.ACCELERATOR_DELIMITER))
+      .collect(Collectors.toSet());
+    Assert.assertEquals(expected, actual);
+    //Remove the application and verify that all metadata is removed
+    applicationLifecycleService.removeApplication(appId);
+    Assert.assertEquals(true, metadataStorage.read(new Read(appId.toMetadataEntity(),
+                                                            MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
   }
 
   /**

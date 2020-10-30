@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -36,6 +37,7 @@ public class ApplicationDeployable {
   private final ArtifactId artifactId;
   private final Location artifactLocation;
   private final ApplicationId applicationId;
+  private final ApplicationClass applicationClass;
   private final ApplicationSpecification specification;
   private final ApplicationSpecification existingAppSpec;
   private final ApplicationDeployScope applicationDeployScope;
@@ -48,15 +50,17 @@ public class ApplicationDeployable {
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
-                               ApplicationDeployScope applicationDeployScope) {
+                               ApplicationDeployScope applicationDeployScope,
+                               ApplicationClass applicationClass) {
     this(artifactId, artifactLocation, applicationId, specification, existingAppSpec, applicationDeployScope,
-         null, true, Collections.emptyList());
+         applicationClass, null, true, Collections.emptyList());
   }
 
   public ApplicationDeployable(ArtifactId artifactId, Location artifactLocation,
                                ApplicationId applicationId, ApplicationSpecification specification,
                                @Nullable ApplicationSpecification existingAppSpec,
                                ApplicationDeployScope applicationDeployScope,
+                               ApplicationClass applicationClass,
                                @Nullable KerberosPrincipalId ownerPrincipal,
                                boolean updateSchedules,
                                Collection<StructuredTableSpecification> systemTables) {
@@ -69,6 +73,7 @@ public class ApplicationDeployable {
     this.ownerPrincipal = ownerPrincipal;
     this.updateSchedules = updateSchedules;
     this.systemTables = systemTables;
+    this.applicationClass = applicationClass;
   }
 
   /**
@@ -90,6 +95,14 @@ public class ApplicationDeployable {
    */
   public ApplicationId getApplicationId() {
     return applicationId;
+  }
+
+  /**
+   *
+   * @return {@link io.cdap.cdap.api.artifact.ApplicationClass} of the Application
+   */
+  public ApplicationClass getApplicationClass() {
+    return applicationClass;
   }
 
   /**

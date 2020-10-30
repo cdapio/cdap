@@ -92,7 +92,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
 
     ArtifactId artifactId = deploymentInfo.getArtifactId();
     Location artifactLocation = deploymentInfo.getArtifactLocation();
-    String appClassName = deploymentInfo.getAppClassName();
+    String appClassName = deploymentInfo.getApplicationClass().getClassName();
     String appVersion = deploymentInfo.getApplicationVersion();
     String configString = deploymentInfo.getConfigString();
 
@@ -126,7 +126,8 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
-                                   ApplicationDeployScope.USER, deploymentInfo.getOwnerPrincipal(),
-                                   deploymentInfo.canUpdateSchedules(), appSpecInfo.getSystemTables()));
+                                   ApplicationDeployScope.USER, deploymentInfo.getApplicationClass(),
+                                   deploymentInfo.getOwnerPrincipal(), deploymentInfo.canUpdateSchedules(),
+                                   appSpecInfo.getSystemTables()));
   }
 }

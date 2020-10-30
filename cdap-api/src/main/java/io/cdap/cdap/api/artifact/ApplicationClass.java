@@ -73,6 +73,14 @@ public final class ApplicationClass {
     return configSchema;
   }
 
+  /**
+   *
+   * @return {@link io.cdap.cdap.api.plugin.Requirements} for the Application
+   */
+  public Requirements getRequirements() {
+    return requirements;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) {

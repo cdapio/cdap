@@ -30,6 +30,7 @@ import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import com.google.inject.util.Modules;
 import io.cdap.cdap.api.Config;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
@@ -284,9 +285,9 @@ public class AppFabricTestHelper {
     artifactRepository.addArtifact(Id.Artifact.fromEntityId(Artifacts.toProtoArtifactId(namespace.toEntityId(),
                                                                                         artifactId)),
                                    new File(deployedJar.toURI()));
-
+    ApplicationClass applicationClass = new ApplicationClass(appClass.getName(), "", null);
     AppDeploymentInfo info = new AppDeploymentInfo(artifactDescriptor, namespace.toEntityId(),
-                                                   appClass.getName(), null, null,
+                                                   applicationClass, null, null,
                                                    config == null ? null : new Gson().toJson(config));
     return getLocalManager().deploy(info).get();
   }

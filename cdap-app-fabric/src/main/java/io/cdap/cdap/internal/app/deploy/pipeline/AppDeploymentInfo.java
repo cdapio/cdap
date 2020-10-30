@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import com.google.gson.annotations.SerializedName;
 import io.cdap.cdap.api.app.Application;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDescriptor;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
@@ -36,7 +37,7 @@ public class AppDeploymentInfo {
   private final ArtifactId artifactId;
   private final Location artifactLocation;
   private final NamespaceId namespaceId;
-  private final String appClassName;
+  private final ApplicationClass applicationClass;
   private final String appName;
   private final String appVersion;
   private final String configString;
@@ -46,19 +47,19 @@ public class AppDeploymentInfo {
   private final boolean updateSchedules;
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
-                           String appClassName, @Nullable String appName, @Nullable String appVersion,
+                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString) {
-    this(artifactDescriptor, namespaceId, appClassName, appName, appVersion, configString, null, true);
+    this(artifactDescriptor, namespaceId, applicationClass, appName, appVersion, configString, null, true);
   }
 
   public AppDeploymentInfo(ArtifactDescriptor artifactDescriptor, NamespaceId namespaceId,
-                           String appClassName, @Nullable String appName, @Nullable String appVersion,
+                           ApplicationClass applicationClass, @Nullable String appName, @Nullable String appVersion,
                            @Nullable String configString, @Nullable KerberosPrincipalId ownerPrincipal,
                            boolean updateSchedules) {
     this.artifactId = Artifacts.toProtoArtifactId(namespaceId, artifactDescriptor.getArtifactId());
     this.artifactLocation = artifactDescriptor.getLocation();
     this.namespaceId = namespaceId;
-    this.appClassName = appClassName;
+    this.applicationClass = applicationClass;
     this.appName = appName;
     this.appVersion = appVersion;
     this.configString = configString;
@@ -88,10 +89,10 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the class name of the {@link Application}.
+   * Returns the {@link io.cdap.cdap.api.artifact.ApplicationClass} associated with this {@link Application}.
    */
-  public String getAppClassName() {
-    return appClassName;
+  public ApplicationClass getApplicationClass() {
+    return applicationClass;
   }
 
   /**

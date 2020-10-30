@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.deploy.pipeline;
 
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Locations;
@@ -57,11 +58,12 @@ public class ProgramGenerationStageTest {
     ApplicationSpecification appSpec = Specifications.from(new AllProgramsApp());
     ApplicationSpecificationAdapter adapter = ApplicationSpecificationAdapter.create();
     ApplicationSpecification newSpec = adapter.fromJson(adapter.toJson(appSpec));
+    ApplicationClass applicationClass = new ApplicationClass(AllProgramsApp.class.getName(), "", null);
     ProgramGenerationStage pgmStage = new ProgramGenerationStage();
     pgmStage.process(new StageContext(Object.class));  // Can do better here - fixed right now to run the test.
     pgmStage.process(new ApplicationDeployable(NamespaceId.DEFAULT.artifact("AllProgramApp", "1.0"), appArchive,
                                                DefaultId.APPLICATION, newSpec, null,
-                                               ApplicationDeployScope.USER));
+                                               ApplicationDeployScope.USER, applicationClass));
     Assert.assertTrue(true);
   }
 
