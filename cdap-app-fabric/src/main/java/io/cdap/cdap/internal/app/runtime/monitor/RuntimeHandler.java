@@ -201,6 +201,7 @@ public class RuntimeHandler extends AbstractHttpHandler {
       public void finished(HttpResponder responder) {
         try {
           os.close();
+          responder.sendStatus(HttpResponseStatus.OK);
         } catch (IOException e) {
           throw new RuntimeException("Failed to close spark event logs output stream for " + location, e);
         }
