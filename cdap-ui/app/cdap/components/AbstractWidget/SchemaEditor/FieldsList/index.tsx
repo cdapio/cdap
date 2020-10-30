@@ -96,6 +96,7 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
             key={field.id}
             field={field}
             onChange={this.onChange}
+            dataCy={`schema-row-${i}`}
           />
         );
       });
@@ -121,6 +122,7 @@ class FieldsListBase extends React.Component<IFieldsListProps, IFieldsListState>
           childHeight={FieldsListBase.heightOfRow}
           renderList={this.renderList.bind(this)}
           childrenUnderFold={FieldsListBase.childrenUnderFold}
+          dataCy="schema-fields-list"
         />
       </SiblingCommunicationProvider>
     );

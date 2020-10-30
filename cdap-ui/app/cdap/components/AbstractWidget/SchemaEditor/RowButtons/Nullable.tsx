@@ -27,6 +27,7 @@ interface INullableBaseProps {
 const NullableBase = ({ nullable, onNullable: onChange }: INullableBaseProps) => {
   return (
     <CheckBox
+      data-cy="schema-field-nullable-checkbox"
       checked={nullable}
       color="primary"
       checkedIcon={<CheckBoxIcon fontSize="small" />}

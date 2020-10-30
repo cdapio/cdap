@@ -115,7 +115,8 @@ function deployAndTestPipeline(filename, pipelineName, done) {
     .type('{enter}');
   cy.get('[data-testid=deploy-pipeline]').click();
   cy.get('[data-cy="Deployed"]', { timeout: 60000 }).should('contain', 'Deployed');
-  cy.url()
+  return cy
+    .url()
     .should('include', `/view/${pipelineName}`)
     .then(() => done());
 }
@@ -137,12 +138,12 @@ function getNodeSelectorFromNodeIndentifier(node: INodeIdentifier) {
   return `[data-cy="plugin-node-${nodeName}-${nodeType}-${nodeId}"]`;
 }
 
-function setDefaultOldSchemaEditor() {
+function setNewSchemaEditor(state = 'false') {
   const SCHEMA_LAB_ID = 'schema-editor';
 
   // set default schema editor to use old schema editor
   cy.window().then((win) => {
-    win.localStorage.setItem(SCHEMA_LAB_ID, 'false');
+    win.localStorage.setItem(SCHEMA_LAB_ID, state);
   });
 }
 
@@ -168,6 +169,6 @@ export {
   getConditionNodeEndpoint,
   dataCy,
   getNodeSelectorFromNodeIndentifier,
-  setDefaultOldSchemaEditor,
+  setNewSchemaEditor,
   generateDraftFromPipeline,
 };

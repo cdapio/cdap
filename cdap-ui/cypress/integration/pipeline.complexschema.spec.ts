@@ -14,9 +14,8 @@
  * the License.
  */
 
-import { loginIfRequired, getArtifactsPoll, setDefaultOldSchemaEditor } from '../helpers';
 import { INodeInfo, INodeIdentifier } from '../typings';
-import { dataCy, setDefaultOldSchemaEditor } from '../helpers';
+import { loginIfRequired, getArtifactsPoll, dataCy, setNewSchemaEditor } from '../helpers';
 import {
   DEFAULT_GCP_PROJECTID,
   DEFAULT_GCP_SERVICEACCOUNT_PATH,
@@ -43,7 +42,7 @@ describe('Output Schema', () => {
   });
 
   beforeEach(() => {
-    setDefaultOldSchemaEditor();
+    setNewSchemaEditor();
   });
 
   afterEach(() => {
@@ -62,7 +61,7 @@ describe('Output Schema', () => {
   const schemaRow3 = dataCy('schema-row-2');
 
   beforeEach(() => {
-    setDefaultOldSchemaEditor();
+    setNewSchemaEditor();
     getArtifactsPoll(headers);
   });
 

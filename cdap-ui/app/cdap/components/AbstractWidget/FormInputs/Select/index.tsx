@@ -108,6 +108,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
   const dense = objectQuery(widgetProps, 'dense') || false;
   const inline = objectQuery(widgetProps, 'inline') || false;
   const native = objectQuery(widgetProps, 'native') || false;
+  const MenuProps = objectQuery(widgetProps, 'MenuProps') || {};
   const OptionItem = native ? 'option' : dense ? DenseMenuItem : MenuItem;
   const SelectComponent = inline ? InlineSelect : Select;
   let optionValues = options.map((opt) => {
@@ -133,6 +134,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
           vertical: 'bottom',
           horizontal: 'left',
         },
+        ...MenuProps,
       }}
       displayEmpty={!isNilOrEmptyString(placeholder)}
       inputRef={inputRef}

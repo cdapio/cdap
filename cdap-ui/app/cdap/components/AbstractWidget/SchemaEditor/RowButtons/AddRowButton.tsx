@@ -20,7 +20,7 @@ import { IconWrapper } from 'components/AbstractWidget/SchemaEditor/RowButtons/I
 
 function AddRowButton({ onAdd }) {
   return (
-    <IconWrapper onClick={onAdd}>
+    <IconWrapper onClick={onAdd} data-cy="schema-field-add-button">
       <AddIcon />
     </IconWrapper>
   );

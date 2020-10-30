@@ -164,6 +164,10 @@ class PluginSchemaEditorBase extends React.PureComponent<
     if (!this.props.disabled && isExperimentEnabled) {
       this.ee.on('schema.import', this.onSchemaImport);
       this.ee.on('dataset.selected', this.onSchemaImport);
+      if (window.Cypress) {
+        window.Cypress.cy.on('schema.import', this.onSchemaImport);
+        window.Cypress.cy.on('dataset.selected', this.onSchemaImport);
+      }
     }
     let doesActionDropdownHasExport;
     if (this.props.actionsDropdownMap && isExperimentEnabled) {
@@ -174,6 +178,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
     if (doesActionDropdownHasExport) {
       // Schema can be exported on detailed view even if it is disabled.
       this.ee.on('schema.export', this.onSchemaExport);
+      if (window.Cypress) {
+        window.Cypress.cy.on('schema.export', this.onSchemaExport);
+      }
     }
     window.addEventListener('resize', this.calculateSchemaRowCount);
   }
@@ -261,6 +268,9 @@ class PluginSchemaEditorBase extends React.PureComponent<
     const a = document.createElement('a');
     a.href = url;
     a.download = `${exportFileName}.json`;
+    if (window.Cypress) {
+      return;
+    }
 
     const clickHandler = (event) => {
       event.stopPropagation();
@@ -402,7 +412,12 @@ class PluginSchemaEditorBase extends React.PureComponent<
         id: i,
         name: s.name,
         content: (
-          <fieldset disabled={this.props.disabled} className={this.props.classes.fieldset} key={i}>
+          <fieldset
+            disabled={this.props.disabled}
+            className={this.props.classes.fieldset}
+            key={i}
+            data-cy="schema-editor-fieldset-container"
+          >
             <RefreshableSchemaEditor
               visibleRows={this.state.schemaRowCount}
               schema={s}
@@ -454,7 +469,11 @@ class PluginSchemaEditorBase extends React.PureComponent<
       return `No ${this.props.schemaTitle} available`;
     }
     return this.santizeSchemasForEditor().map((schema, i) => (
-      <fieldset disabled={this.props.disabled} className={this.props.classes.fieldset}>
+      <fieldset
+        disabled={this.props.disabled}
+        className={this.props.classes.fieldset}
+        data-cy="schema-editor-fieldset-container"
+      >
         <SchemaEditor
           key={i}
           visibleRows={this.state.schemaRowCount}
@@ -506,6 +525,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
             this.props.onSchemaChange(newSchemas);
           }
         }}
+        dataCy={`${this.props.schemaTitle}-macro-input`}
       />
     );
   };
@@ -525,7 +545,16 @@ class PluginSchemaEditorBase extends React.PureComponent<
             value={''}
             placeholder="Actions"
             onChange={this.onActionsHandler}
-            widgetProps={{ options: this.actions, dense: true }}
+            widgetProps={{
+              options: this.actions,
+              dense: true,
+              MenuProps: {
+                MenuListProps: {
+                  'data-cy': 'schema-actions-dropdown-menu-list',
+                } as any,
+              },
+            }}
+            dataCy="schema-actions-dropdown"
           />
         </If>
       </div>
@@ -535,7 +564,11 @@ class PluginSchemaEditorBase extends React.PureComponent<
   public render() {
     const { classes } = this.props;
     return (
-      <div className={classes.container} ref={(ref) => (this.containerRef = ref)}>
+      <div
+        className={classes.container}
+        ref={(ref) => (this.containerRef = ref)}
+        data-cy={`${this.props.schemaTitle}`}
+      >
         {this.renderHeader()}
         <If condition={this.state.loading}>
           <div className={classes.loadingContainer}>

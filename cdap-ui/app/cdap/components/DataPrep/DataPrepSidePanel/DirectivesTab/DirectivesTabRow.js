@@ -52,6 +52,7 @@ export default class DirectivesTabRow extends Component {
         className={classnames('directives-row', {
           inactive: this.props.isInactive,
         })}
+        data-cy={`directive-row-${this.props.rowIndex}`}
       >
         <span>{this.props.rowIndex + 1}</span>
         <span
@@ -70,6 +71,7 @@ export default class DirectivesTabRow extends Component {
             onClick={this.props.handleDelete}
             onMouseEnter={this.props.handleMouseEnter}
             onMouseLeave={this.props.handleMouseLeave}
+            data-cy="delete-directive"
           />
         </span>
       </div>

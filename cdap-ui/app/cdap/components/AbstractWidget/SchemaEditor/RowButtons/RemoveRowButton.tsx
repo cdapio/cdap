@@ -26,9 +26,9 @@ const styles = (theme) => {
   };
 };
 
-function RemoveRowButtonBase({ classes, onRemove }) {
+function RemoveRowButtonBase({ classes, onRemove, ...rest }) {
   return (
-    <IconWrapper onClick={onRemove}>
+    <IconWrapper onClick={onRemove} data-cy="schema-field-remove-button">
       <DeleteIcon className={classes.root} />
     </IconWrapper>
   );
