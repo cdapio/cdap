@@ -75,7 +75,7 @@ public final class ApplicationClass {
 
   /**
    *
-   * @return {@link io.cdap.cdap.api.plugin.Requirements} for the Application
+   * @return {@link Requirements} for the Application
    */
   public Requirements getRequirements() {
     return requirements;

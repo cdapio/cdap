@@ -89,7 +89,7 @@ public class AppDeploymentInfo {
   }
 
   /**
-   * Returns the {@link io.cdap.cdap.api.artifact.ApplicationClass} associated with this {@link Application}.
+   * Returns the {@link ApplicationClass} associated with this {@link Application}.
    */
   public ApplicationClass getApplicationClass() {
     return applicationClass;
