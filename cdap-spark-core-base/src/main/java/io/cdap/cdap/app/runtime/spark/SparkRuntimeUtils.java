@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.app.runtime.spark;
 
-import com.google.common.net.HttpHeaders;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Service;
@@ -26,17 +25,14 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.spark.SparkExecutionContext;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkRunnerClassLoader;
 import io.cdap.cdap.app.runtime.spark.distributed.SparkDriverService;
-import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
-import io.cdap.cdap.common.internal.remote.RemoteClient;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.monitor.RuntimeClient;
 import io.cdap.cdap.proto.id.ProgramRunId;
-import io.cdap.common.http.HttpMethod;
 import org.apache.spark.SparkConf;
 import org.apache.spark.scheduler.EventLoggingListener;
 import org.apache.spark.scheduler.SparkListenerApplicationStart;
@@ -55,8 +51,6 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -73,7 +67,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-import javax.ws.rs.core.MediaType;
 
 /**
  * Util class for common functions needed for Spark implementation.
@@ -376,41 +369,10 @@ public final class SparkRuntimeUtils {
       return;
     }
 
-    LOG.debug("Uploading event logs file {} for program run {}", eventFile, programRunId);
-
-    RemoteClient remoteClient = new RemoteClient(runtimeContext.getDiscoveryServiceClient(), Constants.Service.RUNTIME,
-                                                 new DefaultHttpRequestConfig(false),
-                                                 Constants.Gateway.INTERNAL_API_VERSION_3 + "/runtime/namespaces/");
-    String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/spark-event-logs/%s",
-                                programRunId.getNamespace(),
-                                programRunId.getApplication(),
-                                programRunId.getVersion(),
-                                programRunId.getType().getCategoryName(),
-                                programRunId.getProgram(),
-                                programRunId.getRun(),
-                                eventFile.getName());
-
-    Retries.runWithRetries(() -> {
-      // Stream out the messages
-      HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
-      try {
-        urlConn.setChunkedStreamingMode(CHUNK_SIZE);
-        urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM);
-
-        try (OutputStream os = urlConn.getOutputStream()) {
-          Files.copy(eventFile.toPath(), os);
-        }
-
-        if (urlConn.getResponseCode() == HttpURLConnection.HTTP_UNAVAILABLE) {
-          throw new ServiceUnavailableException("Runtime service is not available");
-        }
-
-        if (urlConn.getResponseCode() != 200) {
-          throw new IOException("Response code is not 200. Received " + urlConn.getResponseCode());
-        }
-      } finally {
-        urlConn.disconnect();
-      }
-    }, RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
+    RuntimeClient runtimeClient = new RuntimeClient(runtimeContext.getCConfiguration(),
+                                                    runtimeContext.getDiscoveryServiceClient());
+    Retries.runWithRetries(() -> runtimeClient.uploadSparkEventLogs(programRunId, eventFile),
+                           RetryStrategies.fromConfiguration(runtimeContext.getCConfiguration(), "spark."));
+    LOG.debug("Uploaded event logs file {} for program run {}", eventFile, programRunId);
   }
 }

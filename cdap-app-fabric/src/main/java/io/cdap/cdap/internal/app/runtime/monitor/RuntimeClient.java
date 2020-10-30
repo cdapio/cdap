@@ -35,16 +35,19 @@ import org.apache.avro.io.Encoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.zip.GZIPOutputStream;
+import javax.ws.rs.core.MediaType;
 
 /**
  * The client for talking to the {@link RuntimeServer}.
@@ -57,7 +60,7 @@ public class RuntimeClient {
   private final RemoteClient remoteClient;
 
   @Inject
-  RuntimeClient(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
+  public RuntimeClient(CConfiguration cConf, DiscoveryServiceClient discoveryClient) {
     this.compression = cConf.getBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED);
     this.remoteClient = new RemoteClient(discoveryClient, Constants.Service.RUNTIME,
                                          new DefaultHttpRequestConfig(false),
@@ -109,22 +112,52 @@ public class RuntimeClient {
         writeMessages(messages, EncoderFactory.get().directBinaryEncoder(os, null));
       }
 
-      throwIfError(programRunId, topicId, urlConn);
+      throwIfError(programRunId, urlConn);
+    } finally {
+      closeURLConnection(urlConn);
+    }
+  }
 
-      // Discard everything from the inputstream. This is needed to allow connection reuse.
-      try (InputStream is = urlConn.getInputStream()) {
-        if (is != null) {
-          ByteStreams.toByteArray(is);
-        }
+  /**
+   * Uploads Spark program event logs to the runtime service.
+   *
+   * @param programRunId the program run id of the program run
+   * @param eventFile the local file containing the event logs
+   * @throws IOException if failed to send the event logs
+   * @throws ServiceUnavailableException if the service is not available
+   */
+  public void uploadSparkEventLogs(ProgramRunId programRunId, File eventFile) throws IOException {
+    String path = String.format("%s/apps/%s/versions/%s/%s/%s/runs/%s/spark-event-logs/%s",
+                                programRunId.getNamespace(),
+                                programRunId.getApplication(),
+                                programRunId.getVersion(),
+                                programRunId.getType().getCategoryName(),
+                                programRunId.getProgram(),
+                                programRunId.getRun(),
+                                eventFile.getName());
+
+    // Stream out the messages
+    HttpURLConnection urlConn = remoteClient.openConnection(HttpMethod.POST, path);
+    try {
+      urlConn.setChunkedStreamingMode(CHUNK_SIZE);
+      urlConn.setRequestProperty(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_OCTET_STREAM);
+
+      // No need to use compression since event files should have compression enabled
+      try (OutputStream os = urlConn.getOutputStream()) {
+        Files.copy(eventFile.toPath(), os);
+        throwIfError(programRunId, urlConn);
+      } catch (BadRequestException e) {
+        // Just treat bad request as IOException since it won't be retriable
+        throw new IOException(e);
       }
     } finally {
-      urlConn.disconnect();
+      closeURLConnection(urlConn);
     }
   }
 
   /**
    * Opens a {@link OutputStream} to the given {@link URLConnection}. If {@link #compression} is {@code true},
-   * the ouptut stream will be wrapped with a {@link GZIPOutputStream} with appropriate request header set.
+   * the output stream will be wrapped with a {@link GZIPOutputStream} with appropriate request header set.
    */
   private OutputStream openOutputStream(URLConnection urlConn) throws IOException {
     if (!compression) {
@@ -135,10 +168,28 @@ public class RuntimeClient {
   }
 
   /**
+   * Closes the given {@link URLConnection} so that the underlying connection can be reused.
+   *
+   * @param urlConn the URL connection to close
+   */
+  private void closeURLConnection(HttpURLConnection urlConn) {
+    try (InputStream is = urlConn.getInputStream()) {
+      if (is != null) {
+        ByteStreams.toByteArray(is);
+      }
+    } catch (IOException e) {
+      // No need to throw. When the URLConnection.disconnect() is called, it will close the socket if the
+      // input stream is not in a reusable state.
+    } finally {
+      urlConn.disconnect();
+    }
+  }
+
+  /**
    * Validates the responds from the given {@link HttpURLConnection} to be 200, or throws exception if it is not 200.
    */
   private void throwIfError(ProgramRunId programRunId,
-                            TopicId topicId, HttpURLConnection urlConn) throws IOException, BadRequestException {
+                            HttpURLConnection urlConn) throws IOException, BadRequestException {
     int responseCode = urlConn.getResponseCode();
     if (responseCode == HttpURLConnection.HTTP_OK) {
       return;
@@ -155,7 +206,7 @@ public class RuntimeClient {
           throw new ServiceUnavailableException(Constants.Service.RUNTIME, errorMsg);
       }
 
-      throw new IOException("Failed to send message for program run " + programRunId + " to topic " + topicId
+      throw new IOException("Failed to send message for program run " + programRunId + " to " + urlConn.getURL()
                               + ". Respond code: " + responseCode + ". Error: " + errorMsg);
     }
   }

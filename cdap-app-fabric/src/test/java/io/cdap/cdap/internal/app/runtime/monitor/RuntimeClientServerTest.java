@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.monitor;
 
 import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
@@ -40,6 +41,8 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
+import org.apache.twill.filesystem.Location;
+import org.apache.twill.filesystem.LocationFactory;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -49,7 +52,11 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.File;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -80,6 +87,7 @@ public class RuntimeClientServerTest {
   private MessagingService messagingService;
   private RuntimeServer runtimeServer;
   private RuntimeClient runtimeClient;
+  private LocationFactory locationFactory;
 
   public RuntimeClientServerTest(boolean compression) {
     this.compression = compression;
@@ -90,6 +98,7 @@ public class RuntimeClientServerTest {
     cConf = CConfiguration.create();
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, TEMP_FOLDER.newFolder().getAbsolutePath());
     cConf.setBoolean(Constants.RuntimeMonitor.COMPRESSION_ENABLED, compression);
+    cConf.setBoolean(Constants.AppFabric.SPARK_EVENT_LOGS_ENABLED, true);
 
     Injector injector = Guice.createInjector(
       new ConfigModule(cConf),
@@ -128,6 +137,7 @@ public class RuntimeClientServerTest {
     runtimeServer.startAndWait();
 
     runtimeClient = injector.getInstance(RuntimeClient.class);
+    locationFactory = injector.getInstance(LocationFactory.class);
   }
 
   @After
@@ -194,6 +204,26 @@ public class RuntimeClientServerTest {
 
     List<String> expected = messages.stream().map(Message::getPayloadAsString).collect(Collectors.toList());
     Assert.assertEquals(expected, logEntries);
+  }
+
+  @Test (timeout = 2000L)
+  public void testSparkEventLogs() throws Exception {
+    File eventFile = TEMP_FOLDER.newFile();
+    Files.write(eventFile.toPath(), "Testing".getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
+
+    ProgramRunId programRunId = NamespaceId.DEFAULT.app("app").spark("spark").run(RunIds.generate());
+    runtimeClient.uploadSparkEventLogs(programRunId, eventFile);
+
+    // Verify by reading from the event logs location
+    List<Location> eventFiles = locationFactory.create(cConf.get(Constants.AppFabric.SPARK_EVENT_LOGS_DIR)).list()
+      .stream()
+      .filter(l -> l.getName().endsWith(eventFile.getName()))
+      .collect(Collectors.toList());
+
+    Assert.assertEquals(1, eventFiles.size());
+    try (InputStream is = eventFiles.get(0).getInputStream()) {
+      Assert.assertEquals("Testing", new String(ByteStreams.toByteArray(is), StandardCharsets.UTF_8));
+    }
   }
 
   private void assertMessages(TopicId topicId, Collection<Message> messages) throws Exception {
