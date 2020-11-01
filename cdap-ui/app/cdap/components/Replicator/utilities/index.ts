@@ -20,7 +20,7 @@ import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
-import { ITableObj } from 'components/Replicator/types';
+import { ITableObj, IColumn } from 'components/Replicator/types';
 
 export function fetchPluginInfo(
   parentArtifact,
@@ -219,10 +219,14 @@ export function constructTablesSelection(tables, columns, dmlBlacklist) {
     if (selectedColumns && selectedColumns.size > 0) {
       const tableColumns = [];
       selectedColumns.forEach((column) => {
-        const columnObj = {
+        const columnObj: IColumn = {
           name: column.get('name'),
           type: column.get('type'),
         };
+
+        if (column.get('suppressWarning')) {
+          columnObj.suppressWarning = true;
+        }
 
         tableColumns.push(columnObj);
       });

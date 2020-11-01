@@ -173,7 +173,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     this.fetchColumns();
   }
 
-  private getInitialSelectedColumns = (columns): Map<string, Map<string, string>> => {
+  private getInitialSelectedColumns = (columns): Map<string, IColumnImmutable> => {
     const existingColumns = {};
     columns.forEach((column) => {
       existingColumns[column.name] = true;
@@ -184,8 +184,9 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     const selectedColumns = {};
     if (this.props.initialSelected && this.props.initialSelected.size > 0) {
       this.props.initialSelected.forEach((row: IColumnImmutable) => {
-        if (existingColumns[row.get('name')]) {
-          selectedColumns[row.get('name')] = row;
+        const rowName = row.get('name') as string;
+        if (existingColumns[rowName]) {
+          selectedColumns[rowName] = row;
         } else {
           hasChange = true;
         }

@@ -29,6 +29,7 @@ import Supported, {
 import sortBy from 'lodash/sortBy';
 import { generateTableKey } from 'components/Replicator/utilities';
 import { List, Map } from 'immutable';
+import { IColumnsList } from 'components/Replicator/types';
 
 const styles = (theme): StyleRules => {
   const headerHeight = '60px';
@@ -85,6 +86,10 @@ const styles = (theme): StyleRules => {
         textDecoration: 'underline',
       },
     },
+    actionsSeparator: {
+      marginLeft: '5px',
+      marginRight: '5px',
+    },
     mappings: {
       padding: '10px 25px',
       height: `calc(100% - ${headerHeight})`,
@@ -124,7 +129,7 @@ const styles = (theme): StyleRules => {
           },
 
           '& .grid-row': {
-            gridTemplateColumns: '2fr 2fr 125px 25px 125px 3fr 200px 100px',
+            gridTemplateColumns: '2fr 2fr 125px 25px 125px 3fr 150px 120px',
 
             '& > div:first-child:not($headerDataTypes)': {
               paddingLeft: '25px',
@@ -240,6 +245,37 @@ const MappingsView: React.FC<IMappingsProps> = ({
     });
   }
 
+  function ignoreColumn(column) {
+    const key = generateTableKey(tableInfo);
+
+    const existingColumns = columns.get(key);
+    let updatedColumns = existingColumns;
+    if (!existingColumns || existingColumns.size === 0) {
+      updatedColumns = List(
+        assessmentColumns.map((col) => {
+          return Map({
+            name: col.sourceName,
+            type: col.sourceType,
+          });
+        })
+      );
+    }
+
+    updatedColumns = updatedColumns.map((col) => {
+      let updatedColumn = col;
+      if (col.get('name') === column.sourceName) {
+        updatedColumn = updatedColumn.set('suppressWarning', true);
+      }
+      return updatedColumn;
+    }) as IColumnsList;
+
+    setColumns(columns.set(key, updatedColumns), () => {
+      setRerunAssessment(true);
+      setLoading(true);
+      saveDraft().subscribe(assessTable);
+    });
+  }
+
   const sourceType = getPluginDisplayName(sourcePluginInfo, sourcePluginWidget);
   const targetType = getPluginDisplayName(targetPluginInfo, targetPluginWidget);
 
@@ -319,6 +355,15 @@ const MappingsView: React.FC<IMappingsProps> = ({
                         <Supported columnRow={row} />
                       </div>
                       <div>
+                        <If condition={row.support === SUPPORT.partial}>
+                          <span
+                            className={classes.columnAction}
+                            onClick={ignoreColumn.bind(null, row)}
+                          >
+                            Ignore
+                          </span>
+                          <span className={classes.actionsSeparator}>|</span>
+                        </If>
                         <If condition={row.support !== SUPPORT.yes}>
                           <span
                             className={classes.columnAction}

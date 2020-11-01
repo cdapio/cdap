@@ -20,12 +20,13 @@ import { List, Map, Set } from 'immutable';
 export interface IColumn {
   name: string;
   type: string;
+  suppressWarning?: boolean;
 }
 
 /**
  * IColumnImmutable is the immutable form of IColumn
  */
-export type IColumnImmutable = Map<string, string>;
+export type IColumnImmutable = Map<string, string | boolean>;
 export type IColumnsList = List<IColumnImmutable>;
 export type IColumnsStore = Map<string, IColumnsList>;
 
