@@ -19,7 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { List, Map, Set, fromJS } from 'immutable';
+import { Map, Set } from 'immutable';
 import Checkbox from '@material-ui/core/Checkbox';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import orderBy from 'lodash/orderBy';
@@ -34,6 +34,14 @@ import ManualSelectTable from 'components/Replicator/Create/Content/SelectTables
 import SearchBox from 'components/Replicator/Create/Content/SearchBox';
 import debounce from 'lodash/debounce';
 import classnames from 'classnames';
+import {
+  DML,
+  ITable,
+  ITablesStore,
+  IColumnsStore,
+  IColumnsList,
+  IDMLStore,
+} from 'components/Replicator/types';
 
 const styles = (theme): StyleRules => {
   return {
@@ -155,29 +163,12 @@ const styles = (theme): StyleRules => {
 
 type ISelectTablesProps = ICreateContext & WithStyles<typeof styles>;
 
-interface ITable {
-  database: string;
-  table: string;
-  numColumns: number;
-}
-
-interface IColumn {
-  name: string;
-  type: string;
-}
-
-export enum DML {
-  insert = 'INSERT',
-  update = 'UPDATE',
-  delete = 'DELETE',
-}
-
 interface ISelectTablesState {
   tables: ITable[];
   filteredTables: ITable[];
-  selectedTables: Map<string, Map<string, string>>;
-  columns: Map<string, List<IColumn>>;
-  dmlBlacklist: Map<string, Set<DML>>;
+  selectedTables: ITablesStore;
+  columns: IColumnsStore;
+  dmlBlacklist: IDMLStore;
   openTable?: ITable;
   error: any;
   loading: boolean;
@@ -267,7 +258,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
       (res) => {
         this.removeNonExistingTable(res.tables);
 
-        const tables = orderBy(res.tables, ['table'], ['asc']);
+        const tables: ITable[] = orderBy(res.tables, ['table'], ['asc']);
         this.setState(
           {
             tables,
@@ -284,7 +275,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     );
   };
 
-  private toggleSelected = (row) => {
+  private toggleSelected = (row: ITable) => {
     const key = generateTableKey(row);
 
     if (this.state.selectedTables.get(key)) {
@@ -295,7 +286,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     }
 
     this.setState({
-      selectedTables: this.state.selectedTables.set(key, fromJS(row)),
+      selectedTables: this.state.selectedTables.set(key, Map(row)),
     });
   };
 
@@ -310,7 +301,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     const selectedMap = {};
     this.state.tables.forEach((row) => {
       const key = generateTableKey(row);
-      selectedMap[key] = fromJS(row);
+      selectedMap[key] = Map(row);
     });
 
     this.setState({
@@ -332,7 +323,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     return this.state.columns.get(generateTableKey(this.state.openTable));
   };
 
-  public onColumnsSelection = (tableKey, columns: List<IColumn>) => {
+  public onColumnsSelection = (tableKey: string, columns: IColumnsList) => {
     let newColumns = this.state.columns.set(tableKey, columns);
 
     if (!columns || columns.size === 0) {
@@ -410,7 +401,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     });
   };
 
-  private toggleDML = (key, dmlEvent: DML) => {
+  private toggleDML = (key: string, dmlEvent: DML) => {
     // get current blacklist
     const tableDML = this.state.dmlBlacklist.get(key);
     let dmlSet: Set<DML>;

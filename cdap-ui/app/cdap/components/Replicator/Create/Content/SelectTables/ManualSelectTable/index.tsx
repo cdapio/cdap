@@ -22,7 +22,13 @@ import TableMultiRow from 'components/Replicator/Create/Content/SelectTables/Man
 import { generateTableKey } from 'components/Replicator/utilities';
 import Heading, { HeadingTypes } from 'components/Heading';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
-import { List, Map, Set } from 'immutable';
+import { List, Map } from 'immutable';
+import {
+  IDMLStore,
+  IColumnsStore,
+  ITableImmutable,
+  ITablesStore,
+} from 'components/Replicator/types';
 
 const styles = (): StyleRules => {
   return {
@@ -105,16 +111,16 @@ const ManualSelectTableView: React.FC<IManualSelectTableProps> = ({
       return;
     }
 
-    let selectedTables = Map();
-    let selectedColumns = Map();
-    let dml = Map();
+    let selectedTables: ITablesStore = Map();
+    let selectedColumns: IColumnsStore = Map();
+    let dml: IDMLStore = Map();
 
     values.forEach((row) => {
       if (!row.table || row.table.length === 0) {
         return;
       }
 
-      const tableInfo = Map({
+      const tableInfo: ITableImmutable = Map({
         database,
         table: row.table,
         schema: row.schema,
