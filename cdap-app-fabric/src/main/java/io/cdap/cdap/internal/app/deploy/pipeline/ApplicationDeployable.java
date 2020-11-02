@@ -99,7 +99,7 @@ public class ApplicationDeployable {
 
   /**
    *
-   * @return {@link io.cdap.cdap.api.artifact.ApplicationClass} of the Application
+   * @return {@link ApplicationClass} of the Application
    */
   public ApplicationClass getApplicationClass() {
     return applicationClass;
