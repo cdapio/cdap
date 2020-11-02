@@ -22,12 +22,33 @@ import Snackbar from '@material-ui/core/Snackbar';
 import Button from '@material-ui/core/Button';
 import ee from 'event-emitter';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
-import { getExperimentValue, isExperimentEnabled, ONE_HOUR_SECONDS } from 'services/helpers';
+import {
+  getExperimentValue,
+  isExperimentEnabled,
+  isNilOrEmpty,
+  ONE_HOUR_SECONDS,
+} from 'services/helpers';
 import DataSource from 'services/datasource';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
+import {
+  XYPlot,
+  makeVisFlexible,
+  XAxis,
+  YAxis,
+  HorizontalGridLines,
+  VerticalBarSeries,
+  MarkSeries,
+  DiscreteColorLegend,
+  Hint,
+} from 'react-vis';
+import flatten from 'lodash/flatten';
 
+interface IBindingRequestInfo {
+  requestTimeFromClient: number;
+  backendRequestTimeDuration: number;
+}
 interface IHealthCheckBindings {
-  [key: string]: number | null;
+  [key: string]: IBindingRequestInfo;
 }
 
 interface ISystemDelayProps extends WithStyles<StyleRules> {
@@ -37,11 +58,12 @@ interface ISystemDelayProps extends WithStyles<StyleRules> {
 
 interface ISystemDelayState {
   cleanChecksNeeded: number;
+  requestDelayMap: Record<number, number>;
 }
 
 const EXPERIMENT_ID = 'system-delay-notification';
 const snoozeTimelabel = `${EXPERIMENT_ID}-snoozetime`;
-const HEALTH_CHECK_INTERVAL = 12000;
+const HEALTH_CHECK_INTERVAL = 1000;
 const DEFAULT_DELAY_TIME = 10000;
 const CLEAN_CHECK_COUNT = 3;
 
@@ -51,12 +73,21 @@ const styles = (theme): StyleRules => {
       backgroundColor: theme.palette.grey[600],
       color: 'black',
     },
+    graph: {
+      position: 'fixed',
+      right: 0,
+      bottom: 0,
+      background: 'white',
+      border: '2px solid black',
+      padding: '10px',
+    },
   };
 };
 
 class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
   public state: ISystemDelayState = {
     cleanChecksNeeded: 0,
+    requestDelayMap: {},
   };
   private healthCheckInterval: NodeJS.Timeout;
   private eventEmitter = ee(ee);
@@ -101,42 +132,7 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
     if (this.isNotificationSnoozed()) {
       return;
     }
-    delete window.localStorage[snoozeTimelabel];
-    const delayedTimeFromExperiment = getExperimentValue(EXPERIMENT_ID);
-    const SERVICES_DELAYED_TIME = delayedTimeFromExperiment
-      ? parseInt(delayedTimeFromExperiment, 10) * 1000
-      : DEFAULT_DELAY_TIME;
-    const currentTime = Date.now();
-    const hasDelayedBinding = this.props.activeDataSources.some((dataSource: DataSource) => {
-      const bindings = dataSource.getBindingsForHealthCheck() as IHealthCheckBindings;
-      return Object.keys(bindings).some((id) => {
-        const requestTime = bindings[id];
-        return requestTime && currentTime - requestTime > SERVICES_DELAYED_TIME;
-      });
-    });
-    if (hasDelayedBinding) {
-      // If there is atleast one delayed binding, show the delay and we need to wait for CLEAN_CHECK_COUNT
-      // more cycles with no delayed bindings before we can remove the notification
-      this.setState({ cleanChecksNeeded: CLEAN_CHECK_COUNT }, () => {
-        if (!this.props.showDelay) {
-          SystemDelayStore.dispatch({
-            type: SystemDelayActions.showDelay,
-          });
-        }
-      });
-    } else {
-      if (this.state.cleanChecksNeeded > 0) {
-        // No delayed bindings and we need more checks before we can say there is no delay
-        this.setState({ cleanChecksNeeded: this.state.cleanChecksNeeded - 1 });
-      } else {
-        // If we complete CLEAN_CHECK_COUNT intervals with no delays, we hide the notification
-        if (this.props.showDelay) {
-          SystemDelayStore.dispatch({
-            type: SystemDelayActions.hideDelay,
-          });
-        }
-      }
-    }
+    this.constructData();
   };
 
   private stopHealthCheck = () => {
@@ -157,30 +153,87 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
     window.localStorage.setItem(snoozeTimelabel, Date.now().toString());
   };
 
+  private constructData = () => {
+    const currentTime = Date.now();
+    const delayedTimeFromExperiment = getExperimentValue(EXPERIMENT_ID);
+    const requestsTakingTime = flatten(
+      this.props.activeDataSources
+        .map((dataSource: DataSource) => {
+          return dataSource.getBindingsForHealthCheck() as IHealthCheckBindings;
+        })
+        .filter((binding: IHealthCheckBindings) => {
+          return !isNilOrEmpty(binding);
+        })
+        .map((binding: IHealthCheckBindings) => {
+          return Object.keys(binding)
+            .filter((k) => binding[k])
+            .map((id, index) => {
+              const {
+                requestTimeFromClient: requestTime,
+                backendRequestTimeDuration: networkDelay,
+              } = binding[id];
+              return { id, y: currentTime - requestTime, networkDelay };
+            });
+        })
+    ).map((d, i) => ({ x: i, ...d }));
+    const requestDelayMap = this.state.requestDelayMap;
+    for (const request of requestsTakingTime) {
+      requestDelayMap[request.id] = request.y;
+    }
+    this.setState({ requestDelayMap });
+  };
+
   public render() {
+    const data = [];
+    let counter = 1;
+    for (const [id, value] of Object.entries(this.state.requestDelayMap)) {
+      data.push({
+        id,
+        x: counter++,
+        y: value,
+      });
+    }
+    // tslint:disable-next-line: no-console
+    console.log(data);
+    if (!Array.isArray(data) || !data.length) {
+      return null;
+    }
     return (
-      <Snackbar
-        data-cy="system-delay-snackbar"
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={this.props.showDelay}
-        message="UI is experiencing slowness or is unable to communicate with server"
-        ContentProps={{
-          classes: {
-            root: this.props.classes.snackbar,
-          },
-        }}
-        action={
-          <Button
-            size="small"
-            color="primary"
-            onClick={this.closeNotification}
-            data-cy="snooze-system-delay-notification"
-          >
-            Snooze for 1 hour
-          </Button>
-        }
-      />
+      <div className={this.props.classes.graph}>
+        <XYPlot width={300} height={300}>
+          <VerticalBarSeries data={data} />
+          <XAxis />
+          <YAxis
+            tickFormat={function tickFormat(d) {
+              return d >= 1000 ? `${(d / 1000).toFixed(1)}k` : d;
+            }}
+          />
+        </XYPlot>
+      </div>
     );
+    //   return (
+    //     <Snackbar
+    //       data-cy="system-delay-snackbar"
+    //       anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+    //       open={this.props.showDelay}
+    //       message="UI is experiencing slowness or is unable to communicate with server"
+    //       ContentProps={{
+    //         classes: {
+    //           root: this.props.classes.snackbar,
+    //         },
+    //       }}
+    //       action={
+    //         <Button
+    //           size="small"
+    //           color="primary"
+    //           onClick={this.closeNotification}
+    //           data-cy="snooze-system-delay-notification"
+    //         >
+    //           Snooze for 1 hour
+    //         </Button>
+    //       }
+    //     />
+    //   );
   }
 }
 

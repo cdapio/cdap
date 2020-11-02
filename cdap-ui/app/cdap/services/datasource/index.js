@@ -133,7 +133,11 @@ export default class Datasource {
       if (!binding.excludeFromHealthCheck) {
         const id = objectQuery(binding, 'resource', 'id');
         const requestTime = objectQuery(binding, 'resource', 'requestTime');
-        bindingsWithTime[id] = requestTime;
+        const backendRequestTimeDuration = objectQuery(binding, 'resource', 'backendRequestTimeDuration');
+        bindingsWithTime[id] = {
+          requestTimeFromClient: requestTime,
+          backendRequestTimeDuration
+        };
       }
     });
     return bindingsWithTime;

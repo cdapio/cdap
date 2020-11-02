@@ -268,6 +268,7 @@ function emitResponse(resource, error, response, body) {
     );
     let newResource = Object.assign({}, resource, {
       url: deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
+      backendRequestTimeDuration: timeDiff,
     });
     log.debug('[RESPONSE]: (id: ' + newResource.id + ', url: ' + newResource.url + ')');
     this.connection.write(
@@ -319,11 +320,21 @@ function onSocketData(message) {
         this.pushConfiguration(r);
         break;
       case 'request':
-        r.startTs = Date.now();
+        // r.startTs = Date.now();
         log.debug('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
-        request(r, emitResponse.bind(this, r)).on('error', function(err) {
-          log.error('[ERROR]: (url: ' + r.url + ') ' + err.message);
-        });
+        if (r.startTs % 2 === 0) {
+          setTimeout(() => {
+            r.startTs = Date.now();
+            request(r, emitResponse.bind(this, r)).on('error', function(err) {
+              log.error('[ERROR]: (url: ' + r.url + ') ' + err.message);
+            });
+          }, 5000);
+        } else {
+          r.startTs = Date.now();
+          request(r, emitResponse.bind(this, r)).on('error', function(err) {
+            log.error('[ERROR]: (url: ' + r.url + ') ' + err.message);
+          });
+        }
         break;
     }
   } catch (e) {

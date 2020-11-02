@@ -18,7 +18,6 @@ import ee from 'event-emitter';
 import 'whatwg-fetch';
 import { objectQuery } from 'services/helpers';
 import ifvisible from 'ifvisible.js';
-import { objectQuery } from 'services/helpers';
 const WINDOW_ON_BLUR = 'WINDOW_BLUR_EVENT';
 const WINDOW_ON_FOCUS = 'WINDOW_FOCUS_EVENT';
 

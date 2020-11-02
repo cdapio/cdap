@@ -7,7 +7,7 @@
   "dashboard.ssl.disable.cert.check": "false",
   "ssl.external.enabled": "false",
   "router.server.address": "127.0.0.1",
-  "dashboard.bind.port": "11011",
+  "dashboard.bind.port": "11012",
   "enable.preview": "true",
   "dashboard.router.check.timeout.secs": "0",
   "market.base.url": "https://hub.cdap.io/dev/v2",
