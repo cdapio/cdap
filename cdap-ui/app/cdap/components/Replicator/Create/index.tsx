@@ -32,8 +32,18 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import uuidV4 from 'uuid/v4';
 import { MyReplicatorApi } from 'api/replicator';
 import { generateTableKey } from 'components/Replicator/utilities';
-import { List, Map, Set, fromJS } from 'immutable';
+import { Map, Set, fromJS } from 'immutable';
 import { Observable } from 'rxjs/Observable';
+import {
+  DML,
+  ITable,
+  IPluginConfig,
+  IPluginInfo,
+  ITablesStore,
+  IColumnsStore,
+  IDMLStore,
+} from 'components/Replicator/types';
+import { IWidgetJson } from 'components/ConfigurationGroup/types';
 
 export const CreateContext = React.createContext({});
 export const LEFT_PANEL_WIDTH = 250;
@@ -67,37 +77,18 @@ interface ICreateProps extends WithStyles<typeof styles> {
   history;
 }
 
-type IPluginConfig = Record<string, string>;
-
-enum DML {
-  insert = 'INSERT',
-  update = 'UPDATE',
-  delete = 'DELETE',
-}
-
-interface ITable {
-  database: string;
-  table: string;
-  schema?: string;
-}
-
-interface IColumn {
-  name: string;
-  type: string;
-}
-
 interface ICreateState {
   name: string;
   description: string;
-  sourcePluginInfo: any;
-  sourcePluginWidget: any;
-  targetPluginInfo: any;
-  targetPluginWidget: any;
+  sourcePluginInfo: IPluginInfo;
+  sourcePluginWidget: IWidgetJson;
+  targetPluginInfo: IPluginInfo;
+  targetPluginWidget: IWidgetJson;
   sourceConfig: IPluginConfig;
   targetConfig: IPluginConfig;
-  tables: any;
-  columns: any;
-  dmlBlacklist: Map<string, Set<DML>>;
+  tables: ITablesStore;
+  columns: IColumnsStore;
+  dmlBlacklist: IDMLStore;
   offsetBasePath: string;
   numInstances: number;
   parentArtifact: {
@@ -111,12 +102,12 @@ interface ICreateState {
   activeStep: number;
   setActiveStep: (step: number) => void;
   setNameDescription: (name: string, description?: string) => void;
-  setSourcePluginWidget: (sourcePluginWidget) => void;
+  setSourcePluginWidget: (sourcePluginWidget: IWidgetJson) => void;
   setSourceConfig: (sourceConfig: IPluginConfig) => void;
-  setTargetPluginInfo: (targetPluginInfo: any) => void;
-  setTargetPluginWidget: (targetPluginWidget) => void;
+  setTargetPluginInfo: (targetPluginInfo: IPluginInfo) => void;
+  setTargetPluginWidget: (targetPluginWidget: IWidgetJson) => void;
   setTargetConfig: (targetConfig: IPluginConfig) => void;
-  setTables: (tables, columns, dmlBlacklist) => void;
+  setTables: (tables: ITablesStore, columns: IColumnsStore, dmlBlacklist: IDMLStore) => void;
   setAdvanced: (offsetBasePath, numInstances) => void;
   getReplicatorConfig: () => any;
   saveDraft: () => Observable<any>;
@@ -250,9 +241,9 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     targetPluginWidget: null,
     sourceConfig: null,
     targetConfig: null,
-    tables: Map<string, Map<string, string>>(),
-    columns: Map<string, List<IColumn>>(),
-    dmlBlacklist: Map<string, Set<DML>>(),
+    tables: Map() as ITablesStore,
+    columns: Map() as IColumnsStore,
+    dmlBlacklist: Map() as IDMLStore,
     offsetBasePath: window.CDAP_CONFIG.delta.defaultCheckpointDir || '',
     numInstances: 1,
 
@@ -386,10 +377,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
       // TABLES & COLUMNS
       const tables = objectQuery(res, 'config', 'tables');
       if (tables) {
-        let selectedTables = Map<string, Map<string, string>>();
+        let selectedTables: ITablesStore = Map();
 
-        let columns = Map<string, List<IColumn>>();
-        let dmlBlacklist = Map<string, Set<DML>>();
+        let columns: IColumnsStore = Map();
+        let dmlBlacklist: IDMLStore = Map();
         tables.forEach((table) => {
           const tableKey = generateTableKey(table);
 

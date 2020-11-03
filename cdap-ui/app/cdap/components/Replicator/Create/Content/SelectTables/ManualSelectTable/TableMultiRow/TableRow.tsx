@@ -24,7 +24,7 @@ import AbstractRow, {
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import { Set } from 'immutable';
-import { DML } from 'components/Replicator/Create/Content/SelectTables';
+import { DML } from 'components/Replicator/types';
 import { objectQuery } from 'services/helpers';
 import ColumnsMultiRow from '../ColumnsMultiRow';
 import Heading, { HeadingTypes } from 'components/Heading';

@@ -17,7 +17,7 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { createContextConnect } from 'components/Replicator/Create';
-import { List, Map } from 'immutable';
+import { Map } from 'immutable';
 import Button from '@material-ui/core/Button';
 import CloseIcon from '@material-ui/icons/Close';
 import IconButton from '@material-ui/core/IconButton';
@@ -33,6 +33,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import If from 'components/If';
 import SearchBox from 'components/Replicator/Create/Content/SearchBox';
 import debounce from 'lodash/debounce';
+import { IColumnsList, IColumnImmutable } from 'components/Replicator/types';
 
 const styles = (theme): StyleRules => {
   return {
@@ -129,8 +130,8 @@ interface ISelectColumnsProps extends WithStyles<typeof styles> {
     table: string;
     database: string;
   };
-  onSave: (tableKey, columns) => void;
-  initialSelected: List<Map<string, string>>;
+  onSave: (tableKey: string, columns: IColumnsList) => void;
+  initialSelected: IColumnsList;
   toggle: () => void;
   draftId: string;
 }
@@ -150,7 +151,7 @@ interface ISelectColumnsState {
   filteredColumns: IColumn[];
   primaryKeys: string[];
   selectedReplication: ReplicateSelect;
-  selectedColumns: Map<string, Map<string, string>>;
+  selectedColumns: Map<string, IColumnImmutable>;
   loading: boolean;
   error: any;
   search: string;
@@ -162,7 +163,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     filteredColumns: [],
     primaryKeys: [],
     selectedReplication: ReplicateSelect.all,
-    selectedColumns: Map<string, Map<string, string>>(),
+    selectedColumns: Map<string, IColumnImmutable>(),
     loading: true,
     error: null,
     search: '',
@@ -182,7 +183,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
 
     const selectedColumns = {};
     if (this.props.initialSelected && this.props.initialSelected.size > 0) {
-      this.props.initialSelected.forEach((row) => {
+      this.props.initialSelected.forEach((row: IColumnImmutable) => {
         if (existingColumns[row.get('name')]) {
           selectedColumns[row.get('name')] = row;
         } else {
@@ -191,7 +192,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
       });
     }
 
-    const response: Map<string, Map<string, string>> = Map(selectedColumns);
+    const response: Map<string, IColumnImmutable> = Map(selectedColumns);
 
     if (hasChange) {
       const tableKey = generateTableKey(this.props.tableInfo);

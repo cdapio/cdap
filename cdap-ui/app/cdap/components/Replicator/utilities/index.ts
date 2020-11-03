@@ -20,6 +20,7 @@ import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
+import { ITableObj } from 'components/Replicator/types';
 
 export function fetchPluginInfo(
   parentArtifact,
@@ -182,24 +183,6 @@ export function generateTableKey(row) {
   return `db-${database}-table-${table}`;
 }
 
-interface IColumn {
-  name: string;
-  type: string;
-}
-
-enum DML {
-  insert = 'INSERT',
-  update = 'UPDATE',
-  delete = 'DELETE',
-}
-
-interface ITableObj {
-  database: string;
-  table: string;
-  schema?: string;
-  columns?: IColumn[];
-  dmlBlacklist?: DML[];
-}
 export function constructTablesSelection(tables, columns, dmlBlacklist) {
   if (!tables) {
     return [];

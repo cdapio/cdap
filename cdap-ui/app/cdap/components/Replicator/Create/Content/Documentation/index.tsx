@@ -19,6 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { MarkdownWithStyles } from 'components/Markdown';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
+import { IPluginInfo } from 'components/Replicator/types';
 
 const styles = (): StyleRules => {
   return {
@@ -29,15 +30,7 @@ const styles = (): StyleRules => {
 };
 
 interface IDocumentationProps extends WithStyles<typeof styles> {
-  pluginInfo: {
-    name: string;
-    type: string;
-    artifact: {
-      name: string;
-      version: string;
-      scope: string;
-    };
-  };
+  pluginInfo: IPluginInfo;
 }
 
 const DocumentationView: React.FC<IDocumentationProps> = ({ classes, pluginInfo }) => {

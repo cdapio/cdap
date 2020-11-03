@@ -98,7 +98,7 @@ const TopPanelView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
             className={`${classes.heading} ${classes.contentHeading}`}
           />
 
-          <If condition={name && sourcePluginInfo}>
+          <If condition={name && !!sourcePluginInfo}>
             <PluginInfo
               type="Source"
               pluginInfo={sourcePluginInfo}
@@ -106,7 +106,7 @@ const TopPanelView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
             />
           </If>
 
-          <If condition={targetPluginInfo}>
+          <If condition={!!targetPluginInfo}>
             <React.Fragment>
               <ChevronRight className={classes.divider} />
               <PluginInfo

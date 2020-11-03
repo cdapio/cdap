@@ -22,6 +22,8 @@ import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
 import debounce from 'lodash/debounce';
+import { List } from 'immutable';
+import { ITableImmutable } from 'components/Replicator/types';
 
 const styles = (): StyleRules => {
   return {
@@ -75,7 +77,7 @@ const TableListView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
       const normalizedSearch = search.toLowerCase();
 
       return normalizedTable.indexOf(normalizedSearch) !== -1;
-    });
+    }) as List<ITableImmutable>;
 
     setFilteredTables(filteredList);
   }, 300);

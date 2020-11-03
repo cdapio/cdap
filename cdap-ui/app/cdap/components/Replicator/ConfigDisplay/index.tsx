@@ -22,6 +22,8 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
 import ExpandMore from '@material-ui/icons/ExpandMore';
 import ExpandLess from '@material-ui/icons/ExpandLess';
+import { IPluginInfo, IPluginConfig } from 'components/Replicator/types';
+import { IWidgetJson } from 'components/ConfigurationGroup/types';
 
 const MAX_HEIGHT = 300;
 const styles = (theme): StyleRules => {
@@ -64,12 +66,12 @@ const styles = (theme): StyleRules => {
 };
 
 interface IConfigDisplayProps extends WithStyles<typeof styles> {
-  sourcePluginInfo: any;
-  targetPluginInfo: any;
-  sourcePluginWidget: any;
-  targetPluginWidget: any;
-  sourceConfig: Record<string, string>;
-  targetConfig: Record<string, string>;
+  sourcePluginInfo: IPluginInfo;
+  targetPluginInfo: IPluginInfo;
+  sourcePluginWidget: IWidgetJson;
+  targetPluginWidget: IWidgetJson;
+  sourceConfig: IPluginConfig;
+  targetConfig: IPluginConfig;
 }
 
 const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({

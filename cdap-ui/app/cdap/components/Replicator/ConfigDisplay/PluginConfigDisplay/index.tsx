@@ -19,6 +19,8 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { objectQuery } from 'services/helpers';
 import difference from 'lodash/difference';
 import Heading, { HeadingTypes } from 'components/Heading';
+import { IPluginInfo, IPluginConfig } from 'components/Replicator/types';
+import { IWidgetJson } from 'components/ConfigurationGroup/types';
 
 const styles = (theme): StyleRules => {
   return {
@@ -45,9 +47,9 @@ const styles = (theme): StyleRules => {
 };
 
 interface IPluginConfigProps extends WithStyles<typeof styles> {
-  pluginInfo: any;
-  pluginWidget: any;
-  pluginConfig: any;
+  pluginInfo: IPluginInfo;
+  pluginWidget: IWidgetJson;
+  pluginConfig: IPluginConfig;
 }
 
 const ESCAPED_SENSITIVE_FIELDS = ['password', 'serviceAccountKey'];
