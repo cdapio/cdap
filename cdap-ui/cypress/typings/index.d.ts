@@ -244,6 +244,7 @@ declare global {
       sessionStorage: any;
       onbeforeunload: any;
       CDAP_CONFIG: any;
+      ace: any;
     }
   }
 }

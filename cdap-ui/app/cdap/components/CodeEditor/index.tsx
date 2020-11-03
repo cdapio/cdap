@@ -21,6 +21,7 @@ import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import Button from '@material-ui/core/Button';
 import If from 'components/If';
+import debounce from 'lodash/debounce';
 
 const styles = (theme): StyleRules => {
   return {
@@ -92,6 +93,18 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
     this.silentOnChange = false;
   }
 
+  private valueChangeHandler = () => {
+    if (this.silentOnChange) {
+      return;
+    }
+    if (typeof this.props.onChange === 'function') {
+      const value = this.editor.getSession().getValue();
+      this.props.onChange(value);
+    }
+  };
+
+  private debouncedChangeHandler = debounce(this.valueChangeHandler, 100);
+
   public componentDidMount() {
     window.ace.config.set('basePath', '/assets/bundle/ace-editor-worker-scripts/');
     this.editor = window.ace.edit(this.aceRef);
@@ -107,26 +120,22 @@ class CodeEditorView extends React.Component<ICodeEditorProps> {
       this.editor.setReadOnly(true);
     }
 
-    this.editor.getSession().on('change', this.valueChangeHandler);
+    this.editor.getSession().on('change', this.debouncedChangeHandler);
     this.editor.setShowPrintMargin(false);
   }
 
-  private valueChangeHandler = () => {
-    if (this.silentOnChange) {
-      return;
+  public componentWillUnmount() {
+    if (this.debouncedChangeHandler) {
+      this.debouncedChangeHandler.flush();
     }
-    if (typeof this.props.onChange === 'function') {
-      const value = this.editor.getSession().getValue();
-      this.props.onChange(value);
-    }
-  };
+  }
 
   public shouldComponentUpdate() {
     return false;
   }
 
   public render() {
-    const { value, className, classes } = this.props;
+    const { value, className = 'ace-editor-ref', classes } = this.props;
     return (
       <div className={classes.root}>
         <div
