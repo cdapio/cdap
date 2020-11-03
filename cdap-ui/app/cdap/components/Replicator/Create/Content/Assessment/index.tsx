@@ -209,7 +209,13 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         </React.Fragment>
       </If>
 
-      <StepButtons />
+      <StepButtons
+        // only block proceeding if assessment API did not return an error and if assessment has issues
+        nextDisabled={
+          !error &&
+          schemaErrorCount + assessment.features.length + assessment.connectivity.length !== 0
+        }
+      />
     </div>
   );
 };
