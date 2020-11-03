@@ -50,6 +50,6 @@
     "namespace-security": true,
     "create-profile": true,
     "reload-system-artifacts": true,
-    "cdc": false
+    "cdc": true
   }
 }

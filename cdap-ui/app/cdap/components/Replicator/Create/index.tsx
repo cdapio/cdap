@@ -120,6 +120,7 @@ interface ICreateState {
   setAdvanced: (offsetBasePath, numInstances) => void;
   getReplicatorConfig: () => any;
   saveDraft: () => Observable<any>;
+  setColumns: (columns, callback) => void;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -173,6 +174,13 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
   public setAdvanced = (offsetBasePath, numInstances) => {
     this.setState({ offsetBasePath, numInstances });
+  };
+
+  // for use in Assessment Table Mapping
+  public setColumns = (columns, callback) => {
+    this.setState({ columns }, () => {
+      callback();
+    });
   };
 
   private saveDraft = () => {
@@ -266,6 +274,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setAdvanced: this.setAdvanced,
     getReplicatorConfig: this.getReplicatorConfig,
     saveDraft: this.saveDraft,
+    setColumns: this.setColumns,
   };
 
   public componentDidMount() {
