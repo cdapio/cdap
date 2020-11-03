@@ -108,6 +108,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   private final MultiThreadMessagingContext messagingContext;
   private final TransactionRunner transactionRunner;
   private final int maxRetriesOnConflict;
+  private final MetricsCollectionService metricsCollectionService;
 
   private String conflictMessageId = null;
   private int conflictCount = 0;
@@ -136,6 +137,7 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     this.metadataStorage = metadataStorage;
     this.transactionRunner = transactionRunner;
     this.maxRetriesOnConflict = cConf.getInt(Constants.Metadata.MESSAGING_RETRIES_ON_CONFLICT);
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -207,7 +209,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
           case PROFILE_UNASSIGNMENT:
           case ENTITY_CREATION:
           case ENTITY_DELETION:
-            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext);
+            return new ProfileMetadataMessageProcessor(metadataStorage, structuredTableContext,
+                                                       metricsCollectionService);
           default:
             return null;
         }

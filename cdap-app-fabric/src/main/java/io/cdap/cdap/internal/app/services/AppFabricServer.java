@@ -33,11 +33,15 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
+import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxCallable;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -48,6 +52,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -75,6 +80,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final CConfiguration cConf;
   private final SConfiguration sConf;
   private final boolean sslEnabled;
+  private final TransactionRunner transactionRunner;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -98,7 +104,8 @@ public class AppFabricServer extends AbstractIdleService {
                          CoreSchedulerService coreSchedulerService,
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService,
-                         SystemAppManagementService systemAppManagementService) {
+                         SystemAppManagementService systemAppManagementService,
+                         TransactionRunner transactionRunner) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -116,6 +123,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.provisioningService = provisioningService;
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
+    this.transactionRunner = transactionRunner;
   }
 
   /**
@@ -163,6 +171,11 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
+    long count = TransactionRunners.run(transactionRunner,
+                                        (TxCallable<Long>) context ->
+                                          AppMetadataStore.create(context).getApplicationCount());
+    metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.APPLICATION_COUNT,
+                                                                      count);
   }
 
   @Override

@@ -22,8 +22,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataScope;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.config.PreferencesTable;
 import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -90,14 +92,17 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private final AppMetadataStore appMetadataStore;
   private final ProgramScheduleStoreDataset scheduleDataset;
   private final PreferencesTable preferencesTable;
+  private final MetricsCollectionService metricsCollectionService;
 
   public ProfileMetadataMessageProcessor(MetadataStorage metadataStorage,
-                                         StructuredTableContext structuredTableContext) {
+                                         StructuredTableContext structuredTableContext,
+                                         MetricsCollectionService metricsCollectionService) {
     namespaceTable = new NamespaceTable(structuredTableContext);
     appMetadataStore = AppMetadataStore.create(structuredTableContext);
     scheduleDataset = Schedulers.getScheduleStore(structuredTableContext);
     preferencesTable = new PreferencesTable(structuredTableContext);
     this.metadataStorage = metadataStorage;
+    this.metricsCollectionService = metricsCollectionService;
   }
 
   @Override
@@ -106,7 +111,6 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
     LOG.trace("Processing message: {}", message);
     EntityId entityId = message.getEntityId();
-
     switch (message.getType()) {
       case PROFILE_ASSIGNMENT:
       case PROFILE_UNASSIGNMENT:
@@ -116,9 +120,15 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       case ENTITY_CREATION:
         validateCreateEntityUpdateTime(entityId, message);
         updateProfileMetadata(entityId, message);
+        if (entityId.getEntityType() == EntityType.APPLICATION) {
+          emitApplicationCountMetric();
+        }
         break;
       case ENTITY_DELETION:
         removeProfileMetadata(message);
+        if (entityId.getEntityType() == EntityType.APPLICATION) {
+          emitApplicationCountMetric();
+        }
         break;
 
       default:
@@ -342,5 +352,17 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       }
     }
     return programIds;
+  }
+
+  /**
+   * Emit the application count metric.
+   */
+  private void emitApplicationCountMetric() {
+    try {
+      metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.APPLICATION_COUNT,
+                                                                        appMetadataStore.getApplicationCount());
+    } catch (IOException e) {
+      LOG.warn("Failed to get application count", e);
+    }
   }
 }
