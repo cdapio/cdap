@@ -64,7 +64,9 @@
     "@storybook/addon-knobs": "5.2.8",
     "@storybook/addons": "5.2.8",
     "@storybook/react": "5.2.8",
-    "@types/jest": "24.0.25",
+    "@testing-library/jest-dom": "5.11.5",
+    "@testing-library/react": "11.1.0",
+    "@types/jest": "26.0.15",
     "@types/react": "16.9.17",
     "@types/react-dom": "16.9.4",
     "@types/react-input-calendar": "0.0.35",
@@ -73,7 +75,7 @@
     "@zeit/ncc": "0.20.4",
     "autoprefixer": "9.7.3",
     "babel-eslint": "7.2.3",
-    "babel-jest": "24.9.0",
+    "babel-jest": "26.6.1",
     "babel-loader": "8.0.6",
     "babel-plugin-lodash": "3.3.4",
     "babel-upgrade": "1.0.1",
@@ -116,10 +118,8 @@
     "gulp-wrapper": "1.0.0",
     "html-webpack-plugin": "3.2.0",
     "is-color": "1.0.2",
-    "jest": "24.9.0",
-    "jest-cli": "24.9.0",
+    "jest": "26.6.1",
     "jest-css-modules-transform": "4.0.1",
-    "jest-dom": "4.0.0",
     "jshint": "2.11.0-rc1",
     "lodash-webpack-plugin": "0.11.5",
     "main-bower-files": "2.13.3",
@@ -130,17 +130,15 @@
     "parallel-webpack": "2.4.0",
     "postcss-loader": "3.0.0",
     "prettier": "1.19.1",
-    "react-addons-test-utils": "15.6.2",
     "react-hot-loader": "4.12.21",
-    "react-testing-library": "8.0.1",
     "sass-loader": "8.0.0",
     "style-loader": "1.1.2",
     "stylelint": "12.0.1",
     "stylelint-webpack-plugin": "1.1.2",
     "svg-sprite-loader": "4.1.6",
     "terser-webpack-plugin": "2.3.1",
-    "ts-jest": "24.2.0",
-    "ts-loader": "6.2.1",
+    "ts-jest": "26.4.3",
+    "ts-loader": "8.0.7",
     "tslint": "5.20.1",
     "tslint-config-prettier": "1.18.0",
     "tslint-plugin-prettier": "2.1.0",
@@ -240,7 +238,7 @@
     "sockjs": "0.3.19",
     "sockjs-client": "1.4.0",
     "svg4everybody": "2.1.9",
-    "typescript": "3.7.4",
+    "typescript": "4.0.5",
     "universal-cookie": "4.0.3",
     "uuid": "3.3.3",
     "vega": "3.0.10",
@@ -252,45 +250,5 @@
   },
   "engines": {
     "node": ">= 10.12.2"
-  },
-  "jest": {
-    "automock": false,
-    "preset": "ts-jest/presets/js-with-babel",
-    "testEnvironment": "jsdom",
-    "roots": [
-      "./app/cdap/"
-    ],
-    "modulePaths": [
-      "./app/cdap/"
-    ],
-    "modulePathIgnorePatterns": [
-      "./app/cdap/components/AbstractWidget/SchemaEditor/Context/__tests__/schemas.js",
-      "./app/cdap/components/AbstractWidget/SchemaEditor/Context/__tests__/data"
-    ],
-    "transform": {
-      ".+\\.(css|styl|less|sass|scss)$": "<rootDir>/node_modules/jest-css-modules-transform"
-    },
-    "transformIgnorePatterns": [
-      "<rootDir>/node_modules/?!(@material)/"
-    ],
-    "moduleNameMapper": {
-      "\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$": "<rootDir>/__mocks__/fileMock.js",
-      ".scss$": "<rootDir>/__mocks__/styleMocks.js",
-      ".css$": "<rootDir>/__mocks__/styleMocks.js",
-      "/^components/": "<rootDir>/app/cdap/components",
-      "/^services/": "<rootDir>/app/cdap/services",
-      "/^api/": "<rootDir>/app/cdap/api",
-      "^lib": "<rootDir>/../lib",
-      "^mocks": "<rootDir>/__mocks__"
-    },
-    "globals": {
-      "ts-jest": {
-        "babelConfig": {
-          "plugins": [
-            "@babel/plugin-transform-modules-commonjs"
-          ]
-        }
-      }
-    }
   }
 }
