@@ -15,27 +15,39 @@
  */
 
 import * as React from 'react';
-import {
-  XYPlot,
-  makeVisFlexible,
-  XAxis,
-  YAxis,
-  HorizontalGridLines,
-  VerticalBarSeries,
-  MarkSeries,
-  DiscreteColorLegend,
-  Hint,
-} from 'react-vis';
-
+import { XYPlot, XAxis, YAxis, VerticalBarSeries, DiscreteColorLegend, Hint } from 'react-vis';
 import { StyleRules, withStyles, WithStyles } from '@material-ui/core/styles';
 import { ILatencyChildProps } from 'components/SystemServicesDelay/LatencyTypes';
 import { orange, red } from 'components/ThemeWrapper/colors';
+import Table from '@material-ui/core/Table';
+import TableBody from '@material-ui/core/TableBody';
+import TableRow from '@material-ui/core/TableRow';
+import TableCell from '@material-ui/core/TableCell';
 
-const style = (): StyleRules => {
+const CustomTableCell = withStyles((theme) => ({
+  head: {
+    backgroundColor: theme.palette.grey['300'],
+    color: theme.palette.common.white,
+    padding: 10,
+    fontSize: 14,
+  },
+  body: {
+    padding: 10,
+    fontSize: 14,
+  },
+}))(TableCell);
+
+const style = (theme): StyleRules => {
   return {
     chartContainer: {
       marginLeft: '20px',
       marginBottom: '10px',
+    },
+    row: {
+      height: 40,
+      '&:nth-of-type(odd)': {
+        backgroundColor: theme.palette.grey['600'],
+      },
     },
   };
 };
@@ -48,29 +60,32 @@ const COLOR_LEGEND = [
     color: orange[50],
   },
   {
-    title: 'Request Delay',
+    title: 'Backend Request Delay',
     color: red[50],
   },
 ];
 
-function LatencyChartBase({ requestDelayMap, classes }: ILatencyChartBaseProps) {
-  const requestDelayData = [];
+function LatencyChartBase({ requests, classes }: ILatencyChartBaseProps) {
+  const [popoverData, setPopoverData] = React.useState(null);
+  const backendRequestDelayData = [];
   const networkDelayData = [];
   let counter = 1;
-  for (const [id, value] of Object.entries(requestDelayMap)) {
-    requestDelayData.push({
-      id,
+  for (const request of requests) {
+    backendRequestDelayData.push({
+      url: request.resource.url,
+      id: request.id,
       x: counter,
-      y: value.backendRequestTimeDuration,
+      y: request.backendRequestTimeDuration,
     });
     networkDelayData.push({
-      id,
+      url: request.resource.url,
+      id: request.id,
       x: counter,
-      y: value.requestTimeFromClient || 0,
+      y: request.networkDelay || 0,
     });
     counter += 1;
   }
-  if (!Array.isArray(requestDelayData) || !requestDelayData.length) {
+  if (!Array.isArray(backendRequestDelayData) || !backendRequestDelayData.length) {
     return null;
   }
   return (
@@ -81,8 +96,20 @@ function LatencyChartBase({ requestDelayMap, classes }: ILatencyChartBaseProps) 
           orientation="horizontal"
           items={COLOR_LEGEND}
         />
-        <VerticalBarSeries cluster="latency" data={requestDelayData} color={red[50]} />
-        <VerticalBarSeries cluster="latency" data={networkDelayData} color={orange[50]} />
+        <VerticalBarSeries
+          onValueMouseOver={(d) => setPopoverData(d)}
+          onValueMouseOut={() => setPopoverData(null)}
+          cluster="latency"
+          data={backendRequestDelayData}
+          color={red[50]}
+        />
+        <VerticalBarSeries
+          onValueMouseOver={(d) => setPopoverData(d)}
+          onValueMouseOut={() => setPopoverData(null)}
+          cluster="latency"
+          data={networkDelayData}
+          color={orange[50]}
+        />
         <XAxis />
         <YAxis
           tickFormat={function tickFormat(d) {
@@ -93,6 +120,43 @@ function LatencyChartBase({ requestDelayMap, classes }: ILatencyChartBaseProps) 
               : d;
           }}
         />
+        {popoverData && (
+          <Hint
+            value={popoverData}
+            style={{
+              background: 'white',
+              borderRadius: '4px',
+              boxShadow: '0px 10px 15px -5px rgba(0, 0, 0, 0.4)',
+              maxWidh: '300px',
+            }}
+            align={{ vertical: 'top', horizontal: 'left' }}
+          >
+            <Table>
+              <TableBody>
+                <TableRow className={classes.row}>
+                  <CustomTableCell>Path</CustomTableCell>
+                  <CustomTableCell>{popoverData.url}</CustomTableCell>
+                </TableRow>
+                <TableRow className={classes.row}>
+                  <CustomTableCell>Backend Latency</CustomTableCell>
+                  <CustomTableCell>
+                    {popoverData.y0 < 1000
+                      ? `${popoverData.y0}ms`
+                      : `${(popoverData.y0 / 1000).toFixed(1)}s`}
+                  </CustomTableCell>
+                </TableRow>
+                <TableRow className={classes.row}>
+                  <CustomTableCell>Network Latency</CustomTableCell>
+                  <CustomTableCell>
+                    {popoverData.y < 1000
+                      ? `${popoverData.y}ms`
+                      : `${(popoverData.y / 1000).toFixed(1)}s`}
+                  </CustomTableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </Hint>
+        )}
       </XYPlot>
     </div>
   );

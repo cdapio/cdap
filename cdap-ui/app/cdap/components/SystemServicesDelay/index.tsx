@@ -32,7 +32,7 @@ import { GenerateStatsFromRequests } from 'components/SystemServicesDelay/Latenc
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import {
   IBindingRequestInfo,
-  IChartStatType,
+  ILatencyData,
   ISystemDelayProps,
 } from 'components/SystemServicesDelay/LatencyTypes';
 import ConfigurableTab from 'components/ConfigurableTab';
@@ -97,14 +97,14 @@ const styles = (theme): StyleRules => {
 };
 export interface ISystemDelayState {
   cleanChecksNeeded: number;
-  requestDelayMap: Record<number, IBindingRequestInfo>;
+  requests: ILatencyData[];
   showMoreInfo: boolean;
 }
 
 class SystemServicesDelayView extends React.Component<ISystemDelayProps, ISystemDelayState> {
   public state = {
     cleanChecksNeeded: 0,
-    requestDelayMap: {},
+    requests: [],
     showMoreInfo: false,
   };
   private healthCheckInterval: NodeJS.Timeout;
@@ -134,7 +134,6 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps, ISystem
   };
 
   /**
-   * When the user clicks on 'Close' button we snooze the notification for 1 hour
    * We wait for 1 hour to show the delay notification if there are any delays.
    */
   private isNotificationSnoozed = () => {
@@ -173,28 +172,19 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps, ISystem
 
   private constructData = () => {
     const delayedTimeFromExperiment = parseInt(getExperimentValue(EXPERIMENT_ID), 10);
-    const requestsTakingTime: IChartStatType[] = GenerateStatsFromRequests(
-      this.props.activeDataSources
-    );
-    const requestDelayMap = {};
-    const slicedRequests =
-      requestsTakingTime.length > 30 ? requestsTakingTime.slice(-30) : requestsTakingTime;
+    const slicedRequests: ILatencyData[] = GenerateStatsFromRequests(this.props.activeDataSources);
     let totalBackendRequestDelay = 0;
     let totalNetworkDelay = 0;
     for (const request of slicedRequests) {
-      totalBackendRequestDelay += request.y;
+      totalBackendRequestDelay += request.backendRequestTimeDuration;
       totalNetworkDelay += request.networkDelay;
-      requestDelayMap[request.id] = {
-        requestTimeFromClient: request.networkDelay,
-        backendRequestTimeDuration: request.y,
-      };
     }
     if (totalBackendRequestDelay / 30 > delayedTimeFromExperiment || totalNetworkDelay / 30 > 10) {
       SystemDelayStore.dispatch({
         type: SystemDelayActions.showDelay,
       });
     }
-    this.setState({ requestDelayMap });
+    this.setState({ requests: slicedRequests });
   };
 
   public toggleMoreInfoPane = () => {
@@ -206,8 +196,8 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps, ISystem
       return null;
     }
     const { classes } = this.props;
-    Tab.tabs[0].content = <LatencyChart requestDelayMap={this.state.requestDelayMap} />;
-    Tab.tabs[1].content = <LatencyStatsContainer requestDelayMap={this.state.requestDelayMap} />;
+    Tab.tabs[0].content = <LatencyChart requests={this.state.requests} />;
+    Tab.tabs[1].content = <LatencyStatsContainer requests={this.state.requests} />;
     return (
       <div className={this.props.classes.container}>
         <div>

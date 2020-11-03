@@ -16,7 +16,12 @@
 
 import { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import DataSource from 'services/datasource';
+export interface IResourceType {
+  url: string;
+  method: string;
+}
 export interface IBindingRequestInfo {
+  resource: IResourceType;
   requestTimeFromClient: number;
   backendRequestTimeDuration: number;
   completedRequestDuration?: number;
@@ -44,6 +49,14 @@ export interface IChartStatType {
   id: string;
 }
 
+export interface ILatencyData {
+  id: string;
+  backendRequestTimeDuration: number;
+  networkDelay: number;
+  requestStartTime: number;
+  resource: IResourceType;
+}
+
 export interface ILatencyChildProps {
-  requestDelayMap: Record<number, IBindingRequestInfo>;
+  requests: ILatencyData[];
 }

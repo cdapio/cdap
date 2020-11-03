@@ -46,15 +46,15 @@ const style = (theme): StyleRules => {
 };
 
 interface ILatencyStatsContainerProps extends ILatencyChildProps, WithStyles<typeof style> {}
-function LatencyStatsContainerBase({ requestDelayMap, classes }: ILatencyStatsContainerProps) {
-  let totalRequestTimeFromClient: number = 0;
+function LatencyStatsContainerBase({ requests, classes }: ILatencyStatsContainerProps) {
+  let totalNetworkDelay: number = 0;
   let totalBackendRequestTimeDuration: number = 0;
-  const totalRequests = Object.entries(requestDelayMap).length;
-  for (const [id, value] of Object.entries(requestDelayMap)) {
-    totalRequestTimeFromClient += value.requestTimeFromClient || 0;
-    totalBackendRequestTimeDuration += value.backendRequestTimeDuration || 0;
+  const totalRequests = requests.length;
+  for (const request of requests) {
+    totalNetworkDelay += request.networkDelay || 0;
+    totalBackendRequestTimeDuration += request.backendRequestTimeDuration || 0;
   }
-  const avgNetworkDelay = totalRequestTimeFromClient / totalRequests;
+  const avgNetworkDelay = totalNetworkDelay / totalRequests;
   const avgBackendDelay = totalBackendRequestTimeDuration / totalRequests;
   return (
     <Table>

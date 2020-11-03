@@ -13,16 +13,26 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-import {
-  IHealthCheckBindings,
-  IBindingRequestInfo,
-  IChartStatType,
-} from 'components/SystemServicesDelay/LatencyTypes';
+import { IHealthCheckBindings, ILatencyData } from 'components/SystemServicesDelay/LatencyTypes';
 import DataSource from 'services/datasource';
 import { isNilOrEmpty } from 'services/helpers';
 import flatten from 'lodash/flatten';
 
-function GenerateStatsFromRequests(activeDataSources: DataSource[]): IChartStatType[] {
+/**
+ * Generates stats from requests across all datasources.
+ *
+ * - During each tick the function queries all datasources for active bindings
+ * - For each bindings it maps through requests which has a completedRequestDuration & backendRequestTimeDuration
+ * - If the request is in flight the duration is running one.
+ * - Generate an array of objects with { id, x, y requestStartTime, networkDelay }
+ *   - x: index for requests
+ *   - y: complete duration of request
+ *   - requestStartTime - start of request in nodejs server to backend
+ *
+ *
+ * @param activeDataSources - Active datasources across all apis
+ */
+function GenerateStatsFromRequests(activeDataSources: DataSource[] = []): ILatencyData[] {
   const currentTime = Date.now();
   return flatten(
     activeDataSources
@@ -45,19 +55,23 @@ function GenerateStatsFromRequests(activeDataSources: DataSource[]): IChartStatT
             const {
               requestTimeFromClient: requestTime,
               completedRequestDuration,
-              backendRequestTimeDuration: networkDelay,
+              backendRequestTimeDuration,
+              resource,
             } = binding[id];
             return {
               id,
-              y: completedRequestDuration || currentTime - requestTime,
-              networkDelay,
+              resource: { url: resource.url, method: resource.method },
+              backendRequestTimeDuration,
+              networkDelay: completedRequestDuration
+                ? completedRequestDuration - backendRequestTimeDuration
+                : 0,
               requestStartTime: requestTime,
             };
           });
       })
   )
-    .map((d, i) => ({ x: i, ...d }))
-    .sort((r1, r2) => r1.requestStartTime - r2.requestStartTime);
+    .sort((r1, r2) => r1.requestStartTime - r2.requestStartTime)
+    .slice(-30);
 }
 
 export { GenerateStatsFromRequests };
