@@ -240,6 +240,7 @@ function emitResponse(resource, error, response, body) {
 
     let newResource = Object.assign({}, resource, {
       url: deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
+      backendRequestTimeDuration: timeDiff,
     });
     this.connection.write(
       JSON.stringify(

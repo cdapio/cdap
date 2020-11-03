@@ -87,7 +87,9 @@ export default class Datasource {
       if (this.bindings[hash] && this.bindings[hash].type === 'REQUEST') {
         this.bindings[hash].rx.complete();
         this.bindings[hash].rx.unsubscribe();
-        delete this.bindings[hash];
+        // delete this.bindings[hash];
+        this.bindings[hash].resource.backendRequestTimeDuration = data.resource.backendRequestTimeDuration;
+        this.bindings[hash].resource.completedRequestDuration = Date.now() - this.bindings[hash].resource.requestTime - data.resource.backendRequestTimeDuration;
       } else {
         if (this.bindings[hash] && this.bindings[hash].type === 'POLL') {
           // Clearing timestamp as we wait for next poll to happen
@@ -134,9 +136,11 @@ export default class Datasource {
         const id = objectQuery(binding, 'resource', 'id');
         const requestTime = objectQuery(binding, 'resource', 'requestTime');
         const backendRequestTimeDuration = objectQuery(binding, 'resource', 'backendRequestTimeDuration');
+        const completedRequestDuration = objectQuery(binding, 'resource', 'completedRequestDuration');
         bindingsWithTime[id] = {
           requestTimeFromClient: requestTime,
-          backendRequestTimeDuration
+          backendRequestTimeDuration,
+          completedRequestDuration,
         };
       }
     });

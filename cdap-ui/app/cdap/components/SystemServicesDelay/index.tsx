@@ -28,38 +28,18 @@ import {
   isNilOrEmpty,
   ONE_HOUR_SECONDS,
 } from 'services/helpers';
-import DataSource from 'services/datasource';
+import { GenerateStatsFromRequests } from 'components/SystemServicesDelay/LatencyStats';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
 import {
-  XYPlot,
-  makeVisFlexible,
-  XAxis,
-  YAxis,
-  HorizontalGridLines,
-  VerticalBarSeries,
-  MarkSeries,
-  DiscreteColorLegend,
-  Hint,
-} from 'react-vis';
-import flatten from 'lodash/flatten';
-
-interface IBindingRequestInfo {
-  requestTimeFromClient: number;
-  backendRequestTimeDuration: number;
-}
-interface IHealthCheckBindings {
-  [key: string]: IBindingRequestInfo;
-}
-
-interface ISystemDelayProps extends WithStyles<StyleRules> {
-  showDelay: boolean;
-  activeDataSources: DataSource[];
-}
-
-interface ISystemDelayState {
-  cleanChecksNeeded: number;
-  requestDelayMap: Record<number, number>;
-}
+  IBindingRequestInfo,
+  IChartStatType,
+  ISystemDelayProps,
+} from 'components/SystemServicesDelay/LatencyTypes';
+import ConfigurableTab from 'components/ConfigurableTab';
+import { LatencyChart } from 'components/SystemServicesDelay/LatencyChart';
+import { LatencyStatsContainer } from 'components/SystemServicesDelay/LatencyStatsContainer';
+import InfoIcon from '@material-ui/icons/InfoRounded';
+import CloseIcon from '@material-ui/icons/CloseRounded';
 
 const EXPERIMENT_ID = 'system-delay-notification';
 const snoozeTimelabel = `${EXPERIMENT_ID}-snoozetime`;
@@ -67,27 +47,65 @@ const HEALTH_CHECK_INTERVAL = 1000;
 const DEFAULT_DELAY_TIME = 10000;
 const CLEAN_CHECK_COUNT = 3;
 
+const Tab = {
+  tabs: [
+    {
+      name: 'Chart',
+      id: 'Chart',
+      content: null,
+    },
+    {
+      name: 'Stats',
+      id: 'Stats',
+      content: null,
+    },
+  ],
+  layout: 'horizontal',
+  defaultTab: 'Chart',
+};
+
 const styles = (theme): StyleRules => {
   return {
     snackbar: {
       backgroundColor: theme.palette.grey[600],
       color: 'black',
     },
-    graph: {
+    container: {
       position: 'fixed',
       right: 0,
       bottom: 0,
-      background: 'white',
+      background: '#ccc',
       border: '2px solid black',
-      padding: '10px',
+      width: '500px',
+      height: '350px',
+    },
+    iconBtn: {
+      outline: 'none',
+      width: '25px',
+      minWidth: 'unset',
+    },
+    moreInfoBtn: {
+      color: theme.palette.blue[100],
+    },
+    InfoPanelCloseBtn: {
+      position: 'absolute',
+      right: '10px',
+      top: '10px',
+      color: 'black',
     },
   };
 };
+export interface ISystemDelayState {
+  cleanChecksNeeded: number;
+  requestDelayMap: Record<number, IBindingRequestInfo>;
+  showMoreInfo: boolean;
+}
 
-class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
-  public state: ISystemDelayState = {
+class SystemServicesDelayView extends React.Component<ISystemDelayProps, ISystemDelayState> {
+  public state = {
     cleanChecksNeeded: 0,
     requestDelayMap: {},
+    showMoreInfo: false,
   };
   private healthCheckInterval: NodeJS.Timeout;
   private eventEmitter = ee(ee);
@@ -154,86 +172,93 @@ class SystemServicesDelayView extends React.Component<ISystemDelayProps> {
   };
 
   private constructData = () => {
-    const currentTime = Date.now();
-    const delayedTimeFromExperiment = getExperimentValue(EXPERIMENT_ID);
-    const requestsTakingTime = flatten(
+    const delayedTimeFromExperiment = parseInt(getExperimentValue(EXPERIMENT_ID), 10);
+    const requestsTakingTime: IChartStatType[] = GenerateStatsFromRequests(
       this.props.activeDataSources
-        .map((dataSource: DataSource) => {
-          return dataSource.getBindingsForHealthCheck() as IHealthCheckBindings;
-        })
-        .filter((binding: IHealthCheckBindings) => {
-          return !isNilOrEmpty(binding);
-        })
-        .map((binding: IHealthCheckBindings) => {
-          return Object.keys(binding)
-            .filter((k) => binding[k])
-            .map((id, index) => {
-              const {
-                requestTimeFromClient: requestTime,
-                backendRequestTimeDuration: networkDelay,
-              } = binding[id];
-              return { id, y: currentTime - requestTime, networkDelay };
-            });
-        })
-    ).map((d, i) => ({ x: i, ...d }));
-    const requestDelayMap = this.state.requestDelayMap;
-    for (const request of requestsTakingTime) {
-      requestDelayMap[request.id] = request.y;
+    );
+    const requestDelayMap = {};
+    const slicedRequests =
+      requestsTakingTime.length > 30 ? requestsTakingTime.slice(-30) : requestsTakingTime;
+    let totalBackendRequestDelay = 0;
+    let totalNetworkDelay = 0;
+    for (const request of slicedRequests) {
+      totalBackendRequestDelay += request.y;
+      totalNetworkDelay += request.networkDelay;
+      requestDelayMap[request.id] = {
+        requestTimeFromClient: request.networkDelay,
+        backendRequestTimeDuration: request.y,
+      };
+    }
+    if (totalBackendRequestDelay / 30 > delayedTimeFromExperiment || totalNetworkDelay / 30 > 10) {
+      SystemDelayStore.dispatch({
+        type: SystemDelayActions.showDelay,
+      });
     }
     this.setState({ requestDelayMap });
   };
 
-  public render() {
-    const data = [];
-    let counter = 1;
-    for (const [id, value] of Object.entries(this.state.requestDelayMap)) {
-      data.push({
-        id,
-        x: counter++,
-        y: value,
-      });
-    }
-    // tslint:disable-next-line: no-console
-    console.log(data);
-    if (!Array.isArray(data) || !data.length) {
+  public toggleMoreInfoPane = () => {
+    this.setState({ showMoreInfo: !this.state.showMoreInfo });
+  };
+
+  public renderMoreInfo = () => {
+    if (!this.state.showMoreInfo) {
       return null;
     }
+    const { classes } = this.props;
+    Tab.tabs[0].content = <LatencyChart requestDelayMap={this.state.requestDelayMap} />;
+    Tab.tabs[1].content = <LatencyStatsContainer requestDelayMap={this.state.requestDelayMap} />;
     return (
-      <div className={this.props.classes.graph}>
-        <XYPlot width={300} height={300}>
-          <VerticalBarSeries data={data} />
-          <XAxis />
-          <YAxis
-            tickFormat={function tickFormat(d) {
-              return d >= 1000 ? `${(d / 1000).toFixed(1)}k` : d;
-            }}
-          />
-        </XYPlot>
+      <div className={this.props.classes.container}>
+        <div>
+          <Button
+            className={`${classes.iconBtn} ${classes.InfoPanelCloseBtn}`}
+            onClick={this.toggleMoreInfoPane}
+          >
+            <CloseIcon />
+          </Button>
+        </div>
+        <ConfigurableTab tabConfig={Tab} />
       </div>
     );
-    //   return (
-    //     <Snackbar
-    //       data-cy="system-delay-snackbar"
-    //       anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-    //       open={this.props.showDelay}
-    //       message="UI is experiencing slowness or is unable to communicate with server"
-    //       ContentProps={{
-    //         classes: {
-    //           root: this.props.classes.snackbar,
-    //         },
-    //       }}
-    //       action={
-    //         <Button
-    //           size="small"
-    //           color="primary"
-    //           onClick={this.closeNotification}
-    //           data-cy="snooze-system-delay-notification"
-    //         >
-    //           Snooze for 1 hour
-    //         </Button>
-    //       }
-    //     />
-    //   );
+  };
+
+  public render() {
+    const { classes } = this.props;
+    return (
+      <React.Fragment>
+        <Snackbar
+          data-cy="system-delay-snackbar"
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          open={this.props.showDelay}
+          message="UI is experiencing slowness or is unable to communicate with server"
+          ContentProps={{
+            classes: {
+              root: this.props.classes.snackbar,
+            },
+          }}
+          action={
+            <div>
+              <Button
+                size="small"
+                color="primary"
+                onClick={this.closeNotification}
+                data-cy="snooze-system-delay-notification"
+              >
+                Snooze for 1 hour
+              </Button>
+              <Button
+                className={`${classes.moreInfoBtn} ${classes.iconBtn}`}
+                onClick={this.toggleMoreInfoPane}
+              >
+                <InfoIcon />
+              </Button>
+            </div>
+          }
+        />
+        {this.renderMoreInfo()}
+      </React.Fragment>
+    );
   }
 }
 
