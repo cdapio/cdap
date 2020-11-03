@@ -262,7 +262,19 @@ angular
     this.pageLevelError = null;
     const {globalEvents} = window.CaskCommon;
 
+    this.eventEmitter.on(globalEvents.NONAMESPACE, () => {
+      this.pageLevelError = {
+        errorCode: 403
+      };
+    });
+
     this.eventEmitter.on(globalEvents.PAGE_LEVEL_ERROR, (error) => {
+      // If we already have no namespace error thrown it trumps all other 404s
+      // and UI should show that the user does not have access to the namespace
+      // instead of specific 404s which will be misleading.
+      if (this.pageLevelError && this.pageLevelError.errorCode === 403) {
+        return;
+      }
       if (error.reset === true) {
         this.pageLevelError = null;
       }

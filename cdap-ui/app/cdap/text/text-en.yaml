@@ -153,6 +153,7 @@ features:
         description: Create, view, and manage namespaces
         label: "Namespaces "
         labelWithCount: "Namespaces ({count})"
+        noNamespace: No namespace available
       SystemPrefs:
         create: Edit System Preferences
         description: Manage system preferences available as runtime arguments to programs across all namespaces

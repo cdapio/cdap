@@ -43,6 +43,7 @@ require('styles/bootstrap_4_patch.scss');
 interface IMyAppHeaderState {
   toggleDrawer: boolean;
   currentNamespace: string;
+  showGlobalLoadingIcon: boolean;
 }
 const styles = (theme) => {
   return {
@@ -62,6 +63,7 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
   public state: IMyAppHeaderState = {
     toggleDrawer: false,
     currentNamespace: '',
+    showGlobalLoadingIcon: true,
   };
 
   private namespacesubscription: ISubscription;
@@ -81,10 +83,10 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
             },
           });
         } else {
-          // TL;DR - This is emitted for Authorization in main.js
-          // This means there is no namespace for the user to work on.
-          // which indicates she/he have no authorization for any namesapce in the system.
-          this.eventEmitter.emit(globalEvents.NONAMESPACE);
+          this.namespacesubscription.unsubscribe();
+          this.setState({
+            showGlobalLoadingIcon: false,
+          });
         }
       },
       (err) => {
@@ -101,6 +103,7 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
       if (selectedNamespace !== this.state.currentNamespace) {
         this.setState({
           currentNamespace: selectedNamespace,
+          showGlobalLoadingIcon: false,
         });
       }
     });
@@ -129,12 +132,7 @@ class MyAppHeader extends React.PureComponent<IMyAppHeaderProps, IMyAppHeaderSta
       namespace: this.state.currentNamespace,
       isNativeLink: this.props.nativeLink,
     };
-    // (TODO): This still doesn't capture correctly how we handle
-    // when authorization is enabled and user has access to no namespaces.
-    if (
-      !this.state.currentNamespace ||
-      (typeof this.state.currentNamespace === 'string' && !this.state.currentNamespace.length)
-    ) {
+    if (this.state.showGlobalLoadingIcon) {
       return (
         <React.Fragment>
           <LoadingSVGCentered showFullPage />

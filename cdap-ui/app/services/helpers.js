@@ -18,7 +18,7 @@
  * various utility functions
  */
 angular.module(PKG.name+'.services')
-  .factory('myHelpers', function(myCdapUrl, $window, GLOBALS){
+  .factory('myHelpers', function(myCdapUrl, $window){
 
    /**
     * set a property deep in an object
@@ -227,25 +227,6 @@ angular.module(PKG.name+'.services')
     return errorMsg;
   }
 
-  /* ----------------------------------------------------------------------- */
-  function validNamespaceResolver(stateParams) {
-    const { namespace } = stateParams;
-    return window.CaskCommon.IsValidNS(namespace)
-      .then(validNamespace => {
-        if (!validNamespace) {
-          // Match error.data to NotFoundException from backend
-          const error = {
-            statusCode: 404,
-            data: GLOBALS.pageLevelErrors['INVALID-NAMESPACE'](namespace)
-          };
-          window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, error);
-        }
-      })
-      .catch(err => {
-        window.CaskCommon.ee.emit(window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, err);
-      });
-  }
-
   return {
     deepSet: deepSet,
     objectSetter: objectSetter,
@@ -258,6 +239,5 @@ angular.module(PKG.name+'.services')
     handlePageLevelError: handlePageLevelError,
     extractErrorMessage: extractErrorMessage,
     objHasMissingValues: objHasMissingValues,
-    validNamespaceResolver: validNamespaceResolver
   };
 });

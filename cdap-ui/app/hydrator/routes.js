@@ -73,8 +73,8 @@ angular.module(PKG.name + '.feature.hydrator')
             window.CaskCommon.ee.emit(
               window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
           },
-          rValidNamespace: function($stateParams, myNamespace, myHelpers){
-            return myHelpers.validNamespaceResolver($stateParams, myNamespace);
+          rValidNamespace: function($stateParams){
+            return window.CaskCommon.validateNamespace($stateParams.namespace);
           },
         },
         data: {
@@ -115,9 +115,6 @@ angular.module(PKG.name + '.feature.hydrator')
             rResetPreviousPageLevelError: function () {
               window.CaskCommon.ee.emit(
                 window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
-            },
-            rValidNamespace: function($stateParams, myNamespace, myHelpers){
-              return myHelpers.validNamespaceResolver($stateParams, myNamespace);
             },
             rConfig: function(rCDAPVersion, $stateParams, mySettings, $q, myHelpers, $window, HydratorPlusPlusHydratorService) {
               var defer = $q.defer();
@@ -379,9 +376,6 @@ angular.module(PKG.name + '.feature.hydrator')
             rResetPreviousPageLevelError: function () {
               window.CaskCommon.ee.emit(
                 window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
-            },
-            rValidNamespace: function($stateParams, myNamespace, myHelpers){
-              return myHelpers.validNamespaceResolver($stateParams, myNamespace);
             },
           },
           ncyBreadcrumb: {

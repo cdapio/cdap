@@ -26,7 +26,8 @@ const pluginLabels = {
 const NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double'];
 const GLOBALS = {
   pageLevelErrors: {
-    'INVALID-NAMESPACE': (invalidNS) => { return `\'namespace:${invalidNS}' was not found.`}
+    'UNKNOWN-NAMESPACE': (invalidNS) => { return `\'namespace:${invalidNS}' was not found.`},
+    'UNAUTHORIZED-NAMESPACE': (invalidNS) => { return `You are not authorized to access '${invalidNS}' namespace`},
   },
   etlBatch: 'cdap-etl-batch',
   etlRealtime: 'cdap-etl-realtime',

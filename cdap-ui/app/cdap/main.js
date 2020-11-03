@@ -60,7 +60,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import VersionStore from 'services/VersionStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-import { handlePageLevelError } from 'services/helpers';
+import { handlePageLevelError, objectQuery } from 'services/helpers';
 import history from 'services/history';
 // See ./graphql/fragements/README.md
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
@@ -140,7 +140,7 @@ class CDAP extends Component {
       if (err.reset === true) {
         this.setState({ pageLevelError: false });
       } else {
-        this.setState({ pageLevelError: handlePageLevelError(err) });
+        this.setState({ pageLevelError: handlePageLevelError(err), loading: false });
       }
     });
   }
@@ -172,11 +172,6 @@ class CDAP extends Component {
               namespaces: res,
             },
           });
-        } else {
-          // TL;DR - This is emitted for Authorization in main.js
-          // This means there is no namespace for the user to work on.
-          // which indicates she/he have no authorization for any namesapce in the system.
-          this.eventEmitter.emit(globalEvents.NONAMESPACE);
         }
         this.setState({ isNamespaceFetchInFlight: false });
       },
@@ -203,6 +198,7 @@ class CDAP extends Component {
     this.eventEmitter.on(globalEvents.NONAMESPACE, () => {
       this.setState({
         authorizationFailed: true,
+        loading: false,
       });
     });
     if (!VersionStore.getState().version) {
@@ -344,6 +340,9 @@ class CDAP extends Component {
         </ErrorBoundary>
       </div>
     );
+    const isNamespaceNotFound = objectQuery(this.state, 'pageLevelError', 'errorCode') === 404;
+    const isUserUnAuthorizedForNamespace =
+      objectQuery(this.state, 'pageLevelError', 'errorCode') === 403;
     return (
       <Router history={history}>
         <ApolloProvider client={client}>
@@ -358,22 +357,35 @@ class CDAP extends Component {
               </div>
             </If>
             <If condition={!this.state.isNamespaceFetchInFlight}>
-              <If
-                condition={this.state.pageLevelError && this.state.pageLevelError.errorCode === 404}
-              >
+              <If condition={isNamespaceNotFound}>
                 <Page404 message={this.state.pageLevelError.message} />
               </If>
+              {/** We show authorization failure message when the specific namespace API returns 403 */}
+              <If condition={isUserUnAuthorizedForNamespace}>
+                <AuthorizationErrorMessage message={this.state.pageLevelError.message} />
+              </If>
               <If
-                condition={this.state.pageLevelError && this.state.pageLevelError.errorCode !== 404}
+                condition={
+                  !isUserUnAuthorizedForNamespace &&
+                  !isNamespaceNotFound &&
+                  this.state.pageLevelError
+                }
               >
                 <Page500
                   message={this.state.pageLevelError.message}
                   refreshFn={this.retrieveNamespace}
                 />
               </If>
-
+              {/**
+               * We show authorization failure message when the backend return empty
+               * namespace. This indicates the user has access to no namespace.
+               */}
               <If condition={!this.state.pageLevelError}>
-                {this.state.authorizationFailed ? <AuthorizationErrorMessage /> : container}
+                {this.state.authorizationFailed ? (
+                  <AuthorizationErrorMessage message={this.state.pageLevelError.message} />
+                ) : (
+                  container
+                )}
               </If>
             </If>
             <Footer />

@@ -25,6 +25,7 @@ interface IToolBarFeatureLinkProps extends WithStyles<typeof styles> {
   featureFlag: boolean;
   featureName: string;
   featureUrl: string;
+  onClick?: () => {};
 }
 
 const styles = (theme) => {
@@ -40,7 +41,7 @@ const styles = (theme) => {
 
 class ToolBarFeatureLink extends React.PureComponent<IToolBarFeatureLinkProps> {
   public render() {
-    const { classes, featureFlag, featureName, featureUrl } = this.props;
+    const { classes, featureFlag, featureName, featureUrl, onClick } = this.props;
     if (featureFlag === false) {
       return null;
     }
@@ -59,6 +60,7 @@ class ToolBarFeatureLink extends React.PureComponent<IToolBarFeatureLinkProps> {
         className={classnames(classes.buttonLink)}
         href={`/cdap${featureUrl}`}
         data-cy={featureName}
+        onClick={onClick}
       >
         {featureName}
       </Button>

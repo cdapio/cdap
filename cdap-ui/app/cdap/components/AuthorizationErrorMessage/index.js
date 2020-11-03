@@ -14,6 +14,7 @@
  * the License.
  */
 
+import PropTypes from 'prop-types';
 import React from 'react';
 require('./AuthorizationMessage.scss');
 import NamespaceStore from 'services/NamespaceStore';
@@ -22,10 +23,13 @@ import RedirectToLogin from 'services/redirect-to-login';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
 import T from 'i18n-react';
+import If from 'components/If';
 
 const cookie = new Cookies();
 
-export default function AuthorizationErrorMessage() {
+export default function AuthorizationErrorMessage({
+  message = T.translate('features.AuthorizationMessage.mainMessage'),
+}) {
   let eventEmitter = ee(ee);
   const logout = () => {
     cookie.remove('show-splash-screen-for-session', { path: '/' });
@@ -39,7 +43,7 @@ export default function AuthorizationErrorMessage() {
     <div className="auth-error-message">
       <h3>
         <span className="fa fa-exclamation-triangle" />
-        <span>{T.translate('features.AuthorizationMessage.mainMessage')}</span>
+        <span>{message}</span>
       </h3>
       <div className="cta-section">
         <ul>
@@ -47,9 +51,11 @@ export default function AuthorizationErrorMessage() {
             <span>{T.translate('features.AuthorizationMessage.callToAction1')}</span>
           </li>
           <li>
-            <span>
-              {T.translate('features.AuthorizationMessage.callToAction2.message1', { username })}
-            </span>
+            <If condition={username}>
+              <span>
+                {T.translate('features.AuthorizationMessage.callToAction2.message1', { username })}
+              </span>
+            </If>
             <span className="link" onClick={logout}>
               {T.translate('features.AuthorizationMessage.callToAction2.loginLabel')}
             </span>
@@ -66,3 +72,7 @@ export default function AuthorizationErrorMessage() {
     </div>
   );
 }
+
+AuthorizationErrorMessage.propTypes = {
+  message: PropTypes.string,
+};
