@@ -60,10 +60,8 @@ export default class DatabaseBrowser extends Component {
   eventEmitter = ee(ee);
 
   componentDidMount() {
-    console.log('DatabaseBrowser componentDidMount');
     this.eventEmitter.on('DATAPREP_CONNECTION_EDIT_DATABASE', this.eventBasedFetchTable);
     this.storeSubscription = DataPrepBrowserStore.subscribe(() => {
-      console.log('DatabaseBrowser componentDidMount subscribe');
       let { database, activeBrowser } = DataPrepBrowserStore.getState();
       if (activeBrowser.name !== ConnectionType.DATABASE) {
         return;
