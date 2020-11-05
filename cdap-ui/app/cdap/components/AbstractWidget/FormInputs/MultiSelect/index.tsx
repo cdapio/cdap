@@ -96,16 +96,7 @@ function MultiSelectBase({
           return element ? element.label : '';
         })
         .join(', ');
-      /**
-       * TODO: Magic number alert!
-       * We right now have a flexible width for widgets and we can't really
-       * show ellipsis via css (yet).
-       */
-
-      const MAX_DISPLAY_TEXT_LENGTH = 75;
-      return selectionText.length > MAX_DISPLAY_TEXT_LENGTH
-        ? `${selectionText.slice(0, MAX_DISPLAY_TEXT_LENGTH)}...`
-        : selectionText;
+      return selectionText;
     }
     const selectionID = selections.find((el) => el !== '');
     const firstSelection = options.find((op) => op.id === selectionID);
@@ -121,6 +112,7 @@ function MultiSelectBase({
   return (
     <Select
       multiple
+      fullWidth
       value={selections}
       onChange={onChangeHandler}
       disabled={disabled}
@@ -129,6 +121,13 @@ function MultiSelectBase({
         'data-cy': dataCy,
       }}
       data-cy={`multiselect-${dataCy}`}
+      MenuProps={{
+        getContentAnchorEl: null,
+        anchorOrigin: {
+          vertical: 'bottom',
+          horizontal: 'left',
+        },
+      }}
       classes={classes}
     >
       {options.map((opt) => (
