@@ -33,7 +33,9 @@ export default class StateWrapper extends PureComponent {
   };
 
   state = {
-    value: this.props.value || objectQuery(this.props, 'widgetProps', 'default') || '',
+    value: isNil(this.props.value)
+      ? objectQuery(this.props, 'widgetProps', 'default')
+      : this.props.value,
   };
 
   componentWillReceiveProps(nextProps) {
