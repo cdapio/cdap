@@ -333,6 +333,5 @@ export function getPluginPropertiesForValidation(nodeInfo: any, widgetJson: IWid
       delete pluginInfo.properties[propertyName];
     }
   });
-  pluginInfo.properties = removeEmptyJsonValues(pluginInfo.properties);
   return pluginInfo;
 }
