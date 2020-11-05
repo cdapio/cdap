@@ -34,6 +34,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.queue.JobQueueTable;
 import io.cdap.cdap.internal.app.runtime.schedule.store.ProgramScheduleStoreDataset;
 import io.cdap.cdap.internal.app.runtime.schedule.store.Schedulers;
 import io.cdap.cdap.internal.app.services.AbstractNotificationSubscriberService;
+import io.cdap.cdap.internal.capability.CapabilityManager;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.ProgramRunStatus;
@@ -69,18 +70,20 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
   private final MessagingService messagingService;
   private final MetricsCollectionService metricsCollectionService;
   private final List<Service> subscriberServices;
+  private final CapabilityManager capabilityManager;
   private ScheduledExecutorService subscriberExecutor;
 
   @Inject
   ScheduleNotificationSubscriberService(CConfiguration cConf, MessagingService messagingService,
                                         MetricsCollectionService metricsCollectionService,
-                                        TransactionRunner transactionRunner) {
+                                        TransactionRunner transactionRunner, CapabilityManager capabilityManager) {
     this.cConf = cConf;
     this.messagingService = messagingService;
     this.metricsCollectionService = metricsCollectionService;
     this.subscriberServices = Arrays.asList(new SchedulerEventSubscriberService(transactionRunner),
                                             new DataEventSubscriberService(transactionRunner),
                                             new ProgramStatusEventSubscriberService(transactionRunner));
+    this.capabilityManager = capabilityManager;
   }
 
   @Override
@@ -199,6 +202,12 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
         scheduleId = ScheduleId.fromString(scheduleIdString);
       }
 
+      if (!capabilityManager.isApplicationEnabled(scheduleId.getNamespace(), scheduleId.getApplication())) {
+        LOG.debug("Application {}.{} is not enabled, ignoring the schedule {}.", scheduleId.getNamespace(),
+                  scheduleId.getApplication(), scheduleId.getSchedule());
+        return;
+      }
+
       ProgramScheduleRecord record;
       try {
         record = scheduleStore.getScheduleRecord(scheduleId);
@@ -267,6 +276,14 @@ public class ScheduleNotificationSubscriberService extends AbstractIdleService {
       }
 
       ProgramRunId programRunId = GSON.fromJson(programRunIdString, ProgramRunId.class);
+      if (!capabilityManager
+        .isApplicationEnabled(programRunId.getNamespaceId().getNamespace(), programRunId.getApplication())) {
+        LOG.debug("Application {}.{} is not enabled, ignoring the schedule for program {}.",
+                  programRunId.getNamespaceId().getNamespace(),
+                  programRunId.getApplication(), programRunId.getProgram());
+        return;
+      }
+
       ProgramId programId = programRunId.getParent();
       String triggerKeyForProgramStatus = Schedulers.triggerKeyForProgramStatus(programId, programStatus);
 

@@ -77,7 +77,6 @@ public final class Constants {
   if they don't exist. */
   public static final String REQUIREMENTS_DATASET_TYPE_EXCLUDE = "requirements.datasetTypes.exclude.list";
 
-
   // Configurations for external proxy support for out going connections.
   // Configuration key for the monitor proxy in the format of "host:port"
   public static final String NETWORK_PROXY_ADDRESS = "network.proxy.address";
@@ -298,6 +297,11 @@ public final class Constants {
      * Topic name for publishing program status recording events to the messaging system
      */
     public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
+
+    /**
+     * Holds a comma separated list of enabled capabilities
+     */
+    public static final String ENABLED_CAPABILITIES_LIST = "capabilities.enabled.list";
 
     /**
      * Annotation for binding remote execution twill service
