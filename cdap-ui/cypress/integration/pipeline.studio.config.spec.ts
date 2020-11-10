@@ -53,8 +53,8 @@ describe('Pipeline Studio Config', () => {
     cy.create_simple_pipeline();
 
     cy.get(dataCy('pipeline-configure-modeless-btn')).click();
-    cy.get(dataCy('pipeline-configure-engine-tab')).click();
-    cy.get(dataCy('engine-config-tab-mapreduce')).click();
+    cy.contains('Engine config').click();
+    cy.contains('MapReduce').click();
     cy.get('[data-testid="config-apply-close"]').click();
 
     cy.get_pipeline_json().then((pipelineConfig) => {
@@ -70,9 +70,9 @@ describe('Pipeline Studio Config', () => {
     cy.create_simple_pipeline();
 
     cy.get(dataCy('pipeline-configure-modeless-btn')).click();
-    cy.get(dataCy('pipeline-configure-engine-tab')).click();
-    cy.get(dataCy('engine-config-tab-mapreduce')).click();
-    
+    cy.contains('Engine config').click();
+    cy.contains('MapReduce').click();
+
     cy.get(dataCy('engine-config-tab-custom')).click();
     cy.get(dataCy('key-value-pair-0')).within(() => {
       cy.get('input[placeholder="key"]')
@@ -96,10 +96,10 @@ describe('Pipeline Studio Config', () => {
     cy.create_simple_pipeline();
 
     cy.get(dataCy('pipeline-configure-modeless-btn')).click();
-    cy.get(dataCy('pipeline-configure-engine-tab')).click();
-    cy.get(dataCy('engine-config-tab-mapreduce')).click();
+    cy.contains('Engine config').click();
+    cy.contains('MapReduce').click();
 
-    cy.get(dataCy('pipeline-configure-resources-tab')).click();
+    cy.contains('Resources').click();
     cy.get(dataCy('resources-config-tab-driver')).within(() => {
       cy.get('[ng-model="virtualCores"]').select('2');
       cy.get('[ng-model="internalModel"]').clear().type('3072');

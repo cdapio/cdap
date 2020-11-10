@@ -227,17 +227,25 @@ describe('Pipeline Studio', () => {
 
     // go to pipeline listing and select draft
     cy.visit('/cdap/ns/default/pipelines');
-    cy.get(dataCy('pipeline-list-view-header')).contains('Drafts').click();
-    cy.get(dataCy('draft-pipeline-table')).contains(TEST_PIPELINE_NAME).click();
+    cy.get(dataCy('pipeline-list-view-header'))
+      .contains('Drafts')
+      .click();
+    cy.get(dataCy('draft-pipeline-table'))
+      .contains(TEST_PIPELINE_NAME)
+      .click();
 
     // Configure source
     cy.get(dataCy('plugin-node-BigQueryTable-batchsource-0')).within(() => {
-      cy.get(dataCy('node-properties-btn')).invoke('show').click();
+      cy.get(dataCy('node-properties-btn'))
+        .invoke('show')
+        .click();
     });
 
     function setFieldText(id, value) {
       cy.get(dataCy(id)).within(() => {
-        cy.get('input').clear().type(value);
+        cy.get('input')
+          .clear()
+          .type(value);
       });
     }
 
@@ -251,8 +259,12 @@ describe('Pipeline Studio', () => {
 
     // go to pipeline listing and select draft (again)
     cy.visit('/cdap/ns/default/pipelines');
-    cy.get(dataCy('pipeline-list-view-header')).contains('Drafts').click();
-    cy.get(dataCy('draft-pipeline-table')).contains(TEST_PIPELINE_NAME).click();
+    cy.get(dataCy('pipeline-list-view-header'))
+      .contains('Drafts')
+      .click();
+    cy.get(dataCy('draft-pipeline-table'))
+      .contains(TEST_PIPELINE_NAME)
+      .click();
 
     cy.get_pipeline_json().then((pipelineConfig) => {
       const sourceProperties = pipelineConfig.config.stages[0].plugin.properties;

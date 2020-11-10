@@ -28,7 +28,7 @@ function loginIfRequired() {
     cy.setCookie('CDAP_Auth_Token', authToken);
     cy.setCookie('CDAP_Auth_User', username);
     Cypress.Cookies.defaults({
-      whitelist: ['CDAP_Auth_Token', 'CDAP_Auth_User'],
+      preserve: ['CDAP_Auth_Token', 'CDAP_Auth_User'],
     });
     return cy.wrap({});
   }
@@ -56,7 +56,7 @@ function loginIfRequired() {
           cy.setCookie('CDAP_Auth_Token', respBody.access_token);
           cy.setCookie('CDAP_Auth_User', username);
           Cypress.Cookies.defaults({
-            whitelist: ['CDAP_Auth_Token', 'CDAP_Auth_User'],
+            preserve: ['CDAP_Auth_Token', 'CDAP_Auth_User'],
           });
         });
       }
@@ -97,7 +97,7 @@ function getArtifactsPoll(headers, retries = 0) {
   });
 }
 
-function deployAndTestPipeline(filename, pipelineName, done) {
+function deployAndTestPipeline(filename, pipelineName, done = () => ({})) {
   cy.visit('/cdap/ns/default/pipelines');
   cy.get('#resource-center-btn').click();
   cy.get('#create-pipeline-link').click();

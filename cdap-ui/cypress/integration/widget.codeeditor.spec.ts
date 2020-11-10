@@ -68,7 +68,7 @@ describe('Code editor widget', () => {
     });
   });
 
-  it.only('Should not jump the cursor position on selecting text and replacing them', () => {
+  it('Should not jump the cursor position on selecting text and replacing them', () => {
     cy.visit('/pipelines/ns/default/studio');
     cy.open_transform_panel();
     cy.add_node_to_canvas(js);

@@ -135,10 +135,12 @@ describe('Pipeline Drafts tests', () => {
             .clear()
             .type(newPipelineDraftName)
             .type('{enter}');
+          cy.get('body').contains(`Draft ${newPipelineDraftName} saved successfully.`);
           cy.visit('/cdap/ns/default/pipelines/drafts');
           cy.get('body').contains(newPipelineDraftName);
           cy.request({
             failOnStatusCode: false,
+            headers,
             url: `http://${Cypress.env(
               'host'
             )}:11015/v3/namespaces/system/apps/pipeline/services/studio/methods/v1/contexts/default/drafts/${queryId}`,

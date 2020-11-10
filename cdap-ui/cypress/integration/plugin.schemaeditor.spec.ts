@@ -30,6 +30,7 @@ describe('Plugin Schema Editor', () => {
           headers = {
             Authorization: 'Bearer ' + cookie.value,
           };
+          return Helpers.getSessionToken(headers);
         })
         .then(() => Helpers.getSessionToken(headers))
         .then(
@@ -173,7 +174,7 @@ describe('Plugin Schema Editor', () => {
     it('Should delete existing simple type fields when clicking on delete button', () => {
       removeField(7);
       cy.get('[data-cy="schema-fields-list"]').then((el) => {
-        expect(el[0].children.length).equal(7);
+        expect(el[0].children.length).equal(8);
       });
       removeField(6);
       removeField(5);
@@ -589,7 +590,7 @@ describe('Plugin Schema Editor', () => {
         openProjectionTransform();
         cy.get('[data-cy="select-schema-actions-dropdown"] [role="button"]').click();
         cy.get('[data-cy="schema-actions-dropdown-menu-list"] [data-cy="option-macro"]').should(
-          'not.be.visible'
+          'does.not.exist'
         );
         cy.get('body').click();
         cy.close_node_property();
@@ -701,9 +702,11 @@ describe('Plugin Schema Editor', () => {
         });
     };
     const applyDirectiveAndCreatePipeline = () => {
+      cy.wait(2000);
       cy.get('input[id="directive-input"]')
         .type('parse-as-csv :body , true')
         .type('{enter}');
+      cy.wait(2000);
       cy.contains('Create a Pipeline').click();
       return cy.contains('Batch pipeline').click();
     };
@@ -724,10 +727,13 @@ describe('Plugin Schema Editor', () => {
           cy.get('[data-cy="dataprep-side-panel"]')
             .contains('Transformation steps')
             .click();
+          cy.wait(100);
           cy.get('[data-cy="directive-row-0"] [data-cy="delete-directive"]').click();
+          cy.get('[data-cy="loading-svg-centered"]').should('not.be.visible');
           cy.get('.action-buttons')
             .contains('Apply')
             .click();
+          cy.get('.action-buttons').should('not.contain', 'Apply');
           cy.get('[data-cy="schema-fields-list"]').then((el) => {
             expect(el[0].children.length).equal(1);
           });
@@ -739,11 +745,12 @@ describe('Plugin Schema Editor', () => {
     const testPipeline = `test_pipeline_${Date.now()}`;
     before((done) => {
       // Deploy a pipeline to have a pipeline and some datasets to see
-      return Helpers.deployAndTestPipeline(
-        'fll_wrangler-test-pipeline.json',
-        testPipeline,
-        done
-      ).then(() => cy.wrap(1));
+      return Helpers.deployAndTestPipeline('fll_wrangler-test-pipeline.json', testPipeline).then(
+        () => {
+          done();
+          cy.wrap(1);
+        }
+      );
     });
     it('Should be disabled in deployed pipeline', () => {
       const wrangler: INodeInfo = { nodeName: 'Wrangler', nodeType: 'transform' };
@@ -756,10 +763,13 @@ describe('Plugin Schema Editor', () => {
        * So the first time the test will fail and the second retry should pass.
        */
       Helpers.setNewSchemaEditor('true');
-      cy.open_node_property(wranglerId);
-      cy.get('[data-cy="Output Schema"] [data-cy="schema-editor-fieldset-container"]').should(
-        'be.disabled'
-      );
+      cy.open_node_property(wranglerId, { force: true }).then(() => {
+        cy.wait(2000);
+        cy.get('.loading-message').should('not.be.visible');
+        cy.get('[data-cy="Output Schema"] [data-cy="schema-editor-fieldset-container"]', {
+          timeout: 60000,
+        }).should('be.disabled');
+      });
     });
   });
 
@@ -785,6 +795,8 @@ describe('Plugin Schema Editor', () => {
 
       cy.get('input[data-cy="referenceName"]').type('FileRef');
       cy.get('input[data-cy="path"]').type('file_path');
+      cy.get('[data-cy="select-format"]').click();
+      cy.get('[data-cy="option-text"]').click();
       cy.get('[data-cy="plugin-properties-validate-btn"]').click();
       cy.get(`[data-cy="schema-row-2"] [data-cy="error-icon"]`).then((el) => {
         expect(el).to.have.attr(

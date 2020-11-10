@@ -73,8 +73,14 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     const csvTransformId: INodeIdentifier = { ...csvTransformInfo, nodeId: '1' };
     const jsTransformInfo: INodeInfo = { nodeName: 'JavaScript', nodeType: 'transform' };
     const jsTransformId: INodeIdentifier = { ...jsTransformInfo, nodeId: '2' };
-    const unionSplitterTransformInfo: INodeInfo = { nodeName: 'UnionSplitter', nodeType: 'splittertransform' };
-    const unionSplitterTransformId: INodeIdentifier = { ...unionSplitterTransformInfo, nodeId: '3' };
+    const unionSplitterTransformInfo: INodeInfo = {
+      nodeName: 'UnionSplitter',
+      nodeType: 'splittertransform',
+    };
+    const unionSplitterTransformId: INodeIdentifier = {
+      ...unionSplitterTransformInfo,
+      nodeId: '3',
+    };
     // string branch
     const stringJsTransformInfo: INodeInfo = { nodeName: 'JavaScript', nodeType: 'transform' };
     const stringJsTransformId: INodeIdentifier = { ...stringJsTransformInfo, nodeId: '4' };
@@ -131,6 +137,8 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     cy.open_node_property(fileSourceId);
     cy.get('input[data-cy="referenceName"]').type('File');
     cy.get('input[data-cy="path"]').type('/tmp/cdap-ui-integration-fixtures/purchase_bad.csv');
+    cy.get('[data-cy="select-format"]').click();
+    cy.get('[data-cy="option-text"]').click();
     cy.close_node_property();
 
     cy.open_node_property(csvTransformId);
@@ -211,6 +219,8 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     cy.open_node_property(intFileSinkId);
     cy.get('input[data-cy="referenceName"]').type('IntFileSink');
     cy.get('input[data-cy="path"]').type('/tmp/cdap-ui-integration-fixtures/prices_in_int.txt');
+    cy.get('[data-cy="select-format"]').click();
+    cy.get('[data-cy="option-csv"]').click();
     cy.close_node_property();
 
     cy.pipeline_clean_up_graph_control();
@@ -230,10 +240,10 @@ describe('Pipelines with plugins having more than one endpoints', () => {
   it('Should show preview data for multiple outputs for splitter and correct message for conditional', () => {
     cy.window().then((window) => {
       skipPreviewTests = window.CDAP_CONFIG.hydrator.previewEnabled !== true;
+      if (skipPreviewTests) {
+        skip();
+      }
     });
-    if (skipPreviewTests) {
-      skip();
-    }
     cy.get(Helpers.dataCy('pipeline-preview-btn')).click();
     cy.get(Helpers.dataCy('preview-top-run-btn')).click();
     cy.get(Helpers.dataCy('stop-preview-btn')).should('be.visible');
@@ -244,13 +254,15 @@ describe('Pipelines with plugins having more than one endpoints', () => {
     cy.get(Helpers.dataCy('toggle-Table')).should('exist');
     cy.get(Helpers.dataCy('tab-head-Int')).should('be.visible');
     cy.get(Helpers.dataCy('tab-head-String')).should('be.visible');
-    cy.get('[data-cy="tab-content-Int"] tbody tr').then((intTableRows) => {
+    cy.get('[data-cy="tab-content-Int"] [data-cy="preview-data-row"]').then((intTableRows) => {
       expect(intTableRows).to.have.length(2);
     });
     cy.get(Helpers.dataCy('tab-head-String')).click();
-    cy.get('[data-cy="tab-content-String"] tbody tr').then((stringTableRows) => {
-      expect(stringTableRows).to.have.length(9);
-    });
+    cy.get('[data-cy="tab-content-String"] [data-cy="preview-data-row"]').then(
+      (stringTableRows) => {
+        expect(stringTableRows).to.have.length(9);
+      }
+    );
     cy.get(closeButton).click();
     cy.get(Helpers.dataCy('preview-active-btn')).click();
   });

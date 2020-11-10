@@ -52,7 +52,7 @@ describe('Generating and navigating field level lineage for datasets', () => {
         DEFAULT_GCP_PROJECTID
       );
       cy.get('[data-cy="save-runtime-args-btn"]').click();
-      cy.get(dataCy('save-runtime-args-btn')).should('not.be.visible');
+      cy.get(dataCy('save-runtime-args-btn')).should('does.not.exist');
       // Run pipeline to generate lineage
       cy.get('[data-cy="pipeline-run-btn"]').should('be.visible');
       cy.get('[data-cy="pipeline-run-btn"]').click({force: true});

@@ -12,7 +12,7 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
-*/
+ */
 
 import * as Helpers from '../helpers';
 import { ConnectionType } from '../../app/cdap/components/DataPrepConnections/ConnectionType';
@@ -38,7 +38,9 @@ describe('Wrangler GCS tests', () => {
         });
       })
       .then(Helpers.getSessionToken)
-      .then(sessionToken => headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
+      .then(
+        (sessionToken) => (headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
+      )
       .then(() => cy.start_wrangler(headers));
   });
 
@@ -74,6 +76,7 @@ describe('Wrangler GCS tests', () => {
     cy.get(
       `[data-cy="wrangler-${ConnectionType.GCS}-connection-${DEFAULT_GCS_CONNECTION_NAME}"]`
     ).click();
+    cy.get(Helpers.dataCy('gcs-search-box')).type(DEFAULT_GCS_FOLDER);
     cy.contains(DEFAULT_GCS_FOLDER).click();
     cy.contains(DEFAULT_GCS_FILE).click();
     cy.url().should('contain', '/ns/default/wrangler');
@@ -89,9 +92,7 @@ describe('Wrangler GCS tests', () => {
   it('Should delete an existing connection', () => {
     cy.visit('/cdap/ns/default/connections');
     cy.get(
-      `[data-cy="connection-action-popover-toggle-${
-      ConnectionType.GCS
-      }-${DEFAULT_GCS_CONNECTION_NAME}"`
+      `[data-cy="connection-action-popover-toggle-${ConnectionType.GCS}-${DEFAULT_GCS_CONNECTION_NAME}"`
     ).click();
     cy.get(`[data-cy="wrangler-${ConnectionType.GCS}-connection-delete"]`).click();
     cy.contains('Are you sure you want to delete connection');
