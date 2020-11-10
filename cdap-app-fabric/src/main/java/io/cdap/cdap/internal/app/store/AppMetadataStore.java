@@ -298,7 +298,7 @@ public class AppMetadataStore {
         appIds.add(getApplicationIdFromRow(iterator.next()));
       }
     }
-   return appIds;
+    return appIds;
   }
 
   /**
@@ -549,7 +549,7 @@ public class AppMetadataStore {
 
     if (existing == null) {
       LOG.warn("Ignoring unexpected request to transition program run {} from non-existent state to cluster state {}.",
-                programRunId, ProgramRunClusterStatus.PROVISIONED);
+               programRunId, ProgramRunClusterStatus.PROVISIONED);
       return null;
     }
     if (!isValid(existing, existing.getStatus(), ProgramRunClusterStatus.PROVISIONED, sourceId)) {
@@ -1278,7 +1278,7 @@ public class AppMetadataStore {
   private void delete(RunRecordDetail record) throws IOException {
     ProgramRunId programRunId = record.getProgramRunId();
     List<Field<?>> key = getProgramRunInvertedTimeKey(STATUS_TYPE_MAP.get(record.getStatus()), programRunId,
-                                              record.getStartTs());
+                                                      record.getStartTs());
     getRunRecordsTable().delete(key);
   }
 

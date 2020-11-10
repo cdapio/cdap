@@ -196,6 +196,11 @@ public abstract class EntityId {
     if (entityType == EntityType.ARTIFACT) {
       extractedParts = metadataEntity.head(MetadataEntity.VERSION);
     }
+
+    // for plugins get till plugin name
+    if (entityType == EntityType.PLUGIN) {
+      extractedParts = metadataEntity.head(MetadataEntity.PLUGIN);
+    }
     extractedParts.iterator().forEachRemaining(keyValue -> values.add(keyValue.getValue()));
     return entityType.fromIdParts(values);
   }

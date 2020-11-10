@@ -24,6 +24,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -56,6 +57,7 @@ public enum EntityType {
   DATASET_MODULE(DatasetModuleId.class),
   SCHEDULE(ScheduleId.class),
   ARTIFACT(ArtifactId.class),
+  PLUGIN(PluginId.class),
   DATASET(DatasetId.class),
   SECUREKEY(SecureKeyId.class),
   TOPIC(TopicId.class),
