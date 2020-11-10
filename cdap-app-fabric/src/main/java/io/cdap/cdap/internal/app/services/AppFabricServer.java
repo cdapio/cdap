@@ -17,11 +17,14 @@
 package io.cdap.cdap.internal.app.services;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -33,7 +36,9 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
@@ -50,12 +55,15 @@ import org.apache.twill.discovery.DiscoveryService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -181,6 +189,28 @@ public class AppFabricServer extends AbstractIdleService {
                                                                       applicationCount);
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
                                                                       namespaceCount);
+                                                                      count);
+
+    Map<ImmutablePair<String, String>, Long> pluginCounts = TransactionRunners.run(transactionRunner,
+                                                            (TxCallable<Map<ImmutablePair<String, String>, Long>>)
+                                                              context ->
+                                                              getPluginCounts(AppMetadataStore.create(context)));
+    for (Map.Entry<ImmutablePair<String, String>, Long> entry : pluginCounts.entrySet()) {
+      Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().getFirst(),
+                                                 Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().getSecond());
+
+      metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, entry.getValue());
+    }
+  }
+
+  private Map<ImmutablePair<String, String>, Long> getPluginCounts(AppMetadataStore appMetadataStore)
+    throws IOException {
+    return appMetadataStore.getAllApplications().stream().map(ApplicationMeta::getSpec)
+        .map(ApplicationSpecification::getPlugins)
+        .flatMap(e -> e.values().stream())
+        .map(Plugin::getPluginClass)
+        .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+      .collect(Collectors.groupingByConcurrent(Function.identity(), Collectors.counting()));
   }
 
   @Override

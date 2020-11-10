@@ -269,6 +269,15 @@ public class AppMetadataStore {
         StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
   }
 
+  public List<ApplicationMeta> getAllApplications() throws IOException {
+    return
+      scanWithRange(
+        Range.all(),
+        ApplicationMeta.class,
+        getApplicationSpecificationTable(),
+        StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
+  }
+
   public long getApplicationCount() throws IOException {
     // Get number of applications where namespace != SYSTEM (exclude system applications)
     Collection<Field<?>> fields = ImmutableList.of(Fields.stringField(StoreDefinition.AppMetadataStore.NAMESPACE_FIELD,

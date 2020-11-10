@@ -115,6 +115,8 @@ public class MetricsQueryHelper {
       // put program related tag
       .put(Constants.Metrics.Tag.PROGRAM, "program")
       .put(Constants.Metrics.Tag.PROGRAM_TYPE, "programtype")
+      .put(Constants.Metrics.Tag.PLUGIN_NAME, "plugin")
+      .put(Constants.Metrics.Tag.PLUGIN_TYPE, "plugintype")
 
       // put profile related tag
       .put(Constants.Metrics.Tag.PROFILE, "profile")

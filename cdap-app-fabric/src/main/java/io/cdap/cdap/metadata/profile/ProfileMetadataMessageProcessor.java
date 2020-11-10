@@ -18,14 +18,17 @@
 package io.cdap.cdap.metadata.profile;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesTable;
 import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -68,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -122,12 +126,20 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         updateProfileMetadata(entityId, message);
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
+          emitPluginCountMetric();
         }
         break;
       case ENTITY_DELETION:
         removeProfileMetadata(message);
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
+          ApplicationSpecification spec = message.getPayload(GSON, ApplicationSpecification.class);
+          Set<ImmutablePair<String, String>> deletedPlugins = spec.getPlugins().entrySet().stream()
+            .map(Map.Entry::getValue)
+            .map(Plugin::getPluginClass)
+            .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+            .collect(Collectors.toSet());
+          emitPluginCountMetric(deletedPlugins);
         }
         break;
 
@@ -363,6 +375,43 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
                                                                         appMetadataStore.getApplicationCount());
     } catch (IOException e) {
       LOG.warn("Failed to get application count", e);
+    }
+  }
+
+  private void emitPluginCountMetric() {
+    emitPluginCountMetric(null);
+  }
+
+  private void emitPluginCountMetric(Set<ImmutablePair<String, String>> deletedPlugins) {
+    try {
+      List<ImmutablePair<String, String>> remainingPlugins = appMetadataStore.getAllApplications().stream()
+        .map(ApplicationMeta::getSpec)
+        .map(ApplicationSpecification::getPlugins)
+        .flatMap(e -> e.values().stream())
+        .map(Plugin::getPluginClass)
+        .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+        .collect(Collectors.toList());
+
+      Map<ImmutablePair<String, String>, Long> pluginCounts = remainingPlugins.stream()
+        .collect(Collectors.groupingByConcurrent(Function.identity(), Collectors.counting()));
+      for (Map.Entry<ImmutablePair<String, String>, Long> entry : pluginCounts.entrySet()) {
+        Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().getFirst(),
+                                                   Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().getSecond());
+        metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, entry.getValue());
+      }
+
+      if (deletedPlugins == null) {
+        return;
+      }
+
+      // emit 0 metric for deleted plugins
+      for (ImmutablePair<String, String> pair: Sets.difference(deletedPlugins, Sets.newHashSet(remainingPlugins))) {
+        Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, pair.getFirst(),
+                                                   Constants.Metrics.Tag.PLUGIN_TYPE, pair.getSecond());
+        metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, 0);
+      }
+    } catch (IOException e) {
+      LOG.warn("Failed to get plugin count", e);
     }
   }
 }

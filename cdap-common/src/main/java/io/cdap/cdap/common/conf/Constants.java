@@ -727,6 +727,8 @@ public final class Constants {
       public static final String PROGRAM = "prg";
       public static final String PROGRAM_TYPE = "prt";
       public static final String PROGRAM_ENTITY = "ent";
+      public static final String PLUGIN_NAME = "plg";
+      public static final String PLUGIN_TYPE = "plt";
     }
 
     /**
@@ -784,6 +786,7 @@ public final class Constants {
       public static final String RUN_TIME_SECONDS = "program.run.seconds";
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
+      public static final String PLUGIN_COUNT = "plugin.count";
     }
 
     /**
