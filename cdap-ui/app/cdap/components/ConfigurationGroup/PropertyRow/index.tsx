@@ -36,7 +36,9 @@ const styles = (theme): StyleRules => {
     },
     row: {
       display: 'grid',
-      gridTemplateColumns: '1fr 40px',
+      // The minmax here provide a way for us use browser native
+      // behavior to handle ellipsis for long text (eg: multiselect)
+      gridTemplateColumns: 'minmax(0, 1fr) 40px',
       alignItems: 'center',
     },
     macroRow: {
