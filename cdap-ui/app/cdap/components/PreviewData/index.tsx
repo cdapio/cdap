@@ -107,7 +107,7 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
   };
 
   useEffect(() => {
-    if (previewId) {
+    if (previewId && selectedNode) {
       fetchPreview(
         selectedNode,
         previewId,
@@ -117,7 +117,7 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
         updatePreviewCb
       );
     }
-  }, [previewId]);
+  }, [previewId, selectedNode]);
 
   const getTableData = (prevData: IPreviewData) => {
     let inputs = [];

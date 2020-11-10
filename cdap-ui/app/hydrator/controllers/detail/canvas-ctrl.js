@@ -100,30 +100,23 @@ angular.module(PKG.name + '.feature.hydrator')
                   programId
                 };
               },
-              rPlugin: function(HydratorPlusPlusNodeService, HydratorPlusPlusHydratorService, GLOBALS) {
+              rPlugin: function(HydratorPlusPlusHydratorService) {
                 'ngInject';
                 let pluginId = pluginNode.name;
                 let pipelineDetailStoreState = window.CaskCommon.PipelineDetailStore.getState();
                 let appType = pipelineDetailStoreState.artifact.name;
-                let artifactVersion = pipelineDetailStoreState.artifact.version;
                 let sourceConnections = pipelineDetailStoreState.config.connections.filter(conn => conn.to === pluginId);
                 let nodes = HydratorPlusPlusHydratorService.getNodesFromStages(pipelineDetailStoreState.config.stages);
                 let nodesMap = HydratorPlusPlusHydratorService.getNodesMap(nodes);
                 let sourceNodes = sourceConnections.map(conn => nodesMap[conn.from]);
-                return HydratorPlusPlusNodeService
-                  .getPluginInfo(pluginNode, appType, sourceConnections, sourceNodes, artifactVersion)
-                  .then((nodeWithInfo) => (
-                    {
-                      node: nodeWithInfo,
-                      isValidPlugin: true,
-                      type: appType,
-                      isSource: GLOBALS.pluginConvert[nodeWithInfo.type] === 'source',
-                      isSink: GLOBALS.pluginConvert[nodeWithInfo.type] === 'sink',
-                      isTransform: GLOBALS.pluginConvert[nodeWithInfo.type] === 'transform',
-                      isAction: GLOBALS.pluginConvert[nodeWithInfo.type] === 'action',
-                      isCondition: GLOBALS.pluginConvert[nodeWithInfo.type] === 'condition',
-                    }
-                  ));
+                let artifactVersion = pipelineDetailStoreState.artifact.version;
+                return {
+                  pluginNode,
+                  appType,
+                  sourceConnections,
+                  sourceNodes,
+                  artifactVersion,
+                };
               }
             }
           })
