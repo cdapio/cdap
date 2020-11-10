@@ -29,6 +29,10 @@ import {
 import { INodeInfo, INodeIdentifier } from '../typings';
 let headers = {};
 const TEST_PIPELINE_NAME = 'pipeline_name';
+const sourceNode: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
+const sourceNodeId: INodeIdentifier = { ...sourceNode, nodeId: '0' };
+const transformNode: INodeInfo = { nodeName: 'Wrangler', nodeType: 'transform' };
+const transformNodeId: INodeIdentifier = { ...transformNode, nodeId: '1' };
 describe('Pipeline Studio', () => {
   // Uses API call to login instead of logging in manually through UI
   before(() => {
@@ -67,10 +71,6 @@ describe('Pipeline Studio', () => {
   });
 
   it('Should render different types of nodes to the canvas', () => {
-    const sourceNode: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
-    const sourceNodeId: INodeIdentifier = { ...sourceNode, nodeId: '0' };
-    const transformNode: INodeInfo = { nodeName: 'Wrangler', nodeType: 'transform' };
-    const transformNodeId: INodeIdentifier = { ...transformNode, nodeId: '1' };
     const sinkNode: INodeInfo = { nodeName: 'BigQueryMultiTable', nodeType: 'batchsink' };
     const sinkNodeId: INodeIdentifier = { ...sinkNode, nodeId: '2' };
     cy.add_node_to_canvas(sourceNode);
@@ -88,10 +88,6 @@ describe('Pipeline Studio', () => {
   });
 
   it('Should be able to connect two nodes in the canvas', () => {
-    const sourceNode: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
-    const sourceNodeId: INodeIdentifier = { ...sourceNode, nodeId: '0' };
-    const transformNode: INodeInfo = { nodeName: 'Wrangler', nodeType: 'transform' };
-    const transformNodeId: INodeIdentifier = { ...transformNode, nodeId: '1' };
     const sinkNode: INodeInfo = { nodeName: 'BigQueryMultiTable', nodeType: 'batchsink' };
     const sinkNodeId: INodeIdentifier = { ...sinkNode, nodeId: '2' };
 
@@ -107,8 +103,6 @@ describe('Pipeline Studio', () => {
 
   it('Should configure plugin properties', () => {
     cy.visit('/pipelines/ns/default/studio');
-    const sourceNode1: INodeInfo = { nodeName: 'BigQueryTable', nodeType: 'batchsource' };
-    const sourceNodeId1: INodeIdentifier = { ...sourceNode1, nodeId: '0' };
     const sourceProperties = {
       referenceName: 'BQ_Source',
       project: DEFAULT_GCP_PROJECTID,
@@ -128,12 +122,12 @@ describe('Pipeline Studio', () => {
       project: DEFAULT_GCP_PROJECTID,
       serviceFilePath: DEFAULT_GCP_SERVICEACCOUNT_PATH,
     };
-    cy.add_node_to_canvas(sourceNode1);
+    cy.add_node_to_canvas(sourceNode);
 
     cy.open_sink_panel();
     cy.add_node_to_canvas(sinkNode1);
 
-    cy.connect_two_nodes(sourceNodeId1, sinkNodeId1, getGenericEndpoint);
+    cy.connect_two_nodes(sourceNodeId, sinkNodeId1, getGenericEndpoint);
 
     // Open Bigquery source properties modal
     cy.get('[data-cy="plugin-node-BigQueryTable-batchsource-0"] .node .node-configure-btn')
@@ -205,5 +199,32 @@ describe('Pipeline Studio', () => {
     });
     cy.get('[data-testid="deploy-pipeline"]').click();
     cy.url({ timeout: 60000 }).should('include', `/view/${TEST_PIPELINE_NAME}`);
+  });
+
+  it('Should honor user choice of empty value over default value for a plugin property', () => {
+    const sourceProperties = {
+      referenceName: 'BQ_Source',
+      project: DEFAULT_GCP_PROJECTID,
+      datasetProject: DEFAULT_GCP_PROJECTID,
+      dataset: DEFAULT_BIGQUERY_DATASET,
+      table: DEFAULT_BIGQUERY_TABLE,
+      serviceFilePath: DEFAULT_GCP_SERVICEACCOUNT_PATH,
+    };
+    cy.visit('/pipelines/ns/default/studio');
+    cy.add_node_to_canvas(sourceNode);
+    cy.open_node_property(sourceNodeId);
+    // This arbitrary wait time is to make sure the widget json default values
+    // are loaded before checking for them.
+    cy.wait(2000);
+    cy.get('input[data-cy="project"]')
+      .invoke('val')
+      .then((val) => expect(val).equals('auto-detect'));
+    cy.get('input[data-cy="serviceFilePath"]')
+      .invoke('val')
+      .then((val) => expect(val).equals('auto-detect'));
+    cy.get('input[data-cy="project"]').clear();
+    cy.get('input[data-cy="project"]')
+      .invoke('val')
+      .then((val) => expect(val).equals(''));
   });
 });
