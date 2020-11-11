@@ -44,6 +44,7 @@ import { getYAxisProps } from 'components/PipelineSummary/RunsGraphHelpers';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
 import isEqual from 'lodash/isEqual';
+import { getLogViewerPageUrl } from 'components/LogViewer/LogViewerPage';
 
 const WARNINGBARCOLOR = '#FDA639';
 const ERRORBARCOLOR = '#A40403';
@@ -189,9 +190,7 @@ export default class LogsMetricsGraph extends Component {
         (run) => this.state.currentHoveredElement.runid === run.runid
       );
       let { namespaceId, appId, programType, programId } = this.props.runContext;
-      logUrl = `/logviewer/view?namespace=${namespaceId}&appId=${appId}&programType=${convertProgramToApi(
-        programType
-      )}&programId=${programId}&runId=${popOverData.runid}`;
+      logUrl = getLogViewerPageUrl(namespaceId, appId, programType, programId, popOverData.runid);
     }
     return (
       <div className="graph-plot-container">
