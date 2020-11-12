@@ -15,14 +15,44 @@
  */
 
 class HydratorPlusPlusTopPanelCtrl {
-  constructor($stateParams, HydratorPlusPlusConfigStore, HydratorPlusPlusConfigActions, $uibModal, HydratorPlusPlusConsoleActions, DAGPlusPlusNodesActionsFactory, GLOBALS, myHelpers, HydratorPlusPlusConsoleStore, myPipelineExportModalService, $timeout, $scope, HydratorPlusPlusPreviewStore, HydratorPlusPlusPreviewActions, $interval, myPipelineApi, $state, MyCDAPDataSource, myAlertOnValium, MY_CONFIG, PREVIEWSTORE_ACTIONS, $q, NonStorePipelineErrorFactory, rArtifacts, $window, myPreviewLogsApi, DAGPlusPlusNodesStore, myPreferenceApi, HydratorPlusPlusHydratorService, $rootScope, uuid, HydratorUpgradeService) {
+  constructor($stateParams,
+    HydratorPlusPlusConfigStore,
+    HydratorPlusPlusConfigActions,
+    $uibModal,
+    DAGPlusPlusNodesActionsFactory,
+    GLOBALS,
+    myHelpers,
+    HydratorPlusPlusConsoleStore,
+    myPipelineExportModalService,
+    $timeout,
+    $scope,
+    HydratorPlusPlusPreviewStore,
+    HydratorPlusPlusPreviewActions,
+    $interval,
+    myPipelineApi,
+    $state,
+    MyCDAPDataSource,
+    myAlertOnValium,
+    MY_CONFIG,
+    PREVIEWSTORE_ACTIONS,
+    $q,
+    NonStorePipelineErrorFactory,
+    rArtifacts,
+    $window,
+    myPreviewLogsApi,
+    DAGPlusPlusNodesStore,
+    myPreferenceApi,
+    HydratorPlusPlusHydratorService,
+    $rootScope,
+    uuid,
+    HydratorUpgradeService
+  ) {
     this.consoleStore = HydratorPlusPlusConsoleStore;
     this.myPipelineExportModalService = myPipelineExportModalService;
     this.HydratorPlusPlusConfigStore = HydratorPlusPlusConfigStore;
     this.GLOBALS = GLOBALS;
     this.HydratorPlusPlusConfigActions = HydratorPlusPlusConfigActions;
     this.$uibModal = $uibModal;
-    this.HydratorPlusPlusConsoleActions = HydratorPlusPlusConsoleActions;
     this.DAGPlusPlusNodesActionsFactory = DAGPlusPlusNodesActionsFactory;
     this.parsedDescription = this.HydratorPlusPlusConfigStore.getDescription();
     this.myHelpers = myHelpers;
@@ -212,6 +242,7 @@ class HydratorPlusPlusTopPanelCtrl {
     this.metadataExpanded = false;
     event.preventDefault();
     event.stopPropagation();
+    this.onSaveDraft();
   }
   onEnterOnMetadata(event) {
     // Save when user hits ENTER key.

@@ -31,8 +31,8 @@ class HydratorPlusPlusConfigActions {
   setConfig(config) {
     this.dispatcher.dispatch('onConfigSave', config);
   }
-  saveAsDraft(config) {
-    this.dispatcher.dispatch('onSaveAsDraft', config);
+  saveAsDraft() {
+    this.dispatcher.dispatch('onSaveAsDraft');
   }
   setEngine(engine) {
     this.dispatcher.dispatch('onEngineChange', engine);
