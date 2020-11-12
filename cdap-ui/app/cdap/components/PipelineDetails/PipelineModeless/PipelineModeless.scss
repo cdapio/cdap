@@ -27,8 +27,6 @@ $container-padding: 0 30px;
 // a static header and a footer and only the content scrolls.
 .pipeline-modeless-container {
   width: $modeless-width;
-  position: static;
-  z-index: 999;
   box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.5);
   color: $grey-01;
   background-color: white;
@@ -42,6 +40,7 @@ $container-padding: 0 30px;
     min-height: $modeless-header-height;
     padding: $container-padding;
     border-radius: 4px 4px 0 0;
+    border-bottom: 1px solid $grey-05;
     display: flex;
     align-items: center;
     justify-content: space-between;

@@ -32,6 +32,7 @@ import {
 import T from 'i18n-react';
 import { Theme } from 'services/ThemeHelper';
 import { GLOBALS } from 'services/global-constants';
+import Popover from '@material-ui/core/Popover';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -60,9 +61,10 @@ export default class PipelineScheduleButton extends Component {
     }
   }
 
-  toggleScheduler = () => {
+  toggleScheduler = (e) => {
     this.setState({
       showScheduler: !this.state.showScheduler,
+      anchorEl: e && e.currentTarget,
     });
   };
 
@@ -142,7 +144,19 @@ export default class PipelineScheduleButton extends Component {
       >
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
-        {this.state.showScheduler ? (
+        <Popover
+          open={this.state.showScheduler}
+          anchorEl={this.state.anchorEl}
+          onClose={this.toggleScheduler}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+        >
           <PipelineScheduler
             schedule={this.props.schedule}
             maxConcurrentRuns={this.props.maxConcurrentRuns}
@@ -153,7 +167,7 @@ export default class PipelineScheduleButton extends Component {
             schedulePipeline={schedulePipeline}
             suspendSchedule={suspendSchedule}
           />
-        ) : null}
+        </Popover>
       </div>
     );
   }
