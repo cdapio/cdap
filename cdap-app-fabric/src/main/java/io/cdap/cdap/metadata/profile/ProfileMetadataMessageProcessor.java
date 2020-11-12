@@ -65,6 +65,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -387,13 +388,14 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       List<ImmutablePair<String, String>> remainingPlugins = appMetadataStore.getAllApplications().stream()
         .map(ApplicationMeta::getSpec)
         .map(ApplicationSpecification::getPlugins)
-        .flatMap(e -> e.values().stream())
+        .map(Map::values)
+        .flatMap(Collection::stream)
         .map(Plugin::getPluginClass)
         .map(e -> ImmutablePair.of(e.getName(), e.getType()))
         .collect(Collectors.toList());
 
       Map<ImmutablePair<String, String>, Long> pluginCounts = remainingPlugins.stream()
-        .collect(Collectors.groupingByConcurrent(Function.identity(), Collectors.counting()));
+        .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
       for (Map.Entry<ImmutablePair<String, String>, Long> entry : pluginCounts.entrySet()) {
         Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().getFirst(),
                                                    Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().getSecond());

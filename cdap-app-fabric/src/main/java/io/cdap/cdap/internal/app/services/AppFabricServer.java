@@ -59,6 +59,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -206,11 +207,12 @@ public class AppFabricServer extends AbstractIdleService {
   private Map<ImmutablePair<String, String>, Long> getPluginCounts(AppMetadataStore appMetadataStore)
     throws IOException {
     return appMetadataStore.getAllApplications().stream().map(ApplicationMeta::getSpec)
-        .map(ApplicationSpecification::getPlugins)
-        .flatMap(e -> e.values().stream())
-        .map(Plugin::getPluginClass)
-        .map(e -> ImmutablePair.of(e.getName(), e.getType()))
-      .collect(Collectors.groupingByConcurrent(Function.identity(), Collectors.counting()));
+      .map(ApplicationSpecification::getPlugins)
+      .map(Map::values)
+      .flatMap(Collection::stream)
+      .map(Plugin::getPluginClass)
+      .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
   }
 
   @Override
