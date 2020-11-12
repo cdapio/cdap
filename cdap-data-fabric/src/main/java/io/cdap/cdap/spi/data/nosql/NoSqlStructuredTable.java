@@ -224,15 +224,17 @@ public final class NoSqlStructuredTable implements StructuredTable {
   }
 
   @Override
-  public long count(Range keyRange) throws IOException {
-    LOG.trace("Table {}: count with range {}", schema.getTableId(), keyRange);
+  public long count(Collection<Range> keyRanges) throws IOException {
+    LOG.trace("Table {}: count with ranges {}", schema.getTableId(), keyRanges);
     long count = 0;
-    try (Scanner scanner = getScanner(keyRange)) {
-      while (scanner.next() != null) {
-        count++;
+    for (Range keyRange: keyRanges) {
+      try (Scanner scanner = getScanner(keyRange)) {
+        while (scanner.next() != null) {
+          count++;
+        }
       }
-      return count;
     }
+    return count;
   }
 
   @Override

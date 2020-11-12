@@ -459,11 +459,11 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   @Override
-  public long count(Range keyRange) throws IOException {
-    LOG.trace("Table {}: count with range {}", tableSchema.getTableId(), keyRange);
-    String sql = getCountStatement(keyRange);
+  public long count(Collection<Range> keyRanges) throws IOException {
+    LOG.trace("Table {}: count with ranges {}", tableSchema.getTableId(), keyRanges);
+    String sql = getCountStatement(keyRanges);
     try (PreparedStatement statement = connection.prepareStatement(sql)) {
-      setStatementFieldByRange(keyRange, statement);
+      setStatementFieldByRange(keyRanges, statement);
       LOG.trace("SQL statement: {}", statement);
 
       statement.executeQuery();
@@ -622,6 +622,18 @@ public class PostgresSqlStructuredTable implements StructuredTable {
   }
 
   /**
+   * Sets the {@link PreparedStatement} arguments by the key {@link Collection<Range>}.
+   */
+  private void setStatementFieldByRange(Collection<Range> keyRanges,
+                                        PreparedStatement statement) throws SQLException, InvalidFieldException {
+    int nextIndex = 1;
+    for (Range keyRange: keyRanges) {
+      nextIndex = setStatementFieldByRange(keyRange, statement, nextIndex);
+    }
+  }
+
+
+  /**
    * Sets the {@link PreparedStatement} arguments by the key {@link Range} starting from the given argument index.
    *
    * @return the next argument index that have been set up to
@@ -746,11 +758,21 @@ public class PostgresSqlStructuredTable implements StructuredTable {
     return statement.toString();
   }
 
-  private String getCountStatement(Range range) {
+  private String getCountStatement(Collection<Range> ranges) {
     StringBuilder statement =  new StringBuilder("SELECT COUNT(*) FROM ").append(tableSchema.getTableId().getName());
-    if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
-      statement.append(" WHERE ");
-      appendRange(statement, range);
+    boolean whereAdded = false;
+    for (Range range: ranges) {
+      if (!range.getBegin().isEmpty() || !range.getEnd().isEmpty()) {
+        if (!whereAdded) {
+          // first WHERE condition
+          statement.append(" WHERE ");
+          whereAdded = true;
+        } else {
+          // subsequent WHERE conditions
+          statement.append(" OR ");
+        }
+        appendRange(statement, range);
+      }
     }
     return statement.toString();
   }
