@@ -679,6 +679,26 @@ class HydratorPlusPlusNodeConfigCtrl {
         }
       };
     }
+    if (this.state.groupsConfig.outputSchema.implicitSchema) {
+      return {
+        export: {
+          value: 'export',
+          label: 'Export',
+          disabled: this.state.schemaAdvance,
+          tooltip: this.state.schemaAdvance ? 'Exporting a schema in Advanced mode is not supported' : '',
+          onClick: this.exportSchema.bind(this),
+        },
+        propagate: {
+          value: 'propagate',
+          label: 'Propagate',
+          disabled:
+            this.state.schemaAdvance ||
+            this.state.node.type === 'splittertransform',
+          tooltip: this.getPropagateDisabledTooltip(),
+          onClick: this.onPropagateSchema.bind(this),
+        },
+      };
+    }
     if (this.getIsMacroEnabled()) {
       actionsMap['macro'] = {
         value: 'macro',

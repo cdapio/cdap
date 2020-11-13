@@ -35,6 +35,7 @@ import { isObject } from 'vega-lite/build/src/util';
 import { isMacro } from 'services/helpers';
 import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
 import isEqual from 'lodash/isEqual';
+import { isNoSchemaAvailable } from 'components/AbstractWidget/SchemaEditor/SchemaHelpers';
 
 const styles = (theme): StyleRules => {
   return {
@@ -195,8 +196,18 @@ class PluginSchemaEditorBase extends React.PureComponent<
       Object.values(this.props.actionsDropdownMap)
         .filter((value) => typeof value === 'string')
         .join('--');
-    const existingSchemas = this.props.schemas.map((s) => s.schema).join('__');
-    const newSchemas = schemas.map((s) => s.schema).join('__');
+    let existingSchemas;
+    if (typeof this.props.schemas === 'string') {
+      existingSchemas = this.props.schemas;
+    } else {
+      existingSchemas = this.props.schemas.map((s) => s.schema).join('__');
+    }
+    let newSchemas;
+    if (typeof schemas === 'string') {
+      newSchemas = schemas;
+    } else {
+      newSchemas = schemas.map((s) => s.schema).join('__');
+    }
 
     const didPropsChange =
       disabled !== this.props.disabled ||
@@ -237,16 +248,28 @@ class PluginSchemaEditorBase extends React.PureComponent<
   };
 
   public onSchemaExport = () => {
-    const schemasToExport = this.props.schemas.map((schema) => {
+    let schemasToExport;
+    if (typeof this.props.schemas === 'string') {
       try {
-        return {
-          name: schema.name,
-          schema: JSON.parse(schema.schema),
+        schemasToExport = {
+          name: 'etlSchemaBody',
+          schema: JSON.parse(this.props.schemas),
         };
       } catch (e) {
-        return schema;
+        schemasToExport = this.props.schemas;
       }
-    });
+    } else {
+      schemasToExport = this.props.schemas.map((schema) => {
+        try {
+          return {
+            name: schema.name,
+            schema: JSON.parse(schema.schema),
+          };
+        } catch (e) {
+          return schema;
+        }
+      });
+    }
     // // CDAP-17106 - Need to use generic DownloadFile function here from download-file
     const blob = new Blob([JSON.stringify(schemasToExport, null, 4)], {
       type: 'application/json',
@@ -373,6 +396,23 @@ class PluginSchemaEditorBase extends React.PureComponent<
   };
 
   private santizeSchemasForEditor = (schemas = this.props.schemas): ISchemaType[] => {
+    if (typeof schemas === 'string') {
+      let returnSchema;
+      try {
+        returnSchema = JSON.parse(schemas);
+      } catch (e) {
+        return [{ ...getDefaultEmptyAvroSchema() }];
+      }
+      if (!returnSchema.schema) {
+        return [
+          {
+            name: 'etlSchemaBody',
+            schema: !returnSchema.fields.length ? getDefaultEmptyAvroSchema() : returnSchema,
+          },
+        ];
+      }
+      return [returnSchema];
+    }
     return (schemas || []).map((s) => {
       const newSchema = {
         name: s.name,
@@ -387,35 +427,42 @@ class PluginSchemaEditorBase extends React.PureComponent<
       } else {
         newSchema.schema = s.schema;
       }
+      if (isNoSchemaAvailable(newSchema)) {
+        newSchema.schema = `No ${this.props.schemaTitle} available`;
+      }
       return newSchema;
     });
   };
 
   public renderSchemaIntabs = () => {
     const tabs = this.santizeSchemasForEditor().map((s, i) => {
+      let content = (
+        <fieldset disabled={this.props.disabled} className={this.props.classes.fieldset} key={i}>
+          <RefreshableSchemaEditor
+            visibleRows={this.state.schemaRowCount}
+            schema={s}
+            disabled={this.props.disabled}
+            onChange={({ avroSchema }) => {
+              const newSchemas = [...this.props.schemas];
+              newSchemas[i] = avroSchema;
+              newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
+              if (typeof this.props.onSchemaChange === 'function') {
+                this.props.onSchemaChange(newSchemas);
+              }
+            }}
+            errors={
+              this.props.errors && this.props.errors[s.name] ? this.props.errors[s.name] : null
+            }
+          />
+        </fieldset>
+      );
+      if (typeof s.schema === 'string') {
+        content = s.schema;
+      }
       return {
         id: i,
         name: s.name,
-        content: (
-          <fieldset disabled={this.props.disabled} className={this.props.classes.fieldset} key={i}>
-            <RefreshableSchemaEditor
-              visibleRows={this.state.schemaRowCount}
-              schema={s}
-              disabled={this.props.disabled}
-              onChange={({ avroSchema }) => {
-                const newSchemas = [...this.props.schemas];
-                newSchemas[i] = avroSchema;
-                newSchemas[i].schema = JSON.stringify(newSchemas[i].schema);
-                if (typeof this.props.onSchemaChange === 'function') {
-                  this.props.onSchemaChange(newSchemas);
-                }
-              }}
-              errors={
-                this.props.errors && this.props.errors[s.name] ? this.props.errors[s.name] : null
-              }
-            />
-          </fieldset>
-        ),
+        content,
         contentClassName: this.props.classes.tabContent,
         paneClassName: this.props.classes.tabContent,
       };
@@ -439,13 +486,30 @@ class PluginSchemaEditorBase extends React.PureComponent<
     ) {
       return null;
     }
-    if (this.props.schemas.length > 1) {
+    if (Array.isArray(this.props.schemas) && this.props.schemas.length > 1) {
       return this.renderSchemaIntabs();
     }
-    if (!this.props.schemas.length && this.props.disabled) {
+    if (this.props.disabled && !this.props.schemas.length) {
       return `No ${this.props.schemaTitle} available`;
     }
-    return this.santizeSchemasForEditor().map((schema, i) => (
+    let incomingSchemas = this.props.schemas;
+    /**
+     * There are cases where plugins can define no schema to be a valid schema.
+     * In this case we only want show 'No schema available' when the plugin developer
+     * is using a non-editable-schema-editor widget.
+     */
+    if (incomingSchemas.length === 1 && isNoSchemaAvailable(incomingSchemas[0])) {
+      if (this.props.disabled) {
+        return `No ${this.props.schemaTitle} available`;
+      } else {
+        // For all other plugins if there is no schema and if it is not disabled show default empty schema.
+        incomingSchemas = [
+          { name: 'etlSchemaBody', schema: JSON.stringify(getDefaultEmptyAvroSchema()) },
+        ];
+      }
+    }
+
+    return this.santizeSchemasForEditor(incomingSchemas).map((schema, i) => (
       <fieldset disabled={this.props.disabled} className={this.props.classes.fieldset}>
         <SchemaEditor
           key={i}
@@ -453,7 +517,16 @@ class PluginSchemaEditorBase extends React.PureComponent<
           schema={schema}
           disabled={this.props.disabled}
           onChange={({ avroSchema }) => {
-            const newSchemas = [...this.props.schemas];
+            let newSchemas = [...this.props.schemas];
+            if (typeof this.props.schemas === 'string') {
+              const sanitizedSchema = this.santizeSchemasForEditor();
+              newSchemas = [
+                {
+                  name: 'etlSchemaBody',
+                  schema: sanitizedSchema.length ? JSON.stringify(sanitizedSchema[0].schema) : '',
+                },
+              ];
+            }
             const fields = objectQuery(avroSchema, 'schema', 'fields');
             if (!Array.isArray(fields) || !fields.length) {
               newSchemas[i] = { ...getDefaultEmptyAvroSchema(), schema: '' };
