@@ -60,12 +60,14 @@
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'engineConfig'}"
-                ng-click="BatchPipelineConfigCtrl.activeTab = 'engineConfig'">
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'engineConfig'"
+                data-cy="pipeline-configure-engine-tab">
             Engine config
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'resources', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
-                ng-click="BatchPipelineConfigCtrl.activeTab = 'resources'">
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'resources'"
+                data-cy="pipeline-configure-resources-tab">
             Resources
           </div>
           <div class="configuration-tab"
@@ -132,7 +134,7 @@
         <div class="step-content-heading">
           Specify the resources for the following processes of the {{ BatchPipelineConfigCtrl.engineForDisplay }} program
         </div>
-        <div class="col-xs-6 driver">
+        <div class="col-xs-6 driver" data-cy="resources-config-tab-driver">
           <span class="resource-title">
             Driver
           </span>
@@ -153,7 +155,7 @@
             ></div>
           </div>
         </div>
-        <div class="col-xs-6 executor">
+        <div class="col-xs-6 executor" data-cy="resources-config-tab-executor">
           <span ng-if="BatchPipelineConfigCtrl.engine === 'mapreduce'"
                 class="resource-title">
             Mapper/Reducer
@@ -211,14 +213,16 @@
               <input type="radio"
                       ng-model="BatchPipelineConfigCtrl.engine"
                       ng-change="BatchPipelineConfigCtrl.onEngineChange()"
-                      value="spark" />
+                      value="spark"
+                      data-cy="engine-config-tab-spark" />
               Spark
             </label>
             <label class="radio-inline radio-mapReduce">
               <input type="radio"
                       ng-model="BatchPipelineConfigCtrl.engine"
                       ng-change="BatchPipelineConfigCtrl.onEngineChange()"
-                      value="mapreduce" />
+                      value="mapreduce"
+                      data-cy="engine-config-tab-mapreduce" />
               MapReduce
             </label>
           </div>
@@ -228,7 +232,8 @@
             <a class="add-custom-config-label"
                 ng-click="BatchPipelineConfigCtrl.showCustomConfig = !BatchPipelineConfigCtrl.showCustomConfig">
                 <span class="fa"
-                      ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !BatchPipelineConfigCtrl.showCustomConfig}">
+                      ng-class="{'fa-caret-down': BatchPipelineConfigCtrl.showCustomConfig, 'fa-caret-right': !BatchPipelineConfigCtrl.showCustomConfig}"
+                      data-cy="engine-config-tab-custom">
                  </span>
                 Show Custom Config
             </a>

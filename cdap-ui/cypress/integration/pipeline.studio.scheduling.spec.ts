@@ -102,4 +102,70 @@ describe('Pipeline Studio', () => {
         cy.get(dataCy('save-start-schedule-btn')).click();
         cy.get(dataCy('pipeline-scheduler-btn')).should('have.text', 'Unschedule');
     });
+
+    it('should save the default schedule', () => {
+        cy.visit('/pipelines/ns/default/studio');
+        cy.create_simple_pipeline();
+    
+        cy.get(dataCy('pipeline-schedule-modeless-btn')).click();
+    
+        cy.get(dataCy('save-schedule-btn-studio')).click();
+    
+        cy.get_pipeline_json().then((pipelineConfig) => {
+          expect(pipelineConfig.config.schedule).eq('0 * * * *');
+        });
+      });
+    
+      it('should save an updated basic schedule', () => {
+        cy.visit('/pipelines/ns/default/studio');
+        cy.create_simple_pipeline();
+    
+        cy.get(dataCy('pipeline-schedule-modeless-btn')).click();
+    
+        cy.get(dataCy('schedule-repeats-every-daily')).within(() => {
+          cy.get('select').select('4');
+        });
+    
+        cy.get(dataCy('save-schedule-btn-studio')).click();
+    
+        cy.get_pipeline_json().then((pipelineConfig) => {
+          expect(pipelineConfig.config.schedule).eq('0 1 */4 * *');
+        });
+      });
+    
+      it('should save an updated advanced schedule', () => {
+        cy.visit('/pipelines/ns/default/studio');
+        cy.create_simple_pipeline();
+    
+        cy.get(dataCy('pipeline-schedule-modeless-btn')).click();
+    
+        cy.get(dataCy('switch-view-advanced')).click();
+    
+        // Set Cron for 4:30 AM and PM
+        cy.get(dataCy('advanced-input-min')).clear().type('30')
+        cy.get(dataCy('advanced-input-hour')).clear().type('4,16')
+    
+        cy.get(dataCy('save-schedule-btn-studio')).click();
+    
+        cy.get_pipeline_json().then((pipelineConfig) => {
+          expect(pipelineConfig.config.schedule).eq('030 04,16 * * *');
+        });
+      });
+    
+      it('should save let the user set max concurrent runs', () => {
+        cy.visit('/pipelines/ns/default/studio');
+        cy.create_simple_pipeline();
+    
+        cy.get(dataCy('pipeline-schedule-modeless-btn')).click();
+    
+        cy.get(dataCy('schedule-concurrent-runs')).within(() => {
+          cy.get('select').select('6');
+        })
+    
+        cy.get(dataCy('save-schedule-btn-studio')).click();
+    
+        cy.get_pipeline_json().then((pipelineConfig) => {
+          expect(pipelineConfig.config.maxConcurrentRuns).eq(6);
+        });
+      });
 });

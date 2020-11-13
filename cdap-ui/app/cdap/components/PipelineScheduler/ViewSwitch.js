@@ -73,6 +73,7 @@ const BasicViewSwitch = ({ scheduleView, onClick }) => {
         active: scheduleView === SCHEDULE_VIEWS.BASIC,
       })}
       onClick={onClick}
+      data-cy="switch-view-basic"
     >
       {T.translate(`${PREFIX}.basic`)}
     </span>
@@ -91,6 +92,7 @@ const AdvancedViewSwitch = ({ scheduleView, onClick }) => {
         active: scheduleView === SCHEDULE_VIEWS.ADVANCED,
       })}
       onClick={onClick}
+      data-cy="switch-view-advanced"
     >
       {T.translate(`${PREFIX}.advanced.label`)}
     </span>

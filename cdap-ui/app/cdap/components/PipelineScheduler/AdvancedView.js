@@ -48,11 +48,17 @@ const mapDispatchToCronInputProps = (dispatch, ownProps) => {
   };
 };
 
-const CronInput = ({ value, label, onChange, colWidth = 2 }) => {
+const CronInput = ({ value, label, onChange, colWidth = 2, dataCy }) => {
   return (
     <div className={`form-group col-${colWidth} schedule-advanced-input`}>
       <label>{label}</label>
-      <input type="text" value={value} onChange={onChange} className="form-control" />
+      <input
+        type="text"
+        value={value}
+        onChange={onChange}
+        className="form-control"
+        data-cy={dataCy}
+      />
     </div>
   );
 };
@@ -62,6 +68,7 @@ CronInput.propTypes = {
   label: PropTypes.string,
   colWidth: PropTypes.number,
   onChange: PropTypes.func,
+  dataCy: PropTypes.string,
 };
 
 const ConnectedCronInput = connect(
@@ -74,11 +81,32 @@ export default function AdvancedView({ isDetailView }) {
     <div className="schedule-type-content">
       <div className="schedule-advanced-header">{T.translate(`${PREFIX}.header`)}</div>
       <div className="schedule-advanced-values">
-        <ConnectedCronInput label={T.translate(`${PREFIX}.min`)} index={0} />
-        <ConnectedCronInput label={T.translate(`${PREFIX}.hour`)} index={1} />
-        <ConnectedCronInput label={T.translate(`${PREFIX}.day`)} index={2} />
-        <ConnectedCronInput label={T.translate(`${PREFIX}.month`)} index={3} />
-        <ConnectedCronInput label={T.translate(`${PREFIX}.daysOfWeek`)} index={4} colWidth={3} />
+        <ConnectedCronInput
+          label={T.translate(`${PREFIX}.min`)}
+          index={0}
+          dataCy="advanced-input-min"
+        />
+        <ConnectedCronInput
+          label={T.translate(`${PREFIX}.hour`)}
+          index={1}
+          dataCy="advanced-input-hour"
+        />
+        <ConnectedCronInput
+          label={T.translate(`${PREFIX}.day`)}
+          index={2}
+          dataCy="advanced-input-day"
+        />
+        <ConnectedCronInput
+          label={T.translate(`${PREFIX}.month`)}
+          index={3}
+          dataCy="advanced-input-month"
+        />
+        <ConnectedCronInput
+          label={T.translate(`${PREFIX}.daysOfWeek`)}
+          index={4}
+          colWidth={3}
+          dataCy="advanced-input-days-of-week"
+        />
       </div>
       <MaxConcurrentRuns />
       {isDetailView ? <ProfilesForSchedule /> : null}
