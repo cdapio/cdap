@@ -23,5 +23,7 @@
          ng-class="{'invalid-number': error.length}"
          tooltip-enable="!showErrorMessage"
          class="form-control"
+         min="{{min}}"
+         max="{{max}}"
          ng-model="internalModel"/>
 </div>
