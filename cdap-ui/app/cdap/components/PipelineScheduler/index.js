@@ -37,9 +37,7 @@ import {
 import IconSVG from 'components/IconSVG';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import StatusMapper from 'services/StatusMapper';
-import { isDescendant, objectQuery } from 'services/helpers';
-import { Observable } from 'rxjs/Observable';
-import { PROFILES_DROPDOWN_DOM_CLASS } from 'components/PipelineScheduler/ProfilesForSchedule';
+import { objectQuery } from 'services/helpers';
 import { MyScheduleApi } from 'api/schedule';
 import T from 'i18n-react';
 import { GLOBALS, CLOUD } from 'services/global-constants';

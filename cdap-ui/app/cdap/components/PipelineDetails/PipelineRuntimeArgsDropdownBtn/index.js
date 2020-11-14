@@ -46,7 +46,7 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
     this.setState(
       {
         showRunOptions: !this.state.showRunOptions,
-        anchorEl,
+        anchorEl: anchorEl ? anchorEl.parentElement : null,
       },
       () => {
         // FIXME: This is to when the user opens/closes the runtime args modeless.

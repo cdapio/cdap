@@ -99,6 +99,7 @@ $min_height_of_graph: 340px;
     background: $summary_titlebar_bg;
     display: flex;
     border: 1px solid $summary_border_color;
+    border-radius: 4px 4px 0 0;
     > div {
       &:nth-child(1) {
         flex: 1;
