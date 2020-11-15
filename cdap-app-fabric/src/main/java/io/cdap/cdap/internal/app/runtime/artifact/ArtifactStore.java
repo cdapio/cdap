@@ -176,6 +176,7 @@ public class ArtifactStore {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
+    .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
     .create();
 
   private final LocationFactory locationFactory;
