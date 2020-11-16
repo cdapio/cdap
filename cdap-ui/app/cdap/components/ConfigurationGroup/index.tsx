@@ -19,7 +19,8 @@ import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IWidgetJson, PluginProperties } from './types';
 import { processConfigurationGroups } from './utilities';
-import { objectQuery, removeEmptyJsonValues } from 'services/helpers';
+import { objectQuery } from 'services/helpers';
+import defaults from 'lodash/defaults';
 import If from 'components/If';
 import PropertyRow from './PropertyRow';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -97,15 +98,13 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     );
 
     setConfigurationGroups(processedConfigurationGroup.configurationGroups);
-
-    // set default values
-    const defaultValues = processedConfigurationGroup.defaultValues;
-    const newValues = {
-      ...defaultValues,
-      ...values,
-    };
-
-    changeParentHandler(newValues);
+    // We don't need to add default values for plugins in published pipeline
+    // as they should already have all the properties they are configured with.
+    if (!disabled) {
+      // Only add default values for plugin properties that are not already configured
+      // by user.
+      changeParentHandler(defaults(values, processedConfigurationGroup.defaultValues));
+    }
   }, [widgetJson, pluginProperties]);
 
   // Watch for changes in values to determine dynamic widget
@@ -156,7 +155,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
       return;
     }
 
-    onChange(removeEmptyJsonValues(updatedValues));
+    onChange(updatedValues);
   }
 
   const extraConfig = {
