@@ -25,6 +25,7 @@ import {
 } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import cloneDeep from 'lodash/cloneDeep';
 import { IFlattenRowType } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
+import { objectQuery } from 'services/helpers';
 
 const displayTypes: Array<ISimpleType | IComplexTypeNames | ILogicalTypeNames> = [
   AvroSchemaTypesEnum.ARRAY,
@@ -201,6 +202,21 @@ const doesRecordTypeNameConformToSpec = (flat: IFlattenRowType[]) => {
     }
   }
 };
+const isNoSchemaAvailable = (schema) => {
+  let avroSchema = schema;
+  if (avroSchema) {
+    avroSchema = avroSchema.schema;
+    if (typeof avroSchema === 'string') {
+      try {
+        avroSchema = JSON.parse(avroSchema);
+      } catch (e) {
+        return true;
+      }
+    }
+    return !objectQuery(avroSchema, 'fields', 'length');
+  }
+  return true;
+};
 
 export {
   isNullable,
@@ -214,4 +230,5 @@ export {
   isDisplayTypeLogical,
   isDisplayTypeComplex,
   doesRecordTypeNameConformToSpec,
+  isNoSchemaAvailable,
 };
