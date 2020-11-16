@@ -19,6 +19,7 @@
 $border-color: #cccccc;
 $table-header-color: #eeeeee;
 $table-row-hover-color: #eeeeee;
+$file-selected-color: #eeeeee;
 $folder-icon-color: $yellow-01;
 $file-icon-color: $blue-03;
 $table-font-color: #333333;
@@ -36,7 +37,13 @@ $empty-message-link-color: var(--brand-primary-color);
     padding: 0;
     height: calc(100% - 50px - 39px);
 
-    .row { margin: 0; }
+    .row {
+      margin: 0;
+
+      &.selected {
+        background-color: $file-selected-color;
+      }
+    }
 
     .content-header {
       border-bottom: 1px solid $border-color;
