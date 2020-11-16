@@ -35,6 +35,7 @@ import {
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import { setGCSPrefix } from 'components/DataPrep/DataPrepBrowser/DataPrepBrowserStore/ActionCreator';
+import DataPrepStore from 'components/DataPrep/store';
 const PREFIX = 'features.DataPrep.DataPrepBrowser.GCSBrowser.BrowserData';
 require('./TableContents.scss');
 
@@ -53,6 +54,7 @@ interface IBucketData {
   type?: string;
   scrollId: number;
   updated?: number;
+  path?: string;
 }
 
 interface ITableContentsProps {
@@ -62,6 +64,7 @@ interface ITableContentsProps {
   onWorkspaceCreate: (file: string) => void;
   prefix: string;
   clearSearch: () => void;
+  connectionId: string;
 }
 interface ITableContentState {
   windowSize: number;
@@ -149,6 +152,10 @@ export default class TableContents extends React.PureComponent<
     const { data } = this.state;
     const ContainerElement = enableRouting ? Link : 'div';
     const pathname = window.location.pathname.replace(/\/cdap/, '');
+
+    const { connectionid, uri } = DataPrepStore.getState().dataprep.properties;
+    const selectedPath = uri ? uri.substring(4) : '';
+
     if (enableRouting) {
       return (
         <div className="gcs-buckets" id="gcs-buckets-container">
@@ -157,6 +164,9 @@ export default class TableContents extends React.PureComponent<
             const size =
               convertBytesToHumanReadable(file.size, HUMANREADABLESTORAGE_NODECIMAL, true) || '--';
             let type = file.directory ? T.translate(`${PREFIX}.Content.directory`) : file.type;
+            const filePath = this.getPrefix(file, prefix);
+            const isSelected =
+              connectionid === this.props.connectionId && filePath === selectedPath;
 
             if (file.type === 'UNKNOWN') {
               type = '--';
@@ -167,8 +177,9 @@ export default class TableContents extends React.PureComponent<
                 key={file.name}
                 className={classnames('content-row', {
                   disabled: !file.directory && !file.wrangle,
+                  selected: isSelected,
                 })}
-                to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
+                to={`${pathname}?prefix=${filePath}`}
                 onClick={this.onClickHandler.bind(
                   null,
                   enableRouting,
@@ -195,21 +206,35 @@ export default class TableContents extends React.PureComponent<
 
     return (
       <div className="gcs-buckets" id="gcs-buckets-container">
-        {data.slice(0, this.state.windowSize).map((file, i) => (
-          <ContainerElement
-            key={file.name}
-            className={classnames('content-row', { disabled: !file.directory && !file.wrangle })}
-            to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
-            onClick={this.onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-          >
-            <div className="row" id={`gcsconnection-${file.scrollId}`}>
-              <div className="col-12">
-                <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
-                {file.name}
+        {data.slice(0, this.state.windowSize).map((file, i) => {
+          const filePath = this.getPrefix(file, prefix);
+          const isSelected = connectionid === this.props.connectionId && filePath === selectedPath;
+
+          return (
+            <ContainerElement
+              key={file.name}
+              className={classnames('content-row', {
+                disabled: !file.directory && !file.wrangle,
+                selected: isSelected,
+              })}
+              to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
+              onClick={this.onClickHandler.bind(
+                null,
+                enableRouting,
+                onWorkspaceCreate,
+                file,
+                prefix
+              )}
+            >
+              <div className="row" id={`gcsconnection-${file.scrollId}`}>
+                <div className="col-12">
+                  <IconSVG name={file.directory ? 'icon-folder-o' : 'icon-file-o'} />
+                  {file.name}
+                </div>
               </div>
-            </div>
-          </ContainerElement>
-        ))}
+            </ContainerElement>
+          );
+        })}
       </div>
     );
   }

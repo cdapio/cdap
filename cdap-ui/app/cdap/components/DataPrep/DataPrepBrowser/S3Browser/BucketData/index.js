@@ -32,6 +32,7 @@ const props = {
   enableRouting: PropTypes.bool,
   prefix: PropTypes.string,
   onWorkspaceCreate: PropTypes.func,
+  connectionId: PropTypes.string,
 };
 
 const TableHeader = ({ enableRouting }) => {
@@ -61,6 +62,7 @@ const BucketData = ({
   prefix,
   enableRouting,
   onWorkspaceCreate,
+  connectionId,
 }) => {
   if (loading) {
     return <LoadingSVGCentered />;
@@ -91,6 +93,7 @@ const BucketData = ({
         prefix={prefix}
         enableRouting={enableRouting}
         onWorkspaceCreate={onWorkspaceCreate}
+        connectionId={connectionId}
       />
     </div>
   );
@@ -105,6 +108,7 @@ const mapStateToProps = (state, ownProps) => {
     search: state.s3.search,
     loading: state.s3.loading,
     prefix: state.s3.prefix,
+    connectionId: state.s3.connectionId,
     enableRouting,
     onWorkspaceCreate,
   };
