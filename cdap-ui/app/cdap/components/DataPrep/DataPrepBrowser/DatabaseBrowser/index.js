@@ -239,7 +239,7 @@ export default class DatabaseBrowser extends Component {
               <h5>{objectQuery(this.state.info, 'info', 'name')}</h5>
               <span className="tables-count">
                 {T.translate(`${PREFIX}.tableCount`, {
-                  context: this.state.tables.length,
+                  context: filteredTables.length,
                 })}
               </span>
             </div>
