@@ -123,13 +123,13 @@ public class ArtifactInspectorTest {
     Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, "duplicate")),
                         artifactInspector.getArtifactRequirements(InspectionApp.DuplicateRequirementsPlugin.class));
 
-    //Test that accelerators in the Requirements annotation is being captured
+    //Test that capabilities in the Requirements annotation is being captured
     Assert.assertEquals(new Requirements(ImmutableSet.of(), ImmutableSet.of("cdc")),
-                        artifactInspector.getArtifactRequirements(InspectionApp.AcceleratorPlugin.class));
+                        artifactInspector.getArtifactRequirements(InspectionApp.CapabilityPlugin.class));
     Assert.assertEquals(new Requirements(ImmutableSet.of(), ImmutableSet.of("cdc", "healthcare")),
-                        artifactInspector.getArtifactRequirements(InspectionApp.MultipleAcceleratorPlugin.class));
+                        artifactInspector.getArtifactRequirements(InspectionApp.MultipleCapabilityPlugin.class));
     Assert.assertEquals(new Requirements(ImmutableSet.of(Table.TYPE, "sometype"), ImmutableSet.of("cdc", "healthcare")),
-                        artifactInspector.getArtifactRequirements(InspectionApp.DatasetAndAcceleratorPlugin.class));
+                        artifactInspector.getArtifactRequirements(InspectionApp.DatasetAndCapabilityPlugin.class));
   }
 
   @Test

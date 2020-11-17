@@ -71,8 +71,8 @@ public @interface Requirements {
   String[] datasetTypes() default {};
 
   /**
-   * Names of associated add-ons or accelerators
-   * @return String array of accelerator names
+   * Names of associated add-ons or capabilities
+   * @return String array of capability names
    */
-  String[] accelerators() default{};
+  String[] capabilities() default{};
 }

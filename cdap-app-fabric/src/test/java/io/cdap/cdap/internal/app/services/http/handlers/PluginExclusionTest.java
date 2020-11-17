@@ -89,8 +89,8 @@ public class PluginExclusionTest extends ArtifactHttpHandlerTestBase {
                                                            InspectionApp.EmptyRequirementPlugin.class.getName(),
                                                            InspectionApp.SingleEmptyRequirementPlugin.class.getName(),
                                                            InspectionApp.NonTransactionalPlugin.class.getName(),
-                                                           InspectionApp.AcceleratorPlugin.class.getName(),
-                                                           InspectionApp.MultipleAcceleratorPlugin.class.getName());
+                                                           InspectionApp.CapabilityPlugin.class.getName(),
+                                                           InspectionApp.MultipleCapabilityPlugin.class.getName());
     Assert.assertEquals(expectedPluginClassNames, actualPluginClassNames);
   }
 }

@@ -53,7 +53,7 @@ public class ApplicationClassCodecTest {
     String testApp2 = getData("ApplicationClass_6_3.json");
     ApplicationClass applicationClass63 = gson.fromJson(testApp2, ApplicationClass.class);
     Requirements requirements = applicationClass63.getRequirements();
-    Assert.assertEquals(Collections.singleton("cdc"), requirements.getAccelerators());
+    Assert.assertEquals(Collections.singleton("cdc"), requirements.getCapabilities());
 
     Assert.assertEquals(applicationClass63, gson.fromJson(gson.toJson(applicationClass63), ApplicationClass.class));
   }

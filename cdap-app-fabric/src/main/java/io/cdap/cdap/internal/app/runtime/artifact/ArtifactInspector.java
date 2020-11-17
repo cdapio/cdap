@@ -388,7 +388,7 @@ final class ArtifactInspector {
       return Requirements.EMPTY;
     }
     return new Requirements(getAnnotationValues(annotation.datasetTypes()),
-                            getAnnotationValues(annotation.accelerators()));
+                            getAnnotationValues(annotation.capabilities()));
   }
 
   private Set<String> getAnnotationValues(String[] field) {
