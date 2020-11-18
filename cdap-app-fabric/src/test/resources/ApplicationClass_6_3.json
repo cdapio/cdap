@@ -1,0 +1,27 @@
+{
+  "className": "io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp",
+  "description": "",
+  "configSchema": {
+    "type": "record",
+    "name": "io.cdap.cdap.internal.app.runtime.artifact.app.inspection.InspectionApp$AConfig",
+    "fields": [
+      {
+        "name": "str",
+        "type": [
+          "string",
+          "null"
+        ]
+      },
+      {
+        "name": "x",
+        "type": "int"
+      }
+    ]
+  },
+  "requirements": {
+    "datasetTypes": [],
+    "accelerators": [
+      "cdc"
+    ]
+  }
+}
