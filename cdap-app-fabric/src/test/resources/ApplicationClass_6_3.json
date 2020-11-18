@@ -20,7 +20,7 @@
   },
   "requirements": {
     "datasetTypes": [],
-    "accelerators": [
+    "capabilities": [
       "cdc"
     ]
   }

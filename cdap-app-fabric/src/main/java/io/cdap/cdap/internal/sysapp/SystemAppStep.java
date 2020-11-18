@@ -56,11 +56,11 @@ public class SystemAppStep {
    */
   public void validate() {
     if (label == null || label.isEmpty()) {
-      throw new IllegalArgumentException("An accelerator step must contain a label.");
+      throw new IllegalArgumentException("A capability step must contain a label.");
     }
 
     if (type == null) {
-      throw new IllegalArgumentException("An accelerator step must contain a type.");
+      throw new IllegalArgumentException("A capability step must contain a type.");
     }
 
     arguments.validate();

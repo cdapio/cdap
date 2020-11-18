@@ -118,11 +118,11 @@ public class SystemMetadataWriterStageTest {
   }
 
   @Test
-  public void testAcceleratorTags() throws Exception {
+  public void testCapabilityTags() throws Exception {
     String appName = AppWithWorkflow.class.getSimpleName();
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
-    String[] acceleratorTestNames = {"cdc", "healthcare"};
-    Requirements requirements = new Requirements(Collections.emptySet(), Stream.of(acceleratorTestNames).collect(
+    String[] capabilityTestNames = {"cdc", "healthcare"};
+    Requirements requirements = new Requirements(Collections.emptySet(), Stream.of(capabilityTestNames).collect(
       Collectors.toSet()));
     ApplicationClass applicationClass = new ApplicationClass(AppWithWorkflow.class.getName(), appName, null,
                                                              requirements);
@@ -138,13 +138,13 @@ public class SystemMetadataWriterStageTest {
 
     Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
                                                              MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
-    //Test that all test accelerators are present in the metadata
+    //Test that all test capabilities are present in the metadata
     Map<String, String> metadataProperties = metadataStorage
       .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
-    Set<String> acceleratorNames = Arrays
-      .stream(metadataProperties.get(AppSystemMetadataWriter.ACCELERATOR_TAG)
-                .split(AppSystemMetadataWriter.ACCELERATOR_DELIMITER)).collect(Collectors.toSet());
-    Assert.assertEquals(Arrays.stream(acceleratorTestNames).collect(Collectors.toSet()), acceleratorNames);
+    Set<String> capabilityNames = Arrays
+      .stream(metadataProperties.get(AppSystemMetadataWriter.CAPABILITY_TAG)
+                .split(AppSystemMetadataWriter.CAPABILITY_DELIMITER)).collect(Collectors.toSet());
+    Assert.assertEquals(Arrays.stream(capabilityTestNames).collect(Collectors.toSet()), capabilityNames);
   }
 
   @SuppressWarnings("unchecked")

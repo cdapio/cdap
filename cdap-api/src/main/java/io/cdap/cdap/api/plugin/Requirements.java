@@ -33,8 +33,8 @@ public class Requirements {
   // can add more when needed in future
   private final Set<String> datasetTypes;
 
-  //Accelerators associated with this plugin
-  private final Set<String> accelerators;
+  //Capabilities associated with this plugin
+  private final Set<String> capabilities;
 
   /**
    * Creates a {@link Requirements} object from the given {@link Set}. Note: Requirements are case insensitive and all
@@ -46,11 +46,11 @@ public class Requirements {
     this(datasetTypes, Collections.emptySet());
   }
 
-  public Requirements(Set<String> datasetTypes, Set<String> accelerators) {
+  public Requirements(Set<String> datasetTypes, Set<String> capabilities) {
     this.datasetTypes = datasetTypes.isEmpty() ? Collections.emptySet() :
       Collections.unmodifiableSet(datasetTypes.stream().map(String::toLowerCase).collect(Collectors.toSet()));
-    this.accelerators = accelerators.isEmpty() ? Collections.emptySet() :
-      Collections.unmodifiableSet(accelerators.stream().map(String::toLowerCase).collect(Collectors.toSet()));
+    this.capabilities = capabilities.isEmpty() ? Collections.emptySet() :
+      Collections.unmodifiableSet(capabilities.stream().map(String::toLowerCase).collect(Collectors.toSet()));
   }
 
   /**
@@ -62,10 +62,10 @@ public class Requirements {
 
   /**
    *
-   * @return {@link Set} containing accelerator names or empty set
+   * @return {@link Set} containing capability names or empty set
    */
-  public Set<String> getAccelerators() {
-    return accelerators;
+  public Set<String> getCapabilities() {
+    return capabilities;
   }
 
   @Override
@@ -77,23 +77,23 @@ public class Requirements {
       return false;
     }
     Requirements that = (Requirements) o;
-    return Objects.equals(datasetTypes, that.datasetTypes) && Objects.equals(accelerators, that.accelerators);
+    return Objects.equals(datasetTypes, that.datasetTypes) && Objects.equals(capabilities, that.capabilities);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(datasetTypes, accelerators);
+    return Objects.hash(datasetTypes, capabilities);
   }
 
   @Override
   public String toString() {
     return "Requirements{" +
       "datasetTypes=" + datasetTypes +
-      "accelerators=" + accelerators +
+      "capabilities=" + capabilities +
       '}';
   }
 
   public boolean isEmpty() {
-    return datasetTypes.isEmpty() && accelerators.isEmpty();
+    return datasetTypes.isEmpty() && capabilities.isEmpty();
   }
 }

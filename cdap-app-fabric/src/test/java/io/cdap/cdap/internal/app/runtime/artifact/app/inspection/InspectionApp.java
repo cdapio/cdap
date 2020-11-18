@@ -30,7 +30,7 @@ import io.cdap.cdap.api.plugin.PluginConfig;
 /**
  * App used in artifact inspector tests
  */
-@Requirements(accelerators = "cdc")
+@Requirements(capabilities = "cdc")
 public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   public static final String PLUGIN_DESCRIPTION = "some plugin";
   public static final String PLUGIN_NAME = "pluginA";
@@ -149,10 +149,11 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   }
 
   @Plugin(type = PLUGIN_TYPE)
-  @Name("AcceleratorPlugin")
+  @Name("Capability" +
+    "Plugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements(accelerators = {"cdc"})
-  public static class AcceleratorPlugin {
+  @Requirements(capabilities = {"cdc"})
+  public static class CapabilityPlugin {
     private PConfig pluginConf;
 
     public double doSomething() {
@@ -161,10 +162,10 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   }
 
   @Plugin(type = PLUGIN_TYPE)
-  @Name("MultipleAcceleratorPlugin")
+  @Name("MultipleCapabilityPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements(accelerators = {"cdc", "healthcare"})
-  public static class MultipleAcceleratorPlugin {
+  @Requirements(capabilities = {"cdc", "healthcare"})
+  public static class MultipleCapabilityPlugin {
     private PConfig pluginConf;
 
     public double doSomething() {
@@ -173,10 +174,10 @@ public class InspectionApp extends AbstractApplication<InspectionApp.AConfig> {
   }
 
   @Plugin(type = PLUGIN_TYPE)
-  @Name("DatasetAndAcceleratorPlugin")
+  @Name("DatasetAndCapabilityPlugin")
   @Description(PLUGIN_DESCRIPTION)
-  @Requirements(datasetTypes = {Table.TYPE, "sometype"}, accelerators = {"cdc", "healthcare"})
-  public static class DatasetAndAcceleratorPlugin {
+  @Requirements(datasetTypes = {Table.TYPE, "sometype"}, capabilities = {"cdc", "healthcare"})
+  public static class DatasetAndCapabilityPlugin {
     private PConfig pluginConf;
 
     public double doSomething() {

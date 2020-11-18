@@ -41,7 +41,7 @@ import java.util.Map;
 /**
  * App with workflow.
  */
-@Requirements(accelerators = "cdc")
+@Requirements(capabilities = "cdc")
 public class AppWithWorkflow extends AbstractApplication {
   public static final String NAME = "AppWithWorkflow";
 

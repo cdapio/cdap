@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
  */
 public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
 
-  public static final String ACCELERATOR_TAG = "accelerator";
-  public static final String ACCELERATOR_DELIMITER = ",";
+  public static final String CAPABILITY_TAG = "capability";
+  public static final String CAPABILITY_DELIMITER = ",";
   private final ApplicationSpecification appSpec;
   private final ApplicationId appId;
   private final ApplicationClass applicationClass;
@@ -80,26 +80,26 @@ public class AppSystemMetadataWriter extends AbstractSystemMetadataWriter {
         existingPluginClasses.add(plugin.getPluginClass());
       }
     }
-    addAccelerators(appSpec, applicationClass, properties);
+    addCapabilities(appSpec, applicationClass, properties);
     return properties.build();
   }
 
-  private void addAccelerators(ApplicationSpecification appSpec,
+  private void addCapabilities(ApplicationSpecification appSpec,
                                ApplicationClass applicationClass,
                                ImmutableMap.Builder<String, String> properties) {
     //add from all plugins
-    Set<String> acceleratorSet = appSpec.getPlugins().values().stream()
+    Set<String> capabilitiesSet = appSpec.getPlugins().values().stream()
       .map(Plugin::getPluginClass)
       .map(PluginClass::getRequirements)
-      .map(Requirements::getAccelerators)
+      .map(Requirements::getCapabilities)
       .flatMap(Set::stream)
       .collect(Collectors.toSet());
     //add from application
-    acceleratorSet.addAll(applicationClass.getRequirements().getAccelerators());
-    if (acceleratorSet.isEmpty()) {
+    capabilitiesSet.addAll(applicationClass.getRequirements().getCapabilities());
+    if (capabilitiesSet.isEmpty()) {
       return;
     }
-    properties.put(ACCELERATOR_TAG, String.join(ACCELERATOR_DELIMITER, acceleratorSet));
+    properties.put(CAPABILITY_TAG, String.join(CAPABILITY_DELIMITER, capabilitiesSet));
   }
 
   @Override

@@ -150,10 +150,10 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   }
 
   @Test
-  public void testAcceleratorMetaDataDeletion() throws Exception {
+  public void testCapabilityMetaDataDeletion() throws Exception {
     Class<AppWithWorkflow> appWithWorkflowClass = AppWithWorkflow.class;
     Requirements declaredAnnotation = appWithWorkflowClass.getDeclaredAnnotation(Requirements.class);
-    Set<String> expected = Arrays.stream(declaredAnnotation.accelerators()).collect(Collectors.toSet());
+    Set<String> expected = Arrays.stream(declaredAnnotation.capabilities()).collect(Collectors.toSet());
     Id.Artifact artifactId = Id.Artifact
       .from(Id.Namespace.DEFAULT, appWithWorkflowClass.getSimpleName(), "1.0.0-SNAPSHOT");
     Location appJar = AppJarHelper.createDeploymentJar(locationFactory, appWithWorkflowClass);
@@ -165,14 +165,14 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService
       .deployAppAndArtifact(NamespaceId.DEFAULT, appWithWorkflowClass.getSimpleName(), artifactId, appJarFile, null,
                             null, programId -> { }, true);
-    //Check for the accelerator metadata
+    //Check for the capability metadata
     ApplicationId appId = NamespaceId.DEFAULT.app(appWithWorkflowClass.getSimpleName());
     Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
                                                              MetadataScope.SYSTEM, MetadataKind.PROPERTY)).isEmpty());
     Map<String, String> metadataProperties = metadataStorage
       .read(new Read(appId.toMetadataEntity())).getProperties(MetadataScope.SYSTEM);
-    String acceleratorMetaData = metadataProperties.get(AppSystemMetadataWriter.ACCELERATOR_TAG);
-    Set<String> actual = Arrays.stream(acceleratorMetaData.split(AppSystemMetadataWriter.ACCELERATOR_DELIMITER))
+    String capabilityMetaData = metadataProperties.get(AppSystemMetadataWriter.CAPABILITY_TAG);
+    Set<String> actual = Arrays.stream(capabilityMetaData.split(AppSystemMetadataWriter.CAPABILITY_DELIMITER))
       .collect(Collectors.toSet());
     Assert.assertEquals(expected, actual);
     //Remove the application and verify that all metadata is removed
