@@ -266,7 +266,12 @@ export default class FileBrowser extends Component {
     );
   }
 
-  renderRowContent(row, isSelected) {
+  renderRowContent(row) {
+    let isSelected = false;
+    if (this.state.path === this.getFilePath() && row.name === this.getFileName()) {
+      isSelected = true;
+    }
+
     if (this.props.noState || !this.props.enableRouting) {
       return this.renderCollapsedContent(row, isSelected);
     }
@@ -344,13 +349,13 @@ export default class FileBrowser extends Component {
     );
   }
 
-  renderRow(content, isSelected) {
+  renderRow(content) {
     if (content.directory) {
       return this.renderDirectory(content);
     } else if (!content.wrangle) {
-      return this.renderRowContent(content, isSelected);
+      return this.renderRowContent(content);
     } else {
-      return this.renderFileContent(content, isSelected);
+      return this.renderFileContent(content);
     }
   }
 
@@ -448,11 +453,6 @@ export default class FileBrowser extends Component {
 
     const COLUMN_HEADERS = Object.keys(columnProperties);
 
-    let inWorkspaceDirectory = false;
-    if (this.state.path === this.getFilePath()) {
-      inWorkspaceDirectory = true;
-    }
-
     return (
       <div className="directory-content-table">
         <div className="content-header row">
@@ -478,11 +478,7 @@ export default class FileBrowser extends Component {
 
         <div className="content-body clearfix">
           {displayContent.map((content) => {
-            let isRowSelected = false;
-            if (inWorkspaceDirectory && content.name === this.getFileName()) {
-              isRowSelected = true;
-            }
-            return this.renderRow(content, isRowSelected);
+            return this.renderRow(content);
           })}
         </div>
       </div>
