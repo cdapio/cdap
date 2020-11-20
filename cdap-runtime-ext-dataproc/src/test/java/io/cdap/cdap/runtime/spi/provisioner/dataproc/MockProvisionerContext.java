@@ -27,6 +27,9 @@ import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import javax.annotation.Nullable;
 
 
@@ -102,5 +105,16 @@ public class MockProvisionerContext implements ProvisionerContext {
       @Override
       public void gauge(String metricName, long value) {}
     };
+  }
+
+  @Override
+  public <T> CompletionStage<T> execute(Callable<T> callable) {
+    CompletableFuture<T> result = new CompletableFuture<>();
+    try {
+      result.complete(callable.call());
+    } catch (Exception e) {
+      result.completeExceptionally(e);
+    }
+    return result;
   }
 }

@@ -78,6 +78,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Writer;
 import java.net.URI;
@@ -98,6 +99,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.jar.JarOutputStream;
 import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 import javax.annotation.Nullable;
@@ -542,7 +544,13 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // If there is a plugin directory, then we need to create an archive and localize it to remote containers
       File localDir = new File(systemArgs.getOption(ProgramOptionConstants.PLUGIN_DIR));
       File archiveFile = new File(tempDir, artifactDirName + ".jar");
-      BundleJarUtil.createJar(localDir, archiveFile);
+
+      // Store all artifact jars into a new jar file for localization without compression
+      try (JarOutputStream jarOut = new JarOutputStream(new FileOutputStream(archiveFile))) {
+        jarOut.setLevel(0);
+        BundleJarUtil.addToArchive(localDir, jarOut);
+      }
+
       // Localize plugins to two files, one expanded into a directory, one not.
       localizeResources.put(artifactDirName, new LocalizeResource(archiveFile, true));
       localizeResources.put(artifactArchiveJarName, new LocalizeResource(archiveFile, false));

@@ -33,6 +33,10 @@ import org.apache.twill.filesystem.LocationFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import javax.annotation.Nullable;
 
 /**
@@ -50,10 +54,12 @@ public class DefaultProvisionerContext implements ProvisionerContext {
   private final RuntimeMonitorType runtimeMonitorType;
   private final MetricsCollectionService metricsCollectionService;
   private final String provisionerName;
+  private final Executor executor;
 
   DefaultProvisionerContext(ProgramRunId programRunId, String provisionerName, Map<String, String> properties,
                             SparkCompat sparkCompat, @Nullable SSHContext sshContext, LocationFactory locationFactory,
-                            RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService) {
+                            RuntimeMonitorType runtimeMonitorType, MetricsCollectionService metricsCollectionService,
+                            Executor executor) {
     this.programRun = new ProgramRun(programRunId.getNamespace(), programRunId.getApplication(),
                                      programRunId.getProgram(), programRunId.getRun());
     this.programRunInfo = new ProgramRunInfo.Builder()
@@ -72,6 +78,7 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     this.runtimeMonitorType = runtimeMonitorType;
     this.metricsCollectionService = metricsCollectionService;
     this.provisionerName = provisionerName;
+    this.executor = executor;
   }
 
   @Override
@@ -124,5 +131,19 @@ public class DefaultProvisionerContext implements ProvisionerContext {
     tags.put(Constants.Metrics.Tag.APP, programRunInfo.getApplication());
     tags.put(Constants.Metrics.Tag.PROVISIONER, provisionerName);
     return new DefaultProvisionerMetrics(metricsCollectionService.getContext(tags));
+  }
+
+  @Override
+  public <T> CompletionStage<T> execute(Callable<T> callable) {
+    CompletableFuture<T> result = new CompletableFuture<>();
+
+    executor.execute(() -> {
+      try {
+        result.complete(callable.call());
+      } catch (Throwable t) {
+        result.completeExceptionally(t);
+      }
+    });
+    return result;
   }
 }

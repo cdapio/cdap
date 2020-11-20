@@ -90,8 +90,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -118,10 +121,11 @@ public class ProvisioningService extends AbstractIdleService {
   private final SecureStore secureStore;
   private final Consumer<ProgramRunId> taskStateCleanup;
   private final ProgramStateWriter programStateWriter;
-  private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
   private final ProvisionerStore provisionerStore;
   private final TransactionRunner transactionRunner;
   private final MetricsCollectionService metricsCollectionService;
+  private KeyedExecutor<ProvisioningTaskKey> taskExecutor;
+  private ExecutorService contextExecutor;
 
   @Inject
   ProvisioningService(CConfiguration cConf, ProvisionerProvider provisionerProvider,
@@ -154,10 +158,19 @@ public class ProvisioningService extends AbstractIdleService {
   @Override
   protected void startUp() throws Exception {
     LOG.info("Starting {}", getClass().getSimpleName());
+
+    this.taskExecutor = new KeyedExecutor<>(
+      Executors.newScheduledThreadPool(cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
+                                       Threads.createDaemonThreadFactory("provisioning-task-%d")));
+
+    int maxPoolSize = cConf.getInt(Constants.Provisioner.CONTEXT_EXECUTOR_THREADS);
+    ThreadPoolExecutor contextExecutor = new ThreadPoolExecutor(
+      maxPoolSize, maxPoolSize, 60, TimeUnit.SECONDS, new LinkedBlockingQueue<>(),
+      Threads.createDaemonThreadFactory("provisioning-context-%d"));
+    contextExecutor.allowCoreThreadTimeOut(true);
+    this.contextExecutor = contextExecutor;
+
     initializeProvisioners();
-    this.taskExecutor = new KeyedExecutor<>(Executors.newScheduledThreadPool(
-      cConf.getInt(Constants.Provisioner.EXECUTOR_THREADS),
-      Threads.createDaemonThreadFactory("provisioning-service-%d")));
     resumeTasks(taskStateCleanup);
   }
 
@@ -173,6 +186,8 @@ public class ProvisioningService extends AbstractIdleService {
     } catch (InterruptedException ie) {
       // Ignore it.
     }
+
+    contextExecutor.shutdownNow();
     LOG.info("Stopped {}", getClass().getSimpleName());
   }
 
@@ -741,7 +756,8 @@ public class ProvisioningService extends AbstractIdleService {
                                            String provisionerName) {
     Map<String, String> evaluated = evaluateMacros(secureStore, userId, programRunId.getNamespace(), properties);
     return new DefaultProvisionerContext(programRunId, provisionerName, evaluated, sparkCompat, sshContext,
-                                         locationFactory, runtimeMonitorType, metricsCollectionService);
+                                         locationFactory, runtimeMonitorType,
+                                         metricsCollectionService, contextExecutor);
   }
 
   /**
