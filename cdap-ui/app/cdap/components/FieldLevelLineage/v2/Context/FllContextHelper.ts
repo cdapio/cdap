@@ -36,6 +36,12 @@ interface IEntityId {
   entity?: string;
 }
 
+interface IOperationsErrorObj {
+  statusCode: number;
+  response: string;
+}
+export type IOperationErrorResponse = IOperationsErrorObj | string;
+
 // Info we get from backend about lineage connection
 export interface IResLink {
   source?: string;
@@ -415,7 +421,8 @@ export function getOperations(
   timeParams: ITimeRange,
   fieldName: string,
   direction: string,
-  cb: (lineage: IContextState) => void
+  cb: (lineage: IContextState) => void,
+  errcb: (error: IOperationErrorResponse) => void
 ) {
   const namespace = getCurrentNamespace();
   const params = {
@@ -430,7 +437,7 @@ export function getOperations(
   MyMetadataApi.getFieldOperations(params).subscribe((res) => {
     const operations = res[direction];
     cb(operations);
-  });
+  }, errcb);
 }
 
 export function fetchUnrelatedFields(
