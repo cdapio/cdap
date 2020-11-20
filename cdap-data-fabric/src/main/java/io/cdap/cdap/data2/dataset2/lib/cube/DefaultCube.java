@@ -96,9 +96,11 @@ public class DefaultCube implements Cube, MeteredDataset {
       resolutionToFactTable.put(resolution, factTableSupplier.get(resolution, 3600));
     }
     this.aggregationAliasMap = aggregationAliasMap;
-    this.executorService = new ThreadPoolExecutor(0, resolutions.length, 30, TimeUnit.SECONDS,
-                                                  new LinkedBlockingQueue<>(),
-                                                  Threads.createDaemonThreadFactory("metrics-table-%d"));
+    ThreadPoolExecutor executor = new ThreadPoolExecutor(resolutions.length, resolutions.length, 30, TimeUnit.SECONDS,
+                                                         new LinkedBlockingQueue<>(),
+                                                         Threads.createDaemonThreadFactory("metrics-table-%d"));
+    executor.allowCoreThreadTimeOut(true);
+    this.executorService = executor;
   }
 
   @Override

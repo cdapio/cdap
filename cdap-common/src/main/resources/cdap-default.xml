@@ -2699,6 +2699,15 @@
     </description>
   </property>
 
+  <property>
+    <name>provisioner.context.executor.threads</name>
+    <value>10</value>
+    <description>
+      Maximum number of threads for the provisioning context executor.
+      It is used by the provisioner implementation to perform task asynchronously.
+    </description>
+  </property>
+
 
   <!-- Runtime Monitor Configuration -->
 

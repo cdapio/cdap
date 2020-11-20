@@ -59,12 +59,14 @@ import java.nio.channels.Channels;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 /**
@@ -176,11 +178,15 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
       List<LocalFile> localFiles = getRuntimeLocalFiles(runtimeJobInfo.getLocalizeFiles(), tempDir);
 
       // step 2: upload all the necessary files to gcs so that those files are available to dataproc job
-      List<LocalFile> uploadedFiles = new ArrayList<>();
+      List<Future<LocalFile>> uploadFutures = new ArrayList<>();
       for (LocalFile fileToUpload : localFiles) {
         String targetFilePath = getPath(runRootPath, fileToUpload.getName());
-        uploadedFiles.add(uploadFile(bucket, targetFilePath, fileToUpload));
-        LOG.debug("Uploaded file from {} to gs://{}/{}.", fileToUpload.getURI(), bucket, targetFilePath);
+        uploadFutures.add(
+          provisionerContext.execute(() -> uploadFile(bucket, targetFilePath, fileToUpload)).toCompletableFuture());
+      }
+      List<LocalFile> uploadedFiles = new ArrayList<>();
+      for (Future<LocalFile> uploadFuture : uploadFutures) {
+        uploadedFiles.add(uploadFuture.get());
       }
 
       // step 3: build the hadoop job request to be submitted to dataproc
@@ -289,6 +295,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     List<LocalFile> localFiles = new ArrayList<>(runtimeLocalFiles);
     localFiles.add(DataprocJarUtil.getTwillJar(locationFactory));
     localFiles.add(DataprocJarUtil.getLauncherJar(locationFactory));
+
+    // Sort files in descending order by size so that we upload concurrently large files first.
+    localFiles.sort(Comparator.comparingLong(LocalFile::getSize).reversed());
+
     return localFiles;
   }
 
@@ -304,6 +314,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
          WriteChannel writer = getStorageClient().writer(blobInfo)) {
       ByteStreams.copy(inputStream, Channels.newOutputStream(writer));
     }
+    LOG.debug("Uploaded file from {} to gs://{}/{}.", localFile.getURI(), bucket, targetFilePath);
 
     return new DefaultLocalFile(localFile.getName(), URI.create(String.format("gs://%s/%s", bucket, targetFilePath)),
                                 localFile.getLastModified(), localFile.getSize(),

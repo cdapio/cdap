@@ -23,6 +23,8 @@ import io.cdap.cdap.runtime.spi.ssh.SSHContext;
 import org.apache.twill.filesystem.LocationFactory;
 
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
 import javax.annotation.Nullable;
 
 /**
@@ -84,4 +86,13 @@ public interface ProvisionerContext {
    * Returns a {@link ProvisionerMetrics} object configured based on {@code context}.
    */
   ProvisionerMetrics getMetrics(Map<String, String> context);
+
+  /**
+   * Executes the given {@link Callable} task asynchronously.
+   *
+   * @param callable the task to execute
+   * @param <T> type of the result returned by the {@link Callable}
+   * @return a {@link CompletionStage} that carries result of the task execution
+   */
+  <T> CompletionStage<T> execute(Callable<T> callable);
 }
