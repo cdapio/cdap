@@ -16,7 +16,7 @@
 
 import React, { useContext } from 'react';
 import { FllContext, IContextState } from 'components/FieldLevelLineage/v2/Context/FllContext';
-import { humanReadableDate, objectQuery } from 'services/helpers';
+import { humanReadableDate, objectQuery, isNilOrEmptyString } from 'services/helpers';
 import Navigation from 'components/FieldLevelLineage/v2/OperationsModal/Navigation';
 import OperationsTable from 'components/FieldLevelLineage/v2/OperationsModal/OperationsTable';
 import Heading, { HeadingTypes } from 'components/Heading';
@@ -45,6 +45,9 @@ function formatDatasets(datasets) {
 function getDatasets(operations) {
   const inputs = new Set(); // to prevent duplicate datasets in header
   const outputs = new Set();
+  if (!operations) {
+    return {};
+  }
 
   operations.forEach((operation) => {
     const input = objectQuery(operation, 'inputs', 'endPoint', 'name');
@@ -66,15 +69,18 @@ function getDatasets(operations) {
 }
 
 const ModalContentView: React.FC = () => {
-  const { operations, activeOpsIndex } = useContext<IContextState>(FllContext);
+  const { operations = [], activeOpsIndex, errorOps } = useContext<IContextState>(FllContext);
   const activeSet = operations[activeOpsIndex];
   const lastApp = objectQuery(activeSet, 'programs', 0);
   const application = objectQuery(lastApp, 'program', 'application');
   const lastExecutedTime = objectQuery(lastApp, 'lastExecutedTimeInSeconds');
-  const activeOperations = activeSet.operations;
+  const activeOperations = objectQuery(activeSet, 'operations');
 
   const { sources, targets } = getDatasets(activeOperations);
 
+  if (!isNilOrEmptyString(errorOps)) {
+    return <div className="error-container text-danger">{errorOps}</div>;
+  }
   return (
     <div className="operations-container">
       <Heading
@@ -82,9 +88,7 @@ const ModalContentView: React.FC = () => {
         label={T.translate(`${PREFIX}.summaryText`, { sources, targets })}
         className="summary-text"
       />
-
       <Navigation />
-
       <Heading
         type={HeadingTypes.h6}
         label={T.translate(`${PREFIX}.lastExecution`, {
@@ -93,7 +97,6 @@ const ModalContentView: React.FC = () => {
         })}
         className="last-executed"
       />
-
       <OperationsTable />
     </div>
   );
