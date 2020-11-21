@@ -18,6 +18,7 @@
 package io.cdap.cdap.datapipeline.service;
 
 import io.cdap.cdap.api.service.AbstractSystemService;
+import io.cdap.cdap.datapipeline.draft.DraftStore;
 
 /**
  * Service that handles pipeline studio operations, like validation and schema propagation.
@@ -27,8 +28,11 @@ public class StudioService extends AbstractSystemService {
 
   @Override
   protected void configure() {
+
     setName(NAME);
     setDescription("Handles pipeline studio operations, like validation and schema propagation.");
     addHandler(new ValidationHandler());
+    addHandler(new DraftHandler());
+    createTable(DraftStore.TABLE_SPEC);
   }
 }

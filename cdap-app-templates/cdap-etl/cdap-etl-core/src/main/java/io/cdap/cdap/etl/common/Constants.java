@@ -66,6 +66,7 @@ public final class Constants {
     public static final String RECORDS_ALERT = "records.alert";
     public static final String AGG_GROUPS = "aggregator.groups";
     public static final String JOIN_KEYS = "joiner.keys";
+    public static final String DRAFT_COUNT = "draft.count";
   }
 
   /**
