@@ -27,7 +27,10 @@ import isNil from 'lodash/isNil';
 import findIndex from 'lodash/findIndex';
 import capitalize from 'lodash/capitalize';
 import cloneDeep from 'lodash/cloneDeep';
-import { getGapFilledAccumulatedData } from 'components/PipelineSummary/RunsGraphHelpers';
+import {
+  getGapFilledAccumulatedData,
+  getResolution,
+} from 'components/PipelineSummary/RunsGraphHelpers';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import CopyableID from 'components/CopyableID';
 import { humanReadableDuration, isPluginSource, isPluginSink } from 'services/helpers';
@@ -108,18 +111,6 @@ export default class PipelineNodeMetricsGraph extends Component {
     this.fetchData();
   }
 
-  getResolution(resolution) {
-    switch (resolution) {
-      case '1s':
-        return T.translate(`${PREFIX}.seconds`);
-      case '60s':
-        return T.translate(`${PREFIX}.minutes`);
-      case '3600s':
-      default:
-        return T.translate(`${PREFIX}.hours`);
-    }
-  }
-
   formatData = (records, numOfDataPoints) => {
     let totalRecords = 0;
     let formattedRecords = [];
@@ -145,7 +136,7 @@ export default class PipelineNodeMetricsGraph extends Component {
   };
 
   filterData = ({ qid: data }) => {
-    let resolution = this.getResolution(data.resolution);
+    let resolution = getResolution(data.resolution);
     let recordsInRegex = new RegExp(/user.*.records.in/);
     let recordsOutRegex = new RegExp(/user.*.records.out/);
     let recordsErrorRegex = new RegExp(/user.*.records.error/);

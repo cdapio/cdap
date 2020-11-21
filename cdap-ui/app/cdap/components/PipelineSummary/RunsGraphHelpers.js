@@ -18,6 +18,7 @@ import isNil from 'lodash/isNil';
 import cloneDeep from 'lodash/cloneDeep';
 import moment from 'moment';
 import numeral from 'numeral';
+import T from 'i18n-react';
 
 export const ONE_MIN_SECONDS = 60;
 export const ONE_HOUR_SECONDS = ONE_MIN_SECONDS * 60;
@@ -201,4 +202,38 @@ export function getGapFilledAccumulatedData(data, numOfDataPoints) {
     }
   }
   return finalData;
+}
+
+/**
+ * Function to get resolution to be displayed in the x-axis in plugin metrics graph
+ * @param {string} resolution
+ * The backend can be configured to return varying resolutions for time ranges of 1 min.
+ * For time ranges of 10 mins and 10+mins it is fixed to 60s and 3600s respectively.
+ *
+ * So we now parse the resolution and get the actual number to determine if we need
+ * to show 'seconds' or 'minutes' or 'hours' based on the range.
+ *
+ * if resolution is 1s - 59s: show 'seconds'
+ * if resolution is 60s - 3599s: show 'minutes'
+ * if resolution is > 3600s: show 'hours'
+ */
+export function getResolution(resolution) {
+  const PREFIX = `features.PipelineSummary.pipelineNodesMetricsGraph`;
+  if (!resolution || typeof resolution !== 'string') {
+    return T.translate(`${PREFIX}.seconds`);
+  }
+  const resolutionNum = resolution.split(/s$/);
+  if (resolutionNum.length !== 2) {
+    return T.translate(`${PREFIX}.seconds`);
+  }
+  const num = parseInt(resolutionNum[0], 10);
+  if (isNaN(num) || num < 60) {
+    return T.translate(`${PREFIX}.seconds`);
+  }
+  if (num >= 60 && num < 3600) {
+    return T.translate(`${PREFIX}.minutes`);
+  }
+  if (num >= 3600) {
+    return T.translate(`${PREFIX}.hours`);
+  }
 }
