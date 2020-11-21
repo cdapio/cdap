@@ -72,8 +72,6 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .create();
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
-  private static final String ARTIFACT_BATCH_NAME = "cdap-data-pipeline";
-  private static final String ARTIFACT_STREAMING_NAME = "cdap-data-streams";
 
   @GET
   @Path("v1/health")
@@ -164,15 +162,15 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     }
 
     ArtifactSummary artifactSummary = appRequest.getArtifact();
-    String artifactName = artifactSummary.getName();
-    if (ARTIFACT_BATCH_NAME.equals(artifactName)) {
+
+    if (StudioUtil.isBatchPipeline(artifactSummary)) {
       responder.sendJson(validateBatchPipeline(appRequest));
-    } else if (ARTIFACT_STREAMING_NAME.equals(artifactName)) {
+    } else if (StudioUtil.isStreamingPipeline(artifactSummary)) {
       responder.sendJson(validateStreamingPipeline(appRequest));
     } else {
       responder.sendError(HttpURLConnection.HTTP_BAD_REQUEST,
-                          String.format("Invalid artifact '%s'. Must be '%s' or '%s'.", artifactName,
-                                        ARTIFACT_BATCH_NAME, ARTIFACT_STREAMING_NAME));
+                          String.format("Invalid artifact '%s'. Must be '%s' or '%s'.", artifactSummary.getName(),
+                                        StudioUtil.ARTIFACT_BATCH_NAME, StudioUtil.ARTIFACT_STREAMING_NAME));
     }
   }
 

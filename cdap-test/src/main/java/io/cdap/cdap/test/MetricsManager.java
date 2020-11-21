@@ -30,12 +30,14 @@ import io.cdap.cdap.api.metrics.RuntimeMetrics;
 import io.cdap.cdap.api.metrics.TagValue;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.metrics.MetricsTags;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.proto.id.ServiceId;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nullable;
@@ -53,6 +55,7 @@ public class MetricsManager {
 
   /**
    * query the metric store and return the Collection<MetricTimeSeries>
+   *
    * @param query
    * @return Collection<MetricTimeSeries>
    */
@@ -62,6 +65,7 @@ public class MetricsManager {
 
   /**
    * Search the metric store and return the collection of metric names available for the tag-values in search query
+   *
    * @param query
    * @return Collection of metric names
    */
@@ -71,6 +75,7 @@ public class MetricsManager {
 
   /**
    * Search the metric store and return the collection of next available tags for the search query
+   *
    * @param query
    * @return Collection of tag values
    */
@@ -80,6 +85,7 @@ public class MetricsManager {
 
   /**
    * returns service related metrics
+   *
    * @param namespace
    * @param applicationId
    * @param serviceId
@@ -95,6 +101,7 @@ public class MetricsManager {
 
   /**
    * returns service handler related metrics
+   *
    * @param namespace
    * @param applicationId
    * @param serviceId
@@ -110,9 +117,9 @@ public class MetricsManager {
                       Constants.Metrics.Name.Service.SERVICE_EXCEPTIONS);
   }
 
-
   /**
    * get metrics total count value for a given context and metric.
+   *
    * @param tags that identify a context
    * @param metricName
    * @return the total metric
@@ -122,9 +129,9 @@ public class MetricsManager {
     return getSingleValueFromTotals(query);
   }
 
-
   /**
    * waitFor a metric value count for the metric identified by metricName and context.
+   *
    * @param tags - context identified by tags map
    * @param metricName
    * @param count - expected metric total count value
@@ -148,6 +155,23 @@ public class MetricsManager {
     if (value < count) {
       throw new TimeoutException("Time limit reached: Expected '" + count + "' but got '" + value + "'");
     }
+  }
+
+  /**
+   * waitFor a metric value count for the metric identified by metricName and context.
+   *
+   * @param tags - context identified by tags map
+   * @param metricName
+   * @param count - expected metric total count value
+   * @param timeout
+   * @param timeoutUnit
+   * @throws TimeoutException
+   * @throws InterruptedException
+   */
+  public void waitForExactMetricCount(Map<String, String> tags, String metricName, long count,
+                                      long timeout, TimeUnit timeoutUnit)
+    throws TimeoutException, InterruptedException, ExecutionException {
+    Tasks.waitFor(count, () -> getTotalMetric(tags, metricName), timeout, timeoutUnit);
   }
 
   /**
@@ -210,7 +234,6 @@ public class MetricsManager {
       }
     };
   }
-
 
   private MetricDataQuery getTotalCounterQuery(Map<String, String> context, String metricName) {
     return new MetricDataQuery(0, 0, Integer.MAX_VALUE, metricName, AggregationFunction.SUM,

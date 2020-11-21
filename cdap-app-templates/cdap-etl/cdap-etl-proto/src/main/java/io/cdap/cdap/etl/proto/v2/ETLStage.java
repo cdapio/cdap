@@ -44,6 +44,7 @@ public final class ETLStage {
   private final Object inputSchema;
   private final Object outputSchema;
   private final String label;
+  private final String id;
 
   private static final Logger LOG = LoggerFactory.getLogger(ETLStage.class);
 
@@ -54,16 +55,18 @@ public final class ETLStage {
     inputSchema = null;
     outputSchema = null;
     label = null;
+    id = null;
   }
 
   // Used only for upgrade stage purpose.
-  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema, Object outputSchema) {
+  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema, Object outputSchema, String id) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = null;
     this.inputSchema = inputSchema;
     this.outputSchema = outputSchema;
     this.label = label;
+    this.id = id;
   }
 
   public String getName() {
@@ -121,7 +124,7 @@ public final class ETLStage {
       switch (updateAction) {
         case UPGRADE_ARTIFACT:
           return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), label, inputSchema,
-                                                        outputSchema);
+                                                        outputSchema, id);
         default:
           return this;
         }

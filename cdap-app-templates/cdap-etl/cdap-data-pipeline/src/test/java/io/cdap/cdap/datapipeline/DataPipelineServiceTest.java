@@ -89,7 +89,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   public static final String STAGE = "stage";
 
   private static ServiceManager serviceManager;
-  private static URI serviceURI;
+  static URI serviceURI;
 
   @ClassRule
   public static final TestConfiguration CONFIG = new TestConfiguration(Constants.Explore.EXPLORE_ENABLED, false,
