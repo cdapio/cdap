@@ -421,7 +421,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
       if (!returnSchema.schema) {
         return [
           {
-            name: 'etlSchemaBody',
+            name: returnSchema.name || 'etlSchemaBody',
             schema: !returnSchema.fields.length ? getDefaultEmptyAvroSchema() : returnSchema,
           },
         ];
@@ -437,7 +437,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
         try {
           newSchema.schema = JSON.parse(s.schema);
         } catch (e) {
-          return { ...getDefaultEmptyAvroSchema() };
+          return { ...getDefaultEmptyAvroSchema(), name: s.name };
         }
       } else {
         newSchema.schema = s.schema;
