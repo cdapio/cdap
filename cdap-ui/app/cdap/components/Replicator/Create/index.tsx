@@ -102,6 +102,7 @@ interface ICreateState {
   activeStep: number;
   setActiveStep: (step: number) => void;
   setNameDescription: (name: string, description?: string) => void;
+  setSourcePluginInfo: (sourcePluginInfo: IPluginInfo) => void;
   setSourcePluginWidget: (sourcePluginWidget: IWidgetJson) => void;
   setSourceConfig: (sourceConfig: IPluginConfig) => void;
   setTargetPluginInfo: (targetPluginInfo: IPluginInfo) => void;
@@ -145,6 +146,10 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
   public setSourceConfig = (sourceConfig) => {
     this.setState({ sourceConfig });
+  };
+
+  public setSourcePluginInfo = (sourcePluginInfo) => {
+    this.setState({ sourcePluginInfo });
   };
 
   public setTargetPluginInfo = (targetPluginInfo) => {
@@ -258,6 +263,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     setNameDescription: this.setNameDescription,
     setSourcePluginWidget: this.setSourcePluginWidget,
     setSourceConfig: this.setSourceConfig,
+    setSourcePluginInfo: this.setSourcePluginInfo,
     setTargetPluginInfo: this.setTargetPluginInfo,
     setTargetPluginWidget: this.setTargetPluginWidget,
     setTargetConfig: this.setTargetConfig,
