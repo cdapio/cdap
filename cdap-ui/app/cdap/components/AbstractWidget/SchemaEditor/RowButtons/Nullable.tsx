@@ -35,6 +35,7 @@ const NullableBase = ({ nullable, onNullable: onChange }: INullableBaseProps) =>
       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
         onChange(e.target.checked);
       }}
+      disabled={typeof onChange !== 'function'}
     />
   );
 };

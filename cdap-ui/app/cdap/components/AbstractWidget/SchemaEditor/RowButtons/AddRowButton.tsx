@@ -18,9 +18,14 @@ import * as React from 'react';
 import AddIcon from '@material-ui/icons/Add';
 import { IconWrapper } from 'components/AbstractWidget/SchemaEditor/RowButtons/IconWrapper';
 
-function AddRowButton({ onAdd }) {
+function AddRowButton({ onAdd, ...rest }) {
   return (
-    <IconWrapper onClick={onAdd} data-cy="schema-field-add-button">
+    <IconWrapper
+      onClick={onAdd}
+      data-cy="schema-field-add-button"
+      disabled={typeof onAdd !== 'function'}
+      {...rest}
+    >
       <AddIcon />
     </IconWrapper>
   );

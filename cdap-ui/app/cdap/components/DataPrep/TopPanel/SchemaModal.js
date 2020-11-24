@@ -18,13 +18,6 @@ import PropTypes from 'prop-types';
 
 import React, { Component } from 'react';
 import { Modal, ModalHeader, ModalBody } from 'reactstrap';
-import SchemaStore from 'components/SchemaEditor/SchemaStore';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import Loadable from 'react-loadable';
-import {
-  getParsedSchemaForDataPrep,
-  getSchemaObjFromFieldsArray,
-} from 'components/SchemaEditor/SchemaHelpers';
 import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import fileDownload from 'js-file-download';
@@ -36,11 +29,8 @@ import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
 import CardActionFeedback from 'components/CardActionFeedback';
 import If from 'components/If';
-
-var SchemaEditor = Loadable({
-  loader: () => import(/* webpackChunkName: "SchemaEditor" */ 'components/SchemaEditor'),
-  loading: LoadingSVGCentered,
-});
+import cdapavsc from 'services/cdapavscwrapper';
+import { SchemaEditor } from 'components/AbstractWidget/SchemaEditor';
 
 const mapErrorToMessage = (e) => {
   let message = e.message;
@@ -68,12 +58,6 @@ export default class SchemaModal extends Component {
     this.download = this.download.bind(this);
   }
 
-  componentWillUnmount() {
-    SchemaStore.dispatch({
-      type: 'RESET',
-    });
-  }
-
   componentDidMount() {
     this.getSchema();
   }
@@ -94,32 +78,26 @@ export default class SchemaModal extends Component {
 
     MyDataPrepApi.getSchema(requestObj, requestBody).subscribe(
       (res) => {
-        let tempSchema = {
-          name: 'avroSchema',
+        const schema = {
+          name: 'etlSchemaBody',
           type: 'record',
           fields: res,
         };
+        const workspaceSchema = { name: 'etlSchemaBody', schema };
 
         try {
-          getParsedSchemaForDataPrep(tempSchema);
+          cdapavsc.parse(schema);
         } catch (e) {
-          let { message, remedies = null } = mapErrorToMessage(e);
-          this.setState({
-            error: { message, remedies },
+          const { remedies, error } = mapErrorToMessage(e);
+          return this.setState({
             loading: false,
+            error,
+            remedies,
           });
         }
-
-        SchemaStore.dispatch({
-          type: 'FIELD_UPDATE',
-          payload: {
-            schema: tempSchema,
-          },
-        });
-
         this.setState({
           loading: false,
-          schema: res,
+          schema: workspaceSchema,
         });
       },
       (err) => {
@@ -161,13 +139,7 @@ export default class SchemaModal extends Component {
   download() {
     let workspaceId = DataPrepStore.getState().dataprep.workspaceId;
     let filename = `${workspaceId}-schema.json`;
-
-    let fields = this.state.schema;
-
-    // TODO: Change this when we make UI schema consistent with backend schema (JIRA: CDAP-13010)
-    let data = JSON.stringify([getSchemaObjFromFieldsArray(fields)], null, 4);
-
-    fileDownload(data, filename);
+    fileDownload(JSON.stringify([this.state.schema], null, 4), filename);
   }
 
   render() {
@@ -202,7 +174,7 @@ export default class SchemaModal extends Component {
     } else {
       content = (
         <fieldset disabled>
-          <SchemaEditor />
+          <SchemaEditor visibleRows={10} schema={this.state.schema} disabled={true} />
         </fieldset>
       );
     }
