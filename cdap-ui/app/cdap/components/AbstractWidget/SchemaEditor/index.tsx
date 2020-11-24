@@ -28,7 +28,7 @@ import {
   IFieldIdentifier,
   IOnChangePayload,
 } from 'components/AbstractWidget/SchemaEditor/EditorTypes';
-import { FieldsList } from 'components/AbstractWidget/SchemaEditor/FieldsList';
+import { FieldsList, FieldsListBase } from 'components/AbstractWidget/SchemaEditor/FieldsList';
 import {
   SchemaValidatorConsumer,
   SchemaValidatorProvider,
@@ -177,4 +177,6 @@ SchemaEditor.propTypes = {
   errors: PropTypes.object,
 };
 
-export { SchemaEditor };
+const heightOfRow = FieldsListBase.heightOfRow;
+
+export { SchemaEditor, heightOfRow };

@@ -20,7 +20,7 @@ import Loadable from 'react-loadable';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import DataPrepStore from 'components/DataPrep/store';
 import { objectQuery, preventPropagation } from 'services/helpers';
-import { getParsedSchemaForDataPrep } from 'components/SchemaEditor/SchemaHelpers';
+import cdapavsc from 'services/cdapavscwrapper';
 import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
 import NamespaceStore from 'services/NamespaceStore';
 import MyDataPrepApi from 'api/dataprep';
@@ -152,7 +152,7 @@ export default class DataPrepTopPanel extends Component {
             fields: res,
           };
           try {
-            getParsedSchemaForDataPrep(schema);
+            cdapavsc.parse(schema, { wrapUnions: true });
           } catch (e) {
             this.setState({
               onSubmitError: e.message,
