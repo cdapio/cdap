@@ -20,7 +20,6 @@ import Checkbox from '@material-ui/core/Checkbox';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import Select from 'components/AbstractWidget/FormInputs/Select';
-import MenuItem from '@material-ui/core/MenuItem';
 import AbstractRow, {
   IAbstractRowProps,
   AbstractRowStyles,
@@ -50,7 +49,7 @@ const styles = (theme): StyleRules => {
 };
 
 interface IComplexDropdown {
-  value: string | number;
+  id: string | number;
   label: string;
 }
 
@@ -136,7 +135,10 @@ class FunctionDropdownArgumentsRow extends AbstractRow<
   public renderInput = () => {
     const dropdownOptions = this.props.dropdownOptions.map((option: IDropdownOption) => {
       if (typeof option === 'object') {
-        return option;
+        return {
+          label: option.label,
+          value: option.id,
+        };
       }
 
       return {

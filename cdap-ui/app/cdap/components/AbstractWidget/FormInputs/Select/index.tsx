@@ -21,7 +21,6 @@ import MenuItem from '@material-ui/core/MenuItem';
 import React from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import { blue } from 'components/ThemeWrapper/colors';
 import { isNilOrEmptyString } from 'services/helpers';
 import { objectQuery } from 'services/helpers';
 import withStyles from '@material-ui/core/styles/withStyles';
@@ -37,25 +36,25 @@ const CustomTooltip = withStyles((theme) => {
   };
 })(Tooltip);
 
-const CustomizedInputBase = withStyles(() => {
+const CustomizedInputBase = withStyles((theme) => {
   return {
     input: {
       padding: '7px 18px 7px 12px',
       '&:focus': {
         backgroundColor: 'transparent',
-        outline: `1px solid ${blue[100]}`,
+        outline: `1px solid ${(theme.palette as any).blue[100]}`,
       },
     },
   };
 })(InputBase);
 
-const CustomizedInput = withStyles(() => {
+const CustomizedInput = withStyles((theme) => {
   return {
     input: {
       padding: '7px 18px 7px 12px',
       '&:focus': {
         backgroundColor: 'transparent',
-        outline: `1px solid ${blue[100]}`,
+        outline: `1px solid ${(theme.palette as any).blue[100]}`,
       },
     },
   };
