@@ -306,7 +306,13 @@ export default class PipelineScheduler extends Component {
     let isScheduled = this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     return (
       <Provider store={PipelineSchedulerStore}>
-        <PipelineModeless title={this.renderHeaderText()} onClose={this.props.onClose}>
+        <PipelineModeless
+          title={this.renderHeaderText()}
+          onClose={this.props.onClose}
+          open={this.props.open}
+          anchorEl={this.props.anchorEl}
+          suppressAnimation={this.props.suppressAnimation}
+        >
           <div
             className="pipeline-scheduler-content"
             ref={(ref) => (this.schedulerComponent = ref)}
@@ -332,9 +338,12 @@ PipelineScheduler.propTypes = {
   schedule: PropTypes.string,
   maxConcurrentRuns: PropTypes.number,
   onClose: PropTypes.func,
+  open: PropTypes.bool,
+  anchorEl: PropTypes.oneOf([PropTypes.element, PropTypes.string]),
   isDetailView: PropTypes.bool,
   pipelineName: PropTypes.string,
   scheduleStatus: PropTypes.string,
   schedulePipeline: PropTypes.func,
+  suppressAnimation: PropTypes.bool,
   suspendSchedule: PropTypes.func,
 };

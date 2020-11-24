@@ -17,27 +17,59 @@
 import PropTypes from 'prop-types';
 import React from 'react';
 import IconSVG from 'components/IconSVG';
+import Popover from '@material-ui/core/Popover';
 
 require('./PipelineModeless.scss');
 
-export default function PipelineModeless({ title, onClose, children }) {
+export default function PipelineModeless({
+  title,
+  onClose,
+  open,
+  anchorEl,
+  suppressAnimation,
+  children,
+}) {
+  let anchorElCb;
+  if (typeof anchorEl === 'string') {
+    anchorElCb = () => document.getElementById(anchorEl);
+  }
+  const transitionDuration = suppressAnimation ? 0 : 'auto';
+
   return (
-    <div className="pipeline-modeless-container">
-      <div className="pipeline-modeless-header">
-        <div className="pipeline-modeless-title">{title}</div>
-        <div className="btn-group">
-          <a className="btn" onClick={onClose}>
-            <IconSVG name="icon-close" />
-          </a>
+    <Popover
+      open={open}
+      anchorEl={anchorElCb || anchorEl}
+      onClose={onClose}
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'center',
+      }}
+      transformOrigin={{
+        vertical: 'top',
+        horizontal: 'center',
+      }}
+      transitionDuration={transitionDuration}
+    >
+      <div className="pipeline-modeless-container">
+        <div className="pipeline-modeless-header">
+          <div className="pipeline-modeless-title">{title}</div>
+          <div className="btn-group">
+            <a className="btn" onClick={onClose}>
+              <IconSVG name="icon-close" />
+            </a>
+          </div>
         </div>
+        <div className="pipeline-modeless-content">{children}</div>
       </div>
-      <div className="pipeline-modeless-content">{children}</div>
-    </div>
+    </Popover>
   );
 }
 
 PipelineModeless.propTypes = {
   title: PropTypes.node,
   onClose: PropTypes.func,
+  open: PropTypes.bool,
+  anchorEl: PropTypes.oneOf([PropTypes.element, PropTypes.string]),
+  suppressAnimation: PropTypes.bool,
   children: PropTypes.node,
 };
