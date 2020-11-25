@@ -236,6 +236,10 @@ declare global {
        */
 
       delete_artifact_via_api: (headers: any, artifactName: string, version: string) => Chainable<Request>;
+
+      fit_pipeline_to_screen: () => Chainable<JQuery<HTMLElement>>;
+      pipeline_clean_up_graph_control: () => Chainable<JQuery<HTMLElement>>;
+
     }
     // tslint:disable-next-line: interface-name
     interface Window {
