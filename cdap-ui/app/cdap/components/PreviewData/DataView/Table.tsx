@@ -15,13 +15,8 @@
  */
 
 import React from 'react';
-
-import TableBody from '@material-ui/core/TableBody';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
-import TableCell from '@material-ui/core/TableCell';
-
 import Paper from '@material-ui/core/Paper';
+import Grid from '@material-ui/core/Grid';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import isEmpty from 'lodash/isEmpty';
 import { PREVIEW_STATUS } from 'services/PreviewStatus';
@@ -32,19 +27,6 @@ import T from 'i18n-react';
 import classnames from 'classnames';
 
 const I18N_PREFIX = 'features.PreviewData.DataView.Table';
-
-export const CustomTableCell = withStyles((theme) => ({
-  head: {
-    backgroundColor: theme.palette.grey['300'],
-    color: theme.palette.common.white,
-    padding: 10,
-    fontSize: 14,
-  },
-  body: {
-    padding: 10,
-    fontSize: 14,
-  },
-}))(TableCell);
 
 export const messageTextStyle = {
   fontSize: '1.3rem !important',
@@ -76,20 +58,22 @@ export const styles = (theme): StyleRules => ({
   },
   cell: {
     textAlign: 'left',
+    height: '40px',
+    lineHeight: '40px',
     whiteSpace: 'nowrap',
     padding: '0px 10px',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
+  },
+
+  // TO DO: Currently the width is fixed. Future plan is to let users vary the column widths
+  tableCell: {
+    width: '120px',
     borderLeft: `1px solid ${theme.palette.grey['500']}`,
-    '&:first-of-type': {
-      borderLeft: 'none',
-    },
+    flexGrow: 1,
   },
   indexCell: {
     width: '50px',
-  },
-  headerCell: {
-    borderLeft: `1px solid ${theme.palette.grey['500']}`,
   },
 });
 
@@ -132,50 +116,36 @@ const DataTableView: React.FC<IDataTableProps> = ({
     }
     return field;
   };
-
-  const renderHeader = (header: string[]) => {
-    return (
-      <TableHead>
-        <TableRow className={classnames(classes.headerRow)}>
-          <CustomTableCell className={classnames(classes.indexCell, classes.headerCell)} />
-          {headers.map((fieldName, i) => {
-            const processedFieldName = format(fieldName);
-            return (
-              <CustomTableCell key={`header-cell-${i}`} className={classes.headerCell}>
-                {processedFieldName}
-              </CustomTableCell>
-            );
-          })}
-        </TableRow>
-      </TableHead>
-    );
-  };
-
   const renderList = (visibleNodeCount: number, startNode: number) => {
-    return records.slice(startNode, startNode + visibleNodeCount).map((record, j) => {
-      const rowIndex = startNode + j + 1;
+    return records.slice(startNode, startNode + visibleNodeCount).map((record, i) => {
       return (
-        <TableBody>
-          <TableRow
-            key={`table-row-${j}`}
-            className={classnames(classes.row, { oddRow: rowIndex % 2 })}
+        <React.Fragment>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            justify="space-evenly"
+            className={classnames(classes.row, { oddRow: (i + startNode + 1) % 2 })}
+            key={`gridrow-${i}`}
           >
-            <CustomTableCell
-              className={classnames(classes.indexCell, classes.cell)}
-              key={`index-cell-${j}`}
-            >
-              {rowIndex}
-            </CustomTableCell>
+            <Grid item className={classnames(classes.cell, classes.indexCell)}>
+              {i + 1 + startNode}
+            </Grid>
             {headers.map((fieldName, k) => {
               const processedValue = format(record[fieldName]);
               return (
-                <CustomTableCell key={`table-cell-${j}-${k}`} className={classes.cell}>
+                <Grid
+                  item
+                  className={classnames(classes.cell, classes.tableCell)}
+                  key={`table-cell-${k}`}
+                  title={processedValue}
+                >
                   {processedValue}
-                </CustomTableCell>
+                </Grid>
               );
             })}
-          </TableRow>
-        </TableBody>
+          </Grid>
+        </React.Fragment>
       );
     });
   };
@@ -190,14 +160,41 @@ const DataTableView: React.FC<IDataTableProps> = ({
 
   return (
     <Paper className={classnames(classes.root, classes.tableContainer)}>
-      <VirtualScroll
-        itemCount={() => records.length}
-        visibleChildCount={25}
-        childHeight={40}
-        renderList={renderList}
-        childrenUnderFold={10}
-        headerEl={renderHeader(headers)}
-      />
+      <Grid container direction="column" wrap="nowrap">
+        <Grid item>
+          <Grid
+            container
+            direction="row"
+            wrap="nowrap"
+            justify="space-evenly"
+            className={classes.headerRow}
+          >
+            <Grid item className={classnames(classes.cell, classes.indexCell)} />
+            {headers.map((fieldName, i) => {
+              const processedFieldName = format(fieldName);
+              return (
+                <Grid
+                  item
+                  key={`header-cell-${i}`}
+                  className={classnames(classes.cell, classes.tableCell)}
+                  title={processedFieldName}
+                >
+                  {processedFieldName}
+                </Grid>
+              );
+            })}
+          </Grid>
+        </Grid>
+        <Grid item>
+          <VirtualScroll
+            itemCount={() => records.length}
+            visibleChildCount={25}
+            childHeight={40}
+            renderList={renderList}
+            childrenUnderFold={10}
+          />
+        </Grid>
+      </Grid>
     </Paper>
   );
 };
