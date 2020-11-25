@@ -682,11 +682,9 @@ angular.module(PKG.name + '.commons')
     }
 
     function addEndpointForSplitterNode(endpointDOMId) {
-      let endpointDOMEl = document.getElementsByClassName(endpointDOMId);
-      endpointDOMEl = endpointDOMEl[endpointDOMEl.length - 1];
-
+      let endpointDOMEl = document.getElementById(endpointDOMId);
       let splitterEndpointStyleWithUUID = Object.assign({}, vm.splitterEndpointStyle, { uuid: endpointDOMId });
-      splitterEndpointStyleWithUUID.cssClass += `plugin-${endpointDOMId}`;
+      splitterEndpointStyleWithUUID.cssClass = `plugin-${endpointDOMId}`;
       let splitterEndpoint = vm.instance.addEndpoint(endpointDOMEl, splitterEndpointStyleWithUUID);
       addListenersForEndpoint(splitterEndpoint, endpointDOMEl);
     }

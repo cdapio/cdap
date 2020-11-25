@@ -85,7 +85,6 @@ angular.module(PKG.name + '.commons')
     };
 
     var splitterEndpointStyle = {
-      cssClass: 'splitter-endpoint',
       isSource: true,
       // [x, y , dx, dy, offsetx, offsety]
       // x, y - position of the anchor.

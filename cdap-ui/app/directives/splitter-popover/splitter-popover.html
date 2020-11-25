@@ -19,7 +19,8 @@
   <div ng-repeat="port in SplitterPopoverCtrl.ports" class="splitter-popover-row">
     <span class="port-name">{{ port.name }}</span>
     <div class="endpoint-circle"
-          ng-class="['endpoint_{{node.name || node.plugin.label}}_port_{{port.name}}', {'disabled': isDisabled}]"
+          ng-class="['endpoint_{{node.id || node.name}}_port_{{port.name}}', {'disabled': isDisabled}]"
+          ng-attr-id="{{'endpoint_' + node.id + '_port_' + port.name }}"
           data-nodeid="{{node.name || node.plugin.label}}"
           data-nodetype="splitter"
           data-portname="{{port.name}}">
