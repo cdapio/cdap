@@ -45,7 +45,7 @@ const styles = (theme): StyleRules => ({
     height: 'inherit',
     overflowX: 'hidden',
     '& .record-pane': {
-      minWidth: '100%',
+      width: '100%',
     },
     '& .cask-tab-headers': {
       overflowX: 'auto',
