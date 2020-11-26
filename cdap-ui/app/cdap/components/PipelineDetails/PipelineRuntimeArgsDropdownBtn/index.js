@@ -23,7 +23,6 @@ import { Provider } from 'react-redux';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import RuntimeArgsModeless from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsModeless';
 import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
-import Popover from '@material-ui/core/Popover';
 
 require('./PipelineRuntimeArgsDropdownBtn.scss');
 
@@ -86,28 +85,16 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
             <IconSVG name="icon-caret-down" />
           </div>
         </div>
-        <Popover
-          open={this.state.showRunOptions}
-          onClose={this.toggleRunConfigOption}
-          anchorEl={this.state.anchorEl}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'center',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'center',
-          }}
-        >
-          <Provider store={PipelineConfigurationsStore}>
-            <PipelineModeless
-              title="Runtime Arguments"
-              onClose={this.toggleRunConfigOption.bind(this, false)}
-            >
-              <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
-            </PipelineModeless>
-          </Provider>
-        </Popover>
+        <Provider store={PipelineConfigurationsStore}>
+          <PipelineModeless
+            title="Runtime Arguments"
+            onClose={this.toggleRunConfigOption.bind(this, false)}
+            open={this.state.showRunOptions}
+            anchorEl={this.state.anchorEl}
+          >
+            <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
+          </PipelineModeless>
+        </Provider>
       </fieldset>
     );
   }
