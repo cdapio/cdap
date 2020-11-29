@@ -119,6 +119,11 @@ export type ICreateContext = Partial<ICreateState>;
 
 class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   public setActiveStep = (step: number) => {
+    if (!this.state.sourcePluginInfo) {
+      this.setState({ activeStep: step });
+      return;
+    }
+
     setTimeout(() => {
       this.saveDraft().subscribe(
         () => {
@@ -133,11 +138,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   };
 
   public setNameDescription = (name, description) => {
-    this.setState({ name, description }, () => {
-      this.props.history.push(
-        `/ns/${getCurrentNamespace()}/replication/drafts/${this.state.draftId}`
-      );
-    });
+    this.setState({ name, description });
   };
 
   public setSourcePluginWidget = (sourcePluginWidget) => {
@@ -145,7 +146,11 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   };
 
   public setSourceConfig = (sourceConfig) => {
-    this.setState({ sourceConfig });
+    this.setState({ sourceConfig }, () => {
+      this.props.history.push(
+        `/ns/${getCurrentNamespace()}/replication/drafts/${this.state.draftId}`
+      );
+    });
   };
 
   public setSourcePluginInfo = (sourcePluginInfo) => {
@@ -291,33 +296,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
   }
 
   private initCreate = () => {
-    // Set source
-    const artifactName = objectQuery(this.props, 'match', 'params', 'artifactName');
-    const artifactVersion = objectQuery(this.props, 'match', 'params', 'artifactVersion');
-    const artifactScope = objectQuery(this.props, 'match', 'params', 'artifactScope');
-    const pluginName = objectQuery(this.props, 'match', 'params', 'pluginName');
-
-    if (!artifactName || !artifactVersion || !artifactScope || !pluginName) {
-      this.setState({ isInvalidSource: true });
-      return;
-    }
-
-    fetchPluginInfo(
-      this.state.parentArtifact,
-      artifactName,
-      artifactScope,
-      pluginName,
-      PluginType.source
-    ).subscribe(
-      (res) => {
-        this.setState({ sourcePluginInfo: res, loading: false, draftId: uuidV4() });
-      },
-      (err) => {
-        // tslint:disable-next-line: no-console
-        console.error('Error fetching plugin', err);
-        this.setState({ isInvalidSource: true });
-      }
-    );
+    this.setState({ draftId: uuidV4(), loading: false });
   };
 
   private initDraft = (draftId) => {

@@ -100,14 +100,12 @@ export default class PlusButton extends Component {
     }
     return (
       <ul>
-        {this.props.contextItems.map((item, i) => {
+        {this.props.contextItems.map((item) => {
           if (item.to) {
             return (
-              <li key={i}>
-                <Link to={item.to} key={item.label}>
-                  {item.label}
-                </Link>
-              </li>
+              <Link to={item.to} key={item.label}>
+                <li>{item.label}</li>
+              </Link>
             );
           }
           return (
@@ -116,7 +114,9 @@ export default class PlusButton extends Component {
             </li>
           );
         })}
-        <li onClick={this.toggleModal}>More</li>
+        <li onClick={this.toggleModal} className="more-button">
+          More
+        </li>
       </ul>
     );
   };
