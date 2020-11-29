@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import { PluginType } from 'components/Replicator/constants';
-import PluginConfig from '../PluginConfig';
+import PluginConfig from 'components/Replicator/Create/Content/PluginConfig';
 
 const TargetConfigView: React.FC<ICreateContext> = ({
   targetPluginInfo,

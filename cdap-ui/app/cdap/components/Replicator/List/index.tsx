@@ -16,22 +16,24 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import SourceList from 'components/Replicator/List/SourceList';
 import { Route, Switch, NavLink } from 'react-router-dom';
 import { basepath } from 'components/Replicator';
 import Deployed from 'components/Replicator/List/Deployed';
 import Drafts from 'components/Replicator/List/Drafts';
 import { getCurrentNamespace } from 'services/NamespaceStore';
-import { PluginCardHeight } from 'components/Replicator/List/PluginCard';
+import EntityTopPanel from 'components/EntityTopPanel';
+import ReplicationPlusButton from './ReplicationPlusButton';
 
 const styles = (theme): StyleRules => {
   return {
     root: {
-      padding: '25px 40px',
       height: '100%',
     },
+    content: {
+      height: 'calc(100% - 50px)', // 100% - height of EntityTopPanel
+      padding: '15px 50px',
+    },
     linkContainer: {
-      marginTop: '50px',
       borderBottom: `2px solid ${theme.palette.grey[400]}`,
       display: 'flex',
     },
@@ -51,8 +53,8 @@ const styles = (theme): StyleRules => {
     contentContainer: {
       marginTop: '15px',
 
-      // 100% - header in source list - plugin card - source list padding - (margin top + NavLink) - content marginTop
-      height: `calc(100% - 50px - ${PluginCardHeight}px - 15px - 85px - 15px)`,
+      // 100% - padding - linkContainer height
+      height: `calc(100% - 30px - 35px)`,
     },
   };
 };
@@ -60,31 +62,33 @@ const styles = (theme): StyleRules => {
 const ListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.root}>
-      <SourceList />
-
-      <div className={classes.linkContainer}>
-        <NavLink
-          exact
-          to={`/ns/${getCurrentNamespace()}/replication`}
-          activeClassName={classes.activeLink}
-          className={classes.link}
-        >
-          Replication Pipeline
-        </NavLink>
-        <NavLink
-          exact
-          to={`/ns/${getCurrentNamespace()}/replication/drafts`}
-          activeClassName={classes.activeLink}
-          className={classes.link}
-        >
-          Drafts
-        </NavLink>
-      </div>
-      <div className={classes.contentContainer}>
-        <Switch>
-          <Route exact path={`${basepath}/drafts`} component={Drafts} />
-          <Route exact path={`${basepath}`} component={Deployed} />
-        </Switch>
+      <EntityTopPanel title="Replication pipelines" />
+      <ReplicationPlusButton />
+      <div className={classes.content}>
+        <div className={classes.linkContainer}>
+          <NavLink
+            exact
+            to={`/ns/${getCurrentNamespace()}/replication`}
+            activeClassName={classes.activeLink}
+            className={classes.link}
+          >
+            Deployed
+          </NavLink>
+          <NavLink
+            exact
+            to={`/ns/${getCurrentNamespace()}/replication/drafts`}
+            activeClassName={classes.activeLink}
+            className={classes.link}
+          >
+            Drafts
+          </NavLink>
+        </div>
+        <div className={classes.contentContainer}>
+          <Switch>
+            <Route exact path={`${basepath}/drafts`} component={Drafts} />
+            <Route exact path={`${basepath}`} component={Deployed} />
+          </Switch>
+        </div>
       </div>
     </div>
   );

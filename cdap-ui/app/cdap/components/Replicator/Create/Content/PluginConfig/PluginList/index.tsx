@@ -26,7 +26,7 @@ import Search from '@material-ui/icons/Search';
 import PluginCard, {
   PluginCardWidth,
   PluginCardHeight,
-} from 'components/Replicator/List/PluginCard';
+} from 'components/Replicator/Create/Content/PluginConfig/PluginCard';
 import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
 import { PluginType } from 'components/Replicator/constants';
@@ -89,7 +89,7 @@ const PluginListView: React.FC<IPluginListProps> = ({
 
   React.useEffect(() => {
     fetchPluginsAndWidgets(parentArtifact, pluginType).subscribe((res) => {
-      if (res.plugins.length === 1 && !currentSelection) {
+      if (res.plugins.length > 0 && !currentSelection) {
         onSelect(res.plugins[0]);
       }
 

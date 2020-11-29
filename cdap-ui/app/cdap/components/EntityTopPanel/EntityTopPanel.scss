@@ -52,10 +52,12 @@ $link-color: $blue-02;
       &:hover { text-decoration: underline; }
     }
   }
+  .overview-heading {
+    margin-bottom: 0;
+  }
 
   .multiline-title {
     .overview-heading {
-      margin-bottom: 0;
       font-weight: bold;
     }
     .entity-type {
