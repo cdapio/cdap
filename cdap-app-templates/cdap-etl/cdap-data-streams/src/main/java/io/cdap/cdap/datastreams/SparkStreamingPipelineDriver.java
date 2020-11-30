@@ -228,7 +228,7 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                                             Collections.emptyMap(), pipelineSpec.isStageLoggingEnabled(),
                                             pipelineSpec.isProcessTimingEnabled());
         boolean shouldConsolidateStages = Boolean.parseBoolean(
-          sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.FALSE.toString()));
+          sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
         runner.runPipeline(phaseSpec, StreamingSource.PLUGIN_TYPE, sec, Collections.emptyMap(),
                            pluginContext, Collections.emptyMap(), uncombinableSinks, shouldConsolidateStages);
       } catch (Exception e) {
