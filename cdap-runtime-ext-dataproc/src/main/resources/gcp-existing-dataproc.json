@@ -43,6 +43,7 @@
               "asia-northeast3",
               "asia-south1",
               "asia-southeast1",
+              "asia-southeast2",
               "australia-southeast1",
               "europe-north1",
               "europe-west1",
@@ -56,7 +57,9 @@
               "us-east1",
               "us-east4",
               "us-west1",
-              "us-west2"
+              "us-west2",
+              "us-west3",
+              "us-west4"
             ],
             "default": "us-east1",
             "size": "medium"
