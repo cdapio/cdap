@@ -33,8 +33,9 @@ import {
 import ConfigDisplay from 'components/Replicator/ConfigDisplay';
 import TablesList from 'components/Replicator/Detail/TablesList';
 import Metrics from 'components/Replicator/Detail/Metrics';
+import ThroughputLatencyGraphs from 'components/Replicator/Detail/ThroughputLatencyGraphs';
 
-const DetailContext = React.createContext({});
+export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
 const styles = (theme): StyleRules => {
   return {
@@ -350,9 +351,6 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
           <TopPanel />
 
           <div className={classes.body}>
-            <Metrics />
-            <hr />
-
             <ConfigDisplay
               sourcePluginInfo={this.state.sourcePluginInfo}
               targetPluginInfo={this.state.targetPluginInfo}
@@ -363,6 +361,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
             />
 
             <hr />
+            <ThroughputLatencyGraphs />
             <TablesList />
           </div>
         </div>

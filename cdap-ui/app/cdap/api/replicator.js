@@ -54,7 +54,7 @@ export const MyReplicatorApi = {
   // Detail
   pollStatus: apiCreator(dataSrc, 'GET', 'POLL', `${workerPath}/runs?limit=1`),
   pollTableStatus: apiCreator(dataSrc, 'POST', 'POLL', `${servicePath}/getState`),
-  pollMetrics: apiCreator(dataSrc, 'POST', 'POLL', `/metrics/query?:queryParams`),
+  pollMetrics: apiCreator(dataSrc, 'POST', 'REQUEST', `/metrics/query?:queryParams`),
 
   // To be replaced with GraphQL
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps?artifactName=delta-app'),
