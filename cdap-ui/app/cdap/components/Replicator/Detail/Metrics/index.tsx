@@ -161,14 +161,15 @@ const MetricsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
       namespace: getCurrentNamespace(),
       app: name,
       worker: PROGRAM_INFO.programId,
+      run: '*',
+      instance: '*',
     };
 
     const tagsParams = MetricsQueryHelper.tagsToParams(tags);
 
-    const targetStageName = targetPluginInfo.name;
     const metrics = ['insert', 'update', 'delete']
       .map((metric) => {
-        return `metric=user.${targetStageName}.dml.${metric}`;
+        return `metric=user.dml.${metric}`;
       })
       .join('&');
 
