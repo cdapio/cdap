@@ -95,7 +95,7 @@ public abstract class AbstractStageContext implements StageContext {
     return pipelineRuntime.getLogicalStartTime();
   }
 
-  protected int getMaxPreviewRecords() {
+  public int getMaxPreviewRecords() {
     return stageSpec.getMaxPreviewRecords();
   }
 
