@@ -19,12 +19,10 @@ import React, { Component } from 'react';
 import IconSVG from 'components/IconSVG';
 import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 import classnames from 'classnames';
-import Popover from 'components/Popover';
 import { Provider } from 'react-redux';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
 import RuntimeArgsModeless from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsModeless';
 import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
-import { preventPropagation } from 'services/helpers';
 
 require('./PipelineRuntimeArgsDropdownBtn.scss');
 
@@ -43,13 +41,11 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
     showRunOptions: this.props.showRunOptions,
   };
 
-  toggleRunConfigOption = (showRunOptions) => {
-    if (showRunOptions === this.state.showRunOptions) {
-      return;
-    }
+  toggleRunConfigOption = (anchorEl) => {
     this.setState(
       {
-        showRunOptions: showRunOptions || !this.state.showRunOptions,
+        showRunOptions: !this.state.showRunOptions,
+        anchorEl: anchorEl ? anchorEl.parentElement : null,
       },
       () => {
         // FIXME: This is to when the user opens/closes the runtime args modeless.
@@ -73,59 +69,31 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
   };
 
   render() {
-    const Btn = (
-      <div
-        className={classnames('btn pipeline-action-btn pipeline-run-btn', {
-          'btn-popover-open': this.state.showRunOptions,
-        })}
-        onClick={(e) => {
-          /*
-            ugh. This is NOT a good approach.
-            The react-popper should have had a disabled prop that
-            which passed on should just disable the popover like a button.
-            Right now I am circumventing that by preventing the propagation/bubbling the event
-            here so it looks like it is disabled.
-
-            We should upgrade react-popper and see if later versions have this prop.
-          */
-          if (this.props.disabled) {
-            preventPropagation(e);
-            return false;
-          }
-        }}
-      >
-        <IconSVG name="icon-caret-down" />
-      </div>
-    );
     return (
       <fieldset disabled={this.props.disabled}>
-        <Provider store={PipelineConfigurationsStore}>
-          <Popover
-            target={() => Btn}
-            className="arrow-btn-container"
-            placement="bottom"
-            enableInteractionInPopover={true}
-            showPopover={this.state.showRunOptions}
-            onTogglePopover={this.toggleRunConfigOption}
-            injectOnToggle={true}
-            modifiers={{
-              flip: {
-                enabled: true,
-                behavior: ['bottom'],
-              },
-              preventOverflow: {
-                enabled: true,
-                boundariesElement: 'scrollParent',
-              },
+        <div className="arrow-btn-container">
+          <div
+            className={classnames('btn pipeline-action-btn pipeline-run-btn', {
+              'btn-popover-open': this.state.showRunOptions,
+            })}
+            onClick={(e) => {
+              if (!this.props.disabled) {
+                this.toggleRunConfigOption(e.currentTarget);
+              }
             }}
           >
-            <PipelineModeless
-              title="Runtime Arguments"
-              onClose={this.toggleRunConfigOption.bind(this, false)}
-            >
-              <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
-            </PipelineModeless>
-          </Popover>
+            <IconSVG name="icon-caret-down" />
+          </div>
+        </div>
+        <Provider store={PipelineConfigurationsStore}>
+          <PipelineModeless
+            title="Runtime Arguments"
+            onClose={this.toggleRunConfigOption.bind(this, false)}
+            open={this.state.showRunOptions}
+            anchorEl={this.state.anchorEl}
+          >
+            <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
+          </PipelineModeless>
         </Provider>
       </fieldset>
     );

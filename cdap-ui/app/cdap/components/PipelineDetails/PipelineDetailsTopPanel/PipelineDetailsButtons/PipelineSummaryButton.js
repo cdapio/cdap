@@ -23,8 +23,18 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import { GLOBALS } from 'services/global-constants';
 import T from 'i18n-react';
+import Popover from '@material-ui/core/Popover';
+import { withStyles } from '@material-ui/core/styles';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
+
+const popoverStyles = {
+  paper: {
+    maxWidth: '100%',
+  },
+};
+
+const FullWidthPopover = withStyles(popoverStyles)(Popover);
 
 export default class PipelineSummaryButton extends Component {
   static propTypes = {
@@ -36,16 +46,17 @@ export default class PipelineSummaryButton extends Component {
     showSummary: false,
   };
 
-  toggleSummary = () => {
+  toggleSummary = (anchorEl) => {
     this.setState({
       showSummary: !this.state.showSummary,
+      anchorEl,
     });
   };
 
   renderSummaryButton() {
     return (
       <div
-        onClick={this.toggleSummary}
+        onClick={(e) => this.toggleSummary(e.currentTarget)}
         className={classnames('btn pipeline-action-btn pipeline-summary-btn', {
           'btn-select': this.state.showSummary,
         })}
@@ -70,7 +81,20 @@ export default class PipelineSummaryButton extends Component {
         })}
       >
         {this.renderSummaryButton()}
-        {this.state.showSummary ? (
+        <FullWidthPopover
+          anchorEl={this.state.anchorEl}
+          open={this.state.showSummary}
+          onClose={this.toggleSummary}
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'right', // needed to use full width of page
+          }}
+          marginThreshold={0}
+        >
           <PipelineSummary
             pipelineType={pipelineType}
             namespaceId={getCurrentNamespace()}
@@ -81,7 +105,7 @@ export default class PipelineSummaryButton extends Component {
             totalRunsCount={PipelineDetailStore.getState().runs.length}
             onClose={this.toggleSummary}
           />
-        ) : null}
+        </FullWidthPopover>
       </div>
     );
   }

@@ -117,6 +117,7 @@
          tooltip-class="toppanel-tooltip"
          tooltip-append-to-body="true"
          ng-disabled="!HydratorPlusPlusTopPanelCtrl.hasNodes"
+         id="pipeline-schedule-modeless-btn"
          data-cy="pipeline-schedule-modeless-btn">
       <div class="btn-container">
         <span class="fa icon-runtimestarttime"></span>
@@ -256,11 +257,9 @@
 </div>
 <div class="pipeline-settings-backdrop"
      ng-if="HydratorPlusPlusTopPanelCtrl.viewLogs ||
-     HydratorPlusPlusTopPanelCtrl.viewConfig ||
-     HydratorPlusPlusTopPanelCtrl.viewScheduler"
+     HydratorPlusPlusTopPanelCtrl.viewConfig"
      ng-click="HydratorPlusPlusTopPanelCtrl.viewLogs =
-     HydratorPlusPlusTopPanelCtrl.viewConfig =
-     HydratorPlusPlusTopPanelCtrl.viewScheduler = false">
+     HydratorPlusPlusTopPanelCtrl.viewConfig = false">
 </div>
 <div class="pipeline-configurations" ng-if="HydratorPlusPlusTopPanelCtrl.viewConfig">
   <div
@@ -285,7 +284,8 @@
     store="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigStore"
     action-creator="HydratorPlusPlusTopPanelCtrl.HydratorPlusPlusConfigActions"
     pipeline-name="{{HydratorPlusPlusTopPanelCtrl.state.metadata['name']}}"
-    on-close="HydratorPlusPlusTopPanelCtrl.viewScheduler = false">
+    on-close="HydratorPlusPlusTopPanelCtrl.viewScheduler = false"
+    anchor-el="pipeline-schedule-modeless-btn">
   </my-pipeline-scheduler>
 </div>
 <div

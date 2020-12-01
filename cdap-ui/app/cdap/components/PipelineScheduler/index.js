@@ -37,13 +37,12 @@ import {
 import IconSVG from 'components/IconSVG';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import StatusMapper from 'services/StatusMapper';
-import { isDescendant, objectQuery } from 'services/helpers';
-import { Observable } from 'rxjs/Observable';
-import { PROFILES_DROPDOWN_DOM_CLASS } from 'components/PipelineScheduler/ProfilesForSchedule';
+import { objectQuery } from 'services/helpers';
 import { MyScheduleApi } from 'api/schedule';
 import T from 'i18n-react';
 import { GLOBALS, CLOUD } from 'services/global-constants';
 import isEmpty from 'lodash/isEmpty';
+import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 
 const PREFIX = 'features.PipelineScheduler';
 
@@ -109,27 +108,6 @@ export default class PipelineScheduler extends Component {
     }
 
     getTimeBasedSchedule();
-
-    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
-      if (!this.schedulerComponent) {
-        return;
-      }
-
-      if (
-        isDescendant(this.schedulerComponent, e.target) ||
-        // FIXME: There should be a better way to detect this.
-        // This is to detect if the click happened inside profiles dropdown
-        // We need this here as the profiles dropdown is attached to the body.
-        isDescendant(
-          document.querySelector(`body > .${PROFILES_DROPDOWN_DOM_CLASS}.dropdown`),
-          e.target
-        )
-      ) {
-        return;
-      }
-
-      this.props.onClose();
-    });
   }
 
   componentWillReceiveProps(nextProps) {
@@ -262,19 +240,10 @@ export default class PipelineScheduler extends Component {
     setOptionalProperty('app.deploy.update.schedules', true);
   };
 
-  renderHeader() {
+  renderHeaderText() {
     return (
-      <div className="pipeline-scheduler-header modeless-header">
-        <div className="modeless-title">
-          {T.translate(`${PREFIX}.header`)}
-          {this.props.pipelineName.length ? ` ${this.props.pipelineName}` : null}
-        </div>
-        <div className="btn-group">
-          <a className="btn" onClick={this.props.onClose}>
-            <IconSVG name="icon-close" />
-          </a>
-        </div>
-      </div>
+      T.translate(`${PREFIX}.header`) +
+      (this.props.pipelineName.length ? ` ${this.props.pipelineName}` : '')
     );
   }
 
@@ -337,21 +306,28 @@ export default class PipelineScheduler extends Component {
     let isScheduled = this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULED'];
     return (
       <Provider store={PipelineSchedulerStore}>
-        <div
-          className="pipeline-scheduler-content modeless-container"
-          ref={(ref) => (this.schedulerComponent = ref)}
+        <PipelineModeless
+          title={this.renderHeaderText()}
+          onClose={this.props.onClose}
+          open={this.props.open}
+          anchorEl={this.props.anchorEl}
+          suppressAnimation={this.props.suppressAnimation}
         >
-          {this.renderHeader()}
-          <div className="pipeline-scheduler-body modeless-content">
-            <div className="schedule-content">
-              <fieldset disabled={isScheduled}>
-                <ViewSwitch />
-                <ViewContainer isDetailView={this.props.isDetailView} />
-              </fieldset>
-              {this.renderActionButtons()}
+          <div
+            className="pipeline-scheduler-content"
+            ref={(ref) => (this.schedulerComponent = ref)}
+          >
+            <div className="pipeline-scheduler-body">
+              <div className="schedule-content">
+                <fieldset disabled={isScheduled}>
+                  <ViewSwitch />
+                  <ViewContainer isDetailView={this.props.isDetailView} />
+                </fieldset>
+                {this.renderActionButtons()}
+              </div>
             </div>
           </div>
-        </div>
+        </PipelineModeless>
       </Provider>
     );
   }
@@ -362,9 +338,12 @@ PipelineScheduler.propTypes = {
   schedule: PropTypes.string,
   maxConcurrentRuns: PropTypes.number,
   onClose: PropTypes.func,
+  open: PropTypes.bool,
+  anchorEl: PropTypes.oneOf([PropTypes.element, PropTypes.string]),
   isDetailView: PropTypes.bool,
   pipelineName: PropTypes.string,
   scheduleStatus: PropTypes.string,
   schedulePipeline: PropTypes.func,
+  suppressAnimation: PropTypes.bool,
   suspendSchedule: PropTypes.func,
 };

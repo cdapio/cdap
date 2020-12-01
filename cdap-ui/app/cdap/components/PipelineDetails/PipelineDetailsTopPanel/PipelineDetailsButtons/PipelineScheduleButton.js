@@ -60,9 +60,10 @@ export default class PipelineScheduleButton extends Component {
     }
   }
 
-  toggleScheduler = () => {
+  toggleScheduler = (e) => {
     this.setState({
       showScheduler: !this.state.showScheduler,
+      anchorEl: e && e.currentTarget,
     });
   };
 
@@ -142,18 +143,18 @@ export default class PipelineScheduleButton extends Component {
       >
         {this.renderScheduleError()}
         {this.renderScheduleButton()}
-        {this.state.showScheduler ? (
-          <PipelineScheduler
-            schedule={this.props.schedule}
-            maxConcurrentRuns={this.props.maxConcurrentRuns}
-            onClose={this.toggleScheduler}
-            isDetailView={true}
-            pipelineName={this.props.pipelineName}
-            scheduleStatus={this.state.scheduleStatus}
-            schedulePipeline={schedulePipeline}
-            suspendSchedule={suspendSchedule}
-          />
-        ) : null}
+        <PipelineScheduler
+          schedule={this.props.schedule}
+          maxConcurrentRuns={this.props.maxConcurrentRuns}
+          onClose={this.toggleScheduler}
+          open={this.state.showScheduler}
+          anchorEl={this.state.anchorEl}
+          isDetailView={true}
+          pipelineName={this.props.pipelineName}
+          scheduleStatus={this.state.scheduleStatus}
+          schedulePipeline={schedulePipeline}
+          suspendSchedule={suspendSchedule}
+        />
       </div>
     );
   }

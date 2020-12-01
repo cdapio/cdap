@@ -31,6 +31,7 @@ angular.module(PKG.name + '.commons')
       actionCreator: '=',
       pipelineName: '@',
       onClose: '&',
+      anchorEl: '@',
     },
     bindToController: true,
     controller: 'MyPipelineSchedulerCtrl',

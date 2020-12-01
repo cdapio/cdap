@@ -33,8 +33,6 @@ import { humanReadableDuration, isBatchPipeline } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
 import ee from 'event-emitter';
-import { isDescendant } from 'services/helpers';
-import { Observable } from 'rxjs/Observable';
 
 const PREFIX = 'features.PipelineSummary';
 
@@ -132,9 +130,6 @@ export default class PipelineSummary extends Component {
     if (this.storeSubscription) {
       this.storeSubscription();
     }
-    if (this.documentClick$) {
-      this.documentClick$.unsubscribe();
-    }
     Mousetrap.unbind('esc');
   }
 
@@ -157,18 +152,6 @@ export default class PipelineSummary extends Component {
     });
   };
   componentDidMount() {
-    this.documentClick$ = Observable.fromEvent(document, 'click').subscribe((e) => {
-      if (!this.summaryComponent) {
-        return;
-      }
-
-      if (isDescendant(this.summaryComponent, e.target)) {
-        return;
-      }
-
-      this.props.onClose();
-    });
-
     this.fetchStats();
     Mousetrap.bind('esc', () => {
       this.eventEmitter.emit('CLOSE_HINT_TOOLTIP');
@@ -288,10 +271,7 @@ export default class PipelineSummary extends Component {
   }
   render() {
     return (
-      <div
-        className="pipeline-settings pipeline-summary"
-        ref={(ref) => (this.summaryComponent = ref)}
-      >
+      <div className="pipeline-summary" ref={(ref) => (this.summaryComponent = ref)}>
         {this.renderTitleBar()}
         <div className="filter-container">
           <span> {T.translate(`${PREFIX}.filterContainer.view`)} </span>
