@@ -38,4 +38,9 @@ public interface BatchSourceContext extends BatchContext {
    * @return a boolean value which indicates the pipeline is running in preview mode.
    */
   boolean isPreviewEnabled();
+
+  /**
+   * @return maximum number of records to read in preview mode.
+   */
+  int getMaxPreviewRecords();
 }
