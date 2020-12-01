@@ -146,7 +146,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
       PipelinePluginInstantiator pluginInstantiator =
         new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
       boolean shouldConsolidateStages = Boolean.parseBoolean(
-        sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.FALSE.toString()));
+        sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
                   sinkFactory.getUncombinableSinks(), shouldConsolidateStages);
     } finally {
