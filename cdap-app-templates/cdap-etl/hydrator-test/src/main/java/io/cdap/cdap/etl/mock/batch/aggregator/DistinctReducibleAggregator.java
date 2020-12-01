@@ -29,6 +29,7 @@ import io.cdap.cdap.etl.api.Emitter;
 import io.cdap.cdap.etl.api.FailureCollector;
 import io.cdap.cdap.etl.api.PipelineConfigurer;
 import io.cdap.cdap.etl.api.StageConfigurer;
+import io.cdap.cdap.etl.api.batch.BatchAggregatorContext;
 import io.cdap.cdap.etl.api.batch.BatchReducibleAggregator;
 import io.cdap.cdap.etl.api.batch.BatchRuntimeContext;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Distinct aggregator
@@ -68,6 +70,13 @@ public class DistinctReducibleAggregator
   }
 
   @Override
+  public void prepareRun(BatchAggregatorContext context) {
+    if (config.partitions != null) {
+      context.setNumPartitions(config.partitions);
+    }
+  }
+
+  @Override
   public void initialize(BatchRuntimeContext context) {
     outputSchema = context.getOutputSchema();
     fields = config.getFields();
@@ -83,17 +92,17 @@ public class DistinctReducibleAggregator
   }
 
   @Override
-  public StructuredRecord initializeAggregateValue(StructuredRecord val) throws Exception {
+  public StructuredRecord initializeAggregateValue(StructuredRecord val) {
     return val;
   }
 
   @Override
-  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue) throws Exception {
+  public StructuredRecord mergeValues(StructuredRecord aggValue, StructuredRecord groupValue) {
     return aggValue;
   }
 
   @Override
-  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2) throws Exception {
+  public StructuredRecord mergePartitions(StructuredRecord value1, StructuredRecord value2) {
     return value1;
   }
 
@@ -125,14 +134,24 @@ public class DistinctReducibleAggregator
     @Description("Comma-separated list of fields to perform the distinct on.")
     private String fields;
 
+    @Nullable
+    private Integer partitions;
+
     Iterable<String> getFields() {
       return Splitter.on(',').trimResults().split(fields);
     }
   }
 
-  public static ETLPlugin getPlugin(String field) {
+  public static ETLPlugin getPlugin(String fields) {
     Map<String, String> properties = new HashMap<>();
-    properties.put("fields", field);
+    properties.put("fields", fields);
+    return new ETLPlugin(NAME, BatchReducibleAggregator.PLUGIN_TYPE, properties);
+  }
+
+  public static ETLPlugin getPlugin(String fields, int partitions) {
+    Map<String, String> properties = new HashMap<>();
+    properties.put("fields", fields);
+    properties.put("partitions", String.valueOf(partitions));
     return new ETLPlugin(NAME, BatchReducibleAggregator.PLUGIN_TYPE, properties);
   }
 
@@ -140,6 +159,7 @@ public class DistinctReducibleAggregator
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put("fields", new PluginPropertyField(
       "fields", "Comma-separated list of fields to perform the distinct on.", "string", true, false));
+    properties.put("partitions", new PluginPropertyField("partitions", "", "int", false, false));
     return new PluginClass(BatchReducibleAggregator.PLUGIN_TYPE, NAME, DESCRIPTION,
                            DistinctReducibleAggregator.class.getName(),
                            "config", properties);
