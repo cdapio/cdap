@@ -95,9 +95,10 @@ public class ReducibleAggregatorTest extends HydratorTestBase {
       Schema.Field.of("used_name", Schema.of(Schema.Type.STRING)));
     String userInput = "inputSource-" + engine;
     String output = "outputSink-" + engine;
+    int numPartitions = 1;
     ETLBatchConfig config = ETLBatchConfig.builder()
       .addStage(new ETLStage("users", MockSource.getPlugin(userInput, inputSchema)))
-      .addStage(new ETLStage("aggregator", DistinctReducibleAggregator.getPlugin("id,name")))
+      .addStage(new ETLStage("aggregator", DistinctReducibleAggregator.getPlugin("id,name", numPartitions)))
       .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
       .addConnection("users", "aggregator")
       .addConnection("aggregator", "sink")
@@ -137,6 +138,7 @@ public class ReducibleAggregatorTest extends HydratorTestBase {
       StructuredRecord.builder(expectedSchema).set("id", 2).set("name", "test2").build()
     );
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
+    validateMetric(numPartitions, appId, "sink." + MockSink.INITIALIZED_COUNT_METRIC);
   }
 
   @Test

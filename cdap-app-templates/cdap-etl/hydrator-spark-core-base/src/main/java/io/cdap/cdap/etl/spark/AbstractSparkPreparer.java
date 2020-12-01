@@ -145,7 +145,10 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
     ContextProvider<DefaultAggregatorContext> contextProvider =
       new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);
     return new SubmitterPlugin<>(stageName, transactional, aggregator, contextProvider,
-                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+                                 ctx -> {
+                                   stagePartitions.put(stageName, ctx.getNumPartitions());
+                                   stageOperations.put(stageName, ctx.getFieldOperations());
+                                 });
   }
 
   @Override
@@ -155,7 +158,10 @@ public abstract class AbstractSparkPreparer extends PipelinePhasePreparer {
     ContextProvider<DefaultAggregatorContext> contextProvider =
       new AggregatorContextProvider(pipelineRuntime, stageSpec, admin);
     return new SubmitterPlugin<>(stageName, transactional, aggregator, contextProvider,
-                                 ctx -> stageOperations.put(stageName, ctx.getFieldOperations()));
+                                 ctx -> {
+                                   stagePartitions.put(stageName, ctx.getNumPartitions());
+                                   stageOperations.put(stageName, ctx.getFieldOperations());
+                                 });
   }
 
   @Override
