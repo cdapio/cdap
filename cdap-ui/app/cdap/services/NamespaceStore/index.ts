@@ -148,6 +148,9 @@ const validateNamespace = async (namespace) => {
   if (!namespace) {
     return;
   }
+  if (namespace === SYSTEM_NAMESPACE) {
+    return Promise.resolve(true);
+  }
   await fetchNamespaceList();
   return await fetchNamespaceDetails(namespace);
 };
