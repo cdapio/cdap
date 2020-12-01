@@ -54,7 +54,7 @@ export default function PipelineModeless({
         <div className="pipeline-modeless-header">
           <div className="pipeline-modeless-title">{title}</div>
           <div className="btn-group">
-            <a className="btn" onClick={onClose}>
+            <a className="btn" data-cy="pipeline-modeless-close-btn" onClick={onClose}>
               <IconSVG name="icon-close" />
             </a>
           </div>

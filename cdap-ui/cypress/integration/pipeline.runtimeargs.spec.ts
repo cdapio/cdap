@@ -278,8 +278,8 @@ describe('Deploying pipeline with temporary runtime arguments', () => {
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
     cy.add_runtime_args_row_with_value(2, 'runtime_args_key2', 'runtime_args_value2');
     cy.add_runtime_args_row_with_value(3, 'runtime_args_key3', 'runtime_args_value3');
-    // dismissing the modeless by clicking outside.
-    cy.get('h1.pipeline-name').click();
+    // dismissing the modeless by clicking close button.
+    cy.get(dataCy('pipeline-modeless-close-btn')).click();
     cy.get('.arrow-btn-container').click();
     cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
     cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
