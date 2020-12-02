@@ -36,6 +36,12 @@ export interface IStageSchema {
   schema: string;
 }
 
+export interface IWidgetExtraConfig {
+  namespace?: string;
+  inputSchema?: IStageSchema[];
+  properties?: Record<string, string>;
+}
+
 export interface IWidgetProps<T = any> {
   widgetProps?: T;
   value: string | number;
@@ -43,11 +49,7 @@ export interface IWidgetProps<T = any> {
   onBlur?: (value) => void | React.Dispatch<any>;
   onKeyPress?: (event: React.KeyboardEvent) => void;
   updateAllProperties?: (values: Record<string, string>) => void | React.Dispatch<any>;
-  extraConfig?: {
-    namespace?: string;
-    inputSchema?: IStageSchema[];
-    properties?: Record<string, string>;
-  };
+  extraConfig?: IWidgetExtraConfig;
   disabled?: boolean;
   errors?: IErrorObj[];
   dataCy?: string;

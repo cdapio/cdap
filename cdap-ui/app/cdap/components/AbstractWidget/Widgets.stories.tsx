@@ -38,6 +38,12 @@ const aliasOptions = [
   { value: 'CollectList', label: 'CollectList' },
 ];
 
+const idLabelOptions = [
+  { id: 'avg', label: 'Avg' },
+  { id: 'count', label: 'Count' },
+  { id: 'collectionList', label: 'CollectionList' },
+];
+
 const radioOptions = [
   { label: 'choice A', id: 'choice A' },
   { label: 'choice B', id: 'choice B' },
@@ -47,6 +53,9 @@ const radioOptions = [
 const widgetProps = {
   functionDropdown: {
     dropdownOptions: aliasOptions,
+  },
+  functionDropdownIdLabel: {
+    dropdownOptions: idLabelOptions,
   },
   keyValueDropdown: {
     dropdownOptions: ['simple option 1', 'simple option 2', 'simple option 3'],
@@ -75,6 +84,13 @@ export const dsv = () => <AbstractWidget type="dsv" />;
 
 export const functionDropdownWithAlias = () => (
   <AbstractWidget type="function-dropdown-with-alias" widgetProps={widgetProps.functionDropdown} />
+);
+
+export const functionDropdownWithArguments = () => (
+  <AbstractWidget
+    type="function-dropdown-with-arguments"
+    widgetProps={widgetProps.functionDropdownIdLabel}
+  />
 );
 
 export const keyValueDropdown = () => (

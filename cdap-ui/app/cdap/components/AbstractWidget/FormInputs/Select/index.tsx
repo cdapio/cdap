@@ -14,14 +14,13 @@
  * the License.
  */
 import Select, { SelectProps } from '@material-ui/core/Select';
-
 import { IWidgetProps } from 'components/AbstractWidget';
+import Input from '@material-ui/core/Input';
 import InputBase from '@material-ui/core/InputBase';
 import MenuItem from '@material-ui/core/MenuItem';
 import React from 'react';
 import Tooltip from '@material-ui/core/Tooltip';
 import { WIDGET_PROPTYPES } from 'components/AbstractWidget/constants';
-import { blue } from 'components/ThemeWrapper/colors';
 import { isNilOrEmptyString } from 'services/helpers';
 import { objectQuery } from 'services/helpers';
 import withStyles from '@material-ui/core/styles/withStyles';
@@ -37,17 +36,29 @@ const CustomTooltip = withStyles((theme) => {
   };
 })(Tooltip);
 
-const CustomizedInput = withStyles(() => {
+const CustomizedInputBase = withStyles((theme) => {
   return {
     input: {
       padding: '7px 18px 7px 12px',
       '&:focus': {
         backgroundColor: 'transparent',
-        outline: `1px solid ${blue[100]}`,
+        outline: `1px solid ${(theme.palette as any).blue[100]}`,
       },
     },
   };
 })(InputBase);
+
+const CustomizedInput = withStyles((theme) => {
+  return {
+    input: {
+      padding: '7px 18px 7px 12px',
+      '&:focus': {
+        backgroundColor: 'transparent',
+        outline: `1px solid ${(theme.palette as any).blue[100]}`,
+      },
+    },
+  };
+})(Input);
 
 const DenseMenuItem = withStyles(() => {
   return {
@@ -78,6 +89,7 @@ interface ISelectWidgetProps extends SelectProps {
   inline?: boolean;
   native?: boolean;
   default?: string;
+  enableUnderline?: boolean;
 }
 
 interface ISelectProps extends IWidgetProps<ISelectWidgetProps> {
@@ -109,6 +121,7 @@ const CustomSelect: React.FC<ISelectProps> = ({
   const inline = objectQuery(widgetProps, 'inline') || false;
   const native = objectQuery(widgetProps, 'native') || false;
   const MenuProps = objectQuery(widgetProps, 'MenuProps') || {};
+  const enableUnderline = objectQuery(widgetProps, 'enableUnderline') || false;
   const OptionItem = native ? 'option' : dense ? DenseMenuItem : MenuItem;
   const SelectComponent = inline ? InlineSelect : Select;
   let optionValues = options.map((opt) => {
@@ -118,12 +131,14 @@ const CustomSelect: React.FC<ISelectProps> = ({
     optionValues = [{ placeholder, value: '', label: placeholder }, ...optionValues];
   }
 
+  const InputComponent = enableUnderline ? CustomizedInput : CustomizedInputBase;
+
   return (
     <SelectComponent
       fullWidth
       value={value}
       onChange={onChangeHandler}
-      input={<CustomizedInput />}
+      input={<InputComponent />}
       readOnly={disabled}
       inputProps={{
         'data-cy': dataCy,
