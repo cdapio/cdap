@@ -35,6 +35,7 @@ import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerInfoContext;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
+import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
@@ -88,8 +89,12 @@ public final class ScheduleTaskRunner {
     TriggeringScheduleInfo triggeringScheduleInfo = getTriggeringScheduleInfo(job);
     systemArgs.put(ProgramOptionConstants.TRIGGERING_SCHEDULE_INFO, GSON.toJson(triggeringScheduleInfo));
 
-    execute(programId, systemArgs, userArgs);
-    LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+    try {
+      execute(programId, systemArgs, userArgs);
+      LOG.info("Successfully started program {} in schedule {}.", schedule.getProgramId(), schedule.getName());
+    } catch (CapabilityNotAvailableException ex) {
+      LOG.debug("Ignoring program {} in schedule {}.", schedule.getProgramId(), schedule.getName(), ex);
+    }
   }
 
   @VisibleForTesting

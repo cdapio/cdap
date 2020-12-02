@@ -33,6 +33,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.LocalArtifactLoaderStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.security.impersonation.Impersonator;
@@ -60,6 +61,7 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
   private final AuthenticationContext authenticationContext;
   private final AuthorizationEnforcer authorizationEnforcer;
   private final PluginFinder pluginFinder;
+  private final CapabilityReader capabilityReader;
 
   @Inject
   PreviewApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -67,7 +69,8 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
                             @Named("datasetMDS") DatasetFramework inMemoryDatasetFramework,
                             UsageRegistry usageRegistry, ArtifactRepository artifactRepository,
                             AuthenticationContext authenticationContext, Impersonator impersonator,
-                            AuthorizationEnforcer authorizationEnforcer, PluginFinder pluginFinder) {
+                            AuthorizationEnforcer authorizationEnforcer, PluginFinder pluginFinder,
+                            CapabilityReader capabilityReader) {
     this.cConf = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -80,13 +83,15 @@ public class PreviewApplicationManager<I, O> implements Manager<I, O> {
     this.ownerAdmin = ownerAdmin;
     this.authorizationEnforcer = authorizationEnforcer;
     this.pluginFinder = pluginFinder;
+    this.capabilityReader = capabilityReader;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(cConf, store, artifactRepository, impersonator,
-                                                  authorizationEnforcer, authenticationContext, pluginFinder));
+                                                  authorizationEnforcer, authenticationContext, pluginFinder,
+                                                  capabilityReader));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new DeployDatasetModulesStage(cConf, datasetFramework, inMemoryDatasetFramework,
                                                    ownerAdmin, authenticationContext));

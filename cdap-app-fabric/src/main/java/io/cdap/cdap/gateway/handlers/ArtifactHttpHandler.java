@@ -56,6 +56,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.WriteConflictException;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginNotExistsException;
+import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.artifact.ApplicationClassInfo;
 import io.cdap.cdap.proto.artifact.ApplicationClassSummary;
@@ -131,13 +133,15 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
 
   private final ArtifactRepository artifactRepository;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
+  private final CapabilityReader capabilityReader;
   private final File tmpDir;
 
   @Inject
   ArtifactHttpHandler(CConfiguration cConf, ArtifactRepository artifactRepository,
-                      NamespaceQueryAdmin namespaceQueryAdmin) {
+                      NamespaceQueryAdmin namespaceQueryAdmin, CapabilityReader capabilityReader) {
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.artifactRepository = artifactRepository;
+    this.capabilityReader = capabilityReader;
     this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
                            cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
   }
@@ -490,6 +494,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
 
         for (PluginClass pluginClass : pluginsEntry.getValue()) {
+          try {
+            capabilityReader.checkAllEnabled(pluginClass.getRequirements().getCapabilities());
+          } catch (CapabilityNotAvailableException e) {
+            LOG.debug("Skipping plugin {} because of disabled capability", pluginClass, e);
+            continue;
+          }
           pluginSummaries.add(new PluginSummary(
             pluginClass.getName(), pluginClass.getType(), pluginClass.getDescription(),
             pluginClass.getClassName(), pluginArtifactSummary));
@@ -552,6 +562,12 @@ public class ArtifactHttpHandler extends AbstractHttpHandler {
         ArtifactSummary pluginArtifactSummary = ArtifactSummary.from(pluginArtifact.getArtifactId());
 
         PluginClass pluginClass = pluginsEntry.getValue();
+        try {
+          capabilityReader.checkAllEnabled(pluginClass.getRequirements().getCapabilities());
+        } catch (CapabilityNotAvailableException e) {
+          LOG.debug("Skipping plugin {} because of disabled capability", pluginClass, e);
+          continue;
+        }
         pluginInfos.add(new PluginInfo(pluginClass, pluginArtifactSummary));
       }
       responder.sendJson(HttpResponseStatus.OK, GSON.toJson(pluginInfos));

@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Files;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.AppWithProgramsUsingGuava;
-import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.MissingMapReduceWorkflowApp;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -39,6 +39,10 @@ import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.deploy.Specifications;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.internal.capability.CapabilityConfig;
+import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.internal.capability.CapabilityStatus;
+import io.cdap.cdap.internal.capability.CapabilityWriter;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -68,6 +72,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -76,6 +81,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipOutputStream;
 
 /**
+ *
  */
 public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
@@ -84,6 +90,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
   private static ArtifactRepository artifactRepository;
   private static MetadataStorage metadataStorage;
   private static MetadataSubscriberService metadataSubscriber;
+  private static CapabilityWriter capabilityWriter;
 
   @BeforeClass
   public static void setup() throws Exception {
@@ -92,6 +99,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     metadataStorage = getInjector().getInstance(MetadataStorage.class);
     metadataSubscriber = getInjector().getInstance(MetadataSubscriberService.class);
+    capabilityWriter = getInjector().getInstance(CapabilityWriter.class);
   }
 
   @AfterClass
@@ -112,7 +120,8 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
     try {
       applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName", artifactId, appJarFile, null,
-                                                       null, programId -> { }, true);
+                                                       null, programId -> {
+        }, true);
       Assert.fail("expected application deployment to fail.");
     } catch (Exception e) {
       // expected
@@ -151,7 +160,7 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
 
   @Test
   public void testCapabilityMetaDataDeletion() throws Exception {
-    Class<AppWithWorkflow> appWithWorkflowClass = AppWithWorkflow.class;
+    Class<CapabilityAppWithWorkflow> appWithWorkflowClass = CapabilityAppWithWorkflow.class;
     Requirements declaredAnnotation = appWithWorkflowClass.getDeclaredAnnotation(Requirements.class);
     Set<String> expected = Arrays.stream(declaredAnnotation.capabilities()).collect(Collectors.toSet());
     Id.Artifact artifactId = Id.Artifact
@@ -161,10 +170,26 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
                                String.format("%s-%s.jar", artifactId.getName(), artifactId.getVersion().getVersion()));
     Files.copy(Locations.newInputSupplier(appJar), appJarFile);
     appJar.delete();
+
     //deploy app
+    try {
+      applicationLifecycleService
+        .deployAppAndArtifact(NamespaceId.DEFAULT, appWithWorkflowClass.getSimpleName(), artifactId, appJarFile, null,
+                              null, programId -> {
+          }, true);
+      Assert.fail("Expecting exception");
+    } catch (CapabilityNotAvailableException ex) {
+      //expected
+    }
+    for (String capability : declaredAnnotation.capabilities()) {
+      CapabilityConfig capabilityConfig = new CapabilityConfig("Test", CapabilityStatus.ENABLED, capability,
+                                                               Collections.emptyList(), Collections.emptyList());
+      capabilityWriter.addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
+    }
     applicationLifecycleService
       .deployAppAndArtifact(NamespaceId.DEFAULT, appWithWorkflowClass.getSimpleName(), artifactId, appJarFile, null,
-                            null, programId -> { }, true);
+                            null, programId -> {
+        }, true);
     //Check for the capability metadata
     ApplicationId appId = NamespaceId.DEFAULT.app(appWithWorkflowClass.getSimpleName());
     Assert.assertEquals(false, metadataStorage.read(new Read(appId.toMetadataEntity(),
@@ -265,11 +290,11 @@ public class ApplicationLifecycleServiceTest extends AppFabricTestBase {
     applicationLifecycleService.deployAppAndArtifact(NamespaceId.DEFAULT, "appName",
                                                      Id.Artifact.fromEntityId(artifactId), appJarFile,
                                                      null, null, new ProgramTerminator() {
-      @Override
-      public void stop(ProgramId programId) throws Exception {
-        // no-op
-      }
-    }, true);
+        @Override
+        public void stop(ProgramId programId) throws Exception {
+          // no-op
+        }
+      }, true);
 
     ApplicationId appId = NamespaceId.DEFAULT.app("appName");
 

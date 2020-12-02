@@ -231,6 +231,11 @@ public class TestBase {
     LevelDBTableService previewLevelDBTableService = new LevelDBTableService();
     previewLevelDBTableService.setConfiguration(previewCConf);
 
+    //enable default services
+    cConf.set(Constants.Capability.CONFIG_DIR, localDataDir.toString());
+    File capabilityFolder = new File(localDataDir.toString());
+    copyTempFile("pipeline.json", capabilityFolder);
+
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
     hConf.reloadConfiguration();

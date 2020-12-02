@@ -20,7 +20,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.inject.Injector;
-import io.cdap.cdap.AppWithWorkflow;
+import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.app.ApplicationSpecification;
@@ -119,17 +119,17 @@ public class SystemMetadataWriterStageTest {
 
   @Test
   public void testCapabilityTags() throws Exception {
-    String appName = AppWithWorkflow.class.getSimpleName();
+    String appName = CapabilityAppWithWorkflow.class.getSimpleName();
     ApplicationId appId = NamespaceId.DEFAULT.app(appName);
     String[] capabilityTestNames = {"cdc", "healthcare"};
     Requirements requirements = new Requirements(Collections.emptySet(), Stream.of(capabilityTestNames).collect(
       Collectors.toSet()));
-    ApplicationClass applicationClass = new ApplicationClass(AppWithWorkflow.class.getName(), appName, null,
+    ApplicationClass applicationClass = new ApplicationClass(CapabilityAppWithWorkflow.class.getName(), appName, null,
                                                              requirements);
-    String workflowName = AppWithWorkflow.SampleWorkflow.class.getSimpleName();
+    String workflowName = CapabilityAppWithWorkflow.SampleWorkflow.class.getSimpleName();
     ArtifactId artifactId = NamespaceId.DEFAULT.artifact(appId.getApplication(), "1.0");
     ApplicationWithPrograms appWithPrograms = createAppWithWorkflow(artifactId, appId, workflowName,
-                                                                    new AppWithWorkflow(), applicationClass);
+                                                                    new CapabilityAppWithWorkflow(), applicationClass);
     WorkflowSpecification workflowSpec = appWithPrograms.getSpecification().getWorkflows().get(workflowName);
     SystemMetadataWriterStage systemMetadataWriterStage = new SystemMetadataWriterStage(metadataServiceClient);
     StageContext stageContext = new StageContext(Object.class);
