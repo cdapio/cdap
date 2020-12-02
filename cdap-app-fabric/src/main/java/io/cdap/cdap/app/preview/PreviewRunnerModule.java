@@ -54,6 +54,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinderProvider;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowStateWriter;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowStateWriter;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.internal.capability.CapabilityReader;
+import io.cdap.cdap.internal.capability.CapabilityStatusStore;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
@@ -194,6 +196,8 @@ public class PreviewRunnerModule extends PrivateModule {
 
     bind(PreferencesFetcher.class).toProvider(preferencesFetcherProvider);
     expose(PreferencesFetcher.class);
+
+    bind(CapabilityReader.class).to(CapabilityStatusStore.class);
   }
 
   /**

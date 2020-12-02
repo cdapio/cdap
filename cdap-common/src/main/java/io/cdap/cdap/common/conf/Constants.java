@@ -1500,4 +1500,18 @@ public final class Constants {
      */
     public static final String UPDATE_ALLOWED = PREFIX + "update.allowed";
   }
+
+  /**
+   * Constants for capability management
+   */
+  public static final class Capability {
+    /**
+     * Interval for scanning config
+     */
+    public static final String DIR_SCAN_INTERVAL_MINUTES = "capability.dir.scan.interval.minutes";
+    /**
+     * Capability config directory path key
+     */
+    public static final String CONFIG_DIR = "capability.config.dir";
+  }
 }

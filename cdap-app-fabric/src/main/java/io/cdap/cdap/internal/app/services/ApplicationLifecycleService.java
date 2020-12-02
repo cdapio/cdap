@@ -67,6 +67,8 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.Artifacts;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.profile.AdminEventPublisher;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
@@ -95,7 +97,6 @@ import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.metadata.MetadataMutation;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,6 +149,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
   private final boolean appUpdateSchedules;
   private final AdminEventPublisher adminEventPublisher;
   private final Impersonator impersonator;
+  private final CapabilityReader capabilityReader;
 
   @Inject
   ApplicationLifecycleService(CConfiguration cConf,
@@ -157,7 +159,8 @@ public class ApplicationLifecycleService extends AbstractIdleService {
                               ManagerFactory<AppDeploymentInfo, ApplicationWithPrograms> managerFactory,
                               MetadataServiceClient metadataServiceClient,
                               AuthorizationEnforcer authorizationEnforcer, AuthenticationContext authenticationContext,
-                              MessagingService messagingService, Impersonator impersonator) {
+                              MessagingService messagingService, Impersonator impersonator,
+                              CapabilityReader capabilityReader) {
     this.cConf = cConf;
     this.appUpdateSchedules = cConf.getBoolean(Constants.AppFabric.APP_UPDATE_SCHEDULES,
                                                Constants.AppFabric.DEFAULT_APP_UPDATE_SCHEDULES);
@@ -173,6 +176,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.impersonator = impersonator;
+    this.capabilityReader = capabilityReader;
     this.adminEventPublisher = new AdminEventPublisher(cConf, new MultiThreadMessagingContext(messagingService));
   }
 
@@ -224,6 +228,12 @@ public class ApplicationLifecycleService extends AbstractIdleService {
     List<ApplicationDetail> result = new ArrayList<>();
     for (Map.Entry<ApplicationId, ApplicationSpecification> entry : appSpecs.entrySet()) {
       ApplicationDetail applicationDetail = ApplicationDetail.fromSpec(entry.getValue(), owners.get(entry.getKey()));
+      try {
+        capabilityReader.checkAllEnabled(entry.getValue());
+      } catch (CapabilityNotAvailableException ex) {
+        LOG.debug("Application {} is ignored due to exception.", applicationDetail.getName(), ex);
+        continue;
+      }
       if (predicate.test(applicationDetail)) {
         result.add(filterApplicationDetail(entry.getKey(), applicationDetail));
       }
@@ -896,7 +906,7 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
                                                        artifactDetail.getDescriptor().getArtifactId(), namespaceId));
     }
-
+    capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
                                                              appClass, appName, appVersion,
