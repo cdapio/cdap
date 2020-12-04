@@ -58,11 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.invoke.CallSite;
 import java.lang.invoke.LambdaMetafactory;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,12 +123,6 @@ final class HttpHandlerGenerator {
   private static final Type EXCEPTION_TYPE = Type.getType(Exception.class);
   private static final Type DELAYED_HTTP_SERVICE_RESPONDER_TYPE = Type.getType(DelayedHttpServiceResponder.class);
   private static final Type HTTP_CONTENT_CONSUMER_TYPE = Type.getType(HttpContentConsumer.class);
-
-  // Method descriptor of the LambdaMetafactory.metafactory method.
-  private static final String LAMBDA_META_FACTORY_METHOD_DESC =
-    MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class,
-                          MethodType.class, MethodHandle.class, MethodType.class).toMethodDescriptorString();
-
 
   private final TransactionControl defaultTxControl;
 
@@ -674,9 +664,9 @@ final class HttpHandlerGenerator {
       // Perform the lambda invocation.
       Handle metaFactoryHandle = new Handle(Opcodes.H_INVOKESTATIC,
                                             Type.getType(LambdaMetafactory.class).getInternalName(),
-                                            "metafactory", LAMBDA_META_FACTORY_METHOD_DESC);
+                                            "metafactory", Methods.LAMBDA_META_FACTORY_METHOD_DESC, false);
       Handle lambdaMethodHandle = new Handle(Opcodes.H_INVOKESTATIC, classType.getInternalName(),
-                                             lambdaMethod.getName(), lambdaMethod.getDescriptor());
+                                             lambdaMethod.getName(), lambdaMethod.getDescriptor(), false);
 
       // Signature of the ThrowingRunnable.run() method
       Type samMethodType = Type.getType(Type.getMethodDescriptor(Type.VOID_TYPE));

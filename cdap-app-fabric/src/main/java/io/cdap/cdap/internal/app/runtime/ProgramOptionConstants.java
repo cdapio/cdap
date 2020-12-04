@@ -25,8 +25,6 @@ public final class ProgramOptionConstants {
 
   public static final String PROGRAM_JAR = "programJar";
 
-  public static final String EXPANDED_PROGRAM_JAR = "expandedProgramJar";
-
   public static final String CDAP_CONF_FILE = "cConfFile";
 
   public static final String HADOOP_CONF_FILE = "hConfFile";

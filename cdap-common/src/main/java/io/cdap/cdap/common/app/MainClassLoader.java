@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.app;
 
-import com.google.common.base.Function;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.api.dataset.Dataset;
@@ -24,12 +23,11 @@ import io.cdap.cdap.common.dataset.DatasetClassRewriter;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.CombineClassLoader;
 import io.cdap.cdap.common.lang.FilterClassLoader;
+import io.cdap.cdap.common.lang.GuavaClassRewriter;
 import io.cdap.cdap.common.lang.InterceptableClassLoader;
 import io.cdap.cdap.common.security.AuthEnforceRewriter;
 import io.cdap.cdap.common.utils.DirUtils;
 import io.cdap.cdap.internal.asm.Classes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -44,6 +42,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /**
@@ -52,9 +51,8 @@ import javax.annotation.Nullable;
  */
 public class MainClassLoader extends InterceptableClassLoader {
 
-  private static final Logger LOG = LoggerFactory.getLogger(MainClassLoader.class);
-
   private static final String DATASET_CLASS_NAME = Dataset.class.getName();
+  private final GuavaClassRewriter guavaClassRewriter;
   private final DatasetClassRewriter datasetRewriter;
   private final AuthEnforceRewriter authEnforceRewriter;
   private final Function<String, URL> resourceLookup;
@@ -139,6 +137,7 @@ public class MainClassLoader extends InterceptableClassLoader {
    */
   public MainClassLoader(URL[] urls, ClassLoader parent) {
     super(urls, parent);
+    this.guavaClassRewriter = new GuavaClassRewriter();
     this.datasetRewriter = new DatasetClassRewriter();
     this.authEnforceRewriter = new AuthEnforceRewriter();
     this.resourceLookup = ClassLoaders.createClassResourceLookup(this);
@@ -158,6 +157,10 @@ public class MainClassLoader extends InterceptableClassLoader {
   @Override
   public byte[] rewriteClass(String className, InputStream input) throws IOException {
     byte[] rewrittenCode = null;
+
+    if (guavaClassRewriter.needRewrite(className)) {
+      rewrittenCode = guavaClassRewriter.rewriteClass(className, input);
+    }
 
     if (isDatasetRewriteNeeded(className)) {
       rewrittenCode = datasetRewriter.rewriteClass(className, input);
@@ -191,7 +194,9 @@ public class MainClassLoader extends InterceptableClassLoader {
   }
 
   private boolean isRewriteNeeded(String className) throws IOException {
-    return isDatasetRewriteNeeded(className) || isAuthRewriteNeeded(className);
+    return guavaClassRewriter.needRewrite(className)
+      || isDatasetRewriteNeeded(className)
+      || isAuthRewriteNeeded(className);
   }
 
   private boolean isDatasetRewriteNeeded(String className) throws IOException {

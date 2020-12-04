@@ -17,7 +17,6 @@
 package io.cdap.cdap.app.runtime.spark
 
 import com.google.common.reflect.TypeToken
-import javax.annotation.Nullable
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext
 import org.apache.spark.scheduler.SparkListener
@@ -32,6 +31,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit
+import javax.annotation.Nullable
 
 import scala.collection.JavaConversions._
 import scala.collection.mutable

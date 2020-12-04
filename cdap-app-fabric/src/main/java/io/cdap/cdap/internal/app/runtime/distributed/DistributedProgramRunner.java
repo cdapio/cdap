@@ -216,11 +216,7 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // Localize the program jar
       Location programJarLocation = program.getJarLocation();
       final String programJarName = programJarLocation.getName();
-      localizeResources.put(programJarName, new LocalizeResource(program.getJarLocation().toURI(), false));
-
-      // Localize an expanded program jar
-      final String expandedProgramJarName = "expanded." + programJarName;
-      localizeResources.put(expandedProgramJarName, new LocalizeResource(program.getJarLocation().toURI(), true));
+      localizeResources.put(programJarName, new LocalizeResource(programJarLocation.toURI(), false));
 
       // Localize the app spec
       localizeResources.put(APP_SPEC_FILE_NAME,
@@ -238,7 +234,6 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
       // and runs it in the remote container
       Map<String, String> extraSystemArgs = new HashMap<>(launchConfig.getExtraSystemArguments());
       extraSystemArgs.put(ProgramOptionConstants.PROGRAM_JAR, programJarName);
-      extraSystemArgs.put(ProgramOptionConstants.EXPANDED_PROGRAM_JAR, expandedProgramJarName);
       extraSystemArgs.put(ProgramOptionConstants.HADOOP_CONF_FILE, HADOOP_CONF_FILE_NAME);
       extraSystemArgs.put(ProgramOptionConstants.CDAP_CONF_FILE, CDAP_CONF_FILE_NAME);
       extraSystemArgs.put(ProgramOptionConstants.APP_SPEC_FILE, APP_SPEC_FILE_NAME);

@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.common.lang;
 
-import com.google.common.base.Function;
 import com.google.common.base.Objects;
 import com.google.common.base.Splitter;
 import com.google.common.base.Throwables;
@@ -38,6 +37,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Queue;
+import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -104,8 +104,8 @@ public final class ClassLoaders {
         return (T) cl;
       }
       if (cl instanceof Delegator) {
-        Object delegate = ((Delegator) cl).getDelegate();
-        if (delegate != null && delegate instanceof ClassLoader) {
+        Object delegate = ((Delegator<?>) cl).getDelegate();
+        if (delegate instanceof ClassLoader) {
           queue.add((ClassLoader) delegate);
         }
       }
@@ -131,8 +131,8 @@ public final class ClassLoaders {
     ClassLoader result = classLoader;
     while (result != null) {
       if (result instanceof Delegator) {
-        Object delegate = ((Delegator) result).getDelegate();
-        if (delegate != null && delegate instanceof ClassLoader) {
+        Object delegate = ((Delegator<?>) result).getDelegate();
+        if (delegate instanceof ClassLoader) {
           result = (ClassLoader) delegate;
         }
       }
@@ -170,12 +170,12 @@ public final class ClassLoaders {
    */
   public static <T extends Collection<? super URL>> T getClassLoaderURLs(ClassLoader classLoader,
                                                                          boolean childFirst, T urls) {
-    Deque<URLClassLoader> classLoaders = collectURLClassLoaders(classLoader, new LinkedList<URLClassLoader>());
+    Deque<URLClassLoader> classLoaders = collectURLClassLoaders(classLoader, new LinkedList<>());
 
     Iterator<URLClassLoader> iterator = childFirst ? classLoaders.iterator() : classLoaders.descendingIterator();
     while (iterator.hasNext()) {
-      ClassLoader cl = iterator.next();
-      for (URL url : ((URLClassLoader) cl).getURLs()) {
+      URLClassLoader cl = iterator.next();
+      for (URL url : cl.getURLs()) {
         if (urls.add(url) && (url.getProtocol().equals("file"))) {
           addClassPathFromJar(url, urls);
         }
@@ -196,7 +196,7 @@ public final class ClassLoaders {
    * @return the result collection
    */
   private static <T extends Collection<? super URLClassLoader>> T collectURLClassLoaders(ClassLoader classLoader,
-                                                                                         T result) {
+                                                                                        T result) {
     // Do BFS from the bottom of the ClassLoader chain
     Deque<ClassLoader> queue = new LinkedList<>();
     queue.add(classLoader);
@@ -216,8 +216,8 @@ public final class ClassLoaders {
       } else if (cl instanceof Delegator) {
         // Similarly for Delegator, although it might implement URLClassLoader, we get the delegate instead
         // so that the parent classloader can be correctly inspected later
-        Object delegate = ((Delegator) cl).getDelegate();
-        if (delegate != null && delegate instanceof ClassLoader) {
+        Object delegate = ((Delegator<?>) cl).getDelegate();
+        if (delegate instanceof ClassLoader) {
           // Use add first for delegate, which effectively is replacing the current classloader
           queue.addFirst((ClassLoader) delegate);
         }
@@ -239,15 +239,8 @@ public final class ClassLoaders {
    * @param classLoader the {@link ClassLoader} to use for the resource lookup.
    * @return the {@link URL} contains the class file or {@code null} if the resource is not found.
    */
-  @Nullable
   public static Function<String, URL> createClassResourceLookup(final ClassLoader classLoader) {
-    return new Function<String, URL>() {
-      @Nullable
-      @Override
-      public URL apply(String className) {
-        return classLoader.getResource(className.replace('.', '/') + ".class");
-      }
-    };
+    return className -> classLoader.getResource(className.replace('.', '/') + ".class");
   }
 
   /**

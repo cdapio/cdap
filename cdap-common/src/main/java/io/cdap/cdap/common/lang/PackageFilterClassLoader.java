@@ -16,15 +16,14 @@
 
 package io.cdap.cdap.common.lang;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterators;
-import com.google.common.collect.Lists;
-
 import java.io.IOException;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 
 /**
@@ -52,7 +51,7 @@ public class PackageFilterClassLoader extends ClassLoader {
     try {
       return bootstrapClassLoader.loadClass(name);
     } catch (ClassNotFoundException e) {
-      if (!predicate.apply(getClassPackage(name))) {
+      if (!predicate.test(getClassPackage(name))) {
         throw new ClassNotFoundException("Loading of class " + name + " not allowed");
       }
 
@@ -67,7 +66,7 @@ public class PackageFilterClassLoader extends ClassLoader {
       return resource;
     }
 
-    if (name.endsWith(".class") && !predicate.apply(getResourcePackage(name))) {
+    if (name.endsWith(".class") && !predicate.test(getResourcePackage(name))) {
       return null;
     }
     return super.getResource(name);
@@ -79,26 +78,26 @@ public class PackageFilterClassLoader extends ClassLoader {
     if (resources.hasMoreElements()) {
       return resources;
     }
-    if (name.endsWith(".class") && !predicate.apply(getResourcePackage(name))) {
-      return Iterators.asEnumeration(Iterators.<URL>emptyIterator());
+    if (name.endsWith(".class") && !predicate.test(getResourcePackage(name))) {
+      return Collections.emptyEnumeration();
     }
     return super.getResources(name);
   }
 
   @Override
   protected Package[] getPackages() {
-    List<Package> packages = Lists.newArrayList();
+    List<Package> packages = new ArrayList<>();
     for (Package pkg : super.getPackages()) {
-      if (predicate.apply(pkg.getName())) {
+      if (predicate.test(pkg.getName())) {
         packages.add(pkg);
       }
     }
-    return packages.toArray(new Package[packages.size()]);
+    return packages.toArray(new Package[0]);
   }
 
   @Override
   protected Package getPackage(String name) {
-    if (!predicate.apply(name)) {
+    if (!predicate.test(name)) {
       return null;
     }
     return super.getPackage(name);

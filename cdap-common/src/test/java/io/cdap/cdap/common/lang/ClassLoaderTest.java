@@ -17,17 +17,19 @@
 package io.cdap.cdap.common.lang;
 
 import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
+import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.common.io.ByteStreams;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import io.cdap.cdap.api.annotation.Beta;
 import io.cdap.cdap.api.annotation.Property;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.app.ApplicationConfigurer;
 import io.cdap.cdap.api.common.Bytes;
+import io.cdap.cdap.common.app.MainClassLoader;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.test.AppJarHelper;
@@ -44,10 +46,13 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Unit test for ClassLoader.
@@ -59,12 +64,8 @@ public class ClassLoaderTest {
 
   @Test
   public void testPackageFilter() throws ClassNotFoundException {
-    ClassLoader classLoader = new PackageFilterClassLoader(getClass().getClassLoader(), new Predicate<String>() {
-      @Override
-      public boolean apply(String input) {
-        return input.startsWith("io.cdap.cdap.api.");
-      }
-    });
+    ClassLoader classLoader = new PackageFilterClassLoader(getClass().getClassLoader(),
+                                                           input -> input.startsWith("io.cdap.cdap.api."));
 
     // Load allowed class. It should gives the same class.
     Class<?> cls = classLoader.loadClass(Application.class.getName());
@@ -98,8 +99,8 @@ public class ClassLoaderTest {
     // One allows "io.cdap.cdap.api.app", the other allows "io.cdap.cdap.api.annotation"
     ClassLoader parent = getClass().getClassLoader();
     ClassLoader classLoader = new CombineClassLoader(null,
-      new PackageFilterClassLoader(parent, Predicates.equalTo(Application.class.getPackage().getName())),
-      new PackageFilterClassLoader(parent, Predicates.equalTo(Beta.class.getPackage().getName()))
+      new PackageFilterClassLoader(parent, Application.class.getPackage().getName()::equals),
+      new PackageFilterClassLoader(parent, Beta.class.getPackage().getName()::equals)
     );
 
     // Should be able to load classes from those two packages
@@ -154,7 +155,7 @@ public class ClassLoaderTest {
 
     // Create a DirectoryClassLoader using guava dir as the main directory, with the gson dir in the extra classpath
     String extraClassPath = gsonDir.getAbsolutePath() + File.pathSeparatorChar + gsonDir.getAbsolutePath() + "/lib/*";
-    ClassLoader cl = new DirectoryClassLoader(guavaDir, extraClassPath, null, Arrays.asList("lib"));
+    ClassLoader cl = new DirectoryClassLoader(guavaDir, extraClassPath, null, Collections.singletonList("lib"));
 
     // Should be able to load both guava and gson class from the class loader
     cl.loadClass(ImmutableList.class.getName());
@@ -165,8 +166,8 @@ public class ClassLoaderTest {
   public void testDefinePackage() throws ClassNotFoundException {
     // This test is to test classes defined by the InterceptableClassLoader also has package being defined.
     // Create a classloader using urls from the current classloader and parent as the parent of the current classloader
-    List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<URL>());
-    ClassLoader cl = new InterceptableClassLoader(urls.toArray(new URL[urls.size()]),
+    List<URL> urls = ClassLoaders.getClassLoaderURLs(getClass().getClassLoader(), new ArrayList<>());
+    ClassLoader cl = new InterceptableClassLoader(urls.toArray(new URL[0]),
                                                   getClass().getClassLoader().getParent()) {
       @Override
       protected boolean needIntercept(String className) {
@@ -184,7 +185,7 @@ public class ClassLoaderTest {
     // Load a non-intercepted class. It should be defined by the intercepting classloader
     Class<?> cls = cl.loadClass(Application.class.getName());
     Assert.assertSame(cl, cls.getClassLoader());
-    Assert.assertEquals(Application.class.getPackage().getName(), cls.getPackage().getName());;
+    Assert.assertEquals(Application.class.getPackage().getName(), cls.getPackage().getName());
 
     // Load an intercepted class that comes from local file system (non-jar).
     cls = cl.loadClass(ClassLoaderTest.class.getName());
@@ -202,5 +203,49 @@ public class ClassLoaderTest {
     Assert.assertSame(cl, cls.getClassLoader());
     // The Supplier package should be the same as the Function package.
     Assert.assertSame(functionPackage, cls.getPackage());
+  }
+
+  @Test
+  public void testPreconditionsRewrite() throws Exception {
+    MainClassLoader classLoader = MainClassLoader.createFromContext();
+    Assert.assertNotNull(classLoader);
+
+    Class<?> cls = classLoader.loadClass(Preconditions.class.getName());
+
+    // Call the newly added method checkArgument(boolean, String, Object)
+    Method method = cls.getMethod("checkArgument", boolean.class, String.class, Object.class);
+    method.invoke(null, true, "check argument %s", "t1");
+    try {
+      method.invoke(null, false, "fail argument %s", "t1");
+    } catch (Exception e) {
+      Assert.assertEquals("fail argument t1", Throwables.getRootCause(e).getMessage());
+    }
+
+    // Call the newly added method checkState(boolean, String, Object)
+    method = cls.getMethod("checkState", boolean.class, String.class, Object.class);
+    method.invoke(null, true, "check state %s", "t2");
+    try {
+      method.invoke(null, false, "fail state %s", "t2");
+    } catch (Exception e) {
+      Assert.assertEquals("fail state t2", Throwables.getRootCause(e).getMessage());
+    }
+  }
+
+  @Test
+  public void testMoreExecutorsRewrite() throws Exception {
+    MainClassLoader classLoader = MainClassLoader.createFromContext();
+    Assert.assertNotNull(classLoader);
+
+    Class<?> cls = classLoader.loadClass(MoreExecutors.class.getName());
+
+    // Call the newly added directExecutor method
+    Method method = cls.getMethod("directExecutor");
+    Executor executor = (Executor) method.invoke(null);
+
+    String currentThreadName = Thread.currentThread().getName();
+    AtomicReference<String> executorThreadName = new AtomicReference<>();
+    executor.execute(() -> executorThreadName.set(Thread.currentThread().getName()));
+
+    Assert.assertEquals(currentThreadName, executorThreadName.get());
   }
 }

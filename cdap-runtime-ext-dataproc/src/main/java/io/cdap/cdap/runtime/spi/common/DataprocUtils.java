@@ -76,7 +76,7 @@ public final class DataprocUtils {
                                             Storage.BlobListOption.prefix(path + "/"));
       boolean addedToDelete = false;
       for (Blob blob : blobs.iterateAll()) {
-        LOG.debug("Added path to be deleted {}", blob.getName());
+        LOG.trace("Added path to be deleted {}", blob.getName());
         batch.delete(blob.getBlobId());
         addedToDelete = true;
       }

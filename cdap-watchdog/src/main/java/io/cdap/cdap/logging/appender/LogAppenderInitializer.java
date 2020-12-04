@@ -25,14 +25,15 @@ import ch.qos.logback.core.status.StatusManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Iterators;
 import com.google.inject.Inject;
-import org.eclipse.jetty.util.ConcurrentHashSet;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nullable;
 
 /**
@@ -40,7 +41,7 @@ import javax.annotation.Nullable;
  */
 public class LogAppenderInitializer implements Closeable {
   private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(LogAppenderInitializer.class);
-  private final Set<String> loggerNames = new ConcurrentHashSet<>();
+  private final Set<String> loggerNames = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private final LogAppender logAppender;
 
   @Inject

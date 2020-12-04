@@ -21,7 +21,6 @@ import io.cdap.cdap.app.runtime.spark.SparkRuntimeContextProvider;
 import io.cdap.cdap.app.runtime.spark.SparkRuntimeUtils;
 import io.cdap.cdap.app.runtime.spark.classloader.SparkContainerClassLoader;
 import io.cdap.cdap.app.runtime.spark.python.SparkPythonUtil;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.lang.ClassLoaders;
 import io.cdap.cdap.common.lang.FilterClassLoader;
 import io.cdap.cdap.common.logging.StandardOutErrorRedirector;
@@ -32,14 +31,16 @@ import org.slf4j.bridge.SLF4JBridgeHandler;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.Enumeration;
+import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,6 +50,7 @@ public final class SparkContainerLauncher {
 
   // This logger is only for logging for this class.
   private static final Logger LOG = LoggerFactory.getLogger(SparkContainerLauncher.class);
+  private static final String SPARK_CONF_CLASS_NAME = "org.apache.spark.SparkConf";
   private static final FilterClassLoader.Filter KAFKA_FILTER = new FilterClassLoader.Filter() {
     @Override
     public boolean acceptResource(String resource) {
@@ -79,10 +81,10 @@ public final class SparkContainerLauncher {
     urls.remove(getURLByClass(systemClassLoader, mainClassName));
 
     // Remove the first scala from the set of classpath. This ensure the one from Spark is used for spark
-    removeFirstJar(systemClassLoader, "scala.language", urls);
+    removeNonSparkJar(systemClassLoader, "scala.language", urls);
     // Remove the first jar containing LZBlockInputStream from the set of classpath.
     // The one from Kafka is not compatible with Spark
-    removeFirstJar(systemClassLoader, "net.jpountz.lz4.LZ4BlockInputStream", urls);
+    removeNonSparkJar(systemClassLoader, "net.jpountz.lz4.LZ4BlockInputStream", urls);
 
     // First create a FilterClassLoader that only loads JVM and kafka classes from the system classloader
     // This is to isolate the scala library from children
@@ -94,7 +96,7 @@ public final class SparkContainerLauncher {
     // Creates the SparkRunnerClassLoader for class rewriting and it will be used for the rest of the execution.
     // Use the extension classloader as the parent instead of the system classloader because
     // Spark classes are in the system classloader which we want to rewrite.
-    ClassLoader classLoader = new SparkContainerClassLoader(urls.toArray(new URL[urls.size()]), parentClassLoader,
+    ClassLoader classLoader = new SparkContainerClassLoader(urls.toArray(new URL[0]), parentClassLoader,
                                                             rewriteCheckpointTempFileName);
 
     // Sets the context classloader and launch the actual Spark main class.
@@ -220,26 +222,35 @@ public final class SparkContainerLauncher {
   }
 
   /**
-   * Removes the first jar file containing the given class based on the ordering providing by
-   * the given {@link ClassLoader} if there are multiple jars containing the given class.
+   * Removes extra classpath containing the given class that is not from the spark library loaded from the
+   * given {@link ClassLoader} if there are multiple files containing the given class.
    *
    * @param classLoader the {@link ClassLoader} for finding the jar containing the given class
    * @param className the class to look for
    * @param urls a {@link Set} of {@link URL} for the removal jar file
    * @throws IOException if failed to lookup the class location
    */
-  private static void removeFirstJar(ClassLoader classLoader, String className, Set<URL> urls) throws IOException {
-    URL url = getURLByClass(classLoader, className);
-    Enumeration<URL> resources = classLoader.getResources(className.replace('.', '/') + ".class");
-    // Only remove if there are more than one in the classpath
-    int count = 0;
-    while (resources.hasMoreElements()) {
-      resources.nextElement();
-      count++;
+  private static void removeNonSparkJar(ClassLoader classLoader,
+                                        String className, Set<URL> urls) throws IOException, URISyntaxException {
+    URL sparkConfURL = getURLByClass(classLoader, SPARK_CONF_CLASS_NAME);
+    List<URL> classURLs = Collections.list(classLoader.getResources(className.replace('.', '/') + ".class"));
+
+    if (classURLs.size() <= 1) {
+      return;
     }
-    if (count > 1) {
-      LOG.info("Removing {}", url);
-      urls.remove(url);
+
+    // Remove URLs that are not from Spark
+    URL sparkLibURL = getParentURL(sparkConfURL);
+    for (URL classURL : classURLs) {
+      URL classPathURL = ClassLoaders.getClassPathURL(className, classURL);
+
+      // Spark 1, all Spark classes comes from the spark-assembly jar
+      // Spark 2+, all Spark classes should comes from the spark-lib directory
+      if (classPathURL.equals(sparkConfURL) || sparkLibURL.equals(getParentURL(classPathURL))) {
+        continue;
+      }
+      LOG.info("Removing duplicated url from classpath {}", classPathURL);
+      urls.remove(classPathURL);
     }
   }
 
@@ -255,5 +266,10 @@ public final class SparkContainerLauncher {
     } catch (Exception e) {
 
     }
+  }
+
+  private static URL getParentURL(URL url) throws URISyntaxException, MalformedURLException {
+    URI uri = url.toURI();
+    return (uri.getPath().endsWith("/") ? uri.resolve("..") : uri.resolve(".")).toURL();
   }
 }

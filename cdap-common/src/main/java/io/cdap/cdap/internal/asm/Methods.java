@@ -18,12 +18,20 @@ package io.cdap.cdap.internal.asm;
 
 import org.objectweb.asm.commons.Method;
 
+import java.lang.invoke.CallSite;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 /**
  * Util class containing helper functions to interact with ASM {@link Method}.
  */
 public final class Methods {
+
+  // Method descriptor of the LambdaMetafactory.metafactory method. It is for invokeDynamic lambda call.
+  public static final String LAMBDA_META_FACTORY_METHOD_DESC =
+    MethodType.methodType(CallSite.class, MethodHandles.Lookup.class, String.class, MethodType.class,
+                          MethodType.class, MethodHandle.class, MethodType.class).toMethodDescriptorString();
 
   public static Method getMethod(Class<?> returnType, String name, Class<?>...args) {
     return new Method(name, MethodType.methodType(returnType, args).toMethodDescriptorString());

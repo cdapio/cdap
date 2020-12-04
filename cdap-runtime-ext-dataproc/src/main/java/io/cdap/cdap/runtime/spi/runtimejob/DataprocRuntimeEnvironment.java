@@ -103,6 +103,9 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
     if (yarnTwillRunnerService != null) {
       yarnTwillRunnerService.stop();
     }
+    if (zkServer != null) {
+      zkServer.stopAndWait();
+    }
     if (locationFactory != null) {
       Location location = locationFactory.create("/");
       try {
@@ -110,9 +113,6 @@ public class DataprocRuntimeEnvironment implements RuntimeJobEnvironment {
       } catch (IOException e) {
         LOG.warn("Failed to delete location {}", location, e);
       }
-    }
-    if (zkServer != null) {
-      zkServer.stopAndWait();
     }
   }
 
