@@ -25,6 +25,7 @@ import Input from '@material-ui/core/Input';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import withStyles from '@material-ui/core/styles/withStyles';
+import If from 'components/If';
 
 const styles = (theme) => {
   return {
@@ -45,12 +46,18 @@ interface IComplexDropdown {
   label: string;
 }
 
+export enum OrderingEnum {
+  KEYSFIRST,
+  VALUESFIRST,
+}
+
 export type IDropdownOption = string | number | IComplexDropdown;
 
 interface IKeyValueDropdownRowProps extends IAbstractRowProps<typeof styles> {
   keyPlaceholder?: string;
   kvDelimiter?: string;
-  dropdownOptions: IDropdownOption[];
+  dropdownOptions?: IDropdownOption[];
+  ordering?: OrderingEnum.KEYSFIRST | OrderingEnum.VALUESFIRST;
 }
 
 interface IKeyValueState {
@@ -64,7 +71,9 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
   public static defaultProps = {
     keyPlaceholder: 'Key',
     kvDelimiter: ':',
+    delimiter: ',',
     dropdownOptions: [],
+    ordering: OrderingEnum.KEYSFIRST,
   };
 
   public state = {
@@ -108,37 +117,54 @@ class KeyValueDropdownRow extends AbstractRow<IKeyValueDropdownRowProps, IKeyVal
       };
     });
 
+    const inputType = this.props.ordering === OrderingEnum.KEYSFIRST ? 'key' : 'value';
+    const InputField = (
+      <Input
+        classes={{ disabled: this.props.classes.disabled }}
+        placeholder={this.props.keyPlaceholder}
+        onChange={this.handleChange.bind(this, inputType)}
+        value={this.props.ordering === OrderingEnum.KEYSFIRST ? this.state.key : this.state.value}
+        autoFocus={this.props.autofocus}
+        onKeyPress={this.handleKeyPress}
+        onKeyDown={this.handleKeyDown}
+        disabled={this.props.disabled}
+        inputRef={this.props.forwardedRef}
+        data-cy={inputType}
+      />
+    );
+
+    const selectType = this.props.ordering === OrderingEnum.VALUESFIRST ? 'key' : 'value';
+    const SelectField = (
+      <Select
+        classes={{ disabled: this.props.classes.disabled }}
+        value={this.props.ordering === OrderingEnum.VALUESFIRST ? this.state.key : this.state.value}
+        onChange={this.handleChange.bind(this, selectType)}
+        displayEmpty={true}
+        disabled={this.props.disabled}
+        data-cy={selectType}
+      >
+        {dropdownOptions.map((option) => (
+          <MenuItem
+            value={option.value}
+            key={option.value}
+            data-cy={`${selectType}-${option.value}`}
+          >
+            {option.label}
+          </MenuItem>
+        ))}
+      </Select>
+    );
+
     return (
       <div className={this.props.classes.inputContainer}>
-        <Input
-          classes={{ disabled: this.props.classes.disabled }}
-          placeholder={this.props.keyPlaceholder}
-          onChange={this.handleChange.bind(this, 'key')}
-          value={this.state.key}
-          autoFocus={this.props.autofocus}
-          onKeyPress={this.handleKeyPress}
-          onKeyDown={this.handleKeyDown}
-          disabled={this.props.disabled}
-          inputRef={this.props.forwardedRef}
-          data-cy="key"
-        />
-
-        <Select
-          classes={{ disabled: this.props.classes.disabled }}
-          value={this.state.value}
-          onChange={this.handleChange.bind(this, 'value')}
-          displayEmpty={true}
-          disabled={this.props.disabled}
-          data-cy="value"
-        >
-          {dropdownOptions.map((option) => {
-            return (
-              <MenuItem value={option.value} key={option.value} data-cy={`value-${option.value}`}>
-                {option.label}
-              </MenuItem>
-            );
-          })}
-        </Select>
+        <If condition={this.props.ordering !== OrderingEnum.VALUESFIRST}>
+          {InputField}
+          {SelectField}
+        </If>
+        <If condition={this.props.ordering === OrderingEnum.VALUESFIRST}>
+          {SelectField}
+          {InputField}
+        </If>
       </div>
     );
   };
