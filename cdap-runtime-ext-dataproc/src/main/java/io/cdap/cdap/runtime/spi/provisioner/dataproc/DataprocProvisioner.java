@@ -16,7 +16,7 @@
 
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
-import com.google.cloud.dataproc.v1beta2.ClusterOperationMetadata;
+import com.google.cloud.dataproc.v1.ClusterOperationMetadata;
 import com.google.common.collect.ImmutableSet;
 import io.cdap.cdap.runtime.spi.ProgramRunInfo;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;

@@ -108,103 +108,11 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Image Version",
-          "name": "imageVersion",
-          "description": "The Dataproc image version. If none is given, one will automatically be chosen. If Custom Image URI is specified, this field will be ignored.",
-          "widget-attributes": {
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Custom Image URI (Beta)",
-          "name": "customImageUri",
-          "description": "Dataproc Image URI. If the URI is unspecified, it will be inferred from Image Version.",
-          "widget-attributes": {
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "textbox",
           "label": "Service Account",
           "name": "serviceAccount",
           "description": "The service account of the Dataproc virtual machine (VM). If none is given, the default Compute Engine service account will be used.",
           "widget-attributes": {
             "size": "medium"
-          }
-        },
-        {
-          "widget-type": "select",
-          "label": "Prefer External IP",
-          "name": "preferExternalIP",
-          "description": "When the system is running on Google Cloud Platform in the same network as the cluster, it will normally use the internal IP when communicating with the cluster. Set this to always use the external IP.",
-          "widget-attributes": {
-            "values": [
-              "false",
-              "true"
-            ],
-            "default": "false",
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "select",
-          "label": "Enable Stackdriver Logging Integration",
-          "name": "stackdriverLoggingEnabled",
-          "description": "Enable or disable Stackdriver logging integration.",
-          "widget-attributes": {
-            "values": [
-              "false",
-              "true"
-            ],
-            "default": "true",
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "select",
-          "label": "Enable Stackdriver Monitoring Integration",
-          "name": "stackdriverMonitoringEnabled",
-          "description": "Enable or disable Stackdriver monitoring integration.",
-          "widget-attributes": {
-            "values": [
-              "false",
-              "true"
-            ],
-            "default": "true",
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "toggle",
-          "label": "Enable Component Gateway",
-          "name": "componentGatewayEnabled",
-          "description": "Enable or disable Component Gateway.",
-          "widget-attributes": {
-            "values": [
-              "false",
-              "true"
-            ],
-            "default": "false",
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "GCS Bucket",
-          "name": "gcsBucket",
-          "description": "The Cloud Storage bucket used by Cloud Dataproc to read/write cluster and job data",
-          "widget-attributes": {
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "textbox",
-          "label": "Encryption Key Name",
-          "name": "encryptionKeyName",
-          "description": "The GCP customer managed encryption key (CMEK) name used by Cloud Dataproc",
-          "widget-attributes": {
-            "placeholder": "projects/<gcp-project-id>/locations/<key-location>/keyRings/<key-ring-name>/cryptoKeys/<key-name>"
           }
         }
       ]
@@ -222,7 +130,7 @@
               1,
               3
             ],
-            "size": "small",
+            "size": "medium",
             "default": 1
           }
         },
@@ -243,7 +151,7 @@
               64,
               96
             ],
-            "size": "small",
+            "size": "medium",
             "default": 1
           }
         },
@@ -255,7 +163,7 @@
           "widget-attributes": {
             "default": 4096,
             "min": 1024,
-            "size": "small"
+            "size": "medium"
           }
         },
         {
@@ -265,7 +173,28 @@
           "description": "The disk size in GB to allocate for a master node",
           "widget-attributes": {
             "default": 1000,
-            "size": "small"
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "radio-group",
+          "label": "Master Disk Type",
+          "name": "masterDiskType",
+          "description": "The type of boot disk for a master node",
+          "widget-attributes": {
+            "layout": "inline",
+            "size": "medium",
+            "default": "pd-standard",
+            "options": [
+              {
+                "id": "pd-standard",
+                "label": "Standard Persistent Disk"
+              },
+              {
+                "id": "pd-ssd",
+                "label": "SSD Persistent Disk"
+              }
+            ]
           }
         }
       ]
@@ -275,13 +204,24 @@
       "properties": [
         {
           "widget-type": "number",
-          "label": "Number of Workers",
+          "label": "Number of Primary Workers",
           "name": "workerNumNodes",
           "description": "Worker nodes contain a YARN NodeManager and a HDFS DataNode.",
           "widget-attributes": {
             "default": 2,
             "min": 1,
-            "size": "small"
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "number",
+          "label": "Number of Secondary Workers",
+          "name": "secondaryWorkerNumNodes",
+          "description": "Secondary worker nodes contain a YARN NodeManager but not a HDFS DataNode. This is normally set to 0 unless an autoscale policy requires it to be higher.",
+          "widget-attributes": {
+            "default": 0,
+            "min": 0,
+            "size": "medium"
           }
         },
         {
@@ -302,7 +242,7 @@
               96
             ],
             "default": 2,
-            "size": "small"
+            "size": "medium"
           }
         },
         {
@@ -313,7 +253,7 @@
           "widget-attributes": {
             "default": 8192,
             "min": 1024,
-            "size": "small"
+            "size": "medium"
           }
         },
         {
@@ -323,7 +263,201 @@
           "description": "The disk size in GB to allocate for a worker node",
           "widget-attributes": {
             "default": 1000,
-            "size": "small"
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "radio-group",
+          "label": "Worker Disk Type",
+          "name": "workerDiskType",
+          "description": "The type of boot disk for a worker node",
+          "widget-attributes": {
+            "layout": "inline",
+            "size": "medium",
+            "default": "pd-standard",
+            "options": [
+              {
+                "id": "pd-standard",
+                "label": "Standard Persistent Disk"
+              },
+              {
+                "id": "pd-ssd",
+                "label": "SSD Persistent Disk"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "label": "Cluster Metadata",
+      "properties": [
+        {
+          "widget-type": "keyvalue",
+          "label": "Metadata",
+          "name": "clusterMetaData",
+          "description": "Add additional metadata for instances that run in your cluster. You can typically use it for tracking billing and chargebacks. For more details, see https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/metadata",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "delimiter": ";",
+            "kv-delimiter": "|",
+            "key-placeholder": "Key",
+            "value-placeholder": "Value"
+          }
+        },
+        {
+          "name": "networkTags",
+          "label": "Network Tags",
+          "widget-type": "csv",
+          "description": "Assign Network tags to apply firewall rules to specific nodes of cluster. Network tags must start with a lowercase letter and can contain lowercase letters, numbers, and hyphens. Tags must end with a lowercase letter or number. ",
+          "widget-attributes" : {}
+        }
+
+      ]
+    },
+    {
+      "label": "Advanced Settings",
+      "properties": [
+        {
+          "widget-type": "textbox",
+          "label": "Image Version",
+          "name": "imageVersion",
+          "description": "The Dataproc image version. If none is given, one will automatically be chosen. If Custom Image URI is specified, this field will be ignored.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Custom Image URI",
+          "name": "customImageUri",
+          "description": "Dataproc Image URI. If the URI is unspecified, it will be inferred from Image Version.",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "GCS Bucket",
+          "name": "gcsBucket",
+          "description": "The Cloud Storage bucket used by Cloud Dataproc to read/write cluster and job data",
+          "widget-attributes": {
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Encryption Key Name",
+          "name": "encryptionKeyName",
+          "description": "The GCP customer managed encryption key (CMEK) name used by Cloud Dataproc",
+          "widget-attributes": {
+            "placeholder": "projects/<gcp-project-id>/locations/<key-location>/keyRings/<key-ring-name>/cryptoKeys/<key-name>"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Autoscaling Policy",
+          "name": "autoScalingPolicy",
+          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
+          "widget-attributes": {
+            "placeholder": "projects/<gcp-project-id>/regions/<region>/autoscalingPolicies/<policy-name>"
+          }
+        },
+        {
+          "name": "initActions",
+          "label": "Initialization Actions",
+          "widget-type": "csv",
+          "description": "A list of scripts to be executed during initialization of cluster.",
+          "widget-attributes" : {}
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Stackdriver Logging Integration",
+          "name": "stackdriverLoggingEnabled",
+          "description": "Enable or disable Stackdriver logging integration.",
+          "widget-attributes": {
+            "default": "true",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Stackdriver Monitoring Integration",
+          "name": "stackdriverMonitoringEnabled",
+          "description": "Enable or disable Stackdriver monitoring integration.",
+          "widget-attributes": {
+            "default": "true",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Enable Component Gateway",
+          "name": "componentGatewayEnabled",
+          "description": "Enable Component Gateway to allow access to cluster UIs like the YARN ResourceManager and Spark HistoryServer.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Skip Cluster Delete",
+          "name": "skipDelete",
+          "description": "Whether to skip cluster deletion at the end of a run. Clusters will need to be deleted manually. This should only be used when debugging a failed run.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Prefer External IP",
+          "name": "preferExternalIP",
+          "description": "When the system is running on Google Cloud Platform in the same network as the cluster, it will normally use the internal IP when communicating with the cluster. Set this to always use the external IP.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
           }
         }
       ]
@@ -369,58 +503,6 @@
           "widget-attributes": {
             "default": "2",
             "size": "small"
-          }
-        }
-      ]
-    },
-    {
-      "label": "Cluster Metadata",
-      "properties": [
-        {
-          "widget-type": "keyvalue",
-          "label": "Metadata",
-          "name": "clusterMetaData",
-          "description": "Add additional metadata for instances that run in your cluster. You can typically use it for tracking billing and chargebacks. For more details, see https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/metadata",
-          "widget-attributes": {
-            "showDelimiter": "false",
-            "delimiter": ";",
-            "kv-delimiter": "|",
-            "key-placeholder": "Key",
-            "value-placeholder": "Value"
-          }
-        },
-        {
-          "name": "networkTags",
-          "label": "Network Tags",
-          "widget-type": "csv",
-          "description": "Assign Network tags to apply firewall rules to specific nodes of cluster. Network tags must start with a lowercase letter and can contain lowercase letters, numbers, and hyphens. Tags must end with a lowercase letter or number. ",
-          "widget-attributes" : {}
-        }
-
-      ]
-    },
-    {
-      "label": "Advanced Settings",
-      "properties": [
-        {
-          "name": "initActions",
-          "label": "Initialization Actions",
-          "widget-type": "csv",
-          "description": "A list of scripts to be executed during initialization of cluster.",
-          "widget-attributes" : {}
-        }
-      ]
-    },
-    {
-      "label": "Experimental Features (BETA)",
-      "properties": [
-        {
-          "widget-type": "textbox",
-          "label": "Autoscaling Policy",
-          "name": "autoScalingPolicy",
-          "description": "Specify the Autoscaling Policy id (name) or the resource URI",
-          "widget-attributes": {
-            "size": "medium"
           }
         }
       ]
