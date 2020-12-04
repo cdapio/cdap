@@ -76,6 +76,7 @@ interface IExperiment {
   showValue?: boolean;
   valueLabel?: string;
   valueType?: string;
+  force?: boolean;
 }
 interface ILabState {
   experiments: IExperiment[];
@@ -84,6 +85,12 @@ interface ILabState {
 class Lab extends React.Component<ILabProps, ILabState> {
   public componentDidMount() {
     experimentsList.forEach((experiment: IExperiment) => {
+      // If the experiment is forcefully disabled do not check
+      // the localStorage. Update localStorage with disabled state.
+      if (experiment.force && !experiment.enabled) {
+        window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
+        return;
+      }
       // If experiment preference is present in storage, use it.
       // If not, use the default value and set it in storage and use it.
       const experimentStatusFromStorage = window.localStorage.getItem(experiment.experimentId);
