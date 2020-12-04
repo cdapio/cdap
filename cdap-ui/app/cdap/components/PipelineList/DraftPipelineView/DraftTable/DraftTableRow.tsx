@@ -31,23 +31,24 @@ export default class DraftTableRow extends React.PureComponent<IProps> {
   public render() {
     const draft = this.props.draft;
     const namespace = getCurrentNamespace();
-    const lastSaved = humanReadableDate(draft.__ui__.lastSaved, true);
+    const lastSaved = humanReadableDate(
+      draft.needsUpgrade ? draft.__ui__.lastSaved : draft.updatedTimeMillis,
+      true
+    );
 
     const link = window.getHydratorUrl({
       stateName: 'hydrator.create',
       stateParams: {
         namespace,
-        draftId: draft.__ui__.draftId,
+        draftId: draft.needsUpgrade ? draft.__ui__.draftId : draft.id,
       },
     });
 
     return (
       <a href={link} className="grid-row" data-cy={`draft-${draft.name}`}>
-        <div className="name" title={draft.name}>
-          {draft.name}
-        </div>
-        <div className="type">{T.translate(`${PREFIX}.${draft.artifact.name}`)}</div>
-        <div className="last-saved">{lastSaved}</div>
+        <div title={draft.name}>{draft.name}</div>
+        <div>{T.translate(`${PREFIX}.${draft.artifact.name}`)}</div>
+        <div>{lastSaved}</div>
 
         <DraftActions draft={this.props.draft} />
       </a>

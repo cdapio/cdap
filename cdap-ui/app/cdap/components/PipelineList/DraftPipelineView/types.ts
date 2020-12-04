@@ -19,6 +19,8 @@ interface IArtifact {
 }
 
 export interface IDraft {
+  id?: string;
+  updatedTimeMillis?: Date;
   name: string;
   artifact: IArtifact;
   __ui__: {
@@ -27,4 +29,5 @@ export interface IDraft {
   };
   description?: string;
   config?: any;
+  needsUpgrade?: boolean;
 }

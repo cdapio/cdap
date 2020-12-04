@@ -116,8 +116,27 @@ angular.module(PKG.name + '.feature.hydrator')
               window.CaskCommon.ee.emit(
                 window.CaskCommon.globalEvents.PAGE_LEVEL_ERROR, { reset: true });
             },
-            rConfig: function(rCDAPVersion, $stateParams, mySettings, $q, myHelpers, $window, HydratorPlusPlusHydratorService) {
+            rConfig: function(rCDAPVersion, $stateParams, mySettings, $q, myHelpers, $window, HydratorPlusPlusHydratorService, myPipelineApi) {
               var defer = $q.defer();
+              const processDraft = (draft) => {
+                if (angular.isObject(draft)) {
+                  let isVersionInRange = HydratorPlusPlusHydratorService
+                    .isVersionInRange({
+                      supportedVersion: rCDAPVersion,
+                      versionRange: draft.artifact.version
+                    });
+
+                  if (isVersionInRange) {
+                    draft.artifact.version = rCDAPVersion;
+                  } else {
+                    defer.resolve({ valid: false, config: draft, upgrade: true });
+                    return;
+                  }
+                  defer.resolve({ valid: true, config: draft });
+                } else {
+                  defer.resolve({ valid: false });
+                }
+              };
               if ($stateParams.data) {
                 // This is being used while cloning a published a pipeline.
                 let isVersionInRange = HydratorPlusPlusHydratorService
@@ -137,26 +156,17 @@ angular.module(PKG.name + '.feature.hydrator')
                 return defer.promise;
               }
               if ($stateParams.draftId) {
-                mySettings.get('hydratorDrafts', true)
-                  .then(function(res) {
-                    var draft = myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId);
-                    if (angular.isObject(draft)) {
-                      let isVersionInRange = HydratorPlusPlusHydratorService
-                        .isVersionInRange({
-                          supportedVersion: rCDAPVersion,
-                          versionRange: draft.artifact.version
-                        });
-
-                      if (isVersionInRange) {
-                        draft.artifact.version = rCDAPVersion;
-                      } else {
-                        defer.resolve({ valid: false, config: draft, upgrade: true });
-                        return;
-                      }
-                      defer.resolve({ valid: true, config: draft });
-                    } else {
-                      defer.resolve({ valid: false });
-                    }
+                const params = {
+                  context: $stateParams.namespace,
+                  draftId: $stateParams.draftId,
+                };
+                myPipelineApi.getDraft(params)
+                  .$promise
+                  .then(processDraft, () => {
+                    mySettings.get('hydratorDrafts', true)
+                      .then(function(res) {
+                        processDraft(myHelpers.objectQuery(res, $stateParams.namespace, $stateParams.draftId));
+                      });
                   });
               } else if ($stateParams.configParams) {
                 // This is being used while adding a dataset/stream as source/sink from metadata to pipeline studio
