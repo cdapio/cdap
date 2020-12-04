@@ -17,6 +17,7 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
+import com.google.api.services.compute.Compute;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
@@ -79,11 +80,14 @@ final class DataprocConf {
   private final int masterCPUs;
   private final int masterMemoryMB;
   private final int masterDiskGB;
+  private final String masterDiskType;
 
   private final int workerNumNodes;
+  private final int secondaryWorkerNumNodes;
   private final int workerCPUs;
   private final int workerMemoryMB;
   private final int workerDiskGB;
+  private final String workerDiskType;
 
   private final long pollCreateDelay;
   private final long pollCreateJitter;
@@ -110,9 +114,9 @@ final class DataprocConf {
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
-         conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB,
-         conf.workerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
-         conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
+         conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
+         conf.workerNumNodes, conf.secondaryWorkerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
+         conf.workerDiskType, conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.componentGatewayEnabled, conf.publicKey, conf.imageVersion, conf.customImageUri,
@@ -123,7 +127,8 @@ final class DataprocConf {
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
-                       int masterDiskGB, int workerNumNodes, int workerCPUs, int workerMemoryMB, int workerDiskGB,
+                       int masterDiskGB, String masterDiskType, int workerNumNodes, int secondaryWorkerNumNodes,
+                       int workerCPUs, int workerMemoryMB, int workerDiskGB, String workerDiskType,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
@@ -144,10 +149,13 @@ final class DataprocConf {
     this.masterCPUs = masterCPUs;
     this.masterMemoryMB = masterMemoryMB;
     this.masterDiskGB = masterDiskGB;
+    this.masterDiskType = masterDiskType;
     this.workerNumNodes = workerNumNodes;
+    this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
     this.workerCPUs = workerCPUs;
     this.workerMemoryMB = workerMemoryMB;
     this.workerDiskGB = workerDiskGB;
+    this.workerDiskType = workerDiskType;
     this.pollCreateDelay = pollCreateDelay;
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
@@ -205,12 +213,24 @@ final class DataprocConf {
     return masterDiskGB;
   }
 
+  String getMasterDiskType() {
+    return masterDiskType;
+  }
+
   int getWorkerNumNodes() {
     return workerNumNodes;
   }
 
+  int getSecondaryWorkerNumNodes() {
+    return secondaryWorkerNumNodes;
+  }
+
   int getWorkerDiskGB() {
     return workerDiskGB;
+  }
+
+  String getWorkerDiskType() {
+    return workerDiskType;
   }
 
   String getMasterMachineType() {
@@ -426,6 +446,12 @@ final class DataprocConf {
         "Invalid config 'workerNumNodes' = 1. Worker nodes must either be zero for a single node cluster, " +
           "or at least 2 for a multi node cluster.");
     }
+    int secondaryWorkerNumNodes = getInt(properties, "secondaryWorkerNumNodes", 0);
+    if (secondaryWorkerNumNodes < 0) {
+      throw new IllegalArgumentException(
+        String.format("Invalid config 'secondaryWorkerNumNodes' = %d. The value must be 0 or greater.",
+                      secondaryWorkerNumNodes));
+    }
     // TODO: more extensive validation. Each cpu number has a different allowed memory range
     // for example, 1 cpu requires memory from 3.5gb to 6.5gb in .25gb increments
     // 3 cpu requires memory from 3.6gb to 26gb in .25gb increments
@@ -435,7 +461,15 @@ final class DataprocConf {
     int workerMemoryGB = getInt(properties, "workerMemoryMB", 15 * 1024);
 
     int masterDiskGB = getInt(properties, "masterDiskGB", 1000);
+    String masterDiskType = getString(properties, "masterDiskType");
+    if (masterDiskType == null) {
+      masterDiskType = "pd-standard";
+    }
     int workerDiskGB = getInt(properties, "workerDiskGB", 1000);
+    String workerDiskType = getString(properties, "workerDiskType");
+    if (workerDiskType == null) {
+      workerDiskType = "pd-standard";
+    }
 
     long pollCreateDelay = getLong(properties, "pollCreateDelay", 60);
     long pollCreateJitter = getLong(properties, "pollCreateJitter", 20);
@@ -480,9 +514,9 @@ final class DataprocConf {
     String autoScalingPolicy = getString(properties, "autoScalingPolicy");
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
-                            masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
-                            workerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
-                            pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
+                            masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB, masterDiskType,
+                            workerNumNodes, secondaryWorkerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
+                            workerDiskType, pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, componentGatewayEnabled,
                             publicKey, imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
