@@ -17,7 +17,6 @@
 package io.cdap.cdap.internal.app.runtime.plugin;
 
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.common.lang.CombineClassLoader;
@@ -52,6 +51,7 @@ import java.util.jar.Manifest;
  * ClassLoader as the Combine ClassLoader.
  */
 public class PluginClassLoader extends DirectoryClassLoader {
+
   private final ArtifactId artifactId;
   private final Set<String> exportPackages;
 
@@ -68,7 +68,7 @@ public class PluginClassLoader extends DirectoryClassLoader {
     Manifest manifest = ((ProgramClassLoader) programClassLoader).getManifest();
     Set<String> exportPackages = ManifestFields.getExportPackages(manifest);
     ClassLoader filteredTemplateClassLoader = new PackageFilterClassLoader(templateClassLoader,
-                                                                           Predicates.in(exportPackages));
+                                                                           exportPackages::contains);
 
     // The lib Classloader needs to be able to see all cdap api classes as well.
     // In this way, parent ClassLoader of the plugin ClassLoader will load class from the parent of the
@@ -95,6 +95,6 @@ public class PluginClassLoader extends DirectoryClassLoader {
    * in the manifest.
    */
   public ClassLoader getExportPackagesClassLoader() {
-    return new PackageFilterClassLoader(this, Predicates.in(exportPackages));
+    return new PackageFilterClassLoader(this, exportPackages::contains);
   }
 }

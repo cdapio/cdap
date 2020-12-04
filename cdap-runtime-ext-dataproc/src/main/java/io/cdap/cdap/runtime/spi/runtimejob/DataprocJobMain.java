@@ -37,6 +37,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -99,6 +100,7 @@ public class DataprocJobMain {
     // which can be used for shutdown hook execution.
     // Closing it too early can result in NoClassDefFoundError in shutdown hook execution.
     ClassLoader newCL = createContainerClassLoader(urls);
+    CompletableFuture<?> completion = new CompletableFuture<>();
     try {
       Thread.currentThread().setContextClassLoader(newCL);
 
@@ -122,6 +124,10 @@ public class DataprocJobMain {
         Object runner = runnerCls.newInstance();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+          // Request the runtime job to stop if it it hasn't been completed
+          if (completion.isDone()) {
+            return;
+          }
           try {
             stopMethod.invoke(runner);
           } catch (Exception e) {
@@ -139,9 +145,11 @@ public class DataprocJobMain {
       }
 
       LOG.info("Runtime job completed.");
+      completion.complete(null);
     } catch (Throwable t) {
       // We log here and rethrow to make sure the exception log is captured in the job output
       LOG.error("Runtime job failed", t);
+      completion.completeExceptionally(t);
       throw t;
     }
   }

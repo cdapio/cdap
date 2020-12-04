@@ -18,6 +18,7 @@ package io.cdap.cdap.app.program;
 
 import com.google.common.collect.ImmutableSet;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
@@ -70,7 +71,7 @@ public final class ManifestFields {
    */
   public static Set<String> getExportPackages(@Nullable Manifest manifest) {
     if (manifest == null) {
-      return ImmutableSet.of();
+      return Collections.emptySet();
     }
 
     ImmutableSet.Builder<String> result = ImmutableSet.builder();

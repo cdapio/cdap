@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.internal.app.runtime;
 
-import com.google.common.base.Function;
 import io.cdap.cdap.api.dataset.Dataset;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -33,6 +32,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * ClassLoader that implements bundle jar feature, in which the application jar contains

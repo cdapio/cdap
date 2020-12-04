@@ -114,7 +114,7 @@ public final class SparkRuntimeContextProvider {
   static final String CCONF_FILE_NAME = "cConf.xml";
   static final String HCONF_FILE_NAME = "hConf.xml";
   // The suffix has to be .jar, otherwise YARN don't expand it
-  static final String PROGRAM_JAR_EXPANDED_NAME = "program.expanded.jar";
+  static final String PROGRAM_JAR_EXPANDED_NAME = "program.jar.expanded.zip";
   static final String PROGRAM_JAR_NAME = "program.jar";
   static final String EXECUTOR_CLASSLOADER_NAME = "org.apache.spark.repl.ExecutorClassLoader";
 

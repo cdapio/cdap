@@ -51,6 +51,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.nio.file.Files;
 import java.util.Arrays;
@@ -304,15 +305,26 @@ public final class SparkRuntimeUtils {
       public void onApplicationStart(SparkListenerApplicationStart event) {
         // Rewrite the application start event with identifiable names based on the program run id such that
         // it can be tied back to the program run.
-        SparkListenerApplicationStart startEvent = new SparkListenerApplicationStart(
-          String.format("%s.%s.%s.%s",
-                        programRunId.getNamespace(),
-                        programRunId.getApplication(),
-                        programRunId.getType().getPrettyName().toLowerCase(),
-                        programRunId.getProgram()),
-          Option.apply(programRunId.getRun()),
-          event.time(), event.sparkUser(), event.appAttemptId(), event.driverLogs());
-        super.onApplicationStart(startEvent);
+        // We use reflection to modify the field instead of creating a new event instance due to
+        // non-binary compatible Spark API change between Spark 2 and Spark 3.
+        try {
+          Field appName = event.getClass().getDeclaredField("appName");
+          appName.setAccessible(true);
+          Field appId = event.getClass().getDeclaredField("appId");
+          appId.setAccessible(true);
+
+          appName.set(event, String.format("%s.%s.%s.%s",
+                                           programRunId.getNamespace(),
+                                           programRunId.getApplication(),
+                                           programRunId.getType().getPrettyName().toLowerCase(),
+                                           programRunId.getProgram()));
+
+          appId.set(event, Option.apply(programRunId.getRun()));
+        } catch (Exception e) {
+          LOG.warn("Failed to alter application start event", e);
+        }
+
+        super.onApplicationStart(event);
       }
     };
     listener.start();
