@@ -17,7 +17,7 @@
 import * as d3 from 'd3';
 import numeral from 'numeral';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
-import { timeFormatMonthDateTime } from 'components/ChartContainer';
+import { timeFormatMonthDate, timeFormatHourMinute } from 'components/ChartContainer';
 
 export interface ILatencyData {
   time: number;
@@ -45,7 +45,7 @@ export function renderLatencyGraph(
 
   const margin = {
     top: 10,
-    bottom: 25,
+    bottom: 40,
     left: 60,
     right: 35,
   };
@@ -118,7 +118,7 @@ export function renderLatencyGraph(
   const xAxis = d3
     .axisBottom(x)
     .tickSizeOuter(0)
-    .tickFormat(timeFormatMonthDateTime);
+    .tickFormat(timeFormatMonthDate);
   const xAxisGroup = chart
     .append('g')
     .attr('class', 'axis axis-x')
@@ -132,6 +132,11 @@ export function renderLatencyGraph(
       return i % 6 !== 0;
     })
     .remove();
+  xAxisGroup
+    .selectAll('.tick')
+    .append('text')
+    .text(timeFormatHourMinute)
+    .attr('dy', 30);
   xAxisGroup
     .selectAll('.tick text')
     .style('font-size', '12px')

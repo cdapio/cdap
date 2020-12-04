@@ -30,7 +30,7 @@ const styles = (): StyleRules => {
       position: 'relative',
     },
     heading: {
-      textAlign: 'center',
+      marginBottom: '10px',
     },
     square: {
       display: 'inline-block',

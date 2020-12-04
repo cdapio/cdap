@@ -85,4 +85,5 @@ const ChartContainer: React.FC<IChartContainerProps> = ({
 };
 
 export default ChartContainer;
-export const timeFormatMonthDateTime = timeFormat('%m/%d %I:%M %p');
+export const timeFormatMonthDate = timeFormat('%m/%d');
+export const timeFormatHourMinute = timeFormat('%I:%M %p');
