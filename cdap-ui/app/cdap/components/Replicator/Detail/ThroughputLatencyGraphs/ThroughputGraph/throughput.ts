@@ -18,7 +18,7 @@ import * as d3 from 'd3';
 import numeral from 'numeral';
 import { objectQuery } from 'services/helpers';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
-import { timeFormatMonthDateTime } from 'components/ChartContainer';
+import { timeFormatMonthDate, timeFormatHourMinute } from 'components/ChartContainer';
 
 export const COLOR_MAP = {
   inserts: '#185ABC',
@@ -39,7 +39,7 @@ export function renderThroughputGraph(
 
   const margin = {
     top: 10,
-    bottom: 25,
+    bottom: 40,
     left: 60,
     right: 35,
   };
@@ -105,7 +105,7 @@ export function renderThroughputGraph(
   const xAxis = d3
     .axisBottom(x)
     .tickSizeOuter(0)
-    .tickFormat(timeFormatMonthDateTime);
+    .tickFormat(timeFormatMonthDate);
   const xAxisGroup = chart
     .append('g')
     .attr('class', 'axis axis-x')
@@ -119,6 +119,11 @@ export function renderThroughputGraph(
       return i % 6 !== 0;
     })
     .remove();
+  xAxisGroup
+    .selectAll('.tick')
+    .append('text')
+    .text(timeFormatHourMinute)
+    .attr('dy', 30);
   xAxisGroup
     .selectAll('.tick text')
     .style('font-size', '12px')
@@ -202,7 +207,7 @@ function createTooltip(id) {
   function show(d) {
     const htmlElem = `
       <div>
-        <strong>Time: ${timeFormatMonthDateTime(d.time)}</strong>
+        <strong>Time: ${timeFormatMonthDate(d.time)}</strong>
         <div>
           <div>Inserts: ${d.inserts}</div>
           <div>Updates: ${d.updates}</div>
