@@ -25,7 +25,6 @@ import PublishPipelineAction from 'services/WizardStores/PublishPipeline/Publish
 import PublishPipelineActionCreator from 'services/WizardStores/PublishPipeline/ActionCreator.js';
 import head from 'lodash/head';
 import uuidV4 from 'uuid/v4';
-import MyUserStoreApi from 'api/userstore';
 import NamespaceStore from 'services/NamespaceStore';
 import { MyPipelineApi } from 'api/pipeline';
 import ee from 'event-emitter';
@@ -129,23 +128,18 @@ export default class PublishPipelineWizard extends Component {
     let currentNamespace = NamespaceStore.getState().selectedNamespace;
     let draftId;
     if (this.props.input.action.type === 'create_pipeline_draft') {
-      return MyUserStoreApi.get()
-        .mergeMap((res) => {
-          draftId = uuidV4();
-          draftConfig.__ui__.draftId = draftId;
-          res = res || {};
-          res.property = res.property || {};
-          res.property.hydratorDrafts = res.property.hydratorDrafts || {};
-          res.property.hydratorDrafts[currentNamespace] =
-            res.property.hydratorDrafts[currentNamespace] || {};
-          res.property.hydratorDrafts[currentNamespace][draftId] = draftConfig;
-          return MyUserStoreApi.set({}, res.property);
-        })
-        .map((res) => {
-          this.buildSuccessInfo(name, currentNamespace, draftId);
-          this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
-          return res;
-        });
+      draftId = uuidV4();
+      return MyPipelineApi.saveDraft(
+        {
+          context: currentNamespace,
+          draftId,
+        },
+        draftConfig
+      ).map((res) => {
+        this.buildSuccessInfo(name, currentNamespace, draftId);
+        this.eventEmitter.emit(globalEvents.PUBLISHPIPELINE);
+        return res;
+      });
     }
     // this is the case when this is used in an usecase, so
     // PublishPipelineUsecase passes the CTA info to this component

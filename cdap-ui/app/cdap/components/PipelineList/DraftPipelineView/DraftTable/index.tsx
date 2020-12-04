@@ -43,7 +43,10 @@ const DraftTableView: React.SFC<IProps> = ({ drafts, currentPage, pageLimit }) =
     return (
       <div className="grid-body">
         {filteredDrafts.map((draft) => {
-          return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
+          if (draft.needsUpgrade) {
+            return <DraftTableRow draft={draft} key={draft.__ui__.draftId} />;
+          }
+          return <DraftTableRow draft={draft} key={draft.id} />;
         })}
       </div>
     );

@@ -18,21 +18,32 @@ import * as React from 'react';
 import { connect } from 'react-redux';
 import T from 'i18n-react';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
-import './DraftCount.scss';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 
-interface IProps {
+interface IProps extends WithStyles<typeof styles> {
   drafts: IDraft[];
 }
 
+const styles = () => {
+  return {
+    root: {
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '10px',
+    },
+  };
+};
+
 const PREFIX = 'features.PipelineList.DraftPipelineView';
 
-const DraftCountView: React.SFC<IProps> = ({ drafts }) => {
+const DraftCountView: React.SFC<IProps> = ({ drafts, classes }) => {
   return (
-    <div className="draft-count">
+    <div className={classes.root}>
       <h5>{T.translate(`${PREFIX}.draftCount`, { context: drafts.length })}</h5>
     </div>
   );
 };
+const CustomizedDraftCountView = withStyles(styles)(DraftCountView);
 
 const mapStateToProps = (state) => {
   return {
@@ -40,6 +51,6 @@ const mapStateToProps = (state) => {
   };
 };
 
-const DraftCount = connect(mapStateToProps)(DraftCountView);
+const DraftCount = connect(mapStateToProps)(CustomizedDraftCountView);
 
 export default DraftCount;
