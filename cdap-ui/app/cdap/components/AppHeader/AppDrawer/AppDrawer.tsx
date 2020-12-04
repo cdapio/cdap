@@ -238,7 +238,7 @@ class AppDrawer extends React.PureComponent<IAppDrawerProps> {
             }
           />
           <DrawerFeatureLink
-            featureUrl="/administration/configuration"
+            featureUrl={`/${nsurl}/details`}
             featureName={Theme.featureNames.projectAdmin}
             featureFlag={true}
             componentDidNavigate={componentDidNavigate}
