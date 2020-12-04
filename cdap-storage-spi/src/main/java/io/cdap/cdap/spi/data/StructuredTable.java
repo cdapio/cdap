@@ -185,9 +185,9 @@ public interface StructuredTable extends Closeable {
 
   /**
    * Get the number of records in the table.
-   * @param keyRange key range of the rows to count
+   * @param keyRanges key ranges of the rows to count
    * @return number of records in the table
    * @throws IOException if there is an error reading from the table
    */
-  long count(Range keyRange) throws IOException;
+  long count(Collection<Range> keyRanges) throws IOException;
 }
