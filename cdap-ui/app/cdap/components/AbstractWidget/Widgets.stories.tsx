@@ -93,6 +93,10 @@ export const functionDropdownWithArguments = () => (
   />
 );
 
+export const inputKeyValueDropdown = () => (
+  <AbstractWidget type="input-field-keyvalue-dropdown" widgetProps={widgetProps.keyValueDropdown} />
+);
+
 export const keyValueDropdown = () => (
   <AbstractWidget type="keyvalue-dropdown" widgetProps={widgetProps.keyValueDropdown} />
 );
