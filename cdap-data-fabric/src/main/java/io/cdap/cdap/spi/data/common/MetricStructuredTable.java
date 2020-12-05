@@ -264,14 +264,14 @@ public class MetricStructuredTable implements StructuredTable {
   }
 
   @Override
-  public long count(Range keyRange) throws IOException {
+  public long count(Collection<Range> keyRanges) throws IOException {
     try {
       long count = 0;
       if (!emitTimeMetrics) {
-        count = structuredTable.count(keyRange);
+        count = structuredTable.count(keyRanges);
       } else {
         long curTime = System.nanoTime();
-        count = structuredTable.count(keyRange);
+        count = structuredTable.count(keyRanges);
         long duration = System.nanoTime() - curTime;
         metricsCollector.increment(metricPrefix + "count.time", duration);
       }

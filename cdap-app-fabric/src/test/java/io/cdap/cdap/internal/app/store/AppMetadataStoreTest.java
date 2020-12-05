@@ -773,11 +773,13 @@ public abstract class AppMetadataStoreTest {
       TransactionRunners.run(transactionRunner, context -> {
         AppMetadataStore store = AppMetadataStore.create(context);
         store.writeApplication(NamespaceId.DEFAULT.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
+        store.writeApplication(NamespaceId.SYSTEM.getNamespace(), appName, ApplicationId.DEFAULT_VERSION, appSpec);
       });
     }
     TransactionRunners.run(transactionRunner, context -> {
       AppMetadataStore store = AppMetadataStore.create(context);
       long count =  store.getApplicationCount();
+      // System apps are not included in the count
       Assert.assertEquals(20, count);
     });
 
