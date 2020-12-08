@@ -60,7 +60,11 @@ const INITIAL_DATA = {
   formattedTimeRange: '',
 };
 
-export function throughputLatencyParser(rawData: IRawMetricData): IThroughputLatencyData[] {
+export function throughputLatencyParser(
+  rawData: IRawMetricData,
+  numTables: number,
+  activeTable?: string
+): IThroughputLatencyData[] {
   /**
    * <time>: {
    *    time: <value>,
@@ -85,7 +89,11 @@ export function throughputLatencyParser(rawData: IRawMetricData): IThroughputLat
         };
       }
 
-      timeMap[time][metricType] = metricData.value;
+      if (metricType === 'latency' && !activeTable) {
+        timeMap[time][metricType] = metricData.value / numTables;
+      } else {
+        timeMap[time][metricType] = metricData.value;
+      }
     });
   });
 
@@ -108,7 +116,7 @@ export function throughputLatencyParser(rawData: IRawMetricData): IThroughputLat
     const time = outputData.time * 1000;
     const startRange = moment(time).format('MM/DD - hh:mmA');
     const endRange = moment(time)
-      .add(1, 'h')
+      .add(resolution, 's')
       .format('hh:mmA');
 
     return {

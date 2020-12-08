@@ -18,6 +18,7 @@ import * as d3 from 'd3';
 import numeral from 'numeral';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
 import { timeFormatMonthDate, timeFormatHourMinute } from 'components/ChartContainer';
+import { tooltipWidth } from 'components/Replicator/Detail/ThroughputLatencyGraphs/LatencyGraph/LatencyTooltip';
 
 export interface ILatencyData {
   time: number;
@@ -36,7 +37,9 @@ export const COLOR_MAP = {
 export function renderLatencyGraph(
   id: string,
   data: IThroughputLatencyData[],
-  containerWidth: number
+  containerWidth: number,
+  unusedHeight?: number,
+  onHover?: (top, left, isOpen, activeData) => void
 ) {
   if (containerWidth < 0) {
     return;
@@ -129,7 +132,7 @@ export function renderLatencyGraph(
   xAxisGroup
     .selectAll('.tick')
     .filter((d, i) => {
-      return i % 6 !== 0;
+      return i % Math.floor(data.length / 4) !== 0;
     })
     .remove();
   xAxisGroup
@@ -189,6 +192,50 @@ export function renderLatencyGraph(
     .text('Minutes')
     .style('font-size', '12px')
     .style('fill', COLOR_MAP.legend);
+
+  // Hover
+  const hoverContainer = chart
+    .append('g')
+    .attr('class', 'hover-container')
+    .selectAll('rect')
+    .data(data)
+    .enter();
+
+  const hoverIndicatorContainer = chart.append('g').attr('class', 'hover-indicator-container');
+  const barWidth = x.bandwidth();
+
+  hoverContainer
+    .append('rect')
+    .attr('height', height)
+    .attr('width', barWidth)
+    .attr('opacity', 0)
+    .attr('x', (d) => x(d.time))
+    .on('mouseover', (d) => {
+      const tooltipTopOffset = 75;
+      const tooltipLeftOffset = 100;
+      const top = y(d.latency) - tooltipTopOffset + 'px';
+      let left = x(d.time) + tooltipLeftOffset;
+      if (left + tooltipWidth >= width) {
+        left = left - (left + tooltipWidth - width);
+      }
+      left = left + 'px';
+      onHover(top, left, true, d);
+
+      const xPosition = x(d.time) + barWidth / 2;
+
+      hoverIndicatorContainer
+        .append('line')
+        .attr('stroke', COLOR_MAP.tick)
+        .attr('stroke-width', 1)
+        .attr('x1', xPosition)
+        .attr('x2', xPosition)
+        .attr('y1', 0)
+        .attr('y2', height);
+    })
+    .on('mouseout', (d) => {
+      onHover(0, 0, false, d);
+      hoverIndicatorContainer.selectAll('line').remove();
+    });
 }
 
 function yTickFormat(d) {
