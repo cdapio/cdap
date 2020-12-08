@@ -15,6 +15,7 @@
 -->
 <div ng-if="!MyPostRunActionsCtrl.actions.length">
   <div class="well well-sm text-center empty-table"
+       data-cy="post-run-alerts-create"
        ng-if="!MyPostRunActionsCtrl.isDisabled"
        ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
     <h1>+</h1>
@@ -58,6 +59,7 @@
     </tbody>
   </table>
   <div class="well well-sm text-center"
+       data-cy="post-run-alerts-create"
        ng-if="!MyPostRunActionsCtrl.isDisabled"
        ng-click="myPostRunActionWizardService.show(MyPostRunActionsCtrl.actionCreator, MyPostRunActionsCtrl.store, 'create')">
     <h1>+</h1>
