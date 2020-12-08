@@ -19,10 +19,22 @@ import PropTypes from 'prop-types';
 import IconSVG from 'components/IconSVG';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyArtifactApi } from 'api/artifact';
-import { Modal, ModalBody, ModalFooter } from 'reactstrap';
+import { ModalBody, ModalFooter } from 'reactstrap';
 import { preventPropagation } from 'services/helpers';
 import { MyPipelineApi } from 'api/pipeline';
 import ConfigurationGroup from 'components/ConfigurationGroup';
+import Popover from '@material-ui/core/Popover';
+import { withStyles } from '@material-ui/core/styles';
+
+const popoverStyles = {
+  paper: {
+    width: '100%',
+    maxWidth: '100%',
+    height: 'calc(100% - 50px)',
+  },
+};
+
+const FullScreenPopover = withStyles(popoverStyles)(Popover);
 
 export default class PostRunActionsWizard extends Component {
   static propTypes = {
@@ -100,41 +112,54 @@ export default class PostRunActionsWizard extends Component {
     let action = this.props.action;
 
     return (
-      <Modal
-        isOpen={this.props.isOpen}
-        toggle={this.toggleAndPreventPropagation}
-        backdrop="static"
-        modalClassName="post-run-actions-modal hydrator-modal node-config-modal"
+      <FullScreenPopover
+        anchorReference="anchorPosition"
+        anchorPosition={{
+          top: 50,
+          left: 0,
+        }}
+        open={this.props.isOpen}
+        onClose={this.toggleAndPreventPropagation}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'left', // needed to use full width of page
+        }}
+        marginThreshold={0}
       >
-        {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
-        <div className="modal-header">
-          <h4 className="modal-title float-left">
-            <span>{action.plugin.name || action.name}</span>
-            <small className="plugin-version">
-              {action.version || action.plugin.artifact.version}
-            </small>
-            <p>
-              <small>{action.description}</small>
-            </p>
-          </h4>
-          <div className="btn-group float-right">
-            <a className="btn" onClick={this.toggleAndPreventPropagation}>
-              <IconSVG name="icon-close" />
-            </a>
+        <div className="post-run-actions-modal cdap-modal modal-dialog">
+          <div className="modal-header">
+            <h4 className="modal-title float-left">
+              <span>{action.plugin.name || action.name}</span>
+              <small className="plugin-version">
+                {action.version || action.plugin.artifact.version}
+              </small>
+              <p>
+                <small>{action.description}</small>
+              </p>
+            </h4>
+            <div className="btn-group float-right">
+              <a className="btn" onClick={this.toggleAndPreventPropagation}>
+                <IconSVG name="icon-close" />
+              </a>
+            </div>
           </div>
+          <ModalBody>
+            <div className="postrun-configuration-content">{this.renderBody()}</div>
+          </ModalBody>
+          <ModalFooter>
+            <div
+              className="btn btn-blue float-right close-button"
+              onClick={this.toggleAndPreventPropagation}
+            >
+              Close
+            </div>
+          </ModalFooter>
         </div>
-        <ModalBody>
-          <div className="postrun-configuration-content">{this.renderBody()}</div>
-        </ModalBody>
-        <ModalFooter>
-          <div
-            className="btn btn-blue float-right close-button"
-            onClick={this.toggleAndPreventPropagation}
-          >
-            Close
-          </div>
-        </ModalFooter>
-      </Modal>
+      </FullScreenPopover>
     );
   }
 }

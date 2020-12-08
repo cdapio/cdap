@@ -14,6 +14,8 @@
  * the License.
 */
 
+@import '~styles/colors.scss';
+
 $first-column-width: 258px;
 $second-column-width: 192px;
 $third-column-width: 55px;
@@ -85,30 +87,95 @@ $fourth-column-width: 53px;
 
 /* Only applying the styles to the post run actions modal in detail view for
 now, since we haven't migrated the one in Studio to use the new component yet */
-.state-hydrator-detail {
-  .modal.hydrator-modal.post-run-actions-modal {
-    .modal-dialog {
-      .modal-content {
-        .modal-body {
-          height: 70vh;
-          .postrun-configuration-content {
-            height: calc(100% - 35px);
-          }
-          .confirm-step-content {
-            .control-label {
-              display: flex;
+.post-run-actions-modal.cdap-modal.modal-dialog {
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+  margin-top: 0;
+  margin: 0;
 
-              .icon-asterisk {
-                top: 5px;
-              }
-            }
-          }
-        }
-        .modal-footer {
-          padding-bottom: 0;
-          border-top: 1px solid #cccccc;
+  .modal-header {
+    background-color: #ebecf1;
+    border-bottom: 1px solid #c9ccd6;
+    height: 60px;
+    margin-bottom: 5px;
+    padding: 0;
+    border-radius: 4px 4px 0 0;
+    box-shadow: 0 0 10px rgba(0, 0, 0, .5);
+
+    > h4 {
+      margin-top: 10px;
+      padding-left: 10px;
+      color: inherit;
+      font-size: 1.25rem;
+    }
+
+    .modal-title {
+      padding-left: 15px;
+      // 340px for all the buttons and error validation message
+      width: 100%;
+      max-width: calc(100% - 340px);
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+      font-weight: 500;
+      margin-right: auto;
+      line-height: 1.4;
+
+      p {
+        min-width: 100%;
+        text-overflow: ellipsis;
+        overflow-wrap: break-word;
+        overflow: hidden;
+        white-space: nowrap;
+        line-height: 1.4;
+      }
+    }
+
+    a.btn {
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 0;
+      background-clip: padding-box;
+      color: $blue-07;
+      font-size: 18px;
+      outline: none;
+      padding: 0;
+      white-space: normal;
+      border-left: 1px solid #c9ccd6;
+      width: 60px;
+      height: 60px;
+      line-height: 60px;
+
+      &:hover {
+        background-color: $blue-07;
+        border: 1px solid $blue-07;
+        color: white;
+        background-clip: padding-box;
+      }
+    }
+  }
+
+  .modal-body {
+    padding: 10px 10px 0;
+    max-height: calc(100% - 120px);
+    overflow-y: auto;
+    .postrun-configuration-content {
+      height: calc(100% - 35px);
+    }
+    .confirm-step-content {
+      .control-label {
+        display: flex;
+
+        .icon-asterisk {
+          top: 5px;
         }
       }
     }
+  }
+  .modal-footer {
+    padding: 10px;
+    padding-bottom: 0;
+    border-top: 1px solid #cccccc;
   }
 }
