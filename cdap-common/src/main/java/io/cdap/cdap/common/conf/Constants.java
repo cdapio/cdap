@@ -300,6 +300,11 @@ public final class Constants {
     public static final String PROGRAM_STATUS_RECORD_EVENT_TOPIC = "program.status.record.event.topic";
 
     /**
+     * Interval at which system programs are monitored
+     */
+    public static final String SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS = "system.program.scan.interval.seconds";
+
+    /**
      * Annotation for binding remote execution twill service
      */
     @Retention(RetentionPolicy.RUNTIME)
