@@ -17,6 +17,7 @@
 import * as d3 from 'd3';
 import { ITableMetricsData } from 'components/Replicator/Detail/TableScatterPlotGraph/parser';
 import numeral from 'numeral';
+import { tooltipWidth } from 'components/Replicator/Detail/TableScatterPlotGraph/ScatterPlotTooltip';
 
 export const COLOR_MAP = {
   active: '#0076DC',
@@ -28,10 +29,15 @@ export const COLOR_MAP = {
   tick: '#333333',
 };
 
-export function renderScatterPlot(id: string, data: ITableMetricsData[], containerWidth: number) {
-  if (containerWidth < 0) {
-    return;
-  }
+export function renderScatterPlot(
+  activeTable: string,
+  id: string,
+  data: ITableMetricsData[],
+  containerWidth: number,
+  unusedHeight?: number,
+  onHover?: (top, left, isOpen, data) => void,
+  onClick?: (top, left, isOpen, data) => void
+) {
   const containerHeight = 350;
 
   const margin = {
@@ -42,7 +48,13 @@ export function renderScatterPlot(id: string, data: ITableMetricsData[], contain
   };
 
   const width = containerWidth - margin.left - margin.right;
+  if (width < 0) {
+    return;
+  }
+
   const height = containerHeight - margin.top - margin.bottom;
+
+  let isClicked = !!activeTable;
 
   const svg = d3
     .select(`#${id} > svg`)
@@ -143,6 +155,7 @@ export function renderScatterPlot(id: string, data: ITableMetricsData[], contain
 
   scatter
     .append('circle')
+    .style('cursor', 'pointer')
     .attr('cx', (d) => x(d.eventsPerMin))
     .attr('cy', (d) => y(d.latency))
     .attr('r', 10)
@@ -158,7 +171,34 @@ export function renderScatterPlot(id: string, data: ITableMetricsData[], contain
         return COLOR_MAP.inactiveOutline;
       }
       return COLOR_MAP.activeOutline;
+    })
+    .on('mouseover', (d) => {
+      const { top, left } = getTooltipPosition(d);
+      onHover(top, left, true, d);
+    })
+    .on('mouseout', (d) => {
+      if (isClicked) {
+        return;
+      }
+      onHover(0, 0, false, d);
+    })
+    .on('click', (d) => {
+      addOverlay(d);
     });
+
+  function getTooltipPosition(d) {
+    const top = y(d.latency) - (margin.top + margin.bottom) + 'px';
+    let left = x(d.eventsPerMin) + margin.left;
+    if (left + tooltipWidth >= width) {
+      left = left - (left + tooltipWidth - width);
+    }
+    left = left + 'px';
+
+    return {
+      top,
+      left,
+    };
+  }
 
   // LEGEND
   chart
@@ -180,6 +220,70 @@ export function renderScatterPlot(id: string, data: ITableMetricsData[], contain
     .text('Throughput (events/min)')
     .style('font-size', '12px')
     .style('fill', COLOR_MAP.legend);
+
+  const overlay = chart.append('g').attr('class', 'overlay');
+  const overlayContentSelector = 'overlay-content';
+
+  if (activeTable) {
+    const activeData = data.find((d) => d.tableName === activeTable);
+
+    if (activeData) {
+      addOverlay(activeData);
+    }
+  } else {
+    removeOverlay();
+  }
+
+  function addOverlay(d) {
+    isClicked = true;
+    const { top, left } = getTooltipPosition(d);
+    onClick(top, left, true, d);
+
+    const overlayContent = overlay.append('g').attr('class', overlayContentSelector);
+    overlayContent
+      .append('rect')
+      .attr('fill', 'white')
+      .attr('opacity', 0.8)
+      .attr('width', width)
+      .attr('height', height)
+      .on('click', removeOverlay);
+
+    // crosshair
+    overlayContent
+      .append('line')
+      .attr('stroke', COLOR_MAP.inactiveOutline)
+      .attr('stroke-width', 1)
+      .attr('x1', 0)
+      .attr('x2', width)
+      .attr('y1', y(d.latency))
+      .attr('y2', y(d.latency));
+    overlayContent
+      .append('line')
+      .attr('stroke', COLOR_MAP.inactiveOutline)
+      .attr('stroke-width', 1)
+      .attr('x1', x(d.eventsPerMin))
+      .attr('x2', x(d.eventsPerMin))
+      .attr('y1', 0)
+      .attr('y2', height);
+
+    const fill = isInactive(d) ? COLOR_MAP.inactive : COLOR_MAP.active;
+    const stroke = isInactive(d) ? COLOR_MAP.inactiveOutline : COLOR_MAP.activeOutline;
+
+    overlayContent
+      .append('circle')
+      .attr('cx', x(d.eventsPerMin))
+      .attr('cy', y(d.latency))
+      .attr('r', 10)
+      .attr('fill', fill)
+      .attr('stroke-width', 1)
+      .attr('stroke', stroke);
+  }
+
+  function removeOverlay() {
+    isClicked = false;
+    overlay.select(`.${overlayContentSelector}`).remove();
+    onClick(0, 0, false, null);
+  }
 }
 
 function tickFormat(d) {

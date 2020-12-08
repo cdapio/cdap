@@ -70,10 +70,10 @@ const LatencyTableView: React.FC<ILatencyTableProps> = ({ classes, data }) => {
   );
 };
 
-function formatLatency(latency) {
+export function formatLatency(latency) {
   const MIN_IN_SECONDS = 60;
   const min = Math.floor(latency / MIN_IN_SECONDS);
-  const seconds = latency - min * MIN_IN_SECONDS;
+  const seconds = Math.round(latency - min * MIN_IN_SECONDS);
 
   return `${min} min - ${seconds} sec`;
 }

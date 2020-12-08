@@ -38,18 +38,35 @@ const styles = (): StyleRules => {
   };
 };
 
+interface ITags {
+  namespace: string;
+  app: string;
+  worker: string;
+  run: string;
+  instance: string;
+  ent?: string;
+}
+
 const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [data, setData] = useState([]);
-  const { name } = useContext(DetailContext);
+  const { name, tables, activeTable, timeRange } = useContext(DetailContext);
 
   useEffect(() => {
-    const tags = {
+    if (tables.size === 0) {
+      return;
+    }
+
+    const tags: ITags = {
       namespace: getCurrentNamespace(),
       app: name,
       worker: PROGRAM_INFO.programId,
       run: '*',
       instance: '*',
     };
+
+    if (activeTable) {
+      tags.ent = activeTable;
+    }
 
     const tagsParams = MetricsQueryHelper.tagsToParams(tags);
 
@@ -59,7 +76,7 @@ const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ clas
       })
       .join('&');
 
-    const start = `start=now-24h`;
+    const start = `start=now-${timeRange}`;
     const end = 'end=now';
     const aggregate = 'aggregate=false';
     const resolution = 'resolution=auto';
@@ -68,14 +85,14 @@ const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ clas
 
     MyMetricApi.queryTags({ params }).subscribe(
       (res) => {
-        setData(throughputLatencyParser(res));
+        setData(throughputLatencyParser(res, tables.size, activeTable));
       },
       (err) => {
         // tslint:disable-next-line: no-console
         console.log('err', err);
       }
     );
-  }, []);
+  }, [tables, activeTable, timeRange]);
 
   return (
     <div className={classes.root}>
