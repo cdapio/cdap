@@ -23,6 +23,8 @@ import {
 import Heading, { HeadingTypes } from 'components/Heading';
 import ChartContainer from 'components/ChartContainer';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
+import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
+import ThroughputTable from 'components/Replicator/Detail/ThroughputLatencyGraphs/ThroughputGraph/ThroughputTable';
 
 const styles = (): StyleRules => {
   return {
@@ -66,9 +68,8 @@ interface IThroughputGraphProps extends WithStyles<typeof styles> {
 const CONTAINER_ID = 'replication-throughput-graph';
 
 const ThroughputGraphView: React.FC<IThroughputGraphProps> = ({ classes, data }) => {
-  return (
-    <div className={classes.root}>
-      <Heading type={HeadingTypes.h4} label="Throughput" className={classes.heading} />
+  const chart = (
+    <React.Fragment>
       <ChartContainer
         containerId={CONTAINER_ID}
         data={data}
@@ -89,6 +90,15 @@ const ThroughputGraphView: React.FC<IThroughputGraphProps> = ({ classes, data })
           <span>Deletes</span>
         </div>
       </div>
+    </React.Fragment>
+  );
+
+  const table = <ThroughputTable data={data} />;
+
+  return (
+    <div className={classes.root}>
+      <Heading type={HeadingTypes.h4} label="Throughput" className={classes.heading} />
+      <ChartTableSwitcher chart={chart} table={table} />
     </div>
   );
 };

@@ -23,6 +23,8 @@ import {
 } from 'components/Replicator/Detail/ThroughputLatencyGraphs/LatencyGraph/latency';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
 import ChartContainer from 'components/ChartContainer';
+import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
+import LatencyTable from 'components/Replicator/Detail/ThroughputLatencyGraphs/LatencyGraph/LatencyTable';
 
 const styles = (): StyleRules => {
   return {
@@ -53,9 +55,8 @@ interface ILatencyGraphProps extends WithStyles<typeof styles> {
 const CONTAINER_ID = 'replication-latency-graph';
 
 const LatencyGraphView: React.FC<ILatencyGraphProps> = ({ classes, data }) => {
-  return (
-    <div>
-      <Heading type={HeadingTypes.h4} label="Latency" className={classes.heading} />
+  const chart = (
+    <React.Fragment>
       <ChartContainer
         containerId={CONTAINER_ID}
         data={data}
@@ -68,6 +69,15 @@ const LatencyGraphView: React.FC<ILatencyGraphProps> = ({ classes, data }) => {
           <span>Average Latency</span>
         </div>
       </div>
+    </React.Fragment>
+  );
+
+  const table = <LatencyTable data={data} />;
+
+  return (
+    <div className={classes.root}>
+      <Heading type={HeadingTypes.h4} label="Latency" className={classes.heading} />
+      <ChartTableSwitcher chart={chart} table={table} />
     </div>
   );
 };
