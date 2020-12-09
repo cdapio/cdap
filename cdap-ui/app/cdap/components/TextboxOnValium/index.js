@@ -58,7 +58,12 @@ export default class TextboxOnValium extends Component {
         textValue,
       },
       () => {
-        if (this.state.originalValue !== this.state.textValue && this.props.onWarning) {
+        // If a warning is already shown and the user has set the input text back to the original value,
+        // we must allow this block to run
+        if (
+          (this.state.originalValue !== this.state.textValue || this.state.isWarning) &&
+          this.props.onWarning
+        ) {
           let isWarning = this.props.onWarning(this.state.textValue);
           if (isWarning || (!isWarning && this.state.isWarning)) {
             this.setState({
