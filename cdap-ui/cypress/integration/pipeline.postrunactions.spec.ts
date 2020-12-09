@@ -124,7 +124,6 @@ describe('Pipeline post-run actions', () => {
       });
     });
     cy.get(`input${dataCy('subject')}`).should('have.value', SUBJECT);
-    //cy.get('.ace-editor-ref').should('have.text', MESSAGE);
     cy.window().then((win) => {
       cy.get('.ace-editor-ref').then((aceElement) => {
         const aceEditor = win.ace.edit(aceElement[0]);
