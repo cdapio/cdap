@@ -17,6 +17,7 @@
 import React, { useEffect, useState, useContext } from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThroughputGraph from 'components/Replicator/Detail/ThroughputLatencyGraphs/ThroughputGraph';
+import LatencyGraph from 'components/Replicator/Detail/ThroughputLatencyGraphs/LatencyGraph';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import MetricsQueryHelper from 'services/MetricsQueryHelper';
 import { PROGRAM_INFO } from 'components/Replicator/constants';
@@ -79,6 +80,7 @@ const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ clas
   return (
     <div className={classes.root}>
       <ThroughputGraph data={data} />
+      <LatencyGraph data={data} />
     </div>
   );
 };
