@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import Select from 'components/AbstractWidget/FormInputs/Select';
-import { SchemaEditor } from 'components/AbstractWidget/SchemaEditor';
+import { SchemaEditor, heightOfRow } from 'components/AbstractWidget/SchemaEditor';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import ThemeWrapper from 'components/ThemeWrapper';
 import ee from 'event-emitter';
@@ -29,7 +29,6 @@ import { RefreshableSchemaEditor } from 'components/PluginSchemaEditor/Refreshab
 import ConfigurableTab from 'components/ConfigurableTab';
 import classnames from 'classnames';
 import { objectQuery, isNilOrEmptyString } from 'services/helpers';
-import { FieldsListBase } from 'components/AbstractWidget/SchemaEditor/FieldsList';
 import Alert from 'components/Alert';
 import { isObject } from 'vega-lite/build/src/util';
 import { isMacro } from 'services/helpers';
@@ -250,7 +249,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
   public calculateSchemaRowCount = () => {
     if (this.containerRef) {
       const { height } = this.containerRef.getBoundingClientRect();
-      let schemaRowCount = Math.floor(height / FieldsListBase.heightOfRow) - 1;
+      let schemaRowCount = Math.floor(height / heightOfRow) - 1;
       // For sinks we can't determine the height. So set it to by default 20 (20 * 34 = 680px in height)
       if (schemaRowCount < 5) {
         schemaRowCount = 20;

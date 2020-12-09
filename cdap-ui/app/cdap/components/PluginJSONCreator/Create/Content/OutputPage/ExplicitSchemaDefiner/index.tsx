@@ -20,7 +20,7 @@ import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/wit
 
 import { COMMON_DELIMITER } from 'components/PluginJSONCreator/constants';
 import PluginInput from 'components/PluginJSONCreator/Create/Content/PluginInput';
-import { SCHEMA_TYPES } from 'components/SchemaEditor/SchemaHelpers';
+import { schemaTypes as avroSchemaTypes } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 import { useOutputState } from 'components/PluginJSONCreator/Create';
 
 const styles = (): StyleRules => {
@@ -70,7 +70,7 @@ const ExplicitSchemaDefinerView: React.FC<WithStyles<typeof styles>> = ({ classe
           onChange={onSchemaTypesChange}
           label={'Schema types'}
           delimiter={COMMON_DELIMITER}
-          options={SCHEMA_TYPES.types}
+          options={avroSchemaTypes}
           value={schemaTypes}
         />
       </div>
