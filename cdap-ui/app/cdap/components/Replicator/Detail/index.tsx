@@ -34,6 +34,7 @@ import ConfigDisplay from 'components/Replicator/ConfigDisplay';
 import TablesList from 'components/Replicator/Detail/TablesList';
 import Metrics from 'components/Replicator/Detail/Metrics';
 import ThroughputLatencyGraphs from 'components/Replicator/Detail/ThroughputLatencyGraphs';
+import TableScatterPlotGraph from 'components/Replicator/Detail/TableScatterPlotGraph';
 
 export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
@@ -360,6 +361,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
               targetConfig={this.state.targetConfig}
             />
 
+            <hr />
+            <TableScatterPlotGraph />
             <hr />
             <ThroughputLatencyGraphs />
             <TablesList />
