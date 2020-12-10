@@ -4136,4 +4136,12 @@
     </description>
   </property>
 
+  <property>
+    <name>system.program.scan.interval.seconds</name>
+    <value>10</value>
+    <description>
+      Interval at which system programs are monitored in seconds
+    </description>
+  </property>
+
 </configuration>
