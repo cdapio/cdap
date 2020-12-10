@@ -61,6 +61,12 @@ class WizardSelectActionStepCtrl {
       fn.call(null, action);
     }
   }
+  findLatestArtifact(plugin) {
+    const allArtifacts = plugin.allArtifacts;
+    const versions = allArtifacts.map((pa) => pa.artifact.version);
+    const latestVersion = window.CaskCommon.VersionUtilities.findHighestVersion(versions, true);
+    return allArtifacts.find((pa) => pa.artifact.version === latestVersion);
+  }
   filterPlugins(results) {
     let pluginsMap = {};
     angular.forEach(results, (plugin) => {
@@ -71,6 +77,8 @@ class WizardSelectActionStepCtrl {
         });
       }
       pluginsMap[plugin.name].allArtifacts.push(plugin);
+      const latestArtifact = this.findLatestArtifact(pluginsMap[plugin.name]);
+      pluginsMap[plugin.name].defaultArtifact = latestArtifact.artifact;
     });
     return pluginsMap;
   }
