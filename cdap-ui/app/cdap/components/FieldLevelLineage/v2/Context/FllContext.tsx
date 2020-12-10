@@ -30,6 +30,7 @@ import {
   ITableInfo,
   ITablesList,
   ITimeParams,
+  IOperationErrorResponse,
 } from 'components/FieldLevelLineage/v2/Context/FllContextHelper';
 import * as d3 from 'd3';
 import { TIME_OPTIONS } from 'components/FieldLevelLineage/store/Store';
@@ -89,6 +90,7 @@ export interface IContextState {
   firstImpact?: number;
   firstField?: number;
   error?: string;
+  errorOps?: string;
   setTimeRange?: (range: string) => void;
   setCustomTimeRange?: ({ start, end }) => void;
   toggleOperations?: (direction?: string) => void;
@@ -309,14 +311,38 @@ export class Provider extends React.Component<{ children }, IContextState> {
 
   private toggleOperations = (direction?: string) => {
     this.setState(
-      { showOperations: !this.state.showOperations, loadingOps: true, direction },
+      { showOperations: !this.state.showOperations, loadingOps: true, direction, errorOps: null },
       () => {
         if (this.state.showOperations && direction) {
           const timeParams = { start: this.state.start, end: this.state.end };
           const cb = (operations) => {
             this.setState({ operations, loadingOps: false, activeOpsIndex: 0 });
           };
-          getOperations(this.state.target, timeParams, this.state.activeField.name, direction, cb);
+          const errcb = (err: IOperationErrorResponse) => {
+            const newState = {
+              loadingOps: false,
+              errorOps: null,
+            };
+            if (typeof err === 'string') {
+              newState.errorOps = err;
+            }
+            if (typeof err === 'object' && err !== null) {
+              if (typeof err.response === 'string') {
+                newState.errorOps = err.response;
+              } else {
+                newState.errorOps = JSON.stringify(err);
+              }
+            }
+            this.setState(newState);
+          };
+          getOperations(
+            this.state.target,
+            timeParams,
+            this.state.activeField.name,
+            direction,
+            cb,
+            errcb
+          );
         }
       }
     );
