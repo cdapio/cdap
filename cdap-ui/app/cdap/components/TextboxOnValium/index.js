@@ -53,6 +53,18 @@ export default class TextboxOnValium extends Component {
       return;
     }
 
+    if (
+      textValue.length > 0 &&
+      !isNil(this.props.invalidCharacterRegex) &&
+      this.props.invalidCharacterRegex instanceof RegExp &&
+      this.props.invalidCharacterRegex.test(textValue)
+    ) {
+      textValue = textValue.replace(
+        this.props.invalidCharacterRegex,
+        this.props.invalidReplacementCharacter
+      );
+    }
+
     this.setState(
       {
         textValue,
@@ -132,5 +144,7 @@ TextboxOnValium.propTypes = {
   allowSpace: PropTypes.bool,
   shouldSelect: PropTypes.bool,
   validCharacterRegex: PropTypes.object, // regex expression
+  invalidCharacterRegex: PropTypes.object, // regex expression
+  invalidReplacementCharacter: PropTypes.string,
   disabled: PropTypes.bool,
 };
