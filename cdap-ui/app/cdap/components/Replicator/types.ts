@@ -30,10 +30,13 @@ export type IColumnImmutable = Map<string, string | boolean>;
 export type IColumnsList = List<IColumnImmutable>;
 export type IColumnsStore = Map<string, IColumnsList>;
 
-export interface ITable {
+export interface ITableInfo {
   database: string;
   table: string;
   schema?: string;
+}
+
+export interface ITable extends ITableInfo {
   numColumns?: number;
 }
 
@@ -70,4 +73,22 @@ export interface IPluginInfo {
     scope: string;
   };
   properties: PluginProperties;
+}
+
+interface IMetricData {
+  time: number;
+  value: number;
+}
+
+interface IMetricSeries {
+  metricName: string;
+  data: IMetricData[];
+  grouping: Record<string, string>;
+}
+
+export interface IRawMetricData {
+  startTime: number;
+  endTime: number;
+  resolution: string;
+  series: IMetricSeries[];
 }

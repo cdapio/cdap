@@ -33,7 +33,7 @@ import RadioGroup from '@material-ui/core/RadioGroup';
 import If from 'components/If';
 import SearchBox from 'components/Replicator/Create/Content/SearchBox';
 import debounce from 'lodash/debounce';
-import { IColumnsList, IColumnImmutable } from 'components/Replicator/types';
+import { IColumnsList, IColumnImmutable, ITableInfo } from 'components/Replicator/types';
 
 const styles = (theme): StyleRules => {
   return {
@@ -126,10 +126,7 @@ const styles = (theme): StyleRules => {
 };
 
 interface ISelectColumnsProps extends WithStyles<typeof styles> {
-  tableInfo?: {
-    table: string;
-    database: string;
-  };
+  tableInfo?: ITableInfo;
   onSave: (tableKey: string, columns: IColumnsList) => void;
   initialSelected: IColumnsList;
   toggle: () => void;
@@ -230,10 +227,14 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
       draftId: this.props.draftId,
     };
 
-    const body = {
+    const body: ITableInfo = {
       table: this.props.tableInfo.table,
       database: this.props.tableInfo.database,
     };
+
+    if (this.props.tableInfo.schema) {
+      body.schema = this.props.tableInfo.schema;
+    }
 
     MyReplicatorApi.getTableInfo(params, body).subscribe(
       (res) => {

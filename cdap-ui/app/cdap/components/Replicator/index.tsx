@@ -34,7 +34,7 @@ const Replicator: React.FC = () => {
       <Switch>
         <Route exact path={`${basepath}/create`} component={Create} />
         <Route exact path={`${basepath}/drafts/:draftId`} component={Create} />
-        <Route exact path={`${basepath}/detail/:replicatorId`} component={Detail} />
+        <Route path={`${basepath}/detail/:replicatorId`} component={Detail} />
         <Route path={basepath} component={List} />
         <Route
           render={() => {

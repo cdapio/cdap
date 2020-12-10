@@ -520,7 +520,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
             </div>
 
             <div className="grid-body">
-              {this.state.filteredTables.map((row) => {
+              {this.state.filteredTables.map((row, i) => {
                 const key = generateTableKey(row);
                 const checked = !!this.state.selectedTables.get(key);
                 const columns = this.state.columns.get(key);
@@ -528,7 +528,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
 
                 return (
                   <div
-                    key={key}
+                    key={`${key}${i}`}
                     className={classnames('grid-row', {
                       active: this.isTableSelected(row),
                     })}

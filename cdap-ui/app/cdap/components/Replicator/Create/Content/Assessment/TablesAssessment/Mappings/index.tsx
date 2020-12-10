@@ -29,7 +29,7 @@ import Supported, {
 import sortBy from 'lodash/sortBy';
 import { generateTableKey } from 'components/Replicator/utilities';
 import { List, Map } from 'immutable';
-import { IColumnsList } from 'components/Replicator/types';
+import { IColumnsList, ITableInfo } from 'components/Replicator/types';
 
 const styles = (theme): StyleRules => {
   const headerHeight = '60px';
@@ -145,10 +145,7 @@ const styles = (theme): StyleRules => {
 };
 
 interface IMappingsProps extends ICreateContext, WithStyles<typeof styles> {
-  tableInfo: {
-    database: string;
-    table: string;
-  };
+  tableInfo: ITableInfo;
   onClose: (rerunAssessment) => void;
 }
 
@@ -182,10 +179,14 @@ const MappingsView: React.FC<IMappingsProps> = ({
       draftId,
     };
 
-    const body = {
+    const body: ITableInfo = {
       database: tableInfo.database,
       table: tableInfo.table,
     };
+
+    if (tableInfo.schema) {
+      body.schema = tableInfo.schema;
+    }
 
     MyReplicatorApi.assessTable(params, body).subscribe(
       (res) => {
