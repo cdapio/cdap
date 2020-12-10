@@ -17,50 +17,21 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import PluginConfigDisplay from 'components/Replicator/ConfigDisplay/PluginConfigDisplay';
-import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
-import If from 'components/If';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import ExpandLess from '@material-ui/icons/ExpandLess';
 import { IPluginInfo, IPluginConfig } from 'components/Replicator/types';
 import { IWidgetJson } from 'components/ConfigurationGroup/types';
 
-const MAX_HEIGHT = 300;
-const styles = (theme): StyleRules => {
+const styles = (): StyleRules => {
   return {
-    gridContainer: {
+    container: {
+      paddingTop: '15px',
+      marginBottom: '40px',
       display: 'grid',
       gridTemplateColumns: '45% 45%',
       gridColumnGap: '10%',
     },
-    container: {
-      paddingTop: '15px',
-      maxHeight: `${MAX_HEIGHT}px`,
-      overflow: 'hidden',
-    },
-    expanded: {
-      maxHeight: 'initial',
-    },
-    noViewMoreToggle: {
-      marginBottom: '25px',
-    },
     sectionTitle: {
       marginBottom: '5px',
-    },
-    viewMoreContainer: {
-      paddingTop: '15px',
-      paddingBottom: '15px',
-      backgroundColor: theme.palette.white[50],
-      '& > div > span': {
-        color: theme.palette.blue[100],
-        cursor: 'pointer',
-        '&:hover': {
-          textDecoration: 'underline',
-        },
-      },
-    },
-    viewMoreText: {
-      marginRight: '25px',
     },
   };
 };
@@ -83,50 +54,9 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
   sourceConfig,
   targetConfig,
 }) => {
-  const [viewingMore, setViewingMore] = React.useState(false);
-  const containerRef = React.useRef(null);
-  const [shouldDisplayToggle, setShouldDisplayToggle] = React.useState(false);
-
-  function toggleViewMore() {
-    setViewingMore(!viewingMore);
-  }
-
-  function setDisplayViewMoreToggle() {
-    const container = containerRef.current;
-
-    if (container.scrollHeight > MAX_HEIGHT) {
-      setShouldDisplayToggle(true);
-    } else {
-      setShouldDisplayToggle(false);
-    }
-  }
-
-  React.useEffect(() => {
-    setDisplayViewMoreToggle();
-
-    const mo = new MutationObserver(setDisplayViewMoreToggle);
-    mo.observe(containerRef.current, {
-      childList: true,
-      subtree: true,
-    });
-
-    window.addEventListener('resize', setDisplayViewMoreToggle);
-
-    return () => {
-      mo.disconnect();
-      window.removeEventListener('resize', setDisplayViewMoreToggle);
-    };
-  }, []);
-
   return (
     <div className={classes.root}>
-      <div
-        className={classnames(classes.container, classes.gridContainer, {
-          [classes.expanded]: viewingMore,
-          [classes.noViewMoreToggle]: !shouldDisplayToggle,
-        })}
-        ref={containerRef}
-      >
+      <div className={classes.container}>
         <div>
           <Heading type={HeadingTypes.h6} className={classes.sectionTitle} label="SOURCE" />
           <PluginConfigDisplay
@@ -145,26 +75,6 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
           />
         </div>
       </div>
-      <If condition={shouldDisplayToggle}>
-        <div className={`${classes.gridContainer} ${classes.viewMoreContainer}`}>
-          <div>
-            <span onClick={toggleViewMore}>
-              <span className={classes.viewMoreText}>
-                View {!viewingMore ? 'more' : 'less'} configurations
-              </span>
-              {viewingMore ? <ExpandLess /> : <ExpandMore />}
-            </span>
-          </div>
-          <div>
-            <span onClick={toggleViewMore}>
-              <span className={classes.viewMoreText}>
-                View {!viewingMore ? 'more' : 'less'} configurations
-              </span>
-              {viewingMore ? <ExpandLess /> : <ExpandMore />}
-            </span>
-          </div>
-        </div>
-      </If>
     </div>
   );
 };

@@ -14,7 +14,8 @@
  * the License.
  */
 
-import { generateTableKey, constructTablesSelection, DML } from 'components/Replicator/utilities';
+import { generateTableKey, constructTablesSelection } from 'components/Replicator/utilities';
+import { DML } from 'components/Replicator/types';
 import { List, Map, Set } from 'immutable';
 
 type IColumn = Map<string, string>;

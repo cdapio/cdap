@@ -30,13 +30,9 @@ import {
   fetchPluginWidget,
   generateTableKey,
 } from 'components/Replicator/utilities';
-import ConfigDisplay from 'components/Replicator/ConfigDisplay';
-import TablesList from 'components/Replicator/Detail/TablesList';
-import Metrics from 'components/Replicator/Detail/Metrics';
-import ThroughputLatencyGraphs from 'components/Replicator/Detail/ThroughputLatencyGraphs';
-import TableScatterPlotGraph from 'components/Replicator/Detail/TableScatterPlotGraph';
-import TimePeriodDropdown from 'components/Replicator/Detail/TimePeriodDropdown';
-import SelectedTable from 'components/Replicator/Detail/SelectedTable';
+import DetailContent from 'components/Replicator/Detail/DetailContent';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import ContentHeading from 'components/Replicator/Detail/ContentHeading';
 
 export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
@@ -55,7 +51,7 @@ const styles = (theme): StyleRules => {
       padding: '15px',
     },
     body: {
-      padding: '15px 40px',
+      padding: '0 40px 15px 40px',
     },
   };
 };
@@ -91,6 +87,10 @@ interface IDetailState {
   offsetBasePath: string;
   activeTable: string;
   timeRange: string;
+  loading: boolean;
+  lastUpdated: number;
+  startTime: number;
+  endTime: number;
 
   start: () => void;
   stop: () => void;
@@ -114,6 +114,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       () => {
         this.setState({
           status: PROGRAM_STATUSES.STARTING,
+          startTime: null,
+          endTime: null,
         });
       },
       (err) => {
@@ -172,6 +174,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
   private setTimeRange = (timeRange: string) => {
     this.setState({
       timeRange,
+      lastUpdated: Date.now(),
     });
   };
 
@@ -193,6 +196,10 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     offsetBasePath: '',
     activeTable: null,
     timeRange: '24h',
+    loading: true,
+    lastUpdated: Date.now(),
+    startTime: null,
+    end: null,
 
     start: this.start,
     stop: this.stop,
@@ -325,6 +332,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
         tables: selectedTables,
         columns,
         offsetBasePath: config.offsetBasePath,
+        loading: false,
+        lastUpdated: Date.now(),
       });
     });
 
@@ -345,6 +354,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       this.setState({
         status: latestRun.status,
         runId: latestRun.runid,
+        startTime: latestRun.starting,
+        endTime: latestRun.end,
       });
     });
   };
@@ -366,6 +377,10 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       return this.redirect();
     }
 
+    if (this.state.loading) {
+      return <LoadingSVGCentered />;
+    }
+
     const classes = this.props.classes;
 
     return (
@@ -374,26 +389,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
           <TopPanel />
 
           <div className={classes.body}>
-            <ConfigDisplay
-              sourcePluginInfo={this.state.sourcePluginInfo}
-              targetPluginInfo={this.state.targetPluginInfo}
-              sourcePluginWidget={this.state.sourcePluginWidget}
-              targetPluginWidget={this.state.targetPluginWidget}
-              sourceConfig={this.state.sourceConfig}
-              targetConfig={this.state.targetConfig}
-            />
-
-            <hr />
-            <div>
-              View
-              <TimePeriodDropdown />
-            </div>
-            <hr />
-            <TableScatterPlotGraph />
-            <hr />
-            <SelectedTable />
-            <ThroughputLatencyGraphs />
-            <TablesList />
+            <ContentHeading />
+            <DetailContent />
           </div>
         </div>
       </DetailContext.Provider>
