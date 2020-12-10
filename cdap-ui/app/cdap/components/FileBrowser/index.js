@@ -137,7 +137,6 @@ export default class FileBrowser extends Component {
 
   getFilePath() {
     let { workspaceInfo } = DataPrepStore.getState().dataprep;
-    // console.dir(workspaceInfo);
     let filePath = objectQuery(workspaceInfo, 'properties', 'path');
     filePath = !isEmpty(filePath)
       ? filePath.slice(0, lastIndexOf(filePath, '/') + 1)
