@@ -289,6 +289,17 @@ describe('Deploying pipeline with temporary runtime arguments', () => {
       )}`
     ).should('not.exist');
   });
+
+  it('should fail running with invalid runtime arguments', () => {
+    cy.get(dataCy(RUNTIME_ARGS_MODELESS_LOADING_SELECTOR)).should('not.exist');
+    cy.get(dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)).should('exist');
+    cy.add_runtime_args_row_with_value(2, 'system.profile.name', 'unknown');
+    cy.get(dataCy('run-deployed-pipeline-modal-btn')).click();
+    cy.get('[data-cy="runtime-args-modeless"]').contains(
+      `'profile:default.unknown' was not found.`,
+      { timeout: 60000 }
+    );
+  });
 });
 
 describe('Deploying pipeline with saved runtime arguments', () => {
@@ -348,9 +359,20 @@ describe('Deploying pipeline with saved runtime arguments', () => {
     cy.get(dataCy('Succeeded'), { timeout: PIPELINE_RUN_TIMEOUT }).should('exist');
   });
 
-  it('should have saved runtime arguments available and validating other valid actions with runtime arguments', () => {
-    // Verifying values are persisted
+  it('should fail saving with invalid runtime arguments', () => {
     cy.get('.arrow-btn-container').click();
+    cy.add_runtime_args_row_with_value(2, 'system.profile.name', 'unknown');
+    cy.get(dataCy('save-runtime-args-btn')).click();
+    cy.get('[data-cy="runtime-args-modeless"]').contains(
+      `'profile:default.unknown' was not found.`,
+      { timeout: 60000 }
+    );
+    cy.get(
+      `${dataCy(RUNTIME_ARGS_DEPLOYED_SELECTOR)} ${dataCy(2)} ${dataCy('remove-row')}`
+    ).click();
+  });
+
+  it('should have saved runtime arguments available and validating other valid actions with runtime arguments', () => {
     cy.assert_runtime_args_row(0, 'source_path', SOURCE_PATH_VAL, true);
     cy.assert_runtime_args_row(1, 'sink_path', SINK_PATH_VAL, true);
     // adding bunch of rows
