@@ -241,8 +241,15 @@ const updatePipeline = () => {
   return publishObservable;
 };
 
-const runPipeline = (runtimeArgs) => {
-  setRunButtonLoading(true);
+/**
+ *
+ * @param {object} runtimeArgs - Runtime arguments that needs to be passed while starting a run
+ * @param {boolean} publishEventsToStore - Boolean to determine we need to publish events to the store.
+ *   This is needed in cases where start the run from runtime arguments modal and have the result (success or failure)
+ * be presented inside the modal instead of globally publishing them.
+ */
+const runPipeline = (runtimeArgs, publishEventsToStore = true) => {
+  publishEventsToStore && setRunButtonLoading(true);
   let { name, artifact } = PipelineDetailStore.getState();
 
   let params = {
@@ -253,13 +260,15 @@ const runPipeline = (runtimeArgs) => {
     action: 'start',
   };
   let observerable$ = MyProgramApi.action(params, runtimeArgs);
-  observerable$.subscribe(
-    () => {},
-    (err) => {
-      setRunButtonLoading(false);
-      setRunError(err.response || err);
-    }
-  );
+  if (publishEventsToStore) {
+    observerable$.subscribe(
+      () => {},
+      (err) => {
+        setRunButtonLoading(false);
+        setRunError(err.response || err);
+      }
+    );
+  }
   return observerable$;
 };
 

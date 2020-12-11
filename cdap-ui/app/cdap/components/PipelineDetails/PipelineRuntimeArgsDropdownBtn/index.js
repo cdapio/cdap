@@ -21,8 +21,9 @@ import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 import classnames from 'classnames';
 import { Provider } from 'react-redux';
 import PipelineConfigurationsStore from 'components/PipelineConfigurations/Store';
-import RuntimeArgsModeless from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsModeless';
+import RuntimeArgsModeless from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsModeless/index.tsx';
 import { fetchAndUpdateRuntimeArgs } from 'components/PipelineConfigurations/Store/ActionCreator';
+import ThemeWrapper from 'components/ThemeWrapper';
 
 require('./PipelineRuntimeArgsDropdownBtn.scss');
 
@@ -70,32 +71,34 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
 
   render() {
     return (
-      <fieldset disabled={this.props.disabled}>
-        <div className="arrow-btn-container">
-          <div
-            className={classnames('btn pipeline-action-btn pipeline-run-btn', {
-              'btn-popover-open': this.state.showRunOptions,
-            })}
-            onClick={(e) => {
-              if (!this.props.disabled) {
-                this.toggleRunConfigOption(e.currentTarget);
-              }
-            }}
-          >
-            <IconSVG name="icon-caret-down" />
+      <ThemeWrapper>
+        <fieldset disabled={this.props.disabled}>
+          <div className="arrow-btn-container">
+            <div
+              className={classnames('btn pipeline-action-btn pipeline-run-btn', {
+                'btn-popover-open': this.state.showRunOptions,
+              })}
+              onClick={(e) => {
+                if (!this.props.disabled) {
+                  this.toggleRunConfigOption(e.currentTarget);
+                }
+              }}
+            >
+              <IconSVG name="icon-caret-down" />
+            </div>
           </div>
-        </div>
-        <Provider store={PipelineConfigurationsStore}>
-          <PipelineModeless
-            title="Runtime Arguments"
-            onClose={this.toggleRunConfigOption.bind(this, false)}
-            open={this.state.showRunOptions}
-            anchorEl={this.state.anchorEl}
-          >
-            <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
-          </PipelineModeless>
-        </Provider>
-      </fieldset>
+          <Provider store={PipelineConfigurationsStore}>
+            <PipelineModeless
+              title="Runtime Arguments"
+              onClose={this.toggleRunConfigOption.bind(this, false)}
+              open={this.state.showRunOptions}
+              anchorEl={this.state.anchorEl}
+            >
+              <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
+            </PipelineModeless>
+          </Provider>
+        </fieldset>
+      </ThemeWrapper>
     );
   }
 }
