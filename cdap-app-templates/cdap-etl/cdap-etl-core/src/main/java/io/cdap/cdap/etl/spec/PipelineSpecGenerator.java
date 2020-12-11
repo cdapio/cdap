@@ -592,6 +592,20 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       stages.put(stageName, stage);
     }
 
+    // make sure actions are not in the middle of the pipeline -- only at the start and/or end
+    for (String actionStage : actionStages) {
+      Set<String> actionParents = dag.parentsOf(actionStage);
+      Set<String> actionChildren = dag.accessibleFrom(actionStage);
+      Set<String> nonControlParents = Sets.difference(actionParents, controlStages);
+      Set<String> nonControlChildren = Sets.difference(actionChildren, controlStages);
+      if (!nonControlChildren.isEmpty() && !nonControlParents.isEmpty()) {
+        throw new IllegalArgumentException(
+          String.format("Action stage '%s' is invalid. Actions can only be placed at the start or end of the pipeline.",
+                        actionStage));
+      }
+    }
+
+
     validateConditionBranches(conditionStages, dag);
 
     for (String stageName : dag.getTopologicalOrder()) {
