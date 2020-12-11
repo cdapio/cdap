@@ -285,4 +285,25 @@ public class StructuredRecordBuilderTest {
     Schema schema = Schema.recordOf("test", Schema.Field.of("d", Schema.decimalOf(5, 2)));
     StructuredRecord.builder(schema).setDecimal("d", new BigDecimal(new BigInteger("12341324"), 2)).build();
   }
+
+  @Test(expected = ClassCastException.class)
+  public void testUnexpectedDateType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.DATE)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", 5L).build();
+    record.getDate("x");
+  }
+
+  @Test(expected = ClassCastException.class)
+  public void testUnexpectedTimestampType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "2020-01-01 12:00:00").build();
+    record.getTimestamp("x");
+  }
+
+  @Test(expected = ClassCastException.class)
+  public void testUnexpectedTimeType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.TIME_MICROS)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "12:00:00").build();
+    record.getTime("x");
+  }
 }
