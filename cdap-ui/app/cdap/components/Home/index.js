@@ -79,8 +79,8 @@ const Reports = Loadable({
   loader: () => import(/* webpackChunkName: "Reports" */ 'components/Reports'),
   loading: LoadingSVGCentered,
 });
-const OpsDashboard = Loadable({
-  loader: () => import(/* webpackChunkName: "OpsDashboard" */ 'components/OpsDashboard'),
+const Operations = Loadable({
+  loader: () => import(/* webpackChunkName: "Operations" */ 'components/Operations'),
   loading: LoadingSVGCentered,
 });
 const PipelineList = Loadable({
@@ -99,7 +99,7 @@ const FieldLevelLineage = Loadable({
 });
 
 const Replicator = Loadable({
-  loader: () => import(/* webpackChunkMame: "Replicator" */ 'components/Replicator'),
+  loader: () => import(/* webpackChunkName: "Replicator" */ 'components/Replicator'),
   loading: LoadingSVGCentered,
 });
 
@@ -150,7 +150,7 @@ export default class Home extends Component {
           <Route exact path="/ns/:namespace/wrangler/:workspaceId" component={DataPrepHome} />
           <Route path="/ns/:namespace/connections" component={DataPrepConnections} />
           <Route path="/ns/:namespace/experiments" component={Experiments} />
-          <Route exact path="/ns/:namespace/operations" component={OpsDashboard} />
+          <Route exact path="/ns/:namespace/operations" component={Operations} />
           <Route exact path="/ns/:namespace/details" component={NamespaceDetails} />
           <Route path="/ns/:namespace/reports" component={Reports} />
           <Route
