@@ -1908,6 +1908,9 @@ features:
       startTour: Start Tour
       takeTour: Take a short tour to discover all that you can do.
 
+  Operations:
+    pageTitle: '{productName} | {featureName}'
+
   OpsDashboard:
     header: Dashboard
     pageTitle: '{productName} | {featureName}'

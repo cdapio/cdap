@@ -25,7 +25,7 @@ const PREFIX = 'features.NamespacesPicker';
 
 require('./NamespacesPicker.scss');
 
-function NamespacesPickerView({ namespacesPick, setNamespacesPick }) {
+export function NamespacesPickerBase({ namespacesPick, setNamespacesPick, className }) {
   let monitorTitle;
 
   if (namespacesPick.length === 0) {
@@ -51,21 +51,25 @@ function NamespacesPickerView({ namespacesPick, setNamespacesPick }) {
   }
 
   return (
-    <div className="namespace-picker float-right">
+    <div className={`namespace-picker float-right ${className}`}>
       {monitorTitle}
 
       <div className="monitor-more text-right">
         <div className="d-inline-block">
-          <NamespacesPopover setNamespacesPick={setNamespacesPick} />
+          <NamespacesPopover
+            setNamespacesPick={setNamespacesPick}
+            namespacesPick={namespacesPick}
+          />
         </div>
       </div>
     </div>
   );
 }
 
-NamespacesPickerView.propTypes = {
+NamespacesPickerBase.propTypes = {
   namespacesPick: PropTypes.array,
   setNamespacesPick: PropTypes.func,
+  className: PropTypes.string,
 };
 
 const mapStateToProps = (state, ownProps) => {
@@ -75,6 +79,6 @@ const mapStateToProps = (state, ownProps) => {
   };
 };
 
-const NamespacesPicker = connect(mapStateToProps)(NamespacesPickerView);
+const NamespacesPicker = connect(mapStateToProps)(NamespacesPickerBase);
 
 export default NamespacesPicker;
