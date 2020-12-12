@@ -57,8 +57,13 @@ public interface HttpServiceRequest {
   /**
    * @param key the header to find
    * @return the value of the specified header; if the header maps to multiple values, return the first value;
-   *         if there is no such header, a {@code null} value will be returned.
+   * if there is no such header, a {@code null} value will be returned.
    */
   @Nullable
   String getHeader(String key);
+
+  /**
+   * @return The id of the user who issued this request
+   */
+  String getUserId();
 }

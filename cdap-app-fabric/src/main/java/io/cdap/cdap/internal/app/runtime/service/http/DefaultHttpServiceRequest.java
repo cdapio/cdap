@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.runtime.service.http;
 
 import com.google.common.collect.ImmutableList;
 import io.cdap.cdap.api.service.http.HttpServiceRequest;
+import io.cdap.cdap.security.spi.authentication.SecurityRequestContext;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.FullHttpRequest;
@@ -109,5 +110,10 @@ final class DefaultHttpServiceRequest implements HttpServiceRequest {
   public String getHeader(String key) {
     Collection<String> values = getHeaders(key);
     return values.isEmpty() ? null : values.iterator().next();
+  }
+
+  @Override
+  public String getUserId() {
+    return SecurityRequestContext.getUserId();
   }
 }
