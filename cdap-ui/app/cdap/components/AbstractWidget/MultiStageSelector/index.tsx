@@ -72,13 +72,36 @@ const MultiStageSelectorBase: React.FC<IMultiStageSelectorProps> = ({
       </div>
     );
   }
+  const validatedValue = value
+    .toString()
+    .split(',')
+    .filter((stage) => {
+      return inputStages.find((s) => s.id === stage);
+    })
+    .join(',');
+  if (validatedValue !== value) {
+    /**
+     * This will happen when the user configured the plugin (say joiner)
+     * with initial two stages and then later drop one of those stages.
+     *
+     * Now the previously selected input stages are no longer valid.
+     * The validatedValue will only have stages that are still input to joiner
+     * and will update the value of the plugin automatically.
+     *
+     * If not for this we will show only valid stages but the actual plugin property
+     * will have all the stages.
+     */
+    onChange(validatedValue);
+  }
   return (
-    <MultiSelect
-      value={value}
-      onChange={onChange}
-      widgetProps={multiSelectWidgetProps}
-      disabled={disabled}
-    />
+    <React.Fragment>
+      <MultiSelect
+        value={validatedValue}
+        onChange={onChange}
+        widgetProps={multiSelectWidgetProps}
+        disabled={disabled}
+      />
+    </React.Fragment>
   );
 };
 
