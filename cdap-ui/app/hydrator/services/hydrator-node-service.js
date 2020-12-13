@@ -15,7 +15,7 @@
  */
 
 class HydratorPlusPlusNodeService {
-  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers, GLOBALS, avsc) {
+  constructor($q, HydratorPlusPlusHydratorService, IMPLICIT_SCHEMA, myHelpers, GLOBALS, avsc, $state, myPipelineApi) {
     'ngInject';
     this.$q = $q;
     this.HydratorPlusPlusHydratorService = HydratorPlusPlusHydratorService;
@@ -23,6 +23,8 @@ class HydratorPlusPlusNodeService {
     this.IMPLICIT_SCHEMA = IMPLICIT_SCHEMA;
     this.GLOBALS = GLOBALS;
     this.avsc = avsc;
+    this.$state = $state;
+    this.myPipelineApi = myPipelineApi;
   }
   getPluginInfo(node, appType, sourceConnections, sourceNodes, artifactVersion) {
     var promise;
@@ -31,7 +33,7 @@ class HydratorPlusPlusNodeService {
     } else {
       promise = this.HydratorPlusPlusHydratorService.fetchBackendProperties(node, appType, artifactVersion);
     }
-    return promise.then((node) => this.configurePluginInfo(node, appType, sourceConnections, sourceNodes));
+    return promise.then((node) => this.configurePluginInfo(node, sourceConnections, sourceNodes));
   }
   isFieldExistsInSchema(field, schema) {
     if(angular.isObject(schema) && Array.isArray(schema.fields)) {
@@ -39,69 +41,99 @@ class HydratorPlusPlusNodeService {
     }
     return false;
   }
-  configurePluginInfo(node, appType, sourceConnections, sourceNodes) {
-    const getInputSchema = (sourceNode, targetNode, sourceConnections) => {
-      let schema = '';
-      let inputSchema;
 
-      if (!sourceNode.outputSchema || typeof sourceNode.outputSchema === 'string') {
-        sourceNode.outputSchema = [this.getOutputSchemaObj(sourceNode.outputSchema)];
+  parseSchema (schema) {
+    let rSchema;
+    if (typeof schema === 'string') {
+      if (this.HydratorPlusPlusHydratorService.containsMacro(schema)) {
+        return schema;
       }
-
-      if (sourceNode.outputSchema[0].name !== this.GLOBALS.defaultSchemaName) {
-        let sourcePort = (sourceConnections.find(sconn => sconn.port) || {}).port;
-        let sourceSchema = sourceNode.outputSchema.filter(outputSchema => outputSchema.name === sourcePort);
-        schema = sourceSchema[0].schema;
-      } else {
-        schema = sourceNode.outputSchema[0].schema;
+      try {
+        rSchema = JSON.parse(schema);
+      } catch (e) {
+        rSchema = null;
       }
-
-      if (targetNode.type === 'errortransform') {
-        if (this.GLOBALS.pluginConvert[node.type] === 'source' || (Array.isArray(sourceNode.inputSchema) && !sourceNode.inputSchema.length)) {
-          return null;
-        }
-        schema = sourceNode.inputSchema && Array.isArray(sourceNode.inputSchema) ? sourceNode.inputSchema[0].schema : sourceNode.inputSchema;
-      }
-
-      if (Object.keys(this.IMPLICIT_SCHEMA).indexOf(sourceNode.plugin.properties.format) !== -1) {
-        schema = this.IMPLICIT_SCHEMA[sourceNode.plugin.properties.format];
-      }
-
-      if (typeof schema === 'string'){
-        if (this.HydratorPlusPlusHydratorService.containsMacro(schema)) {
-          return schema;
-        }
-        try {
-          inputSchema = JSON.parse(schema);
-        } catch(e) {
-          inputSchema = null;
-        }
-      } else {
-        inputSchema = schema;
-      }
-      return inputSchema;
-    };
-
-    if (['action', 'source'].indexOf(this.GLOBALS.pluginConvert[node.type]) === -1) {
-      node.inputSchema = sourceNodes.map(sourceNode => {
-        const inputSchema = getInputSchema(sourceNode, node, sourceConnections);
-        if (
-          typeof inputSchema === 'string' &&
-          this.HydratorPlusPlusHydratorService.containsMacro(inputSchema)
-        ) {
-          return {
-            name: sourceNode.plugin.label,
-            schema: inputSchema,
-          };
-        }
-        return {
-          name: sourceNode.plugin.label,
-          schema: this.HydratorPlusPlusHydratorService.formatSchemaToAvro(inputSchema)
-        };
-      });
+    } else {
+      rSchema = schema;
     }
+    return rSchema;
+  }
 
-    return node;
+  getInputSchema (sourceNode, currentNode, sourceConnections) {
+    if (!sourceNode.outputSchema || typeof sourceNode.outputSchema === 'string') {
+      sourceNode.outputSchema = [this.getOutputSchemaObj(sourceNode.outputSchema)];
+    }
+  
+    let schema = sourceNode.outputSchema[0].schema;
+    const defer = this.$q.defer();
+  
+    // If the current stage is an error collector and the previous stage is a source
+    // Then call validation API to get error schema of previous node and set it as input schema
+    // of the current stage.
+    if (currentNode.type === 'errortransform' && (sourceNode.type === 'batchsource' || sourceNode.type === 'streamingsource')) {
+      const body = {
+        stage: {
+          name: sourceNode.name,
+          plugin: sourceNode.plugin,
+        },
+      };
+      const params = {
+        context: this.$state.params.namespace,
+      };
+      this.myPipelineApi.validateStage(params, body).$promise.then((res) => {
+        let schema = this.myHelpers.objectQuery(res, 'spec', 'errorSchema') || this.myHelpers.objectQuery(res, 'spec', 'outputSchema');
+        defer.resolve(this.parseSchema(schema));
+      });
+      return defer.promise;
+    }
+  
+    // If for nodes other than source set the input schema of previous stage as input
+    // schema of the current stage.
+    if (currentNode.type === 'errortransform' && sourceNode.type !== 'batchsource') {
+      schema =
+        sourceNode.inputSchema && Array.isArray(sourceNode.inputSchema) ? sourceNode.inputSchema[0].schema : sourceNode.inputSchema;
+    }
+  
+    // If current stage connects to a port from previous stage then cycle through connections
+    // and find the stage and its output schema. That is the input schema for current stage.
+    if (sourceNode.outputSchema[0].name !== this.GLOBALS.defaultSchemaName) {
+      const sourcePort = (sourceConnections.find((sconn) => sconn.port) || {}).port;
+      const sourceSchema = sourceNode.outputSchema.filter(
+        (outputSchema) => outputSchema.name === sourcePort
+      );
+      schema = sourceSchema[0].schema;
+    }
+  
+    if (Object.keys(this.IMPLICIT_SCHEMA).indexOf(sourceNode.plugin.properties.format) !== -1) {
+      schema = this.IMPLICIT_SCHEMA[sourceNode.plugin.properties.format];
+    }
+    defer.resolve(this.parseSchema(schema));
+    return defer.promise;
+  }
+
+  configurePluginInfo (node, sourceConnections, sourceNodes) {
+    const defer = this.$q.defer();
+    if (['action', 'source'].indexOf(this.GLOBALS.pluginConvert[node.type]) !== -1) {
+      defer.resolve(node);
+      return defer.promise;
+    }
+    const inputSchemas = [];
+    const allInputSchemas = sourceNodes.map((sourceNode) => {
+      return this.getInputSchema(sourceNode, node, sourceConnections).then((inputSchema) => {
+        const schemaContainsMacro =
+          typeof inputSchema === 'string' &&
+          this.HydratorPlusPlusHydratorService.containsMacro(inputSchema);
+          inputSchemas.push({
+          name: sourceNode.plugin.label,
+          schema: schemaContainsMacro ? inputSchema : this.HydratorPlusPlusHydratorService.formatSchemaToAvro(inputSchema),
+        });
+      });
+    });
+    this.$q.all(allInputSchemas).then(() => {
+      node.inputSchema = inputSchemas;
+      return defer.resolve(node);
+    });
+    return defer.promise;
   }
 
   getOutputSchemaObj(schema, schemaObjName = this.GLOBALS.defaultSchemaName) {
