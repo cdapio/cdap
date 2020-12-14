@@ -44,8 +44,10 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.configurationGroupUtilities = window.CaskCommon.ConfigurationGroupUtilities;
     this.dynamicFiltersUtilities = window.CaskCommon.DynamicFiltersUtilities;
     this.showNewSchemaEditor = window.localStorage['schema-editor'] === 'true';
-    this.setDefaults(rPlugin);
     this.myAlertOnValium = myAlertOnValium;
+    this.metricsContext = rNodeMetricsContext;
+    this.isStudioMode = rIsStudioMode;
+    this.rPlugin = rPlugin;
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.getPreviewId = this.getPreviewId.bind(this);
     this.previewId = this.getPreviewId();
@@ -59,6 +61,11 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.onSchemaChange = this.onSchemaChange.bind(this);
     this.onSchemaImportLinkClick = this.onSchemaImportLinkClick.bind(this);
     this.isSchemaMacro = this.isSchemaMacro.bind(this);
+    this.onPropertiesChange = this.onPropertiesChange.bind(this);
+    this.handleLabelChange = this.handleLabelChange.bind(this);
+    this.initializeMetrics = this.initializeMetrics.bind(this);
+    this.showContents = this.showContents.bind(this);
+    this.initializePreview = this.initializePreview.bind(this);
     this.tabs = [
       {
         label: 'Properties',
@@ -77,56 +84,11 @@ class HydratorPlusPlusNodeConfigCtrl {
         templateUrl: '/assets/features/hydrator/templates/partial/node-config-modal/metrics-tab.html'
       }
     ];
-
-    this.metricsContext = rNodeMetricsContext;
-    this.isMetricsEnabled = this.$scope.isDisabled && (Array.isArray(rNodeMetricsContext.runs) && rNodeMetricsContext.runs.length);
-    if (this.metricsContext) {
-      this.nodeMetrics = [
-        `user.${this.state.node.name}.records.in`,
-        `user.${this.state.node.name}.records.error`,
-        `user.${this.state.node.name}.process.time.total`,
-        `user.${this.state.node.name}.process.time.avg`,
-        `user.${this.state.node.name}.process.time.max`,
-        `user.${this.state.node.name}.process.time.min`,
-        `user.${this.state.node.name}.process.time.stddev`
-      ];
-      let nodeType = this.state.node.type || this.state.node.plugin.type;
-      if (nodeType === 'splittertransform') {
-        if (this.state.node.outputSchema && Array.isArray(this.state.node.outputSchema))   {
-          angular.forEach(this.state.node.outputSchema, (port) => {
-            this.nodeMetrics.push(`user.${this.state.node.name}.records.out.${port.name}`);
-          });
-        }
-      } else {
-        this.nodeMetrics.push(`user.${this.state.node.name}.records.out`);
-      }
-    } else {
-      this.nodeMetrics = [];
-    }
-    this.showContents();
-
-    this.isStudioMode = rIsStudioMode;
-    this.isPreviewMode = this.previewStore.getState().preview.isPreviewModeEnabled;
-    this.isPreviewData = this.previewStore.getState().preview.previewData;
-
-    if (rIsStudioMode && this.isPreviewMode && this.previewId) {
-      this.previewData = null;
-      this.updatePreviewStatus();
-      this.selectedNode = {
-        name: this.state.node.plugin.label,
-        plugin: this.state.node.plugin,
-        isSource: this.state.isSource,
-        isSink: this.state.isSink,
-        isCondition: this.state.isCondition,
-       };
-    }
-
-    this.activeTab = 1;
-    if (this.isPreviewMode && this.isPreviewData && !rPlugin.isAction) {
-      this.activeTab = 2;
-    } else if (this.PipelineMetricsStore.getState().metricsTabActive) {
-      this.activeTab = 4;
-    }
+    this.setDefaults();
+    this.fetchPluginInfo(rPlugin)
+        .then(this.initializeMetrics)
+        .then(this.showContents)
+        .then(this.initializePreview);
 
     this.portMetricsToShow = this.PipelineMetricsStore.getState().portsToShow;
 
@@ -156,63 +118,31 @@ class HydratorPlusPlusNodeConfigCtrl {
         required: true,
       }
     };
-
-    this.onPropertiesChange = this.onPropertiesChange.bind(this);
-    this.handleLabelChange = this.handleLabelChange.bind(this);
-  }
-  handleDatasetSelected(schema, format, datasetAlreadyExists, datasetId) {
-    if (datasetAlreadyExists) {
-      this.datasetAlreadyExists = datasetAlreadyExists;
-    } else {
-      this.datasetAlreadyExists = false;
-    }
-
-    // if this plugin is having an existing dataset with a macro, then don't change anything.
-    // else if the user is changing to another existing dataset, then show basic mode.
-    if (this.myHelpers.objectQuery(this, 'defaultState', 'node', 'plugin', 'properties', 'name') && this.defaultState.node.plugin.properties.name !== datasetId) {
-      this.state.schemaAdvance = false;
-    }
-    if (datasetId) {
-      this.datasetId = datasetId;
-    }
   }
 
-  onPropertiesChange(values = {}) {
-    this.state.node.plugin.properties = values;
-  }
-  handleLabelChange(value) {
-    this.state.node.plugin.label = value;
+  fetchPluginInfo(rPlugin) {
+    const pluginNode = rPlugin.pluginNode;
+    const appType = rPlugin.appType;
+    const sourceConnections = rPlugin.sourceConnections;
+    const sourceNodes = rPlugin.sourceNodes;
+    const artifactVersion = rPlugin.artifactVersion;
+    return this.HydratorPlusPlusNodeService
+        .getPluginInfo(pluginNode, appType, sourceConnections, sourceNodes, artifactVersion)
+        .then((nodeWithInfo) => {
+          let pluginType = nodeWithInfo.type || nodeWithInfo.plugin.type;
+          return this.setDefaults({
+            node: nodeWithInfo,
+            isValidPlugin: true,
+            type: appType,
+            isSource: this.GLOBALS.pluginConvert[pluginType] === 'source',
+            isSink: this.GLOBALS.pluginConvert[pluginType] === 'sink',
+            isTransform: this.GLOBALS.pluginConvert[pluginType] === 'transform',
+            isAction: this.GLOBALS.pluginConvert[pluginType] === 'action',
+            isCondition: this.GLOBALS.pluginConvert[pluginType] === 'condition',
+          });
+        });
   }
 
-  showContents() {
-    if (angular.isArray(this.state.watchers)) {
-      this.state.watchers.forEach(watcher => watcher());
-      this.state.watchers = [];
-    }
-    if (Object.keys(this.state.node).length) {
-      this.configfetched = false;
-
-      this.$timeout.cancel(this.setStateTimeout);
-      this.setStateTimeout = this.$timeout(() => {
-        this.loadNewPlugin();
-        this.validateNodeLabel();
-      });
-    }
-  }
-  validateNodeLabel() {
-    let nodes = this.ConfigStore.getNodes();
-    let nodeName = this.myHelpers.objectQuery(this.state, 'node', 'plugin', 'label');
-    if (!nodeName) {
-      return;
-    }
-    this.NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, err => {
-      if (err) {
-        this.state.nodeLabelError = this.GLOBALS.en.hydrator.studio.error[err];
-      } else {
-        this.state.nodeLabelError = '';
-      }
-    });
-  }
   setDefaults(config = {}) {
     this.state = {
       configfetched : false,
@@ -237,6 +167,14 @@ class HydratorPlusPlusNodeConfigCtrl {
       outputSchemaUpdate: 0,
       schemaAdvance: false
     };
+    this.isPreviewMode = this.previewStore.getState().preview.isPreviewModeEnabled;
+    this.isPreviewData = this.previewStore.getState().preview.previewData;
+    this.activeTab = 1;
+    if (this.isPreviewMode && this.isPreviewData && !this.rPlugin.isAction) {
+      this.activeTab = 2;
+    } else if (this.PipelineMetricsStore.getState().metricsTabActive) {
+      this.activeTab = 4;
+    }
 
     this.defaultState = angular.copy(this.state);
 
@@ -281,9 +219,108 @@ class HydratorPlusPlusNodeConfigCtrl {
 
     this.showPropagateConfirm = false;
   }
+
+  initializeMetrics() {
+    this.isMetricsEnabled = this.$scope.isDisabled && (Array.isArray(this.metricsContext.runs) && this.metricsContext.runs.length);
+    if (this.metricsContext) {
+      this.nodeMetrics = [
+        `user.${this.state.node.name}.records.in`,
+        `user.${this.state.node.name}.records.error`,
+        `user.${this.state.node.name}.process.time.total`,
+        `user.${this.state.node.name}.process.time.avg`,
+        `user.${this.state.node.name}.process.time.max`,
+        `user.${this.state.node.name}.process.time.min`,
+        `user.${this.state.node.name}.process.time.stddev`
+      ];
+      let nodeType = this.state.node.type || this.state.node.plugin.type;
+      if (nodeType === 'splittertransform') {
+        if (this.state.node.outputSchema && Array.isArray(this.state.node.outputSchema))   {
+          angular.forEach(this.state.node.outputSchema, (port) => {
+            this.nodeMetrics.push(`user.${this.state.node.name}.records.out.${port.name}`);
+          });
+        }
+      } else {
+        this.nodeMetrics.push(`user.${this.state.node.name}.records.out`);
+      }
+    } else {
+      this.nodeMetrics = [];
+    }
+  }
+
+  initializePreview() {
+    if (this.isStudioMode && this.isPreviewMode && this.previewId) {
+      this.previewData = null;
+      this.updatePreviewStatus();
+      this.selectedNode = {
+        name: this.state.node.plugin.label,
+        plugin: this.state.node.plugin,
+        isSource: this.state.isSource,
+        isSink: this.state.isSink,
+        isCondition: this.state.isCondition,
+       };
+    }
+  }
+
+  handleDatasetSelected(schema, format, datasetAlreadyExists, datasetId) {
+    if (datasetAlreadyExists) {
+      this.datasetAlreadyExists = datasetAlreadyExists;
+    } else {
+      this.datasetAlreadyExists = false;
+    }
+
+    // if this plugin is having an existing dataset with a macro, then don't change anything.
+    // else if the user is changing to another existing dataset, then show basic mode.
+    if (this.myHelpers.objectQuery(this, 'defaultState', 'node', 'plugin', 'properties', 'name') && this.defaultState.node.plugin.properties.name !== datasetId) {
+      this.state.schemaAdvance = false;
+    }
+    if (datasetId) {
+      this.datasetId = datasetId;
+    }
+  }
+
+  onPropertiesChange(values = {}) {
+    this.state.node.plugin.properties = values;
+  }
+
+  handleLabelChange(value) {
+    this.state.node.plugin.label = value;
+  }
+
+  showContents() {
+    if (angular.isArray(this.state.watchers)) {
+      this.state.watchers.forEach(watcher => watcher());
+      this.state.watchers = [];
+    }
+    if (Object.keys(this.state.node).length) {
+      this.configfetched = false;
+
+      this.$timeout.cancel(this.setStateTimeout);
+      this.setStateTimeout = this.$timeout(() => {
+        this.loadNewPlugin();
+        this.validateNodeLabel();
+      });
+    }
+  }
+
+  validateNodeLabel() {
+    let nodes = this.ConfigStore.getNodes();
+    let nodeName = this.myHelpers.objectQuery(this.state, 'node', 'plugin', 'label');
+    if (!nodeName) {
+      return;
+    }
+    this.NonStorePipelineErrorFactory.isNodeNameUnique(nodeName, nodes, err => {
+      if (err) {
+        this.state.nodeLabelError = this.GLOBALS.en.hydrator.studio.error[err];
+      } else {
+        this.state.nodeLabelError = '';
+      }
+    });
+  }
+
   propagateSchemaDownStream() {
     this.HydratorPlusPlusConfigActions.propagateSchemaDownStream(this.state.node.name);
   }
+
   loadNewPlugin() {
     const noJsonErrorHandler = (err) => {
       var propertiesFromBackend = Object.keys(this.state.node._backendProperties);
@@ -424,9 +461,11 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.state.configfetched = true;
     }
   }
+
   schemaClear() {
     this.eventEmitter.emit('schema.clear');
   }
+
   importFiles(files) {
     let reader = new FileReader();
     reader.readAsText(files[0], 'UTF-8');
@@ -436,9 +475,11 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.eventEmitter.emit('schema.import', data);
     };
   }
+
   onSchemaImportLinkClick() {
     this.$timeout(() => document.getElementById('schema-import-link').click());
   }
+
   exportSchema() {
     this.eventEmitter.emit('schema.export');
   }
@@ -536,6 +577,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       error.push('There are two or more fields with the same name.');
     }
   }
+
   updateNodeStateIfDirty() {
     let stateIsDirty = this.stateIsDirty();
     // because we are adding state to history before we open a node config, so if the config wasn't changed at all,
@@ -547,11 +589,13 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.DAGPlusPlusNodesActionsFactory.resetFutureStates();
     }
   }
+
   stateIsDirty() {
     let defaults = this.defaultState.node;
     let state = this.state.node;
     return !angular.equals(defaults, state);
   }
+
   updateDefaultOutputSchema(outputSchema) {
     if (typeof outputSchema !== 'string') {
       outputSchema = JSON.stringify(outputSchema);
@@ -610,6 +654,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     }
     return '';
   }
+
   getIsMacroEnabled() {
     return (
       !this.$scope.isDisabled &&
@@ -617,22 +662,27 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.state.node._backendProperties['schema'].macroSupported
     );
   }
+
   onClearSchema() {
     this.state.node['outputSchema'] = [{ name: 'etlSchemaBody', schema: ''}];
     this.updateAngularPostSchemaUpdate();
   }
+
   onPropagateSchema() {
     this.showPropagateConfirm = true;
     this.updateAngularPostSchemaUpdate();
   }
+
   onMacroEnabled() {
     this.state.schemaAdvance = !this.state.schemaAdvance;
     this.updateAngularPostSchemaUpdate();
   }
+
   onSchemaChange(outputSchemas) {
     this.state.node.outputSchema = outputSchemas;
     this.updateAngularPostSchemaUpdate();
   }
+
   onImportSchema(stringifiedSchema) {
     try {
       this.state.node.outputSchema = JSON.parse(stringifiedSchema);
@@ -645,6 +695,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.updateAngularPostSchemaUpdate();
     }
   }
+
   updateAngularPostSchemaUpdate() {
     try {
       this.$scope.$digest();
@@ -652,9 +703,11 @@ class HydratorPlusPlusNodeConfigCtrl {
       return;
     }
   }
+
   isSchemaMacro() {
     return this.state.schemaAdvance;
   }
+
   getActionsDropdownMap(isInputSchema) {
     let actionsMap = {};
     if (isInputSchema) {
