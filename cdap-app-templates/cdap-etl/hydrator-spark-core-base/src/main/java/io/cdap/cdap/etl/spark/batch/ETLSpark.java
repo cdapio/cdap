@@ -23,7 +23,6 @@ import io.cdap.cdap.api.ProgramStatus;
 import io.cdap.cdap.api.annotation.TransactionControl;
 import io.cdap.cdap.api.annotation.TransactionPolicy;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.spark.AbstractSpark;
@@ -104,6 +103,8 @@ public class ETLSpark extends AbstractSpark {
     // to make sure fields that are the same but different casing are treated as different fields in auto-joins
     // see CDAP-17024
     sparkConf.set("spark.sql.caseSensitive", "true");
+    // Turn on adaptive query execution for perfomance optimization in Spark 3.
+    sparkConf.set("spark.sql.adaptive.enabled", "true");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
