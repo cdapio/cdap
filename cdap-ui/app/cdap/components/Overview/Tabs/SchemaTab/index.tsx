@@ -14,33 +14,63 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
-
 import React, { Component } from 'react';
-import SchemaStore from 'components/SchemaEditor/SchemaStore';
-import LoadingSVGCentered from 'components/LoadingSVGCentered';
-import Loadable from 'react-loadable';
 import { Tooltip } from 'reactstrap';
 import T from 'i18n-react';
+import { SchemaEditor, heightOfRow } from 'components/AbstractWidget/SchemaEditor';
+import { ISchemaType } from 'components/AbstractWidget/SchemaEditor/SchemaTypes';
+import { getDefaultEmptyAvroSchema } from 'components/AbstractWidget/SchemaEditor/SchemaConstants';
 require('./SchemaTab.scss');
 
-var SchemaEditor = Loadable({
-  loader: () => import(/* webpackChunkName: "SchemaEditor" */ 'components/SchemaEditor'),
-  loading: LoadingSVGCentered,
-});
+interface IProgram {
+  app: string;
+  application: string;
+  entity: string;
+  name: string;
+  program: string;
+  namespace: string;
+  type: string;
+  uniqueId: string;
+  version: string;
+}
 
-export default class SchemaTab extends Component {
+interface IEntity {
+  app: string;
+  id: string;
+  name: string;
+  programs: IProgram[];
+  properties: Record<string, string>;
+  type: string;
+  schema: string;
+}
+
+interface ISchemaTabProps {
+  entity: IEntity;
+}
+
+interface ISchemaTabState {
+  entity: IEntity;
+  tooltipOpen: boolean;
+  schema: ISchemaType;
+  schemaRowCount: number;
+}
+
+export default class SchemaTab extends Component<ISchemaTabProps, ISchemaTabState> {
   constructor(props) {
     super(props);
-    this.state = {
-      entity: this.props.entity,
-      tooltipOpen: false,
-    };
-
-    this.toggleTooltip = this.toggleTooltip.bind(this);
+    window.addEventListener('resize', this.calculateSchemaRowCount);
   }
 
-  componentWillMount() {
+  public containerRef = null;
+
+  public state = {
+    entity: this.props.entity,
+    tooltipOpen: false,
+    schema: null,
+    schemaRowCount: null,
+  };
+
+  public componentDidMount() {
     if (!this.props.entity.schema) {
       return;
     }
@@ -48,36 +78,35 @@ export default class SchemaTab extends Component {
     try {
       schema = JSON.parse(this.props.entity.schema);
     } catch (e) {
-      console.error('Error parsing schema: ', e);
-      schema = { fields: [] };
+      schema = { ...getDefaultEmptyAvroSchema() };
     }
-    this.setSchema({ fields: schema.fields });
+    this.setState({ schema: { name: 'etlSchemaBody', schema } });
   }
 
-  componentWillUnmount() {
-    SchemaStore.dispatch({
-      type: 'RESET',
-    });
+  public componentWillUnmount() {
+    window.removeEventListener('resize', this.calculateSchemaRowCount);
   }
 
-  setSchema(schema) {
-    SchemaStore.dispatch({
-      type: 'FIELD_UPDATE',
-      payload: {
-        schema,
-      },
-    });
-  }
+  public calculateSchemaRowCount = () => {
+    if (this.containerRef) {
+      const { height } = this.containerRef.getBoundingClientRect();
+      let schemaRowCount = Math.floor(height / heightOfRow) - 1;
+      if (schemaRowCount < 5) {
+        schemaRowCount = 20;
+      }
+      this.setState({ schemaRowCount });
+    }
+  };
 
-  toggleTooltip() {
+  public toggleTooltip = () => {
     this.setState({ tooltipOpen: !this.state.tooltipOpen });
-  }
+  };
 
-  render() {
+  public render() {
     const infoIconId = 'schema-tab-title-info';
 
     return (
-      <div className="schema-tab">
+      <div className="schema-tab" ref={(ref) => (this.containerRef = ref)}>
         <div className="message-section">
           <strong>
             {' '}
@@ -99,8 +128,12 @@ export default class SchemaTab extends Component {
           </span>
         </div>
         <fieldset className="disable-schema" disabled>
-          {this.state.entity.schema ? (
-            <SchemaEditor />
+          {this.state.schema ? (
+            <SchemaEditor
+              visibleRows={this.state.schemaRowCount}
+              schema={this.state.schema}
+              disabled={true}
+            />
           ) : (
             <div className="empty-schema">
               <i>{T.translate('features.Overview.SchemaTab.emptyMessage')}</i>
@@ -111,9 +144,3 @@ export default class SchemaTab extends Component {
     );
   }
 }
-
-SchemaTab.propTypes = {
-  entity: PropTypes.shape({
-    schema: PropTypes.oneOfType([PropTypes.string, PropTypes.object]),
-  }),
-};

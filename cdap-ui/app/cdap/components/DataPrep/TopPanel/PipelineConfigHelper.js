@@ -19,7 +19,7 @@ import MyDataPrepApi from 'api/dataprep';
 import DataPrepStore from 'components/DataPrep/store';
 import { directiveRequestBodyCreator } from 'components/DataPrep/helper';
 import { MyArtifactApi } from 'api/artifact';
-import { getParsedSchemaForDataPrep } from 'components/SchemaEditor/SchemaHelpers';
+import cdapavsc from 'services/cdapavscwrapper';
 import { objectQuery } from 'services/helpers';
 import { findHighestVersion } from 'services/VersionRange/VersionUtilities';
 import T from 'i18n-react';
@@ -581,7 +581,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
           }
 
           try {
-            getParsedSchemaForDataPrep(tempSchema);
+            cdapavsc.parse(tempSchema, { wrapUnions: true });
           } catch (e) {
             observable.error(objectQuery(e, 'message'));
           }

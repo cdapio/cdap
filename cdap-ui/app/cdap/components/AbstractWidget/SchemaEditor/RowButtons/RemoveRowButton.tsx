@@ -28,8 +28,15 @@ const styles = (theme) => {
 
 function RemoveRowButtonBase({ classes, onRemove, ...rest }) {
   return (
-    <IconWrapper onClick={onRemove} data-cy="schema-field-remove-button">
-      <DeleteIcon className={classes.root} />
+    <IconWrapper
+      onClick={onRemove}
+      data-cy="schema-field-remove-button"
+      disabled={typeof onRemove !== 'function'}
+    >
+      <DeleteIcon
+        className={typeof onRemove === 'function' ? classes.root : ''}
+        color={typeof onRemove !== 'function' ? 'disabled' : 'action'}
+      />
     </IconWrapper>
   );
 }

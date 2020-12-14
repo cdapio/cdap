@@ -21,7 +21,7 @@ import { Nav, NavItem, TabContent } from 'reactstrap';
 import isNil from 'lodash/isNil';
 import { Route, Switch, NavLink as RouterNavLink } from 'react-router-dom';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
-import SchemaTab from 'components/Overview/Tabs/SchemaTab';
+import SchemaTab from 'components/Overview/Tabs/SchemaTab/index.tsx';
 import LineageTab from 'components/DatasetDetailedView/Tabs/LineageTab';
 import PropertiesTab from 'components/DatasetDetailedView/Tabs/PropertiesTab';
 import { Theme } from 'services/ThemeHelper';

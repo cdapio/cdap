@@ -19,7 +19,7 @@ import PropTypes from 'prop-types';
 import React, { Component } from 'react';
 import { TabContent, TabPane, Nav, NavItem, NavLink, Row, Col } from 'reactstrap';
 import ProgramTab from 'components/Overview/Tabs/ProgramTab';
-import SchemaTab from 'components/Overview/Tabs/SchemaTab';
+import SchemaTab from 'components/Overview/Tabs/SchemaTab/index.tsx';
 import classnames from 'classnames';
 import isNil from 'lodash/isNil';
 require('../Tabs/OverviewTab.scss');
