@@ -111,7 +111,7 @@ const DataTableView: React.FC<IDataTableProps> = ({
   // Used to stringify any non-string field values and field names.
   // TO DO: Might not need to do this for field names, need to test with nested schemas
   const format = (field: any) => {
-    if (typeof field === 'object') {
+    if (typeof field === 'object' || typeof field === 'boolean') {
       return JSON.stringify(field);
     }
     return field;
