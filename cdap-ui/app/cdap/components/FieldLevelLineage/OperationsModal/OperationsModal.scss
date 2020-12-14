@@ -36,6 +36,10 @@ $input-field-color: $blue-03;
     padding-top: 0;
   }
 
+  .error-container {
+    padding: 10px 0;
+  }
+
   .operations-container {
     .navigation {
       user-select: none;
