@@ -17,6 +17,8 @@
 import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import classnames from 'classnames';
+import { Link } from 'react-router-dom';
+import NavLinkWrapper from 'components/NavLinkWrapper';
 
 const styles = (theme): StyleRules => {
   return {
@@ -30,6 +32,14 @@ const styles = (theme): StyleRules => {
         backgroundColor: theme.palette.grey[700],
       },
     },
+    link: {
+      color: 'inherit',
+
+      '&:hover': {
+        textDecoration: 'none',
+        color: 'inherit',
+      },
+    },
   };
 };
 
@@ -37,6 +47,8 @@ interface ITableRowProps extends WithStyles<typeof styles> {
   columnTemplate?: string;
   hover?: boolean;
   alignItems?: string;
+  to?: string;
+  nativeLink?: boolean;
 }
 
 const TableRowView: React.FC<React.PropsWithChildren<ITableRowProps>> = ({
@@ -45,11 +57,24 @@ const TableRowView: React.FC<React.PropsWithChildren<ITableRowProps>> = ({
   columnTemplate,
   alignItems = 'center',
   hover = true,
+  to,
+  nativeLink = false,
 }) => {
   const style = {
     gridTemplateColumns: columnTemplate,
     alignItems,
   };
+
+  const linkClassName = `${classes.gridRow} ${classes.hover} ${classes.link}`;
+
+  if (to) {
+    return (
+      <NavLinkWrapper to={to} isNativeLink={nativeLink} className={linkClassName} style={style}>
+        {children}
+      </NavLinkWrapper>
+    );
+  }
+
   return (
     <div className={classnames(classes.gridRow, { [classes.hover]: hover })} style={style}>
       {children}
