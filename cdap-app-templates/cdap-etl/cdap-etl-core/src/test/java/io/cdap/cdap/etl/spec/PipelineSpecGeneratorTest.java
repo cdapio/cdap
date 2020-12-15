@@ -334,6 +334,52 @@ public class PipelineSpecGeneratorTest {
   }
 
   @Test
+  public void testActionInPipelineMiddle() throws ValidationException {
+    /*
+     * source1 --> sink1 --> action --> source2 --> sink2
+     */
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source1", MOCK_SOURCE))
+      .addStage(new ETLStage("source2", MOCK_SOURCE))
+      .addStage(new ETLStage("sink1", MOCK_SINK))
+      .addStage(new ETLStage("sink2", MOCK_SINK))
+      .addStage(new ETLStage("action", MOCK_ACTION))
+      .addConnection("source1", "sink1")
+      .addConnection("sink1", "action")
+      .addConnection("action", "source2")
+      .addConnection("source2", "sink2")
+      .build();
+    try {
+      specGenerator.generateSpec(config);
+      Assert.fail("Did not fail a pipeline with an action in the middle");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+
+
+    /*
+     * action1 --> source --> action2 --> sink --> action3
+     */
+    config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", MOCK_SOURCE))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addStage(new ETLStage("action1", MOCK_ACTION))
+      .addStage(new ETLStage("action2", MOCK_ACTION))
+      .addStage(new ETLStage("action3", MOCK_ACTION))
+      .addConnection("action1", "source")
+      .addConnection("source", "action2")
+      .addConnection("action2", "sink")
+      .addConnection("sink", "action3")
+      .build();
+    try {
+      specGenerator.generateSpec(config);
+      Assert.fail("Did not fail a pipeline with an action in the middle");
+    } catch (IllegalArgumentException e) {
+      // expected
+    }
+  }
+
+  @Test
   public void testDifferentInputSchemasForAction() throws ValidationException {
     /*
      *           ---- transformA ---- sinkA ----
