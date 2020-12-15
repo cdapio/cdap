@@ -165,6 +165,7 @@ const updatePipeline = () => {
     properties,
     processTimingEnabled,
     stageLoggingEnabled,
+    description,
   };
 
   let batchOnlyConfig = {
