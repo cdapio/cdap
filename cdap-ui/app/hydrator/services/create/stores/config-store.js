@@ -1045,7 +1045,14 @@ class HydratorPlusPlusConfigStore {
   saveAsDraft() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
     let name = this.getName();
-    if (!name.length) {
+    let isValidName = true;
+    let errorFactory = this.NonStorePipelineErrorFactory;
+    errorFactory.hasValidName(name, (err) => {
+      if (err) {
+        isValidName = false;
+      }
+    });
+    if (!name.length || !isValidName) {
       this.HydratorPlusPlusConsoleActions.addMessage([{
         type: 'MISSING-NAME',
       }]);
