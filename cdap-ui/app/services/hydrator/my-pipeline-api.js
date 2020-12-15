@@ -101,6 +101,11 @@ angular.module(PKG.name + '.services')
 
         // PIPELINE SYSTEM APP
         validateStage: myHelpers.getConfig('POST', 'REQUEST', pipelineAppPath + '/contexts/:context/validations/stage', false),
+
+        // Draft management
+        saveDraft: myHelpers.getConfig('PUT', 'REQUEST', pipelineAppPath + '/contexts/:context/drafts/:draftId', false),
+        getDraft: myHelpers.getConfig('GET', 'REQUEST', pipelineAppPath + '/contexts/:context/drafts/:draftId', false),
+        deleteDraft: myHelpers.getConfig('DELETE', 'REQUEST', pipelineAppPath + '/contexts/:context/drafts/:draftId', false),
       }
     );
   });

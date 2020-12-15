@@ -15,27 +15,44 @@
  */
 
 import MyUserStoreApi from 'api/userstore';
+import { MyPipelineApi } from 'api/pipeline';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { objectQuery } from 'services/helpers';
 import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DraftPipelineView/store';
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import orderBy from 'lodash/orderBy';
+import { Observable } from 'rxjs/Observable';
+import uuidV4 from 'uuid/v4';
 
 const DRAFTS_KEY = 'hydratorDrafts';
 const PROPERTY = 'property';
 
+function getOldDrafts(oldDrafts) {
+  const namespace = getCurrentNamespace();
+  const oldDraftsObj = objectQuery(oldDrafts, PROPERTY, DRAFTS_KEY, namespace) || {};
+
+  let drafts: IDraft[] = [];
+
+  Object.keys(oldDraftsObj).forEach((id) => {
+    drafts.push({ ...oldDraftsObj[id], needsUpgrade: true });
+  });
+
+  drafts = orderBy(drafts, [(draft) => draft.name.toLowerCase()], ['asc']);
+  return drafts;
+}
+
 export function getDrafts() {
-  MyUserStoreApi.get().subscribe((res) => {
-    const namespace = getCurrentNamespace();
-    const draftsObj = objectQuery(res, PROPERTY, DRAFTS_KEY, namespace) || {};
-
-    let drafts: IDraft[] = [];
-
-    Object.keys(draftsObj).forEach((id) => {
-      drafts.push(draftsObj[id]);
-    });
-
-    drafts = orderBy(drafts, [(draft) => draft.name.toLowerCase()], ['asc']);
+  Observable.forkJoin<
+    IDraft[],
+    any /** setting as 'any'. We should remove user store reference in the next major release */
+  >(
+    MyPipelineApi.getDrafts({
+      context: 'default',
+    }),
+    MyUserStoreApi.get()
+  ).subscribe(([newDrafts, userStore]) => {
+    let drafts = getOldDrafts(userStore);
+    drafts = newDrafts.concat(drafts);
 
     Store.dispatch({
       type: Actions.setDrafts,
@@ -53,18 +70,24 @@ export function reset() {
 }
 
 export function deleteDraft(draft: IDraft) {
-  const draftId = draft.__ui__.draftId;
-
-  MyUserStoreApi.get().subscribe((res) => {
-    const namespace = getCurrentNamespace();
-    const draftObj = objectQuery(res, PROPERTY, DRAFTS_KEY, namespace, draftId);
-
-    if (draftObj) {
-      delete res.property[DRAFTS_KEY][namespace][draftId];
-
-      MyUserStoreApi.set(null, res.property).subscribe(getDrafts);
-    }
-  });
+  const draftId = draft.needsUpgrade ? draft.__ui__.draftId : draft.id;
+  let deleteObservable$ = null;
+  if (!draft.needsUpgrade) {
+    deleteObservable$ = MyPipelineApi.deleteDraft({
+      context: getCurrentNamespace(),
+      draftId,
+    });
+  } else {
+    deleteObservable$ = MyUserStoreApi.get().mergeMap((res) => {
+      const currentNamespace = getCurrentNamespace();
+      if (!objectQuery(res, 'property', 'hydratorDrafts', currentNamespace, draftId)) {
+        return;
+      }
+      delete res.property.hydratorDrafts[currentNamespace][draftId];
+      return MyUserStoreApi.set({}, res.property);
+    });
+  }
+  deleteObservable$.subscribe(getDrafts);
 }
 
 export function setSort(columnName: string) {
@@ -86,7 +109,8 @@ export function setSort(columnName: string) {
       orderColumnFunction = (draft) => draft.artifact.name;
       break;
     case 'lastSaved':
-      orderColumnFunction = (draft) => draft.__ui__.lastSaved;
+      orderColumnFunction = (draft) =>
+        draft.needsUpgrade ? draft.__ui__.lastSaved : draft.updatedTimeMillis;
       break;
   }
 
