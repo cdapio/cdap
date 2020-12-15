@@ -20,7 +20,9 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -37,6 +39,8 @@ import java.util.TimeZone;
  * Tests conversion logic
  */
 public class StructuredRecordBuilderTest {
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @Test
   public void testNullCheck() {
@@ -223,14 +227,15 @@ public class StructuredRecordBuilderTest {
     Assert.assertNull(StructuredRecord.builder(schema).setDate("x", date).build().getDate("y"));
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testSetNonExistentField() {
     Schema schema = Schema.recordOf("record", Schema.Field.of("x", Schema.of(Schema.LogicalType.DATE)));
     LocalDate date = LocalDate.of(2018, 11, 11);
+    thrown.expect(UnexpectedFormatException.class);
     StructuredRecord.builder(schema).setDate("y", date).build();
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testInvalidNestedUnionSchemaType() {
     Schema schema = Schema.recordOf("x", Schema.Field.of("x", Schema.unionOf(
       Schema.unionOf(Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
@@ -241,48 +246,90 @@ public class StructuredRecordBuilderTest {
       Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS)))));
 
     LocalDate date = LocalDate.of(2018, 11, 11);
-    Assert.assertEquals(date, StructuredRecord.builder(schema).setDate("x", date).build().getDate("x"));
+    thrown.expect(UnexpectedFormatException.class);
+    StructuredRecord.builder(schema).setDate("x", date).build().getDate("x");
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testInvalidDateLogicalType() {
     Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
                                     Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("date", Schema.of(Schema.LogicalType.DATE)));
 
     LocalTime expected = LocalTime.now();
+    thrown.expect(UnexpectedFormatException.class);
     StructuredRecord.builder(schema).set("id", 1).set("name", "test").setTime("date", expected).build();
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testInvalidTimeLogicalType() {
     Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
                                     Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("time", Schema.of(Schema.LogicalType.TIME_MILLIS)));
 
     LocalDate expected = LocalDate.now();
+    thrown.expect(UnexpectedFormatException.class);
     StructuredRecord.builder(schema).set("id", 1).set("name", "test").setDate("time", expected).build();
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testInvalidTimestampLogicalType() {
     Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
                                     Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("timestamp", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)));
 
     LocalDate expected = LocalDate.now();
+    thrown.expect(UnexpectedFormatException.class);
     StructuredRecord.builder(schema).set("id", 1).set("name", "test").setDate("timestamp", expected).build();
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testInvalidDecimalScale() {
     Schema schema = Schema.recordOf("test", Schema.Field.of("d", Schema.decimalOf(5, 2)));
+    thrown.expect(UnexpectedFormatException.class);
     StructuredRecord.builder(schema).setDecimal("d", new BigDecimal(new BigInteger("1234"), 1)).build();
   }
 
-  @Test(expected = UnexpectedFormatException.class)
+  @Test
   public void testInvalidPrecision() {
     Schema schema = Schema.recordOf("test", Schema.Field.of("d", Schema.decimalOf(5, 2)));
+    thrown.expect(UnexpectedFormatException.class);
     StructuredRecord.builder(schema).setDecimal("d", new BigDecimal(new BigInteger("12341324"), 2)).build();
+  }
+
+  @Test
+  public void testUnexpectedDateType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.DATE)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", 5L).build();
+    thrown.expect(ClassCastException.class);
+    thrown.expectMessage("Field 'x' is expected to be a date");
+    record.getDate("x");
+  }
+
+  @Test
+  public void testUnexpectedTimestampType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "2020-01-01 12:00:00").build();
+    thrown.expect(ClassCastException.class);
+    thrown.expectMessage("Field 'x' is expected to be a timestamp");
+    record.getTimestamp("x");
+  }
+
+  @Test
+  public void testUnexpectedTimeType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.TIME_MICROS)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "12:00:00").build();
+    thrown.expect(ClassCastException.class);
+    thrown.expectMessage("Field 'x' is expected to be a time");
+    record.getTime("x");
+  }
+
+  @Test
+  public void testUnexpectedDecimalType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.decimalOf(5, 3)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "5.3").build();
+    thrown.expect(ClassCastException.class);
+    thrown.expectMessage("Field 'x' is expected to be a decimal");
+    record.getDecimal("x");
   }
 }
