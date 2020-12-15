@@ -14,7 +14,6 @@
  * the License.
  */
 
-import PropTypes from 'prop-types';
 import React, { PureComponent } from 'react';
 import RuntimeArgsTabContent from 'components/PipelineDetails/PipelineRuntimeArgsDropdownBtn/RuntimeArgsKeyValuePairWrapper';
 import {
@@ -25,87 +24,134 @@ import {
 import BtnWithLoading from 'components/BtnWithLoading';
 import PipelineRunTimeArgsCounter from 'components/PipelineDetails/PipelineRuntimeArgsCounter';
 import { connect } from 'react-redux';
-import isEmpty from 'lodash/isEmpty';
 import { convertKeyValuePairsToMap, preventPropagation } from 'services/helpers';
 import Popover from 'components/Popover';
 import T from 'i18n-react';
 import If from 'components/If';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
-require('./RuntimeArgsModeless.scss');
+import withStyles, { StyleRules, WithStyles } from '@material-ui/styles/withStyles';
+import Button from '@material-ui/core/Button';
+
+const styles = (theme): StyleRules => {
+  return {
+    container: {
+      display: 'grid',
+      gridTemplateRows: 'auto',
+      margin: '0',
+      textAlign: 'left',
+      width: '100%',
+      paddingTop: '10px',
+    },
+    loading: {
+      minHeight: '200px',
+    },
+    tabFooter: {
+      borderTop: `1px solid ${theme.palette.grey[400]}`,
+      display: 'flex',
+      justifyContent: 'space-between',
+      paddingTop: '20px',
+    },
+    argumentLabel: {
+      marginTop: '10px',
+    },
+    btnsContainer: {
+      display: 'grid',
+      gridTemplateColumns: 'auto auto',
+      gridGap: '10px',
+    },
+    errorContainer: {
+      color: theme.palette.red[200],
+    },
+  };
+};
+
+interface IRuntimeArgsModelessProps extends WithStyles<typeof styles> {
+  runtimeArgs: any;
+  onClose: () => void;
+}
 
 const I18N_PREFIX =
   'features.PipelineDetails.PipelineRuntimeArgsDropdownBtn.RuntimeArgsTabContent.RuntimeArgsModeless';
-class RuntimeArgsModeless extends PureComponent {
-  static propTypes = {
-    runtimeArgs: PropTypes.object,
-    onClose: PropTypes.func.isRequired,
-  };
-
-  state = {
+class RuntimeArgsModeless extends PureComponent<IRuntimeArgsModelessProps> {
+  public state = {
     saving: false,
-    savedSuccessMessage: null,
     savingAndRun: false,
     error: null,
     initialPropsLoading: true,
   };
 
-  componentWillReceiveProps() {
-    this.setState({
-      savedSuccessMessage: null,
-    });
-  }
-
-  toggleSaving = () => {
+  public toggleSaving = () => {
     this.setState({
       saving: !this.state.saving,
     });
   };
 
-  toggleSavingAndRun = () => {
+  public toggleSavingAndRun = () => {
     this.setState({
       savingAndRun: !this.state.savingAndRun,
     });
   };
 
-  saveRuntimeArgs = (e) => {
+  public saveRuntimeArgs = (e) => {
     preventPropagation(e);
     this.toggleSaving();
     updatePreferences().subscribe(
       () => {
         this.setState(
           {
-            savedSuccessMessage: 'Runtime arguments saved successfully',
             saving: false,
           },
           this.props.onClose
         );
       },
       (err) => {
-        this.setState({
-          error: err.response || JSON.stringify(err),
-          saving: false,
-        });
+        // Timeout to prevent janky experience when the response fails quick.
+        setTimeout(() => {
+          this.setState({
+            error: err.response || JSON.stringify(err),
+            saving: false,
+          });
+        }, 1000);
       }
     );
   };
 
-  saveRuntimeArgsAndRun = () => {
+  public runPipelineWithArguments = () => {
     this.toggleSavingAndRun();
-    let { runtimeArgs } = this.props;
+    const { runtimeArgs } = this.props;
     // Arguments with empty values are assumed to be provided from the pipeline
     runtimeArgs.pairs = runtimeArgs.pairs.filter((runtimeArg) => runtimeArg.value);
-    let runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
-    runPipeline(runtimeArgsMap);
-    this.props.onClose();
+    const runtimeArgsMap = convertKeyValuePairsToMap(runtimeArgs.pairs);
+    runPipeline(runtimeArgsMap, false).subscribe(
+      () => {
+        this.props.onClose();
+      },
+      (err) => {
+        // Timeout to prevent janky experience when the response fails quick.
+        setTimeout(() => {
+          this.setState({
+            savingAndRun: !this.state.savingAndRun,
+            error: err.response || JSON.stringify(err),
+          });
+        }, 1000);
+      }
+    );
   };
 
-  componentDidMount() {
+  public onRuntimeArgsChanged = () => {
+    this.setState({
+      error: null,
+    });
+  };
+
+  public componentDidMount() {
     fetchAndUpdateRuntimeArgs().subscribe(() => {
       this.setState({ initialPropsLoading: false });
     });
   }
 
-  render() {
+  public render() {
+    const { classes } = this.props;
     const SaveBtn = () => {
       return (
         <BtnWithLoading
@@ -113,7 +159,7 @@ class RuntimeArgsModeless extends PureComponent {
           className="btn btn-primary"
           data-cy="save-runtime-args-btn"
           onClick={this.saveRuntimeArgs}
-          disabled={this.state.saving || !isEmpty(this.state.savedSuccessMessage)}
+          disabled={this.state.saving || this.state.savingAndRun}
           label="Save"
         />
       );
@@ -123,25 +169,28 @@ class RuntimeArgsModeless extends PureComponent {
         <BtnWithLoading
           loading={this.state.savingAndRun}
           className="btn btn-secondary"
-          onClick={this.saveRuntimeArgsAndRun}
-          disabled={this.state.saving}
+          onClick={this.runPipelineWithArguments}
+          disabled={this.state.saving || this.state.savingAndRun}
           label="Run"
           data-cy="run-deployed-pipeline-modal-btn"
         />
       );
     };
     return (
-      <div className="runtime-args-modeless" data-cy="runtime-args-modeless">
+      <div className={classes.container} data-cy="runtime-args-modeless">
         <If condition={this.state.initialPropsLoading}>
-          <div className="loading">
+          <div className={classes.loading}>
             <LoadingSVGCentered data-cy="runtime-args-modeless-loading" />
           </div>
         </If>
         <If condition={!this.state.initialPropsLoading}>
-          <div className="arguments-label">{T.translate(`${I18N_PREFIX}.specifyArgs`)}</div>
-          <RuntimeArgsTabContent runtimeArgs={this.props.runtimeArgs} />
-          <div className="tab-footer">
-            <div className="btns-container">
+          <div className={classes.argumentsLabel}>{T.translate(`${I18N_PREFIX}.specifyArgs`)}</div>
+          <RuntimeArgsTabContent
+            runtimeArgs={this.props.runtimeArgs}
+            onRuntimeArgsChange={this.onRuntimeArgsChanged}
+          />
+          <div className={classes.tabFooter}>
+            <div className={classes.btnsContainer}>
               <Popover target={SaveBtn} placement="left" showOn="Hover">
                 {T.translate(`${I18N_PREFIX}.saveBtnPopover`)}
               </Popover>
@@ -149,11 +198,11 @@ class RuntimeArgsModeless extends PureComponent {
                 {T.translate(`${I18N_PREFIX}.runBtnPopover`)}
               </Popover>
             </div>
-            {!isEmpty(this.state.savedSuccessMessage) ? (
-              <span className="text-success">{this.state.savedSuccessMessage}</span>
-            ) : null}
             <PipelineRunTimeArgsCounter />
           </div>
+          <If condition={this.state.error}>
+            <div className={classes.errorContainer}>{this.state.error}</div>
+          </If>
         </If>
       </div>
     );
@@ -166,6 +215,8 @@ const mapStateToProps = (state) => {
   };
 };
 
-const ConnectedRuntimeArgsModeless = connect(mapStateToProps)(RuntimeArgsModeless);
+const ConnectedRuntimeArgsModeless = connect(mapStateToProps)(
+  withStyles(styles)(RuntimeArgsModeless)
+);
 
 export default ConnectedRuntimeArgsModeless;
