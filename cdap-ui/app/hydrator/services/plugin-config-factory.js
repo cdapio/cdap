@@ -358,6 +358,21 @@ class HydratorPlusPlusPluginConfigFactory {
           }
         }
       }, (err) => {
+        if (err && err.statusCode === 503) {
+          /**
+           * TODO: (CDAP-17468). We can do a better job in surfacing the 'orphanerrors'
+           * in a better way. We currently are tightly coupled from here till configurationgroups
+           * where we show the error.
+           */
+          let propertyErrors = {
+            'orphanErrors': [{
+              msg: 'Unable to communicate with the Pipeline Studio service. Please check the service status.'
+            }]
+          };
+          return errorCb({
+            propertyErrors
+          });
+        }
         this.myAlertOnValium.show({
             type: 'danger',
             content: 'Error occurred while validating.'
