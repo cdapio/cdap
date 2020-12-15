@@ -91,7 +91,10 @@ export function renderThroughputGraph(
       if (parseInt(d, 10) !== d) {
         return;
       }
-      return numeral(d).format('0a');
+      if (d < 1000) {
+        return d;
+      }
+      return numeral(d).format('0.0a');
     });
   const yAxisGroup = chart.append('g').attr('class', 'axis axis-y');
   yAxisGroup.call(yAxis);

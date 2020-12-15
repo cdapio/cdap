@@ -14,9 +14,12 @@
  * the License.
  */
 
+import { orderBy } from 'natural-orderby';
+
 export interface ITableMetricsData {
   tableName: string;
   errors: number;
+  totalEvents: number;
   eventsPerMin: number;
   latency: number;
 }
@@ -42,13 +45,14 @@ interface IRawMetricData {
 const INITIAL_DATA = {
   errors: 0,
   eventsPerMin: 0,
+  totalEvents: 0,
   latency: 0,
 };
 
 const METRIC_MAP = {
-  'user.dml.insert': 'eventsPerMin',
-  'user.dml.update': 'eventsPerMin',
-  'user.dml.delete': 'eventsPerMin',
+  'user.dml.insert': 'totalEvents',
+  'user.dml.update': 'totalEvents',
+  'user.dml.delete': 'totalEvents',
   'user.dml.error': 'errors',
   'user.dml.latency.seconds': 'latency',
 };
@@ -86,9 +90,9 @@ export function parseTableMetrics(
   // convert events total to events per minute
   const ONE_DAY_MINUTE = 24 * 60;
   tableList.forEach((tableName) => {
-    tableMap[tableName].eventsPerMin = tableMap[tableName].eventsPerMin / ONE_DAY_MINUTE;
+    tableMap[tableName].eventsPerMin = tableMap[tableName].totalEvents / ONE_DAY_MINUTE;
   });
 
-  const output = Object.values(tableMap);
+  const output = orderBy(Object.values(tableMap), [(val) => val.tableName], ['asc']);
   return output;
 }

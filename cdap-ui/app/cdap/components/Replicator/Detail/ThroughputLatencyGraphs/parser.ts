@@ -14,6 +14,8 @@
  * the License.
  */
 
+import moment from 'moment';
+
 export interface IThroughputLatencyData {
   time: number;
   inserts: number;
@@ -21,6 +23,7 @@ export interface IThroughputLatencyData {
   deletes: number;
   errors: number;
   latency: number;
+  formattedTimeRange: string;
 }
 
 interface IMetricData {
@@ -54,6 +57,7 @@ const INITIAL_DATA = {
   deletes: 0,
   errors: 0,
   latency: 0,
+  formattedTimeRange: '',
 };
 
 export function throughputLatencyParser(rawData: IRawMetricData): IThroughputLatencyData[] {
@@ -101,9 +105,16 @@ export function throughputLatencyParser(rawData: IRawMetricData): IThroughputLat
   }
 
   const output = Object.values(timeMap).map((outputData) => {
+    const time = outputData.time * 1000;
+    const startRange = moment(time).format('MM/DD - hh:mmA');
+    const endRange = moment(time)
+      .add(1, 'h')
+      .format('hh:mmA');
+
     return {
       ...outputData,
-      time: outputData.time * 1000,
+      time,
+      formattedTimeRange: `${startRange} - ${endRange}`,
     };
   });
 

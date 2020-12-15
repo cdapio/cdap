@@ -90,6 +90,28 @@ function humanReadableNumber(num, type) {
       return numeral(num).format('0,0');
   }
 }
+
+function truncateNumber(num, precision = 0) {
+  if (typeof num !== 'number') {
+    return num;
+  }
+
+  let format = '0';
+  if (precision === 0) {
+    return numeral(num).format(`${format}a`);
+  }
+
+  format = format.concat('.');
+
+  for (let i = 0; i < precision; i++) {
+    format = `${format}0`;
+  }
+
+  format = `${format}a`;
+
+  return numeral(num).format(format);
+}
+
 // FIXME: humanReadableDate(date, options = {isMilliseconds: false, shortForm: false}) would have been\
 // more readable api. We should think about changing the function signature.
 function humanReadableDate(date, isMilliseconds, shortForm = false) {
@@ -501,7 +523,7 @@ function categorizeGraphQlErrors(error) {
   if (graphQLErrors.length === 0 && networkErrors.length === 0 && error) {
     errorsByOrigin[GENERIC_ERROR_ORIGIN] = error.message;
   }
- 
+
   graphQLErrors.forEach(error => {
     const errorOrigin = objectQuery(error, 'extensions', 'exception', 'errorOrigin') || GENERIC_ERROR_ORIGIN;
     if (errorsByOrigin.hasOwnProperty(errorOrigin)) {
@@ -655,6 +677,7 @@ export {
   objectQuery,
   convertBytesToHumanReadable,
   humanReadableNumber,
+  truncateNumber,
   humanReadableDuration,
   timeSinceCreated,
   isDescendant,

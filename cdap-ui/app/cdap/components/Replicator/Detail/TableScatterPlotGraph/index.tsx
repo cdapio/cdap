@@ -28,11 +28,14 @@ import {
 } from 'components/Replicator/Detail/TableScatterPlotGraph/scatterPlot';
 import ChartContainer from 'components/ChartContainer';
 import Heading, { HeadingTypes } from 'components/Heading';
+import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
+import ScatterPlotTable from 'components/Replicator/Detail/TableScatterPlotGraph/ScatterPlotTable';
 
 const styles = (): StyleRules => {
   return {
     root: {
       marginBottom: '25px',
+      position: 'relative',
     },
     headingSection: {
       marginBottom: '10px',
@@ -118,14 +121,8 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
     );
   }, [tables]);
 
-  return (
-    <div className={classes.root}>
-      <div className={classes.headingSection}>
-        <div>
-          <Heading type={HeadingTypes.h4} label="Tables performance" />
-        </div>
-        <div>Latency and throughput by table - select one to view details below</div>
-      </div>
+  const chart = (
+    <React.Fragment>
       <ChartContainer
         containerId={CONTAINER_ID}
         data={data}
@@ -142,6 +139,20 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
           <div>Inactive table</div>
         </div>
       </div>
+    </React.Fragment>
+  );
+
+  const table = <ScatterPlotTable data={data} />;
+
+  return (
+    <div className={classes.root}>
+      <div className={classes.headingSection}>
+        <div>
+          <Heading type={HeadingTypes.h4} label="Tables performance" />
+        </div>
+        <div>Latency and throughput by table - select one to view details below</div>
+      </div>
+      <ChartTableSwitcher chart={chart} table={table} />
     </div>
   );
 };
