@@ -98,8 +98,14 @@ public class StructuredRecord implements Serializable {
   public LocalDate getDate(String fieldName) {
     Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
                                                                EnumSet.of(LogicalType.DATE));
-    Integer value = (Integer) fields.get(fieldName);
-    return (value == null || logicalTypeSchema == null) ? null : LocalDate.ofEpochDay(value.longValue());
+    Object val = fields.get(fieldName);
+    try {
+      Integer value = (Integer) val;
+      return (value == null || logicalTypeSchema == null) ? null : LocalDate.ofEpochDay(value.longValue());
+    } catch (ClassCastException e) {
+      throw new ClassCastException(String.format("Field '%s' is expected to be a date, but is a %s",
+                                                 fieldName, val.getClass().getSimpleName()));
+    }
   }
 
   /**
@@ -116,16 +122,30 @@ public class StructuredRecord implements Serializable {
     Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
                                                                EnumSet.of(LogicalType.TIME_MILLIS,
                                                                           LogicalType.TIME_MICROS));
-    Object value = fields.get(fieldName);
-    if (value == null || logicalTypeSchema == null) {
+    Object val = fields.get(fieldName);
+    if (val == null || logicalTypeSchema == null) {
       return null;
     }
 
     if (logicalTypeSchema.getLogicalType() == LogicalType.TIME_MILLIS) {
-      return LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(((Integer) value)));
+      try {
+        Integer value = (Integer) val;
+        return LocalTime.ofNanoOfDay(TimeUnit.MILLISECONDS.toNanos(value));
+      } catch (ClassCastException e) {
+        throw new ClassCastException(
+          String.format("Field '%s' is expected to be a time in milliseconds, but is a %s",
+                        fieldName, val.getClass().getSimpleName()));
+      }
     }
 
-    return LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos((Long) value));
+    try {
+      Long value = (Long) val;
+      return LocalTime.ofNanoOfDay(TimeUnit.MICROSECONDS.toNanos(value));
+    } catch (ClassCastException e) {
+      throw new ClassCastException(
+        String.format("Field '%s' is expected to be a time in microseconds, but is a %s",
+                      fieldName, val.getClass().getSimpleName()));
+    }
   }
 
   /**
@@ -159,16 +179,24 @@ public class StructuredRecord implements Serializable {
     Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
                                                                EnumSet.of(LogicalType.TIMESTAMP_MILLIS,
                                                                           LogicalType.TIMESTAMP_MICROS));
-    Object value = fields.get(fieldName);
-    if (value == null || logicalTypeSchema == null) {
+    Object val = fields.get(fieldName);
+    if (val == null || logicalTypeSchema == null) {
       return null;
     }
 
-    if (logicalTypeSchema.getLogicalType() == LogicalType.TIMESTAMP_MILLIS) {
-      return getZonedDateTime((long) value, TimeUnit.MILLISECONDS, zoneId);
+    Long value;
+    try {
+      value = (Long) val;
+    } catch (ClassCastException e) {
+      throw new ClassCastException(
+        String.format("Field '%s' is expected to be a timestamp, but is a %s",
+                      fieldName, val.getClass().getSimpleName()));
     }
 
-    return getZonedDateTime((long) value, TimeUnit.MICROSECONDS, zoneId);
+    if (logicalTypeSchema.getLogicalType() == LogicalType.TIMESTAMP_MILLIS) {
+      return getZonedDateTime(value, TimeUnit.MILLISECONDS, zoneId);
+    }
+    return getZonedDateTime(value, TimeUnit.MICROSECONDS, zoneId);
   }
 
   /**
@@ -192,7 +220,12 @@ public class StructuredRecord implements Serializable {
       return new BigDecimal(new BigInteger(Bytes.toBytes((ByteBuffer) value)), scale);
     }
 
-    return new BigDecimal(new BigInteger((byte[]) value), scale);
+    try {
+      return new BigDecimal(new BigInteger((byte[]) value), scale);
+    } catch (ClassCastException e) {
+      throw new ClassCastException(String.format("Field '%s' is expected to be a decimal, but is a %s.", fieldName,
+                                                 value.getClass().getSimpleName()));
+    }
   }
 
   /**
