@@ -24,10 +24,11 @@ import InputBase from '@material-ui/core/InputBase';
 const styles = (): StyleRules => {
   return {
     select: {
-      marginLeft: '10px',
+      marginLeft: '5px',
     },
     selectRoot: {
       textDecoration: 'underline',
+      marginTop: '2px',
     },
     menu: {
       // This is needed because there is no way to overwrite the parent portal z-index for the menu dropdown.
