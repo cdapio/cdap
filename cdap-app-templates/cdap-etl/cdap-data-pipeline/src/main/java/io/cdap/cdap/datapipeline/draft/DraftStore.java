@@ -35,7 +35,6 @@ import io.cdap.cdap.spi.data.table.field.Fields;
 import io.cdap.cdap.spi.data.table.field.Range;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
-import org.apache.commons.lang.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -161,8 +160,9 @@ public class DraftStore {
         comparator = Comparator.comparing(o -> o.getBytes(sortField), Bytes.BYTES_COMPARATOR);
         break;
       default:
-        throw new NotImplementedException(String.format("Cannot sort field '%s' because type '%s' is not supported.",
-                                                        sortField, fieldType.toString()));
+        throw new UnsupportedOperationException(
+          String.format("Cannot sort field '%s' because type '%s' is not supported.",
+                        sortField, fieldType.toString()));
     }
 
     if (sortRequest.getOrder() != SortRequest.SortOrder.ASC) {
