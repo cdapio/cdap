@@ -223,8 +223,8 @@ public class StructuredRecord implements Serializable {
     try {
       return new BigDecimal(new BigInteger((byte[]) value), scale);
     } catch (ClassCastException e) {
-      throw new UnexpectedFormatException(String.format("Field '%s' is expected to be a %s, but is a %s.", fieldName,
-                                                        "decimal", value.getClass().getSimpleName()), e);
+      throw new ClassCastException(String.format("Field '%s' is expected to be a decimal, but is a %s.", fieldName,
+                                                 value.getClass().getSimpleName()));
     }
   }
 
