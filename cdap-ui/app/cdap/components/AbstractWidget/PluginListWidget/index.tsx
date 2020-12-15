@@ -23,6 +23,7 @@ import { GLOBALS, SCOPES } from 'services/global-constants';
 import { objectQuery } from 'services/helpers';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import VersionStore from 'services/VersionStore';
+import uniqBy from 'lodash/uniqBy';
 
 const PREFIX = 'features.AbstractWidget.PluginListWidget';
 
@@ -79,11 +80,12 @@ const PluginListWidget: React.FC<IPluginListProps> = ({
       const displayOptions = res.map((plugin) => {
         return {
           value: plugin.name,
-          label: `${plugin.name} (${plugin.artifact.name} ${plugin.artifact.version})`,
+          label: plugin.name,
         };
       });
+      const uniqueOptions = uniqBy(displayOptions, 'value');
 
-      setOptions(displayOptions);
+      setOptions(uniqueOptions);
     });
   }, []);
 
