@@ -58,7 +58,6 @@ import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
-import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.lucene.search.join.ScoreMode;
@@ -183,7 +182,6 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private static final String SUPPORTED_SORT_KEYS = String.join(", ", SORT_KEY_MAP.keySet());
 
   private final CConfiguration cConf;
-  private final SConfiguration sConf;
   private final String elasticHosts;
   private final String indexName;
   private final String scrollTimeout;
@@ -191,7 +189,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   private final String credentialsUsername;
   private final String credentialsPassword;
 
-  private final boolean verifyTls;
+  private final boolean verifyTLS;
 
   private volatile RestHighLevelClient client;
 
@@ -204,13 +202,12 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
   @Inject
   public ElasticsearchMetadataStorage(CConfiguration cConf, SConfiguration sConf) {
     this.cConf = cConf;
-    this.sConf = sConf;
     this.indexName = cConf.get(Config.CONF_ELASTIC_INDEX_NAME, Config.DEFAULT_INDEX_NAME);
     this.scrollTimeout = cConf.get(Config.CONF_ELASTIC_SCROLL_TIMEOUT, Config.DEFAULT_SCROLL_TIMEOUT);
     this.elasticHosts = cConf.get(Config.CONF_ELASTIC_HOSTS, Config.DEFAULT_ELASTIC_HOSTS);
     this.credentialsUsername = sConf.get(Config.CONF_ELASTIC_USERNAME);
     this.credentialsPassword = sConf.get(Config.CONF_ELASTIC_PASSWORD);
-    this.verifyTls = cConf.getBoolean(Config.CONF_ELASTIC_TLS_VERIFY, Config.DEFAULT_ELASTIC_TLS_VERIFY);
+    this.verifyTLS = cConf.getBoolean(Config.CONF_ELASTIC_TLS_VERIFY, Config.DEFAULT_ELASTIC_TLS_VERIFY);
     int numRetries = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_NUM_RETRIES,
                                   Config.DEFAULT_ELASTIC_CONFLICT_NUM_RETRIES);
     int retrySleepMs = cConf.getInt(Config.CONF_ELASTIC_CONFLICT_RETRY_SLEEP_MS,
@@ -346,10 +343,10 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
           httpClientConfigCallback.setDefaultCredentialsProvider(credentialsProvider);
         }
 
-        if (!verifyTls) {
+        if (!verifyTLS) {
           LOG.warn("Creating REST client with TLS verification DISABLED");
           try {
-            SSLContext sslContext = SSLContextBuilder.create().loadTrustMaterial(new TrustSelfSignedStrategy()).build();
+            SSLContext sslContext = SSLContextBuilder.create().loadTrustMaterial((chain, authType) -> true).build();
             httpClientConfigCallback.setSSLContext(sslContext);
           } catch (NoSuchAlgorithmException | KeyManagementException | KeyStoreException e) {
             LOG.error("Unable to trust self-signed certificates", e);
@@ -532,7 +529,7 @@ public class ElasticsearchMetadataStorage implements MetadataStorage {
                                getResponse.getVersion())
         : VersionedMetadata.NONE;
       RequestAndChange intermediary = applyMutation(before, entry.getValue());
-      bulkRequest.add((DocWriteRequest) intermediary.getRequest());
+      bulkRequest.add((DocWriteRequest<?>) intermediary.getRequest());
       changes.put(entry.getKey(), intermediary.getChange());
     }
     setRefreshPolicy(bulkRequest, options);
