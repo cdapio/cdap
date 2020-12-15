@@ -25,6 +25,7 @@ import ChartContainer from 'components/ChartContainer';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
 import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
 import ThroughputTable from 'components/Replicator/Detail/ThroughputLatencyGraphs/ThroughputGraph/ThroughputTable';
+import ThroughputTooltip from 'components/Replicator/Detail/ThroughputLatencyGraphs/ThroughputGraph/ThroughputTooltip';
 
 const styles = (): StyleRules => {
   return {
@@ -68,6 +69,10 @@ interface IThroughputGraphProps extends WithStyles<typeof styles> {
 const CONTAINER_ID = 'replication-throughput-graph';
 
 const ThroughputGraphView: React.FC<IThroughputGraphProps> = ({ classes, data }) => {
+  function renderTooltip(tooltip) {
+    return <ThroughputTooltip tooltip={tooltip} />;
+  }
+
   const chart = (
     <React.Fragment>
       <ChartContainer
@@ -75,6 +80,7 @@ const ThroughputGraphView: React.FC<IThroughputGraphProps> = ({ classes, data })
         data={data}
         chartRenderer={renderThroughputGraph}
         watchWidth={true}
+        renderTooltip={renderTooltip}
       />
       <div className={classes.bottomLegend}>
         <div>

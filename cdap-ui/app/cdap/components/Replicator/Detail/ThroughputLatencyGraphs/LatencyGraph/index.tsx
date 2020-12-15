@@ -25,6 +25,7 @@ import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputL
 import ChartContainer from 'components/ChartContainer';
 import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
 import LatencyTable from 'components/Replicator/Detail/ThroughputLatencyGraphs/LatencyGraph/LatencyTable';
+import LatencyTooltip from 'components/Replicator/Detail/ThroughputLatencyGraphs/LatencyGraph/LatencyTooltip';
 
 const styles = (): StyleRules => {
   return {
@@ -55,6 +56,10 @@ interface ILatencyGraphProps extends WithStyles<typeof styles> {
 const CONTAINER_ID = 'replication-latency-graph';
 
 const LatencyGraphView: React.FC<ILatencyGraphProps> = ({ classes, data }) => {
+  function renderTooltip(tooltip) {
+    return <LatencyTooltip tooltip={tooltip} />;
+  }
+
   const chart = (
     <React.Fragment>
       <ChartContainer
@@ -62,6 +67,7 @@ const LatencyGraphView: React.FC<ILatencyGraphProps> = ({ classes, data }) => {
         data={data}
         chartRenderer={renderLatencyGraph}
         watchWidth={true}
+        renderTooltip={renderTooltip}
       />
       <div className={classes.bottomLegend}>
         <div>

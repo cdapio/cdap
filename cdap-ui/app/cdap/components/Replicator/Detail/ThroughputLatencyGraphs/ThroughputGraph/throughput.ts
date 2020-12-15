@@ -16,9 +16,9 @@
 
 import * as d3 from 'd3';
 import numeral from 'numeral';
-import { objectQuery } from 'services/helpers';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/ThroughputLatencyGraphs/parser';
 import { timeFormatMonthDate, timeFormatHourMinute } from 'components/ChartContainer';
+import { tooltipWidth } from 'components/Replicator/Detail/ThroughputLatencyGraphs/ThroughputGraph/ThroughputTooltip';
 
 export const COLOR_MAP = {
   inserts: '#185ABC',
@@ -33,7 +33,9 @@ export const COLOR_MAP = {
 export function renderThroughputGraph(
   id: string,
   data: IThroughputLatencyData[],
-  containerWidth: number
+  containerWidth: number,
+  unusedHeight?: number,
+  onHover?: (top, left, isOpen, activeData) => void
 ) {
   const containerHeight = 300;
 
@@ -107,6 +109,7 @@ export function renderThroughputGraph(
 
   const xAxis = d3
     .axisBottom(x)
+    // .ticks(4, 's')
     .tickSizeOuter(0)
     .tickFormat(timeFormatMonthDate);
   const xAxisGroup = chart
@@ -119,7 +122,7 @@ export function renderThroughputGraph(
   xAxisGroup
     .selectAll('.tick')
     .filter((d, i) => {
-      return i % 6 !== 0;
+      return i % Math.floor(data.length / 4) !== 0;
     })
     .remove();
   xAxisGroup
@@ -145,9 +148,7 @@ export function renderThroughputGraph(
   const insertHeight = (d) => height - y(d.inserts);
   const updatesHeight = (d) => height - y(d.updates);
   const deletesHeight = (d) => height - y(d.deletes);
-
-  const { show, hide } = createTooltip(id);
-  svg.on('click', hide);
+  const hoverContainerHeight = (d) => height - y(d.inserts + d.updates + d.deletes);
 
   // INSERTS
   bar
@@ -157,8 +158,7 @@ export function renderThroughputGraph(
     .attr('width', barWidth)
     .attr('height', insertHeight)
     .attr('x', xLocation)
-    .attr('y', (d) => y(d.inserts))
-    .on('click', show);
+    .attr('y', (d) => y(d.inserts));
 
   // UPDATES
   bar
@@ -168,8 +168,7 @@ export function renderThroughputGraph(
     .attr('width', barWidth)
     .attr('height', updatesHeight)
     .attr('x', xLocation)
-    .attr('y', (d) => y(d.updates) - insertHeight(d))
-    .on('click', show);
+    .attr('y', (d) => y(d.updates) - insertHeight(d));
 
   // DELETES
   bar
@@ -179,8 +178,29 @@ export function renderThroughputGraph(
     .attr('width', barWidth)
     .attr('height', deletesHeight)
     .attr('x', xLocation)
-    .attr('y', (d) => y(d.deletes) - insertHeight(d) - updatesHeight(d))
-    .on('click', show);
+    .attr('y', (d) => y(d.deletes) - insertHeight(d) - updatesHeight(d));
+
+  bar
+    .append('rect')
+    .attr('class', 'hover-container')
+    .attr('opacity', 0)
+    .attr('width', barWidth)
+    .attr('height', hoverContainerHeight)
+    .attr('x', xLocation)
+    .attr('y', (d) => height - hoverContainerHeight(d))
+    .on('mouseover', (d) => {
+      const tooltipLeftOffset = 15;
+      const top = height - hoverContainerHeight(d) - (margin.bottom + margin.top) * 2 + 'px';
+      let left = xLocation(d) + margin.left + tooltipLeftOffset;
+      if (left + tooltipWidth >= width) {
+        left = left - (left + tooltipWidth - width);
+      }
+      left = left + 'px';
+      onHover(top, left, true, d);
+    })
+    .on('mouseout', (d) => {
+      onHover(0, 0, false, d);
+    });
 
   // LEGEND
   chart
@@ -191,51 +211,4 @@ export function renderThroughputGraph(
     .text('events')
     .style('font-size', '12px')
     .style('fill', COLOR_MAP.legend);
-}
-
-function createTooltip(id) {
-  const tooltip = d3
-    .select(`#${id}`)
-    .append('div')
-    .style('opacity', 0)
-    .attr('class', 'graph-tooltip')
-    .style('background-color', 'white')
-    .style('border', 'solid')
-    .style('border-width', '2px')
-    .style('border-radius', '4px')
-    .style('border-color', COLOR_MAP.legend)
-    .style('padding', '5px')
-    .style('position', 'absolute');
-
-  function show(d) {
-    const htmlElem = `
-      <div>
-        <strong>Time: ${timeFormatMonthDate(d.time)}</strong>
-        <div>
-          <div>Inserts: ${d.inserts}</div>
-          <div>Updates: ${d.updates}</div>
-          <div>Deletes: ${d.deletes}</div>
-          <div>Errors: ${d.errors}</div>
-        </div>
-      </div>
-    `;
-    tooltip
-      .html(htmlElem)
-      .style('left', d3.mouse(this)[0] + 'px')
-      .style('top', d3.mouse(this)[1] + 'px')
-      .style('opacity', 1);
-  }
-
-  function hide() {
-    const target = objectQuery(d3.event, 'target', 'classList', 'value');
-    if (['inserts', 'updates', 'deletes'].indexOf(target) !== -1) {
-      return;
-    }
-    tooltip.style('opacity', 0);
-  }
-
-  return {
-    show,
-    hide,
-  };
 }

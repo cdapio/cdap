@@ -35,6 +35,8 @@ import TablesList from 'components/Replicator/Detail/TablesList';
 import Metrics from 'components/Replicator/Detail/Metrics';
 import ThroughputLatencyGraphs from 'components/Replicator/Detail/ThroughputLatencyGraphs';
 import TableScatterPlotGraph from 'components/Replicator/Detail/TableScatterPlotGraph';
+import TimePeriodDropdown from 'components/Replicator/Detail/TimePeriodDropdown';
+import SelectedTable from 'components/Replicator/Detail/SelectedTable';
 
 export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
@@ -87,10 +89,14 @@ interface IDetailState {
   tables: Map<string, Map<string, string>>;
   columns: Map<string, List<IColumn>>;
   offsetBasePath: string;
+  activeTable: string;
+  timeRange: string;
 
   start: () => void;
   stop: () => void;
   deleteReplicator: () => void;
+  setActiveTable: (table: string) => void;
+  setTimeRange: (timeRange: string) => void;
 }
 
 export type IDetailContext = Partial<IDetailState>;
@@ -157,6 +163,18 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     );
   };
 
+  private setActiveTable = (table: string) => {
+    this.setState({
+      activeTable: table,
+    });
+  };
+
+  private setTimeRange = (timeRange: string) => {
+    this.setState({
+      timeRange,
+    });
+  };
+
   public state = {
     name: objectQuery(this.props, 'match', 'params', 'replicatorId'),
     description: null,
@@ -173,10 +191,14 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     tables: Map<string, Map<string, string>>(),
     columns: Map<string, List<IColumn>>(),
     offsetBasePath: '',
+    activeTable: null,
+    timeRange: '24h',
 
     start: this.start,
     stop: this.stop,
     deleteReplicator: this.deleteReplicator,
+    setActiveTable: this.setActiveTable,
+    setTimeRange: this.setTimeRange,
   };
 
   public componentDidMount() {
@@ -362,8 +384,14 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
             />
 
             <hr />
+            <div>
+              View
+              <TimePeriodDropdown />
+            </div>
+            <hr />
             <TableScatterPlotGraph />
             <hr />
+            <SelectedTable />
             <ThroughputLatencyGraphs />
             <TablesList />
           </div>

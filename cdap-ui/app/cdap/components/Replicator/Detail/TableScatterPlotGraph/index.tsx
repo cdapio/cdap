@@ -30,6 +30,7 @@ import ChartContainer from 'components/ChartContainer';
 import Heading, { HeadingTypes } from 'components/Heading';
 import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
 import ScatterPlotTable from 'components/Replicator/Detail/TableScatterPlotGraph/ScatterPlotTable';
+import ScatterPlotTooltip from 'components/Replicator/Detail/TableScatterPlotGraph/ScatterPlotTooltip';
 
 const styles = (): StyleRules => {
   return {
@@ -72,7 +73,16 @@ const CONTAINER_ID = 'replication-scatter-plot';
 
 const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [data, setData] = useState([]);
-  const { name, tables } = useContext(DetailContext);
+  const { name, tables, activeTable, setActiveTable, timeRange } = useContext(DetailContext);
+
+  function onClick(d) {
+    const tableName = d ? d.tableName : null;
+    setActiveTable(tableName);
+  }
+
+  function renderTooltip(tooltip) {
+    return <ScatterPlotTooltip tooltip={tooltip} />;
+  }
 
   useEffect(() => {
     if (tables.size === 0) {
@@ -95,7 +105,7 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
       })
       .join('&');
 
-    const start = `start=now-24h`;
+    const start = `start=now-${timeRange}`;
     const end = 'end=now';
     const aggregate = 'aggregate=false';
     const groupBy = 'groupBy=ent';
@@ -119,15 +129,18 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
         console.log('err', err);
       }
     );
-  }, [tables]);
+  }, [tables, timeRange]);
 
   const chart = (
     <React.Fragment>
       <ChartContainer
         containerId={CONTAINER_ID}
         data={data}
-        chartRenderer={renderScatterPlot}
+        chartRenderer={renderScatterPlot.bind(this, activeTable)}
         watchWidth={true}
+        renderTooltip={renderTooltip}
+        onClick={onClick}
+        additionalWatchProperty={[activeTable]}
       />
       <div className={classes.bottomLegend}>
         <div>

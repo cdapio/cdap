@@ -57,6 +57,8 @@ const METRIC_MAP = {
   'user.dml.latency.seconds': 'latency',
 };
 
+const ONE_MIN_SECONDS = 60;
+
 export function parseTableMetrics(
   rawData: IRawMetricData,
   tableList: string[]
@@ -81,16 +83,18 @@ export function parseTableMetrics(
 
     if (metricName === 'latency') {
       // calculate average for latency
-      tableMap[tableName][metricName] = sumData / metricSeries.data.length / 60;
+      tableMap[tableName][metricName] = sumData / metricSeries.data.length / ONE_MIN_SECONDS;
     } else {
       tableMap[tableName][metricName] += sumData;
     }
   });
 
   // convert events total to events per minute
-  const ONE_DAY_MINUTE = 24 * 60;
+  const duration = rawData.endTime - rawData.startTime;
+  const durationMinute = duration / ONE_MIN_SECONDS;
+
   tableList.forEach((tableName) => {
-    tableMap[tableName].eventsPerMin = tableMap[tableName].totalEvents / ONE_DAY_MINUTE;
+    tableMap[tableName].eventsPerMin = tableMap[tableName].totalEvents / durationMinute;
   });
 
   const output = orderBy(Object.values(tableMap), [(val) => val.tableName], ['asc']);
