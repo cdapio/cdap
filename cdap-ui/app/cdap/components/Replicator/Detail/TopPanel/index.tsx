@@ -20,6 +20,7 @@ import { detailContextConnect, IDetailContext } from 'components/Replicator/Deta
 import { Link } from 'react-router-dom';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import ActionButtons from 'components/Replicator/Detail/TopPanel/ActionButtons';
+import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -44,9 +45,6 @@ const styles = (theme): StyleRules => {
       marginLeft: '5px',
       marginRight: '10px',
     },
-    name: {
-      fontSize: '16px',
-    },
   };
 };
 
@@ -63,7 +61,7 @@ const TopPanelView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
           <span>All pipelines</span>
         </Link>
         <span className={classes.divider}>|</span>
-        <span className={classes.name}>{name}</span>
+        <Heading type={HeadingTypes.h2} label={name} />
       </div>
       <div>{description}</div>
       <ActionButtons />

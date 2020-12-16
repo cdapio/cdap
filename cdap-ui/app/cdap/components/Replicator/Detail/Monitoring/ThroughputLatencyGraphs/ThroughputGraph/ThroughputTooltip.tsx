@@ -18,6 +18,7 @@ import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/parser';
 import { COLOR_MAP } from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/ThroughputGraph/throughput';
+import { convertBytesToHumanReadable } from 'services/helpers';
 
 export const tooltipWidth = 250;
 const styles = (theme): StyleRules => {
@@ -53,6 +54,9 @@ const styles = (theme): StyleRules => {
     deletes: {
       backgroundColor: COLOR_MAP.deletes,
     },
+    errors: {
+      backgroundColor: COLOR_MAP.error,
+    },
   };
 };
 
@@ -82,6 +86,11 @@ const ThroughputTooltipView: React.FC<IThroughputTooltipProps> = ({ classes, too
       <div className={classes.heading}>
         <strong>{tooltipData.formattedTimeRange}</strong>
       </div>
+      <div className={classes.metricContent}>
+        <div className={classes.square} />
+        <span>Data replicated:</span>
+        <span>{convertBytesToHumanReadable(tooltipData.dataReplicated, null, true)}</span>
+      </div>
       <div>
         <div className={classes.metricContent}>
           <div className={`${classes.square} ${classes.deletes}`} />
@@ -99,6 +108,12 @@ const ThroughputTooltipView: React.FC<IThroughputTooltipProps> = ({ classes, too
           <div className={`${classes.square} ${classes.inserts}`} />
           <span>Inserts:</span>
           <span>{tooltipData.inserts}</span>
+        </div>
+
+        <div className={classes.metricContent}>
+          <div className={`${classes.square} ${classes.errors}`} />
+          <span>Errors:</span>
+          <span>{tooltipData.errors}</span>
         </div>
       </div>
     </div>

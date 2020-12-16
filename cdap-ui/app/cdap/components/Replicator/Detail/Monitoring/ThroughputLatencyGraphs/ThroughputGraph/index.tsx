@@ -27,7 +27,7 @@ import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher'
 import ThroughputTable from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/ThroughputGraph/ThroughputTable';
 import ThroughputTooltip from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/ThroughputGraph/ThroughputTooltip';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     root: {
       position: 'relative',
@@ -49,6 +49,20 @@ const styles = (): StyleRules => {
     },
     deletes: {
       backgroundColor: COLOR_MAP.deletes,
+    },
+    errors: {
+      backgroundColor: COLOR_MAP.error,
+      height: '15px',
+      width: '15px',
+      display: 'inline-block',
+      borderRadius: '50%',
+      color: theme.palette.white[50],
+      textAlign: 'center',
+      lineHeight: '15px',
+      marginRight: '7px',
+    },
+    errorContainer: {
+      marginLeft: 'auto',
     },
     bottomLegend: {
       marginTop: '25px',
@@ -94,6 +108,10 @@ const ThroughputGraphView: React.FC<IThroughputGraphProps> = ({ classes, data })
         <div>
           <div className={`${classes.square} ${classes.deletes}`} />
           <span>Deletes</span>
+        </div>
+        <div className={classes.errorContainer}>
+          <div className={classes.errors}>!</div>
+          <span>Errors</span>
         </div>
       </div>
     </React.Fragment>

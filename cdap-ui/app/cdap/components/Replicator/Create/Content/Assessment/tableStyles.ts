@@ -53,7 +53,7 @@ export function getSchemaTableStyles(theme, gridTemplateColumns): StyleRules {
       },
     },
     mappingButton: {
-      color: theme.palette.grey[200],
+      color: theme.palette.blue[200],
       cursor: 'pointer',
       '&:hover': {
         textDecoration: 'underline',

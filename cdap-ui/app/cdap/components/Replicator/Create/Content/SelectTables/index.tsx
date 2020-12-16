@@ -299,7 +299,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     }
 
     const selectedMap = {};
-    this.state.tables.forEach((row) => {
+    this.state.filteredTables.forEach((row) => {
       const key = generateTableKey(row);
       selectedMap[key] = Map(row);
     });
@@ -342,7 +342,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
    *  1 for all selected
    */
   private dmlSelectAllIndicator = (dmlEvent: DML) => {
-    const dmlListArray = this.state.tables.map((table) => {
+    const dmlListArray = this.state.filteredTables.map((table) => {
       const key = generateTableKey(table);
       const tableDML = this.state.dmlBlacklist.get(key);
 
@@ -368,7 +368,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
 
     if (this.dmlSelectAllIndicator(dmlEvent) !== -1) {
       // deselect all
-      this.state.tables.forEach((table) => {
+      this.state.filteredTables.forEach((table) => {
         const key = generateTableKey(table);
         let tableDML = dmlBlacklist.get(key);
 
@@ -382,7 +382,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
       });
     } else {
       // select all
-      this.state.tables.forEach((table) => {
+      this.state.filteredTables.forEach((table) => {
         const key = generateTableKey(table);
         let tableDML = dmlBlacklist.get(key);
 
@@ -487,7 +487,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                 <div>Table name</div>
                 <div className={classes.count}>Total columns</div>
                 <div />
-                <div className={classes.count}>Replicate columns</div>
+                <div className={classes.count}>Columns to replicate</div>
                 <div />
                 <div>
                   <Checkbox
@@ -556,7 +556,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                       onClick={this.openTable.bind(this, row)}
                     >
                       <span className={classes.openOverviewLink}>
-                        {columns && columns.size > 0 ? columns.size : 'All available'}
+                        {columns && columns.size > 0 ? columns.size : 'All'}
                       </span>
                     </div>
                     <div />
@@ -623,10 +623,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     return (
       <React.Fragment>
         <div className={classes.root}>
-          <Heading
-            type={HeadingTypes.h3}
-            label="Select tables, columns, and actions to replicate"
-          />
+          <Heading type={HeadingTypes.h3} label="Select tables, columns, and events to replicate" />
           <div className={classes.subHeadingContainer}>
             <div className={classes.subHeadingText}>
               {this.state.selectedTables.size} of {this.state.tables.length} tables selected

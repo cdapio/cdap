@@ -142,7 +142,7 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
     <div className={classes.root}>
       <div className={classes.heading}>
         <div>
-          <Heading type={HeadingTypes.h4} label="Assessment summary" className={classes.title} />
+          <Heading type={HeadingTypes.h4} label="Review assessment" className={classes.title} />
           <div className={classes.subHeading}>Resolve all issues to continue</div>
         </div>
         <div>

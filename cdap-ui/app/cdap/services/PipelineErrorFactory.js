@@ -14,7 +14,7 @@
  * the License.
 */
 
-import { objectQuery } from 'services/helpers';
+import { objectQuery, isValidEntityName } from 'services/helpers';
 import { GLOBALS } from 'services/global-constants';
 import { Theme } from './ThemeHelper';
 
@@ -123,13 +123,12 @@ let isNodeNameUnique = (nodeName, nodes, cb) => {
 
 let hasValidName = (name, cb) => {
   let error;
-  let pattern = /^[\w-]+$/;
   if (!name) {
     error = 'MISSING-NAME';
     cb(error);
     return;
   }
-  if (!pattern.test(name)) {
+  if (!isValidEntityName(name)) {
     error = 'INVALID-NAME';
     cb(error);
     return;

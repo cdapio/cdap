@@ -190,6 +190,7 @@ export function renderLatencyGraph(
     .append('text')
     .attr('transform', `translate(-${margin.left / 2}, ${height / 2}) rotate(-90)`)
     .text('Minutes')
+    .attr('text-anchor', 'middle')
     .style('font-size', '12px')
     .style('fill', COLOR_MAP.legend);
 

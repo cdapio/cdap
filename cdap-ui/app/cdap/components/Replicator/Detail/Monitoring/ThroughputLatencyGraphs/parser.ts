@@ -24,6 +24,7 @@ export interface IThroughputLatencyData {
   errors: number;
   latency: number;
   formattedTimeRange: string;
+  dataReplicated: number;
 }
 
 interface IMetricData {
@@ -49,6 +50,7 @@ const METRIC_NAME_MAP = {
   'user.dml.deletes': 'deletes',
   'user.dml.errors': 'errors',
   'user.dml.latency.seconds': 'latency',
+  'user.dml.data.processed.bytes': 'dataReplicated',
 };
 
 const INITIAL_DATA = {
@@ -58,6 +60,7 @@ const INITIAL_DATA = {
   errors: 0,
   latency: 0,
   formattedTimeRange: '',
+  dataReplicated: 0,
 };
 
 export function throughputLatencyParser(

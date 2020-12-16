@@ -82,7 +82,7 @@ export function parseAggregateMetric(
   const totalEvents = output.inserts + output.updates + output.deletes;
   output.totalEvents = totalEvents;
   output.eventsPerMin = truncateNumber(totalEvents / durationMinute, PRECISION);
-  output.latency = truncateNumber(output.latency / numTables, PRECISION);
+  output.latency = Math.round(output.latency / numTables);
   output.dataReplicated = convertBytesToHumanReadable(output.dataReplicated);
 
   return output;

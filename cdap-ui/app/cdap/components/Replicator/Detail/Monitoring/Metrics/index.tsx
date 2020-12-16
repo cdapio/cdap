@@ -25,6 +25,8 @@ import {
   parseAggregateMetric,
   INITIAL_OUTPUT,
 } from 'components/Replicator/Detail/Monitoring/Metrics/parser';
+import { ONE_MIN_SECONDS, truncateNumber } from 'services/helpers';
+import { formatNumber } from 'components/Replicator/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -38,7 +40,14 @@ const styles = (theme): StyleRules => {
       padding: '0 25px',
 
       '& > div': {
-        padding: '5px 15px',
+        padding: '0 15px',
+      },
+    },
+    unit: {
+      color: theme.palette.grey[200],
+
+      '& > div': {
+        padding: '0 15px',
       },
     },
     header: {
@@ -46,6 +55,10 @@ const styles = (theme): StyleRules => {
       fontWeight: 600,
       backgroundColor: theme.palette.grey[700],
       alignItems: 'end',
+
+      '& > div': {
+        padding: '5px 15px',
+      },
     },
     metricContent: {
       fontSize: '26px',
@@ -53,8 +66,19 @@ const styles = (theme): StyleRules => {
     error: {
       color: theme.palette.red[100],
     },
+    latencyLabel: {
+      fontWeight: 400,
+      fontSize: '16px',
+      color: theme.palette.grey[100],
+    },
+    marginRight: {
+      marginRight: '5px',
+    },
   };
 };
+
+const PRECISION = 2;
+const THRESHOLD = 999999;
 
 const MetricsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const { name, timeRange, tables } = useContext(DetailContext);
@@ -102,13 +126,15 @@ const MetricsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     );
   }, [timeRange, tables]);
 
+  const parsedLatency = parseLatencySeconds(data.latency);
+
   return (
     <div className={classes.root}>
       <div className={`${classes.grid} ${classes.header}`}>
         <div>Data replicated</div>
-        <div>Throughput events per min</div>
+        <div>Throughput</div>
         <div>Avg latency</div>
-        <div>Pipeline errors</div>
+        <div>Errors</div>
         <div>Total events</div>
         <div>Inserts</div>
         <div>Updates</div>
@@ -116,17 +142,42 @@ const MetricsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
       </div>
       <div className={`${classes.grid} ${classes.metricContent}`}>
         <div>{data.dataReplicated}</div>
-        <div>{data.eventsPerMin}</div>
-        <div>{data.latency}</div>
+        <div>{truncateNumber(data.eventsPerMin, PRECISION)}</div>
+        <div>
+          <span>{parsedLatency.minutes}</span>
+          <span className={`${classes.latencyLabel} ${classes.marginRight}`}>min</span>
+          <span>{parsedLatency.seconds}</span>
+          <span className={classes.latencyLabel}>sec</span>
+        </div>
         <div className={classes.error}>{data.errors}</div>
-        <div>{data.totalEvents}</div>
-        <div>{data.inserts}</div>
-        <div>{data.updates}</div>
-        <div>{data.deletes}</div>
+        <div>{formatNumber(data.totalEvents, THRESHOLD)}</div>
+        <div>{formatNumber(data.inserts, THRESHOLD)}</div>
+        <div>{formatNumber(data.updates, THRESHOLD)}</div>
+        <div>{formatNumber(data.deletes, THRESHOLD)}</div>
+      </div>
+      <div className={`${classes.grid} ${classes.unit}`}>
+        <div />
+        <div>events/min</div>
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
+        <div />
       </div>
     </div>
   );
 };
+
+function parseLatencySeconds(latency) {
+  const minutes = Math.floor(latency / ONE_MIN_SECONDS);
+  const seconds = latency % ONE_MIN_SECONDS;
+
+  return {
+    minutes,
+    seconds,
+  };
+}
 
 const Metrics = withStyles(styles)(MetricsView);
 export default Metrics;

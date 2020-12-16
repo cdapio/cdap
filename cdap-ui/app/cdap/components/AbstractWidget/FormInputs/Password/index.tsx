@@ -75,6 +75,7 @@ function Password({ value, onChange, widgetProps, disabled, classes, dataCy }: I
             className={classes.button}
             aria-label="Toggle password visibility"
             onClick={handleClickShowPassword}
+            tabIndex={-1}
           >
             {pwdVisibility ? <Visibility /> : <VisibilityOff />}
           </IconButton>

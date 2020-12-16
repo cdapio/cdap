@@ -673,6 +673,16 @@ function sanitizeNodeNamesInPluginProperties(nodes, availablePlugins, oldNameToN
   return newNodes;
 }
 
+function isValidEntityName(name) {
+  if (!name) {
+    return false;
+  }
+
+  const pattern = /^[\w-]+$/;
+
+  return pattern.test(name);
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -720,4 +730,5 @@ export {
   getExperimentValue,
   isExperimentEnabled,
   sanitizeNodeNamesInPluginProperties,
+  isValidEntityName,
 };

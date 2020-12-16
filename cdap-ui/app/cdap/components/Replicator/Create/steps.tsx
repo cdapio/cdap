@@ -40,15 +40,15 @@ export const STEPS = [
     component: TargetConfig,
   },
   {
-    label: 'Advanced',
+    label: 'Configure advanced properties',
     component: Advanced,
   },
   {
-    label: 'Assessment',
+    label: 'Review assessment',
     component: Assessment,
   },
   {
-    label: 'Review',
+    label: 'View summary',
     component: Summary,
   },
 ];

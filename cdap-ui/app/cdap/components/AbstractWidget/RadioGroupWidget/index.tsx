@@ -99,10 +99,9 @@ const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
             }
           }
           return (
-            <React.Fragment>
+            <React.Fragment key={`${i}-${option.id}`}>
               <FormControlLabel
                 className={classes.labelControl}
-                key={`${i}-${option.id}`}
                 value={option.id}
                 control={<Radio color="primary" />}
                 label={option.label || option.id}
