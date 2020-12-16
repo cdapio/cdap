@@ -30,6 +30,7 @@ const styles = (): StyleRules => {
     root: {
       display: 'grid',
       gridTemplateColumns: '50% 50%',
+      paddingBottom: '25px',
 
       '& > div': {
         padding: '0 15px',
@@ -70,7 +71,14 @@ const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ clas
 
     const tagsParams = MetricsQueryHelper.tagsToParams(tags);
 
-    const metrics = ['inserts', 'updates', 'deletes', 'errors', 'latency.seconds']
+    const metrics = [
+      'inserts',
+      'updates',
+      'deletes',
+      'errors',
+      'latency.seconds',
+      'data.processed.bytes',
+    ]
       .map((metric) => {
         return `metric=user.dml.${metric}`;
       })

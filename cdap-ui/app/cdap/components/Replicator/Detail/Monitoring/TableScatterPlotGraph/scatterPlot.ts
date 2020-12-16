@@ -24,6 +24,8 @@ export const COLOR_MAP = {
   activeOutline: '#9FC0FB',
   inactive: '#999999',
   inactiveOutline: '#686868',
+  error: '#D40001',
+  errorOutline: '#A40403',
   axisColor: '#DDDDDD',
   legend: '#999999',
   tick: '#333333',
@@ -149,29 +151,15 @@ export function renderScatterPlot(
     .data(data)
     .enter();
 
-  function isInactive(d) {
-    return d.latency === 0 && d.eventsPerMin === 0;
-  }
-
   scatter
     .append('circle')
     .style('cursor', 'pointer')
     .attr('cx', (d) => x(d.eventsPerMin))
     .attr('cy', (d) => y(d.latency))
     .attr('r', 10)
-    .attr('fill', (d) => {
-      if (isInactive(d)) {
-        return COLOR_MAP.inactive;
-      }
-      return COLOR_MAP.active;
-    })
+    .attr('fill', getFillColor)
     .attr('stroke-width', 1)
-    .attr('stroke', (d) => {
-      if (isInactive(d)) {
-        return COLOR_MAP.inactiveOutline;
-      }
-      return COLOR_MAP.activeOutline;
-    })
+    .attr('stroke', getStrokeColor)
     .on('mouseover', (d) => {
       const { top, left } = getTooltipPosition(d);
       onHover(top, left, true, d);
@@ -187,7 +175,8 @@ export function renderScatterPlot(
     });
 
   function getTooltipPosition(d) {
-    const top = y(d.latency) - (margin.top + margin.bottom) + 'px';
+    const topOffset = 10;
+    const top = y(d.latency) - (margin.top + margin.bottom) - topOffset + 'px';
     let left = x(d.eventsPerMin) + margin.left;
     if (left + tooltipWidth >= width) {
       left = left - (left + tooltipWidth - width);
@@ -266,17 +255,14 @@ export function renderScatterPlot(
       .attr('y1', 0)
       .attr('y2', height);
 
-    const fill = isInactive(d) ? COLOR_MAP.inactive : COLOR_MAP.active;
-    const stroke = isInactive(d) ? COLOR_MAP.inactiveOutline : COLOR_MAP.activeOutline;
-
     overlayContent
       .append('circle')
       .attr('cx', x(d.eventsPerMin))
       .attr('cy', y(d.latency))
       .attr('r', 10)
-      .attr('fill', fill)
+      .attr('fill', getFillColor(d))
       .attr('stroke-width', 1)
-      .attr('stroke', stroke);
+      .attr('stroke', getStrokeColor(d));
   }
 
   function removeOverlay() {
@@ -284,6 +270,28 @@ export function renderScatterPlot(
     overlay.select(`.${overlayContentSelector}`).remove();
     onClick(0, 0, false, null);
   }
+}
+
+function isInactive(d) {
+  return d.latency === 0 && d.eventsPerMin === 0;
+}
+
+function getFillColor(d) {
+  if (d.errors > 0) {
+    return COLOR_MAP.error;
+  } else if (isInactive(d)) {
+    return COLOR_MAP.inactive;
+  }
+  return COLOR_MAP.active;
+}
+
+function getStrokeColor(d) {
+  if (d.errors > 0) {
+    return COLOR_MAP.errorOutline;
+  } else if (isInactive(d)) {
+    return COLOR_MAP.inactiveOutline;
+  }
+  return COLOR_MAP.activeOutline;
 }
 
 function tickFormat(d) {

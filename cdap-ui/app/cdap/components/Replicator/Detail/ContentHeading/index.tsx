@@ -21,7 +21,6 @@ import { objectQuery } from 'services/helpers';
 import ConfigDisplay from 'components/Replicator/ConfigDisplay';
 import If from 'components/If';
 import RunInfo from 'components/Replicator/Detail/ContentHeading/RunInfo';
-import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (theme): StyleRules => {
   return {
@@ -57,6 +56,26 @@ const styles = (theme): StyleRules => {
       marginTop: 0,
       marginBottom: 0,
     },
+    heading: {
+      display: 'flex',
+      alignItems: 'center',
+    },
+    sourceTargetInfo: {
+      display: 'flex',
+      fontSize: '16px',
+
+      '& > div': {
+        marginRight: '50px',
+
+        '&:last-child': {
+          marginRight: '15px',
+        },
+      },
+    },
+    pluginType: {
+      fontWeight: 500,
+      color: theme.palette.grey[200],
+    },
   };
 };
 
@@ -84,11 +103,18 @@ const ContentHeadingView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
       <hr className={classes.noMargin} />
       <div className={classes.contentHeading}>
         <div className={classes.heading}>
-          <Heading
-            type={HeadingTypes.h4}
-            label={`Transfer from ${sourceName} to ${targetName}`}
-            className={classes.text}
-          />
+          <div className={classes.sourceTargetInfo}>
+            <div>
+              <div className={classes.pluginType}>Source</div>
+              <div>{sourceName}</div>
+            </div>
+
+            <div>
+              <div className={classes.pluginType}>Target</div>
+              <div>{targetName}</div>
+            </div>
+          </div>
+
           <span className={classes.expandBtn} onClick={() => setConfigExpanded(!configExpanded)}>
             {configExpanded ? 'Hide details' : 'View details'}
           </span>

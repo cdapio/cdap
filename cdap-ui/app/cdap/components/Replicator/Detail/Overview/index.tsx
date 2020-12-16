@@ -17,12 +17,12 @@
 import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import TablesList from 'components/Replicator/Detail/Overview/TablesList';
-import Heading, { HeadingTypes } from 'components/Heading';
 
 const styles = (): StyleRules => {
   return {
     root: {
       marginTop: '25px',
+      height: 'calc(100% - 150px)', // 100% - content heading -nav link section
     },
   };
 };
@@ -30,7 +30,6 @@ const styles = (): StyleRules => {
 const OverviewView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.root}>
-      <Heading type={HeadingTypes.h3} label="All tables replicated" />
       <TablesList />
     </div>
   );

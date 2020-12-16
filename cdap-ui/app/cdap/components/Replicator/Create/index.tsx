@@ -46,7 +46,7 @@ import {
 import { IWidgetJson } from 'components/ConfigurationGroup/types';
 
 export const CreateContext = React.createContext({});
-export const LEFT_PANEL_WIDTH = 250;
+export const LEFT_PANEL_WIDTH = 275;
 
 const styles = (): StyleRules => {
   return {
@@ -445,6 +445,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
   private constructStageSpec = (type) => {
     const pluginKey = `${type}PluginInfo`;
+    const pluginWidget = `${type}PluginWidget`;
     const configKey = `${type}Config`;
 
     if (!this.state[pluginKey]) {
@@ -452,9 +453,11 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     }
 
     const plugin = this.state[pluginKey];
+    const displayName =
+      objectQuery(this.state, pluginWidget, 'display-name') || objectQuery(plugin, 'name');
 
     const stage = {
-      name: plugin.name,
+      name: displayName,
       plugin: {
         name: plugin.name,
         type: plugin.type,

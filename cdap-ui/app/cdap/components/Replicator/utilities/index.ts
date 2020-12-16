@@ -21,6 +21,7 @@ import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
 import { ITableObj, IColumn } from 'components/Replicator/types';
+import { truncateNumber } from 'services/helpers';
 
 export function fetchPluginInfo(
   parentArtifact,
@@ -243,4 +244,12 @@ export function constructTablesSelection(tables, columns, dmlBlacklist) {
   });
 
   return tablesArr;
+}
+
+export function formatNumber(num, threshold = 999) {
+  if (num < threshold) {
+    return num;
+  }
+  const PRECISION = 2;
+  return truncateNumber(num, PRECISION);
 }

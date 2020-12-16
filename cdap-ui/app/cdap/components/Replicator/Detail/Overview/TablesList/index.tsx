@@ -42,10 +42,12 @@ import TimePeriodDropdown from 'components/Replicator/Detail/TimePeriodDropdown'
 
 const styles = (theme): StyleRules => {
   return {
-    grid: {
-      height: '500px',
+    root: {
+      height: '100%',
     },
-
+    grid: {
+      height: 'calc(100% - 50px)', // 100% -subtitle height
+    },
     subtitle: {
       marginTop: '10px',
       marginBottom: '10px',
@@ -169,7 +171,14 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
     const tagsParams = MetricsQueryHelper.tagsToParams(tags);
 
-    const metrics = ['inserts', 'updates', 'deletes', 'errors', 'latency.seconds']
+    const metrics = [
+      'inserts',
+      'updates',
+      'deletes',
+      'errors',
+      'latency.seconds',
+      'data.processed.bytes',
+    ]
       .map((metric) => {
         return `metric=user.dml.${metric}`;
       })
@@ -204,7 +213,7 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
     <div className={classes.root}>
       <div className={classes.subtitle}>
         <div>
-          <strong>{tables.size}</strong> tables to be replicated
+          Replicating <strong>{tables.size}</strong> tables
         </div>
         <div>
           <TextField
@@ -225,12 +234,12 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
       </div>
 
       <Table
-        columnTemplate="30px 2fr 100px 1fr 1fr 1fr 150px 1fr 1fr 1fr"
+        columnTemplate="30px 2fr 100px 1fr 1fr 1fr 1fr 100px 1fr 1fr 1fr"
         classes={{ grid: classes.grid }}
       >
         <TableHeader>
           <TableColumnGroup>
-            <ColumnGroup gridColumn="4 / span 7">
+            <ColumnGroup gridColumn="4 / span 8">
               Activities in the <TimePeriodDropdown />
             </ColumnGroup>
           </TableColumnGroup>
@@ -240,8 +249,12 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             </TableCell>
             <TableCell>Table name</TableCell>
             <TableCell textAlign="right">
-              <div>Selected</div>
-              <div>columns</div>
+              <div>No. columns</div>
+              <div>replicated</div>
+            </TableCell>
+            <TableCell textAlign="right">
+              <div>Data</div>
+              <div>replicated</div>
             </TableCell>
             <TableCell textAlign="right">
               <div>No. events</div>
@@ -280,6 +293,7 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                 </TableCell>
                 <TableCell>{tableName}</TableCell>
                 <TableCell textAlign="right">{numColumns === 0 ? 'All' : numColumns}</TableCell>
+                <TableCell textAlign="right">{tableMetrics.dataReplicated}</TableCell>
                 <TableCell textAlign="right">{tableMetrics.totalEvents}</TableCell>
                 <TableCell textAlign="right">{tableMetrics.eventsPerMin}</TableCell>
                 <TableCell textAlign="right">{tableMetrics.latency}</TableCell>

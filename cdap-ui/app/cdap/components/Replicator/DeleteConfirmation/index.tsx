@@ -82,6 +82,11 @@ const DeleteConfirmationView: React.FC<IDeleteConfirmationView> = ({
     );
   }
 
+  function cancel() {
+    setError(null);
+    closeModal();
+  }
+
   const confirmElem = (
     <div>
       Are you sure you want to delete
@@ -105,7 +110,7 @@ const DeleteConfirmationView: React.FC<IDeleteConfirmationView> = ({
       confirmationElem={confirmElem}
       confirmButtonText="Delete"
       confirmFn={handleDelete}
-      cancelFn={closeModal}
+      cancelFn={cancel}
       isOpen={show}
       errorMessage={!error ? '' : 'Failed to delete replication pipeline'}
       extendedMessage={error}

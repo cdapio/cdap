@@ -24,6 +24,8 @@ import { MyPreferenceApi } from 'api/preference';
 import pickBy from 'lodash/pickBy';
 import mapKeys from 'lodash/mapKeys';
 import Button from '@material-ui/core/Button';
+import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
+import isEqual from 'lodash/isEqual';
 
 const modelessWidth = '600px';
 const buttonWidth = '70px';
@@ -47,9 +49,19 @@ const styles = (theme): StyleRules => {
       alignItems: 'center',
       paddingLeft: '15px',
     },
-    content: {
-      height: '400px',
+    taskMemory: {
+      width: '200px',
+      margin: '15px 0 25px',
+    },
+    body: {
       padding: '10px 15px',
+    },
+    content: {
+      height: '300px',
+
+      '& .grid-row.active > div:first-child': {
+        textOverflow: 'unset',
+      },
     },
     footer: {
       padding: '10px 15px',
@@ -58,6 +70,33 @@ const styles = (theme): StyleRules => {
       },
     },
   };
+};
+
+const TaskMemoryEditor = ({ onChange, value }) => {
+  const widget = {
+    label: 'Task memory',
+    name: 'taskMemory',
+    'widget-type': 'memory-textbox',
+  };
+
+  const property = {
+    required: false,
+    name: 'taskMemory',
+    description: 'The amount of memory for each tasks.',
+  };
+
+  function handleChange(val) {
+    onChange(parseInt(val, 10));
+  }
+
+  return (
+    <WidgetWrapper
+      widgetProperty={widget}
+      pluginProperty={property}
+      value={value.toString()}
+      onChange={handleChange}
+    />
+  );
 };
 
 interface IActiveProfile {
@@ -72,10 +111,15 @@ interface IConfigureModelessProps extends IDetailContext, WithStyles<typeof styl
 const PROFILE_PREFIX = 'system.profile';
 const PROFILE_NAME = `${PROFILE_PREFIX}.name`;
 const PROPERTIES_PREFIX = `${PROFILE_PREFIX}.properties.`;
+const TASK_MEMORY_KEY = 'system.resources.memory';
+const DEFAULT_MEMORY = 2048;
 
 const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, name, onToggle }) => {
   const [activeProfile, setActiveProfile] = React.useState<IActiveProfile>({});
+  const [initialActiveProfile, setInitialActiveProfile] = React.useState<IActiveProfile>({});
   const [loading, setLoading] = React.useState(false);
+  const [taskMemory, setTaskMemory] = React.useState(DEFAULT_MEMORY);
+  const [initialMemory, setInitialMemory] = React.useState(DEFAULT_MEMORY);
 
   React.useEffect(() => {
     const params = {
@@ -85,6 +129,12 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
 
     MyPreferenceApi.getAppPreferencesResolved(params).subscribe((preferences) => {
       const profileName = preferences[PROFILE_NAME];
+      const taskMemoryPreference = preferences[TASK_MEMORY_KEY];
+
+      if (taskMemoryPreference) {
+        setTaskMemory(taskMemoryPreference);
+        setInitialMemory(initialMemory);
+      }
 
       if (!profileName) {
         return;
@@ -98,10 +148,13 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
         return key.slice(PROPERTIES_PREFIX.length);
       });
 
-      setActiveProfile({
+      const selectedActiveProfile = {
         name: profileName,
         profileCustomizations: customizations,
-      });
+      };
+
+      setActiveProfile(selectedActiveProfile);
+      setInitialActiveProfile(selectedActiveProfile);
     });
   }, []);
 
@@ -113,7 +166,10 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
   }
 
   function handleSave() {
-    if (!activeProfile || !activeProfile.name) {
+    const profileIsEqual = isEqual(activeProfile, initialActiveProfile);
+    const memoryIsEqual = taskMemory === initialMemory;
+
+    if (profileIsEqual && memoryIsEqual) {
       return;
     }
 
@@ -129,20 +185,32 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
         return key !== PROFILE_NAME && !key.startsWith(PROPERTIES_PREFIX);
       });
 
-      const customProperties = mapKeys(activeProfile.profileCustomizations, (value, key) => {
-        return `${PROPERTIES_PREFIX}${key}`;
-      });
-
-      const preferences = {
+      let preferences = {
         ...existingPreferences,
-        ...customProperties,
-        [PROFILE_NAME]: activeProfile.name,
       };
+
+      if (!profileIsEqual) {
+        const customProperties = mapKeys(activeProfile.profileCustomizations, (value, key) => {
+          return `${PROPERTIES_PREFIX}${key}`;
+        });
+
+        preferences = {
+          ...preferences,
+          ...customProperties,
+          [PROFILE_NAME]: activeProfile.name,
+        };
+      }
+
+      if (!memoryIsEqual) {
+        preferences[TASK_MEMORY_KEY] = taskMemory;
+      }
 
       MyPreferenceApi.setAppPreferences(params, preferences).subscribe(
         () => {
-          onToggle();
+          setInitialMemory(taskMemory);
+          setInitialActiveProfile(activeProfile);
           setLoading(false);
+          onToggle();
         },
         (err) => {
           setLoading(false);
@@ -159,13 +227,23 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
         <Heading type={HeadingTypes.h4} label="Configure" />
       </div>
 
-      <div className={classes.content}>
-        <ProfilesListViewInPipeline
-          appName={name}
-          onProfileSelect={handleProfileSelect}
-          selectedProfile={activeProfile}
-          tableTitle={'Select the compute profile you want to use to run this replication pipeline'}
-        />
+      <div className={classes.body}>
+        <Heading type={HeadingTypes.h5} label="Memory" />
+        <div className={classes.taskMemory}>
+          <TaskMemoryEditor value={taskMemory} onChange={setTaskMemory} />
+        </div>
+
+        <Heading type={HeadingTypes.h5} label="Compute profile" />
+        <div className={classes.content}>
+          <ProfilesListViewInPipeline
+            appName={name}
+            onProfileSelect={handleProfileSelect}
+            selectedProfile={activeProfile}
+            tableTitle={
+              'Select the compute profile you want to use to run this replication pipeline'
+            }
+          />
+        </div>
       </div>
 
       <div className={classes.footer}>

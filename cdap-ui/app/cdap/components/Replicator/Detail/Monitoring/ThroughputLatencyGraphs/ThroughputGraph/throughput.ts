@@ -24,6 +24,7 @@ export const COLOR_MAP = {
   inserts: '#185ABC',
   updates: '#669DF6',
   deletes: '#AECBFA',
+  error: '#D40001',
   horizontalLine: '#DDDDDD',
   verticalLine: '#979797',
   legend: '#999999',
@@ -148,7 +149,7 @@ export function renderThroughputGraph(
   const insertHeight = (d) => height - y(d.inserts);
   const updatesHeight = (d) => height - y(d.updates);
   const deletesHeight = (d) => height - y(d.deletes);
-  const hoverContainerHeight = (d) => height - y(d.inserts + d.updates + d.deletes);
+  const hoverContainerHeight = (d) => height - y(d.inserts + d.updates + d.deletes) + barWidth + 5;
 
   // INSERTS
   bar
@@ -180,7 +181,57 @@ export function renderThroughputGraph(
     .attr('x', xLocation)
     .attr('y', (d) => y(d.deletes) - insertHeight(d) - updatesHeight(d));
 
-  bar
+  // Errors
+  const errorGroupElem = chart.append('g').attr('class', 'error-container');
+  const error = errorGroupElem
+    .selectAll('circle')
+    .data(data)
+    .enter();
+
+  const errorXLocation = (d) => {
+    return xLocation(d) + barWidth / 2;
+  };
+
+  const errorYLocation = (d) => {
+    return height - hoverContainerHeight(d) + barWidth / 2;
+  };
+
+  error
+    .filter((d) => {
+      return d.errors > 0;
+    })
+    .append('circle')
+    .attr('cx', errorXLocation)
+    .attr('cy', errorYLocation)
+    .attr('r', barWidth / 2)
+    .attr('fill', COLOR_MAP.error);
+
+  const errorTextSize = barWidth * 0.8;
+  const errorTextYPosition = (d) => {
+    return errorYLocation(d) + errorTextSize / 2 - (barWidth - errorTextSize) / 2;
+  };
+
+  error
+    .filter((d) => {
+      return d.errors > 0;
+    })
+    .append('text')
+    .text('!')
+    .attr('fill', 'white')
+    .attr('x', errorXLocation)
+    .attr('y', errorTextYPosition)
+    .attr('text-anchor', 'middle')
+    .style('font-size', errorTextSize);
+
+  // Hover Container
+  // This has to be the last one to render
+  const hoverGroupElem = chart.append('g').attr('class', 'hover-group-container');
+  const hover = hoverGroupElem
+    .selectAll('rect')
+    .data(data)
+    .enter();
+
+  hover
     .append('rect')
     .attr('class', 'hover-container')
     .attr('opacity', 0)
@@ -190,7 +241,13 @@ export function renderThroughputGraph(
     .attr('y', (d) => height - hoverContainerHeight(d))
     .on('mouseover', (d) => {
       const tooltipLeftOffset = 15;
-      const top = height - hoverContainerHeight(d) - (margin.bottom + margin.top) * 2 + 'px';
+      const tooltipTopOffset = 40;
+      const top =
+        height -
+        hoverContainerHeight(d) -
+        tooltipTopOffset -
+        (margin.bottom + margin.top) * 2 +
+        'px';
       let left = xLocation(d) + margin.left + tooltipLeftOffset;
       if (left + tooltipWidth >= width) {
         left = left - (left + tooltipWidth - width);
@@ -208,7 +265,8 @@ export function renderThroughputGraph(
     .attr('class', 'legend axis-y-left-legend')
     .append('text')
     .attr('transform', `translate(-45, ${height / 2}) rotate(-90)`)
-    .text('events')
+    .text('No. of events')
+    .attr('text-anchor', 'middle')
     .style('font-size', '12px')
     .style('fill', COLOR_MAP.legend);
 }
