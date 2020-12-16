@@ -147,6 +147,12 @@ export default class FileBrowser extends Component {
     return filePath;
   }
 
+  getFileName() {
+    const { workspaceInfo } = DataPrepStore.getState().dataprep;
+    const fileName = objectQuery(workspaceInfo, 'properties', 'name');
+    return fileName;
+  }
+
   preventPropagation = (e) => {
     if (this.props.enableRouting) {
       return;
@@ -234,12 +240,13 @@ export default class FileBrowser extends Component {
     );
   }
 
-  renderCollapsedContent(row) {
+  renderCollapsedContent(row, isSelected) {
     return (
       <div
         key={row.uniqueId}
         className={classnames('row content-row', {
           disabled: !row.directory && !row.wrangle,
+          selected: isSelected,
         })}
       >
         <div className="col-8 name">
@@ -259,8 +266,13 @@ export default class FileBrowser extends Component {
   }
 
   renderRowContent(row) {
+    let isSelected = false;
+    if (this.state.path === this.getFilePath() && row.name === this.getFileName()) {
+      isSelected = true;
+    }
+
     if (this.props.noState || !this.props.enableRouting) {
-      return this.renderCollapsedContent(row);
+      return this.renderCollapsedContent(row, isSelected);
     }
 
     return (
@@ -268,6 +280,7 @@ export default class FileBrowser extends Component {
         key={row.uniqueId}
         className={classnames('row content-row', {
           disabled: !row.directory && !row.wrangle,
+          selected: isSelected,
         })}
       >
         <div className="col-3 name">
@@ -309,7 +322,7 @@ export default class FileBrowser extends Component {
           className="row-container"
           onClick={goToPath.bind(this, content.path)}
         >
-          {this.renderRowContent(content)}
+          {this.renderRowContent(content, false)}
         </div>
       );
     }
@@ -318,19 +331,19 @@ export default class FileBrowser extends Component {
     linkPath = trimSuffixSlash(linkPath);
     return (
       <Link key={content.uniqueId} to={linkPath}>
-        {this.renderRowContent(content)}
+        {this.renderRowContent(content, false)}
       </Link>
     );
   }
 
-  renderFileContent(content) {
+  renderFileContent(content, isSelected) {
     return (
       <div
         key={content.uniqueId}
         className="row-container"
         onClick={this.ingestFile.bind(this, content)}
       >
-        {this.renderRowContent(content)}
+        {this.renderRowContent(content, isSelected)}
       </div>
     );
   }
