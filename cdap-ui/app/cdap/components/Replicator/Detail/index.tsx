@@ -30,11 +30,11 @@ import {
   fetchPluginWidget,
   generateTableKey,
 } from 'components/Replicator/utilities';
-import ConfigDisplay from 'components/Replicator/ConfigDisplay';
-import TablesList from 'components/Replicator/Detail/TablesList';
-import Metrics from 'components/Replicator/Detail/Metrics';
+import DetailContent from 'components/Replicator/Detail/DetailContent';
+import LoadingSVGCentered from 'components/LoadingSVGCentered';
+import ContentHeading from 'components/Replicator/Detail/ContentHeading';
 
-const DetailContext = React.createContext({});
+export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
 const styles = (theme): StyleRules => {
   return {
@@ -51,7 +51,7 @@ const styles = (theme): StyleRules => {
       padding: '15px',
     },
     body: {
-      padding: '15px 40px',
+      padding: '0 40px 15px 40px',
     },
   };
 };
@@ -85,10 +85,18 @@ interface IDetailState {
   tables: Map<string, Map<string, string>>;
   columns: Map<string, List<IColumn>>;
   offsetBasePath: string;
+  activeTable: string;
+  timeRange: string;
+  loading: boolean;
+  lastUpdated: number;
+  startTime: number;
+  endTime: number;
 
   start: () => void;
   stop: () => void;
   deleteReplicator: () => void;
+  setActiveTable: (table: string) => void;
+  setTimeRange: (timeRange: string) => void;
 }
 
 export type IDetailContext = Partial<IDetailState>;
@@ -106,6 +114,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       () => {
         this.setState({
           status: PROGRAM_STATUSES.STARTING,
+          startTime: null,
+          endTime: null,
         });
       },
       (err) => {
@@ -155,6 +165,19 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     );
   };
 
+  private setActiveTable = (table: string) => {
+    this.setState({
+      activeTable: table,
+    });
+  };
+
+  private setTimeRange = (timeRange: string) => {
+    this.setState({
+      timeRange,
+      lastUpdated: Date.now(),
+    });
+  };
+
   public state = {
     name: objectQuery(this.props, 'match', 'params', 'replicatorId'),
     description: null,
@@ -171,10 +194,18 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     tables: Map<string, Map<string, string>>(),
     columns: Map<string, List<IColumn>>(),
     offsetBasePath: '',
+    activeTable: null,
+    timeRange: '24h',
+    loading: true,
+    lastUpdated: Date.now(),
+    startTime: null,
+    end: null,
 
     start: this.start,
     stop: this.stop,
     deleteReplicator: this.deleteReplicator,
+    setActiveTable: this.setActiveTable,
+    setTimeRange: this.setTimeRange,
   };
 
   public componentDidMount() {
@@ -301,6 +332,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
         tables: selectedTables,
         columns,
         offsetBasePath: config.offsetBasePath,
+        loading: false,
+        lastUpdated: Date.now(),
       });
     });
 
@@ -321,6 +354,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       this.setState({
         status: latestRun.status,
         runId: latestRun.runid,
+        startTime: latestRun.starting,
+        endTime: latestRun.end,
       });
     });
   };
@@ -342,6 +377,10 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       return this.redirect();
     }
 
+    if (this.state.loading) {
+      return <LoadingSVGCentered />;
+    }
+
     const classes = this.props.classes;
 
     return (
@@ -350,20 +389,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
           <TopPanel />
 
           <div className={classes.body}>
-            <Metrics />
-            <hr />
-
-            <ConfigDisplay
-              sourcePluginInfo={this.state.sourcePluginInfo}
-              targetPluginInfo={this.state.targetPluginInfo}
-              sourcePluginWidget={this.state.sourcePluginWidget}
-              targetPluginWidget={this.state.targetPluginWidget}
-              sourceConfig={this.state.sourceConfig}
-              targetConfig={this.state.targetConfig}
-            />
-
-            <hr />
-            <TablesList />
+            <ContentHeading />
+            <DetailContent />
           </div>
         </div>
       </DetailContext.Provider>

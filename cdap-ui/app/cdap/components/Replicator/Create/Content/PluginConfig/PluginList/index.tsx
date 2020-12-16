@@ -19,7 +19,6 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
 import HorizontalCarousel from 'components/HorizontalCarousel';
 import { fetchPluginsAndWidgets } from 'components/Replicator/utilities';
-import { PluginType } from 'components/Replicator/constants';
 import { objectQuery } from 'services/helpers';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
@@ -27,9 +26,10 @@ import Search from '@material-ui/icons/Search';
 import PluginCard, {
   PluginCardWidth,
   PluginCardHeight,
-} from 'components/Replicator/List/PluginCard';
+} from 'components/Replicator/Create/Content/PluginConfig/PluginCard';
 import classnames from 'classnames';
 import Heading, { HeadingTypes } from 'components/Heading';
+import { PluginType } from 'components/Replicator/constants';
 
 const styles = (theme): StyleRules => {
   return {
@@ -70,28 +70,30 @@ const styles = (theme): StyleRules => {
   };
 };
 
-interface ITargetListProps extends ICreateContext, WithStyles<typeof styles> {
-  onSelect: (target) => void;
+interface IPluginListProps extends ICreateContext, WithStyles<typeof styles> {
+  onSelect: (plugin) => void;
   currentSelection: any;
+  pluginType: PluginType;
 }
 
-const TargetListView: React.FC<ITargetListProps> = ({
+const PluginListView: React.FC<IPluginListProps> = ({
   classes,
   onSelect,
   currentSelection,
   parentArtifact,
+  pluginType,
 }) => {
-  const [targets, setTargets] = React.useState([]);
+  const [plugins, setPlugins] = React.useState([]);
   const [widgetMap, setWidgetMap] = React.useState({});
   const [search, setSearch] = React.useState('');
 
   React.useEffect(() => {
-    fetchPluginsAndWidgets(parentArtifact, PluginType.target).subscribe((res) => {
-      if (res.plugins.length === 1 && !currentSelection) {
+    fetchPluginsAndWidgets(parentArtifact, pluginType).subscribe((res) => {
+      if (res.plugins.length > 0 && !currentSelection) {
         onSelect(res.plugins[0]);
       }
 
-      setTargets(res.plugins);
+      setPlugins(res.plugins);
       setWidgetMap(res.widgetMap);
     });
   }, []);
@@ -101,15 +103,15 @@ const TargetListView: React.FC<ITargetListProps> = ({
     setSearch(value);
   }
 
-  let filteredTarget = targets;
+  let filteredPlugins = plugins;
   if (search.length > 0) {
-    filteredTarget = targets.filter((target) => {
-      const pluginKey = `${target.name}-${target.type}`;
+    filteredPlugins = plugins.filter((plugin) => {
+      const pluginKey = `${plugin.name}-${plugin.type}`;
       const displayName = objectQuery(widgetMap, pluginKey, 'display-name');
 
       const normalizedSearch = search.toLowerCase();
 
-      if (target.name.toLowerCase().indexOf(normalizedSearch) !== -1) {
+      if (plugin.name.toLowerCase().indexOf(normalizedSearch) !== -1) {
         return true;
       }
 
@@ -121,18 +123,18 @@ const TargetListView: React.FC<ITargetListProps> = ({
     <div className={classes.root}>
       <div className={classes.header}>
         <div>
-          <Heading type={HeadingTypes.h4} label="Select target" />
+          <Heading type={HeadingTypes.h4} label="Select plugin" />
         </div>
         <div className={classes.searchSection}>
           <div>
-            {targets.length} {targets.length === 1 ? 'source' : 'sources'} available
+            {plugins.length} {plugins.length === 1 ? 'plugin' : 'plugins'} available
           </div>
           <TextField
             className={classes.search}
             value={search}
             onChange={handleSearch}
             variant="outlined"
-            placeholder="Search targets by name"
+            placeholder="Search plugins by name"
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -146,10 +148,10 @@ const TargetListView: React.FC<ITargetListProps> = ({
 
       <div className={classes.listContainer}>
         <HorizontalCarousel scrollAmount={PluginCardWidth} classes={{ arrow: classes.arrow }}>
-          {filteredTarget.map((target) => {
-            const pluginKey = `${target.name}-${target.type}`;
+          {filteredPlugins.map((plugin) => {
+            const pluginKey = `${plugin.name}-${plugin.type}`;
             const widgetInfo = widgetMap[pluginKey];
-            const targetName = widgetInfo ? widgetInfo['display-name'] : target.name;
+            const targetName = widgetInfo ? widgetInfo['display-name'] : plugin.name;
             const icon = objectQuery(widgetInfo, 'icon', 'arguments', 'data');
 
             const currentSelectionName = objectQuery(currentSelection, 'name');
@@ -157,9 +159,9 @@ const TargetListView: React.FC<ITargetListProps> = ({
 
             return (
               <div
-                key={target.name}
+                key={plugin.name}
                 className={classes.targetItem}
-                onClick={onSelect.bind(null, target)}
+                onClick={onSelect.bind(null, plugin)}
               >
                 <PluginCard
                   name={targetName}
@@ -167,8 +169,8 @@ const TargetListView: React.FC<ITargetListProps> = ({
                   classes={{
                     root: classnames({
                       [classes.selected]:
-                        target.name === currentSelectionName &&
-                        target.artifact.name === currentSelectionArtifact,
+                        plugin.name === currentSelectionName &&
+                        plugin.artifact.name === currentSelectionArtifact,
                     }),
                   }}
                 />
@@ -181,6 +183,6 @@ const TargetListView: React.FC<ITargetListProps> = ({
   );
 };
 
-const StyledTargetList = withStyles(styles)(TargetListView);
-const TargetList = createContextConnect(StyledTargetList);
-export default TargetList;
+const StyledPluginList = withStyles(styles)(PluginListView);
+const PluginList = createContextConnect(StyledPluginList);
+export default PluginList;

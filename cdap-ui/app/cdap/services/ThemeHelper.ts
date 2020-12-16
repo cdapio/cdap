@@ -267,7 +267,7 @@ function parse1Point0Spec(themeJSON: IOnePoint0SpecJSON): IThemeObj {
       featureNames: {
         analytics: 'Analytics',
         controlCenter: 'Control Center',
-        dashboard: 'Dashboard',
+        dashboard: 'Operations',
         dataPrep: 'Wrangler',
         wranglerDataModel: 'Wrangler Data Model',
         wranglerDatamodelViewer: 'EnhancedWrangler',

@@ -19,14 +19,13 @@ import PropTypes from 'prop-types';
 import Popover from 'components/Popover';
 import NamespaceStore, { getCurrentNamespace } from 'services/NamespaceStore';
 import IconSVG from 'components/IconSVG';
-import { connect } from 'react-redux';
 import { UncontrolledDropdown } from 'components/UncontrolledComponents';
 import { DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 import T from 'i18n-react';
 
 const PREFIX = 'features.NamespacesPicker';
 
-class NamespacesPopoverView extends Component {
+class NamespacesPopover extends Component {
   static propTypes = {
     namespacesPick: PropTypes.array,
     setNamespacesPick: PropTypes.func,
@@ -140,7 +139,11 @@ class NamespacesPopoverView extends Component {
                 let isPicked = this.props.namespacesPick.indexOf(ns) !== -1;
 
                 return (
-                  <div className="namespace-row" onClick={this.namespaceClick.bind(this, ns)}>
+                  <div
+                    key={ns}
+                    className="namespace-row"
+                    onClick={this.namespaceClick.bind(this, ns)}
+                  >
                     <div className="checkbox-column">
                       <IconSVG name={isPicked ? 'icon-check-square' : 'icon-square-o'} />
                     </div>
@@ -155,14 +158,5 @@ class NamespacesPopoverView extends Component {
     );
   }
 }
-
-const mapStateToProps = (state, ownProps) => {
-  return {
-    namespacesPick: state.namespaces.namespacesPick,
-    setNamespacesPick: ownProps.setNamespacesPick,
-  };
-};
-
-const NamespacesPopover = connect(mapStateToProps)(NamespacesPopoverView);
 
 export default NamespacesPopover;
