@@ -89,7 +89,9 @@ public class DraftHandler extends AbstractSystemHttpServiceHandler {
       }
 
       SortRequest sortRequest = new SortRequest(sortBy, sortOrder);
-      responder.sendJson(draftService.listDrafts(namespace, request.getUserId(), includeConfig, sortRequest, filter));
+      String userId = request.getUserId();
+      userId = userId == null ? "" : userId;
+      responder.sendJson(draftService.listDrafts(namespace, userId, includeConfig, sortRequest, filter));
     });
   }
 
@@ -102,7 +104,9 @@ public class DraftHandler extends AbstractSystemHttpServiceHandler {
                        @PathParam("context") String namespaceName,
                        @PathParam("draft") String draftId) {
     respond(namespaceName, responder, (namespace) -> {
-      DraftId id = new DraftId(namespace, draftId, request.getUserId());
+      String userId = request.getUserId();
+      userId = userId == null ? "" : userId;
+      DraftId id = new DraftId(namespace, draftId, userId);
       responder.sendJson(draftService.getDraft(id));
     });
   }
@@ -120,8 +124,9 @@ public class DraftHandler extends AbstractSystemHttpServiceHandler {
 
       String requestStr = StandardCharsets.UTF_8.decode(request.getContent()).toString();
       DraftStoreRequest<ETLConfig> draftStoreRequest = deserializeDraftStoreRequest(requestStr);
-
-      DraftId id = new DraftId(namespace, draftId, request.getUserId());
+      String userId = request.getUserId();
+      userId = userId == null ? "" : userId;
+      DraftId id = new DraftId(namespace, draftId, userId);
       draftService.writeDraft(id, draftStoreRequest);
 
       responder.sendStatus(HttpURLConnection.HTTP_OK);
@@ -137,7 +142,9 @@ public class DraftHandler extends AbstractSystemHttpServiceHandler {
                           @PathParam("context") String namespaceName,
                           @PathParam("draft") String draftId) {
     respond(namespaceName, responder, (namespace) -> {
-      DraftId id = new DraftId(namespace, draftId, request.getUserId());
+      String userId = request.getUserId();
+      userId = userId == null ? "" : userId;
+      DraftId id = new DraftId(namespace, draftId, userId);
 
       draftService.deleteDraft(id);
       responder.sendStatus(HttpURLConnection.HTTP_OK);
