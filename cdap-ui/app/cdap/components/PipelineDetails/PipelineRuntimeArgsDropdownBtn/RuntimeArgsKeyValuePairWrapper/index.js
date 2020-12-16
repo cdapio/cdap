@@ -28,6 +28,9 @@ class RuntimeArgsKeyValuePairWrapper extends React.Component {
   runtimeArgsChanged = (changedArgs) => {
     const newArgs = changedArgs.length ? changedArgs : [getDefaultKeyValuePair()];
     updateRunTimeArgs({ pairs: newArgs });
+    if (typeof this.props.onRuntimeArgsChange === 'function') {
+      this.props.onRuntimeArgsChange({ pairs: newArgs });
+    }
   };
 
   render() {
@@ -59,6 +62,7 @@ class RuntimeArgsKeyValuePairWrapper extends React.Component {
 RuntimeArgsKeyValuePairWrapper.propTypes = {
   isHistoricalRun: PropTypes.bool,
   runtimeArgs: PropTypes.object,
+  onRuntimeArgsChange: PropTypes.func,
 };
 
 const mapStateToProps = (state) => {
