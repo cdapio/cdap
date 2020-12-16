@@ -72,7 +72,8 @@
           </div>
           <div class="configuration-tab"
                 ng-class="{'active': BatchPipelineConfigCtrl.activeTab === 'alerts', 'disabled': BatchPipelineConfigCtrl.showPreviewConfig}"
-                ng-click="BatchPipelineConfigCtrl.activeTab = 'alerts'">
+                ng-click="BatchPipelineConfigCtrl.activeTab = 'alerts'"
+                data-cy="pipeline-configure-alerts-tab">
             Pipeline alert
           </div>
         </div>

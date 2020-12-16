@@ -57,6 +57,7 @@ export default class PipelineConfigureButton extends Component {
       <div
         onClick={this.getRuntimeArgumentsAndToggleModeless}
         className="btn pipeline-action-btn pipeline-configure-btn"
+        data-cy="pipeline-configure-btn"
       >
         <div className="btn-container">
           <IconSVG name="icon-sliders" className="configure-icon" />
