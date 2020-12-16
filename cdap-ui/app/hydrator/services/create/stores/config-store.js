@@ -81,8 +81,6 @@ class HydratorPlusPlusConfigStore {
       },
       __ui__: {
         nodes: [],
-        draftId: null,
-        lastSaved: null
       },
       description: '',
       name: ''
@@ -141,10 +139,7 @@ class HydratorPlusPlusConfigStore {
     return angular.copy(this.state);
   }
   getDraftId() {
-    return this.state.__ui__.draftId;
-  }
-  setDraftId(draftId) {
-    this.state.__ui__.draftId = draftId;
+    return this.$stateParams.draftId;
   }
   getArtifact() {
     return this.getState().artifact;
@@ -1056,40 +1051,33 @@ class HydratorPlusPlusConfigStore {
       }]);
       return;
     }
-    if (!this.getDraftId()) {
-      this.setDraftId(this.uuid.v4());
-      this.$stateParams.draftId = this.getDraftId();
-      this.$state.go('hydrator.create', this.$stateParams, {notify: false});
-    }
+
     let config = this.getConfigForExport();
-    config.__ui__ = {
-      draftId: this.getDraftId(),
-      lastSaved: new Date()
+    const draftId = this.getDraftId() || this.uuid.v4();
+    const params = {
+      context: this.$stateParams.namespace,
+      draftId,
     };
-    let checkForDuplicateDrafts = (config, draftsMap = {}) => {
-      return Object.keys(draftsMap).filter(
-        draft => {
-          return draftsMap[draft].name === config.name &&
-                 config.__ui__.draftId !== draftsMap[draft].__ui__.draftId;
-        }
-      ).length > 0;
-    };
-    let saveDraft = (config, draftsMap = {}) => {
-      draftsMap[this.getDraftId()] = config;
-      return draftsMap;
-    };
-    this.mySettings.get('hydratorDrafts', true)
-      .then( (res = {isMigrated: true}) => {
-        let draftsMap = res[this.$stateParams.namespace];
-        if (!checkForDuplicateDrafts(config, draftsMap)) {
-          res[this.$stateParams.namespace] = saveDraft(config, draftsMap);
-        } else {
-          throw 'A draft with the same name already exists. Please rename your draft.';
-        }
-        return this.mySettings.set('hydratorDrafts', res);
-      })
+    /**
+     * If the user is editing draft that is using old user store, then we
+     * remove it from old user store and save it in the new drafts API.
+     *
+     * This is to migrate the draft to using new drafts API.
+     */
+    this.mySettings
+      .get('hydratorDrafts', true)
       .then(
-        () => {
+        (res) => {
+          var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, draftId);
+          if (savedDraft) {
+            delete res[this.$stateParams.namespace][draftId];
+            return this.mySettings.set('hydratorDrafts', res);
+          }
+        })
+        .then(() => this.myPipelineApi.saveDraft(params, config).$promise)
+        .then(() => {
+          this.$stateParams.draftId = draftId;
+          this.$state.go('hydrator.create', this.$stateParams, {notify: false});
           this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'success',
             content: `Draft ${config.name} saved successfully.`
@@ -1102,8 +1090,7 @@ class HydratorPlusPlusConfigStore {
             type: 'error',
             content: err
           }]);
-        }
-      );
+        });
   }
 
   publishPipeline() {
@@ -1113,10 +1100,25 @@ class HydratorPlusPlusConfigStore {
     if (!error) { return; }
     this.EventPipe.emit('showLoadingIcon', 'Deploying Pipeline...');
 
-    let removeFromUserDrafts = (adapterName) => {
-      let draftId = this.getState().__ui__.draftId;
-      this.mySettings
-        .get('hydratorDrafts', true)
+    const navigateToDetailedView = (adapterName) => {
+      this.EventPipe.emit('hideLoadingIcon.immediate');
+      this.setState(this.getDefaults());
+      this.$state.go('hydrator.detail', { pipelineId: adapterName });
+    };
+
+    const draftDeleteErrorHandler = (err) => {
+      this.HydratorPlusPlusConsoleActions.addMessage([{
+        type: 'error',
+        content: err
+      }]);
+      return this.$q.reject(false);
+    };
+
+    const removeOldDraft = (draftId, adapterName, res) => {
+      if (res.statusCode !== 404) {
+        return draftDeleteErrorHandler.bind(this, res.response);
+      }
+      this.mySettings.get('hydratorDrafts', true)
         .then(
           (res) => {
             var savedDraft = this.myHelpers.objectQuery(res, this.$stateParams.namespace, draftId);
@@ -1125,21 +1127,29 @@ class HydratorPlusPlusConfigStore {
               return this.mySettings.set('hydratorDrafts', res);
             }
           },
-          (err) => {
-            this.HydratorPlusPlusConsoleActions.addMessage([{
-              type: 'error',
-              content: err
-            }]);
-            return this.$q.reject(false);
-          }
-        )
-        .then(
-          () => {
-            this.EventPipe.emit('hideLoadingIcon.immediate');
-            this.setState(this.getDefaults());
-            this.$state.go('hydrator.detail', { pipelineId: adapterName });
-          }
-        );
+          draftDeleteErrorHandler.bind(this)
+        ).then(navigateToDetailedView.bind(this, adapterName));
+    };
+
+    let removeFromUserDrafts = (adapterName) => {
+      const draftId = this.getDraftId();
+      if (!draftId) {
+        return;
+      }
+      /**
+       * Remove the draft from the new API. If it errors out check if it is
+       * a 404.
+       * - If it is 404 so it should be an older draft. Delete from the user store
+       * - If it is non-404 not show the error message. This is less likely to happen as
+       *   pipeline publish succeeds but draft delete fails (network timeout issue).
+       *   TODO: We should show a navigate anyway link to discard the draft and navigate to published
+       *   pipeline view.
+       * - If it succeeds then proceed to pipeline detailed view.
+       */
+      this.myPipelineApi
+        .deleteDraft({ context: this.$stateParams.namespace, draftId })
+        .$promise
+        .then(navigateToDetailedView.bind(this, adapterName), removeOldDraft.bind(this, draftId, adapterName));
     };
 
     let publish = (pipelineName) => {

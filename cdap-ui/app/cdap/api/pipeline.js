@@ -34,6 +34,8 @@ const extensionsFetchBase =
   '/namespaces/:namespace/artifacts/:pipelineType/versions/:version/extensions';
 const pluginFetchBase = `${extensionsFetchBase}/:extensionType`;
 const pluginsFetchPath = `${pluginFetchBase}?scope=system`;
+var pipelineV1AppPath = '/namespaces/system/apps/pipeline/services/studio/methods/v1';
+var pipelineV1AppContextPath = `${pipelineV1AppPath}/contexts/:context`;
 
 export const MyPipelineApi = {
   list: apiCreator(dataSrc, 'GET', 'REQUEST', '/namespaces/:namespace/apps'),
@@ -61,4 +63,13 @@ export const MyPipelineApi = {
 
   getPluginProperties: apiCreator(dataSrc, 'GET', 'REQUEST', pluginsPath),
   getExtensions: apiCreator(dataSrc, 'GET', 'REQUEST', extensionsPath),
+
+  getDrafts: apiCreator(dataSrc, 'GET', 'REQUEST', `${pipelineV1AppContextPath}/drafts`),
+  saveDraft: apiCreator(dataSrc, 'PUT', 'REQUEST', `${pipelineV1AppContextPath}/drafts/:draftId`),
+  deleteDraft: apiCreator(
+    dataSrc,
+    'DELETE',
+    'REQUEST',
+    `${pipelineV1AppContextPath}/drafts/:draftId`
+  ),
 };
