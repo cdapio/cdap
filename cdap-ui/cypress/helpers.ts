@@ -129,6 +129,10 @@ function getConditionNodeEndpoint(options, id) {
   return `.plugin-endpoint_${id}_condition_${options.condition}`;
 }
 
+function getSplitterNodeEndpoint(options, id) {
+  return `.plugin-endpoint_${id}_port_${options.portName}`;
+}
+
 function dataCy(property) {
   return `[data-cy="${property}"]`;
 }
@@ -167,6 +171,7 @@ export {
   getSessionToken,
   getGenericEndpoint,
   getConditionNodeEndpoint,
+  getSplitterNodeEndpoint,
   dataCy,
   getNodeSelectorFromNodeIndentifier,
   setNewSchemaEditor,

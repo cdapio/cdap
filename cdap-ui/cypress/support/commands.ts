@@ -415,12 +415,17 @@ Cypress.Commands.add(
       cy.get_node(targetNode).then((targetEl) => {
         const sourceCoOrdinates = sourceEl[0].getBoundingClientRect();
         const targetCoOrdinates = targetEl[0].getBoundingClientRect();
+        let pageX = targetCoOrdinates.left - sourceCoOrdinates.right + targetCoOrdinates.width / 2;
+        let pageY = targetCoOrdinates.top - sourceCoOrdinates.bottom + targetCoOrdinates.height / 2;
+        // This is not perfect. Since splitter endpoints are on a popover
+        // we need to go extra down and left to connect from the endpoint
+        // to the target node.
+        if (options.portName) {
+          pageX -= targetCoOrdinates.width / 2;
+          pageY += targetCoOrdinates.height / 2;
+        }
         // connect from source endpoint to midway between the target node
-        cy.move_node(
-          sourceEndpoint(options, sourceEl[0].id),
-          targetCoOrdinates.left - sourceCoOrdinates.right + targetCoOrdinates.width / 2,
-          targetCoOrdinates.top - sourceCoOrdinates.bottom + targetCoOrdinates.height / 2
-        );
+        cy.move_node(sourceEndpoint(options, sourceEl[0].id), pageX, pageY);
       });
     });
   }
@@ -728,3 +733,10 @@ Cypress.Commands.add('delete_artifact_via_api', (headers, artifactName, version)
   });
 });
 
+Cypress.Commands.add('fit_pipeline_to_screen', () => {
+  return cy.get('[data-cy="pipeline-fit-to-screen-control"]').click();
+});
+
+Cypress.Commands.add('pipeline_clean_up_graph_control', () => {
+  return cy.get('[data-cy="pipeline-clean-up-graph-control"]').click();
+});
