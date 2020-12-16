@@ -17,36 +17,53 @@
 import * as React from 'react';
 import T from 'i18n-react';
 import { connect } from 'react-redux';
-
-import './PipelineCount.scss';
+import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import { IPipeline } from 'components/PipelineList/DeployedPipelineView/types';
 
-interface IProps {
+const styles = () => {
+  return {
+    root: {
+      display: 'inline-block',
+      marginLeft: '10px',
+    },
+  };
+};
+
+interface IProps extends WithStyles<typeof styles> {
   pipelines: IPipeline[];
   pipelinesLoading: boolean;
+  filteredPipelines: IPipeline[];
 }
 
 const PREFIX = 'features.PipelineList';
 
-const PipelineCountView: React.SFC<IProps> = ({ pipelines = [], pipelinesLoading }) => {
+const PipelineCountView: React.SFC<IProps> = ({
+  pipelines = [],
+  pipelinesLoading,
+  filteredPipelines,
+  classes,
+}) => {
   if (pipelinesLoading) {
     return null;
   }
+  let count = `Showing ${filteredPipelines.length} of ${pipelines.length}`;
+  if (!pipelines.length) {
+    count = '0';
+  }
   return (
-    <div className="pipeline-count">
-      <h5>
-        {T.translate(`${PREFIX}.DeployedPipelineView.pipelineCount`, {
-          context: pipelines ? pipelines.length : 0,
-        })}
-      </h5>
+    <div className={classes.root}>
+      {T.translate(`${PREFIX}.DeployedPipelineView.pipelineCount`, {
+        context: count,
+      })}
     </div>
   );
 };
 
 const mapStateToProps = (state) => ({
   pipelines: state.deployed.pipelines,
+  filteredPipelines: state.deployed.filteredPipelines,
 });
 
 const PipelineCount = PipelineCountView;
 
-export default connect(mapStateToProps)(PipelineCount);
+export default connect(mapStateToProps)(withStyles(styles)(PipelineCount));
