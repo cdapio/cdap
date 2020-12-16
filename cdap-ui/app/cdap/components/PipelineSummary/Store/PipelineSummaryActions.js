@@ -167,7 +167,7 @@ function updateNodeMetrics(pipelineConfig) {
   Object.keys(nodesMap.recordsout)
     .filter((node) => sinkPlugins.indexOf(node) === -1)
     .forEach((node) => {
-      recordsOutNoneSinkPluginsMap[node] = nodesMap.recordsin[node];
+      recordsOutNoneSinkPluginsMap[node] = nodesMap.recordsout[node];
     });
   nodesMap = {
     recordsin: recordsInNonSourcePluginsMap,
