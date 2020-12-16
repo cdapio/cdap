@@ -311,7 +311,10 @@ export default class NamespaceDropdown extends React.PureComponent<
                   to={`/ns/${currentNamespace}/details`}
                   href={`/cdap/ns/${currentNamespace}/details`}
                 >
-                  <div className="current-namespace-metadata" onClick={this.onNamespaceChange}>
+                  <div
+                    className="current-namespace-metadata"
+                    onClick={this.onNamespaceChange.bind(this, currentNamespace)}
+                  >
                     {this.state.preferencesSavedMessage === true
                       ? preferenceSpecificCardHeader
                       : currentNamespaceCardHeader}
