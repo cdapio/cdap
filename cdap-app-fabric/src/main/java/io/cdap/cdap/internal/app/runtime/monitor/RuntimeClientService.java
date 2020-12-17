@@ -213,7 +213,7 @@ public class RuntimeClientService extends AbstractRetryableScheduledService {
           // Update the lastMessageId if sendMessages succeeded
           lastMessageId = messageId[0] == null ? lastMessageId : messageId[0];
           totalPublished += messageCount.get();
-          progressLog.debug("Processed in total {} messages on topic {}", totalPublished, topicId);
+          progressLog.trace("Processed in total {} messages on topic {}", totalPublished, topicId);
         }
 
         // If we fetched all messages, then delay the next poll by pollTimeMillis.
