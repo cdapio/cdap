@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security;
 
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.security.store.SecureStore;
@@ -109,33 +108,38 @@ public class TokenSecureStoreRenewer extends SecureStoreRenewer {
    * Creates a {@link Credentials} that contains delegation tokens of the current user for all services that CDAP uses.
    */
   public Credentials createCredentials() {
+    Credentials refreshedCredentials = new Credentials();
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      YarnTokenUtils.obtainToken(yarnConf, refreshedCredentials);
+    }
+
+    // Optionally add the hbase token
     try {
-      Credentials refreshedCredentials = new Credentials();
-
-      if (User.isSecurityEnabled()) {
-        YarnTokenUtils.obtainToken(yarnConf, refreshedCredentials);
-      }
-
       if (User.isHBaseSecurityEnabled(yarnConf)) {
         HBaseTokenUtils.obtainToken(yarnConf, refreshedCredentials);
       }
+    } catch (Throwable t) {
+      LOG.trace("HBase is not available. Skipping HBase token", t);
+    }
 
-      if (secureExplore) {
-        HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
-        JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
-      }
+    if (secureExplore) {
+      HiveTokenUtils.obtainTokens(cConf, refreshedCredentials);
+      JobHistoryServerTokenUtils.obtainToken(yarnConf, refreshedCredentials);
+    }
 
+    try {
       if (secureStore instanceof DelegationTokensUpdater) {
         String renewer = UserGroupInformation.getCurrentUser().getShortUserName();
         ((DelegationTokensUpdater) secureStore).addDelegationTokens(renewer, refreshedCredentials);
       }
 
       YarnUtils.addDelegationTokens(yarnConf, locationFactory, refreshedCredentials);
-
-      return refreshedCredentials;
-    } catch (IOException ioe) {
-      throw Throwables.propagate(ioe);
+    } catch (IOException e) {
+      LOG.warn("Failed to refresh Hadoop delegation tokens", e);
     }
+
+    return refreshedCredentials;
   }
 
   private long calculateUpdateInterval() {

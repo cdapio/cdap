@@ -20,6 +20,7 @@ package io.cdap.cdap.runtime.spi.provisioner.remote;
 import com.google.common.base.Throwables;
 import io.cdap.cdap.runtime.spi.provisioner.Capabilities;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterStatus;
 import io.cdap.cdap.runtime.spi.provisioner.Node;
 import io.cdap.cdap.runtime.spi.provisioner.PollingStrategies;
@@ -36,6 +37,7 @@ import java.net.ConnectException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -109,7 +111,15 @@ public class RemoteHadoopProvisioner implements Provisioner {
     context.getSSHContext().setSSHKeyPair(conf.getKeyPair());
     Collection<Node> nodes = Collections.singletonList(new Node(conf.getHost(), Node.Type.MASTER, conf.getHost(),
                                                                 0, Collections.emptyMap()));
-    return new Cluster(conf.getHost(), ClusterStatus.RUNNING, nodes, Collections.emptyMap());
+    Map<String, String> properties = new HashMap<>();
+    String principal = conf.getKerberosPrincipal();
+    String keytab = conf.getKerberosKeytabPath();
+    if (principal != null && keytab != null) {
+      properties.put(ClusterProperties.KERBEROS_PRINCIPAL, principal);
+      properties.put(ClusterProperties.KERBEROS_KEYTAB, keytab);
+    }
+
+    return new Cluster(conf.getHost(), ClusterStatus.RUNNING, nodes, properties);
   }
 
   @Override

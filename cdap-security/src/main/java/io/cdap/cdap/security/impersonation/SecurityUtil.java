@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import com.google.common.base.Preconditions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
@@ -36,8 +35,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +43,6 @@ import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.security.auth.login.Configuration;
-import javax.security.auth.login.LoginException;
 
 /**
  * Utility functions for Kerberos.
@@ -77,21 +73,8 @@ public final class SecurityUtil {
       return;
     }
 
-    Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) != null,
-                                "Kerberos authentication is enabled, but " +
-                                Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
-
-    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
-    principal = expandPrincipal(principal);
-
-    Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH) != null,
-                                "Kerberos authentication is enabled, but " +
-                                Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
-
-
-    File keytabFile = new File(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH));
-    Preconditions.checkArgument(Files.isReadable(keytabFile.toPath()),
-                                "Keytab file is not a readable file: %s", keytabFile);
+    String principal = expandPrincipal(getMasterPrincipal(cConf));
+    File keytabFile = getMasterKeytabFile(cConf);
 
     LOG.info("Using Kerberos principal {} and keytab {}", principal, keytabFile.getAbsolutePath());
 
@@ -131,7 +114,7 @@ public final class SecurityUtil {
   @Nullable
   public static String expandPrincipal(@Nullable String principal) throws UnknownHostException {
     if (principal == null) {
-      return principal;
+      return null;
     }
 
     String localHostname = InetAddress.getLocalHost().getCanonicalHostName();
@@ -148,35 +131,42 @@ public final class SecurityUtil {
   }
 
   public static String getMasterPrincipal(CConfiguration cConf) {
-    return cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    String principal = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL);
+    if (principal == null) {
+      throw new IllegalArgumentException("Kerberos authentication is enabled, but " +
+                                           Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
+    }
+    return principal;
   }
 
-  public static String getMasterKeytabURI(CConfiguration cConf) {
-    return cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+  public static File getMasterKeytabFile(CConfiguration cConf) {
+    String uri = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
+    if (uri == null) {
+      throw new IllegalArgumentException(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
+    }
+
+    File keytabFile = new File(uri);
+    if (!Files.isReadable(keytabFile.toPath())) {
+      throw new IllegalArgumentException("Keytab file is not a readable file " + keytabFile);
+    }
+    return keytabFile;
   }
 
-  public static void loginForMasterService(CConfiguration cConf) throws IOException, LoginException {
-    String principal = getMasterPrincipal(cConf);
-    String keytabPath = getMasterKeytabURI(cConf);
-
+  public static void loginForMasterService(CConfiguration cConf) throws IOException {
     if (UserGroupInformation.isSecurityEnabled()) {
-      Path keytabFile = Paths.get(keytabPath);
-      Preconditions.checkArgument(Files.isReadable(keytabFile),
-                                  "Keytab file is not a readable file: %s", keytabFile);
-      String expandedPrincipal = expandPrincipal(principal);
-      LOG.info("Logging in as: principal={}, keytab={}", principal, keytabPath);
-      UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabPath);
+      String expandedPrincipal = expandPrincipal(getMasterPrincipal(cConf));
+      File keytabFile = getMasterKeytabFile(cConf);
+
+      LOG.info("Logging in as: principal={}, keytab={}", expandedPrincipal, keytabFile);
+      UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabFile.getAbsolutePath());
 
       long delaySec = cConf.getLong(Constants.Security.KERBEROS_KEYTAB_RELOGIN_INTERVAL);
       Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("Kerberos keytab renewal"))
-        .scheduleWithFixedDelay(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
-            } catch (IOException e) {
-              LOG.error("Failed to relogin from keytab", e);
-            }
+        .scheduleWithFixedDelay(() -> {
+          try {
+            UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
+          } catch (IOException e) {
+            LOG.error("Failed to relogin from keytab", e);
           }
         }, delaySec, delaySec, TimeUnit.SECONDS);
     }
@@ -211,13 +201,6 @@ public final class SecurityUtil {
   }
 
   /**
-   * Wrapper around {@link #validateKerberosPrincipal(KerberosPrincipalId)} to validate a principal in string format
-   */
-  public static void validateKerberosPrincipal(String principal) {
-    validateKerberosPrincipal(new KerberosPrincipalId(principal));
-  }
-
-  /**
    * @param principal The principal whose KeytabURI is being looked up
    * @param cConf To lookup the configured path for the keytabs
    * @return The location of the keytab
@@ -225,9 +208,11 @@ public final class SecurityUtil {
    */
   static String getKeytabURIforPrincipal(String principal, CConfiguration cConf) throws IOException {
     String confPath = cConf.getRaw(Constants.Security.KEYTAB_PATH);
-    Preconditions.checkNotNull(confPath, String.format("Failed to get a valid keytab path. " +
+    if (confPath == null) {
+      throw new IllegalArgumentException(String.format("Failed to get a valid keytab path. " +
                                                          "Please ensure that you have specified %s in cdap-site.xml",
                                                        Constants.Security.KEYTAB_PATH));
+    }
     String name = new KerberosName(principal).getShortName();
     return confPath.replace(Constants.USER_NAME_SPECIFIER, name);
   }
@@ -244,7 +229,7 @@ public final class SecurityUtil {
                                                           NamespacedEntityId entityId) throws IOException {
     ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
     if (impersonationInfo == null) {
-      return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
+      return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabFile(cConf).toURI().toString());
     }
     return impersonationInfo;
   }

@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
@@ -62,10 +64,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -78,15 +82,17 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private static final String SETUP_SPARK_PY = "setupSpark.py";
   private static final String SPARK_ENV_SH = "sparkEnv.sh";
 
+  private final Cluster cluster;
   private final SSHConfig sshConfig;
   private final Location serviceProxySecretLocation;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
+                               Cluster cluster, SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
                                TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
                                TwillControllerFactory controllerFactory) {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
+    this.cluster = cluster;
     this.sshConfig = sshConfig;
     this.serviceProxySecretLocation = serviceProxySecretLocation;
   }
@@ -319,13 +325,24 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
     scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
 
+    Map<String, String> args = new LinkedHashMap<>();
+    args.put(RemoteExecutionJobMain.RUN_ID, getProgramRunId().getRun());
+
+    Map<String, String> clusterProperties = cluster.getProperties();
+    String principal = clusterProperties.get(ClusterProperties.KERBEROS_PRINCIPAL);
+    String keytab = clusterProperties.get(ClusterProperties.KERBEROS_KEYTAB);
+    if (principal != null && keytab != null) {
+      args.put(ClusterProperties.KERBEROS_PRINCIPAL, principal);
+      args.put(ClusterProperties.KERBEROS_KEYTAB, keytab);
+    }
+
     scriptWriter.printf(
       "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s >%s/stdout 2>%s/stderr &\n",
       getProgramRunId().getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
       jvmOptions.getAMExtraOptions(),
       RemoteLauncher.class.getName(),
       RemoteExecutionJobMain.class.getName(),
-      getProgramRunId().getRun(),
+      args.entrySet().stream().map(e -> "--" + e.getKey() + "=" + e.getValue()).collect(Collectors.joining(" ")),
       logsDir, logsDir);
 
     scriptWriter.flush();

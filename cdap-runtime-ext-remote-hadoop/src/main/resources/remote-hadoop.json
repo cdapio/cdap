@@ -52,6 +52,24 @@
           "widget-attributes": {
             "default": ""
           }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Kerberos Principal",
+          "name": "kerberosPrincipal",
+          "description": "The Kerberos principal to use for program execution",
+          "widget-attributes": {
+            "placeholder": "Specify the Kerberos principal"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Kerberos Keytab Path",
+          "name": "kerberosKeytabPath",
+          "description": "The file path to the Kerberos keytab file. The file path must exist on the master node of the Hadoop cluster",
+          "widget-attributes": {
+            "placeholder": "Specify the Kerberos keytab path"
+          }
         }
       ]
     }
