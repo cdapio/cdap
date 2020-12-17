@@ -304,11 +304,21 @@ class HydratorPlusPlusLeftPanelCtrl {
 
     this.DAGPlusPlusNodesActionsFactory.resetSelectedNode();
     let name = item.name || item.pluginTemplate;
+    const configProperties = {};
 
     if (!item.pluginTemplate) {
       let itemArtifact = item.artifact;
       let key = `${item.name}-${item.type}-${itemArtifact.name}-${itemArtifact.version}-${itemArtifact.scope}`;
-      let displayName = this.myHelpers.objectQuery(this.availablePluginMap, key, 'widgets', 'display-name');
+      const widgets = this.myHelpers.objectQuery(this.availablePluginMap, key, 'widgets');
+      const displayName = this.myHelpers.objectQuery(widgets, 'display-name');
+      const configurationGroups = this.myHelpers.objectQuery(widgets, 'configuration-groups');
+      if (configurationGroups && configurationGroups.length > 0) {
+        configurationGroups.forEach(cg => {
+          cg.properties.forEach(prop => {
+            configProperties[prop.name] = this.myHelpers.objectQuery(prop, 'widget-attributes', 'default');
+          });
+        });
+      }
 
       name = displayName || name;
     }
@@ -339,7 +349,7 @@ class HydratorPlusPlusLeftPanelCtrl {
           label: (filteredNodes.length > 0 ? name + (filteredNodes.length+1) : name),
           artifact: item.artifact,
           name: item.name,
-          properties: {}
+          properties: configProperties,
         },
         icon: item.icon,
         description: item.description,
