@@ -23,7 +23,6 @@ import IconSVG from 'components/IconSVG';
 import classnames from 'classnames';
 import LoadingSVG from 'components/LoadingSVG';
 import { MyServiceProviderApi } from 'api/serviceproviders';
-import TextboxOnValium from 'components/TextboxOnValium';
 import Alert from 'components/Alert';
 import If from 'components/If';
 import { Theme } from 'services/ThemeHelper';
@@ -88,63 +87,12 @@ export default class ServicesTable extends Component {
 
   servicePolls = [];
 
-  resetEditInstances = () => {
-    let services = [...this.state.services];
-    services = services.map((service) => {
-      service.editInstance = false;
-      return service;
-    });
-    this.setState({
-      services,
-    });
-  };
-
-  editRequestedServiceInstance = (service) => {
-    if (service.editInstance || service.isSystemProgram) {
-      return;
-    }
-
-    const serviceName = service.name;
-
-    let services = [...this.state.services];
-    services = services.map((service) => {
-      if (serviceName === service.name) {
-        return Object.assign({}, service, {
-          editInstance: true,
-        });
-      }
-      return service;
-    });
-    this.setState({
-      services,
-    });
-  };
-
   resetAlert = () => {
     this.setState({
       showAlert: false,
       alertType: null,
       alertMessage: null,
     });
-  };
-
-  serviceInstanceRequested = (serviceid, index, value) => {
-    let currentRequested = this.state.services[index].requested;
-    if (currentRequested === value) {
-      this.resetEditInstances();
-      return;
-    }
-    MyServiceProviderApi.setProvisions({ serviceid }, { instances: value }).subscribe(
-      () => {},
-      (err) => {
-        this.resetEditInstances();
-        this.setState({
-          showAlert: true,
-          alertType: 'error',
-          alertMessage: err.response,
-        });
-      }
-    );
   };
 
   /*
@@ -327,7 +275,7 @@ export default class ServicesTable extends Component {
     return (
       <table className="table-sm">
         <tbody>
-          {services.map((service, i) => {
+          {services.map((service) => {
             let logUrl = `/v3/system/services/${service.name}/logs`;
             if (service.isSystemProgram) {
               logUrl = `/v3/namespaces/system/apps/${service.appId}/${convertProgramToApi(
@@ -365,23 +313,7 @@ export default class ServicesTable extends Component {
                     <span>{service.provisioned || '--'}</span>
                   </td>
                   <td>
-                    <span
-                      onClick={this.editRequestedServiceInstance.bind(this, service)}
-                      className="request-instances"
-                    >
-                      {service.editInstance ? (
-                        <TextboxOnValium
-                          className="form-control"
-                          value={service.requested}
-                          onBlur={this.resetEditInstances}
-                          onChange={this.serviceInstanceRequested.bind(this, service.name, i)}
-                        />
-                      ) : (
-                        <span className="requested-instances-holder">
-                          {service.requested || '--'}
-                        </span>
-                      )}
-                    </span>
+                    <span className="requested-instances-holder">{service.requested || '--'}</span>
                   </td>
                 </If>
                 <td>
