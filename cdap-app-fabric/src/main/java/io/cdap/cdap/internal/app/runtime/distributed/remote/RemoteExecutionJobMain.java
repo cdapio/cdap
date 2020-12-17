@@ -21,6 +21,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Scopes;
+import io.cdap.cdap.api.common.RuntimeArguments;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreData;
 import io.cdap.cdap.api.security.store.SecureStoreMetadata;
@@ -35,10 +36,12 @@ import io.cdap.cdap.common.guice.DFSLocationModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.logging.common.UncaughtExceptionHandler;
 import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJob;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.runtimejob.RuntimeJobEnvironment;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.CurrentUGIProvider;
 import io.cdap.cdap.security.impersonation.UGIProvider;
+import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.twill.api.RunId;
 import org.apache.twill.api.TwillRunner;
 import org.apache.twill.api.TwillRunnerService;
@@ -60,6 +63,8 @@ import java.util.Map;
  */
 public class RemoteExecutionJobMain {
 
+  public static final String RUN_ID = "runId";
+
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionJobMain.class);
 
   private final DefaultRuntimeJob runtimeJob = new DefaultRuntimeJob();
@@ -80,16 +85,31 @@ public class RemoteExecutionJobMain {
    * @throws Exception if failed to the the job
    */
   private void doMain(String[] args) throws Exception {
-    if (args.length < 1) {
-      throw new IllegalArgumentException("Missing runId from the first argument");
+    Map<String, String> arguments = RuntimeArguments.fromPosixArray(args);
+    if (!arguments.containsKey(RUN_ID)) {
+      throw new IllegalArgumentException("Missing argument " + RUN_ID);
+    }
+
+    if (UserGroupInformation.isSecurityEnabled()) {
+      String principal = arguments.get(ClusterProperties.KERBEROS_PRINCIPAL);
+      String keytab = arguments.get(ClusterProperties.KERBEROS_KEYTAB);
+      if (principal != null && keytab != null) {
+        LOG.info("Login with kerberos principal {} and keytab {}", principal, keytab);
+        UserGroupInformation.loginUserFromKeytab(principal, keytab);
+      } else {
+        LOG.warn("Security enabled but no kerberos principal and keytab are provided");
+      }
     }
 
     // Stop the job when this process get terminated
     Runtime.getRuntime().addShutdownHook(new Thread(runtimeJob::requestStop));
 
     System.setProperty(Constants.Zookeeper.TWILL_ZK_SERVER_LOCALHOST, "false");
-    RunId runId = RunIds.fromString(args[0]);
+    RunId runId = RunIds.fromString(arguments.get(RUN_ID));
     CConfiguration cConf = CConfiguration.create();
+
+    // Not support explore functionality in remote execution
+    cConf.setBoolean(Constants.Explore.EXPLORE_ENABLED, false);
 
     // Namespace the HDFS on the current cluster to segregate multiple runs on the same cluster
     cConf.set(Constants.CFG_HDFS_NAMESPACE, "/twill-" + runId);
