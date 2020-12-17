@@ -105,8 +105,8 @@ const DeployedPipeline: React.FC = () => {
     <Provider store={Store}>
       <div className="pipeline-deployed-view pipeline-list-content">
         <div className="deployed-header">
-          <PipelineCount pipelinesLoading={loading} />
           <SearchBox />
+          <PipelineCount pipelinesLoading={loading} />
           <Pagination />
         </div>
 
