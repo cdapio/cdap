@@ -20,9 +20,9 @@
         },
         {
           "widget-type": "securekey-textarea",
-          "label": "Service Account Key",
+          "label": "Creator Service Account Key",
           "name": "accountKey",
-          "description": "A service account is a special type of Google account that belongs to your application or a virtual machine (VM), instead of to an individual end user. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's credentials will be used.",
+          "description": "Service account key used to create Dataproc clusters. Paste the contents of the service account key JSON file that you can download from the service accounts section under IAM and admin on the Cloud Console. If the system is running on Google Cloud Platform, this can be left blank or set to 'auto-detect' and the system's credentials will be used.",
           "widget-attributes": {
             "placeholder": "Specify the GCP service account"
           }
@@ -108,9 +108,9 @@
         },
         {
           "widget-type": "textbox",
-          "label": "Service Account",
+          "label": "Runner Service Account",
           "name": "serviceAccount",
-          "description": "The service account of the Dataproc virtual machine (VM). If none is given, the default Compute Engine service account will be used.",
+          "description": "Name of the service account of the Dataproc virtual machines (VM) that are used to run programs. If none is given, the default Compute Engine service account will be used.",
           "widget-attributes": {
             "size": "medium"
           }
@@ -367,8 +367,10 @@
           "name": "initActions",
           "label": "Initialization Actions",
           "widget-type": "csv",
-          "description": "A list of scripts to be executed during initialization of cluster.",
-          "widget-attributes" : {}
+          "description": "A list of scripts to be executed during initialization of cluster. Init actions should be placed on Google Cloud Storage.",
+          "widget-attributes" : {
+            "value-placeholder": "gs://<gcs-bucket>/<your-script>"
+          }
         },
         {
           "widget-type": "toggle",
