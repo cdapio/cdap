@@ -1093,9 +1093,16 @@ class HydratorPlusPlusConfigStore {
           this.emitChange();
         },
         err => {
+          let message = err;
+          if (err && (err.data || err.response)) {
+            message = err.data || err.response;
+          }
+          if (err && (err.statusCode === 404 || err.statusCode === 503)) {
+            message = 'Unable to communicate with the Pipeline Studio service. Please check the service status.';
+          }
           this.HydratorPlusPlusConsoleActions.addMessage([{
             type: 'error',
-            content: err
+            content: message
           }]);
         });
   }
@@ -1123,7 +1130,7 @@ class HydratorPlusPlusConfigStore {
 
     const removeOldDraft = (draftId, adapterName, res) => {
       if (res.statusCode !== 404) {
-        return draftDeleteErrorHandler.bind(this, res.response);
+        return draftDeleteErrorHandler.bind(this, res.response || res.data);
       }
       this.mySettings.get('hydratorDrafts', true)
         .then(
