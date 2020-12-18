@@ -157,7 +157,8 @@ export default class DataPrepTable extends Component {
       if (header.name === head.name) {
         return Object.assign({}, header, {
           edit: !header.edit,
-          showWarning: false,
+          showDuplicateWarning: false,
+          showInvalidWarning: false,
         });
       }
       return {
@@ -171,25 +172,40 @@ export default class DataPrepTable extends Component {
   };
 
   showWarningMessage(index, currentValue) {
-    let showWarning = this.state.headers.filter((header) => header.name === currentValue);
-    let headers = this.state.headers;
-    let matchedHeader = headers[index];
-    if (!showWarning.length || headers[index].name === currentValue) {
-      if (matchedHeader.showWarning) {
-        matchedHeader.showWarning = false;
-        delete matchedHeader.editedColumnName;
-        this.setState({
-          headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
-        });
-      }
-      return;
+    const dupeNames = this.state.headers.filter((header) => header.name === currentValue);
+    const headers = this.state.headers;
+    const matchedHeader = headers[index];
+    if (dupeNames.length > 0 && headers[index].name !== currentValue) {
+      matchedHeader.showDuplicateWarning = true;
+      matchedHeader.editedColumnName = currentValue;
+      this.setState({
+        headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
+      });
+      return true;
+    } else if (matchedHeader.showDuplicateWarning) {
+      matchedHeader.showDuplicateWarning = false;
+      delete matchedHeader.editedColumnName;
+      this.setState({
+        headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
+      });
     }
-    matchedHeader.showWarning = true;
-    matchedHeader.editedColumnName = currentValue;
-    this.setState({
-      headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
-    });
-    return true;
+
+    if (!/^\w+$/.test(currentValue)) {
+      matchedHeader.showInvalidWarning = true;
+      matchedHeader.editedColumnName = currentValue;
+      this.setState({
+        headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
+      });
+      return true;
+    } else if (matchedHeader.showInvalidWarning) {
+      matchedHeader.showInvalidWarning = false;
+      delete matchedHeader.editedColumnName;
+      this.setState({
+        headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
+      });
+    }
+
+    return;
   }
 
   handleSaveEditedColumnName(index, changedValue, noChange) {
@@ -204,11 +220,17 @@ export default class DataPrepTable extends Component {
       matchedHeader.name = changedValue;
     }
     matchedHeader.edit = false;
-    matchedHeader.showWarning = false;
+    matchedHeader.showDuplicateWarning = false;
+    matchedHeader.showInvalidWarning = false;
     delete matchedHeader.editedColumnName;
     this.setState({
       headers: [...headers.slice(0, index), matchedHeader, ...headers.slice(index + 1)],
     });
+  }
+
+  handleFixInvalidColumnName(index, changedValue) {
+    const fixedValue = changedValue.replace(/\W+/g, '_');
+    this.handleSaveEditedColumnName(index, fixedValue);
   }
 
   applyDirective(directive) {
@@ -292,11 +314,14 @@ export default class DataPrepTable extends Component {
                             onWarning={this.showWarningMessage.bind(this, index)}
                             allowSpace={false}
                             shouldSelect={true}
-                            validCharacterRegex={/^\w+$/}
                           />
-                          {head.showWarning ? (
+                          {head.showDuplicateWarning || head.showInvalidWarning ? (
                             <WarningContainer
-                              message={T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)}
+                              message={
+                                head.showDuplicateWarning
+                                  ? T.translate(`${PREFIX}.copyToNewColumn.inputDuplicate`)
+                                  : T.translate(`${PREFIX}.invalidCharacterWarning`)
+                              }
                             >
                               <div className="warning-btns-container">
                                 <div
@@ -304,22 +329,11 @@ export default class DataPrepTable extends Component {
                                   onClick={this.handleSaveEditedColumnName.bind(
                                     this,
                                     index,
-                                    head.editedColumnName,
-                                    false
-                                  )}
-                                >
-                                  {T.translate('features.DataPrep.Directives.apply')}
-                                </div>
-                                <div
-                                  className="btn"
-                                  onClick={this.handleSaveEditedColumnName.bind(
-                                    this,
-                                    index,
                                     head.name,
                                     true
                                   )}
                                 >
-                                  {T.translate('features.DataPrep.Directives.cancel')}
+                                  {T.translate('features.DataPrep.Directives.accept')}
                                 </div>
                               </div>
                             </WarningContainer>

@@ -402,7 +402,7 @@ features:
       DataType:
         unknown: unknown
       copyToNewColumn:
-        inputDuplicate: A column with the same name already exists. Pick a new name, or click “Apply” to overwrite.
+        inputDuplicate: A column with the same name already exists. Pick a new name, or click "Ok" to cancel.
         inputLabel: Name new column
         inputPlaceholder: Destination column
         inputSuffix: _copy
@@ -410,6 +410,7 @@ features:
       dataErrorMessageTitle: Unable to load data.
       dataErrorMessageTitle2: Unable to load data for "{workspaceName}".
       emptyWorkspace: No data
+      invalidCharacterWarning: The name you have entered is invalid. It must contain only letters, numbers, and underscores (_). Pick a new name, or click "Ok" to cancel.
       noData: No data. Try removing some transformation steps.
     DataPrepBrowser:
       BigQueryBrowser:
@@ -535,6 +536,7 @@ features:
             label: "{dirsCount} directories and {filesCount} files"
           selectData: Select data
     Directives:
+      accept: Ok
       apply: Apply
       cancel: Cancel
       Calculate:
