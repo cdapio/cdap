@@ -20,8 +20,10 @@ import { createContextConnect, ICreateContext } from 'components/Replicator/Crea
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import StepButtons from 'components/Replicator/Create/Content/StepButtons';
 import Heading, { HeadingTypes } from 'components/Heading';
+import { isValidEntityName, objectQuery } from 'services/helpers';
+import If from 'components/If';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     root: {
       padding: '30px 40px',
@@ -31,10 +33,14 @@ const styles = (): StyleRules => {
       maxWidth: '1000px',
       minWidth: '600px',
     },
+    error: {
+      marginTop: '3px',
+      color: theme.palette.red[100],
+    },
   };
 };
 
-const Name = ({ setName, value }) => {
+const Name = ({ setName, value, error }) => {
   const widget = {
     label: 'Name',
     name: 'name',
@@ -55,6 +61,7 @@ const Name = ({ setName, value }) => {
       pluginProperty={property}
       value={value}
       onChange={setName}
+      errors={error}
     />
   );
 };
@@ -63,9 +70,9 @@ const Description = ({ setDescription, value }) => {
   const widget = {
     label: 'Description',
     name: 'description',
-    'widget-type': 'textarea',
+    'widget-type': 'textbox',
     'widget-attributes': {
-      placeholder: '240 character max',
+      placeholder: 'Enter a description for the replication pipeline',
     },
   };
 
@@ -93,24 +100,45 @@ const NameDescriptionView: React.FC<INameDescriptionProps> = ({
   setNameDescription,
 }) => {
   const [localName, setLocalName] = React.useState(name);
+  const [nameError, setNameError] = React.useState(null);
   const [localDescription, setLocalDescription] = React.useState(description);
 
   function handleNext() {
     setNameDescription(localName, localDescription);
   }
 
+  function handleNameChange(value) {
+    setLocalName(value);
+
+    if (!isValidEntityName(value)) {
+      const errorArr = [
+        {
+          msg: 'Name is required. Name may only contain alphanumeric, -, and _',
+        },
+      ];
+      setNameError(errorArr);
+    } else {
+      setNameError(null);
+    }
+  }
+
+  const errorMessage = objectQuery(nameError, 0, 'msg');
+
   return (
     <div className={classes.root}>
       <div className={classes.content}>
         <Heading type={HeadingTypes.h3} label="Name replication pipeline" />
         <br />
-        <Name value={localName} setName={setLocalName} />
+        <Name value={localName} setName={handleNameChange} error={nameError} />
+        <If condition={!!nameError}>
+          <div className={classes.error}>{errorMessage}</div>
+        </If>
         <br />
         <br />
         <Description value={localDescription} setDescription={setLocalDescription} />
       </div>
 
-      <StepButtons nextDisabled={localName.length === 0} onNext={handleNext} />
+      <StepButtons nextDisabled={nameError || localName.length === 0} onNext={handleNext} />
     </div>
   );
 };

@@ -38,6 +38,9 @@ export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
 const styles = (theme): StyleRules => {
   return {
+    root: {
+      height: '100%',
+    },
     buttonContainer: {
       '& > *': {
         marginRight: '15px',
@@ -52,6 +55,7 @@ const styles = (theme): StyleRules => {
     },
     body: {
       padding: '0 40px 15px 40px',
+      height: 'calc(100% - 70px)',
     },
   };
 };
@@ -385,7 +389,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
 
     return (
       <DetailContext.Provider value={this.state}>
-        <div>
+        <div className={classes.root}>
           <TopPanel />
 
           <div className={classes.body}>

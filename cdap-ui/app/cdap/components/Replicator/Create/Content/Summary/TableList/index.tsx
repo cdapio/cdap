@@ -127,9 +127,7 @@ const TableListView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
                 <div key={tableKey} className="grid-row">
                   <div>{row.get('table')}</div>
                   <div>
-                    {selectedColumns && selectedColumns.size > 0
-                      ? selectedColumns.size
-                      : 'All available'}
+                    {selectedColumns && selectedColumns.size > 0 ? selectedColumns.size : 'All'}
                   </div>
                 </div>
               );

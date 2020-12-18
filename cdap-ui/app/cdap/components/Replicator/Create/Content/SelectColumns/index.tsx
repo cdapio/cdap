@@ -432,7 +432,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
                           className={`${classes.radio} ${classes.replicateSelectionRadio}`}
                         />
                       }
-                      label="Replicate all columns available"
+                      label="Replicate all available columns"
                     />
                     <FormControlLabel
                       value={ReplicateSelect.individual}
@@ -442,7 +442,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
                           className={`${classes.radio} ${classes.replicateSelectionRadio}`}
                         />
                       }
-                      label="Select the columns to be replicated"
+                      label="Select the columns to replicate"
                     />
                   </RadioGroup>
                 </div>

@@ -86,7 +86,7 @@ const PluginConfigView: React.FC<IPluginConfigProps> = ({
   pluginType,
 }) => {
   const [view, setView] = React.useState(VIEW.configuration);
-  const [values, setValues] = React.useState(pluginConfig);
+  const [values, setValues] = React.useState(pluginConfig || {});
   const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
@@ -110,6 +110,7 @@ const PluginConfigView: React.FC<IPluginConfigProps> = ({
   // Fetch Target
   function handlePluginSelect(plugin) {
     setLoading(true);
+
     const artifactName = plugin.artifact.name;
     const pluginName = plugin.name;
 
@@ -121,8 +122,6 @@ const PluginConfigView: React.FC<IPluginConfigProps> = ({
       pluginType
     ).subscribe(
       (res) => {
-        setPluginInfo(res);
-
         fetchPluginWidget(
           artifactName,
           res.artifact.version,
@@ -131,12 +130,13 @@ const PluginConfigView: React.FC<IPluginConfigProps> = ({
           pluginType
         ).subscribe(
           (widget) => {
+            setValues({});
+            setPluginInfo(res);
             setPluginWidget(widget);
           },
           null,
           () => {
             setLoading(false);
-            setValues({});
           }
         );
       },

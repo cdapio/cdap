@@ -138,6 +138,9 @@ const styles = (theme): StyleRules => {
         },
       },
     },
+    headerColumnName: {
+      gridColumn: '1 / span 2',
+    },
     headerDataTypes: {
       gridColumn: '3 / span 3',
     },
@@ -173,7 +176,7 @@ const MappingsView: React.FC<IMappingsProps> = ({
   const [loading, setLoading] = React.useState(true);
   const [rerunAssessment, setRerunAssessment] = React.useState(false);
 
-  function assessTable() {
+  function assessTable(updatedColumns?) {
     const params = {
       namespace: getCurrentNamespace(),
       draftId,
@@ -203,7 +206,23 @@ const MappingsView: React.FC<IMappingsProps> = ({
           },
         ]);
 
-        setAssessmentColumns(sortedColumns);
+        const key = generateTableKey(tableInfo);
+        const existingColumns = updatedColumns ? updatedColumns : columns.get(key);
+        const columnRowMap = {};
+
+        existingColumns.forEach((column) => {
+          const columnName = column.get('name') as string;
+          columnRowMap[columnName] = column.get('suppressWarning') || false;
+        });
+
+        const checkSuppressedWarning = sortedColumns.map((row) => {
+          return {
+            ...row,
+            suppressWarning: columnRowMap[row.sourceName] || false,
+          };
+        });
+
+        setAssessmentColumns(checkSuppressedWarning);
         setLoading(false);
       },
       (err) => {
@@ -273,7 +292,7 @@ const MappingsView: React.FC<IMappingsProps> = ({
     setColumns(columns.set(key, updatedColumns), () => {
       setRerunAssessment(true);
       setLoading(true);
-      saveDraft().subscribe(assessTable);
+      saveDraft().subscribe(assessTable.bind(this, updatedColumns));
     });
   }
 
@@ -328,11 +347,12 @@ const MappingsView: React.FC<IMappingsProps> = ({
 
               <div className="grid-header">
                 <div className="grid-row">
+                  <div className={classes.headerColumnName}>Column name</div>
                   <div className={classes.headerDataTypes}>Data type</div>
                 </div>
                 <div className="grid-row">
-                  <div>Column name</div>
-                  <div>Column name</div>
+                  <div>Source</div>
+                  <div>Target</div>
                   <div>Source</div>
                   <div>&gt;</div>
                   <div>Target</div>
@@ -356,22 +376,27 @@ const MappingsView: React.FC<IMappingsProps> = ({
                         <Supported columnRow={row} />
                       </div>
                       <div>
-                        <If condition={row.support === SUPPORT.partial}>
-                          <span
-                            className={classes.columnAction}
-                            onClick={ignoreColumn.bind(null, row)}
-                          >
-                            Ignore
-                          </span>
-                          <span className={classes.actionsSeparator}>|</span>
+                        <If condition={!(row.support === SUPPORT.partial && row.suppressWarning)}>
+                          <If condition={row.support === SUPPORT.partial}>
+                            <span
+                              className={classes.columnAction}
+                              onClick={ignoreColumn.bind(null, row)}
+                            >
+                              Ignore
+                            </span>
+                            <span className={classes.actionsSeparator}>|</span>
+                          </If>
+                          <If condition={row.support !== SUPPORT.yes}>
+                            <span
+                              className={classes.columnAction}
+                              onClick={deleteColumn.bind(null, row)}
+                            >
+                              Delete
+                            </span>
+                          </If>
                         </If>
-                        <If condition={row.support !== SUPPORT.yes}>
-                          <span
-                            className={classes.columnAction}
-                            onClick={deleteColumn.bind(null, row)}
-                          >
-                            Delete
-                          </span>
+                        <If condition={row.support === SUPPORT.partial && row.suppressWarning}>
+                          <span>Ignored</span>
                         </If>
                       </div>
                     </div>

@@ -94,7 +94,7 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
               const stages = objectQuery(draft, 'config', 'stages') || [];
 
               stages.forEach((stage) => {
-                stageMap[stage.plugin.type] = stage.plugin.name;
+                stageMap[stage.plugin.type] = stage.name;
               });
 
               const source = stageMap[PluginType.source] || '--';
