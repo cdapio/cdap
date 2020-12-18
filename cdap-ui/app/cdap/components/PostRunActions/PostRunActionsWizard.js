@@ -24,6 +24,8 @@ import { preventPropagation } from 'services/helpers';
 import { MyPipelineApi } from 'api/pipeline';
 import ConfigurationGroup from 'components/ConfigurationGroup';
 
+const MATERIAL_UI_Z_INDEX = 1300;
+
 export default class PostRunActionsWizard extends Component {
   static propTypes = {
     action: PropTypes.object,
@@ -105,6 +107,7 @@ export default class PostRunActionsWizard extends Component {
         toggle={this.toggleAndPreventPropagation}
         backdrop="static"
         modalClassName="post-run-actions-modal hydrator-modal node-config-modal"
+        zIndex={MATERIAL_UI_Z_INDEX + 1} // Workaround for material-ui PipelineModeless
       >
         {/* Not using <ModalHeader> here because it wraps the entire header in an h4 */}
         <div className="modal-header">
