@@ -24,7 +24,8 @@ public class SortRequest {
   private final SortOrder order;
 
   public SortRequest(String fieldName, String sortOrder) {
-    this.fieldName = fieldName;
+    //Always change to lowercase since some databases dont support capital letters in column names
+    this.fieldName = fieldName.toLowerCase();
     try {
       this.order = SortOrder.valueOf(sortOrder.toUpperCase());
     } catch (Exception e) {
