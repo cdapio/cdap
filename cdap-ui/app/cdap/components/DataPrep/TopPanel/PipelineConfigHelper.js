@@ -525,11 +525,11 @@ function constructProperties(workspaceInfo, pluginVersion) {
     MyArtifactApi.list({ namespace })
       .combineLatest(rxArray)
       .subscribe(
-        (res) => {
-          let batchArtifactsList = res[0].filter((artifact) => {
+        ([artifactsList, wrangledSchema, sourceSpec, originalSchema]) => {
+          let batchArtifactsList = artifactsList.filter((artifact) => {
             return artifact.name === 'cdap-data-pipeline';
           });
-          let realtimeArtifactsList = res[0].filter((artifact) => {
+          let realtimeArtifactsList = artifactsList.filter((artifact) => {
             return artifact.name === 'cdap-data-streams';
           });
 
@@ -556,7 +556,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
 
           let wranglerArtifact;
           try {
-            wranglerArtifact = findWranglerArtifacts(res[0], pluginVersion);
+            wranglerArtifact = findWranglerArtifacts(artifactsList, pluginVersion);
           } catch (e) {
             observable.error(e);
           }
@@ -564,7 +564,7 @@ function constructProperties(workspaceInfo, pluginVersion) {
           let tempSchema = {
             name: 'avroSchema',
             type: 'record',
-            fields: res[1],
+            fields: wrangledSchema,
           };
 
           let properties = {
@@ -604,22 +604,26 @@ function constructProperties(workspaceInfo, pluginVersion) {
           let connections = [];
           const connectionType = state.workspaceInfo.properties.connection;
           if (connectionType === 'file') {
-            sourceConfigs = constructFileSource(res[0], res[2]);
+            sourceConfigs = constructFileSource(artifactsList, sourceSpec);
           } else if (connectionType === 'database') {
-            sourceConfigs = constructDatabaseSource(res[0], res[2]);
-            delete sourceConfigs.batchSource.plugin.properties.schema;
+            sourceConfigs = constructDatabaseSource(artifactsList, sourceSpec);
+            sourceConfigs.batchSource.plugin.properties.schema = JSON.stringify({
+              name: 'avroSchema',
+              type: 'record',
+              fields: originalSchema,
+            });
           } else if (connectionType === 'kafka') {
-            sourceConfigs = constructKafkaSource(res[0], res[2]);
+            sourceConfigs = constructKafkaSource(artifactsList, sourceSpec);
           } else if (connectionType === 's3') {
-            sourceConfigs = constructS3Source(res[0], res[2]);
+            sourceConfigs = constructS3Source(artifactsList, sourceSpec);
           } else if (connectionType === 'gcs') {
-            sourceConfigs = constructGCSSource(res[0], res[2]);
+            sourceConfigs = constructGCSSource(artifactsList, sourceSpec);
           } else if (connectionType === 'bigquery') {
-            sourceConfigs = constructBigQuerySource(res[0], res[2]);
+            sourceConfigs = constructBigQuerySource(artifactsList, sourceSpec);
           } else if (state.workspaceInfo.properties.connection === 'spanner') {
-            sourceConfigs = constructSpannerSource(res[0], res[2]);
+            sourceConfigs = constructSpannerSource(artifactsList, sourceSpec);
           } else if (connectionType === 'adls') {
-            sourceConfigs = constructAdlsSource(res[0], res[2]);
+            sourceConfigs = constructAdlsSource(artifactsList, sourceSpec);
           }
           if (typeof sourceConfigs === 'string') {
             observable.error(sourceConfigs);
