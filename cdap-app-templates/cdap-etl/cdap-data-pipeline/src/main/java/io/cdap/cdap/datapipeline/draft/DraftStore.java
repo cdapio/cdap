@@ -56,8 +56,8 @@ public class DraftStore {
   private static final String ARTIFACT_COL = "artifact";
   private static final String NAME_COL = "name";
   private static final String DESCRIPTION_COL = "description";
-  private static final String CREATED_COL = "createdTimeMillis";
-  private static final String UPDATED_COL = "updatedTimeMillis";
+  private static final String CREATED_COL = "createdtimemillis";
+  private static final String UPDATED_COL = "updatedtimemillis";
   private static final String PIPELINE_COL = "pipeline";
   private static final String REVISION_COL = "revision";
   public static final StructuredTableSpecification TABLE_SPEC = new StructuredTableSpecification.Builder()
