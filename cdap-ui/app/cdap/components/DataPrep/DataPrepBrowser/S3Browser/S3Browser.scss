@@ -83,6 +83,11 @@ $s3_file_icon_color: $blue-03;
           cursor: not-allowed;
           color: $disabled_row_color;
         }
+
+        .selected {
+          background-color: #f5f5f5;
+        }
+
         .row {
           margin: 0;
           border-bottom: 1px solid $header_border_color;

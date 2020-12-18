@@ -23,6 +23,7 @@ import classnames from 'classnames';
 import EmptyMessageContainer from 'components/EmptyMessageContainer';
 import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
+import DataPrepStore from 'components/DataPrep/store';
 const PREFIX = 'features.DataPrep.DataPrepBrowser.S3Browser.BucketData';
 
 // Lazy load polyfill in safari as InteresectionObservers are not implemented there yet.
@@ -50,6 +51,7 @@ interface ITableContentsProps {
   onWorkspaceCreate: (file: string) => void;
   prefix: string;
   clearSearch: () => void;
+  connectionId: string;
 }
 interface ITableContentState {
   windowSize: number;
@@ -156,16 +158,30 @@ export default class TableContents extends React.PureComponent<
     const { data } = this.state;
     const ContainerElement = enableRouting ? Link : 'div';
     const pathname = window.location.pathname.replace(/\/cdap/, '');
+
+    const {
+      connectionid,
+      key,
+      'bucket-name': bucketName,
+    } = DataPrepStore.getState().dataprep.properties;
+    const selectedPath = `/${bucketName}/${key}/`;
+
     if (enableRouting) {
       return (
         <div className="s3-buckets" id="s3-buckets-container">
           {data.slice(0, this.state.windowSize).map((file, i) => {
             const lastModified = humanReadableDate(file['last-modified'], true);
+            const filePath = this.getPrefix(file, prefix);
+            const isSelected =
+              connectionid === this.props.connectionId && filePath === selectedPath;
 
             return (
               <ContainerElement
-                className={classnames({ disabled: !file.directory && !file.wrangle })}
-                to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
+                className={classnames({
+                  disabled: !file.directory && !file.wrangle,
+                  selected: isSelected,
+                })}
+                to={`${pathname}?prefix=${filePath}`}
                 onClick={this.onClickHandler.bind(
                   null,
                   enableRouting,
@@ -193,21 +209,35 @@ export default class TableContents extends React.PureComponent<
 
     return (
       <div className="s3-buckets" id="s3-buckets-container">
-        {data.slice(0, this.state.windowSize).map((file, i) => (
-          <ContainerElement
-            className={classnames({ disabled: !file.directory && !file.wrangle })}
-            to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
-            onClick={this.onClickHandler.bind(null, enableRouting, onWorkspaceCreate, file, prefix)}
-            key={`${file.name}-${i}`}
-          >
-            <div className="row" id={`s3connection-${file.scrollId}`}>
-              <div className="col-12">
-                {this.renderIcon(file.type)}
-                {file.name}
+        {data.slice(0, this.state.windowSize).map((file, i) => {
+          const filePath = this.getPrefix(file, prefix);
+          const isSelected = connectionid === this.props.connectionId && filePath === selectedPath;
+
+          return (
+            <ContainerElement
+              className={classnames({
+                disabled: !file.directory && !file.wrangle,
+                selected: isSelected,
+              })}
+              to={`${pathname}?prefix=${this.getPrefix(file, prefix)}`}
+              onClick={this.onClickHandler.bind(
+                null,
+                enableRouting,
+                onWorkspaceCreate,
+                file,
+                prefix
+              )}
+              key={`${file.name}-${i}`}
+            >
+              <div className="row" id={`s3connection-${file.scrollId}`}>
+                <div className="col-12">
+                  {this.renderIcon(file.type)}
+                  {file.name}
+                </div>
               </div>
-            </div>
-          </ContainerElement>
-        ))}
+            </ContainerElement>
+          );
+        })}
       </div>
     );
   }
