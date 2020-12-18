@@ -62,7 +62,12 @@ export default class PostRunActions extends Component {
                   <td>{action.plugin.name}</td>
                   <td>{action.plugin.properties.runCondition}</td>
                   <td className="text-center">
-                    <a onClick={this.setActiveActionWizard.bind(this, action)}>View</a>
+                    <a
+                      data-cy="action-view"
+                      onClick={this.setActiveActionWizard.bind(this, action)}
+                    >
+                      View
+                    </a>
                   </td>
                 </tr>
               );
