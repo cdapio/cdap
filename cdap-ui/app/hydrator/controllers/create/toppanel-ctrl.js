@@ -878,6 +878,10 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   _checkAndShowConfirmationModalOnActionPlugin(proceedCb) {
+    if (!this.HydratorPlusPlusConfigStore.validateState(true)) {
+      return;
+    }
+
     let config = this.HydratorPlusPlusConfigStore.getConfigForExport().config;
 
     let actions = config.stages.filter((stage) => {
