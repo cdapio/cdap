@@ -22,6 +22,7 @@ export interface ITableMetricsData {
   totalEvents: number;
   eventsPerMin: number;
   latency: number;
+  dataReplicated: number;
 }
 
 interface IMetricData {
@@ -47,6 +48,7 @@ const INITIAL_DATA = {
   eventsPerMin: 0,
   totalEvents: 0,
   latency: 0,
+  dataReplicated: 0,
 };
 
 const METRIC_MAP = {
@@ -55,6 +57,7 @@ const METRIC_MAP = {
   'user.dml.deletes': 'totalEvents',
   'user.dml.errors': 'errors',
   'user.dml.latency.seconds': 'latency',
+  'user.dml.data.processed.bytes': 'dataReplicated',
 };
 
 const ONE_MIN_SECONDS = 60;

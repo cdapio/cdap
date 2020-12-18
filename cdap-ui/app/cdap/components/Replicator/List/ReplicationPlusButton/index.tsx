@@ -33,7 +33,7 @@ const styles = (): StyleRules => {
 const ReplicationPlusButtonView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const contextItems = [
     {
-      label: 'Create replication pipeline',
+      label: 'Create a replication pipeline',
       to: `/ns/${getCurrentNamespace()}/replication/create`,
     },
   ];

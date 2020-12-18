@@ -15,7 +15,7 @@
  */
 
 import { IRawMetricData } from 'components/Replicator/types';
-import { truncateNumber, ONE_MIN_SECONDS } from 'services/helpers';
+import { truncateNumber, ONE_MIN_SECONDS, convertBytesToHumanReadable } from 'services/helpers';
 
 interface IOverviewMetricsData {
   tableName: string;
@@ -26,6 +26,7 @@ interface IOverviewMetricsData {
   latency: number;
   eventsPerMin: number;
   totalEvents: number;
+  dataReplicated: number;
 }
 
 const INITIAL_DATA = {
@@ -36,6 +37,7 @@ const INITIAL_DATA = {
   latency: 0,
   eventsPerMin: 0,
   totalEvents: 0,
+  dataReplicated: 0,
 };
 
 const METRIC_MAP = {
@@ -44,6 +46,7 @@ const METRIC_MAP = {
   'user.dml.deletes': 'deletes',
   'user.dml.errors': 'errors',
   'user.dml.latency.seconds': 'latency',
+  'user.dml.data.processed.bytes': 'dataReplicated',
 };
 
 const PRECISION = 2;
@@ -88,6 +91,9 @@ export function parseOverviewMetrics(
     tableMap[tableName].eventsPerMin = truncateNumber(totalEvents / durationMinute, PRECISION);
     tableMap[tableName].totalEvents = totalEvents;
     tableMap[tableName].latency = truncateNumber(tableMap[tableName].latency, PRECISION);
+    tableMap[tableName].dataReplicated = convertBytesToHumanReadable(
+      tableMap[tableName].dataReplicated
+    );
   });
 
   return tableMap;

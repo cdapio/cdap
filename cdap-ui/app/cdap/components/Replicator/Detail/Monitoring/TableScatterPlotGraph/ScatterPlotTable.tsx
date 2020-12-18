@@ -17,7 +17,8 @@
 import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { ITableMetricsData } from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/parser';
-import { truncateNumber } from 'services/helpers';
+import { convertBytesToHumanReadable, truncateNumber } from 'services/helpers';
+import { formatNumber } from 'components/Replicator/utilities';
 
 const styles = (): StyleRules => {
   return {
@@ -33,7 +34,7 @@ const styles = (): StyleRules => {
           },
 
           '& .grid-row': {
-            gridTemplateColumns: '3fr 2fr 2fr 2fr 2fr',
+            gridTemplateColumns: '3fr 2fr 2fr 2fr 2fr 2fr',
 
             '& > div:not(:first-child)': {
               textAlign: 'right',
@@ -56,13 +57,14 @@ const ScatterPlotTableView: React.FC<IScatterPlotTableProps> = ({ classes, data 
         <div className="grid-header">
           <div className="grid-row">
             <div>Table name</div>
+            <div>Data replicated</div>
             <div>
               <div>Throughput</div>
               <div>(events/min)</div>
             </div>
             <div>
               <div>Avg. latency</div>
-              <div>min</div>
+              <div>(min)</div>
             </div>
             <div>
               <div>Events</div>
@@ -77,13 +79,15 @@ const ScatterPlotTableView: React.FC<IScatterPlotTableProps> = ({ classes, data 
             const PRECISION = 2;
             const eventsPerMin = truncateNumber(table.eventsPerMin, PRECISION);
             const latency = truncateNumber(table.latency, PRECISION);
+            const dataReplicated = convertBytesToHumanReadable(table.dataReplicated, null, true);
 
             return (
               <div className="grid-row" key={table.tableName}>
                 <div>{table.tableName}</div>
+                <div>{dataReplicated}</div>
                 <div>{eventsPerMin}</div>
                 <div>{latency}</div>
-                <div>{table.totalEvents}</div>
+                <div>{formatNumber(table.totalEvents)}</div>
                 <div>{table.errors}</div>
               </div>
             );

@@ -104,11 +104,11 @@ const Replicator = Loadable({
 });
 
 const Ingestion = Loadable({
-  loader: () => import(/* webpackChunkMame: "Ingestion" */ 'components/Ingestion'),
+  loader: () => import(/* webpackChunkName: "Ingestion" */ 'components/Ingestion'),
   loading: LoadingSVGCentered,
 });
 const PluginJSONCreator = Loadable({
-  loader: () => import(/* webpackChunkMame: "PluginJSONCreator" */ 'components/PluginJSONCreator'),
+  loader: () => import(/* webpackChunkName: "PluginJSONCreator" */ 'components/PluginJSONCreator'),
   loading: LoadingSVGCentered,
 });
 

@@ -83,7 +83,7 @@ function expressionContainMacro(filter: IPropertyFilter, propertyValues: IProper
     .filter((token) => token.type === 'identifier')
     .map((token) => token.value);
   const literalsWithMacro = literals.filter((literal) => {
-    return propertyValues[literal] && isMacro(propertyValues[literal]);
+    return propertyValues && propertyValues[literal] && isMacro(propertyValues[literal]);
   });
   return literalsWithMacro.length;
 }

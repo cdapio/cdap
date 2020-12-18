@@ -17,7 +17,7 @@
 import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { ITableMetricsData } from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/parser';
-import { truncateNumber } from 'services/helpers';
+import { convertBytesToHumanReadable, truncateNumber } from 'services/helpers';
 
 export const tooltipWidth = 350;
 const styles = (theme): StyleRules => {
@@ -30,7 +30,7 @@ const styles = (theme): StyleRules => {
       width: `${tooltipWidth}px`,
     },
     tooltipHeading: {
-      marginBottom: '25px',
+      marginBottom: '15px',
       padding: '0 15px',
     },
     tooltipMetrics: {
@@ -51,6 +51,14 @@ const styles = (theme): StyleRules => {
     },
     metric: {
       textAlign: 'right',
+    },
+    dataReplicated: {
+      display: 'flex',
+      width: '250px',
+      marginLeft: '15px',
+    },
+    dataMetric: {
+      marginLeft: '10px',
     },
   };
 };
@@ -80,6 +88,12 @@ const ScatterPlotTooltipView: React.FC<IScatterPlotTooltipProps> = ({ classes, t
     >
       <div className={classes.tooltipHeading}>
         <strong>{activeTooltip.tableName}</strong>
+      </div>
+      <div className={classes.dataReplicated}>
+        <strong>Data replicated</strong>
+        <span className={classes.dataMetric}>
+          {convertBytesToHumanReadable(activeTooltip.dataReplicated, null, true)}
+        </span>
       </div>
       <div className={classes.tooltipMetrics}>
         <div className={classes.metricContent}>

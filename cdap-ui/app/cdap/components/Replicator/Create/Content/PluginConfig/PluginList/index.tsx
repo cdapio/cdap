@@ -76,6 +76,11 @@ interface IPluginListProps extends ICreateContext, WithStyles<typeof styles> {
   pluginType: PluginType;
 }
 
+const DISPLAY_NAME_MAP = {
+  [PluginType.source]: 'source',
+  [PluginType.target]: 'target',
+};
+
 const PluginListView: React.FC<IPluginListProps> = ({
   classes,
   onSelect,
@@ -119,22 +124,25 @@ const PluginListView: React.FC<IPluginListProps> = ({
     });
   }
 
+  const displayPluginType = DISPLAY_NAME_MAP[pluginType];
+
   return (
     <div className={classes.root}>
       <div className={classes.header}>
         <div>
-          <Heading type={HeadingTypes.h4} label="Select plugin" />
+          <Heading type={HeadingTypes.h4} label={`Select ${displayPluginType}`} />
         </div>
         <div className={classes.searchSection}>
           <div>
-            {plugins.length} {plugins.length === 1 ? 'plugin' : 'plugins'} available
+            {plugins.length} {plugins.length === 1 ? displayPluginType : `${displayPluginType}s`}{' '}
+            available
           </div>
           <TextField
             className={classes.search}
             value={search}
             onChange={handleSearch}
             variant="outlined"
-            placeholder="Search plugins by name"
+            placeholder={`Search ${displayPluginType}s by name`}
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">

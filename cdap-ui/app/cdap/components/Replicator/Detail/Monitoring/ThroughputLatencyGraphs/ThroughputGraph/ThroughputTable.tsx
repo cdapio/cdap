@@ -17,6 +17,8 @@
 import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IThroughputLatencyData } from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/parser';
+import { convertBytesToHumanReadable } from 'services/helpers';
+import { formatNumber } from 'components/Replicator/utilities';
 
 const styles = (): StyleRules => {
   return {
@@ -28,7 +30,7 @@ const styles = (): StyleRules => {
           maxHeight: '345px',
 
           '& .grid-row': {
-            gridTemplateColumns: '3fr 2fr 2fr 2fr 2fr',
+            gridTemplateColumns: '3fr 2fr 1fr 1fr 1fr 1fr',
 
             '& > div:not(:first-child)': {
               textAlign: 'right',
@@ -51,6 +53,7 @@ const ThroughputTableView: React.FC<IThroughputTableProps> = ({ classes, data })
         <div className="grid-header">
           <div className="grid-row">
             <div>Date and time</div>
+            <div>Data replicated</div>
             <div>Inserts</div>
             <div>Updates</div>
             <div>Deletes</div>
@@ -63,10 +66,11 @@ const ThroughputTableView: React.FC<IThroughputTableProps> = ({ classes, data })
             return (
               <div className="grid-row" key={row.time}>
                 <div>{row.formattedTimeRange}</div>
-                <div>{row.inserts}</div>
-                <div>{row.updates}</div>
-                <div>{row.deletes}</div>
-                <div>{row.errors}</div>
+                <div>{convertBytesToHumanReadable(row.dataReplicated, null, true)}</div>
+                <div>{formatNumber(row.inserts)}</div>
+                <div>{formatNumber(row.updates)}</div>
+                <div>{formatNumber(row.deletes)}</div>
+                <div>{formatNumber(row.errors)}</div>
               </div>
             );
           })}
