@@ -26,6 +26,7 @@ import FunctionDropdownAliasWidget from 'components/AbstractWidget/FunctionDropd
 import FunctionDropdownArgumentsWidget from 'components/AbstractWidget/FunctionDropdownArgumentsWidget';
 import GetSchemaWidget from 'components/AbstractWidget/GetSchemaWidget';
 import InputFieldDropdown from 'components/AbstractWidget/InputFieldDropdown';
+import InputFieldKeyValueDropdown from 'components/AbstractWidget/InputFieldKeyValueDropdown';
 import JoinTypeWidget from 'components/AbstractWidget/JoinTypeWidget';
 import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEditorWidget';
 import KeyValueDropdownWidget from 'components/AbstractWidget/KeyValueDropdownWidget';
@@ -136,6 +137,7 @@ export const WIDGET_FACTORY = {
   dlp: DLPCustomWidget,
   'get-schema': GetSchemaWidget,
   'input-field-selector': InputFieldDropdown,
+  'input-field-keyvalue-dropdown': InputFieldKeyValueDropdown,
   'multiple-input-stage-selector': MultiStageSelector,
   'keyvalue-dropdown': KeyValueDropdownWidget,
   'keyvalue-encoded': KeyValueEncodedWidget,
