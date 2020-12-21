@@ -16,17 +16,23 @@
 package io.cdap.cdap.internal.app.preview;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import io.cdap.cdap.api.data.format.StructuredRecord;
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.preview.DataTracer;
 import io.cdap.cdap.app.preview.PreviewDataPublisher;
 import io.cdap.cdap.app.preview.PreviewMessage;
 import io.cdap.cdap.app.store.preview.PreviewStore;
+import io.cdap.cdap.internal.app.store.preview.PreviewJsonSerializer;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.id.ApplicationId;
 
 /**
  * Default implementation of {@link DataTracer}, the data are preserved using {@link PreviewStore}
  */
 class DefaultDataTracer implements DataTracer {
-  private static final Gson GSON = new Gson();
+  private static final Gson GSON = new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .registerTypeAdapter(StructuredRecord.class, new PreviewJsonSerializer()).create();
 
   private final String tracerName;
   private final ApplicationId applicationId;
