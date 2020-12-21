@@ -114,6 +114,12 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
                         JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
                         TimeoutChecker timeoutChecker) throws Exception {
     try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+      // Validate kerberos setting if any
+      Map<String, String> clusterProperties = cluster.getProperties();
+      String principal = clusterProperties.get(ClusterProperties.KERBEROS_PRINCIPAL);
+      String keytab = clusterProperties.get(ClusterProperties.KERBEROS_KEYTAB);
+      validateKerberos(principal, keytab, session);
+
       String targetPath = session.executeAndWait("mkdir -p ./" + getProgramRunId().getRun(),
                                                  "echo `pwd`/" + getProgramRunId().getRun()).trim();
       // Upload files
@@ -133,9 +139,11 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
                                            targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
                                            targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
                                            targetPath, SPARK_ENV_SH));
+
       // Generates the launch script
       byte[] scriptContent = generateLaunchScript(targetPath, runnableName,
-                                                  memory, jvmOptions, environments).getBytes(StandardCharsets.UTF_8);
+                                                  memory, jvmOptions, environments,
+                                                  principal, keytab).getBytes(StandardCharsets.UTF_8);
       //noinspection OctalInteger
       session.copy(new ByteArrayInputStream(scriptContent),
                    targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
@@ -144,6 +152,30 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
       LOG.info("Starting runnable {} for runId {} with SSH", runnableName, getProgramRunId());
       session.executeAndWait(targetPath + "/launcher.sh");
+    }
+  }
+
+  private void validateKerberos(@Nullable String principal, @Nullable String keytab, SSHSession session) {
+    if (principal == null || keytab == null) {
+      return;
+    }
+
+    String klistPath;
+    try {
+      klistPath = session.executeAndWait("which klist").trim();
+    } catch (IOException e) {
+      LOG.warn("Failed to locate klist command for Kerberos validation. " +
+                 "If the Kerberos principal and keytab are mis-configured, program execution will fail.", e);
+      return;
+    }
+
+    try {
+      String result = session.executeAndWait(String.format("%s -k -t %s", klistPath, keytab));
+      if (!result.contains(principal)) {
+        throw new IllegalArgumentException("Kerberos principal " + principal + " not found in the keytab");
+      }
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Kerberos information is not valid: " + e.getMessage(), e);
     }
   }
 
@@ -302,7 +334,10 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
    * Generates the shell script for launching the JVM process of the runnable that will run on the remote host.
    */
   private String generateLaunchScript(String targetPath, String runnableName,
-                                      int memory, JvmOptions jvmOptions, Map<String, String> environments) {
+                                      int memory, JvmOptions jvmOptions,
+                                      Map<String, String> environments,
+                                      @Nullable String kerberosPrincipal,
+                                      @Nullable String kerberosKeytab) {
     String logsDir = targetPath + "/logs";
 
     StringWriter writer = new StringWriter();
@@ -328,12 +363,9 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     Map<String, String> args = new LinkedHashMap<>();
     args.put(RemoteExecutionJobMain.RUN_ID, getProgramRunId().getRun());
 
-    Map<String, String> clusterProperties = cluster.getProperties();
-    String principal = clusterProperties.get(ClusterProperties.KERBEROS_PRINCIPAL);
-    String keytab = clusterProperties.get(ClusterProperties.KERBEROS_KEYTAB);
-    if (principal != null && keytab != null) {
-      args.put(ClusterProperties.KERBEROS_PRINCIPAL, principal);
-      args.put(ClusterProperties.KERBEROS_KEYTAB, keytab);
+    if (kerberosPrincipal != null && kerberosKeytab != null) {
+      args.put(ClusterProperties.KERBEROS_PRINCIPAL, kerberosPrincipal);
+      args.put(ClusterProperties.KERBEROS_KEYTAB, kerberosKeytab);
     }
 
     scriptWriter.printf(

@@ -147,8 +147,8 @@ public class DefaultSSHSession implements SSHSession {
         try {
           int exitCode = process.waitFor();
           if (exitCode != 0) {
-            throw new RuntimeException("Commands execution failed with exit code (" + exitCode + ") Commands: " +
-                                         commands + ", Output: " + out + " Error: " + err);
+            throw new IOException("Commands execution failed with exit code (" + exitCode + ") Commands: " +
+                                    commands + ", Output: " + out + " Error: " + err);
           }
           return out;
         } catch (InterruptedException e) {
