@@ -42,11 +42,15 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
     showRunOptions: this.props.showRunOptions,
   };
 
-  toggleRunConfigOption = (anchorEl) => {
+  constructor(props) {
+    super(props);
+    this.dropdownButtonRef = React.createRef();
+  }
+
+  toggleRunConfigOption = () => {
     this.setState(
       {
         showRunOptions: !this.state.showRunOptions,
-        anchorEl: anchorEl ? anchorEl.parentElement : null,
       },
       () => {
         // FIXME: This is to when the user opens/closes the runtime args modeless.
@@ -78,9 +82,10 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
               className={classnames('btn pipeline-action-btn pipeline-run-btn', {
                 'btn-popover-open': this.state.showRunOptions,
               })}
-              onClick={(e) => {
+              ref={this.dropdownButtonRef}
+              onClick={() => {
                 if (!this.props.disabled) {
-                  this.toggleRunConfigOption(e.currentTarget);
+                  this.toggleRunConfigOption();
                 }
               }}
             >
@@ -92,7 +97,7 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
               title="Runtime Arguments"
               onClose={this.toggleRunConfigOption.bind(this, false)}
               open={this.state.showRunOptions}
-              anchorEl={this.state.anchorEl}
+              anchorEl={this.dropdownButtonRef.current}
             >
               <RuntimeArgsModeless onClose={this.toggleRunConfigOption} />
             </PipelineModeless>
