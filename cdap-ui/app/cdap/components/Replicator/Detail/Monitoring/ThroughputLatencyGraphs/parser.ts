@@ -14,6 +14,7 @@
  * the License.
  */
 
+import { ITableInfo } from 'components/Replicator/types';
 import moment from 'moment';
 
 export interface IThroughputLatencyData {
@@ -66,7 +67,7 @@ const INITIAL_DATA = {
 export function throughputLatencyParser(
   rawData: IRawMetricData,
   numTables: number,
-  activeTable?: string
+  activeTable?: ITableInfo
 ): IThroughputLatencyData[] {
   /**
    * <time>: {

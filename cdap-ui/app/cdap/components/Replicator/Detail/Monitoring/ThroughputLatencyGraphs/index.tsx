@@ -24,6 +24,7 @@ import { PROGRAM_INFO } from 'components/Replicator/constants';
 import { DetailContext } from 'components/Replicator/Detail';
 import { MyMetricApi } from 'api/metric';
 import { throughputLatencyParser } from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/parser';
+import { getFullyQualifiedTableName } from 'components/Replicator/utilities';
 
 const styles = (): StyleRules => {
   return {
@@ -66,7 +67,7 @@ const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ clas
     };
 
     if (activeTable) {
-      tags.ent = activeTable;
+      tags.ent = getFullyQualifiedTableName(activeTable);
     }
 
     const tagsParams = MetricsQueryHelper.tagsToParams(tags);

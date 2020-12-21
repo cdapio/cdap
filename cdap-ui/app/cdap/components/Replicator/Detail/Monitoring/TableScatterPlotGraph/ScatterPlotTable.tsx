@@ -83,7 +83,7 @@ const ScatterPlotTableView: React.FC<IScatterPlotTableProps> = ({ classes, data 
 
             return (
               <div className="grid-row" key={table.tableName}>
-                <div>{table.tableName}</div>
+                <div>{table.tableInfo.table}</div>
                 <div>{dataReplicated}</div>
                 <div>{eventsPerMin}</div>
                 <div>{latency}</div>

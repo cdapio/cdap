@@ -33,6 +33,7 @@ import {
 import DetailContent from 'components/Replicator/Detail/DetailContent';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ContentHeading from 'components/Replicator/Detail/ContentHeading';
+import { ITableInfo } from '../types';
 
 export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
@@ -89,7 +90,7 @@ interface IDetailState {
   tables: Map<string, Map<string, string>>;
   columns: Map<string, List<IColumn>>;
   offsetBasePath: string;
-  activeTable: string;
+  activeTable: ITableInfo;
   timeRange: string;
   loading: boolean;
   lastUpdated: number;
@@ -99,7 +100,7 @@ interface IDetailState {
   start: () => void;
   stop: () => void;
   deleteReplicator: () => void;
-  setActiveTable: (table: string) => void;
+  setActiveTable: (table: ITableInfo) => void;
   setTimeRange: (timeRange: string) => void;
 }
 
@@ -169,9 +170,9 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     );
   };
 
-  private setActiveTable = (table: string) => {
+  private setActiveTable = (tableInfo: ITableInfo) => {
     this.setState({
-      activeTable: table,
+      activeTable: tableInfo,
     });
   };
 
