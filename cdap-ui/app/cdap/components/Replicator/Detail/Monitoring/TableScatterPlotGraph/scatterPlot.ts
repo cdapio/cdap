@@ -18,6 +18,8 @@ import * as d3 from 'd3';
 import { ITableMetricsData } from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/parser';
 import numeral from 'numeral';
 import { tooltipWidth } from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/ScatterPlotTooltip';
+import { ITableInfo } from 'components/Replicator/types';
+import { getFullyQualifiedTableName } from 'components/Replicator/utilities';
 
 export const COLOR_MAP = {
   active: '#0076DC',
@@ -32,7 +34,7 @@ export const COLOR_MAP = {
 };
 
 export function renderScatterPlot(
-  activeTable: string,
+  activeTableInfo: ITableInfo,
   id: string,
   data: ITableMetricsData[],
   containerWidth: number,
@@ -56,6 +58,7 @@ export function renderScatterPlot(
 
   const height = containerHeight - margin.top - margin.bottom;
 
+  const activeTable = activeTableInfo ? getFullyQualifiedTableName(activeTableInfo) : null;
   let isClicked = !!activeTable;
 
   const svg = d3

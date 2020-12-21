@@ -20,7 +20,7 @@ import { MyPipelineApi } from 'api/pipeline';
 import { MyReplicatorApi } from 'api/replicator';
 import { bucketPlugins } from 'services/PluginUtilities';
 import { Map } from 'immutable';
-import { ITableObj, IColumn } from 'components/Replicator/types';
+import { ITableObj, IColumn, ITableInfo, ITableImmutable } from 'components/Replicator/types';
 import { truncateNumber } from 'services/helpers';
 
 export function fetchPluginInfo(
@@ -252,4 +252,19 @@ export function formatNumber(num, threshold = 999) {
   }
   const PRECISION = 2;
   return truncateNumber(num, PRECISION);
+}
+
+export function getFullyQualifiedTableName(tableInput) {
+  let tableInfo = tableInput;
+  if (Map.isMap(tableInput)) {
+    tableInfo = tableInput.toJS();
+  }
+
+  let tableName = tableInfo.database;
+  if (tableInfo.schema) {
+    tableName = `${tableName}.${tableInfo.schema}`;
+  }
+
+  tableName = `${tableName}.${tableInfo.table}`;
+  return tableName;
 }
