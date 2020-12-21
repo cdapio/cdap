@@ -17,7 +17,6 @@
 package io.cdap.cdap.security.impersonation;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Throwables;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.logging.LogSamplers;
@@ -42,19 +41,20 @@ public class DefaultImpersonator implements Impersonator {
   private static final Logger IMPERSONATION_FAILTURE_LOG = Loggers.sampling(LOG, LogSamplers.onceEvery(100));
   private final UGIProvider ugiProvider;
   private final boolean kerberosEnabled;
-  private String masterShortUsername;
+  private final String masterShortUsername;
 
   @Inject
   @VisibleForTesting
   public DefaultImpersonator(CConfiguration cConf, UGIProvider ugiProvider) {
     this.ugiProvider = ugiProvider;
     this.kerberosEnabled = SecurityUtil.isKerberosEnabled(cConf);
-    // on kerberos disabled cluster the master principal will be null
-    String masterPrincipal = SecurityUtil.getMasterPrincipal(cConf);
     try {
-      masterShortUsername = masterPrincipal == null ? null : new KerberosName(masterPrincipal).getShortName();
+      // on kerberos disabled cluster the master principal will be null
+      this.masterShortUsername = kerberosEnabled
+        ? new KerberosName(SecurityUtil.getMasterPrincipal(cConf)).getShortName()
+        : null;
     } catch (IOException e) {
-      Throwables.propagate(e);
+      throw new RuntimeException("Failed to get short name from the kerberos principal", e);
     }
   }
 

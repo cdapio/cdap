@@ -16,7 +16,6 @@
 
 package io.cdap.cdap.security.impersonation;
 
-import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.FeatureDisabledException;
@@ -62,7 +61,6 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
   private final File tempDir;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final Store store;
-  private static final Gson gson = new Gson();
 
   @Inject
   DefaultUGIProvider(CConfiguration cConf, LocationFactory locationFactory, OwnerAdmin ownerAdmin,
@@ -124,9 +122,8 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
           && (properties.containsKey(SystemArguments.RUNTIME_PRINCIPAL_NAME))) {
       String keytab = properties.get(SystemArguments.RUNTIME_KEYTAB_PATH);
       String principal = properties.get(SystemArguments.RUNTIME_PRINCIPAL_NAME);
-      LOG.debug("Using runtime config principal: %s, keytab: %s", principal, keytab);
-      UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(
-              principal, keytab);
+      LOG.debug("Using runtime config principal: {}, keytab: {}", principal, keytab);
+      UserGroupInformation ugi = UserGroupInformation.loginUserFromKeytabAndReturnUGI(principal, keytab);
       return new UGIWithPrincipal(principal, ugi);
     }
 
@@ -136,7 +133,11 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       return new UGIWithPrincipal(impersonationRequest.getPrincipal(), UserGroupInformation.getCurrentUser());
     }
 
-    URI keytabURI = URI.create(impersonationRequest.getKeytabURI());
+    String keytab = impersonationRequest.getKeytabURI();
+    if (keytab == null) {
+      throw new IOException("Missing keytab file from the impersonation request " + impersonationRequest);
+    }
+    URI keytabURI = URI.create(keytab);
     boolean isKeytabLocal = keytabURI.getScheme() == null || "file".equals(keytabURI.getScheme());
 
     File localKeytabFile = isKeytabLocal ?
@@ -212,13 +213,12 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
     }
 
     ProgramRunId runId = ((ProgramRunId) entityId);
-    RunRecordDetail runRecord = null;
 
     long sleepDelayMs = TimeUnit.MILLISECONDS.toMillis(100);
     long timeoutMs = TimeUnit.SECONDS.toMillis(10);
 
     try {
-      runRecord = Retries.callWithRetries(() -> {
+      RunRecordDetail runRecord = Retries.callWithRetries(() -> {
         RunRecordDetail rec = store.getRun(runId);
         if (rec != null) {
           return rec;
@@ -227,10 +227,10 @@ public class DefaultUGIProvider extends AbstractCachedUGIProvider {
       }, RetryStrategies.timeLimit(timeoutMs, TimeUnit.MILLISECONDS,
                   RetryStrategies.fixDelay(sleepDelayMs, TimeUnit.MILLISECONDS)),
                   Exception.class::isInstance);
+      return runRecord.getUserArgs();
     } catch (Exception e) {
       LOG.warn("Failed to fetch run record for {} due to {}", runId, e.getMessage(), e);
       return Collections.emptyMap();
     }
-    return runRecord.getUserArgs();
   }
 }

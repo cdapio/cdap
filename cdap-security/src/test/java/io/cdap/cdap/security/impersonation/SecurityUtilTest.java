@@ -78,11 +78,11 @@ public class SecurityUtilTest {
   public void testNoKeytabPath() throws IOException {
     String user = "alice";
     CConfiguration cConf = CConfiguration.create();
-    // this should throw a null pointer exception with proper message as what to set
+    // this should throw a illegal argument exception with proper message as what to set
     try {
       SecurityUtil.getKeytabURIforPrincipal(user, cConf);
       Assert.fail();
-    } catch (NullPointerException e) {
+    } catch (IllegalArgumentException e) {
       // expected
       Assert.assertTrue(e.getMessage().contains(Constants.Security.KEYTAB_PATH));
     }

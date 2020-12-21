@@ -46,7 +46,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -85,7 +84,7 @@ public class DefaultSSHSession implements SSHSession {
       session.connect();
       this.session = session;
     } catch (JSchException e) {
-      throw new IOException(e);
+      throw new IOException("Failed to SSH to " + config, e);
     }
 
     this.remoteAddress = new InetSocketAddress(config.getHost(), config.getPort());
@@ -119,7 +118,7 @@ public class DefaultSSHSession implements SSHSession {
         // the InputStream that acquired later.
         SSHProcess process = new DefaultSSHProcess(channelExec, channelExec.getOutputStream(),
                                                    channelExec.getInputStream(), channelExec.getErrStream());
-        channelExec.setCommand(commands.stream().collect(Collectors.joining(";")));
+        channelExec.setCommand(String.join(";", commands));
         channelExec.connect();
 
         return process;
