@@ -17,7 +17,7 @@
 import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { ITableMetricsData } from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/parser';
-import { convertBytesToHumanReadable, truncateNumber } from 'services/helpers';
+import { convertBytesToHumanReadable, objectQuery, truncateNumber } from 'services/helpers';
 
 export const tooltipWidth = 350;
 const styles = (theme): StyleRules => {
@@ -77,6 +77,8 @@ interface IScatterPlotTooltipProps extends WithStyles<typeof styles> {
 const ScatterPlotTooltipView: React.FC<IScatterPlotTooltipProps> = ({ classes, tooltip }) => {
   const activeTooltip: Partial<ITableMetricsData> =
     tooltip && tooltip.activeData ? tooltip.activeData : {};
+
+  const displayTableName = objectQuery(tooltip, 'activeData', 'tableInfo', 'table');
   return (
     <div
       className={classes.tooltip}
@@ -87,7 +89,7 @@ const ScatterPlotTooltipView: React.FC<IScatterPlotTooltipProps> = ({ classes, t
       }}
     >
       <div className={classes.tooltipHeading}>
-        <strong>{activeTooltip.tableName}</strong>
+        <strong>{displayTableName}</strong>
       </div>
       <div className={classes.dataReplicated}>
         <strong>Data replicated</strong>
