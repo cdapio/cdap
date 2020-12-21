@@ -15,9 +15,12 @@
  */
 
 import { orderBy } from 'natural-orderby';
+import { ITableInfo } from 'components/Replicator/types';
+import { getFullyQualifiedTableName } from 'components/Replicator/utilities';
 
 export interface ITableMetricsData {
   tableName: string;
+  tableInfo: ITableInfo;
   errors: number;
   totalEvents: number;
   eventsPerMin: number;
@@ -64,14 +67,16 @@ const ONE_MIN_SECONDS = 60;
 
 export function parseTableMetrics(
   rawData: IRawMetricData,
-  tableList: string[]
+  tableList: ITableInfo[]
 ): ITableMetricsData[] {
   const tableMap: Record<string, ITableMetricsData> = {};
 
   // initialize tables
-  tableList.forEach((tableName) => {
+  tableList.forEach((tableInfo) => {
+    const tableName = getFullyQualifiedTableName(tableInfo);
     tableMap[tableName] = {
       tableName,
+      tableInfo,
       ...INITIAL_DATA,
     };
   });
@@ -96,7 +101,8 @@ export function parseTableMetrics(
   const duration = rawData.endTime - rawData.startTime;
   const durationMinute = duration / ONE_MIN_SECONDS;
 
-  tableList.forEach((tableName) => {
+  tableList.forEach((tableInfo) => {
+    const tableName = getFullyQualifiedTableName(tableInfo);
     tableMap[tableName].eventsPerMin = tableMap[tableName].totalEvents / durationMinute;
   });
 

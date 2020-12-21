@@ -80,8 +80,8 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
   const { name, tables, activeTable, setActiveTable, timeRange } = useContext(DetailContext);
 
   function onClick(d) {
-    const tableName = d ? d.tableName : null;
-    setActiveTable(tableName);
+    const selectedTable = d ? d.tableInfo : null;
+    setActiveTable(selectedTable);
   }
 
   function renderTooltip(tooltip) {
@@ -125,15 +125,7 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
 
     MyMetricApi.queryTags({ params }).subscribe(
       (res) => {
-        setData(
-          parseTableMetrics(
-            res,
-            tables
-              .toList()
-              .map((tableInfo) => tableInfo.get('table'))
-              .toJS()
-          )
-        );
+        setData(parseTableMetrics(res, tables.toList().toJS()));
       },
       (err) => {
         // tslint:disable-next-line: no-console

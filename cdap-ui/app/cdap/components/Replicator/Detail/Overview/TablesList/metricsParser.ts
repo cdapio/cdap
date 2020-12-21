@@ -14,7 +14,8 @@
  * the License.
  */
 
-import { IRawMetricData } from 'components/Replicator/types';
+import { IRawMetricData, ITableInfo } from 'components/Replicator/types';
+import { getFullyQualifiedTableName } from 'components/Replicator/utilities';
 import { truncateNumber, ONE_MIN_SECONDS, convertBytesToHumanReadable } from 'services/helpers';
 
 interface IOverviewMetricsData {
@@ -53,12 +54,13 @@ const PRECISION = 2;
 
 export function parseOverviewMetrics(
   rawData: IRawMetricData,
-  tableList: string[]
+  tableList: ITableInfo[]
 ): Record<string, IOverviewMetricsData> {
   const tableMap: Record<string, IOverviewMetricsData> = {};
 
   // initialize tables
-  tableList.forEach((tableName) => {
+  tableList.forEach((tableInfo) => {
+    const tableName = getFullyQualifiedTableName(tableInfo);
     tableMap[tableName] = {
       tableName,
       ...INITIAL_DATA,
@@ -85,9 +87,10 @@ export function parseOverviewMetrics(
   const duration = rawData.endTime - rawData.startTime;
   const durationMinute = duration / ONE_MIN_SECONDS;
 
-  tableList.forEach((tableName) => {
-    const tableInfo = tableMap[tableName];
-    const totalEvents = tableInfo.inserts + tableInfo.updates + tableInfo.deletes;
+  tableList.forEach((tableInfo) => {
+    const tableName = getFullyQualifiedTableName(tableInfo);
+    const tableMetrics = tableMap[tableName];
+    const totalEvents = tableMetrics.inserts + tableMetrics.updates + tableMetrics.deletes;
     tableMap[tableName].eventsPerMin = truncateNumber(totalEvents / durationMinute, PRECISION);
     tableMap[tableName].totalEvents = totalEvents;
     tableMap[tableName].latency = truncateNumber(tableMap[tableName].latency, PRECISION);
