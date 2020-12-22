@@ -1,0 +1,29 @@
+{
+  "label": "Enable test capability",
+  "status": "ENABLED",
+  "capability": "cap1",
+  "applications": [
+    {
+      "namespace": "system",
+      "name": "App",
+      "version": "1.0.0",
+      "artifact": {
+        "name": "App",
+        "version": "[1.0.0, 10.0.0)"
+      },
+      "config": {
+        "service": true
+      }
+    }
+  ],
+  "programs": [
+    {
+      "type": "SERVICE",
+      "application": "App",
+      "name": "NoOpService",
+      "namespace": "system",
+      "version": "1.0.0"
+    }
+  ]
+}
+

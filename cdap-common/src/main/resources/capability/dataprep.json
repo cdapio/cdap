@@ -1,0 +1,64 @@
+{
+  "label": "Enable dataprep capability",
+  "status": "ENABLED",
+  "capability": "dataprep",
+  "applications": [
+    {
+      "namespace": "system",
+      "name": "dataprep",
+      "artifact": {
+        "name": "wrangler-service",
+        "version": "[4.0.0-SNAPSHOT, 10.0.0)",
+        "scope": "SYSTEM"
+      },
+      "config": {
+        "defaultConnection": "cloud_storage_default",
+        "disabledTypes": [
+          "FILE"
+        ],
+        "connections": [
+          {
+            "name": "Cloud Storage Default",
+            "description": "Cloud Storage connection for your project",
+            "type": "GCS"
+          },
+          {
+            "name": "BigQuery Default",
+            "description": "BigQuery connection for your project",
+            "type": "BIGQUERY"
+          },
+          {
+            "name": "Cloud Spanner Default",
+            "description": "Cloud Spanner connection for your project",
+            "type": "SPANNER"
+          },
+          {
+            "name": "Sample Buckets",
+            "description": "Cloud Storage buckets with sample data",
+            "type": "GCS",
+            "properties": {
+              "bucketWhitelist": "campaign-tutorial"
+            }
+          },
+          {
+            "name": "Sample Datasets",
+            "description": "BigQuery datasets with sample data",
+            "type": "BIGQUERY",
+            "properties": {
+              "datasetWhitelist": "dis-user-guide:campaign_tutorial"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "programs": [
+    {
+      "type": "SERVICE",
+      "application": "dataprep",
+      "name": "service",
+      "namespace": "system",
+      "version": "[4.0.0-SNAPSHOT, 10.0.0)"
+    }
+  ]
+}

@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.app.runtime.LogLevelUpdater;
@@ -53,6 +54,8 @@ import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerNotifier;
@@ -129,6 +132,7 @@ public class ProgramLifecycleService {
   private final ProvisionerNotifier provisionerNotifier;
   private final ProvisioningService provisioningService;
   private final ProgramStateWriter programStateWriter;
+  private final CapabilityReader capabilityReader;
   private final int maxConcurrentRuns;
 
   @Inject
@@ -138,7 +142,7 @@ public class ProgramLifecycleService {
                           PreferencesService preferencesService, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
-                          ProgramStateWriter programStateWriter) {
+                          ProgramStateWriter programStateWriter, CapabilityReader capabilityReader) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.store = store;
     this.profileService = profileService;
@@ -150,6 +154,7 @@ public class ProgramLifecycleService {
     this.provisionerNotifier = provisionerNotifier;
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
+    this.capabilityReader = capabilityReader;
   }
 
   /**
@@ -479,6 +484,18 @@ public class ProgramLifecycleService {
   }
 
   /**
+   * Stop all active programs for the given application
+   * @param applicationId
+   * @throws Exception
+   */
+  public void stopAll(ApplicationId applicationId) throws Exception {
+    Map<ProgramRunId, RunRecordDetail> runMap = store.getActiveRuns(applicationId);
+    for (ProgramRunId programRunId : runMap.keySet()) {
+      stop(programRunId.getParent(), programRunId.getRun());
+    }
+  }
+
+  /**
    * Runs a Program without authorization.
    *
    * Note that this method should only be called through internal service, it does not have auth check for starting the
@@ -494,13 +511,15 @@ public class ProgramLifecycleService {
    * @throws ProfileConflictException if the profile is disabled
    */
   public RunId runInternal(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
-                           boolean debug) throws NotFoundException, IOException, ConflictException {
+                           boolean debug) throws NotFoundException, IOException, ConflictException,
+    CapabilityNotAvailableException {
     RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     String userId = SecurityRequestContext.getUserId();
     userId = userId == null ? "" : userId;
 
+    checkCapability(programDescriptor);
     synchronized (this) {
       if (maxConcurrentRuns > 0 && maxConcurrentRuns <= store.countActiveRuns(maxConcurrentRuns)) {
         ConflictException e = new ConflictException(
@@ -590,8 +609,19 @@ public class ProgramLifecycleService {
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
     ProgramRunId programRunId = programId.run(RunIds.generate());
 
+    checkCapability(programDescriptor);
+
     programStateWriter.start(programRunId, options, null, programDescriptor);
     return startInternal(programDescriptor, options, programRunId);
+  }
+
+  private void checkCapability(ProgramDescriptor programDescriptor) throws IOException,
+    CapabilityNotAvailableException {
+    for (Map.Entry<String, Plugin> pluginEntry : programDescriptor.getApplicationSpecification().getPlugins()
+      .entrySet()) {
+      Set<String> capabilities = pluginEntry.getValue().getPluginClass().getRequirements().getCapabilities();
+      capabilityReader.checkAllEnabled(capabilities);
+    }
   }
 
   /**

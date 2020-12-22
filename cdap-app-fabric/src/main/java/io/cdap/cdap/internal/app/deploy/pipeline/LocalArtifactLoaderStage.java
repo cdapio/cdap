@@ -30,6 +30,7 @@ import io.cdap.cdap.internal.app.deploy.InMemoryConfigurator;
 import io.cdap.cdap.internal.app.deploy.LocalApplicationManager;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.AbstractStage;
 import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
@@ -64,13 +65,15 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final AuthenticationContext authenticationContext;
   private final PluginFinder pluginFinder;
+  private final CapabilityReader capabilityReader;
 
   /**
    * Constructor with hit for handling type.
    */
   public LocalArtifactLoaderStage(CConfiguration cConf, Store store, ArtifactRepository artifactRepository,
                                   Impersonator impersonator, AuthorizationEnforcer authorizationEnforcer,
-                                  AuthenticationContext authenticationContext, PluginFinder pluginFinder) {
+                                  AuthenticationContext authenticationContext, PluginFinder pluginFinder,
+                                  CapabilityReader capabilityReader) {
     super(TypeToken.of(AppDeploymentInfo.class));
     this.cConf = cConf;
     this.store = store;
@@ -79,6 +82,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
     this.authorizationEnforcer = authorizationEnforcer;
     this.authenticationContext = authenticationContext;
     this.pluginFinder = pluginFinder;
+    this.capabilityReader = capabilityReader;
   }
 
   /**
@@ -124,6 +128,7 @@ public class LocalArtifactLoaderStage extends AbstractStage<AppDeploymentInfo> {
       applicationId = deploymentInfo.getNamespaceId().app(specification.getName(), appVersion);
     }
     authorizationEnforcer.enforce(applicationId, authenticationContext.getPrincipal(), Action.ADMIN);
+    capabilityReader.checkAllEnabled(specification);
     emit(new ApplicationDeployable(deploymentInfo.getArtifactId(), deploymentInfo.getArtifactLocation(),
                                    applicationId, specification, store.getApplication(applicationId),
                                    ApplicationDeployScope.USER, deploymentInfo.getApplicationClass(),

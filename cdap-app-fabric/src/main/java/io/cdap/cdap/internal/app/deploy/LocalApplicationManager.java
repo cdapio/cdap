@@ -24,7 +24,6 @@ import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.app.deploy.Manager;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.data2.metadata.writer.MetadataServiceClient;
 import io.cdap.cdap.data2.registry.UsageRegistry;
@@ -41,6 +40,7 @@ import io.cdap.cdap.internal.app.deploy.pipeline.ProgramGenerationStage;
 import io.cdap.cdap.internal.app.deploy.pipeline.SystemMetadataWriterStage;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
+import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.pipeline.Context;
 import io.cdap.cdap.pipeline.Pipeline;
 import io.cdap.cdap.pipeline.PipelineFactory;
@@ -83,6 +83,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
   private final AuthorizationEnforcer authorizationEnforcer;
   private final StructuredTableAdmin structuredTableAdmin;
   private final PluginFinder pluginFinder;
+  private final CapabilityReader capabilityReader;
 
   @Inject
   LocalApplicationManager(CConfiguration configuration, PipelineFactory pipelineFactory,
@@ -96,7 +97,7 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
                           Scheduler programScheduler,
                           AuthorizationEnforcer authorizationEnforcer,
                           StructuredTableAdmin structuredTableAdmin,
-                          PluginFinder pluginFinder) {
+                          PluginFinder pluginFinder, CapabilityReader capabilityReader) {
     this.configuration = configuration;
     this.pipelineFactory = pipelineFactory;
     this.store = store;
@@ -114,13 +115,15 @@ public class LocalApplicationManager<I, O> implements Manager<I, O> {
     this.authorizationEnforcer = authorizationEnforcer;
     this.structuredTableAdmin = structuredTableAdmin;
     this.pluginFinder = pluginFinder;
+    this.capabilityReader = capabilityReader;
   }
 
   @Override
   public ListenableFuture<O> deploy(I input) throws Exception {
     Pipeline<O> pipeline = pipelineFactory.getPipeline();
     pipeline.addLast(new LocalArtifactLoaderStage(configuration, store, artifactRepository, impersonator,
-                                                  authorizationEnforcer, authenticationContext, pluginFinder));
+                                                  authorizationEnforcer, authenticationContext, pluginFinder,
+                                                  capabilityReader));
     pipeline.addLast(new ApplicationVerificationStage(store, datasetFramework, ownerAdmin, authenticationContext));
     pipeline.addLast(new CreateSystemTablesStage(structuredTableAdmin));
     pipeline.addLast(new DeployDatasetModulesStage(configuration, datasetFramework, inMemoryDatasetFramework,

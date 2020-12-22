@@ -22,9 +22,11 @@ import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
@@ -36,6 +38,7 @@ import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -49,9 +52,8 @@ import java.util.Map;
  */
 public class SystemProgramManagementServiceTest extends AppFabricTestBase {
 
-  private static SystemProgramManagementService programManagementService;
+  private static SystemProgramManagementService progmMgmtSvc;
   private static ProgramLifecycleService programLifecycleService;
-  private static ProgramRuntimeService programRuntimeService;
   private static ApplicationLifecycleService applicationLifecycleService;
   private static LocationFactory locationFactory;
   private static ArtifactRepository artifactRepository;
@@ -63,13 +65,19 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
   private static final Class<AllProgramsApp> APP_CLASS = AllProgramsApp.class;
 
   @BeforeClass
-  public static void setup() throws Exception {
-    programRuntimeService = getInjector().getInstance(ProgramRuntimeService.class);
-    programManagementService = getInjector().getInstance(SystemProgramManagementService.class);
+  public static void setup() {
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     locationFactory = getInjector().getInstance(LocationFactory.class);
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
+    progmMgmtSvc = new SystemProgramManagementService(getInjector().getInstance(CConfiguration.class),
+                                                      getInjector().getInstance(ProgramRuntimeService.class),
+                                                      programLifecycleService);
+  }
+
+  @AfterClass
+  public static void stop() {
+    AppFabricTestHelper.shutdown();
   }
 
   @Test
@@ -81,14 +89,14 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     ProgramId programId = new ProgramId(applicationId, ProgramType.SERVICE, PROGRAM_NAME);
     Map<ProgramId, Arguments> enabledServices = new HashMap<>();
     enabledServices.put(programId, new BasicArguments(new HashMap<>()));
-    programManagementService.setProgramsEnabled(enabledServices);
+    progmMgmtSvc.setProgramsEnabled(enabledServices);
     //run one iteration of programManagementService. The program should start
-    programManagementService.runTask();
+    progmMgmtSvc.runTask();
     waitState(programId, ProgramStatus.RUNNING.name());
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
     //Remove this app as an enabled service , program should stop
-    programManagementService.setProgramsEnabled(new HashMap<>());
-    programManagementService.runTask();
+    progmMgmtSvc.setProgramsEnabled(new HashMap<>());
+    progmMgmtSvc.runTask();
     waitState(programId, ProgramStatus.STOPPED.name());
     Assert.assertEquals(ProgramStatus.STOPPED.name(), getProgramStatus(programId));
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
@@ -96,8 +104,8 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     programLifecycleService.start(programId, new HashMap<>(), false);
     programLifecycleService.start(programId, new HashMap<>(), false);
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 2);
-    programManagementService.setProgramsEnabled(enabledServices);
-    programManagementService.runTask();
+    progmMgmtSvc.setProgramsEnabled(enabledServices);
+    progmMgmtSvc.runTask();
     assertProgramRuns(programId, ProgramRunStatus.KILLED, 2);
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
   }
