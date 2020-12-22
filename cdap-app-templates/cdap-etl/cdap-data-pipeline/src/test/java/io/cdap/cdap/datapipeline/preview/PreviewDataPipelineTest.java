@@ -19,6 +19,7 @@ package io.cdap.cdap.datapipeline.preview;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -249,12 +250,12 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
     // Make sure correct logical type values are being returned from tracers
     List<JsonElement> data = previewManager.getData(previewId, "source").get(DATA_TRACER_PROPERTY);
-    StructuredRecord actualRecordSamuel = GSON.fromJson(data.get(0), StructuredRecord.class);
-    Assert.assertEquals(actualRecordSamuel.get("date"), "2002-11-18");
-    Assert.assertEquals(actualRecordSamuel.get("ts"), "2018-11-11T11:11:11.123Z[UTC]");
-    StructuredRecord actualRecordBob = GSON.fromJson(data.get(1), StructuredRecord.class);
-    Assert.assertEquals(actualRecordBob.get("date"), "2003-11-18");
-    Assert.assertEquals(actualRecordBob.get("ts"), "2018-11-11T11:11:11.123Z[UTC]");
+    StructuredRecord actualRecordOne = GSON.fromJson(data.get(0), StructuredRecord.class);
+    StructuredRecord actualRecordTwo = GSON.fromJson(data.get(1), StructuredRecord.class);
+    Assert.assertEquals(ImmutableSet.of("2002-11-18", "2003-11-18"),
+                        ImmutableSet.of(actualRecordOne.get("date"), actualRecordTwo.get("date")));
+    Assert.assertEquals(ImmutableSet.of("2018-11-11T11:11:11.123Z[UTC]", "2018-11-11T11:11:11.123Z[UTC]"),
+                        ImmutableSet.of(actualRecordOne.get("ts"), actualRecordTwo.get("ts")));
 
     // Get the data for stage "transform" in the PreviewStore, should contain two records.
     checkPreviewStore(previewManager, previewId, "transform", 2);
