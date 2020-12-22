@@ -30,7 +30,7 @@ import {
 } from 'services/helpers';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
-import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
+import PipelineModelessOld from 'components/PipelineDetails/PipelineModelessOld';
 import T from 'i18n-react';
 import { Provider } from 'react-redux';
 import findIndex from 'lodash/findIndex';
@@ -210,7 +210,7 @@ export default class RunConfigs extends Component {
         }}
       >
         <Provider store={PipelineConfigurationsStore}>
-          <PipelineModeless title={title} onClose={this.toggleModeless.bind(this, false)}>
+          <PipelineModelessOld title={title} onClose={this.toggleModeless.bind(this, false)}>
             <div className="historical-runtime-args-wrapper">
               {this.renderRuntimeArgs()}
               <div className="runconfig-tab-footer">
@@ -219,7 +219,7 @@ export default class RunConfigs extends Component {
                 )}
               </div>
             </div>
-          </PipelineModeless>
+          </PipelineModelessOld>
         </Provider>
       </Popover>
     );
