@@ -1513,5 +1513,9 @@ public final class Constants {
      * Capability config directory path key
      */
     public static final String CONFIG_DIR = "capability.config.dir";
+    /**
+     * Flag for enabling capability
+     */
+    public static final String FEATURE_ENABLED = "capability.feature.enabled";
   }
 }

@@ -16,9 +16,9 @@
 
 package io.cdap.cdap.internal.app.services;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.util.concurrent.AbstractIdleService;
 import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -83,6 +84,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
   private final CapabilityManagementService capabilityManagementService;
+  private final boolean capabilityFeatureEnabled;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -127,6 +129,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.capabilityManagementService = capabilityManagementService;
+    this.capabilityFeatureEnabled = cConf.getBoolean(Constants.Capability.FEATURE_ENABLED, false);
     this.transactionRunner = transactionRunner;
   }
 
@@ -138,18 +141,19 @@ public class AppFabricServer extends AbstractIdleService {
     LoggingContextAccessor.setLoggingContext(new ServiceLoggingContext(NamespaceId.SYSTEM.getNamespace(),
                                                                        Constants.Logging.COMPONENT_NAME,
                                                                        Constants.Service.APP_FABRIC_HTTP));
-    Futures.allAsList(
-      ImmutableList.of(
-        provisioningService.start(),
-        applicationLifecycleService.start(),
-        bootstrapService.start(),
-        programRuntimeService.start(),
-        programNotificationSubscriberService.start(),
-        runRecordCorrectorService.start(),
-        coreSchedulerService.start(),
-        capabilityManagementService.start()
-      )
-    ).get();
+    List<ListenableFuture<State>> servicesList = new ArrayList<>(Arrays.asList(
+      provisioningService.start(),
+      applicationLifecycleService.start(),
+      bootstrapService.start(),
+      programRuntimeService.start(),
+      programNotificationSubscriberService.start(),
+      runRecordCorrectorService.start(),
+      coreSchedulerService.start()
+    ));
+    if (capabilityFeatureEnabled) {
+      servicesList.add(capabilityManagementService.start());
+    }
+    Futures.allAsList(servicesList).get();
 
     // Create handler hooks
     List<MetricsReporterHook> handlerHooks = handlerHookNames.stream()
