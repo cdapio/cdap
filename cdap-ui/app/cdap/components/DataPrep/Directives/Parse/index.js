@@ -40,7 +40,6 @@ const DIRECTIVE_MAP = {
   XMLTOJSON: 'parse-xml-to-json',
   LOG: 'parse-as-log',
   SIMPLEDATE: 'parse-as-simple-date',
-  NATURALDATE: 'parse-as-date',
   FIXEDLENGTH: 'parse-as-fixed-length',
   HL7: 'parse-as-hl7',
   AVRO: 'parse-as-avro-file',
@@ -65,7 +64,6 @@ export default class ParseDirective extends Component {
       'XMLTOJSON',
       'LOG',
       'SIMPLEDATE',
-      'NATURALDATE',
       'FIXEDLENGTH',
       'HL7',
     ];
