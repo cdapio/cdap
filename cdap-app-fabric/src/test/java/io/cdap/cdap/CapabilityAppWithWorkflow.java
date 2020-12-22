@@ -17,6 +17,7 @@
 package io.cdap.cdap;
 
 import com.google.common.base.Throwables;
+import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.app.AbstractApplication;
 import io.cdap.cdap.api.customaction.AbstractCustomAction;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
@@ -40,8 +41,9 @@ import java.util.Map;
 /**
  * App with workflow.
  */
-public class AppWithWorkflow extends AbstractApplication {
-  public static final String NAME = "AppWithWorkflow";
+@Requirements(capabilities = "cdc")
+public class CapabilityAppWithWorkflow extends AbstractApplication {
+  public static final String NAME = "CapabilityAppWithWorkflow";
 
   @Override
   public void configure() {

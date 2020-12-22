@@ -95,15 +95,14 @@ import io.cdap.cdap.internal.app.services.NoopRunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.RunRecordCorrectorService;
 import io.cdap.cdap.internal.app.services.ScheduledRunRecordCorrectorService;
-import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import io.cdap.cdap.internal.app.store.DefaultStore;
 import io.cdap.cdap.internal.bootstrap.guice.BootstrapModules;
+import io.cdap.cdap.internal.capability.CapabilityModule;
 import io.cdap.cdap.internal.pipeline.SynchronousPipelineFactory;
 import io.cdap.cdap.internal.profile.ProfileService;
 import io.cdap.cdap.internal.provision.ProvisionerModule;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
 import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
-import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.pipeline.PipelineFactory;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
@@ -142,6 +141,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   @Override
   public Module getInMemoryModules() {
     return Modules.combine(new AppFabricServiceModule(),
+                           new CapabilityModule(),
                            new NamespaceAdminModule().getInMemoryModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
@@ -181,6 +181,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getStandaloneModules() {
 
     return Modules.combine(new AppFabricServiceModule(),
+                           new CapabilityModule(),
                            new NamespaceAdminModule().getStandaloneModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
@@ -233,6 +234,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
   public Module getDistributedModules() {
 
     return Modules.combine(new AppFabricServiceModule(ImpersonationHandler.class),
+                           new CapabilityModule(),
                            new NamespaceAdminModule().getDistributedModules(),
                            new ConfigStoreModule(),
                            new EntityVerifierModule(),
@@ -302,7 +304,6 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
       bind(ProfileService.class).in(Scopes.SINGLETON);
       bind(ProgramLifecycleService.class).in(Scopes.SINGLETON);
       bind(SystemAppManagementService.class).in(Scopes.SINGLETON);
-      bind(SystemProgramManagementService.class).in(Scopes.SINGLETON);
       bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       bind(CoreSchedulerService.class).in(Scopes.SINGLETON);
       bind(Scheduler.class).to(CoreSchedulerService.class);
@@ -398,6 +399,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
     /**
      * Create a quartz scheduler. Quartz factory method is not used, because inflexible in allowing custom jobstore
      * and turning off check for new versions.
+     *
      * @param store JobStore.
      * @param cConf CConfiguration.
      * @return an instance of {@link org.quartz.Scheduler}
