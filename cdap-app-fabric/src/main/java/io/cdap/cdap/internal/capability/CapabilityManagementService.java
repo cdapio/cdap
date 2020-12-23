@@ -80,13 +80,18 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
     return scheduleIntervalInMillis;
   }
 
-  private List<CapabilityConfig> scanConfigDirectory() throws IOException {
+  private List<CapabilityConfig> scanConfigDirectory() {
     File configDir = new File(cConf.get(Constants.Capability.CONFIG_DIR));
     List<CapabilityConfig> capabilityConfigs = new ArrayList<>();
     for (File configFile : DirUtils.listFiles(configDir)) {
+      if (!configFile.isFile()) {
+        continue;
+      }
       try (Reader reader = new FileReader(configFile)) {
         CapabilityConfig capabilityConfig = GSON.fromJson(reader, CapabilityConfig.class);
         capabilityConfigs.add(capabilityConfig);
+      } catch (IOException exception) {
+        LOG.debug("Exception reading capability config file {}", configFile, exception);
       }
     }
     return capabilityConfigs;

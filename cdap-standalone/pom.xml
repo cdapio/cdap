@@ -624,7 +624,7 @@
                     </resource>
                     <!-- copy capability configs -->
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-common/src/main/resources/capability</directory>
+                      <directory>${project.parent.basedir}/src/main/resources/capability</directory>
                       <targetPath>capability-config</targetPath>
                       <includes>
                         <include>*.json</include>
