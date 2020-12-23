@@ -114,6 +114,9 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityManagementService.runTask();
     List<JsonObject> appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+    waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 
     //remove the file and make sure it gets removed
@@ -158,6 +161,9 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     writeConfigAsFile(externalConfigPath, fileName, capabilityConfig);
     capabilityManagementService.runTask();
     capabilityStatusStore.checkAllEnabled(Collections.singleton("cap1"));
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+    waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 
     //cleanup
@@ -199,6 +205,9 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //app should show up and program should have run
     appList = getAppList(namespace);
     Assert.assertFalse(appList.isEmpty());
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+    waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
     String capability = config.getCapability();
     capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
@@ -333,6 +342,9 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     }
     ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
                                         CapabilitySleepingWorkflowApp.SleepWorkflow.class.getSimpleName());
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+    waitState(programId, "RUNNING");
     assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
 
     //disable the capability -  the program that was started should stop
