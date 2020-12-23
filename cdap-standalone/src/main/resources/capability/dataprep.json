@@ -1,0 +1,26 @@
+{
+  "label": "Enable dataprep capability",
+  "status": "ENABLED",
+  "capability": "dataprep",
+  "applications": [
+    {
+      "namespace": "system",
+      "name": "dataprep",
+      "version": "-SNAPSHOT",
+      "artifact": {
+        "name": "wrangler-service",
+        "version": "[4.0.0-SNAPSHOT, 10.0.0)",
+        "scope": "SYSTEM"
+      }
+    }
+  ],
+  "programs": [
+    {
+      "type": "SERVICE",
+      "application": "dataprep",
+      "name": "service",
+      "namespace": "system",
+      "version": "-SNAPSHOT"
+    }
+  ]
+}
