@@ -878,7 +878,11 @@ class HydratorPlusPlusTopPanelCtrl {
   }
 
   _checkAndShowConfirmationModalOnActionPlugin(proceedCb) {
-    if (!this.HydratorPlusPlusConfigStore.validateState(true)) {
+    const isPipelineValid = this.HydratorPlusPlusConfigStore.validateState({
+      showConsoleMessage: true,
+      validateBeforePreview: true
+    });
+    if (!isPipelineValid) {
       return;
     }
 
