@@ -6,6 +6,7 @@
     {
       "namespace": "system",
       "name": "delta",
+      "version": "-SNAPSHOT",
       "artifact": {
         "name": "delta-app",
         "version": "[0.0.0, 10.0.0)",
@@ -22,7 +23,7 @@
       "application": "delta",
       "name": "assessor",
       "namespace": "system",
-      "version": "[0.0.0, 10.0.0)"
+      "version": "-SNAPSHOT"
     }
   ]
 }

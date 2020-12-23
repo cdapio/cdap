@@ -558,6 +558,27 @@
                 </configuration>
               </execution>
 
+              <execution>
+                <id>copy-capability-files</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>copy-resources</goal>
+                </goals>
+                <configuration combine.self="override">
+                  <outputDirectory>/opt/cdap/master/capability-config</outputDirectory>
+                  <resources>
+                    <resource>
+                      <directory>
+                        ${project.parent.basedir}/src/main/resources/capability/
+                      </directory>
+                      <includes>
+                        <include>*.json</include>
+                      </includes>
+                    </resource>
+                  </resources>
+                </configuration>
+              </execution>
+
               <!-- Copy runtime provider extensions -->
               <execution>
                 <id>copy-runtime-ext-emr</id>
