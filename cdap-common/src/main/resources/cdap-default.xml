@@ -4143,5 +4143,18 @@
       Interval at which system programs are monitored in seconds
     </description>
   </property>
-
+  <property>
+    <name>capability.dir.scan.interval.minutes</name>
+    <value>1</value>
+    <description>
+      Interval at which system programs are monitored in minutes
+    </description>
+  </property>
+  <property>
+    <name>capability.config.dir</name>
+    <value>/opt/cdap/master/capability-config</value>
+    <description>
+      Internal directory that maintains the currently disabled and enabled configurations
+    </description>
+  </property>
 </configuration>

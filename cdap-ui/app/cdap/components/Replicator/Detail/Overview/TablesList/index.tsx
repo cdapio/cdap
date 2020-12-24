@@ -17,7 +17,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { DetailContext } from 'components/Replicator/Detail';
-import { generateTableKey } from 'components/Replicator/utilities';
+import { generateTableKey, getFullyQualifiedTableName } from 'components/Replicator/utilities';
 import { Map } from 'immutable';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -193,15 +193,7 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
     MyMetricApi.queryTags({ params }).subscribe(
       (res) => {
-        setTableMetricsMap(
-          parseOverviewMetrics(
-            res,
-            tables
-              .toList()
-              .map((tableInfo) => tableInfo.get('table'))
-              .toJS()
-          )
-        );
+        setTableMetricsMap(parseOverviewMetrics(res, tables.toList().toJS()));
       },
       (err) => {
         // tslint:disable-next-line: no-console
@@ -283,15 +275,16 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             const numColumns = tableColumns ? tableColumns.size : 0;
             const tableStatus = statusMap.get(tableKey) || 'IDLE';
             const icon = tableStatus === 'SNAPSHOTTING' ? 'icon-circle-o' : 'icon-circle';
-            const tableName = row.get('table');
-            const tableMetrics = tableMetricsMap[tableName] || {};
+            const tableDisplayName = row.get('table');
+            const tableMetricsKey = getFullyQualifiedTableName(row);
+            const tableMetrics = tableMetricsMap[tableMetricsKey] || {};
 
             return (
               <TableRow key={tableKey.toString()}>
                 <TableCell>
                   <IconSVG name={icon} className={classes[tableStatus]} />
                 </TableCell>
-                <TableCell>{tableName}</TableCell>
+                <TableCell>{tableDisplayName}</TableCell>
                 <TableCell textAlign="right">{numColumns === 0 ? 'All' : numColumns}</TableCell>
                 <TableCell textAlign="right">{tableMetrics.dataReplicated}</TableCell>
                 <TableCell textAlign="right">{tableMetrics.totalEvents}</TableCell>

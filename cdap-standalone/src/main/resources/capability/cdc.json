@@ -1,0 +1,29 @@
+{
+  "label": "Enable cdc capability",
+  "status": "ENABLED",
+  "capability": "cdc",
+  "applications": [
+    {
+      "namespace": "system",
+      "name": "delta",
+      "version": "-SNAPSHOT",
+      "artifact": {
+        "name": "delta-app",
+        "version": "[0.0.0, 10.0.0)",
+        "scope": "SYSTEM"
+      },
+      "config": {
+        "service": true
+      }
+    }
+  ],
+  "programs": [
+    {
+      "type": "SERVICE",
+      "application": "delta",
+      "name": "assessor",
+      "namespace": "system",
+      "version": "-SNAPSHOT"
+    }
+  ]
+}
