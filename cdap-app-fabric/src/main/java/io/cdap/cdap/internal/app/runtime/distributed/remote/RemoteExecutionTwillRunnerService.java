@@ -340,7 +340,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
 
     // Use SSH if there is no RuntimeJobManager
     ClusterKeyInfo clusterKeyInfo = new ClusterKeyInfo(cConf, programOpts, locationFactory);
-    return new RemoteExecutionTwillPreparer(cConf, hConf, clusterKeyInfo.getSSHConfig(),
+    return new RemoteExecutionTwillPreparer(cConf, hConf, clusterKeyInfo.getCluster(), clusterKeyInfo.getSSHConfig(),
                                             serviceProxySecretLocation,
                                             twillSpec, programRunId, programOpts,
                                             locationCache, locationFactory, controllerFactory);
@@ -637,6 +637,7 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
   private static final class ClusterKeyInfo {
 
     private final CConfiguration cConf;
+    private final Cluster cluster;
     private final Location keysDir;
     private final SSHConfig sshConfig;
     private volatile String serverProxySecret;
@@ -647,8 +648,12 @@ public class RemoteExecutionTwillRunnerService implements TwillRunnerService, Pr
       this.cConf = cConf;
       this.keysDir = getKeysDirLocation(programOptions, locationFactory);
 
-      Cluster cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
+      this.cluster = GSON.fromJson(systemArgs.getOption(ProgramOptionConstants.CLUSTER), Cluster.class);
       this.sshConfig = createSSHConfig(cluster, keysDir);
+    }
+
+    Cluster getCluster() {
+      return cluster;
     }
 
     SSHConfig getSSHConfig() {

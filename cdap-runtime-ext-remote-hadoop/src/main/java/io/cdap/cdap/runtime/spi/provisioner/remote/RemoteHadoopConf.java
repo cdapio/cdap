@@ -22,6 +22,7 @@ import io.cdap.cdap.runtime.spi.ssh.SSHPublicKey;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import javax.annotation.Nullable;
 
 /**
  * Configuration for the Remote Hadoop provisioner.
@@ -30,11 +31,16 @@ public class RemoteHadoopConf {
   private final SSHKeyPair sshKeyPair;
   private final String host;
   private final String initializationAction;
+  private final String kerberosKeytabPath;
+  private final String kerberosPrincipal;
 
-  private RemoteHadoopConf(SSHKeyPair sshKeyPair, String host, String initializationAction) {
+  private RemoteHadoopConf(SSHKeyPair sshKeyPair, String host, @Nullable String initializationAction,
+                           @Nullable String kerberosPrincipal, @Nullable String kerberosKeytabPath) {
     this.sshKeyPair = sshKeyPair;
     this.host = host;
     this.initializationAction = initializationAction;
+    this.kerberosKeytabPath = kerberosKeytabPath;
+    this.kerberosPrincipal = kerberosPrincipal;
   }
 
   public SSHKeyPair getKeyPair() {
@@ -45,8 +51,19 @@ public class RemoteHadoopConf {
     return host;
   }
 
+  @Nullable
   public String getInitializationAction() {
     return initializationAction;
+  }
+
+  @Nullable
+  public String getKerberosKeytabPath() {
+    return kerberosKeytabPath;
+  }
+
+  @Nullable
+  public String getKerberosPrincipal() {
+    return kerberosPrincipal;
   }
 
   /**
@@ -56,11 +73,13 @@ public class RemoteHadoopConf {
     String host = getString(properties, "host");
     String user = getString(properties, "user");
     String privateKey = getString(properties, "sshKey");
-    String initializationAction = getString(properties, "initializationAction");
 
     SSHKeyPair keyPair = new SSHKeyPair(new SSHPublicKey(user, ""),
                                         () -> privateKey.getBytes(StandardCharsets.UTF_8));
-    return new RemoteHadoopConf(keyPair, host, initializationAction);
+    return new RemoteHadoopConf(keyPair, host, properties.get("initializationAction"),
+                                properties.get("kerberosPrincipal"),
+                                properties.get("kerberosKeytabPath")
+    );
   }
 
   private static String getString(Map<String, String> properties, String key) {

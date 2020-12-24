@@ -24,6 +24,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.provisioner.Cluster;
+import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
 import joptsimple.OptionSpec;
 import org.apache.hadoop.conf.Configuration;
@@ -62,10 +64,12 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
@@ -78,15 +82,17 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private static final String SETUP_SPARK_PY = "setupSpark.py";
   private static final String SPARK_ENV_SH = "sparkEnv.sh";
 
+  private final Cluster cluster;
   private final SSHConfig sshConfig;
   private final Location serviceProxySecretLocation;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
-                               SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
+                               Cluster cluster, SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
                                TwillSpecification twillSpec, ProgramRunId programRunId, ProgramOptions programOptions,
                                LocationCache locationCache, LocationFactory locationFactory,
                                TwillControllerFactory controllerFactory) {
     super(cConf, hConf, twillSpec, programRunId, programOptions, locationCache, locationFactory, controllerFactory);
+    this.cluster = cluster;
     this.sshConfig = sshConfig;
     this.serviceProxySecretLocation = serviceProxySecretLocation;
   }
@@ -108,6 +114,12 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
                         JvmOptions jvmOptions, Map<String, String> environments, Map<String, LocalFile> localFiles,
                         TimeoutChecker timeoutChecker) throws Exception {
     try (SSHSession session = new DefaultSSHSession(sshConfig)) {
+      // Validate kerberos setting if any
+      Map<String, String> clusterProperties = cluster.getProperties();
+      String principal = clusterProperties.get(ClusterProperties.KERBEROS_PRINCIPAL);
+      String keytab = clusterProperties.get(ClusterProperties.KERBEROS_KEYTAB);
+      validateKerberos(principal, keytab, session);
+
       String targetPath = session.executeAndWait("mkdir -p ./" + getProgramRunId().getRun(),
                                                  "echo `pwd`/" + getProgramRunId().getRun()).trim();
       // Upload files
@@ -127,9 +139,11 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
                                            targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
                                            targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
                                            targetPath, SPARK_ENV_SH));
+
       // Generates the launch script
       byte[] scriptContent = generateLaunchScript(targetPath, runnableName,
-                                                  memory, jvmOptions, environments).getBytes(StandardCharsets.UTF_8);
+                                                  memory, jvmOptions, environments,
+                                                  principal, keytab).getBytes(StandardCharsets.UTF_8);
       //noinspection OctalInteger
       session.copy(new ByteArrayInputStream(scriptContent),
                    targetPath, "launcher.sh", scriptContent.length, 0755, null, null);
@@ -138,6 +152,30 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
       LOG.info("Starting runnable {} for runId {} with SSH", runnableName, getProgramRunId());
       session.executeAndWait(targetPath + "/launcher.sh");
+    }
+  }
+
+  private void validateKerberos(@Nullable String principal, @Nullable String keytab, SSHSession session) {
+    if (principal == null || keytab == null) {
+      return;
+    }
+
+    String klistPath;
+    try {
+      klistPath = session.executeAndWait("which klist").trim();
+    } catch (IOException e) {
+      LOG.warn("Failed to locate klist command for Kerberos validation. " +
+                 "If the Kerberos principal and keytab are mis-configured, program execution will fail.", e);
+      return;
+    }
+
+    try {
+      String result = session.executeAndWait(String.format("%s -k -t %s", klistPath, keytab));
+      if (!result.contains(principal)) {
+        throw new IllegalArgumentException("Kerberos principal " + principal + " not found in the keytab");
+      }
+    } catch (IOException e) {
+      throw new IllegalArgumentException("Kerberos information is not valid: " + e.getMessage(), e);
     }
   }
 
@@ -296,7 +334,10 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
    * Generates the shell script for launching the JVM process of the runnable that will run on the remote host.
    */
   private String generateLaunchScript(String targetPath, String runnableName,
-                                      int memory, JvmOptions jvmOptions, Map<String, String> environments) {
+                                      int memory, JvmOptions jvmOptions,
+                                      Map<String, String> environments,
+                                      @Nullable String kerberosPrincipal,
+                                      @Nullable String kerberosKeytab) {
     String logsDir = targetPath + "/logs";
 
     StringWriter writer = new StringWriter();
@@ -319,13 +360,21 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
 
     scriptWriter.println("export HADOOP_CLASSPATH=`hadoop classpath`");
 
+    Map<String, String> args = new LinkedHashMap<>();
+    args.put(RemoteExecutionJobMain.RUN_ID, getProgramRunId().getRun());
+
+    if (kerberosPrincipal != null && kerberosKeytab != null) {
+      args.put(ClusterProperties.KERBEROS_PRINCIPAL, kerberosPrincipal);
+      args.put(ClusterProperties.KERBEROS_KEYTAB, kerberosKeytab);
+    }
+
     scriptWriter.printf(
       "nohup java -Djava.io.tmpdir=tmp -Dcdap.runid=%s -cp %s/%s -Xmx%dm %s %s '%s' true %s >%s/stdout 2>%s/stderr &\n",
       getProgramRunId().getRun(), targetPath, Constants.Files.LAUNCHER_JAR, memory,
       jvmOptions.getAMExtraOptions(),
       RemoteLauncher.class.getName(),
       RemoteExecutionJobMain.class.getName(),
-      getProgramRunId().getRun(),
+      args.entrySet().stream().map(e -> "--" + e.getKey() + "=" + e.getValue()).collect(Collectors.joining(" ")),
       logsDir, logsDir);
 
     scriptWriter.flush();
