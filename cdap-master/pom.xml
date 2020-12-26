@@ -243,6 +243,7 @@
         <stage.runtime.providers.ext.dir>${stage.opt.dir}/ext/runtimeproviders</stage.runtime.providers.ext.dir>
         <stage.securestores.ext.dir>${stage.opt.dir}/ext/securestores</stage.securestores.ext.dir>
         <stage.bootstrap.dir>${stage.opt.dir}/bootstrap</stage.bootstrap.dir>
+        <stage.capability.dir>${stage.opt.dir}/capability-config</stage.capability.dir>
         <additional.artifacts.jar.pattern>**/target/*.jar</additional.artifacts.jar.pattern>
         <additional.artifacts.config.pattern>**/target/*.json</additional.artifacts.config.pattern>
         <additional.artifacts.exclude.pattern>**/target/*-tests.jar</additional.artifacts.exclude.pattern>
@@ -547,11 +548,9 @@
                   <outputDirectory>${stage.bootstrap.dir}</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>
-                        ${project.parent.basedir}/cdap-common/src/main/resources/bootstrap/
-                      </directory>
+                      <directory>${project.basedir}/src/main/resources/bootstrap</directory>
                       <includes>
-                        <include>distributed.json</include>
+                        <include>*.json</include>
                       </includes>
                     </resource>
                   </resources>
@@ -565,12 +564,10 @@
                   <goal>copy-resources</goal>
                 </goals>
                 <configuration combine.self="override">
-                  <outputDirectory>/opt/cdap/master/capability-config</outputDirectory>
+                  <outputDirectory>${stage.capability.dir}</outputDirectory>
                   <resources>
                     <resource>
-                      <directory>
-                        ${project.parent.basedir}/src/main/resources/capability/
-                      </directory>
+                      <directory>${project.basedir}/src/main/resources/capability</directory>
                       <includes>
                         <include>*.json</include>
                       </includes>

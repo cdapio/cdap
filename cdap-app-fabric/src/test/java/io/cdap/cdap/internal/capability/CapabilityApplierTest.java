@@ -68,7 +68,7 @@ public class CapabilityApplierTest extends AppFabricTestBase {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     CConfiguration cConfiguration = getInjector().getInstance(CConfiguration.class);
     DiscoveryServiceClient client = getInjector().getInstance(DiscoveryServiceClient.class);
-    capabilityApplier = new CapabilityApplier(cConfiguration, null, null, null, null, null, client);
+    capabilityApplier = new CapabilityApplier(null, null, null, null, null, client);
   }
 
   @AfterClass
