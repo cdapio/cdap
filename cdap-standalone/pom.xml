@@ -608,23 +608,15 @@
                     </resource>
                     <!-- copy bootstrap file -->
                     <resource>
-                      <directory>${project.parent.basedir}/cdap-common/src/main/resources/bootstrap</directory>
+                      <directory>${project.basedir}/src/main/resources/bootstrap</directory>
                       <targetPath>bootstrap</targetPath>
-                      <includes>
-                        <include>sandbox.json</include>
-                      </includes>
-                    </resource>
-                    <!-- copy system app configs -->
-                    <resource>
-                      <directory>${project.parent.basedir}/cdap-common/src/main/resources/system-apps</directory>
-                      <targetPath>system-app-config</targetPath>
                       <includes>
                         <include>*.json</include>
                       </includes>
                     </resource>
                     <!-- copy capability configs -->
                     <resource>
-                      <directory>${project.parent.basedir}/src/main/resources/capability</directory>
+                      <directory>${project.basedir}/src/main/resources/capability</directory>
                       <targetPath>capability-config</targetPath>
                       <includes>
                         <include>*.json</include>
