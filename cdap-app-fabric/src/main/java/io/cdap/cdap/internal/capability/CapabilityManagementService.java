@@ -73,7 +73,7 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
 
   @Override
   protected long runTask() throws Exception {
-    LOG.debug("Scanning capability config directory.");
+    LOG.trace("Scanning capability config directory");
     List<CapabilityConfig> capabilityConfigs = scanConfigDirectory();
     //apply all the config
     capabilityApplier.apply(capabilityConfigs);

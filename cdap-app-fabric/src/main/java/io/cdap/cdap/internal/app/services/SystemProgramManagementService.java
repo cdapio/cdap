@@ -47,7 +47,6 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
   private static final Logger LOG = LoggerFactory.getLogger(SystemProgramManagementService.class);
 
   private final long scheduleIntervalInMillis;
-  private final CConfiguration cConf;
   private final ProgramRuntimeService programRuntimeService;
   private final ProgramLifecycleService programLifecycleService;
   private final AtomicReference<Map<ProgramId, Arguments>> programsEnabled;
@@ -57,7 +56,6 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
                                  ProgramLifecycleService programLifecycleService) {
     super(RetryStrategies
             .fixDelay(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS), TimeUnit.SECONDS));
-    this.cConf = cConf;
     this.scheduleIntervalInMillis = TimeUnit.SECONDS
       .toMillis(cConf.getLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS));
     this.programRuntimeService = programRuntimeService;
@@ -69,14 +67,14 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
    * Sets the map of programs that are currently enabled along with their runtime args.
    * The programs that are not present in map will be stopped during the next run of the service.
    *
-   * @param programsEnabled
+   * @param programsEnabled the set of programs to enable
    */
   public void setProgramsEnabled(Map<ProgramId, Arguments> programsEnabled) {
     this.programsEnabled.set(new HashMap<>(programsEnabled));
   }
 
   @Override
-  protected long runTask() throws Exception {
+  protected long runTask() {
     if (programsEnabled.get() == null) {
       LOG.debug("Programs to run not yet set, will be retried.");
       return scheduleIntervalInMillis;
@@ -85,7 +83,7 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
     return scheduleIntervalInMillis;
   }
 
-  private void reconcilePrograms() throws Exception {
+  private void reconcilePrograms() {
     Map<ProgramId, Arguments> enabledProgramsMap = new HashMap<>(this.programsEnabled.get());
     Set<ProgramRunId> programRunsToStop = new HashSet<>();
     //Get all current runs

@@ -25,7 +25,6 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
-import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -82,7 +81,7 @@ class CapabilityApplier {
   private final MetadataSearchClient metadataSearchClient;
 
   @Inject
-  CapabilityApplier(CConfiguration cConf, SystemProgramManagementService systemProgramManagementService,
+  CapabilityApplier(SystemProgramManagementService systemProgramManagementService,
                     ApplicationLifecycleService applicationLifecycleService, NamespaceAdmin namespaceAdmin,
                     ProgramLifecycleService programLifecycleService, CapabilityStatusStore capabilityStatusStore,
                     DiscoveryServiceClient discoveryClient) {
