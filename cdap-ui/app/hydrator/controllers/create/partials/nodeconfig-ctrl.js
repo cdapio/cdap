@@ -523,8 +523,12 @@ class HydratorPlusPlusNodeConfigCtrl {
   validatePluginProperties(callback, validationFromGetSchema) {
     const nodeInfo = this.state.node;
     let vm = this;
+    vm.propertyErrors = {};
+    vm.inputSchemaErrors = {};
+    vm.outputSchemaErrors = {};
     if(!validationFromGetSchema){
       vm.validating = true;
+      vm.errorCount = undefined;
     }
     const errorCb = ({ errorCount, propertyErrors, inputSchemaErrors, outputSchemaErrors }) => {
       // errorCount can be 0, a positive integer, or undefined (in case of an error thrown)

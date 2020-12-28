@@ -67,6 +67,11 @@ class SchemaValidatorProvider extends React.Component<ISchemaValidatorProviderPr
 
   public componentWillReceiveProps(nextProps) {
     const { errors } = nextProps;
+    if (errors === null) {
+      return this.setState({
+        errorMap: {},
+      });
+    }
     if (!isEqual(errors, this.props.errors)) {
       this.setState({
         errorMap: {
