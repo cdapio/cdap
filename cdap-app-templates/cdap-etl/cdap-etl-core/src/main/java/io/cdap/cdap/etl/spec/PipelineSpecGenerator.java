@@ -65,6 +65,8 @@ import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.proto.v2.spec.PipelineSpec;
 import io.cdap.cdap.etl.proto.v2.spec.PluginSpec;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,6 +85,7 @@ import java.util.stream.Collectors;
  * @param <P> the pipeline specification generated from the config
  */
 public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends PipelineSpec> {
+  private static final Logger LOG = LoggerFactory.getLogger(PipelineSpecGenerator.class);
   private static final Set<String> VALID_ERROR_INPUTS = ImmutableSet.of(
     BatchSource.PLUGIN_TYPE, Transform.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, ErrorTransform.PLUGIN_TYPE);
   protected final PluginConfigurer pluginConfigurer;
@@ -325,8 +328,10 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
       throw e;
     } catch (NullPointerException e) {
       // handle the case where plugin throws null pointer exception, this is to avoid having 'null' as error message
-      collector.addFailure("Null error occurred while configuring the stage.", null)
+      collector.addFailure(String.format("Null error occurred while configuring the stage %s.", stageName), null)
         .withStacktrace(e.getStackTrace());
+      // Log the NullPointerException for debugging:
+      LOG.error(String.format("Null error occurred while configuring the stage %s.", stageName), e);
     } catch (Exception e) {
       collector.addFailure(String.format("Error encountered while configuring the stage: '%s'",
                                          e.getMessage()), null).withStacktrace(e.getStackTrace());
