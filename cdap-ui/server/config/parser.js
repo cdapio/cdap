@@ -44,7 +44,6 @@ export function extractUISettings() {
 export function extractConfig(param) {
   var deferred = q.defer();
   param = param || 'cdap';
-
   if (cache[param]) {
     deferred.resolve(cache[param]);
     return deferred.promise;
