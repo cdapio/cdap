@@ -35,7 +35,7 @@ export default class ConfigReader {
   configReadFail(data) {
     var textChunk = decoder.write(data);
     if (textChunk) {
-      log.error(textChunk);
+      log.error('config read failed for: ' + textChunk);
     }
   }
   configRead(data) {
