@@ -1,3 +1,5 @@
+image:
+  file: .gitpod.Dockerfile
 tasks:
   - before: cd /workspace && git clone https://github.com/caskdata/hydrator-plugins.git && cd hydrator-plugins && git submodule update --init --recursive --remote && mvn clean package && cd .. 
   - init: MAVEN_OPTS="-Xmx2048m " mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl -am -amd -DskipTests -P templates,dist -Dadditional.artifacts.dir=./hydrator-plugins && ./cdap-standalone/target/sdk/cdap-sandbox-6.3.0-SNAPSHOT/bin sandbox start
