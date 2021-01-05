@@ -139,13 +139,16 @@ public final class SecurityUtil {
     return principal;
   }
 
-  public static File getMasterKeytabFile(CConfiguration cConf) {
+  public static String getMasterKeytabURI(CConfiguration cConf) {
     String uri = cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH);
     if (uri == null) {
       throw new IllegalArgumentException(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH + " is not configured");
     }
+    return uri;
+  }
 
-    File keytabFile = new File(uri);
+  public static File getMasterKeytabFile(CConfiguration cConf) {
+    File keytabFile = new File(getMasterKeytabURI(cConf));
     if (!Files.isReadable(keytabFile.toPath())) {
       throw new IllegalArgumentException("Keytab file is not a readable file " + keytabFile);
     }
@@ -229,7 +232,8 @@ public final class SecurityUtil {
                                                           NamespacedEntityId entityId) throws IOException {
     ImpersonationInfo impersonationInfo = ownerAdmin.getImpersonationInfo(entityId);
     if (impersonationInfo == null) {
-      return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabFile(cConf).toURI().toString());
+      // here we don't need to get the keytab file since we use delegation tokens accross system containers
+      return new ImpersonationInfo(getMasterPrincipal(cConf), getMasterKeytabURI(cConf));
     }
     return impersonationInfo;
   }
