@@ -1150,6 +1150,7 @@ class HydratorPlusPlusConfigStore {
               delete res[this.$stateParams.namespace][draftId];
               return this.mySettings.set('hydratorDrafts', res);
             }
+            return Promise.resolve(true);
           },
           draftDeleteErrorHandler.bind(this)
         ).then(navigateToDetailedView.bind(this, adapterName));
@@ -1158,7 +1159,7 @@ class HydratorPlusPlusConfigStore {
     let removeFromUserDrafts = (adapterName) => {
       const draftId = this.getDraftId();
       if (!draftId) {
-        return;
+        return navigateToDetailedView.call(this, adapterName);
       }
       /**
        * Remove the draft from the new API. If it errors out check if it is
