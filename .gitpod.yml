@@ -26,7 +26,9 @@ tasks:
       mvn clean package -DskipTests &&
       cd /workspace/cdap &&
       MAVEN_OPTS="-Xmx2048m " mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl -am -amd -DskipTests -P templates,dist -Dadditional.artifacts.dir=/workspace/hydrator-plugins &&
-      /workspace/cdap/cdap-standalone/target/sdk/cdap-sandbox-6.3.0-SNAPSHOT/bin sandbox start
+      cd /workspace/cdap/cdap-standalone/target/sdk &&
+      cd $(ls -d */|head -n 1) &&
+      ./bin/cdap sandbox start
     command: >-
       cd /workspace/cdap/cdap-ui &&
       yarn &&
