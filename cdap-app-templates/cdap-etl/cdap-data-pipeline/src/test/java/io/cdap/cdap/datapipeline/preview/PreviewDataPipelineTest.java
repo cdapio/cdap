@@ -19,6 +19,9 @@ package io.cdap.cdap.datapipeline.preview;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSet;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.format.StructuredRecord;
@@ -46,6 +49,7 @@ import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.artifact.AppRequest;
 import io.cdap.cdap.proto.artifact.preview.PreviewConfig;
@@ -59,6 +63,10 @@ import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -84,6 +92,8 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
                                                                        Constants.AppFabric.SPARK_COMPAT,
                                                                        Compat.SPARK_COMPAT);
   private static final String DATA_TRACER_PROPERTY = "records.out";
+  private static final Gson GSON =
+    new GsonBuilder().registerTypeAdapter(Schema.class, new SchemaTypeAdapter()).create();
 
   @BeforeClass
   public static void setupTest() throws Exception {
@@ -151,6 +161,101 @@ public class PreviewDataPipelineTest extends HydratorTestBase {
 
     // Get the data for stage "source" in the PreviewStore, should contain two records.
     checkPreviewStore(previewManager, previewId, "source", 2);
+
+    // Get the data for stage "transform" in the PreviewStore, should contain two records.
+    checkPreviewStore(previewManager, previewId, "transform", 2);
+
+    // Get the data for stage "sink" in the PreviewStore, should contain two records.
+    checkPreviewStore(previewManager, previewId, "sink", 2);
+
+    // Validate the metrics for preview
+    validateMetric(2, previewId, "source.records.in", previewManager);
+    validateMetric(2, previewId, "source.records.out", previewManager);
+    validateMetric(2, previewId, "transform.records.in", previewManager);
+    validateMetric(2, previewId, "transform.records.out", previewManager);
+    validateMetric(2, previewId, "sink.records.out", previewManager);
+    validateMetric(2, previewId, "sink.records.in", previewManager);
+
+    // Check the sink table is not created in the real space.
+    DataSetManager<Table> sinkManager = getDataset(sinkTableName);
+    Assert.assertNull(sinkManager.get());
+    deleteDatasetInstance(NamespaceId.DEFAULT.dataset(sourceTableName));
+    Assert.assertNotNull(previewManager.getRunId(previewId));
+  }
+
+  @Test
+  public void testLogicalTypePreviewRuns() throws Exception {
+    testLogicalTypePreviewRun(Engine.MAPREDUCE);
+    testLogicalTypePreviewRun(Engine.SPARK);
+  }
+
+  private void testLogicalTypePreviewRun(Engine engine) throws Exception {
+    PreviewManager previewManager = getPreviewManager();
+
+    String sourceTableName = "singleInput";
+    String sinkTableName = "singleOutput";
+    Schema schema = Schema.recordOf(
+      "testRecord",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("date", Schema.of(Schema.LogicalType.DATE)),
+      Schema.Field.of("ts", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))
+    );
+
+    /*
+     * source --> transform -> sink
+     */
+    ETLBatchConfig etlConfig = ETLBatchConfig.builder()
+      .addStage(new ETLStage("source", MockSource.getPlugin(sourceTableName, schema)))
+      .addStage(new ETLStage("transform", IdentityTransform.getPlugin()))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(sinkTableName)))
+      .addConnection("source", "transform")
+      .addConnection("transform", "sink")
+      .setEngine(engine)
+      .setNumOfRecordsPreview(100)
+      .build();
+
+
+    // Construct the preview config with the program name and program type
+    PreviewConfig previewConfig = new PreviewConfig(SmartWorkflow.NAME, ProgramType.WORKFLOW,
+                                                    Collections.<String, String>emptyMap(), 10);
+
+    // Create the table for the mock source
+    addDatasetInstance(Table.class.getName(), sourceTableName,
+                       DatasetProperties.of(ImmutableMap.of("schema", schema.toString())));
+    DataSetManager<Table> inputManager = getDataset(NamespaceId.DEFAULT.dataset(sourceTableName));
+    ZonedDateTime expectedMillis = ZonedDateTime.of(2018, 11, 11, 11, 11, 11, 123 * 1000 * 1000,
+                                                    ZoneId.ofOffset("UTC", ZoneOffset.UTC));
+    StructuredRecord recordSamuel = StructuredRecord.builder(schema).set("name", "samuel")
+      .setDate("date", LocalDate.of(2002, 11, 18)).setTimestamp("ts", expectedMillis).build();
+    StructuredRecord recordBob = StructuredRecord.builder(schema).set("name", "bob")
+      .setDate("date", LocalDate.of(2003, 11, 18)).setTimestamp("ts", expectedMillis).build();
+    MockSource.writeInput(inputManager, ImmutableList.of(recordSamuel, recordBob));
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT_RANGE, etlConfig, previewConfig);
+
+    // Start the preview and get the corresponding PreviewRunner.
+    ApplicationId previewId = previewManager.start(NamespaceId.DEFAULT, appRequest);
+
+    // Wait for the preview status go into COMPLETED.
+    Tasks.waitFor(PreviewStatus.Status.COMPLETED, new Callable<PreviewStatus.Status>() {
+      @Override
+      public PreviewStatus.Status call() throws Exception {
+        PreviewStatus status = previewManager.getStatus(previewId);
+        return status == null ? null : status.getStatus();
+      }
+    }, 5, TimeUnit.MINUTES);
+
+    // Get the data for stage "source" in the PreviewStore, should contain two records.
+    checkPreviewStore(previewManager, previewId, "source", 2);
+
+    // Make sure correct logical type values are being returned from tracers
+    List<JsonElement> data = previewManager.getData(previewId, "source").get(DATA_TRACER_PROPERTY);
+    StructuredRecord actualRecordOne = GSON.fromJson(data.get(0), StructuredRecord.class);
+    StructuredRecord actualRecordTwo = GSON.fromJson(data.get(1), StructuredRecord.class);
+    Assert.assertEquals(ImmutableSet.of("2002-11-18", "2003-11-18"),
+                        ImmutableSet.of(actualRecordOne.get("date"), actualRecordTwo.get("date")));
+    Assert.assertEquals(ImmutableSet.of("2018-11-11T11:11:11.123Z[UTC]", "2018-11-11T11:11:11.123Z[UTC]"),
+                        ImmutableSet.of(actualRecordOne.get("ts"), actualRecordTwo.get("ts")));
 
     // Get the data for stage "transform" in the PreviewStore, should contain two records.
     checkPreviewStore(previewManager, previewId, "transform", 2);
