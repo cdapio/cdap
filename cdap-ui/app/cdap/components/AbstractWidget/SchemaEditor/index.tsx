@@ -110,6 +110,9 @@ class SchemaEditorBase extends React.Component<ISchemaEditorProps, ISchemaEditor
       }
       newState.errors = mapOfRowIdToError;
     }
+    if (errors === null) {
+      newState.errors = errors;
+    }
     if (Object.keys(newState).length) {
       this.setState(newState as ISchemaEditorState);
     }
