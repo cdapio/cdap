@@ -109,7 +109,7 @@ interface ICreateState {
   setTargetPluginWidget: (targetPluginWidget: IWidgetJson) => void;
   setTargetConfig: (targetConfig: IPluginConfig) => void;
   setTables: (tables: ITablesStore, columns: IColumnsStore, dmlBlacklist: IDMLStore) => void;
-  setAdvanced: (offsetBasePath, numInstances) => void;
+  setAdvanced: (numInstances) => void;
   getReplicatorConfig: () => any;
   saveDraft: () => Observable<any>;
   setColumns: (columns, callback) => void;
@@ -173,8 +173,8 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     this.setState({ tables, columns, dmlBlacklist });
   };
 
-  public setAdvanced = (offsetBasePath, numInstances) => {
-    this.setState({ offsetBasePath, numInstances });
+  public setAdvanced = (numInstances) => {
+    this.setState({ numInstances });
   };
 
   // for use in Assessment Table Mapping
