@@ -19,6 +19,7 @@ package io.cdap.cdap.internal.app.services;
 import com.google.inject.Inject;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
+import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.app.RunIds;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -120,6 +121,9 @@ public class SystemProgramManagementService extends AbstractRetryableScheduledSe
       LOG.debug("Starting program {} with args {}", programId, overrides);
       try {
         programLifecycleService.start(programId, overrides, false);
+      } catch (ConflictException ex) {
+        // Ignore if the program is already running.
+        LOG.debug("Program {} is already running.", programId);
       } catch (Exception ex) {
         LOG.warn("Could not start program {} , will be retried in next run.", programId, ex);
       }
