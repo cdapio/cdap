@@ -282,12 +282,36 @@ class HydratorPlusPlusPluginConfigFactory {
     return groupConfig;
   }
 
-  validatePluginProperties(nodeInfo, widgetJson, errorCb) {
+  validatePluginProperties(nodeInfo, widgetJson, errorCb, validationFromGetSchema) {
     // for post-run plugins, use nodeInfo. For other plugins, get plugin property.
     const pluginInfo = nodeInfo.plugin ? nodeInfo.plugin : nodeInfo;
+    const schemaProperty = this.myHelpers.objectQuery(widgetJson, 'outputs', 0, 'name');
     const plugin = angular.copy(pluginInfo);
     if (!plugin.type) {
       plugin.type = nodeInfo.type;
+    }
+    /**
+     * TODO: CDAP-17535
+     * - TL;DR - We need to remove the schema property when getting schema for the plugin.
+     * - Longer version
+     * The validation API does couple of things today,
+     *  - Validates plugin properties (plugin specific logic)
+     *  - Updates output schema if none provided
+     *
+     * 1. During validation it validates all the plugin properties (including input schema(s))
+     * 2. If there is a schema it tries to validate the schema
+     * 3. If the validation seemingly passes, it doesn't change the schema
+     *
+     * This results in unexpected behavior when user tries to use the 'Get Schema' button in the plugin
+     * Since UI passes all the properties of the plugin, validation API does not update the output schema.
+     *
+     * So we remove the schema property to be able to update the schema from backend only for generating schema.
+     * If the plugin doesn't generate a new schema UI won't update.
+     *
+     * While validating the plugin UI should not remove the schema property(existing behavior).
+     */
+    if (schemaProperty && validationFromGetSchema) {
+      delete plugin.properties[schemaProperty];
     }
     const requestBody = {
       stage: {
