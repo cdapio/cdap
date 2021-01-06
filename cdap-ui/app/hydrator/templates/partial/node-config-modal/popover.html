@@ -82,8 +82,11 @@
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[1].label}}
           </li>
           <li role="presentation"
-              ng-click="HydratorPlusPlusNodeConfigCtrl.activeTab = 3"
-              ng-class="{active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3}">
+              ng-click="HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin ? HydratorPlusPlusNodeConfigCtrl.activeTab = 3 : null"
+              ng-class="{
+                active: HydratorPlusPlusNodeConfigCtrl.activeTab === 3,
+                'disabled': !HydratorPlusPlusNodeConfigCtrl.state.isValidPlugin
+              }">
             {{::HydratorPlusPlusNodeConfigCtrl.tabs[2].label}}
           </li>
           <li role="presentation"
