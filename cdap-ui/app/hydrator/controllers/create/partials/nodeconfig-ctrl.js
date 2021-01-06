@@ -140,6 +140,13 @@ class HydratorPlusPlusNodeConfigCtrl {
             isAction: this.GLOBALS.pluginConvert[pluginType] === 'action',
             isCondition: this.GLOBALS.pluginConvert[pluginType] === 'condition',
           });
+        }, (err) => {
+          if (err && err.statusCode === 404) {
+            // This is when plugin artifact is unavailable. Show appropriate message.
+            this.state.configfetched = true;
+            this.state.noproperty = 0;
+            this.state.isValidPlugin = false;
+          }
         });
   }
 

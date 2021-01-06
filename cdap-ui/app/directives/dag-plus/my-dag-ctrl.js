@@ -1738,7 +1738,16 @@ angular.module(PKG.name + '.commons')
       vm.pluginsMap = AvailablePluginsStore.getState().plugins.pluginsMap;
       $scope.nodes.forEach(node => {
         let key = generatePluginMapKey(node);
-        node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) ;
+        // This is to check if the plugin version is a range. If so, mark the plugin
+        // as available and UI will decide on the specific version while opening the plugin.
+        if (
+            myHelpers.objectQuery(node, 'plugin', 'artifact', 'version') &&
+            node.plugin.artifact.version.indexOf('[') === 0
+          ) {
+          node.isPluginAvailable = true;
+        } else {
+          node.isPluginAvailable = Boolean(myHelpers.objectQuery(vm.pluginsMap, key, 'pluginInfo')) ;
+        }
       });
       if (!_.isEmpty(vm.pluginsMap)) {
         addErrorAlertsEndpointsAndConnections();
