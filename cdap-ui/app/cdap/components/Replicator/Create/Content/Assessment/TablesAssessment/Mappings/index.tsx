@@ -210,10 +210,12 @@ const MappingsView: React.FC<IMappingsProps> = ({
         const existingColumns = updatedColumns ? updatedColumns : columns.get(key);
         const columnRowMap = {};
 
-        existingColumns.forEach((column) => {
-          const columnName = column.get('name') as string;
-          columnRowMap[columnName] = column.get('suppressWarning') || false;
-        });
+        if (existingColumns) {
+          existingColumns.forEach((column) => {
+            const columnName = column.get('name') as string;
+            columnRowMap[columnName] = column.get('suppressWarning') || false;
+          });
+        }
 
         const checkSuppressedWarning = sortedColumns.map((row) => {
           return {
