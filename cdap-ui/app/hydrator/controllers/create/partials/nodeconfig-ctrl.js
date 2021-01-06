@@ -555,7 +555,7 @@ class HydratorPlusPlusNodeConfigCtrl {
         callback();
       }
     };
-    this.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(nodeInfo, this.state.config, errorCb);
+    this.HydratorPlusPlusPluginConfigFactory.validatePluginProperties(nodeInfo, this.state.config, errorCb, validationFromGetSchema);
   }
 
   // MACRO ENABLED SCHEMA
