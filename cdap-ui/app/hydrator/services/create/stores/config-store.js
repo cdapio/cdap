@@ -774,7 +774,13 @@ class HydratorPlusPlusConfigStore {
     this.state.config.schedule = schedule;
   }
 
-  validateState(isShowConsoleMessage) {
+  validateState(validationConfig) {
+    if (!validationConfig) {
+      validationConfig = {
+        showConsoleMessage: false,
+        validateBeforePreview: false
+      };
+    }
     let isStateValid = true;
     let name = this.getName();
     let errorFactory = this.NonStorePipelineErrorFactory;
@@ -798,7 +804,7 @@ class HydratorPlusPlusConfigStore {
       } else {
         node.warning = true;
       }
-      if (isShowConsoleMessage) {
+      if (validationConfig.showConsoleMessage) {
         node.error = true;
         delete node.warning;
       }
@@ -830,14 +836,16 @@ class HydratorPlusPlusConfigStore {
       });
     }
 
-    errorFactory.hasValidName(name, (err) => {
-      if (err) {
-        isStateValid = false;
-        errors.push({
-          type: err
-        });
-      }
-    });
+    if (!validationConfig.validateBeforePreview) {
+      errorFactory.hasValidName(name, (err) => {
+        if (err) {
+          isStateValid = false;
+          errors.push({
+            type: err
+          });
+        }
+      });
+    }
     errorFactory.hasNoBackendProperties(nodes, errorNodes => {
       if (errorNodes) {
         isStateValid = false;
@@ -927,7 +935,7 @@ class HydratorPlusPlusConfigStore {
       });
     }
 
-    if (errors.length && isShowConsoleMessage) {
+    if (errors.length && validationConfig.showConsoleMessage) {
       this.HydratorPlusPlusConsoleActions.addMessage(errors);
     }
     return isStateValid;
@@ -1109,7 +1117,9 @@ class HydratorPlusPlusConfigStore {
 
   publishPipeline() {
     this.HydratorPlusPlusConsoleActions.resetMessages();
-    let error = this.validateState(true);
+    let error = this.validateState({
+      showConsoleMessage: true
+    });
 
     if (!error) { return; }
     this.EventPipe.emit('showLoadingIcon', 'Deploying Pipeline...');
