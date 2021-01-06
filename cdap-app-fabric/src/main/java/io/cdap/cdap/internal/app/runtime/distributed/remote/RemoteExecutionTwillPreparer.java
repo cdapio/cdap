@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.app.runtime.distributed.remote;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
@@ -156,7 +157,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   }
 
   private void validateKerberos(@Nullable String principal, @Nullable String keytab, SSHSession session) {
-    if (principal == null || keytab == null) {
+    if (Strings.isNullOrEmpty(principal) || Strings.isNullOrEmpty(keytab)) {
       return;
     }
 
@@ -363,7 +364,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     Map<String, String> args = new LinkedHashMap<>();
     args.put(RemoteExecutionJobMain.RUN_ID, getProgramRunId().getRun());
 
-    if (kerberosPrincipal != null && kerberosKeytab != null) {
+    if (!Strings.isNullOrEmpty(kerberosPrincipal) && !Strings.isNullOrEmpty(kerberosKeytab)) {
       args.put(ClusterProperties.KERBEROS_PRINCIPAL, kerberosPrincipal);
       args.put(ClusterProperties.KERBEROS_KEYTAB, kerberosKeytab);
     }
