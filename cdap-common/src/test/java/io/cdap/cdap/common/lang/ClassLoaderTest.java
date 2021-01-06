@@ -229,6 +229,15 @@ public class ClassLoaderTest {
     } catch (Exception e) {
       Assert.assertEquals("fail state t2", Throwables.getRootCause(e).getMessage());
     }
+
+    // Call the newly added method checkNotNull(boolean, String, Object)
+    method = cls.getMethod("checkNotNull", Object.class, String.class, Object.class);
+    method.invoke(null, "a", "check not null %s", "t3");
+    try {
+      method.invoke(null, null, "fail null %s", "t3");
+    } catch (Exception e) {
+      Assert.assertEquals("fail null t3", Throwables.getRootCause(e).getMessage());
+    }
   }
 
   @Test
