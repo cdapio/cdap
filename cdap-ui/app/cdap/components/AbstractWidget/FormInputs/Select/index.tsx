@@ -80,7 +80,7 @@ const InlineSelect = withStyles(() => {
 
 interface ISelectOptions {
   value: string | number; // We need to expand this when we have complex use cases
-  label: string;
+  label: string | React.ReactNode;
 }
 
 interface ISelectWidgetProps extends SelectProps {
