@@ -118,6 +118,12 @@ export default class PublishPipelineWizard extends Component {
   publishPipeline() {
     let action = this.props.input.action;
     let artifact = head(action.arguments.filter((arg) => arg.name === 'artifact')).value;
+    if (artifact.scope) {
+      // CDAP-17500 - This is a side effect of moving to new draft API.
+      // The new draft API doesn't accept scope that is not capital case. So
+      // a `scope: 'system'` is ignored and publishing the pipeline fails.
+      artifact = { ...artifact, scope: artifact.scope.toUpperCase() };
+    }
     let { name, pipelineConfig } = PublishPipelineWizardStore.getState().pipelinemetadata;
     let draftConfig = {
       artifact,
