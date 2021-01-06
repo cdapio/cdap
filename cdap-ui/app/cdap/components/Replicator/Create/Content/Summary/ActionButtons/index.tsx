@@ -45,7 +45,7 @@ const styles = (theme): StyleRules => {
 
 enum REDIRECT_TARGET {
   detail = 'detail',
-  list = 'list',
+  drafts = 'drafts',
 }
 
 const ActionButtonsView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
@@ -116,7 +116,7 @@ const ActionButtonsView: React.FC<ICreateContext & WithStyles<typeof styles>> = 
   function saveAndClose() {
     saveDraft().subscribe(
       () => {
-        setRedirect(REDIRECT_TARGET.list);
+        setRedirect(REDIRECT_TARGET.drafts);
       },
       (err) => {
         setError(err);
@@ -128,6 +128,8 @@ const ActionButtonsView: React.FC<ICreateContext & WithStyles<typeof styles>> = 
     let redirectLink = `/ns/${getCurrentNamespace()}/replication`;
     if (redirect === REDIRECT_TARGET.detail) {
       redirectLink = `${redirectLink}/detail/${name}`;
+    } else {
+      redirectLink = `${redirectLink}/drafts`;
     }
 
     return <Redirect to={redirectLink} />;

@@ -54,33 +54,6 @@ const styles = (): StyleRules => {
   };
 };
 
-const OffsetBasePathEditor = ({ onChange, value }) => {
-  const widget = {
-    label: 'Path',
-    name: 'offset',
-    'widget-type': 'textbox',
-    'widget-attributes': {
-      placeholder: 'Path for checkpoint storage location',
-    },
-  };
-
-  const property = {
-    required: false,
-    name: 'offset',
-    description:
-      'This is the directory where checkpoints for the replication pipeline are stored, so the pipeline can resume from a previous checkpoint, instead of starting from the beginning if it is restarted.',
-  };
-
-  return (
-    <WidgetWrapper
-      widgetProperty={widget}
-      pluginProperty={property}
-      value={value}
-      onChange={onChange}
-    />
-  );
-};
-
 const NumInstancesEditor = ({ onChange, value }) => {
   const widget = {
     label: 'Number of tasks',
@@ -165,11 +138,9 @@ const TASK_OPTIONS = {
 
 const AdvancedView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   classes,
-  offsetBasePath,
   numInstances,
   setAdvanced,
 }) => {
-  const [localOffset, setLocalOffset] = React.useState(offsetBasePath);
   const [localNumInstances, setLocalNumInstances] = React.useState(numInstances);
   const [taskSelection, setTaskSelection] = React.useState(TASK_OPTIONS.calculate);
   const [dataAmount, setDataAmount] = React.useState(1);
@@ -195,7 +166,7 @@ const AdvancedView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
       selectedNumInstance = dataAmount;
     }
 
-    setAdvanced(localOffset, selectedNumInstance);
+    setAdvanced(selectedNumInstance);
   }
 
   function handleSelectTask(e) {
@@ -241,10 +212,6 @@ const AdvancedView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
           </div>
         </If>
       </div>
-
-      <Heading type={HeadingTypes.h4} label="Checkpoint" />
-      <br />
-      <OffsetBasePathEditor value={localOffset} onChange={setLocalOffset} />
 
       <StepButtons onNext={handleNext} />
     </div>
