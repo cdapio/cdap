@@ -182,7 +182,6 @@ class CapabilityApplier {
       capabilityStatusStore
         .addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
       capabilityStatusStore.deleteCapabilityOperation(capability);
-      LOG.debug("Enabled capability {}", capability);
     }
   }
 
@@ -204,7 +203,6 @@ class CapabilityApplier {
       doForAllAppsWithCapability(capability,
                                  applicationId -> doWithRetry(applicationId, programLifecycleService::stopAll));
       capabilityStatusStore.deleteCapabilityOperation(capability);
-      LOG.debug("Disabled capability {}", capability);
     }
   }
 
@@ -234,7 +232,6 @@ class CapabilityApplier {
       }
       capabilityStatusStore.deleteCapability(capability);
       capabilityStatusStore.deleteCapabilityOperation(capability);
-      LOG.debug("Deleted capability {}", capability);
     }
   }
 
