@@ -1,0 +1,36 @@
+{
+  "type": "validatingInputFormat",
+  "name": "blob",
+  "description": "Plugin for reading files in blob format.",
+  "className": "io.cdap.plugin.format.blob.input.BlobInputFormatProvider",
+  "configFieldName": "conf",
+  "properties": {
+    "schema": {
+      "name": "schema",
+      "description": "Schema of the data to read.",
+      "type": "string",
+      "required": false,
+      "macroSupported": true,
+      "macroEscapingEnabled": false
+    },
+    "filenameOnly": {
+      "name": "filenameOnly",
+      "description": "Whether to only use the filename instead of the URI of the",
+      "type": "boolean",
+      "required": false,
+      "macroSupported": true,
+      "macroEscapingEnabled": false
+    },
+    "pathField": {
+      "name": "pathField",
+      "description": "Output",
+      "type": "string",
+      "required": false,
+      "macroSupported": true,
+      "macroEscapingEnabled": false
+    }
+  },
+  "requirements": {
+    "datasetTypes": []
+  }
+}
