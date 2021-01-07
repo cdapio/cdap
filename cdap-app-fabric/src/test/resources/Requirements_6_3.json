@@ -1,0 +1,4 @@
+{
+  "datasetTypes": ["d1", "d2"],
+  "capabilities": ["c1","c2"]
+}
