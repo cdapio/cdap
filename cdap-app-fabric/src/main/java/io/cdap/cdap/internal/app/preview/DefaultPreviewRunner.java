@@ -325,7 +325,7 @@ public class DefaultPreviewRunner extends AbstractIdleService implements Preview
           ProgramId programId = GSON.fromJson(reader, ProgramId.class);
           long submitTimeMillis = RunIds.getTime(programId.getApplication(), TimeUnit.MILLISECONDS);
           PreviewStatus status = new PreviewStatus(
-            PreviewStatus.Status.RUN_FAILED, submitTimeMillis,
+            PreviewStatus.Status.KILLED_BY_EXCEEDING_MEMORY_LIMIT, submitTimeMillis,
             new BasicThrowable(new Exception("Preview runner container killed possibly because of out of memory. " +
                                                "Please try running preview again.")),
             null, null);

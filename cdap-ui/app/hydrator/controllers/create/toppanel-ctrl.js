@@ -768,6 +768,7 @@ class HydratorPlusPlusTopPanelCtrl {
         DEPLOY_FAILED,
         RUN_FAILED,
         KILLED_BY_TIMER,
+        KILLED_BY_EXCEEDING_MEMORY_LIMIT
       } = window.CaskCommon.PREVIEW_STATUS;
       this.updateTimerLabelAndTitle(res);
       if ([RUNNING, INIT, ACQUIRED, WAITING].indexOf(res.status) === -1) {
@@ -779,8 +780,14 @@ class HydratorPlusPlusTopPanelCtrl {
             type: 'success',
             content: `${pipelinePreviewPlaceholder} has completed successfully.`
           });
-        } else if (res.status === DEPLOY_FAILED || res.status === RUN_FAILED) {
+        } else {
           let failureMsg = this.myHelpers.objectQuery(res, 'throwable', 'message') || `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`;
+          if (res.status === DEPLOY_FAILED || res.status === KILLED_BY_EXCEEDING_MEMORY_LIMIT) {
+            failureMsg = this.myHelpers.objectQuery(res, 'throwable', 'message') || 'Unable to run preview. Please try again in sometime.';
+          }
+          if (res.status === RUN_FAILED) {
+            failureMsg = `${pipelinePreviewPlaceholder} has failed. Please check the logs for more information.`;
+          }
           this.myAlertOnValium.show({
             type: 'danger',
             content: failureMsg,
