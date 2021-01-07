@@ -110,7 +110,14 @@ const NameDescriptionView: React.FC<INameDescriptionProps> = ({
   function handleNameChange(value) {
     setLocalName(value);
 
-    if (!isValidEntityName(value)) {
+    if (value.length > 64) {
+      const errorArr = [
+        {
+          msg: 'Name cannot be longer than 64 characters.',
+        },
+      ];
+      setNameError(errorArr);
+    } else if (!isValidEntityName(value)) {
       const errorArr = [
         {
           msg: 'Name is required. Name may only contain alphanumeric, -, and _',

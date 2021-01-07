@@ -124,18 +124,21 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   useEffect(filterTableBySearch, [search, tables]);
 
   useEffect(() => {
-    if (!offsetBasePath || offsetBasePath.length === 0) {
-      return;
-    }
-
     const params = {
       namespace: getCurrentNamespace(),
     };
 
-    const body = {
+    interface IRequestBody {
+      name: string;
+      offsetBasePath?: string;
+    }
+    const body: IRequestBody = {
       name,
-      offsetBasePath,
     };
+
+    if (offsetBasePath && offsetBasePath.length > 0) {
+      body.offsetBasePath = offsetBasePath;
+    }
 
     // TODO: optimize polling
     // Don't poll when status is not running

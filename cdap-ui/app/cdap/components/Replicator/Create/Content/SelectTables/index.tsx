@@ -155,6 +155,9 @@ const styles = (theme): StyleRules => {
         marginRight: '10px',
       },
     },
+    invalidTable: {
+      color: theme.palette.red[100],
+    },
     pointer: {
       cursor: 'pointer',
     },
@@ -291,7 +294,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
   };
 
   private toggleSelectAll = () => {
-    if (this.state.selectedTables.size > 0) {
+    if (this.state.selectedTables && this.state.selectedTables.size > 0) {
       this.setState({
         selectedTables: this.state.selectedTables.clear(),
       });
@@ -448,6 +451,18 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     return row.table === openTable.table && row.database === openTable.database;
   };
 
+  private isNextDisabled = () => {
+    const errorTables = this.state.selectedTables.filter(this.isTableSelectionInvalid);
+    return errorTables.size > 0;
+  };
+
+  private isTableSelectionInvalid = (tableInfo) => {
+    const tableKey = generateTableKey(tableInfo);
+    const dmlBlacklist = this.state.dmlBlacklist.get(tableKey);
+
+    return dmlBlacklist && dmlBlacklist.size === 3;
+  };
+
   private renderContent = () => {
     if (this.state.error) {
       return null;
@@ -526,6 +541,9 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                 const columns = this.state.columns.get(key);
                 const tableDML = this.state.dmlBlacklist.get(key) || Set<DML>();
 
+                const isTableInvalid = checked && this.isTableSelectionInvalid(row);
+                const errorDescription = !isTableInvalid ? null : 'Select events to replicate';
+
                 return (
                   <div
                     key={`${key}${i}`}
@@ -541,7 +559,13 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                         className={classes.checkbox}
                       />
                     </div>
-                    <div onClick={this.openTable.bind(this, row)} className={classes.pointer}>
+                    <div
+                      onClick={this.openTable.bind(this, row)}
+                      className={classnames(classes.pointer, {
+                        [classes.invalidTable]: isTableInvalid,
+                      })}
+                      title={errorDescription}
+                    >
                       {row.table}
                     </div>
                     <div
@@ -608,7 +632,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
             </div>
           </div>
         </div>
-        <StepButtons onNext={this.handleNext} />
+        <StepButtons onNext={this.handleNext} nextDisabled={this.isNextDisabled()} />
       </React.Fragment>
     );
   };
