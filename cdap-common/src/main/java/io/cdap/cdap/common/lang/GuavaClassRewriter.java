@@ -81,8 +81,8 @@ public class GuavaClassRewriter implements ClassRewriter {
   }
 
   /**
-   * Rewrites the {@link Preconditions} class to add various {@code checkArgument} and {@code checkState} methods
-   * that are missing in earlier Guava library.
+   * Rewrites the {@link Preconditions} class to add various {@code checkArgument}, {@code checkState},
+   * and {@code checkNotNull} methods that are missing in earlier Guava library.
    *
    * @param input the bytecode stream of the Preconditions class
    * @return the rewritten bytecode
@@ -100,21 +100,33 @@ public class GuavaClassRewriter implements ClassRewriter {
     // There are multiple of them, each take one or combinations of two parameters of type Object, char, int, and long
     // for the string formatting template to use
     List<Method> methods = new ArrayList<>();
-    for (String methodName : Arrays.asList("checkArgument", "checkState")) {
+    // Carry the list of method templates for generating new methods.
+    // Each template contains the method name, the first argument type, and the return type.
+    List<Method> methodTemplates = Arrays.asList(
+      new Method("checkArgument", Type.VOID_TYPE, new Type[] { Type.BOOLEAN_TYPE }),
+      new Method("checkState", Type.VOID_TYPE, new Type[] { Type.BOOLEAN_TYPE }),
+      new Method("checkNotNull", Type.getType(Object.class), new Type[] { Type.getType(Object.class) })
+    );
+
+    for (Method method : methodTemplates) {
+      String methodName = method.getName();
+      Type returnType = method.getReturnType();
+      Type firstArgType = method.getArgumentTypes()[0];
+
       for (Type type : types) {
-        methods.add(new Method(methodName, Type.VOID_TYPE,
-                               new Type[] { Type.BOOLEAN_TYPE, STRING_TYPE, type }));
+        methods.add(new Method(methodName, returnType,
+                               new Type[] { firstArgType, STRING_TYPE, type }));
         for (Type type2 : types) {
-          methods.add(new Method(methodName, Type.VOID_TYPE,
-                                 new Type[] { Type.BOOLEAN_TYPE, STRING_TYPE, type, type2 }));
+          methods.add(new Method(methodName, returnType,
+                                 new Type[] { firstArgType, STRING_TYPE, type, type2 }));
         }
       }
 
       // Later version of Preconditions class also added methods that take three and four Objects
-      methods.add(new Method(methodName, Type.VOID_TYPE,
-                             new Type[] { Type.BOOLEAN_TYPE, STRING_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
-      methods.add(new Method(methodName, Type.VOID_TYPE,
-                             new Type[] { Type.BOOLEAN_TYPE, STRING_TYPE,
+      methods.add(new Method(methodName, returnType,
+                             new Type[] { firstArgType, STRING_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
+      methods.add(new Method(methodName, returnType,
+                             new Type[] { firstArgType, STRING_TYPE,
                                OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE, OBJECT_TYPE}));
     }
 
@@ -249,7 +261,7 @@ public class GuavaClassRewriter implements ClassRewriter {
           adapter.loadLocal(objectArray);
           adapter.push(i);
           adapter.loadArg(i + 2);
-          // If the given argument is not Object, turn it into a String
+          // If the given argument is not an Object, turn it into a String
           if (argType.getSort() != Type.OBJECT) {
             adapter.invokeStatic(STRING_TYPE, new Method("valueOf", STRING_TYPE, new Type[] { argType }));
           }
@@ -259,10 +271,10 @@ public class GuavaClassRewriter implements ClassRewriter {
 
         // Call the varargs method
         adapter.invokeStatic(Type.getObjectType(PRECONDTIONS_CLASS_NAME.replace('.', '/')),
-                             new Method(method.getName(), Type.VOID_TYPE,
+                             new Method(method.getName(), method.getReturnType(),
                                         new Type[] {
-                                          Type.BOOLEAN_TYPE,
-                                          STRING_TYPE,
+                                          method.getArgumentTypes()[0],
+                                          method.getArgumentTypes()[1],
                                           Type.getType(Object[].class)
                                         }));
         adapter.returnValue();
