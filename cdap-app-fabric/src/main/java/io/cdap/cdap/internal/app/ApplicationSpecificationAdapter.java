@@ -30,6 +30,7 @@ import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.customaction.CustomActionSpecification;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.mapreduce.MapReduceSpecification;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.api.schedule.Trigger;
 import io.cdap.cdap.api.service.ServiceSpecification;
 import io.cdap.cdap.api.spark.SparkSpecification;
@@ -37,6 +38,7 @@ import io.cdap.cdap.api.worker.WorkerSpecification;
 import io.cdap.cdap.api.workflow.ConditionSpecification;
 import io.cdap.cdap.api.workflow.WorkflowNode;
 import io.cdap.cdap.api.workflow.WorkflowSpecification;
+import io.cdap.cdap.internal.app.runtime.artifact.RequirementsCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.constraint.ConstraintCodec;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.SatisfiableTrigger;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.TriggerCodec;
@@ -93,7 +95,8 @@ public final class ApplicationSpecificationAdapter {
       .registerTypeAdapter(Trigger.class, new TriggerCodec())
       .registerTypeAdapter(SatisfiableTrigger.class, new TriggerCodec())
       .registerTypeAdapter(Constraint.class, new ConstraintCodec())
-      .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory());
+      .registerTypeAdapterFactory(new AppSpecTypeAdapterFactory())
+      .registerTypeAdapter(Requirements.class, new RequirementsCodec());
   }
 
   /**
