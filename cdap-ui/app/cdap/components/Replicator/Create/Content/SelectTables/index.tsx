@@ -71,7 +71,7 @@ const styles = (theme): StyleRules => {
         },
 
         '& .grid-row': {
-          gridTemplateColumns: '40px 1fr 75px 50px 100px 70px 120px 120px 120px',
+          gridTemplateColumns: '40px 1fr 100px 100px 120px 120px 120px',
           alignItems: 'center',
 
           '&:hover $openOverviewLink': {
@@ -123,12 +123,8 @@ const styles = (theme): StyleRules => {
         color: theme.palette.blue[200],
       },
     },
-    tableHeaderColumn: {
-      gridColumn: '3 / span 3',
-      textAlign: 'center',
-    },
     tableHeaderEvents: {
-      gridColumn: '7 / span 3',
+      gridColumn: '5 / span 3',
       textAlign: 'center',
     },
     count: {
@@ -476,11 +472,6 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
           <div className={`grid grid-container grid-compact`}>
             <div className="grid-header">
               <div className="grid-row grouping-row">
-                <div className={`${classes.tableHeaderColumn} ${classes.groupHeader}`}>
-                  <hr className={classes.groupLine} />
-                  <div className={classes.groupText}>Column selection</div>
-                </div>
-
                 <div className={`${classes.tableHeaderEvents} ${classes.groupHeader}`}>
                   <hr className={classes.groupLine} />
                   <div className={classes.groupText}>Events to replicate</div>
@@ -500,8 +491,6 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                   />
                 </div>
                 <div>Table name</div>
-                <div className={classes.count}>Total columns</div>
-                <div />
                 <div className={classes.count}>Columns to replicate</div>
                 <div />
                 <div>
@@ -568,13 +557,6 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                     >
                       {row.table}
                     </div>
-                    <div
-                      className={`${classes.pointer} ${classes.count}`}
-                      onClick={this.openTable.bind(this, row)}
-                    >
-                      {row.numColumns}
-                    </div>
-                    <div onClick={this.openTable.bind(this, row)} className={classes.pointer} />
                     <div
                       className={`${classes.pointer} ${classes.count}`}
                       onClick={this.openTable.bind(this, row)}
