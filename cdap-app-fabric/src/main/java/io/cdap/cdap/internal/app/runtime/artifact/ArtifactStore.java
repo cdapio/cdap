@@ -34,6 +34,7 @@ import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.api.plugin.PluginClass;
+import io.cdap.cdap.api.plugin.Requirements;
 import io.cdap.cdap.common.ArtifactAlreadyExistsException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -177,6 +178,7 @@ public class ArtifactStore {
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
     .registerTypeAdapter(ArtifactRange.class, new ArtifactRangeCodec())
     .registerTypeAdapter(ApplicationClass.class, new ApplicationClassCodec())
+    .registerTypeAdapter(Requirements.class, new RequirementsCodec())
     .create();
 
   private final LocationFactory locationFactory;
