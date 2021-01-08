@@ -103,8 +103,6 @@ public class ETLSpark extends AbstractSpark {
     // to make sure fields that are the same but different casing are treated as different fields in auto-joins
     // see CDAP-17024
     sparkConf.set("spark.sql.caseSensitive", "true");
-    // Turn on adaptive query execution for perfomance optimization in Spark 3.
-    sparkConf.set("spark.sql.adaptive.enabled", "true");
     context.setSparkConf(sparkConf);
 
     Map<String, String> properties = context.getSpecification().getProperties();
