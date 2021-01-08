@@ -17,11 +17,11 @@
 import { extractConfig } from 'server/config/parser';
 import memoize from 'lodash/memoize';
 
-async function extractCDAPConfig() {
+async function extractCDAPConfig(param = 'cdap') {
   let cdapConfig;
 
   try {
-    cdapConfig = await extractConfig('cdap');
+    cdapConfig = await extractConfig(param);
   } catch (e) {
     return Promise.reject(e);
   }
