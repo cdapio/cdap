@@ -130,16 +130,13 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
   return (
     <div className={classes.root}>
-      <div className={classes.headerText}>
-        {replicators.length} replication {replicators.length === 1 ? 'pipeline' : 'pipelines'} -
-        Select a row to view details
-      </div>
+      <div className={classes.headerText}>{replicators.length} deployed</div>
 
       <div className={`grid-wrapper ${classes.gridWrapper}`}>
         <div className="grid grid-container grid-compact">
           <div className="grid-header">
             <div className="grid-row">
-              <div>Replication pipeline name</div>
+              <div>Name</div>
               <div>From / To</div>
               <div>Status</div>
               <div />

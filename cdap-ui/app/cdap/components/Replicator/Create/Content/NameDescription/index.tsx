@@ -46,7 +46,8 @@ const Name = ({ setName, value, error }) => {
     name: 'name',
     'widget-type': 'textbox',
     'widget-attributes': {
-      placeholder: 'Select a name for the replication pipeline',
+      placeholder:
+        'Specify a name containing alphanumeric characters, underscores, and dashes only',
     },
   };
 
@@ -72,7 +73,7 @@ const Description = ({ setDescription, value }) => {
     name: 'description',
     'widget-type': 'textbox',
     'widget-attributes': {
-      placeholder: 'Enter a description for the replication pipeline',
+      placeholder: 'Enter a description',
     },
   };
 
@@ -134,7 +135,7 @@ const NameDescriptionView: React.FC<INameDescriptionProps> = ({
   return (
     <div className={classes.root}>
       <div className={classes.content}>
-        <Heading type={HeadingTypes.h3} label="Name replication pipeline" />
+        <Heading type={HeadingTypes.h3} label="Specify basic information" />
         <br />
         <Name value={localName} setName={handleNameChange} error={nameError} />
         <If condition={!!nameError}>
