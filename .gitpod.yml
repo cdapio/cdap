@@ -19,16 +19,9 @@ github:
     addLabel: false
 tasks: 
   - init: >-
-      cd /workspace &&
-      git clone https://github.com/caskdata/hydrator-plugins.git &&
-      cd hydrator-plugins &&
-      git submodule update --init --recursive --remote &&
-      mvn clean package -DskipTests &&
-      cd /workspace/cdap &&
-      MAVEN_OPTS="-Xmx2048m " mvn package -pl cdap-standalone,cdap-app-templates/cdap-etl -am -amd -DskipTests -P templates,dist -Dadditional.artifacts.dir=/workspace/hydrator-plugins &&
-      cd /workspace/cdap/cdap-standalone/target/sdk &&
-      cd $(ls -d */|head -n 1) &&
-      ./bin/cdap sandbox start
+      cd /workspace/cdap/cdap-ui/gitpod &&
+      yarn
+      yarn setup
     command: >-
       cd /workspace/cdap/cdap-ui &&
       yarn &&
