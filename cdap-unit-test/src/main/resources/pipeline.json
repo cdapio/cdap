@@ -6,6 +6,7 @@
     {
       "namespace": "system",
       "name": "pipeline",
+      "version": "-SNAPSHOT",
       "artifact": {
         "name": "cdap-data-pipeline",
         "version": "[6.0.0, 10.0.0)",
@@ -22,7 +23,7 @@
       "application": "pipeline",
       "name": "studio",
       "namespace": "system",
-      "version": "[6.0.0, 10.0.0)"
+      "version": "-SNAPSHOT"
     }
   ]
 }

@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
@@ -90,7 +89,7 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
       try (Reader reader = new FileReader(configFile)) {
         CapabilityConfig capabilityConfig = GSON.fromJson(reader, CapabilityConfig.class);
         capabilityConfigs.add(capabilityConfig);
-      } catch (IOException exception) {
+      } catch (Exception exception) {
         LOG.debug("Exception reading capability config file {}", configFile, exception);
       }
     }
