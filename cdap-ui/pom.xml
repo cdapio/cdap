@@ -182,6 +182,7 @@
                   <exclude>**/*.snap</exclude>
                   <exclude>**/*.rst</exclude>
                   <exclude>**/cypress/fixtures/**</exclude>
+                  <exclude>**/gitpod/**</exclude>
                 </excludes>
               </configuration>
             </execution>
