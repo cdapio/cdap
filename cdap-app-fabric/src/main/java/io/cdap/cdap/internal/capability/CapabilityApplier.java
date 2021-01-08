@@ -246,13 +246,17 @@ class CapabilityApplier {
     return new ProgramId(applicationId, ProgramType.valueOf(program.getType().toUpperCase()), program.getName());
   }
 
-  private void deployAllSystemApps(String capability, List<SystemApplication> applications) throws Exception {
+  private void deployAllSystemApps(String capability, List<SystemApplication> applications)  {
     if (applications.isEmpty()) {
       LOG.debug("Capability {} do not have apps associated with it", capability);
       return;
     }
-    for (SystemApplication application : applications) {
-      doWithRetry(application, this::deployApp);
+    try {
+      for (SystemApplication application : applications) {
+        doWithRetry(application, this::deployApp);
+      }
+    } catch (Exception exception) {
+      LOG.error("Deploying application failed", exception);
     }
   }
 

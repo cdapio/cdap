@@ -232,8 +232,9 @@ public class TestBase {
     previewLevelDBTableService.setConfiguration(previewCConf);
 
     //enable default services
-    cConf.set(Constants.Capability.CONFIG_DIR, localDataDir.toString());
-    File capabilityFolder = new File(localDataDir.toString());
+    File capabilityFolder = new File(localDataDir.toString(), "capability");
+    capabilityFolder.mkdir();
+    cConf.set(Constants.Capability.CONFIG_DIR, capabilityFolder.getAbsolutePath());
     copyTempFile("pipeline.json", capabilityFolder);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
