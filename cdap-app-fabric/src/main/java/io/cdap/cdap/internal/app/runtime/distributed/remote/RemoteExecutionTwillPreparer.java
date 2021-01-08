@@ -24,7 +24,9 @@ import io.cdap.cdap.app.runtime.ProgramOptions;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.ssh.DefaultSSHSession;
 import io.cdap.cdap.common.ssh.SSHConfig;
+import io.cdap.cdap.internal.app.spark.SparkCompatReader;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.runtime.spi.SparkCompat;
 import io.cdap.cdap.runtime.spi.provisioner.Cluster;
 import io.cdap.cdap.runtime.spi.provisioner.ClusterProperties;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
@@ -81,11 +83,13 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   private static final Logger LOG = LoggerFactory.getLogger(RemoteExecutionTwillPreparer.class);
   private static final String SETUP_SPARK_SH = "setupSpark.sh";
   private static final String SETUP_SPARK_PY = "setupSpark.py";
+  private static final String SETUP_SPARK1_PY = "setupSpark1.py";
   private static final String SPARK_ENV_SH = "sparkEnv.sh";
 
   private final Cluster cluster;
   private final SSHConfig sshConfig;
   private final Location serviceProxySecretLocation;
+  private final SparkCompat sparkCompat;
 
   RemoteExecutionTwillPreparer(CConfiguration cConf, Configuration hConf,
                                Cluster cluster, SSHConfig sshConfig, @Nullable Location serviceProxySecretLocation,
@@ -96,6 +100,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
     this.cluster = cluster;
     this.sshConfig = sshConfig;
     this.serviceProxySecretLocation = serviceProxySecretLocation;
+    this.sparkCompat = SparkCompatReader.get(cConf);
   }
 
   @Override
@@ -108,6 +113,7 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
   protected void addRuntimeConfigFiles(Path runtimeConfigDir) throws IOException {
     saveResource(runtimeConfigDir, SETUP_SPARK_SH);
     saveResource(runtimeConfigDir, SETUP_SPARK_PY);
+    saveResource(runtimeConfigDir, SETUP_SPARK1_PY);
   }
 
   @Override
@@ -138,7 +144,9 @@ class RemoteExecutionTwillPreparer extends AbstractRuntimeTwillPreparer {
       // Spark env setup script
       session.executeAndWait(String.format("bash %s/%s/%s %s/%s/%s > %s/%s",
                                            targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
-                                           targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
+                                           targetPath, Constants.Files.RUNTIME_CONFIG_JAR,
+                                           SparkCompat.SPARK1_2_10.equals(sparkCompat) ?
+                                             SETUP_SPARK1_PY : SETUP_SPARK_PY,
                                            targetPath, SPARK_ENV_SH));
 
       // Generates the launch script
