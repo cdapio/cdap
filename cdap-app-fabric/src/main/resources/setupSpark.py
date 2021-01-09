@@ -15,7 +15,10 @@
 # the License.
 
 # A simple python that runs with spark-submit to grab all SPARK environment variables
-import os
+import os, sys
+
+f = open(sys.argv[1], "w")
 for key, val in os.environ.items():
     if key.startswith("SPARK_") or key.startswith("HADOOP_"):
-        print("export {}=\"{}\"".format(key, val))
+        f.write("export {}=\"{}\"\n".format(key, val))
+f.close()
