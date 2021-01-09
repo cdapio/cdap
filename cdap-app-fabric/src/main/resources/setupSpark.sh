@@ -16,5 +16,5 @@
 #!/bin/bash
 
 if [[ $(which spark-submit 2>/dev/null) ]]; then
-  spark-submit --master local[2] $1
+  spark-submit --master local[2] $@
 fi
