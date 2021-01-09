@@ -23,7 +23,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
@@ -246,13 +245,17 @@ class CapabilityApplier {
     return new ProgramId(applicationId, ProgramType.valueOf(program.getType().toUpperCase()), program.getName());
   }
 
-  private void deployAllSystemApps(String capability, List<SystemApplication> applications) throws Exception {
+  private void deployAllSystemApps(String capability, List<SystemApplication> applications)  {
     if (applications.isEmpty()) {
       LOG.debug("Capability {} do not have apps associated with it", capability);
       return;
     }
-    for (SystemApplication application : applications) {
-      doWithRetry(application, this::deployApp);
+    try {
+      for (SystemApplication application : applications) {
+        doWithRetry(application, this::deployApp);
+      }
+    } catch (Exception exception) {
+      LOG.error("Deploying application failed", exception);
     }
   }
 
@@ -307,8 +310,7 @@ class CapabilityApplier {
 
   private boolean shouldRetry(Throwable throwable) {
     return !(throwable instanceof UnauthorizedException ||
-      throwable instanceof InvalidArtifactException ||
-      throwable instanceof ArtifactNotFoundException);
+      throwable instanceof InvalidArtifactException);
   }
 
   /**
