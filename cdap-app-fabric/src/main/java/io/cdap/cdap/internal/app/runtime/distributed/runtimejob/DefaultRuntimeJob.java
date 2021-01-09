@@ -187,12 +187,12 @@ public class DefaultRuntimeJob implements RuntimeJob {
     startCoreServices(coreServices);
 
     ProgramStateWriter programStateWriter = injector.getInstance(ProgramStateWriter.class);
+    CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
     try {
       ProgramRunner programRunner = injector.getInstance(ProgramRunnerFactory.class).create(programId.getType());
 
       // Create and run the program. The program files should be present in current working directory.
       try (Program program = createProgram(cConf, programRunner, programDescriptor, programOpts)) {
-        CompletableFuture<ProgramController.State> programCompletion = new CompletableFuture<>();
         ProgramController controller = programRunner.run(program, programOpts);
         controllerFuture.complete(controller);
 
@@ -232,6 +232,17 @@ public class DefaultRuntimeJob implements RuntimeJob {
       }
     } catch (Throwable t) {
       controllerFuture.completeExceptionally(t);
+
+      if (!programCompletion.isDone()) {
+        // We log here so that the logs would still send back to the program logs collection.
+        // Only log if the program completion is not done.
+        // Otherwise the program runner itself should have logged the error.
+        LOG.error("Failed to execute program {}", programRunId, t);
+        // If the program completion is not done, then this exception
+        // is due to systematic failure in which fail to run the program.
+        // We write out an extra error state for the program to make sure the program state get transited.
+        programStateWriter.error(programRunId, t);
+      }
       throw t;
     } finally {
       stopCoreServices(coreServices, logAppenderInitializer);
