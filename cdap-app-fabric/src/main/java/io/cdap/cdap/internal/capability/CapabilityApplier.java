@@ -23,7 +23,6 @@ import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.common.ApplicationNotFoundException;
-import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
@@ -311,8 +310,7 @@ class CapabilityApplier {
 
   private boolean shouldRetry(Throwable throwable) {
     return !(throwable instanceof UnauthorizedException ||
-      throwable instanceof InvalidArtifactException ||
-      throwable instanceof ArtifactNotFoundException);
+      throwable instanceof InvalidArtifactException);
   }
 
   /**
