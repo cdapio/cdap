@@ -31,6 +31,9 @@ import { GLOBALS, CLOUD } from 'services/global-constants';
 import { Observable } from 'rxjs/Observable';
 
 function setStateFromCron(cron = PipelineSchedulerStore.getState().cron) {
+  if (!cron) {
+    return;
+  }
   let cronValues = cron.split(' ');
   let payload = {};
   let converted12HourFormat = moment().hour(parseInt(cronValues[1]), 10);

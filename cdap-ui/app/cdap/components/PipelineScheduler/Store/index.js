@@ -226,7 +226,9 @@ const schedule = (state = DEFAULT_SCHEDULE_OPTIONS, action = defaultAction) => {
         return constraint.type === 'CONCURRENCY';
       });
       let maxConcurrencyFromBackend = objectQuery(constraintFromBackend, 'maxConcurrency');
-      let cronFromBackend = objectQuery(currentBackendSchedule, 'trigger', 'cronExpression');
+      let cronFromBackend =
+        objectQuery(currentBackendSchedule, 'trigger', 'cronExpression') ||
+        HYDRATOR_DEFAULT_VALUES.schedule;
       let selectedProfile =
         profileFromBackend || profileFromPreferences || CLOUD.DEFAULT_PROFILE_NAME;
       return {
