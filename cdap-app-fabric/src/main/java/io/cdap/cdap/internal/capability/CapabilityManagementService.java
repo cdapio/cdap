@@ -71,7 +71,8 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
   }
 
   @Override
-  protected long runTask() throws Exception {
+  //Made public for access from tests
+  public long runTask() throws Exception {
     LOG.trace("Scanning capability config directory");
     List<CapabilityConfig> capabilityConfigs = scanConfigDirectory();
     //apply all the config
