@@ -185,6 +185,8 @@ public class AppFabricServer extends AbstractIdleService {
 
   @Override
   protected void shutDown() throws Exception {
+    //stop capability service before other dependent services
+    capabilityManagementService.stopAndWait();
     coreSchedulerService.stopAndWait();
     bootstrapService.stopAndWait();
     systemAppManagementService.stopAndWait();
@@ -194,7 +196,6 @@ public class AppFabricServer extends AbstractIdleService {
     programNotificationSubscriberService.stopAndWait();
     runRecordCorrectorService.stopAndWait();
     provisioningService.stopAndWait();
-    capabilityManagementService.stopAndWait();
   }
 
   private Cancellable startHttpService(NettyHttpService httpService) throws Exception {
