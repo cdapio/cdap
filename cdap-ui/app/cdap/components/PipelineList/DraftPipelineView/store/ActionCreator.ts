@@ -22,12 +22,14 @@ import Store, { Actions, SORT_ORDER } from 'components/PipelineList/DraftPipelin
 import { IDraft } from 'components/PipelineList/DraftPipelineView/types';
 import orderBy from 'lodash/orderBy';
 import { Observable } from 'rxjs/Observable';
-import uuidV4 from 'uuid/v4';
 
 const DRAFTS_KEY = 'hydratorDrafts';
 const PROPERTY = 'property';
 
 function getOldDrafts(oldDrafts) {
+  if (oldDrafts && oldDrafts.statusCode) {
+    return [];
+  }
   const namespace = getCurrentNamespace();
   const oldDraftsObj = objectQuery(oldDrafts, PROPERTY, DRAFTS_KEY, namespace) || {};
 
@@ -43,16 +45,25 @@ function getOldDrafts(oldDrafts) {
 
 export function getDrafts() {
   Observable.forkJoin<
-    IDraft[],
+    any,
     any /** setting as 'any'. We should remove user store reference in the next major release */
   >(
     MyPipelineApi.getDrafts({
       context: 'default',
-    }),
-    MyUserStoreApi.get()
+    }).catch((err) => Observable.of(err)),
+    MyUserStoreApi.get().catch((err) => Observable.of(err))
   ).subscribe(([newDrafts, userStore]) => {
     let drafts = getOldDrafts(userStore);
-    drafts = newDrafts.concat(drafts);
+    // We get a `statusCode` when the service down or a 404 error.
+    // For 200 we just get the drafts.
+    /**
+     * TODO (CDAP-17569): We need to properly handle error if either of the APIs fail.
+     * We don't do that today as from a user perspective they don't know
+     * what an old and a new draft really is.
+     */
+    if (newDrafts && !newDrafts.statusCode) {
+      drafts = newDrafts.concat(drafts);
+    }
 
     Store.dispatch({
       type: Actions.setDrafts,
