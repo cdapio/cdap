@@ -235,7 +235,6 @@ public class TestBase {
     File capabilityFolder = new File(localDataDir.toString(), "capability");
     capabilityFolder.mkdir();
     cConf.set(Constants.Capability.CONFIG_DIR, capabilityFolder.getAbsolutePath());
-    copyTempFile("pipeline.json", capabilityFolder);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -395,6 +394,32 @@ public class TestBase {
     if (scheduler instanceof CoreSchedulerService) {
       ((CoreSchedulerService) scheduler).waitUntilFunctional(10, TimeUnit.SECONDS);
     }
+  }
+
+  /**
+   * Method for enabling capability, copies the corresponding config file to appropriate location.
+   * Calling method should ensure necessary Artifact is loaded before calling
+   * Capability is enabled only on next run, so should wait for Application to be deployed
+   * and program to be running if applicable
+   *
+   * @param capability
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  protected static void enableCapability(String capability) throws IOException, InterruptedException {
+    File capabilityFolder = new File(cConf.get(Constants.Capability.CONFIG_DIR));
+    copyTempFile(String.format("%s.json", capability), capabilityFolder);
+  }
+
+  /**
+   *
+   * @param capability
+   * @throws IOException
+   * @throws InterruptedException
+   */
+  protected static void removeCapability(String capability) throws IOException, InterruptedException {
+    File capabilityFile = new File(cConf.get(Constants.Capability.CONFIG_DIR), String.format("%s.json", capability));
+    capabilityFile.delete();
   }
 
   /**
@@ -634,6 +659,16 @@ public class TestBase {
     ApplicationManager appManager = getTestManager().deployApplication(appId, appRequest);
     applicationManagers.add(appManager);
     return appManager;
+  }
+
+  /**
+   * Creates and returns {@link ApplicationManager} for the passed {@link ApplicationId}
+   * @param appId
+   * @return
+   * @throws Exception
+   */
+  protected static ApplicationManager getApplicationManager(ApplicationId appId) throws Exception {
+    return getTestManager().getApplicationManager(appId);
   }
 
   /**
