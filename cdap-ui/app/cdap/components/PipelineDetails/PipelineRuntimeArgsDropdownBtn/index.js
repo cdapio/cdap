@@ -57,7 +57,9 @@ export default class PipelineRuntimeArgsDropdownBtn extends Component {
         // This is to restore it to whatever is the state is in the backend.
         // This will ensure if the user clicks on the "Run" button directly
         // UI will still operate correctly discarding recently entered inputs in the session.
-        fetchAndUpdateRuntimeArgs();
+        if (!this.state.showRunOptions) {
+          fetchAndUpdateRuntimeArgs();
+        }
         if (this.props.onToggle) {
           this.props.onToggle(this.state.showRunOptions);
         }

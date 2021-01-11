@@ -41,6 +41,7 @@ import uuidV4 from 'uuid/v4';
 import uniqBy from 'lodash/uniqBy';
 import cloneDeep from 'lodash/cloneDeep';
 import { CLOUD } from 'services/global-constants';
+import { Observable } from 'rxjs/Observable';
 
 // Filter certain preferences from being shown in the run time arguments
 // They are being represented in other places (like selected compute profile).
@@ -319,13 +320,14 @@ const fetchAndUpdateRuntimeArgs = () => {
     appId: PipelineDetailStore.getState().name,
   };
 
-  let observable$ = MyPipelineApi.fetchMacros(params).combineLatest([
+  let observable$ = Observable.forkJoin(
+    MyPipelineApi.fetchMacros(params),
     MyPreferenceApi.getAppPreferences(params),
     // This is required to resolve macros from preferences
     // Say DEFAULT_STREAM is a namespace level preference used as a macro
     // in one of the plugins in the pipeline.
-    MyPreferenceApi.getAppPreferencesResolved(params),
-  ]);
+    MyPreferenceApi.getAppPreferencesResolved(params)
+  );
 
   observable$.subscribe((res) => {
     let macrosSpec = res[0];
