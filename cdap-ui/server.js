@@ -31,6 +31,7 @@ import middleware404 from 'server/middleware-404';
 var cdapConfig,
   securityConfig,
   allowedOrigin = [],
+  wsConnections = [],
   hostname,
   hostIP = ip.address();
 
@@ -157,10 +158,12 @@ getCDAPConfig()
     sockServer.on('connection', function(c) {
       log.debug('[SOCKET OPEN] Connection to client "' + c.id + '" opened');
       // @ts-ignore
-      var a = new Aggregator(c);
+      var a = new Aggregator(c, { ...cdapConfig, ...securityConfig });
+      wsConnections.push(c);
       c.on('close', function() {
         log.trace('Cleaning out aggregator: ' + JSON.stringify(a.connection.id));
         a = null;
+        wsConnections = wsConnections.filter(conn => conn.id !== c.id);
       });
     });
 
@@ -171,6 +174,21 @@ getCDAPConfig()
         log.info('Denying socket connection and closing the channel');
         socket.end();
         socket.destroy();
+        return;
       }
     });
+    function gracefulShutdown() {
+      log.info('Caught SIGTERM. Closing http & ws server');
+      server.close();
+      if(Array.isArray(wsConnections) && wsConnections.length) {
+        log.info(`Closing ${wsConnections.length} open websocket connections`)
+        wsConnections.forEach((connection) => {
+          connection.end();
+          connection.destroy();
+        });
+        log.info('Closed all open websocket connections');
+      }
+      process.exit(0);
+    }
+    process.on('SIGTERM', gracefulShutdown);
   });

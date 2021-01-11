@@ -19,7 +19,6 @@ import request from 'request';
 import fs from 'fs';
 import log4js from 'log4js';
 import { REQUEST_ORIGIN_ROUTER, REQUEST_ORIGIN_MARKET, constructUrl, deconstructUrl, isVerifiedMarketHost} from 'server/url-helper';
-import { extractConfig } from 'server/config/parser';
 import * as sessionToken from 'server/token';
 
 const log = log4js.getLogger('default');
@@ -30,15 +29,15 @@ const log = log4js.getLogger('default');
  *
  * @param {Object} SockJS connection
  */
-function Aggregator(conn) {
+function Aggregator(conn, cdapConfig) {
   // make 'new' optional
   if (!(this instanceof Aggregator)) {
     return new Aggregator(conn);
   }
-  this.cdapConfig = null;
+  this.cdapConfig = cdapConfig;
   this.connection = conn;
 
-  this.populateCdapConfig().then(this.initializeEventListeners.bind(this));
+  this.initializeEventListeners();
   this.isSessionValid = false;
 }
 
@@ -88,20 +87,6 @@ Aggregator.prototype.validateSession = function(message) {
     return false;
   }
   return true;
-};
-
-Aggregator.prototype.populateCdapConfig = async function() {
-  let cdapConfig, securityConfig;
-  try {
-    cdapConfig = await extractConfig('cdap');
-    securityConfig = await extractConfig('security');
-    this.cdapConfig = { ...cdapConfig, ...securityConfig };
-  } catch (e) {
-    log.error(
-      "[ERROR]: Unable to parse CDAP config. CDAP UI Proxy won't be able to serve any request to the client: " +
-        e
-    );
-  }
 };
 
 /**
