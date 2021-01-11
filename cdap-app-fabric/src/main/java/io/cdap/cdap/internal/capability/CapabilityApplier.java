@@ -19,22 +19,32 @@ package io.cdap.cdap.internal.capability;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.artifact.ArtifactId;
+import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.common.ApplicationNotFoundException;
+import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import io.cdap.cdap.internal.entity.EntityResult;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.artifact.ArtifactSortOrder;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
@@ -78,18 +88,20 @@ class CapabilityApplier {
   private final NamespaceAdmin namespaceAdmin;
   private final CapabilityStatusStore capabilityStatusStore;
   private final MetadataSearchClient metadataSearchClient;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   CapabilityApplier(SystemProgramManagementService systemProgramManagementService,
                     ApplicationLifecycleService applicationLifecycleService, NamespaceAdmin namespaceAdmin,
                     ProgramLifecycleService programLifecycleService, CapabilityStatusStore capabilityStatusStore,
-                    DiscoveryServiceClient discoveryClient) {
+                    ArtifactRepository artifactRepository, DiscoveryServiceClient discoveryClient) {
     this.systemProgramManagementService = systemProgramManagementService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
     this.capabilityStatusStore = capabilityStatusStore;
     this.namespaceAdmin = namespaceAdmin;
     this.metadataSearchClient = new MetadataSearchClient(discoveryClient);
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -262,24 +274,47 @@ class CapabilityApplier {
   private void deployApp(SystemApplication application) throws Exception {
     ApplicationId applicationId = getApplicationId(application);
     LOG.debug("Deploying app {}", applicationId);
-    if (isAppDeployed(applicationId)) {
-      //Already deployed.
+    if (!shouldDeployApp(applicationId, application)) {
+      //Already deployed with latest app artifact.
       LOG.debug("Application {} is already deployed", applicationId);
       return;
     }
+    LOG.debug("Application {} is being deployed", applicationId);
     String configString = application.getConfig() == null ? null : GSON.toJson(application.getConfig());
     applicationLifecycleService
       .deployApp(applicationId.getParent(), applicationId.getApplication(), applicationId.getVersion(),
                  application.getArtifact(), configString, NOOP_PROGRAM_TERMINATOR, null, null);
   }
 
-  private boolean isAppDeployed(ApplicationId applicationId) throws Exception {
+  // Returns true if capability applier should try to deploy this application. 2 conditions when it returns true:
+  // 1. Either the application is not deployed before.
+  // 2. If application is deployed before then the app artifact of the deployed application is not the latest one
+  //    available.
+  private boolean shouldDeployApp(ApplicationId applicationId, SystemApplication application) throws Exception {
+    ApplicationDetail currAppDetail = null;
     try {
-      applicationLifecycleService.getAppDetail(applicationId);
-      return true;
+      currAppDetail = applicationLifecycleService.getAppDetail(applicationId);
     } catch (ApplicationNotFoundException exception) {
-      return false;
+      return true;
     }
+    // Compare if the app artifact version of currently deployed application with highest version of app artifact
+    // available. If it's not same, capability applier should redeploy application.
+    ArtifactSummary summary = application.getArtifact();
+    NamespaceId artifactNamespace =
+      ArtifactScope.SYSTEM.equals(summary.getScope()) ? NamespaceId.SYSTEM : applicationId.getParent();
+    ArtifactRange range = new ArtifactRange(artifactNamespace.getNamespace(), summary.getName(),
+      ArtifactVersionRange.parse(summary.getVersion()));
+    // this method will not throw ArtifactNotFoundException, if no artifacts in the range, we are expecting an empty
+    // collection returned.
+    List<ArtifactDetail> artifactDetail = artifactRepository.getArtifactDetails(range, 1, ArtifactSortOrder.DESC);
+    if (artifactDetail.isEmpty()) {
+      throw new ArtifactNotFoundException(range.getNamespace(), range.getName());
+    }
+
+    ArtifactId latestArtifactId = artifactDetail.get(0).getDescriptor().getArtifactId();
+    // Compare the version of app artifact for deployed application and the latest available version of that
+    // same artifact. If same means no need to deploy the application again.
+    return !currAppDetail.getArtifact().getVersion().equals(latestArtifactId.getVersion().getVersion());
   }
 
   //Find all applications for capability and call consumer for each
