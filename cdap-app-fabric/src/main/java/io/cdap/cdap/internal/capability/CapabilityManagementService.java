@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.internal.capability;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
@@ -71,7 +72,7 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
   }
 
   @Override
-  //Made public for access from tests
+  @VisibleForTesting
   public long runTask() throws Exception {
     LOG.trace("Scanning capability config directory");
     List<CapabilityConfig> capabilityConfigs = scanConfigDirectory();
