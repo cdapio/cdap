@@ -906,7 +906,9 @@ public class ApplicationLifecycleService extends AbstractIdleService {
       throw new InvalidArtifactException(String.format("No application class found in artifact '%s' in namespace '%s'.",
                                                        artifactDetail.getDescriptor().getArtifactId(), namespaceId));
     }
-    capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
+    if (!NamespaceId.SYSTEM.equals(namespaceId)) {
+      capabilityReader.checkAllEnabled(appClass.getRequirements().getCapabilities());
+    }
     // deploy application with newly added artifact
     AppDeploymentInfo deploymentInfo = new AppDeploymentInfo(artifactDetail.getDescriptor(), namespaceId,
                                                              appClass, appName, appVersion,

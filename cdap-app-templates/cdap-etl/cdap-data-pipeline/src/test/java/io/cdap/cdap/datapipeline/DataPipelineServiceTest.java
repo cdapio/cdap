@@ -23,8 +23,12 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.api.retry.RetryableException;
+import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
+import io.cdap.cdap.common.service.Retries;
+import io.cdap.cdap.common.service.RetryStrategies;
 import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
@@ -51,6 +55,7 @@ import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.artifact.AppRequest;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.test.ApplicationManager;
@@ -75,9 +80,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * Tests for the data pipeline service.
@@ -89,6 +92,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
   public static final String STAGE = "stage";
 
   private static ServiceManager serviceManager;
+  private static ApplicationManager appManager;
   static URI serviceURI;
 
   @ClassRule
@@ -99,21 +103,46 @@ public class DataPipelineServiceTest extends HydratorTestBase {
 
   @BeforeClass
   public static void setupTest() throws Exception {
-    ArtifactId appArtifactId = NamespaceId.SYSTEM.artifact("app", "1.0.0");
+    ArtifactId appArtifactId = NamespaceId.SYSTEM.artifact("cdap-data-pipeline", "6.0.0");
     setupBatchArtifacts(appArtifactId, DataPipelineApp.class);
-
-    ArtifactSummary artifactSummary = new ArtifactSummary(appArtifactId.getArtifact(), appArtifactId.getVersion());
-    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(artifactSummary, ETLBatchConfig.forSystemService());
-    ApplicationManager appManager = deployApplication(NamespaceId.SYSTEM.app("datapipeline"), appRequest);
+    enableCapability("pipeline");
+    ApplicationId pipeline = NamespaceId.SYSTEM.app("pipeline");
+    appManager = getApplicationManager(pipeline);
+    waitForAppToDeploy(pipeline);
     serviceManager = appManager.getServiceManager(StudioService.NAME);
     serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }
 
+  private static void waitForAppToDeploy(ApplicationId pipeline) throws Exception {
+    Retries.callWithRetries(() -> {
+      try {
+        appManager.getInfo();
+        return null;
+      } catch (ApplicationNotFoundException exception) {
+        throw new RetryableException(String.format("App %s not yet deployed", pipeline));
+      }
+    }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
+  }
+
   @AfterClass
-  public static void teardownTests() throws InterruptedException, ExecutionException, TimeoutException {
-    serviceManager.stop();
-    serviceManager.waitForStopped(2, TimeUnit.MINUTES);
+  public static void teardownTests() throws Exception {
+    if (serviceManager == null) {
+      return;
+    }
+    removeCapability("pipeline");
+    waitForAppToBeRemoved(NamespaceId.SYSTEM.app("pipeline"));
+  }
+
+  private static void waitForAppToBeRemoved(ApplicationId pipeline) throws Exception {
+    Retries.callWithRetries(() -> {
+      try {
+        appManager.getInfo();
+        throw new RetryableException(String.format("App %s not yet removed", pipeline));
+      } catch (ApplicationNotFoundException exception) {
+        return true;
+      }
+    }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
   }
 
   @Test
