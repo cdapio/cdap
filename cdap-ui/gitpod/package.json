@@ -1,0 +1,15 @@
+{
+  "name": "gitpod",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "scripts": {
+    "setup": "node setup.js"
+  },
+  "dependencies": {
+    "mkdirp": "^1.0.4",
+    "node-fetch": "^2.6.1",
+    "xml2js": "^0.4.23",
+    "yauzl": "^2.10.0"
+  }
+}

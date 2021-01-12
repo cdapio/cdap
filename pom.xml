@@ -1648,6 +1648,8 @@
                   <exclude>**/MANIFEST.MF</exclude>
                   <exclude>**/.rubocop*.yml</exclude>
                   <exclude>third-party-licenses/**</exclude>
+                  <exclude>.gitpod.yml</exclude>
+                  <exclude>.gitpod.Dockerfile</exclude>
                 </excludes>
               </configuration>
             </execution>
