@@ -376,3 +376,18 @@ export function countErrors(
 
   return messages.size;
 }
+
+export function removeFilteredProperties(values, filteredConfigurationGroups) {
+  const newValues = { ...values };
+  if (filteredConfigurationGroups) {
+    filteredConfigurationGroups.forEach((group) => {
+      group.properties.forEach((property) => {
+        if (property.show === false) {
+          delete newValues[property.name];
+        }
+      });
+    });
+  }
+
+  return newValues;
+}

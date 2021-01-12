@@ -29,6 +29,11 @@ import PluginList from 'components/Replicator/Create/Content/PluginConfig/Plugin
 import { PluginType } from 'components/Replicator/constants';
 import { IPluginConfig, IPluginInfo } from 'components/Replicator/types';
 import { IWidgetJson } from 'components/ConfigurationGroup/types';
+import {
+  processConfigurationGroups,
+  removeFilteredProperties,
+} from 'components/ConfigurationGroup/utilities';
+import { filterByCondition } from 'components/ConfigurationGroup/utilities/DynamicPluginFilters';
 
 const styles = (theme): StyleRules => {
   return {
@@ -164,7 +169,23 @@ const PluginConfigView: React.FC<IPluginConfigProps> = ({
   }
 
   function handleNext() {
-    setPluginConfig(values);
+    // Remove filtered out values
+    const widgetConfigurationGroup = objectQuery(pluginWidget, 'configuration-groups');
+    const widgetOutputs = objectQuery(pluginWidget, 'outputs');
+    const processedConfigurationGroup = processConfigurationGroups(
+      pluginProperties,
+      widgetConfigurationGroup,
+      widgetOutputs
+    );
+    const filteredConfigurationGroup = filterByCondition(
+      processedConfigurationGroup.configurationGroups,
+      pluginWidget,
+      pluginProperties,
+      values
+    );
+    const filteredValues = removeFilteredProperties(values, filteredConfigurationGroup);
+
+    setPluginConfig(filteredValues);
   }
 
   return (

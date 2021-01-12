@@ -18,7 +18,7 @@ import * as React from 'react';
 import PropTypes from 'prop-types';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { IWidgetJson, PluginProperties } from './types';
-import { processConfigurationGroups } from './utilities';
+import { processConfigurationGroups, removeFilteredProperties } from './utilities';
 import { objectQuery } from 'services/helpers';
 import defaults from 'lodash/defaults';
 import If from 'components/If';
@@ -135,18 +135,10 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
   // This onUnMount is to make sure we clear out all properties that are hidden.
   React.useEffect(() => {
     return () => {
-      const newValues = { ...referenceValueForUnMount.current.values };
+      const newValues = referenceValueForUnMount.current.values;
       const configGroups = referenceValueForUnMount.current.configurationGroups;
-      if (configGroups) {
-        configGroups.forEach((group) => {
-          group.properties.forEach((property) => {
-            if (property.show === false) {
-              delete newValues[property.name];
-            }
-          });
-        });
-      }
-      changeParentHandler(newValues);
+      const updatedFilteredValues = removeFilteredProperties(newValues, configGroups);
+      changeParentHandler(updatedFilteredValues);
     };
   }, []);
 

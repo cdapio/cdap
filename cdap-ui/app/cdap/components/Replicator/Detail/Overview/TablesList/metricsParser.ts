@@ -71,6 +71,10 @@ export function parseOverviewMetrics(
     const metricName = METRIC_MAP[metricSeries.metricName];
     const tableName = Object.values(metricSeries.grouping)[0];
 
+    if (!tableMap[tableName]) {
+      return;
+    }
+
     const sumData = metricSeries.data.reduce((prev, curr) => {
       return prev + curr.value;
     }, 0);
@@ -89,6 +93,9 @@ export function parseOverviewMetrics(
 
   tableList.forEach((tableInfo) => {
     const tableName = getFullyQualifiedTableName(tableInfo);
+    if (!tableMap[tableName]) {
+      return;
+    }
     const tableMetrics = tableMap[tableName];
     const totalEvents = tableMetrics.inserts + tableMetrics.updates + tableMetrics.deletes;
     tableMap[tableName].eventsPerMin = truncateNumber(totalEvents / durationMinute, PRECISION);
