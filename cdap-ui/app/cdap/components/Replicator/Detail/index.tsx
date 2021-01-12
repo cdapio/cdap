@@ -316,13 +316,16 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       tables.forEach((table) => {
         const tableKey = generateTableKey(table);
 
-        selectedTables = selectedTables.set(
-          tableKey,
-          fromJS({
-            database: table.database,
-            table: table.table,
-          })
-        );
+        const tableInfo: ITableInfo = {
+          database: table.database,
+          table: table.table,
+        };
+
+        if (table.schema) {
+          tableInfo.schema = table.schema;
+        }
+
+        selectedTables = selectedTables.set(tableKey, fromJS(tableInfo));
 
         const tableColumns = objectQuery(table, 'columns') || [];
         const columnList = fromJS(tableColumns);
