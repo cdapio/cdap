@@ -32,6 +32,7 @@ public class CapabilityModule extends PrivateModule {
     bind(CapabilityWriter.class).to(CapabilityStatusStore.class);
     bind(SystemProgramManagementService.class).in(Scopes.SINGLETON);
     bind(CapabilityManagementService.class).in(Scopes.SINGLETON);
+    expose(SystemProgramManagementService.class);
     expose(CapabilityManagementService.class);
     expose(CapabilityReader.class);
     expose(CapabilityWriter.class);
