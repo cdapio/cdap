@@ -61,6 +61,7 @@ import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemo
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
+import { handlePageLevelError, setupExperiments } from 'services/helpers';
 import ToggleExperiment from 'components/Lab/ToggleExperiment';
 
 const Administration = Loadable({
@@ -114,6 +115,7 @@ class CDAP extends Component {
     this.eventEmitter = ee(ee);
     this.eventEmitter.on(WINDOW_ON_FOCUS, this.onWindowFocus);
     this.eventEmitter.on(WINDOW_ON_BLUR, this.onWindowBlur);
+    setupExperiments();
   }
 
   componentWillMount() {
