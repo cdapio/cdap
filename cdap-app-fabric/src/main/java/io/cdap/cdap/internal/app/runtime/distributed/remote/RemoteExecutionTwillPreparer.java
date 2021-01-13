@@ -449,7 +449,7 @@ class RemoteExecutionTwillPreparer implements TwillPreparer {
                                                     twillRuntimeSpec.getMinHeapRatio(runnableName));
 
           // Spark env setup script
-          session.executeAndWait(String.format("bash %s/%s/%s %s/%s/%s > %s/%s",
+          session.executeAndWait(String.format("bash %s/%s/%s %s/%s/%s %s/%s",
                                                targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_SH,
                                                targetPath, Constants.Files.RUNTIME_CONFIG_JAR, SETUP_SPARK_PY,
                                                targetPath, SPARK_ENV_SH));
