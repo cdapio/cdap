@@ -28,7 +28,8 @@ import { Typography, TextField } from '@material-ui/core';
 import NewReleasesRoundedIcon from '@material-ui/icons/NewReleasesRounded';
 import experimentsList from './experiment-list';
 import If from 'components/If';
-import { getExperimentValue } from 'services/helpers';
+import { getExperimentValue, setupExperiments } from 'services/helpers';
+import { IExperiment, ILabState } from 'components/Lab/types';
 
 const styles = (): StyleRules => {
   return {
@@ -67,40 +68,11 @@ const styles = (): StyleRules => {
 };
 
 interface ILabProps extends WithStyles<typeof styles> {}
-interface IExperiment {
-  experimentId: string;
-  enabled: boolean;
-  screenshot: string | null;
-  name: string;
-  description: string;
-  showValue?: boolean;
-  valueLabel?: string;
-  valueType?: string;
-  force?: boolean;
-}
-interface ILabState {
-  experiments: IExperiment[];
-}
 
 class Lab extends React.Component<ILabProps, ILabState> {
   public componentDidMount() {
-    experimentsList.forEach((experiment: IExperiment) => {
-      // If the experiment is forcefully disabled do not check
-      // the localStorage. Update localStorage with disabled state.
-      if (experiment.force && !experiment.enabled) {
-        window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
-        return;
-      }
-      // If experiment preference is present in storage, use it.
-      // If not, use the default value and set it in storage and use it.
-      const experimentStatusFromStorage = window.localStorage.getItem(experiment.experimentId);
-      if (experimentStatusFromStorage === null) {
-        window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
-      } else {
-        experiment.enabled = experimentStatusFromStorage === 'true';
-      }
-    });
-    this.setState({ experiments: experimentsList });
+    const experiments = setupExperiments();
+    this.setState({ experiments });
   }
 
   public updatePreference = (event: React.ChangeEvent<HTMLInputElement>) => {

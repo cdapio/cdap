@@ -25,6 +25,7 @@ import uuidV4 from 'uuid/v4';
 import round from 'lodash/round';
 import React from 'react';
 import { connect } from 'react-redux';
+import experimentsList from 'components/Lab/experiment-list';
 /*
   Purpose: Query a json object or an array of json objects
   Return: Returns undefined if property is not defined(never set) and
@@ -682,6 +683,25 @@ function isValidEntityName(name) {
 
   return pattern.test(name);
 }
+function setupExperiments() {
+  return experimentsList.map((experiment) => {
+    // If the experiment is forcefully disabled do not check
+    // the localStorage. Update localStorage with disabled state.
+    if (experiment.force && !experiment.enabled) {
+      window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
+      return;
+    }
+    // If experiment preference is present in storage, use it.
+    // If not, use the default value and set it in storage and use it.
+    const experimentStatusFromStorage = window.localStorage.getItem(experiment.experimentId);
+    if (experimentStatusFromStorage === null) {
+      window.localStorage.setItem(experiment.experimentId, experiment.enabled.toString());
+    } else {
+      experiment.enabled = experimentStatusFromStorage === 'true';
+    }
+    return experiment;
+  });
+};
 
 export {
   objectQuery,
@@ -731,4 +751,5 @@ export {
   isExperimentEnabled,
   sanitizeNodeNamesInPluginProperties,
   isValidEntityName,
+  setupExperiments,
 };
