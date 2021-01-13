@@ -45,7 +45,6 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
   private final long scheduleIntervalInMillis;
   private final CConfiguration cConf;
   private final CapabilityApplier capabilityApplier;
-  private final SystemProgramManagementService systemProgramManagementService;
 
   @Inject
   CapabilityManagementService(CConfiguration cConf, CapabilityApplier capabilityApplier,
@@ -54,21 +53,8 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
             .fixDelay(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES), TimeUnit.MINUTES));
     this.cConf = cConf;
     this.capabilityApplier = capabilityApplier;
-    this.systemProgramManagementService = systemProgramManagementService;
     this.scheduleIntervalInMillis = TimeUnit.MINUTES
       .toMillis(cConf.getLong(Constants.Capability.DIR_SCAN_INTERVAL_MINUTES));
-  }
-
-  @Override
-  protected void doStartUp() {
-    LOG.debug("Starting scheduled service {}", getServiceName());
-    systemProgramManagementService.start();
-  }
-
-  @Override
-  protected void doShutdown() {
-    LOG.debug("Stopping scheduled service {}", getServiceName());
-    systemProgramManagementService.stopAndWait();
   }
 
   @Override
