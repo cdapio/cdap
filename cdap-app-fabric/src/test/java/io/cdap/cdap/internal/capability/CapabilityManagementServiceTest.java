@@ -89,6 +89,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityStatusStore = new CapabilityStatusStore(getInjector().getInstance(TransactionRunner.class));
     applicationLifecycleService = getInjector().getInstance(ApplicationLifecycleService.class);
     programLifecycleService = getInjector().getInstance(ProgramLifecycleService.class);
+    capabilityManagementService.stopAndWait();
   }
 
   @AfterClass
@@ -99,11 +100,13 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   @After
   public void reset() throws Exception {
     // Reset all relevant stores.
-    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.SYSTEM, null)) {
+    for (ApplicationDetail appDetail : applicationLifecycleService
+      .getApps(NamespaceId.SYSTEM, applicationDetail -> true)) {
       programLifecycleService.stopAll(
         new ApplicationId(NamespaceId.SYSTEM.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
     }
-    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.DEFAULT, null)) {
+    for (ApplicationDetail appDetail : applicationLifecycleService
+      .getApps(NamespaceId.DEFAULT, applicationDetail -> true)) {
       programLifecycleService.stopAll(
         new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
     }
