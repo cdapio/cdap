@@ -21,6 +21,7 @@ import com.google.gson.JsonObject;
 import io.cdap.cdap.api.retry.RetryableException;
 import io.cdap.cdap.common.service.RetryStrategy;
 import io.cdap.cdap.internal.AppFabricTestHelper;
+import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
 import io.cdap.cdap.internal.bootstrap.executor.BaseStepExecutor;
 import io.cdap.cdap.internal.bootstrap.executor.BootstrapStepExecutor;
 import io.cdap.cdap.internal.bootstrap.executor.EmptyArguments;
@@ -78,8 +79,11 @@ public class BootstrapServiceTest {
     systemAppManagementService = AppFabricTestHelper.getInjector().getInstance(SystemAppManagementService.class);
     CapabilityManagementService capabilityManagementService = AppFabricTestHelper.getInjector()
       .getInstance(CapabilityManagementService.class);
+    SystemProgramManagementService systemProgramManagementService = AppFabricTestHelper.getInjector()
+      .getInstance(SystemProgramManagementService.class);
     bootstrapService = new BootstrapService(bootstrapConfigProvider, bootstrapStore, executors,
-                                            systemAppManagementService, capabilityManagementService);
+                                            systemAppManagementService, capabilityManagementService,
+                                            systemProgramManagementService);
     bootstrapService.reload();
   }
 

@@ -73,6 +73,7 @@ public class SystemProgramManagementServiceTest extends AppFabricTestBase {
     progmMgmtSvc = new SystemProgramManagementService(getInjector().getInstance(CConfiguration.class),
                                                       getInjector().getInstance(ProgramRuntimeService.class),
                                                       programLifecycleService);
+    progmMgmtSvc.stopAndWait();
   }
 
   @AfterClass
