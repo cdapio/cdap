@@ -28,7 +28,7 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <spark.version>2.3.1</spark.version>
-    <cdap.version>6.3.0-SNAPSHOT</cdap.version>
+    <cdap.version>6.3.0</cdap.version>
     <hadoop.version>2.3.0</hadoop.version>
     <!-- properties for script build step that creates the config files for the artifacts -->
     <widgets.dir>widgets</widgets.dir>
@@ -234,8 +234,8 @@
           <version>1.0.1</version>
           <configuration>
             <cdapArtifacts>
-              <parent>system:cdap-data-pipeline[6.3.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
-              <parent>system:cdap-data-streams[6.3.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
+              <parent>system:cdap-data-pipeline[6.3.0,7.0.0-SNAPSHOT)</parent>
+              <parent>system:cdap-data-streams[6.3.0,7.0.0-SNAPSHOT)</parent>
             </cdapArtifacts>
           </configuration>
           <executions>
@@ -313,7 +313,7 @@
         <artifactId>cdap-maven-plugin</artifactId>
         <configuration>
           <cdapArtifacts>
-            <parent>system:cdap-data-pipeline[6.3.0-SNAPSHOT,7.0.0-SNAPSHOT)</parent>
+            <parent>system:cdap-data-pipeline[6.3.0,7.0.0-SNAPSHOT)</parent>
           </cdapArtifacts>
         </configuration>
       </plugin>
