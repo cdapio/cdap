@@ -65,7 +65,7 @@ import { MyNamespaceApi } from 'api/namespace';
 import If from 'components/If';
 import Page500 from 'components/500';
 import LoadingSVG from 'components/LoadingSVG';
-import { handlePageLevelError } from 'services/helpers';
+import { handlePageLevelError, setupExperiments } from 'services/helpers';
 
 const cookie = new Cookies();
 
@@ -127,6 +127,7 @@ class CDAP extends Component {
     this.eventEmitter = ee(ee);
     this.eventEmitter.on(WINDOW_ON_FOCUS, this.onWindowFocus);
     this.eventEmitter.on(WINDOW_ON_BLUR, this.onWindowBlur);
+    setupExperiments();
   }
 
   componentWillMount() {
