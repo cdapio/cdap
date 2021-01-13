@@ -86,7 +86,7 @@ object SparkRuntimeEnv {
   /**
     * Puts all global properties into the given [[org.apache.spark.SparkConf]].
     */
-  def setupSparkConf(sparkConf: SparkConf): Unit = sparkConf.setAll(properties)
+  def setupSparkConf(sparkConf: SparkConf): Unit = properties.foreach(t => sparkConf.set(t._1, t._2))
 
   /**
     * Adds a [[org.apache.spark.scheduler.SparkListener]].
