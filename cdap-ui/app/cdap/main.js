@@ -60,7 +60,7 @@ import VersionActions from 'services/VersionStore/VersionActions';
 import VersionStore from 'services/VersionStore';
 import ee from 'event-emitter';
 import globalEvents from 'services/global-events';
-import { handlePageLevelError, objectQuery } from 'services/helpers';
+import { handlePageLevelError, objectQuery, setupExperiments } from 'services/helpers';
 import history from 'services/history';
 // See ./graphql/fragements/README.md
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
@@ -132,6 +132,7 @@ class CDAP extends Component {
     this.eventEmitter = ee(ee);
     this.eventEmitter.on(WINDOW_ON_FOCUS, this.onWindowFocus);
     this.eventEmitter.on(WINDOW_ON_BLUR, this.onWindowBlur);
+    setupExperiments();
   }
 
   componentWillMount() {
