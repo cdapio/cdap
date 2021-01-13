@@ -38,6 +38,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.http.AppFabricTestBase;
+import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ApplicationId;
@@ -46,9 +47,11 @@ import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -91,6 +94,23 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
   @AfterClass
   public static void stop() {
     AppFabricTestHelper.shutdown();
+  }
+
+  @After
+  public void reset() throws Exception {
+    // Reset all relevant stores.
+    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.SYSTEM, null)) {
+      programLifecycleService.stopAll(
+        new ApplicationId(NamespaceId.SYSTEM.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
+    }
+    for (ApplicationDetail appDetail : applicationLifecycleService.getApps(NamespaceId.DEFAULT, null)) {
+      programLifecycleService.stopAll(
+        new ApplicationId(NamespaceId.DEFAULT.getNamespace(), appDetail.getName(), appDetail.getAppVersion()));
+    }
+    applicationLifecycleService.removeAll(NamespaceId.SYSTEM);
+    applicationLifecycleService.removeAll(NamespaceId.DEFAULT);
+    artifactRepository.clear(NamespaceId.SYSTEM);
+    artifactRepository.clear(NamespaceId.DEFAULT);
   }
 
   @Test
@@ -169,7 +189,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //cleanup
     new File(externalConfigPath, fileName).delete();
     capabilityManagementService.runTask();
-    artifactRepository.deleteArtifact(Id.Artifact.from(new Id.Namespace(namespace), appName, version));
   }
 
   private void writeConfigAsFile(String externalConfigPath, String fileName,
@@ -233,8 +252,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
     appList = getAppList(namespace);
     Assert.assertTrue(appList.isEmpty());
-    artifactRepository.deleteArtifact(Id.Artifact
-                                        .from(new Id.Namespace("system"), appName, version));
   }
 
   @Test
@@ -327,8 +344,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
     appList = getAppList(namespace);
     Assert.assertTrue(appList.isEmpty());
-    artifactRepository.deleteArtifact(Id.Artifact.from(new Id.Namespace("system"), appName, oldArtifactVersion));
-    artifactRepository.deleteArtifact(Id.Artifact.from(new Id.Namespace("system"), appName, newArtifactVersion));
   }
 
   @Test
@@ -418,7 +433,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
     appList = getAppList(namespace);
     Assert.assertTrue(appList.isEmpty());
-    artifactRepository.deleteArtifact(Id.Artifact.from(new Id.Namespace("system"), appName, artifactVersion));
   }
 
   @Test
@@ -493,6 +507,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityManagementService.runTask();
   }
 
+  //TODO(CDAP-17589): Re-enable this test once fix.
+  @Ignore
   @Test
   public void testProgramStart() throws Exception {
     String externalConfigPath = tmpFolder.newFolder("capability-config-program").getAbsolutePath();
@@ -557,8 +573,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     new File(externalConfigPath, capability).delete();
     capabilityManagementService.runTask();
     Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
-    artifactRepository.deleteArtifact(Id.Artifact
-                                        .from(new Id.Namespace(namespace), appName, version));
   }
 
   @Test
