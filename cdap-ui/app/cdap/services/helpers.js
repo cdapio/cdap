@@ -25,7 +25,9 @@ import uuidV4 from 'uuid/v4';
 import round from 'lodash/round';
 import React from 'react';
 import { connect } from 'react-redux';
-import experimentsList from 'components/Lab/experiment-list';
+// We don't use webpack alias here because this is used in Footer which is used in login app
+// And for login 'components/Lab/..' aliases to components folder inside login app.
+import experimentsList from '../components/Lab/experiment-list.tsx';
 /*
   Purpose: Query a json object or an array of json objects
   Return: Returns undefined if property is not defined(never set) and

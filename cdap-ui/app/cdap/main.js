@@ -61,7 +61,7 @@ import { IntrospectionFragmentMatcher, InMemoryCache } from 'apollo-cache-inmemo
 import introspectionQueryResultData from '../../graphql/fragments/fragmentTypes.json';
 import SessionTokenStore, { fetchSessionToken } from 'services/SessionTokenStore';
 import { WINDOW_ON_FOCUS, WINDOW_ON_BLUR } from 'services/WindowManager';
-import { handlePageLevelError, setupExperiments } from 'services/helpers';
+import { setupExperiments } from 'services/helpers';
 import ToggleExperiment from 'components/Lab/ToggleExperiment';
 
 const Administration = Loadable({
