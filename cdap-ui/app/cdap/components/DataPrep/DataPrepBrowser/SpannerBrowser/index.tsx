@@ -35,6 +35,7 @@ interface ISpannerBrowserProps {
   onWorkspaceCreate: () => void;
   enableRouting: boolean;
   scope: boolean | string;
+  showPanelToggle: boolean;
 }
 
 export default class SpannerBrowser extends React.PureComponent<ISpannerBrowserProps> {
@@ -62,6 +63,7 @@ export default class SpannerBrowser extends React.PureComponent<ISpannerBrowserP
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.title`)}
+            showPanelToggle={this.props.showPanelToggle}
           />
           {this.props.enableRouting ? (
             <Switch>

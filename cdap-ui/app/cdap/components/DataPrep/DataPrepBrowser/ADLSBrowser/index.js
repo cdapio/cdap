@@ -77,6 +77,7 @@ export default class ADLSBrowser extends Component {
     onWorkspaceCreate: PropTypes.func,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     browserTitle: PropTypes.string,
+    showPanelToggle: PropTypes.bool,
   };
 
   parsePath() {
@@ -501,6 +502,7 @@ export default class ADLSBrowser extends Component {
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={this.props.browserTitle}
+            showPanelToggle={this.props.showPanelToggle}
           />
           <div
             className={classnames('sub-panel', { 'routing-disabled': !this.props.enableRouting })}

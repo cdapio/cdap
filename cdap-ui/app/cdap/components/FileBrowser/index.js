@@ -73,6 +73,7 @@ export default class FileBrowser extends Component {
     onWorkspaceCreate: PropTypes.func,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
     browserTitle: PropTypes.string,
+    showPanelToggle: PropTypes.bool,
   };
 
   componentDidMount() {
@@ -491,6 +492,7 @@ export default class FileBrowser extends Component {
           allowSidePanelToggle={this.props.allowSidePanelToggle}
           toggle={this.props.toggle}
           browserTitle={this.props.browserTitle}
+          showPanelToggle={this.props.showPanelToggle}
         />
 
         <div className="sub-panel">

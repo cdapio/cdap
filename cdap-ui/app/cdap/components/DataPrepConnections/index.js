@@ -727,8 +727,8 @@ export default class DataPrepConnections extends Component {
       <div className="connections-panel">
         <div className="panel-title" onClick={this.toggleSidePanel}>
           <h5>
-            <span className="fa fa-fw">
-              <IconSVG name="icon-angle-double-left" />
+            <span className="fa fa-fw panel-toggle-icon">
+              <IconSVG name="icon-chevron-left" />
             </span>
 
             <span>{T.translate(`${PREFIX}.title`, { namespace })}</span>
@@ -894,7 +894,8 @@ export default class DataPrepConnections extends Component {
                 match={match}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
-                setActiveConnection={setActiveConnection}
+                setActiveConnetion={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -906,6 +907,7 @@ export default class DataPrepConnections extends Component {
               <ConnectionsUpload
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -924,6 +926,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -942,6 +945,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -962,6 +966,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -982,6 +987,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -1000,6 +1006,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -1018,6 +1025,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -1036,6 +1044,7 @@ export default class DataPrepConnections extends Component {
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
                 setActiveConnection={setActiveConnection}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -1062,6 +1071,7 @@ export default class DataPrepConnections extends Component {
                 connectionsList={this.state.connectionsList}
                 showAddConnectionPopover={this.toggleAddConnectionPopover.bind(this, true)}
                 toggleSidepanel={this.toggleSidePanel}
+                showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
           }}
@@ -1076,7 +1086,11 @@ export default class DataPrepConnections extends Component {
     }
     if (this.state.showUpload) {
       return (
-        <ConnectionsUpload toggle={this.toggleSidePanel} onWorkspaceCreate={this.onUploadSuccess} />
+        <ConnectionsUpload
+          toggle={this.toggleSidePanel}
+          onWorkspaceCreate={this.onUploadSuccess}
+          showPanelToggle={!this.state.sidePanelExpanded}
+        />
       );
     }
     let { enableRouting, ...attributes } = this.props;
@@ -1191,6 +1205,7 @@ export default class DataPrepConnections extends Component {
             connectionsList={this.state.connectionsList}
             showAddConnectionPopover={this.toggleAddConnectionPopover.bind(this, true)}
             toggleSidepanel={this.toggleSidePanel}
+            showPanelToggle={!this.state.sidePanelExpanded}
           />
         );
       }
@@ -1203,6 +1218,7 @@ export default class DataPrepConnections extends Component {
         onWorkspaceCreate={!this.props.singleWorkspaceMode ? null : this.props.onWorkspaceCreate}
         enableRouting={enableRouting}
         setActiveConnection={setActiveConnection}
+        showPanelToggle={!this.state.sidePanelExpanded}
         {...attributes}
       />
     );

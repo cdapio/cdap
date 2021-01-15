@@ -48,6 +48,11 @@ $expanded-menu-icon-width: 40px;
       h5 {
         font-size: 14px;
         font-weight: 600;
+
+        .panel-toggle-icon {
+          padding-right: 5px;
+          vertical-align: top;
+        }
       }
     }
 

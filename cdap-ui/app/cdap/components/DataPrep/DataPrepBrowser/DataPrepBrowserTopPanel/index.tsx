@@ -17,6 +17,7 @@
 import classnames from 'classnames';
 import * as React from 'react';
 import IconSVG from 'components/IconSVG';
+import If from 'components/If';
 
 require('./DataPrepBrowserTopPanel.scss');
 
@@ -24,6 +25,7 @@ interface IDataprepBrowserTopPanel {
   allowSidePanelToggle: boolean;
   toggle: (e: React.MouseEvent<HTMLElement>) => void;
   browserTitle: React.ReactNode;
+  showPanelToggle: boolean;
 }
 export default class DataprepBrowserTopPanel extends React.PureComponent<IDataprepBrowserTopPanel> {
   public render() {
@@ -31,14 +33,16 @@ export default class DataprepBrowserTopPanel extends React.PureComponent<IDatapr
       <div className="dataprep-browser-top-panel">
         <div className="title">
           <h5>
-            <span
-              className={classnames('fa fa-fw', {
-                disabled: !this.props.allowSidePanelToggle,
-              })}
-              onClick={this.props.toggle}
-            >
-              <IconSVG name="icon-bars" />
-            </span>
+            <If condition={this.props.showPanelToggle}>
+              <span
+                className={classnames('fa fa-fw', {
+                  disabled: !this.props.allowSidePanelToggle,
+                })}
+                onClick={this.props.toggle}
+              >
+                <IconSVG name="icon-chevron-right" />
+              </span>
+            </If>
 
             <span>{this.props.browserTitle}</span>
           </h5>

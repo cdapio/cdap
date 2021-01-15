@@ -45,6 +45,7 @@ export default class DatabaseBrowser extends Component {
     toggle: PropTypes.func,
     onWorkspaceCreate: PropTypes.func,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    showPanelToggle: PropTypes.bool,
   };
 
   state = {
@@ -232,6 +233,7 @@ export default class DatabaseBrowser extends Component {
           allowSidePanelToggle={true}
           toggle={this.props.toggle}
           browserTitle={T.translate(`${PREFIX}.title`)}
+          showPanelToggle={this.props.showPanelToggle}
         />
         <div>
           <div className="database-browser-header">

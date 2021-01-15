@@ -36,12 +36,14 @@ interface INoDefaultConnectionProps {
   showAddConnectionPopover: () => void;
   toggleSidepanel: (e: React.MouseEvent<HTMLElement>) => void;
   connectionsList: IPartialConnectionType[];
+  showPanelToggle: boolean;
 }
 const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
   defaultConnection,
   showAddConnectionPopover,
   connectionsList = [],
   toggleSidepanel,
+  showPanelToggle,
 }) => {
   const defaultConnectionObj = connectionsList.find((conn) => conn.id === defaultConnection);
   if (isNilOrEmpty(defaultConnection) || !defaultConnectionObj) {
@@ -51,6 +53,7 @@ const NoDefaultConnection: React.SFC<INoDefaultConnectionProps> = ({
           allowSidePanelToggle={true}
           toggle={toggleSidepanel}
           browserTitle={T.translate(`${PREFIX}.title`)}
+          showPanelToggle={showPanelToggle}
         />
 
         <EmptyMessageContainer title={T.translate(`${PREFIX}.title`)}>
