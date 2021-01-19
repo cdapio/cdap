@@ -20,8 +20,10 @@ import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractService;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
 import com.google.inject.Module;
+import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -57,8 +59,9 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
   }
 
   @Override
-  protected List<Module> getServiceModules(
-      MasterEnvironment masterEnv, EnvironmentOptions options, CConfiguration cConf) {
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options,
+                                           CConfiguration cConf) {
     return Arrays.asList(
         getDataFabricModule(),
         new ZKClientModule(),
@@ -67,33 +70,27 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
   }
 
   @Override
-  protected void addServices(
-      Injector injector, List<? super Service> services, List<? super AutoCloseable> closeableResources,
-      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext, EnvironmentOptions options) {
-
+  protected void addServices(Injector injector,
+                             List<? super Service> services,
+                             List<? super AutoCloseable> closeableResources,
+                             MasterEnvironment masterEnv,
+                             MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
     MessagingService messagingService = injector.getInstance(MessagingService.class);
     if (messagingService instanceof Service) {
       services.add((Service) messagingService);
     }
-
     CConfiguration configuration = injector.getInstance(CConfiguration.class);
-
     if (configuration.getBoolean(Constants.Security.ENABLED)) {
-
       services.add(new AbstractService() {
-
         @Override
         protected void doStart() {
-
           ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
           ExternalAuthenticationServer authServer = injector.getInstance(ExternalAuthenticationServer.class);
-
           try {
             LOG.info("Starting AuthenticationServer.");
-
             // Enable Kerberos login
             SecurityUtil.enableKerberosLogin(configuration);
-
             io.cdap.cdap.common.service.Services.startAndWait(
                 zkClientService,
                 configuration.getLong(
@@ -106,7 +103,6 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
                         "cdap-site.xml. Currently configured as: %s",
                     configuration.get(Constants.Zookeeper.QUORUM)));
             authServer.startAndWait();
-
             notifyStarted();
           } catch (Exception e) {
             Throwable rootCause = Throwables.getRootCause(e);
@@ -115,24 +111,19 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
             } else {
               LOG.error("Failed to start Authentication Server", e);
             }
+            System.exit(1);
           }
         }
 
         @Override
         protected void doStop() {
-
           ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
           ExternalAuthenticationServer authServer = injector.getInstance(ExternalAuthenticationServer.class);
-
           LOG.info("Stopping AuthenticationServer.");
           Futures.getUnchecked(Services.chainStop(authServer, zkClientService));
-
           notifyStopped();
         }
       });
-
-      services.add(injector.getInstance(ZKClientService.class));
-      services.add(injector.getInstance(ExternalAuthenticationServer.class));
     } else {
       String warning = "AuthenticationServer not started since security is disabled." +
           " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +

@@ -122,7 +122,7 @@ public final class Constants {
     public static final String EXPLORE_HTTP_USER_SERVICE = "explore.service";
     public static final String MESSAGING_SERVICE = "messaging.service";
     public static final String RUNTIME = "runtime";
-    public static final String AUTHENTICATION = "Authentication";
+    public static final String AUTHENTICATION = "authentication";
 
     public static final String SERVICE_INSTANCE_TABLE_NAME = "cdap.services.instances";
     /** Scheduler queue name to submit the master service app. */
