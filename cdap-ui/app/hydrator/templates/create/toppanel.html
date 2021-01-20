@@ -110,7 +110,7 @@
     <div class="btn"
          ng-if="HydratorPlusPlusTopPanelCtrl.showSchedule"
          ng-class="{'active': HydratorPlusPlusTopPanelCtrl.viewScheduler}"
-         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.toggleScheduler()"
+         ng-click="!HydratorPlusPlusTopPanelCtrl.hasNodes || HydratorPlusPlusTopPanelCtrl.toggleScheduler($event)"
          uib-tooltip="Start building a pipeline before scheduling"
          tooltip-placement="bottom auto"
          tooltip-enable="!HydratorPlusPlusTopPanelCtrl.hasNodes"

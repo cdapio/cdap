@@ -29,7 +29,7 @@ import {
 } from 'services/helpers';
 import classnames from 'classnames';
 import Popover from 'components/Popover';
-import PipelineModelessOld from 'components/PipelineDetails/PipelineModelessOld';
+import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 import T from 'i18n-react';
 import { Provider } from 'react-redux';
 import findIndex from 'lodash/findIndex';
@@ -55,6 +55,12 @@ export default class RunConfigs extends Component {
   };
 
   runtimeArgsMap = {};
+
+  constructor(props) {
+    super(props);
+
+    this.buttonRef = React.createRef();
+  }
 
   componentWillReceiveProps() {
     this.getRuntimeArgsAndToggleModeless();
@@ -153,13 +159,6 @@ export default class RunConfigs extends Component {
   };
 
   renderRunConfigsButton = () => {
-    const target = (
-      <div className="run-configs-btn">
-        <IconSVG name="icon-macro" />
-        <div className="button-label">{T.translate(`${PREFIX}.configs`)}</div>
-      </div>
-    );
-
     let { runs, currentRun } = this.props;
     let reversedRuns = reverseArrayWithoutMutating(runs);
     let currentRunIndex = findIndex(reversedRuns, { runid: objectQuery(currentRun, 'runid') });
@@ -178,25 +177,24 @@ export default class RunConfigs extends Component {
       </div>
     );
     return (
-      <Popover
-        target={() => target}
-        placement="bottom"
-        enableInteractionInPopover={true}
-        showPopover={this.state.showModeless}
-        onTogglePopover={this.toggleModeless}
-        injectOnToggle={true}
-        modifiers={{
-          flip: {
-            enabled: true,
-            behavior: ['bottom', 'right'],
-          },
-          shift: {
-            enabled: true,
-          },
-        }}
-      >
+      <React.Fragment>
+        <div
+          className="run-configs-btn"
+          ref={this.buttonRef}
+          onClick={this.toggleModeless.bind(this, true)}
+        >
+          <IconSVG name="icon-macro" />
+          <div className="button-label">{T.translate(`${PREFIX}.configs`)}</div>
+        </div>
+
         <Provider store={PipelineConfigurationsStore}>
-          <PipelineModelessOld title={title} onClose={this.toggleModeless.bind(this, false)}>
+          <PipelineModeless
+            title={title}
+            onClose={this.toggleModeless.bind(this, false)}
+            open={this.state.showModeless}
+            anchorEl={this.buttonRef.current}
+            arrow={true}
+          >
             <div className="historical-runtime-args-wrapper">
               {this.renderRuntimeArgs()}
               <div className="runconfig-tab-footer">
@@ -205,9 +203,9 @@ export default class RunConfigs extends Component {
                 )}
               </div>
             </div>
-          </PipelineModelessOld>
+          </PipelineModeless>
         </Provider>
-      </Popover>
+      </React.Fragment>
     );
   };
 

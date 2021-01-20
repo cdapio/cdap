@@ -20,7 +20,7 @@ $border-color: $grey-05;
 $modeless-bg-color: $grey-06;
 $modeless-header-bg-color: $grey-08;
 $modeless-width: 730px;
-$modeless-height: 355px;
+$modeless-height: 385px;
 $top-panel-height: 54px;
 $right-position: -330px;
 $regular-font: 14px;
@@ -31,6 +31,7 @@ $secondary-btn-color: $brand-primary;
   height: $modeless-height;
   top: $top-panel-height;
   right: $right-position;
+  padding: 0 30px 30px;
 
   .pipeline-scheduler-body {
     .schedule-content {

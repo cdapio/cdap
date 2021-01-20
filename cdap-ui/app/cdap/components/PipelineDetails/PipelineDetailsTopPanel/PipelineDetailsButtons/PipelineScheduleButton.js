@@ -52,6 +52,12 @@ export default class PipelineScheduleButton extends Component {
     scheduleStatus: this.props.scheduleStatus,
   };
 
+  constructor(props) {
+    super(props);
+
+    this.buttonRef = React.createRef();
+  }
+
   componentWillReceiveProps(nextProps) {
     let scheduleStatus = StatusMapper.lookupDisplayStatus(nextProps.scheduleStatus);
     if (scheduleStatus !== this.state.scheduleStatus) {
@@ -60,10 +66,9 @@ export default class PipelineScheduleButton extends Component {
     }
   }
 
-  toggleScheduler = (e) => {
+  toggleScheduler = (open) => {
     this.setState({
-      showScheduler: !this.state.showScheduler,
-      anchorEl: e && e.currentTarget,
+      showScheduler: open,
     });
   };
 
@@ -90,9 +95,10 @@ export default class PipelineScheduleButton extends Component {
     ) {
       return (
         <div
-          onClick={this.toggleScheduler}
+          onClick={this.toggleScheduler.bind(this, true)}
           className="btn pipeline-action-btn pipeline-scheduler-btn"
           disabled={this.state.scheduleStatus === StatusMapper.statusMap['SUSPENDING']}
+          ref={this.buttonRef}
         >
           <div className="btn-container">
             {this.props.scheduleButtonLoading ? (
@@ -108,11 +114,12 @@ export default class PipelineScheduleButton extends Component {
 
     return (
       <div
-        onClick={this.toggleScheduler}
+        onClick={this.toggleScheduler.bind(this, true)}
         className={classnames('btn pipeline-action-btn pipeline-scheduler-btn', {
           'btn-select': this.state.showScheduler,
         })}
         disabled={this.state.scheduleStatus === StatusMapper.statusMap['SCHEDULING']}
+        ref={this.buttonRef}
       >
         <div className="btn-container">
           {this.props.scheduleButtonLoading ? (
@@ -146,9 +153,9 @@ export default class PipelineScheduleButton extends Component {
         <PipelineScheduler
           schedule={this.props.schedule}
           maxConcurrentRuns={this.props.maxConcurrentRuns}
-          onClose={this.toggleScheduler}
+          onClose={this.toggleScheduler.bind(this, false)}
           open={this.state.showScheduler}
-          anchorEl={this.state.anchorEl}
+          anchorEl={this.buttonRef.current}
           isDetailView={true}
           pipelineName={this.props.pipelineName}
           scheduleStatus={this.state.scheduleStatus}

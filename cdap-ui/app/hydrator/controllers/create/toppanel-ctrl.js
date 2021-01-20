@@ -564,8 +564,9 @@ class HydratorPlusPlusTopPanelCtrl {
       });
   }
 
-  toggleScheduler() {
+  toggleScheduler(e) {
     this.viewScheduler = !this.viewScheduler;
+    e.stopPropagation();
   }
 
   applyRuntimeArguments() {

@@ -33,6 +33,7 @@ import { humanReadableDuration, isBatchPipeline } from 'services/helpers';
 import isNil from 'lodash/isNil';
 import Mousetrap from 'mousetrap';
 import ee from 'event-emitter';
+import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 
 const PREFIX = 'features.PipelineSummary';
 
@@ -249,102 +250,108 @@ export default class PipelineSummary extends Component {
       end,
     });
   }
-  renderTitleBar() {
+  renderSecondaryTitleBar() {
     return (
-      <div className="top-title-bar">
-        <div> {T.translate(`${PREFIX}.title`)}</div>
-        <div className="stats-container text-right">
-          {isBatchPipeline(this.props.pipelineType) ? (
-            <span>
-              <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
-              {humanReadableDuration(this.state.avgRunTime)}
-            </span>
-          ) : null}
+      <div className="stats-container">
+        {isBatchPipeline(this.props.pipelineType) ? (
           <span>
-            <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
-            {this.state.totalRunsCount}
+            <strong>{T.translate(`${PREFIX}.statsContainer.avgRunTime`)}: </strong>
+            {humanReadableDuration(this.state.avgRunTime)}
           </span>
-          <IconSVG name="icon-close" onClick={this.props.onClose} />
-        </div>
+        ) : null}
+        <span>
+          <strong>{T.translate(`${PREFIX}.statsContainer.totalRuns`)}: </strong>
+          {this.state.totalRunsCount}
+        </span>
       </div>
     );
   }
+
   render() {
     return (
-      <div className="pipeline-summary" ref={(ref) => (this.summaryComponent = ref)}>
-        {this.renderTitleBar()}
-        <div className="filter-container">
-          <span> {T.translate(`${PREFIX}.filterContainer.view`)} </span>
-          <UncontrolledDropdown className="runs-dropdown">
-            <DropdownToggle caret>
-              <span>{this.state.activeRunsFilter}</span>
-              <IconSVG name="icon-caret-down" />
-            </DropdownToggle>
-            <CustomDropdownMenu>
-              {this.runsDropdown.map((dropdown) => {
-                if (dropdown.label === 'divider') {
-                  return <DropdownItem tag="li" divider />;
-                }
-                return (
-                  <DropdownItem tag="li" onClick={dropdown.onClick.bind(this, dropdown.label)}>
-                    {dropdown.label}
-                  </DropdownItem>
-                );
-              })}
-            </CustomDropdownMenu>
-          </UncontrolledDropdown>
+      <PipelineModeless
+        title={T.translate(`${PREFIX}.title`)}
+        secondaryTitle={this.renderSecondaryTitleBar()}
+        onClose={this.props.onClose}
+        open={this.props.open}
+        anchorEl={this.props.anchorEl}
+        fullScreen={true}
+        placement="bottom-end"
+      >
+        <div className="pipeline-summary">
+          <div className="filter-container">
+            <span> {T.translate(`${PREFIX}.filterContainer.view`)} </span>
+            <UncontrolledDropdown className="runs-dropdown">
+              <DropdownToggle caret>
+                <span>{this.state.activeRunsFilter}</span>
+                <IconSVG name="icon-caret-down" />
+              </DropdownToggle>
+              <CustomDropdownMenu>
+                {this.runsDropdown.map((dropdown) => {
+                  if (dropdown.label === 'divider') {
+                    return <DropdownItem tag="li" divider />;
+                  }
+                  return (
+                    <DropdownItem tag="li" onClick={dropdown.onClick.bind(this, dropdown.label)}>
+                      {dropdown.label}
+                    </DropdownItem>
+                  );
+                })}
+              </CustomDropdownMenu>
+            </UncontrolledDropdown>
+          </div>
+          <div className="graphs-container">
+            <RunsHistoryGraph
+              activeFilterLabel={this.state.activeRunsFilter}
+              totalRunsCount={this.state.totalRunsCount}
+              runs={this.state.runs}
+              runsLimit={this.state.runsLimit}
+              start={this.state.start}
+              end={this.state.end}
+              xDomainType={this.state.filterType}
+              runContext={this.props}
+              isLoading={this.state.loading}
+            />
+            <LogsMetricsGraph
+              activeFilterLabel={this.state.activeRunsFilter}
+              totalRunsCount={this.state.totalRunsCount}
+              runs={this.state.logsMetrics}
+              runsLimit={this.state.runsLimit}
+              start={this.state.start}
+              end={this.state.end}
+              xDomainType={this.state.filterType}
+              runContext={this.props}
+              isLoading={this.state.loading}
+            />
+            <NodesMetricsGraph
+              activeFilterLabel={this.state.activeRunsFilter}
+              totalRunsCount={this.state.totalRunsCount}
+              runs={this.state.nodesMetrics}
+              runsLimit={this.state.runsLimit}
+              start={this.state.start}
+              end={this.state.end}
+              xDomainType={this.state.filterType}
+              runContext={this.props}
+              isLoading={this.state.nodeMetricsLoading}
+              recordType="recordsout"
+              nodesMap={this.state.nodesMap.recordsout}
+            />
+            <NodesMetricsGraph
+              activeFilterLabel={this.state.activeRunsFilter}
+              totalRunsCount={this.state.totalRunsCount}
+              runs={this.state.nodesMetrics}
+              runsLimit={this.state.runsLimit}
+              start={this.state.start}
+              end={this.state.end}
+              xDomainType={this.state.filterType}
+              runContext={this.props}
+              isLoading={this.state.nodeMetricsLoading}
+              recordType="recordsin"
+              nodesMap={this.state.nodesMap.recordsin}
+            />
+          </div>
         </div>
-        <div className="graphs-container">
-          <RunsHistoryGraph
-            activeFilterLabel={this.state.activeRunsFilter}
-            totalRunsCount={this.state.totalRunsCount}
-            runs={this.state.runs}
-            runsLimit={this.state.runsLimit}
-            start={this.state.start}
-            end={this.state.end}
-            xDomainType={this.state.filterType}
-            runContext={this.props}
-            isLoading={this.state.loading}
-          />
-          <LogsMetricsGraph
-            activeFilterLabel={this.state.activeRunsFilter}
-            totalRunsCount={this.state.totalRunsCount}
-            runs={this.state.logsMetrics}
-            runsLimit={this.state.runsLimit}
-            start={this.state.start}
-            end={this.state.end}
-            xDomainType={this.state.filterType}
-            runContext={this.props}
-            isLoading={this.state.loading}
-          />
-          <NodesMetricsGraph
-            activeFilterLabel={this.state.activeRunsFilter}
-            totalRunsCount={this.state.totalRunsCount}
-            runs={this.state.nodesMetrics}
-            runsLimit={this.state.runsLimit}
-            start={this.state.start}
-            end={this.state.end}
-            xDomainType={this.state.filterType}
-            runContext={this.props}
-            isLoading={this.state.nodeMetricsLoading}
-            recordType="recordsout"
-            nodesMap={this.state.nodesMap.recordsout}
-          />
-          <NodesMetricsGraph
-            activeFilterLabel={this.state.activeRunsFilter}
-            totalRunsCount={this.state.totalRunsCount}
-            runs={this.state.nodesMetrics}
-            runsLimit={this.state.runsLimit}
-            start={this.state.start}
-            end={this.state.end}
-            xDomainType={this.state.filterType}
-            runContext={this.props}
-            isLoading={this.state.nodeMetricsLoading}
-            recordType="recordsin"
-            nodesMap={this.state.nodesMap.recordsin}
-          />
-        </div>
-      </div>
+      </PipelineModeless>
     );
   }
 }
@@ -358,4 +365,6 @@ PipelineSummary.propTypes = {
   pipelineConfig: PropTypes.object.isRequired,
   totalRunsCount: PropTypes.number,
   onClose: PropTypes.func,
+  open: PropTypes.bool,
+  anchorEl: PropTypes.oneOf([PropTypes.element, PropTypes.string]),
 };
