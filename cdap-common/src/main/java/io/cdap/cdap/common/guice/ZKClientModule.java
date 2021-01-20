@@ -49,7 +49,7 @@ public class ZKClientModule extends AbstractModule {
   private ZKClientService provideZKClientService(CConfiguration cConf) {
     String zookeeper = cConf.get(Constants.Zookeeper.QUORUM);
     Preconditions.checkNotNull(zookeeper, "Missing ZooKeeper configuration '%s'", Constants.Zookeeper.QUORUM);
-ZKClientService.class.equals()
+
     return ZKClientServices.delegate(
       ZKClients.reWatchOnExpire(
         ZKClients.retryOnFailure(
