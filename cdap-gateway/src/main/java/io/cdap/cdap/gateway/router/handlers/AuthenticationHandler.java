@@ -24,8 +24,9 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
-import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.AccessTokenIdentifierPair;
 import io.cdap.cdap.security.auth.TokenState;
+import io.cdap.cdap.security.auth.TokenTransformer;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.server.GrantAccessToken;
 import io.netty.buffer.ByteBuf;
@@ -79,11 +80,11 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final boolean auditLogEnabled;
   private final List<String> authServerURLs;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final AccessTokenTransformer tokenTransformer;
+  private final TokenTransformer tokenTransformer;
 
   public AuthenticationHandler(CConfiguration cConf, TokenValidator tokenValidator,
                                DiscoveryServiceClient discoveryServiceClient,
-                               AccessTokenTransformer tokenTransformer) {
+                               TokenTransformer tokenTransformer) {
     this.cConf = cConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
     this.tokenValidator = tokenValidator;
@@ -184,7 +185,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
     if (state.isValid()) {
       try {
-        AccessTokenTransformer.AccessTokenIdentifierPair tokenPair = tokenTransformer.transform(accessToken);
+        AccessTokenIdentifierPair tokenPair = tokenTransformer.transform(accessToken);
         // Update message header
         request.headers().set(HttpHeaderNames.AUTHORIZATION,
                               "CDAP-verified " + tokenPair.getAccessTokenIdentifierStr());

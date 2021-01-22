@@ -77,6 +77,9 @@ public final class SecurityUtil {
       return;
     }
 
+    Preconditions.checkArgument(!isPassthroughAuthEnabled(cConf), "Kerberos authentication and " +
+      Constants.Security.TOKEN_PASSTHROUGH_ENABLED + " cannot be enabled at the same time.");
+
     Preconditions.checkArgument(cConf.get(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL) != null,
                                 "Kerberos authentication is enabled, but " +
                                 Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL + " is not configured");
@@ -145,6 +148,15 @@ public final class SecurityUtil {
   public static boolean isKerberosEnabled(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.KERBEROS_ENABLED,
                             cConf.getBoolean(Constants.Security.ENABLED));
+  }
+
+  /**
+   * Returns whether token passthrough authentication is enabled.
+   * @param cConf CConfiguration object.
+   * @return true, if token passthrough authentication is enabled.
+   */
+  public static boolean isPassthroughAuthEnabled(CConfiguration cConf) {
+    return cConf.getBoolean(Constants.Security.TOKEN_PASSTHROUGH_ENABLED, false);
   }
 
   public static String getMasterPrincipal(CConfiguration cConf) {

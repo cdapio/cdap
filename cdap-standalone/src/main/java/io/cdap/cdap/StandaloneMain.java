@@ -137,6 +137,7 @@ public class StandaloneMain {
   private final InMemoryTransactionService txService;
   private final MetadataService metadataService;
   private final boolean securityEnabled;
+  private final boolean tokenPassthroughEnabled;
   private final boolean sslEnabled;
   private final CConfiguration cConf;
   private final DatasetService datasetService;
@@ -161,6 +162,8 @@ public class StandaloneMain {
   private StandaloneMain(List<Module> modules, CConfiguration cConf) {
     Thread.setDefaultUncaughtExceptionHandler(new UncaughtExceptionHandler());
     this.cConf = cConf;
+    // This needs to happen before instantiation of the AuthorizerInstantiator
+    cleanupTempDir();
 
     injector = Guice.createInjector(modules);
 
@@ -199,7 +202,8 @@ public class StandaloneMain {
 
     sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    if (securityEnabled) {
+    tokenPassthroughEnabled = cConf.getBoolean(Constants.Security.TOKEN_PASSTHROUGH_ENABLED);
+    if (securityEnabled && !tokenPassthroughEnabled) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
@@ -242,8 +246,6 @@ public class StandaloneMain {
   public void startUp() throws Exception {
     // Workaround for release of file descriptors opened by URLClassLoader - https://issues.cask.co/browse/CDAP-2841
     URLConnections.setDefaultUseCaches(false);
-
-    cleanupTempDir();
 
     ConfigurationLogger.logImportantConfig(cConf);
 
@@ -295,7 +297,7 @@ public class StandaloneMain {
       userInterfaceService.startAndWait();
     }
 
-    if (securityEnabled) {
+    if (securityEnabled && !tokenPassthroughEnabled) {
       externalAuthenticationServer.startAndWait();
     }
 
@@ -363,7 +365,7 @@ public class StandaloneMain {
         txService.stopAndWait();
       }
 
-      if (securityEnabled) {
+      if (securityEnabled && !tokenPassthroughEnabled) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
       }

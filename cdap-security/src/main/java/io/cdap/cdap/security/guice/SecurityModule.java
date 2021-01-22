@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -37,7 +37,10 @@ import io.cdap.cdap.security.auth.AccessTokenTransformer;
 import io.cdap.cdap.security.auth.AccessTokenValidator;
 import io.cdap.cdap.security.auth.KeyIdentifier;
 import io.cdap.cdap.security.auth.KeyIdentifierCodec;
+import io.cdap.cdap.security.auth.PassthroughTokenTransformer;
+import io.cdap.cdap.security.auth.PassthroughTokenValidator;
 import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.TokenTransformer;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.server.AuditLogHandler;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
@@ -77,9 +80,9 @@ public abstract class SecurityModule extends PrivateModule {
       .annotatedWith(Names.named(ExternalAuthenticationServer.NAMED_EXTERNAL_AUTH))
       .toInstance(new AuditLogHandler(EXTERNAL_AUTH_AUDIT_LOG));
 
-    bind(TokenValidator.class).to(AccessTokenValidator.class);
-    bind(AccessTokenTransformer.class).in(Scopes.SINGLETON);
-    expose(AccessTokenTransformer.class);
+    bind(TokenValidator.class).toProvider(TokenValidatorProvider.class);
+    bind(TokenTransformer.class).toProvider(TokenTransformerProvider.class).in(Scopes.SINGLETON);
+    expose(TokenTransformer.class);
     expose(TokenValidator.class);
     expose(TokenManager.class);
     expose(ExternalAuthenticationServer.class);
@@ -100,6 +103,59 @@ public abstract class SecurityModule extends PrivateModule {
       // we don't instantiate the handler class via injection, to avoid giving it access to objects bound in guice,
       // such as SConfiguration
       return new InstantiatorFactory(false).get(TypeToken.of(handlerClass)).create();
+    }
+  }
+
+  /**
+   * Provider for the {@link TokenValidator} class which supports either the {@link PassthroughTokenValidator} or the
+   * {@link AccessTokenValidator}.
+   */
+  private static final class TokenValidatorProvider implements Provider<TokenValidator> {
+    private final boolean passthroughEnabled;
+    private final TokenManager tokenManager;
+    private final Codec<AccessToken> accessTokenCodec;
+
+    @Inject
+    private TokenValidatorProvider(CConfiguration configuration, TokenManager manager, Codec<AccessToken> codec) {
+      passthroughEnabled = configuration.getBoolean(Constants.Security.TOKEN_PASSTHROUGH_ENABLED, false);
+      tokenManager = manager;
+      accessTokenCodec = codec;
+    }
+
+    @Override
+    public TokenValidator get() {
+      if (passthroughEnabled) {
+        return new PassthroughTokenValidator();
+      } else {
+        return new AccessTokenValidator(tokenManager, accessTokenCodec);
+      }
+    }
+  }
+
+  /**
+   * Provider for the {@link TokenTransformer} class which supports either the {@link PassthroughTokenTransformer} or
+   * the {@link AccessTokenTransformer}.
+   */
+  private static final class TokenTransformerProvider implements Provider<TokenTransformer> {
+    private final boolean passthroughEnabled;
+    private final Codec<AccessToken> accessTokenCodec;
+    private final Codec<AccessTokenIdentifier> accessTokenIdentifierCodec;
+
+    @Inject
+    private TokenTransformerProvider(CConfiguration configuration, Codec<AccessToken> tokenCodec,
+                                     Codec<AccessTokenIdentifier> identifierCodec) {
+      passthroughEnabled = configuration.getBoolean(Constants.Security.TOKEN_PASSTHROUGH_ENABLED, false);
+      accessTokenCodec = tokenCodec;
+      accessTokenIdentifierCodec = identifierCodec;
+    }
+
+    @Override
+    public TokenTransformer get() {
+      if (passthroughEnabled) {
+        return new PassthroughTokenTransformer();
+      } else {
+        return new AccessTokenTransformer(accessTokenCodec, accessTokenIdentifierCodec);
+      }
     }
   }
 

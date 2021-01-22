@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,7 +24,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
-import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.TokenTransformer;
 import io.cdap.cdap.security.guice.SecurityModules;
 import org.apache.commons.net.DefaultSocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
@@ -78,7 +78,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
                                                new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-      AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
+      TokenTransformer tokenTransformer = injector.getInstance(TokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
@@ -86,7 +86,7 @@ public class NettyRouterHttpTest extends NettyRouterTestBase {
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),
                         new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup()),
-                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
+                        new SuccessTokenValidator(), tokenTransformer, discoveryServiceClient);
       router.startAndWait();
     }
 

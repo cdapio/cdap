@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2020 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
-import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.TokenTransformer;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.common.http.HttpRequests;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
@@ -168,14 +168,14 @@ public class NettyRouterHttpsTest extends NettyRouterTestBase {
                                                new InMemoryDiscoveryModule(),
                                                new AppFabricTestModule(cConf));
       DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-      AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
+      TokenTransformer tokenTransformer = injector.getInstance(TokenTransformer.class);
       cConf.set(Constants.Router.ADDRESS, hostname);
 
       router =
         new NettyRouter(cConf, sConf, InetAddresses.forString(hostname),
                         new RouterServiceLookup(cConf, (DiscoveryServiceClient) discoveryService,
                                                 new RouterPathLookup()),
-                        new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
+                        new SuccessTokenValidator(), tokenTransformer, discoveryServiceClient);
       router.startAndWait();
     }
 

@@ -76,7 +76,9 @@ public class RouterMain extends DaemonMain {
           System.exit(1);
         }
         // Enable Kerberos login
-        SecurityUtil.enableKerberosLogin(cConf);
+        if (!cConf.getBoolean(Constants.Security.TOKEN_PASSTHROUGH_ENABLED)) {
+          SecurityUtil.enableKerberosLogin(cConf);
+        }
       }
 
       // Initialize ZK client

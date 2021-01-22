@@ -17,6 +17,7 @@
 package io.cdap.cdap.gateway.router;
 
 import io.cdap.cdap.security.auth.AccessTokenIdentifier;
+import io.cdap.cdap.security.auth.AccessTokenIdentifierPair;
 import io.cdap.cdap.security.auth.AccessTokenTransformer;
 
 import java.io.IOException;

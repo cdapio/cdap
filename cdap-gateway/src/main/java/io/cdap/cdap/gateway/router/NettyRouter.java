@@ -32,7 +32,7 @@ import io.cdap.cdap.gateway.router.handlers.AuditLogHandler;
 import io.cdap.cdap.gateway.router.handlers.AuthenticationHandler;
 import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
 import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
-import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.TokenTransformer;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.SSLConfig;
 import io.cdap.http.SSLHandlerFactory;
@@ -86,7 +86,7 @@ public class NettyRouter extends AbstractIdleService {
   private final RouterServiceLookup serviceLookup;
   private final boolean securityEnabled;
   private final TokenValidator tokenValidator;
-  private final AccessTokenTransformer accessTokenTransformer;
+  private final TokenTransformer tokenTransformer;
   private final boolean sslEnabled;
   private InetSocketAddress boundAddress;
 
@@ -96,7 +96,7 @@ public class NettyRouter extends AbstractIdleService {
   @Inject
   public NettyRouter(CConfiguration cConf, SConfiguration sConf, @Named(Constants.Router.ADDRESS) InetAddress hostname,
                      RouterServiceLookup serviceLookup, TokenValidator tokenValidator,
-                     AccessTokenTransformer accessTokenTransformer,
+                     TokenTransformer tokenTransformer,
                      DiscoveryServiceClient discoveryServiceClient) {
     this.cConf = cConf;
     this.sConf = sConf;
@@ -107,7 +107,7 @@ public class NettyRouter extends AbstractIdleService {
     this.serviceLookup = serviceLookup;
     this.securityEnabled = cConf.getBoolean(Constants.Security.ENABLED, false);
     this.tokenValidator = tokenValidator;
-    this.accessTokenTransformer = accessTokenTransformer;
+    this.tokenTransformer = tokenTransformer;
     this.discoveryServiceClient = discoveryServiceClient;
     this.sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     this.port = sslEnabled
@@ -203,7 +203,7 @@ public class NettyRouter extends AbstractIdleService {
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator",
                              new AuthenticationHandler(cConf, tokenValidator,
-                                                       discoveryServiceClient, accessTokenTransformer));
+                                                       discoveryServiceClient, tokenTransformer));
           }
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
             pipeline.addLast("audit-log", new AuditLogHandler());
