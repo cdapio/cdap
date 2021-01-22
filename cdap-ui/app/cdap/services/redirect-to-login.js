@@ -31,5 +31,7 @@ export default function RedirectToLogin(data) {
       clientId: 'cdap',
     });
   }
+  cookie.set('CDAP_Auth_Token', 'testToken');
+  cookie.set('CDAP_Auth_User', 'admin');
   return true;
 }

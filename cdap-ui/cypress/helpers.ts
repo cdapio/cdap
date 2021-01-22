@@ -23,6 +23,8 @@ let authToken = null;
 let sessionToken = null;
 
 function loginIfRequired() {
+  isAuthEnabled = true;
+  authToken = 'testtoken';
   if (isAuthEnabled && authToken !== null) {
     cy.setCookie('CDAP_Auth_Token', authToken);
     cy.setCookie('CDAP_Auth_User', username);
@@ -63,6 +65,7 @@ function loginIfRequired() {
 }
 
 function getSessionToken(headers) {
+  sessionToken = "testSessionToken";
   if (sessionToken !== null) {
     return sessionToken;
   }
