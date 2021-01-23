@@ -53,6 +53,8 @@ import java.util.concurrent.TimeUnit;
 public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOptions> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationServiceMain.class);
+  private ZKClientService zkClientService;
+  private ExternalAuthenticationServer authServer;
 
   public static void main(String[] args) throws Exception {
     main(AuthenticationServiceMain.class, args);
@@ -85,8 +87,8 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
       services.add(new AbstractService() {
         @Override
         protected void doStart() {
-          ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-          ExternalAuthenticationServer authServer = injector.getInstance(ExternalAuthenticationServer.class);
+          zkClientService = injector.getInstance(ZKClientService.class);
+          authServer = injector.getInstance(ExternalAuthenticationServer.class);
           try {
             LOG.info("Starting AuthenticationServer.");
             // Enable Kerberos login
@@ -117,8 +119,6 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
 
         @Override
         protected void doStop() {
-          ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-          ExternalAuthenticationServer authServer = injector.getInstance(ExternalAuthenticationServer.class);
           LOG.info("Stopping AuthenticationServer.");
           Futures.getUnchecked(Services.chainStop(authServer, zkClientService));
           notifyStopped();
