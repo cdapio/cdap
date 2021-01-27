@@ -53,7 +53,7 @@ const ActionsPopover: React.SFC<IActionsPopoverProps> = ({
 }) => {
   let target = (props) => (
     <IconSVG
-      name="icon-cog-empty"
+      name="icon-more"
       {...props}
       className={`default-target ${props.className}`}
       onClick={togglePopover}
