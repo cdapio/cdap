@@ -127,7 +127,7 @@ const styles = (theme): StyleRules => {
 
 interface ISelectColumnsProps extends WithStyles<typeof styles> {
   tableInfo?: ITableInfo;
-  onSave: (tableKey: string, columns: IColumnsList) => void;
+  onSave: (tableInfo: ITableInfo, columns: IColumnsList) => void;
   initialSelected: IColumnsList;
   toggle: () => void;
   draftId: string;
@@ -193,8 +193,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     const response: Map<string, IColumnImmutable> = Map(selectedColumns);
 
     if (hasChange) {
-      const tableKey = generateTableKey(this.props.tableInfo);
-      this.props.onSave(tableKey, response.toList());
+      this.props.onSave(this.props.tableInfo, response.toList());
     }
 
     return response;
@@ -274,13 +273,12 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
   };
 
   private handleSave = () => {
-    const tableKey = generateTableKey(this.props.tableInfo);
     const selectedList =
       this.state.selectedReplication === ReplicateSelect.all
         ? null
         : this.state.selectedColumns.toList();
 
-    this.props.onSave(tableKey, selectedList);
+    this.props.onSave(this.props.tableInfo, selectedList);
     this.props.toggle();
   };
 
