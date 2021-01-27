@@ -26,6 +26,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.dataset.DatasetManagementException;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.store.Store;
 import io.cdap.cdap.common.BadRequestException;
 import io.cdap.cdap.common.NamespaceAlreadyExistsException;
@@ -33,6 +34,7 @@ import io.cdap.cdap.common.NamespaceCannotBeCreatedException;
 import io.cdap.cdap.common.NamespaceCannotBeDeletedException;
 import io.cdap.cdap.common.NamespaceNotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.security.AuthEnforce;
@@ -57,6 +59,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -72,6 +75,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private final NamespaceStore nsStore;
   private final Store store;
   private final DatasetFramework dsFramework;
+  private final MetricsCollectionService metricsCollectionService;
 
   // Cannot have direct dependency on the following three resources
   // Otherwise there would be circular dependency
@@ -89,6 +93,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public DefaultNamespaceAdmin(NamespaceStore nsStore,
                                Store store,
                                DatasetFramework dsFramework,
+                               MetricsCollectionService metricsCollectionService,
                                Provider<NamespaceResourceDeleter> resourceDeleter,
                                Provider<StorageProviderNamespaceAdmin> storageProviderNamespaceAdmin,
                                CConfiguration cConf,
@@ -98,6 +103,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     this.nsStore = nsStore;
     this.store = store;
     this.dsFramework = dsFramework;
+    this.metricsCollectionService = metricsCollectionService;
     this.authenticationContext = authenticationContext;
     this.authorizationEnforcer = authorizationEnforcer;
     this.storageProviderNamespaceAdmin = storageProviderNamespaceAdmin;
@@ -181,6 +187,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       deleteNamespaceMeta(metadata.getNamespaceId());
       throw new NamespaceCannotBeCreatedException(namespace, t);
     }
+    emitNamespaceCountMetric();
     LOG.info("Namespace {} created with meta {}", metadata.getNamespaceId(), metadata);
   }
 
@@ -285,6 +292,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       LOG.warn("Error while deleting namespace {}", namespaceId, e);
       throw new NamespaceCannotBeDeletedException(namespaceId, e);
     }
+    emitNamespaceCountMetric();
   }
 
   @Override
@@ -475,5 +483,13 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   private void deleteNamespaceMeta(NamespaceId namespaceId) {
     nsStore.delete(namespaceId);
     namespaceMetaCache.invalidate(namespaceId);
+  }
+
+  /**
+   * Emit the namespace count metric.
+   */
+  private void emitNamespaceCountMetric() {
+    metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
+                                                                      nsStore.getNamespaceCount());
   }
 }

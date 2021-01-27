@@ -18,6 +18,7 @@ package io.cdap.cdap.internal.app.store;
 
 import com.google.inject.Injector;
 import com.opentable.db.postgres.embedded.EmbeddedPostgres;
+import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.data2.dataset2.DatasetFramework;
 import io.cdap.cdap.internal.AppFabricTestHelper;
@@ -69,9 +70,10 @@ public class SqlDefaultStoreTest extends DefaultStoreTest {
     nsStore = new DefaultNamespaceStore(transactionRunner);
     nsAdmin = new DefaultNamespaceAdmin(
       nsStore, store, injector.getInstance(DatasetFramework.class),
-      injector.getProvider(NamespaceResourceDeleter.class), injector.getProvider(StorageProviderNamespaceAdmin.class),
-      injector.getInstance(CConfiguration.class), injector.getInstance(Impersonator.class),
-      injector.getInstance(AuthorizationEnforcer.class), injector.getInstance(AuthenticationContext.class));
+      injector.getInstance(MetricsCollectionService.class), injector.getProvider(NamespaceResourceDeleter.class),
+      injector.getProvider(StorageProviderNamespaceAdmin.class), injector.getInstance(CConfiguration.class),
+      injector.getInstance(Impersonator.class), injector.getInstance(AuthorizationEnforcer.class),
+      injector.getInstance(AuthenticationContext.class));
   }
 
   @AfterClass

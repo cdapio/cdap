@@ -31,6 +31,9 @@ import io.cdap.cdap.spi.data.table.field.Range;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
@@ -104,5 +107,24 @@ public final class NamespaceTable {
       }
     }
     return result;
+  }
+
+  /**
+   * Count all namespaces
+   * @return long of all namespaces except for system.
+   * @throws IOException from StructuredTable.count
+   */
+  public long getNamespaceCount() throws IOException {
+    return getNamespaceCount(Collections.singletonList(Range.all()));
+  }
+
+  /**
+   * Count namespaces for a particular range.
+   * @param ranges list of ranges
+   * @return long of all namespaces based on range
+   * @throws IOException from StructuredTable.count
+   */
+  public long getNamespaceCount(Collection<Range> ranges) throws IOException {
+    return table.count(ranges);
   }
 }
