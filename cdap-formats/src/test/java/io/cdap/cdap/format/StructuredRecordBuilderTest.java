@@ -28,6 +28,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
@@ -158,6 +159,20 @@ public class StructuredRecordBuilderTest {
       .setTimestamp("timestamp", expectedMicros).build();
     actual = record.getTimestamp("timestamp");
     Assert.assertEquals(expectedMicros, actual);
+  }
+
+  @Test
+  public void testDateTimeSupport() {
+    String fieldName = "datetimefield";
+    Schema schema = Schema.recordOf("test", Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+                                    Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+                                    Schema.Field.of(fieldName, Schema.of(Schema.LogicalType.DATETIME)));
+    LocalDateTime localDateTime = LocalDateTime.now();
+    StructuredRecord record = StructuredRecord.builder(schema)
+      .set("id", 1)
+      .set("name", "test")
+      .setDateTime(fieldName, localDateTime).build();
+    Assert.assertEquals(localDateTime, record.getDateTime(fieldName));
   }
 
   @Test
@@ -322,6 +337,15 @@ public class StructuredRecordBuilderTest {
     thrown.expect(ClassCastException.class);
     thrown.expectMessage("Field 'x' is expected to be a time");
     record.getTime("x");
+  }
+
+  @Test
+  public void testUnexpectedDateTimeType() {
+    Schema schema = Schema.recordOf("test", Schema.Field.of("x", Schema.of(Schema.LogicalType.DATETIME)));
+    StructuredRecord record = StructuredRecord.builder(schema).set("x", "12:00:00").build();
+    thrown.expect(UnexpectedFormatException.class);
+    thrown.expectMessage("Field 'x' with value '12:00:00' is not a valid datetime in ISO-8601 format");
+    record.getDateTime("x");
   }
 
   @Test

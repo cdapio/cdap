@@ -202,6 +202,9 @@ public final class SchemaHash implements Serializable {
           md5.update((byte) schema.getPrecision());
           md5.update((byte) schema.getScale());
           break;
+        case DATETIME:
+          md5.update((byte) 19);
+          break;
       }
     }
 

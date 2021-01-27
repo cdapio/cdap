@@ -75,4 +75,14 @@ public class SchemaHashTest {
     Assert.assertNotEquals(schema1, schema2);
     Assert.assertEquals(schema1.getSchemaHash(), schema1.getSchemaHash());
   }
+
+  @Test
+  public void testDateTimeHash() {
+    //Datetime type should have a different hash than the string type
+    Schema schema1 = Schema.of(Schema.LogicalType.DATETIME);
+    Schema schema2 = Schema.of(Schema.Type.STRING);
+    Schema schema3 = Schema.of(Schema.LogicalType.DATETIME);
+    Assert.assertNotEquals(schema1.getSchemaHash(), schema2.getSchemaHash());
+    Assert.assertEquals(schema1.getSchemaHash(), schema3.getSchemaHash());
+  }
 }

@@ -29,10 +29,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Date;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -225,6 +228,30 @@ public class StructuredRecord implements Serializable {
     } catch (ClassCastException e) {
       throw new ClassCastException(String.format("Field '%s' is expected to be a decimal, but is a %s.", fieldName,
                                                  value.getClass().getSimpleName()));
+    }
+  }
+
+  /**
+   * Returns value of a datetime field as java.time.LocalDateTime formatted using
+   * {@link java.time.format.DateTimeFormatter#ISO_LOCAL_DATE_TIME}. Use get() to retrieve value as string.
+   *
+   * @param fieldName Name of the field
+   * @return {@link LocalDateTime}
+   */
+  @Nullable
+  public LocalDateTime getDateTime(String fieldName) {
+    Schema logicalTypeSchema = validateAndGetLogicalTypeSchema(schema.getField(fieldName),
+                                                               EnumSet.of(LogicalType.DATETIME));
+    Object value = fields.get(fieldName);
+    if (value == null || logicalTypeSchema == null) {
+      return null;
+    }
+    try {
+      return LocalDateTime.parse(value.toString());
+    } catch (DateTimeParseException dateTimeParseException) {
+      throw new UnexpectedFormatException(
+        String.format("Field '%s' with value '%s' is not a valid datetime in ISO-8601 format", fieldName,
+                      value.toString()));
     }
   }
 
@@ -481,6 +508,25 @@ public class StructuredRecord implements Serializable {
       return this;
     }
 
+
+    /**
+     * Sets the java.time.LocalDateTime for a datetime field.
+     *
+     * @param fieldName String field name
+     * @param localDateTime {@link LocalDateTime} value , is nullable
+     * @return {@link Builder} for the StructuredRecord
+     */
+    public Builder setDateTime(String fieldName, @Nullable LocalDateTime localDateTime) {
+      validateAndGetLogicalTypeSchema(validateAndGetField(fieldName, localDateTime),
+                                                             EnumSet.of(LogicalType.DATETIME));
+      if (localDateTime == null) {
+        fields.put(fieldName, null);
+        return this;
+      }
+      // Save as ISO-8601 format without the offset
+      fields.put(fieldName, localDateTime.format(DateTimeFormatter.ISO_DATE_TIME));
+      return this;
+    }
 
     /**
      * Convert the given date into the type of the given field, and set the value for that field.

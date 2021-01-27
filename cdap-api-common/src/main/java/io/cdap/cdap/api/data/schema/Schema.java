@@ -93,6 +93,7 @@ public final class Schema implements Serializable {
    * Logical type TIME_MILLIS relies on INT as underlying primitive type
    * Logical type TIME_MICROS relies on LONG as underlying primitive type
    * Logical type DECIMAL relies on BYTES as underlying primitive type
+   * Logical type DATETIME relies on STRING as underlying primitive type
    *
    * For example, the json schema for logicaltype date will be as below:
    * {
@@ -114,6 +115,13 @@ public final class Schema implements Serializable {
    * For example,
    * An unscaled value of 102 and scale 1 represents the number 10.2 with precision 3.
    * An unscaled value of 111 and scale -1 represents the number 1110 with precision 3.
+   *
+   * Example json schema for logicaltype datetime will be as below.
+   * {
+   *   "type": "string",
+   *   "logicalType": "datetime"
+   * }
+   * Note that the string value is expected to be in ISO 8601 format without offset(timezone).
    */
   public enum LogicalType {
     DATE(Type.INT, "date"),
@@ -121,7 +129,8 @@ public final class Schema implements Serializable {
     TIMESTAMP_MICROS(Type.LONG, "timestamp-micros"),
     TIME_MILLIS(Type.INT, "time-millis"),
     TIME_MICROS(Type.LONG, "time-micros"),
-    DECIMAL(Type.BYTES, "decimal");
+    DECIMAL(Type.BYTES, "decimal"),
+    DATETIME(Type.STRING, "datetime");
 
     private final Type type;
     private final String token;
@@ -743,6 +752,7 @@ public final class Schema implements Serializable {
    * {@link LogicalType#TIMESTAMP_MILLIS} -> "timestamp in milliseconds"
    * {@link LogicalType#TIMESTAMP_MICROS} -> "timestamp in microseconds"
    * {@link LogicalType#DECIMAL} -> "decimal with precision p and scale s"
+   * {@link LogicalType#DATETIME} -> "datetime in ISO-8601 format without timezone"
    *
    * @return display name of this schema.
    */
@@ -761,6 +771,8 @@ public final class Schema implements Serializable {
           return "timestamp in microseconds";
         case DECIMAL:
           return String.format("decimal with precision %d and scale %d", precision, scale);
+        case DATETIME:
+          return String.format("datetime in ISO-8601 format without timezone");
       }
     }
 
