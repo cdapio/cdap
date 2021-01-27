@@ -17,11 +17,19 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { ITable } from 'components/Replicator/Create/Content/Assessment/TablesAssessment';
-import { getSchemaTableStyles } from 'components/Replicator/Create/Content/Assessment/tableStyles';
+import Table from 'components/Table';
+import TableHeader from 'components/Table/TableHeader';
+import TableRow from 'components/Table/TableRow';
+import TableCell from 'components/Table/TableCell';
+import TableBody from 'components/Table/TableBody';
+import ViewMappingButton from 'components/Replicator/Create/Content/Assessment/TablesAssessment/ViewMappingButton';
 
 const styles = (theme): StyleRules => {
   return {
-    ...getSchemaTableStyles(theme, '250px 100px 1fr'),
+    text: {
+      marginBottom: '10px',
+      color: theme.palette.grey[100],
+    },
   };
 };
 
@@ -41,33 +49,29 @@ const NoIssuesTablesView: React.FC<INoIssuesTablesProps> = ({ classes, tables, s
         {tables.length} tables have been assessed with no schema issues
       </div>
 
-      <div className={`grid-wrapper ${classes.gridWrapper}`}>
-        <div className="grid grid-container grid-compact">
-          <div className="grid-header">
-            <div className="grid-row">
-              <div>Name</div>
-              <div>Number of columns</div>
-              <div />
-            </div>
-          </div>
+      <Table columnTemplate="250px 100px 1fr">
+        <TableHeader>
+          <TableRow>
+            <TableCell>Name</TableCell>
+            <TableCell textAlign="right">Number of columns</TableCell>
+            <TableCell />
+          </TableRow>
+        </TableHeader>
 
-          <div className="grid-body">
-            {tables.map((row: ITable) => {
-              return (
-                <div key={`${row.database}-${row.table}`} className="grid-row">
-                  <div>{row.table}</div>
-                  <div>{row.numColumns}</div>
-                  <div>
-                    <span className={classes.mappingButton} onClick={() => setOpenTable(row)}>
-                      View mappings
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
+        <TableBody>
+          {tables.map((row: ITable) => {
+            return (
+              <TableRow key={`${row.database}-${row.table}`}>
+                <TableCell>{row.table}</TableCell>
+                <TableCell textAlign="right">{row.numColumns}</TableCell>
+                <TableCell textAlign="right">
+                  <ViewMappingButton onClick={() => setOpenTable(row)} />
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
     </div>
   );
 };

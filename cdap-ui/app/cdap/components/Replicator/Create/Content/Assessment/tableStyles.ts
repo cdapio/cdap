@@ -16,52 +16,6 @@
 
 import { StyleRules } from '@material-ui/core/styles/withStyles';
 
-export function getSchemaTableStyles(theme, gridTemplateColumns): StyleRules {
-  return {
-    root: {
-      height: '100%',
-    },
-    text: {
-      color: theme.palette.grey[100],
-      marginBottom: '10px',
-    },
-    gridWrapper: {
-      height: '100%',
-      '& .grid.grid-container.grid-compact': {
-        maxHeight: '300px',
-
-        '& .grid-header > .grid-row': {
-          alignItems: 'end',
-          lineHeight: 1.2,
-        },
-
-        '& .grid-row': {
-          gridTemplateColumns,
-
-          '& > div:not(:first-child)': {
-            textAlign: 'right',
-          },
-
-          '& > div:last-child': {
-            paddingRight: '25px',
-          },
-
-          '&:hover $mappingButton': {
-            color: theme.palette.blue[200],
-          },
-        },
-      },
-    },
-    mappingButton: {
-      color: theme.palette.blue[200],
-      cursor: 'pointer',
-      '&:hover': {
-        textDecoration: 'underline',
-      },
-    },
-  };
-}
-
 export function getGenericIssuesTableStyles(theme): StyleRules {
   return {
     root: {
