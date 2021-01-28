@@ -23,13 +23,17 @@ import com.jcraft.jsch.ChannelDirectTCPIP;
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.JSchException;
+import com.jcraft.jsch.OpenSSHConfig;
 import com.jcraft.jsch.ProxySOCKS5;
 import com.jcraft.jsch.Session;
 import io.cdap.cdap.runtime.spi.ssh.PortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.RemotePortForwarding;
 import io.cdap.cdap.runtime.spi.ssh.SSHProcess;
 import io.cdap.cdap.runtime.spi.ssh.SSHSession;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -39,9 +43,11 @@ import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.nio.file.attribute.PosixFilePermission;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,6 +58,11 @@ import javax.annotation.Nullable;
  * The default implementation of {@link SSHSession} that uses {@link JSch} library.
  */
 public class DefaultSSHSession implements SSHSession {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DefaultSSHSession.class);
+
+  // Default SSH timeout to 30 seconds.
+  private static final int DEFAULT_TIMEOUT = 30000;
 
   private final InetSocketAddress remoteAddress;
   private final String user;
@@ -64,7 +75,7 @@ public class DefaultSSHSession implements SSHSession {
    * @throws IOException if failed to connect according to the configuration
    */
   public DefaultSSHSession(SSHConfig config) throws IOException {
-    JSch jsch = new JSch();
+    JSch jsch = createJSch();
 
     try {
       jsch.addIdentity(config.getUser(), config.getPrivateKey(), null, null);
@@ -79,6 +90,11 @@ public class DefaultSSHSession implements SSHSession {
 
       for (Map.Entry<String, String> entry : config.getConfigs().entrySet()) {
         session.setConfig(entry.getKey(), entry.getValue());
+      }
+
+      // If there is no timeout set through the configuration, we default it.
+      if (session.getTimeout() <= 0) {
+        session.setTimeout(DEFAULT_TIMEOUT);
       }
 
       session.connect();
@@ -348,5 +364,28 @@ public class DefaultSSHSession implements SSHSession {
       permissions |= 1;
     }
     return permissions;
+  }
+
+  /**
+   * Creates a new {@link JSch} and apply SSH config from the system.
+   */
+  private static JSch createJSch() {
+    JSch jSch = new JSch();
+
+    // Detect and try to set configurations via OpenSSH configurations
+    for (Path configPath : Arrays.asList(Paths.get(System.getProperty("user.home"), ".ssh", "config"),
+                                         Paths.get(File.separator, "etc", "ssh", "config"))) {
+      if (Files.exists(configPath)) {
+        try {
+          OpenSSHConfig config = OpenSSHConfig.parseFile(configPath.toAbsolutePath().toString());
+          jSch.setConfigRepository(config);
+          break;
+        } catch (IOException e) {
+          LOG.warn("Ignore applying SSH config from file {} due to failure", configPath, e);
+        }
+      }
+    }
+
+    return jSch;
   }
 }
