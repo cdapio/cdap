@@ -148,7 +148,7 @@ public class MultiSinkFunction implements PairFlatMapFunc<RecordInfo<Object>, St
                                      phaseSpec, new SingleConnectorFactory());
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(
       pipelineRuntime.getArguments(), pipelineRuntime.getLogicalStartTime(), pipelineRuntime.getSecureStore(),
-      pipelineRuntime.getNamespace());
+      pipelineRuntime.getServiceDiscoverer(), pipelineRuntime.getNamespace());
     executorFactory = new SparkTransformExecutorFactory(pluginInstantiator, macroEvaluator, null,
                                                         collectors, dataTracers, pipelineRuntime, emitter);
 

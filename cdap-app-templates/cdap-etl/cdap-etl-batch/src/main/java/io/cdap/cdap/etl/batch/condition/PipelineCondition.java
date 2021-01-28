@@ -73,28 +73,28 @@ public class PipelineCondition extends AbstractCondition {
   }
 
   @Override
-  public boolean apply(@Nullable WorkflowContext input) {
-    if (input == null) {
+  public boolean apply(@Nullable WorkflowContext context) {
+    if (context == null) {
       // should not happen
       throw new IllegalStateException("WorkflowContext for the Condition cannot be null.");
     }
-    Map<String, String> properties = input.getConditionSpecification().getProperties();
+    Map<String, String> properties = context.getConditionSpecification().getProperties();
     BatchPhaseSpec phaseSpec = GSON.fromJson(properties.get(Constants.PIPELINEID), BatchPhaseSpec.class);
     PipelinePhase phase = phaseSpec.getPhase();
     StageSpec stageSpec = phase.iterator().next();
-    PluginContext pluginContext = new PipelinePluginContext(input, metrics, phaseSpec.isStageLoggingEnabled(),
+    PluginContext pluginContext = new PipelinePluginContext(context, metrics, phaseSpec.isStageLoggingEnabled(),
                                                             phaseSpec.isProcessTimingEnabled());
 
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(new BasicArguments(input.getToken(), input.getRuntimeArguments()),
-                                input.getLogicalStartTime(), input, input.getNamespace());
+      new DefaultMacroEvaluator(new BasicArguments(context.getToken(), context.getRuntimeArguments()),
+                                context.getLogicalStartTime(), context, context, context.getNamespace());
 
     try {
       Condition condition = pluginContext.newPluginInstance(stageSpec.getName(), macroEvaluator);
-      PipelineRuntime pipelineRuntime = new PipelineRuntime(input, metrics);
-      ConditionContext conditionContext = new BasicConditionContext(input, pipelineRuntime, stageSpec);
+      PipelineRuntime pipelineRuntime = new PipelineRuntime(context, metrics);
+      ConditionContext conditionContext = new BasicConditionContext(context, pipelineRuntime, stageSpec);
       boolean result = condition.apply(conditionContext);
-      WorkflowToken token = input.getToken();
+      WorkflowToken token = context.getToken();
       if (token == null) {
         throw new IllegalStateException("WorkflowToken cannot be null when Condition is executed through Workflow.");
       }

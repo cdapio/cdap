@@ -115,7 +115,7 @@ public class ETLSpark extends AbstractSpark {
     PipelineRuntime pipelineRuntime = new PipelineRuntime(context);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                          context.getLogicalStartTime(), context,
-                                                         context.getNamespace());
+                                                         context, context.getNamespace());
     SparkPreparer preparer = new SparkPreparer(context, context.getMetrics(), evaluator, pipelineRuntime);
     List<Finisher> finishers = preparer.prepare(phaseSpec);
     finisher = new CompositeFinisher(finishers);

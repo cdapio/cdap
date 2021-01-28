@@ -77,7 +77,9 @@ public abstract class AbstractStageContext implements StageContext {
     this.arguments = pipelineRuntime.getArguments();
     this.failureCollector = new LoggingFailureCollector(stageSpec.getName(), inputSchemas);
     this.macroEvaluator = new DefaultMacroEvaluator(arguments, pipelineRuntime.getLogicalStartTime(),
-                                                    pipelineRuntime.getSecureStore(), pipelineRuntime.getNamespace());
+                                                    pipelineRuntime.getSecureStore(),
+                                                    pipelineRuntime.getServiceDiscoverer(),
+                                                    pipelineRuntime.getNamespace());
   }
 
   @Override

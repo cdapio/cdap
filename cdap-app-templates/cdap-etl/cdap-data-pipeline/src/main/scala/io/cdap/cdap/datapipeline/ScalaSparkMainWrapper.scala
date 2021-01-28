@@ -16,11 +16,14 @@
 
 package io.cdap.cdap.datapipeline
 
-import io.cdap.cdap.api.spark.{SparkExecutionContext, SparkMain}
-import io.cdap.cdap.etl.batch.BatchPhaseSpec
-import io.cdap.cdap.etl.common.{BasicArguments, Constants, DefaultMacroEvaluator}
-import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext
 import com.google.gson.Gson
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.SparkMain
+import io.cdap.cdap.etl.batch.BatchPhaseSpec
+import io.cdap.cdap.etl.common.BasicArguments
+import io.cdap.cdap.etl.common.Constants
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator
+import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext
 
 /**
  * Instantiates a SparkMain plugin and runs it.
@@ -37,7 +40,7 @@ class ScalaSparkMainWrapper extends SparkMain {
 
     val macroEvaluator =
       new DefaultMacroEvaluator(new BasicArguments(sec.getWorkflowToken.orNull, sec.getRuntimeArguments),
-        sec.getLogicalStartTime, sec.getSecureStore, sec.getNamespace)
+        sec.getLogicalStartTime, sec.getSecureStore, sec.getServiceDiscoverer, sec.getNamespace)
     val sparkMain: SparkMain = pluginContext.newPluginInstance(stageName, macroEvaluator)
     sparkMain.run(sec)
   }

@@ -84,7 +84,7 @@ public class PipelineAction extends AbstractCustomAction {
       pluginContext.newPluginInstance(stageSpec.getName(),
                                       new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                                 context.getLogicalStartTime(),
-                                                                context,
+                                                                context, context,
                                                                 context.getNamespace()));
     ActionContext actionContext = new BasicActionContext(context, pipelineRuntime, stageSpec);
     if (!context.getDataTracer(stageSpec.getName()).isEnabled()) {

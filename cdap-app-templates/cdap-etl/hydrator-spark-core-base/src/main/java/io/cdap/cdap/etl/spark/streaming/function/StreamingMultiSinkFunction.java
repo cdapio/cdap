@@ -82,6 +82,7 @@ public class StreamingMultiSinkFunction implements Function2<JavaRDD<RecordInfo<
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
+                                                         sec.getServiceDiscoverer(),
                                                          sec.getNamespace());
     PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                  phaseSpec.isStageLoggingEnabled(),

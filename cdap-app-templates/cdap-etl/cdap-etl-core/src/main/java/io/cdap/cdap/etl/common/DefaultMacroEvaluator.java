@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.common;
 
+import io.cdap.cdap.api.ServiceDiscoverer;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
@@ -32,17 +33,19 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
   private final long logicalStartTime;
   private final LogicalStartTimeMacro logicalStartTimeMacro;
   private final SecureStore secureStore;
+  private final ServiceDiscoverer serviceDiscoverer;
   private final String namespace;
 
   private static final String LOGICAL_START_TIME_FUNCTION_NAME = "logicalStartTime";
   private static final String SECURE_FUNCTION_NAME = "secure";
 
-  public DefaultMacroEvaluator(BasicArguments arguments,
-                               long logicalStartTime, SecureStore secureStore, String namespace) {
+  public DefaultMacroEvaluator(BasicArguments arguments, long logicalStartTime,
+                               SecureStore secureStore, ServiceDiscoverer serviceDiscoverer, String namespace) {
     this.arguments = arguments;
     this.logicalStartTime = logicalStartTime;
     this.logicalStartTimeMacro = new LogicalStartTimeMacro();
     this.secureStore = secureStore;
+    this.serviceDiscoverer = serviceDiscoverer;
     this.namespace = namespace;
   }
 

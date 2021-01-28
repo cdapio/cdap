@@ -57,6 +57,7 @@ public class StreamingAlertPublishFunction implements Function2<JavaRDD<Alert>, 
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          batchTime.milliseconds(),
                                                          sec.getSecureStore(),
+                                                         sec.getServiceDiscoverer(),
                                                          sec.getNamespace());
 
     PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),

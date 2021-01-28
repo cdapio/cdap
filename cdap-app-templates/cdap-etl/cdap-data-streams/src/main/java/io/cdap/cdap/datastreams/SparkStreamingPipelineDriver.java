@@ -41,7 +41,6 @@ import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkSink;
 import io.cdap.cdap.etl.api.streaming.StreamingSource;
 import io.cdap.cdap.etl.api.streaming.Windower;
-import io.cdap.cdap.etl.common.BasicArguments;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.PhaseSpec;
@@ -51,7 +50,6 @@ import io.cdap.cdap.etl.common.plugin.PipelinePluginContext;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.StreamingCompat;
-import io.cdap.cdap.etl.spark.batch.SparkPreparer;
 import io.cdap.cdap.etl.spark.streaming.SparkStreamingPreparer;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.hadoop.conf.Configuration;
@@ -69,7 +67,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
@@ -200,7 +197,9 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                                                                     pipelineSpec.isProcessTimingEnabled());
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
-                                                         sec.getLogicalStartTime(), sec,
+                                                         sec.getLogicalStartTime(),
+                                                         sec.getSecureStore(),
+                                                         sec.getServiceDiscoverer(),
                                                          sec.getNamespace());
     SparkStreamingPreparer preparer = new SparkStreamingPreparer(pluginContext, sec.getMetrics(), evaluator,
                                                                  pipelineRuntime, sec);

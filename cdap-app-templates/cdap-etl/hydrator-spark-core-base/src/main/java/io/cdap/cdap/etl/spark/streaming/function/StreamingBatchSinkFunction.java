@@ -71,6 +71,7 @@ public class StreamingBatchSinkFunction<T> implements Function2<JavaRDD<T>, Time
     MacroEvaluator evaluator = new DefaultMacroEvaluator(new BasicArguments(sec),
                                                          logicalStartTime,
                                                          sec.getSecureStore(),
+                                                         sec.getServiceDiscoverer(),
                                                          sec.getNamespace());
     PluginContext pluginContext = new SparkPipelinePluginContext(sec.getPluginContext(), sec.getMetrics(),
                                                                  stageSpec.isStageLoggingEnabled(),
