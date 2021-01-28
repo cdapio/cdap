@@ -3248,7 +3248,7 @@
 
   <property>
     <name>spark.streaming.checkpoint.rewrite.enabled</name>
-    <value>false</value>
+    <value>true</value>
     <description>
       Specify whether to rewrite the temporary checkpoint file name by adding the checkpoint timestamp to the temporary
       file name. This is useful when using object storage as the checkpoint directory.
