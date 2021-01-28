@@ -1531,5 +1531,9 @@ public final class Constants {
      * Capability config directory path key
      */
     public static final String CONFIG_DIR = "capability.config.dir";
+    /**
+     * Number of executor threads used to auto install resources when a capability is enabled
+     */
+    public static final String AUTO_INSTALL_THREADS = "capability.autoinstall.threads";
   }
 }

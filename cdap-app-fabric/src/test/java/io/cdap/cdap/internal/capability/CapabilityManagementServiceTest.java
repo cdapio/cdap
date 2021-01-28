@@ -172,7 +172,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     CapabilityConfig disableConfig = new CapabilityConfig(capabilityConfig.getLabel(), CapabilityStatus.DISABLED,
                                                           capabilityConfig.getCapability(),
                                                           capabilityConfig.getApplications(),
-                                                          capabilityConfig.getPrograms());
+                                                          capabilityConfig.getPrograms(),
+                                                          capabilityConfig.getHubs());
     writeConfigAsFile(externalConfigPath, fileName, disableConfig);
     capabilityManagementService.runTask();
     try {
@@ -483,7 +484,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //enable the capabilities
     List<CapabilityConfig> capabilityConfigs = Arrays.stream(declaredAnnotation.capabilities())
       .map(capability -> new CapabilityConfig("Test capability", CapabilityStatus.ENABLED, capability,
-                                              Collections.emptyList(), Collections.emptyList()))
+                                              Collections.emptyList(), Collections.emptyList(),
+                                              Collections.emptyList()))
       .collect(Collectors.toList());
     for (CapabilityConfig capabilityConfig : capabilityConfigs) {
       writeConfigAsFile(externalConfigPath, capabilityConfig.getCapability(), capabilityConfig);
@@ -527,7 +529,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //enable a capability with no system apps and programs
     CapabilityConfig enabledConfig = new CapabilityConfig("Enable healthcare", CapabilityStatus.ENABLED,
                                                           "healthcare", Collections.emptyList(),
-                                                          Collections.emptyList());
+                                                          Collections.emptyList(), Collections.emptyList());
     writeConfigAsFile(externalConfigPath, enabledConfig.getCapability(), enabledConfig);
     capabilityManagementService.runTask();
     String capability = enabledConfig.getCapability();
@@ -554,7 +556,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //disable the capability -  the program that was started should stop
     CapabilityConfig disabledConfig = new CapabilityConfig("Disable healthcare", CapabilityStatus.DISABLED,
                                                            "healthcare", Collections.emptyList(),
-                                                           Collections.emptyList());
+                                                           Collections.emptyList(), Collections.emptyList());
     writeConfigAsFile(externalConfigPath, capability, disabledConfig);
     capabilityManagementService.runTask();
     assertProgramRuns(programId, ProgramRunStatus.KILLED, 1);
@@ -607,7 +609,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //enable a capability with no system apps and programs
     CapabilityConfig enabledConfig = new CapabilityConfig("Enable healthcare", CapabilityStatus.ENABLED,
                                                           "healthcare", Collections.emptyList(),
-                                                          Collections.emptyList());
+                                                          Collections.emptyList(), Collections.emptyList());
     writeConfigAsFile(externalConfigPath, enabledConfig.getCapability(), enabledConfig);
     capabilityManagementService.runTask();
     String capability = enabledConfig.getCapability();
@@ -634,7 +636,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     //disable the capability -  the program that was started should stop
     CapabilityConfig disabledConfig = new CapabilityConfig("Disable healthcare", CapabilityStatus.DISABLED,
                                                            "healthcare", Collections.emptyList(),
-                                                           Collections.emptyList());
+                                                           Collections.emptyList(), Collections.emptyList());
     writeConfigAsFile(externalConfigPath, capability, disabledConfig);
     capabilityManagementService.runTask();
     assertProgramRuns(programId, ProgramRunStatus.KILLED, 1);
@@ -757,7 +759,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
 
   private CapabilityConfig changeConfigStatus(CapabilityConfig original, CapabilityStatus status) {
     return new CapabilityConfig(original.getLabel(), status, original.getCapability(), original.getApplications(),
-                                original.getPrograms());
+                                original.getPrograms(), original.getHubs());
   }
 
   private CapabilityConfig getTestConfig(String artifactVersion) {
@@ -772,7 +774,8 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     SystemProgram program = new SystemProgram(namespace, appName, ProgramType.SERVICE.name(),
                                               programName, appVersion, null);
     return new CapabilityConfig(label, CapabilityStatus.ENABLED, capability,
-                                Collections.singletonList(application), Collections.singletonList(program));
+                                Collections.singletonList(application), Collections.singletonList(program),
+                                Collections.emptyList());
   }
 
   void deployTestArtifact(String namespace, String appName, String version, Class<?> appClass) throws Exception {

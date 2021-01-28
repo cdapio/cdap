@@ -1,0 +1,13 @@
+{
+  "label": "Enable test capability",
+  "status": "ENABLED",
+  "capability": "cap2",
+  "applications": [
+  ],
+  "programs": [
+  ],
+  "hubs": [
+    "https://my.hub.io"
+  ]
+}
+

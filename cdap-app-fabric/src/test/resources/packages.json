@@ -1,0 +1,34 @@
+[
+  {
+    "name": "plugin-1",
+    "version": "1.0.0",
+    "description": "Description1",
+    "label": "Label1",
+    "author": "Author1",
+    "org": "Org1",
+    "cdapVersion": "[6.3.0,7.0.0-SNAPSHOT)",
+    "created": 1473901763,
+    "beta": false,
+    "categories": [
+      "category1"
+    ],
+    "paid": true,
+    "paidLink": "https://www.foo.com"
+  },
+  {
+    "name": "plugin-2",
+    "version": "2.0.0",
+    "description": "Description2",
+    "label": "Label2",
+    "author": "Author2",
+    "org": "Org2",
+    "cdapVersion": "[6.1.1,6.1.1]",
+    "created": 1510006834,
+    "beta": true,
+    "categories": [
+      "category2",
+      "category3"
+    ],
+    "paid": false
+  }
+]

@@ -31,9 +31,12 @@ import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
 import io.cdap.cdap.common.NotFoundException;
+import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
+import io.cdap.cdap.gateway.handlers.util.VersionHelper;
 import io.cdap.cdap.internal.app.deploy.ProgramTerminator;
 import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactDetail;
@@ -41,6 +44,7 @@ import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.services.ApplicationLifecycleService;
 import io.cdap.cdap.internal.app.services.ProgramLifecycleService;
 import io.cdap.cdap.internal.app.services.SystemProgramManagementService;
+import io.cdap.cdap.internal.capability.autoinstall.HubPackage;
 import io.cdap.cdap.internal.entity.EntityResult;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -57,14 +61,23 @@ import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
@@ -90,12 +103,16 @@ class CapabilityApplier {
   private final CapabilityStatusStore capabilityStatusStore;
   private final MetadataSearchClient metadataSearchClient;
   private final ArtifactRepository artifactRepository;
+  private final File tmpDir;
+  private ExecutorService executorService;
+  private final int autoInstallThreads;
 
   @Inject
   CapabilityApplier(SystemProgramManagementService systemProgramManagementService,
                     ApplicationLifecycleService applicationLifecycleService, NamespaceAdmin namespaceAdmin,
                     ProgramLifecycleService programLifecycleService, CapabilityStatusStore capabilityStatusStore,
-                    ArtifactRepository artifactRepository, DiscoveryServiceClient discoveryClient) {
+                    ArtifactRepository artifactRepository, DiscoveryServiceClient discoveryClient,
+                    CConfiguration cConf) {
     this.systemProgramManagementService = systemProgramManagementService;
     this.applicationLifecycleService = applicationLifecycleService;
     this.programLifecycleService = programLifecycleService;
@@ -103,6 +120,9 @@ class CapabilityApplier {
     this.namespaceAdmin = namespaceAdmin;
     this.metadataSearchClient = new MetadataSearchClient(discoveryClient);
     this.artifactRepository = artifactRepository;
+    this.tmpDir = new File(cConf.get(Constants.CFG_LOCAL_DATA_DIR),
+                           cConf.get(Constants.AppFabric.TEMP_DIR)).getAbsoluteFile();
+    this.autoInstallThreads = cConf.getInt(Constants.Capability.AUTO_INSTALL_THREADS);
   }
 
   /**
@@ -167,6 +187,14 @@ class CapabilityApplier {
     deleteCapabilities(deleteSet);
   }
 
+  public void doShutdown() {
+    executorService.shutdown();
+  }
+
+  public void doStartup() {
+    executorService = Executors.newFixedThreadPool(autoInstallThreads);
+  }
+
   private void enableCapabilities(Set<CapabilityConfig> enableSet) throws Exception {
     Map<ProgramId, Arguments> enabledPrograms = new HashMap<>();
     Map<String, CapabilityConfig> configs = capabilityStatusStore
@@ -184,6 +212,7 @@ class CapabilityApplier {
       capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.ENABLE, capabilityConfig);
       //If already deployed, will be ignored
       deployAllSystemApps(capability, capabilityConfig.getApplications());
+      autoInstallResources(capability, capabilityConfig.getHubs());
     }
     //start all programs
     systemProgramManagementService.setProgramsEnabled(enabledPrograms);
@@ -287,6 +316,61 @@ class CapabilityApplier {
     applicationLifecycleService
       .deployApp(applicationId.getParent(), applicationId.getApplication(), applicationId.getVersion(),
                  application.getArtifact(), configString, NOOP_PROGRAM_TERMINATOR, null, null);
+  }
+
+  @VisibleForTesting
+  void autoInstallResources(String capability, List<URL> hubs) {
+    if (hubs == null || hubs.isEmpty()) {
+      LOG.debug("Capability {} do not have auto install resources associated with it", capability);
+      return;
+    }
+
+    for (URL hub : hubs) {
+      HubPackage[] hubPackages;
+      try {
+        URL url = new URL(hub, "/v2/packages.json");
+        String packagesJson = HttpClients.doGetAsString(url);
+        // Deserialize packages.json from hub
+        // See https://cdap.atlassian.net/wiki/spaces/DOCS/pages/554401840/Hub+API?src=search#Get-Hub-Catalog
+        hubPackages = GSON.fromJson(packagesJson, HubPackage[].class);
+      } catch (Exception e) {
+        LOG.warn("Failed to get packages.json from {}. Ignoring error.", hub, e);
+        continue;
+      }
+
+      String currentVersion = getCurrentVersion();
+      // Get the latest compatible version of each plugin from hub and install it
+      List<Future<?>> futures = Arrays.stream(hubPackages)
+        .filter(p -> p.versionIsInRange(currentVersion))
+        .collect(Collectors.groupingBy(HubPackage::getName,
+                                       Collectors.maxBy(Comparator.comparing(HubPackage::getArtifactVersion))))
+        .values()
+        .stream()
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .map(p ->
+               executorService.submit(() -> {
+                 try {
+                   p.installPlugin(hub, artifactRepository, tmpDir);
+                 } catch (Exception e) {
+                   LOG.warn("Failed to install plugin {}. Ignoring error", p.getName(), e);
+                 }
+               })
+        )
+        .collect(Collectors.toList());
+      for (Future<?> future : futures) {
+        try {
+          future.get();
+        } catch (InterruptedException | ExecutionException e) {
+          LOG.warn("Ignoring error during plugin install", e);
+        }
+      }
+    }
+  }
+
+  @VisibleForTesting
+  String getCurrentVersion() {
+    return VersionHelper.getCDAPVersion().getVersion();
   }
 
   // Returns true if capability applier should try to deploy this application. 2 conditions when it returns true:

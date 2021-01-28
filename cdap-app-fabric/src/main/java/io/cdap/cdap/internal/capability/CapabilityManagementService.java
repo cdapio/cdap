@@ -83,4 +83,16 @@ public class CapabilityManagementService extends AbstractRetryableScheduledServi
     }
     return capabilityConfigs;
   }
+
+  @Override
+  public void doStartUp() throws Exception {
+    super.doStartUp();
+    capabilityApplier.doStartup();
+  }
+
+  @Override
+  public void doShutdown() throws Exception {
+    super.doShutdown();
+    capabilityApplier.doShutdown();
+  }
 }

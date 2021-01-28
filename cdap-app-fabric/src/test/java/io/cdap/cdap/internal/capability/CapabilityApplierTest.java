@@ -51,8 +51,7 @@ import java.util.UUID;
 /**
  * Tests for CapabilityApplier
  */
-public class CapabilityApplierTest extends AppFabricTestBase {
-
+ public class CapabilityApplierTest extends AppFabricTestBase {
   private static ApplicationLifecycleService applicationLifecycleService;
   private static ArtifactRepository artifactRepository;
   private static CapabilityApplier capabilityApplier;
@@ -68,7 +67,9 @@ public class CapabilityApplierTest extends AppFabricTestBase {
     artifactRepository = getInjector().getInstance(ArtifactRepository.class);
     CConfiguration cConfiguration = getInjector().getInstance(CConfiguration.class);
     DiscoveryServiceClient client = getInjector().getInstance(DiscoveryServiceClient.class);
-    capabilityApplier = new CapabilityApplier(null, null, null, null, null, null, client);
+    capabilityApplier = new CapabilityApplier(null, null,
+                                              null, null, null,
+                                              null, client, cConfiguration);
   }
 
   @AfterClass
@@ -86,7 +87,8 @@ public class CapabilityApplierTest extends AppFabricTestBase {
     String appNameWithCapabilities = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();
     for (String capability : declaredAnnotation.capabilities()) {
       CapabilityConfig capabilityConfig = new CapabilityConfig("Enable", CapabilityStatus.ENABLED, capability,
-                                                               Collections.emptyList(), Collections.emptyList());
+                                                               Collections.emptyList(), Collections.emptyList(),
+                                                               Collections.emptyList());
       capabilityWriter.addOrUpdateCapability(capability, CapabilityStatus.ENABLED, capabilityConfig);
     }
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapabilities);
@@ -142,8 +144,8 @@ public class CapabilityApplierTest extends AppFabricTestBase {
       capabilityWriter.addOrUpdateCapability(capability, CapabilityStatus.ENABLED,
                                              new CapabilityConfig("Enable", CapabilityStatus.ENABLED,
                                                                   appNameWithCapability1,
-                                                                  Collections
-                                                                    .emptyList(), Collections.emptyList()));
+                                                                  Collections.emptyList(), Collections.emptyList(),
+                                                                  Collections.emptyList()));
     }
     deployArtifactAndApp(appWithWorkflowClass, appNameWithCapability1);
     String appNameWithCapability2 = appWithWorkflowClass.getSimpleName() + UUID.randomUUID();

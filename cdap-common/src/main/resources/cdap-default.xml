@@ -4189,4 +4189,11 @@
       Internal directory that maintains the currently disabled and enabled configurations
     </description>
   </property>
+  <property>
+    <name>capability.autoinstall.threads</name>
+    <value>5</value>
+    <description>
+      Number of threads to be used for auto installing resources when a capability is enabled
+    </description>
+  </property>
 </configuration>
