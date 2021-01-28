@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2017 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,9 +28,10 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.io.Closeables;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.artifact.ArtifactId;
-import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
@@ -201,19 +202,6 @@ public class PluginInstantiator implements Closeable {
   }
 
   /**
-   * Create a new instance of plugin class without any config, config will be null in the instantiated plugin.
-   * @param plugin information about the plugin
-   * @param <T> Type of plugin
-   * @return a new plugin instance
-   */
-  public <T> T newInstanceWithoutConfig(Plugin plugin) throws IOException, ClassNotFoundException {
-    ClassLoader pluginClassLoader = getPluginClassLoader(plugin);
-    @SuppressWarnings("unchecked")
-    Class<T> pluginClassLoaded = (Class<T>) pluginClassLoader.loadClass(plugin.getPluginClass().getClassName());
-    return instantiatorFactory.get(TypeToken.of(pluginClassLoaded)).create();
-  }
-
-  /**
    * Creates a new instance of the given plugin class.
    * @param plugin {@link Plugin}
    * @param <T> Type of the plugin
@@ -318,16 +306,15 @@ public class PluginInstantiator implements Closeable {
                                            TrackingMacroEvaluator trackingMacroEvaluator) {
     if (trackingMacroEvaluator.hasMacro()) {
       trackingMacroEvaluator.reset();
-      return getDefaultProperty(propertyName, propertyType);
+      return getDefaultProperty(propertyType);
     }
     return originalPropertyString;
   }
 
-  private String getDefaultProperty(String propertyName, String propertyType) {
+  private String getDefaultProperty(String propertyType) {
     Class<?> propertyClass = PROPERTY_TYPES.get(propertyType);
     if (propertyClass == null) {
-      throw new IllegalArgumentException(String.format("Unable to get default value for property %s of type %s.",
-                                                       propertyName, propertyType));
+      return null;
     }
     Object defaultProperty = Defaults.defaultValue(propertyClass);
     return defaultProperty == null ? null : defaultProperty.toString();
@@ -505,12 +492,14 @@ public class PluginInstantiator implements Closeable {
    * A {@link FieldVisitor} for setting values into {@link PluginConfig} object based on {@link PluginProperties}.
    */
   private static final class ConfigFieldSetter extends FieldVisitor {
+
     private final PluginClass pluginClass;
     private final PluginProperties properties;
     private final PluginProperties rawProperties;
     private final Set<String> macroFields;
     private final Set<String> missingProperties;
     private final Set<InvalidPluginProperty> invalidProperties;
+    private final Gson gson;
 
     ConfigFieldSetter(PluginClass pluginClass, PluginProperties properties, PluginProperties rawProperties,
                       Set<String> macroFields) {
@@ -520,6 +509,9 @@ public class PluginInstantiator implements Closeable {
       this.macroFields = macroFields;
       this.missingProperties = new HashSet<>();
       this.invalidProperties = new HashSet<>();
+
+      // Don't use a static Gson object to avoid caching of classloader, which can cause classloader leakage.
+      this.gson = new Gson();
     }
 
     @Override
@@ -550,15 +542,17 @@ public class PluginInstantiator implements Closeable {
       String name = nameAnnotation == null ? field.getName() : nameAnnotation.value();
       PluginPropertyField pluginPropertyField = pluginClass.getProperties().get(name);
       // if the property is required and it's not a macro and the property doesn't exist
-      if (pluginPropertyField.isRequired() && !macroFields.contains(name) &&
-        properties.getProperties().get(name) == null) {
+      if (pluginPropertyField.isRequired()
+          && !macroFields.contains(name)
+          && properties.getProperties().get(name) == null) {
         missingProperties.add(name);
         return;
       }
       String value = properties.getProperties().get(name);
       if (pluginPropertyField.isRequired() || value != null) {
         try {
-          field.set(instance, convertValue(name, declareTypeToken.resolveType(field.getGenericType()), value));
+          field.set(instance, convertValue(name, declareType,
+                                           declareTypeToken.resolveType(field.getGenericType()), value));
         } catch (Exception e) {
           invalidProperties.add(new InvalidPluginProperty(name, e));
         }
@@ -568,8 +562,10 @@ public class PluginInstantiator implements Closeable {
     /**
      * Converts string value into value of the fieldType.
      */
-    private Object convertValue(String name, TypeToken<?> fieldType, String value) throws Exception {
-      // Currently we only support primitive, wrapped primitive and String types.
+    private Object convertValue(String name, Type declareType, TypeToken<?> fieldType, String value) throws Exception {
+      // For primitive, wrapped primitive, and String types, we convert the string value into the corresponding type
+      // For object type, we assume the string value is a Json string, and try to use Gson to deserialize into the
+      // given field type.
       Class<?> rawType = fieldType.getRawType();
 
       if (String.class.equals(rawType)) {
@@ -604,17 +600,21 @@ public class PluginInstantiator implements Closeable {
           if (e.getCause() instanceof NumberFormatException) {
             // if exception is due to wrong value for integer/double conversion
             String errorMessage = Strings.isNullOrEmpty(value) ?
-              String.format("Value of field %s is null or empty. It should be a number", name) :
-              String.format("Value of field %s is expected to be a number", name);
+              String.format("Value of field %s.%s is null or empty. It should be a number", declareType, name) :
+              String.format("Value of field %s.%s is expected to be a number", declareType, name);
             throw new InvalidPluginConfigException(errorMessage, e.getCause());
           }
           throw e;
         }
       }
 
-      throw new UnsupportedTypeException(String.format("Plugin config property '%s' is of invalid type '%s'. " +
-                                                         "Only primitive and String types are supported",
-                                                       name, rawType.getSimpleName()));
+      try {
+        // Assuming it is a POJO type, use Gson to deserialize the value
+        return gson.fromJson(value, fieldType.getType());
+      } catch (JsonSyntaxException e) {
+        throw new InvalidPluginConfigException(
+          String.format("Failed to assign value '%s' to plugin config field %s.%s", value, declareType, name), e);
+      }
     }
   }
 }

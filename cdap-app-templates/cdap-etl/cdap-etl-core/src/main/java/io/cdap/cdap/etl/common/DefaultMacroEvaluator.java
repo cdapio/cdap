@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,37 +16,36 @@
 
 package io.cdap.cdap.etl.common;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.api.ServiceDiscoverer;
-import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.etl.common.macro.LogicalStartTimeMacro;
+import io.cdap.cdap.etl.common.macro.LogicalStartTimeMacroEvaluator;
 
+import java.util.Map;
 import javax.annotation.Nullable;
 
 /**
  * Macro evaluator used by batch application
  */
 public class DefaultMacroEvaluator implements MacroEvaluator {
-  private final BasicArguments arguments;
-  private final long logicalStartTime;
-  private final LogicalStartTimeMacro logicalStartTimeMacro;
-  private final SecureStore secureStore;
-  private final ServiceDiscoverer serviceDiscoverer;
-  private final String namespace;
 
-  private static final String LOGICAL_START_TIME_FUNCTION_NAME = "logicalStartTime";
-  private static final String SECURE_FUNCTION_NAME = "secure";
+  private final BasicArguments arguments;
+  private final Map<String, MacroEvaluator> macroEvaluators;
 
   public DefaultMacroEvaluator(BasicArguments arguments, long logicalStartTime,
                                SecureStore secureStore, ServiceDiscoverer serviceDiscoverer, String namespace) {
+    this(arguments, ImmutableMap.of(
+      LogicalStartTimeMacroEvaluator.FUNCTION_NAME, new LogicalStartTimeMacroEvaluator(logicalStartTime),
+      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, secureStore),
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(serviceDiscoverer)
+    ));
+  }
+
+  public DefaultMacroEvaluator(BasicArguments arguments, Map<String, MacroEvaluator> macroEvaluators) {
     this.arguments = arguments;
-    this.logicalStartTime = logicalStartTime;
-    this.logicalStartTimeMacro = new LogicalStartTimeMacro();
-    this.secureStore = secureStore;
-    this.serviceDiscoverer = serviceDiscoverer;
-    this.namespace = namespace;
+    this.macroEvaluators = ImmutableMap.copyOf(macroEvaluators);
   }
 
   @Override
@@ -61,19 +60,12 @@ public class DefaultMacroEvaluator implements MacroEvaluator {
 
   @Override
   @Nullable
-  public String evaluate(String macroFunction, String... arguments) throws InvalidMacroException {
-    if (macroFunction.equals(LOGICAL_START_TIME_FUNCTION_NAME)) {
-      return logicalStartTimeMacro.evaluate(logicalStartTime, arguments);
-    } else if (macroFunction.equals(SECURE_FUNCTION_NAME)) {
-      if (arguments.length != 1) {
-        throw new InvalidMacroException("Secure store macro function only supports 1 argument.");
-      }
-      try {
-        return Bytes.toString(secureStore.get(namespace, arguments[0]).get());
-      } catch (Exception e) {
-        throw new InvalidMacroException("Failed to resolve macro '" + macroFunction + "(" + arguments[0] + ")'", e);
-      }
+  public String evaluate(String macroFunction, String... args) throws InvalidMacroException {
+    MacroEvaluator evaluator = macroEvaluators.get(macroFunction);
+    if (evaluator == null) {
+      throw new InvalidMacroException(String.format("Unsupported macro function %s", macroFunction));
     }
-    throw new InvalidMacroException(String.format("Unsupported macro function %s", macroFunction));
+
+    return evaluator.evaluate(macroFunction, args);
   }
 }

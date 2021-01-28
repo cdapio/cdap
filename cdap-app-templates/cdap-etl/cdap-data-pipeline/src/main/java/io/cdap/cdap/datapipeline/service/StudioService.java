@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,17 +20,17 @@ package io.cdap.cdap.datapipeline.service;
 import io.cdap.cdap.api.service.AbstractSystemService;
 import io.cdap.cdap.datapipeline.draft.DraftStore;
 import io.cdap.cdap.datapipeline.oauth.OAuthStore;
+import io.cdap.cdap.etl.common.Constants;
 
 /**
  * Service that handles pipeline studio operations, like validation and schema propagation.
  */
 public class StudioService extends AbstractSystemService {
-  public static final String NAME = "studio";
 
   @Override
   protected void configure() {
 
-    setName(NAME);
+    setName(Constants.STUDIO_SERVICE_NAME);
     setDescription("Handles pipeline studio operations, like validation and schema propagation.");
     addHandler(new ValidationHandler());
     addHandler(new DraftHandler());

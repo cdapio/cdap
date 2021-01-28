@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -483,9 +483,6 @@ final class ArtifactInspector {
     }
 
     rawType = Primitives.unwrap(rawType);
-    if (!rawType.isPrimitive() && !String.class.equals(rawType)) {
-      throw new UnsupportedTypeException("Only primitive and String types are supported");
-    }
 
     boolean required = true;
     for (Annotation annotation : field.getAnnotations()) {

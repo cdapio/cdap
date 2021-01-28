@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -29,7 +29,6 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.http.DefaultHttpRequestConfig;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
-import io.cdap.cdap.datapipeline.service.StudioService;
 import io.cdap.cdap.etl.api.Transform;
 import io.cdap.cdap.etl.api.action.Action;
 import io.cdap.cdap.etl.api.batch.BatchSource;
@@ -109,7 +108,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     ApplicationId pipeline = NamespaceId.SYSTEM.app("pipeline");
     appManager = getApplicationManager(pipeline);
     waitForAppToDeploy(pipeline);
-    serviceManager = appManager.getServiceManager(StudioService.NAME);
+    serviceManager = appManager.getServiceManager(io.cdap.cdap.etl.common.Constants.STUDIO_SERVICE_NAME);
     serviceManager.startAndWaitForRun(ProgramRunStatus.RUNNING, 2, TimeUnit.MINUTES);
     serviceURI = serviceManager.getServiceURL(1, TimeUnit.MINUTES).toURI();
   }

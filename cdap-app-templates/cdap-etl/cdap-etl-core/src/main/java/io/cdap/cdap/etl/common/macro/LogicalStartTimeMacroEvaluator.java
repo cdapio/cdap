@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,6 +18,8 @@ package io.cdap.cdap.etl.common.macro;
 
 
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.api.macro.InvalidMacroException;
+import io.cdap.cdap.api.macro.MacroEvaluator;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -41,19 +43,38 @@ import java.util.TimeZone;
  * This means the macro will be replaced with 2015-12-31T03:30:00, since the offset translates to 20.5 hours, so
  * the whole macro evaluates to 20.5 hours before midnight of new years 2016.
  */
-public class LogicalStartTimeMacro {
+public class LogicalStartTimeMacroEvaluator implements MacroEvaluator {
+
+  public static final String FUNCTION_NAME = "logicalStartTime";
+
+  private final long logicalStartTime;
   private final TimeZone defaultTimeZone;
 
-  public LogicalStartTimeMacro() {
-    this(TimeZone.getDefault());
+  public LogicalStartTimeMacroEvaluator(long logicalStartTime) {
+    this(logicalStartTime, TimeZone.getDefault());
   }
 
   @VisibleForTesting
-  LogicalStartTimeMacro(TimeZone defaultTimeZone) {
+  LogicalStartTimeMacroEvaluator(long logicalStartTime, TimeZone defaultTimeZone) {
+    this.logicalStartTime = logicalStartTime;
     this.defaultTimeZone = defaultTimeZone;
   }
 
-  public String evaluate(long logicalStartTime, String... arguments) {
+  @Override
+  public String lookup(String property) throws InvalidMacroException {
+    throw new InvalidMacroException("The '" + FUNCTION_NAME
+                                      + "' macro function doesn't support direct property lookup for property '"
+                                      + property + "'");
+  }
+
+  @Override
+  public String evaluate(String macroFunction, String... arguments) throws InvalidMacroException {
+    if (!FUNCTION_NAME.equals(macroFunction)) {
+      // This shouldn't happen
+      throw new IllegalArgumentException("Invalid function name " + macroFunction
+                                           + ". Expecting " + FUNCTION_NAME);
+    }
+
     if (arguments.length == 1 && arguments[0].isEmpty()) {
       return String.valueOf(logicalStartTime);
     }
