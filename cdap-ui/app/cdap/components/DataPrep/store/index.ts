@@ -65,6 +65,7 @@ export interface IDataPrepState {
   types?: any; // pure column types from backend. Used for display
   typesCheck?: any; // case sensitive column types, Should be used when checking types of column
   selectedHeaders?: any;
+  newHeaders: any;
   highlightColumns?: any;
   directives?: any;
   higherVersion?: any;
@@ -86,6 +87,7 @@ const defaultInitialState: IDataPrepState = {
   types: {}, // pure column types from backend. Used for display
   typesCheck: {}, // case sensitive column types, Should be used when checking types of column
   selectedHeaders: [],
+  newHeaders: [],
   highlightColumns: {
     directive: null,
     columns: [],
@@ -126,6 +128,21 @@ const getTypesCheck = (types = {}, headers = []) => {
   return typesCheck;
 };
 
+const findNewHeaders = (oldHeaders, actionHeaders) => {
+  // TODO Do we need to be faster for large numbers of columns?
+  if (oldHeaders.length === actionHeaders.length) {
+    // Don't treat renames as new columns
+    return [];
+  }
+  const newHeaders = [];
+  actionHeaders.forEach((h) => {
+    if (!oldHeaders.includes(h)) {
+      newHeaders.push(h);
+    }
+  });
+  return newHeaders;
+};
+
 const dataprep = (state = defaultInitialState, action = defaultAction) => {
   let stateCopy;
 
@@ -150,6 +167,7 @@ const dataprep = (state = defaultInitialState, action = defaultAction) => {
         selectedHeaders: state.selectedHeaders.filter((head) => {
           return action.payload.headers.indexOf(head) !== -1;
         }),
+        newHeaders: findNewHeaders(state.headers, action.payload.headers),
       });
       break;
     case DataPrepActions.setProperties: {

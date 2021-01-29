@@ -96,6 +96,7 @@ $option-hover-bg-color: #eeeeee;
                 max-width: 250px;
                 overflow: hidden;
                 text-overflow: ellipsis;
+                position: relative;
               }
               &:nth-child(5) {
                 width: 10%;
@@ -114,6 +115,45 @@ $option-hover-bg-color: #eeeeee;
           }
           &.selected {
             background-color: $element-selected-color;
+          }
+          &.is-new-appear {
+            td {
+              border-top-width: 1px;
+              border-top-style: solid;
+              border-top-color: $green-02;
+              border-bottom-width: 1px;
+              border-bottom-style: solid;
+              border-bottom-color: $green-02;
+
+              &.column-name:after {
+                content: "ADDED";
+                position: absolute;
+                right: 0px;
+                font-weight: bold;
+                font-variant: small-caps;
+                color: $grey-03;
+                opacity: 1;
+              }
+            }
+          }
+          &.is-new-appear-active {
+            td {
+              border-top-color: #dee2e6;
+              border-bottom-color: #dee2e6;
+              transition: all 3s 1s;
+
+              &.column-name:after {
+                opacity: 0;
+                transition: opacity 3s 1s;
+              }
+            }
+
+            &:last-of-type {
+              td {
+                border-bottom-color: transparent;
+              }
+            }
+
           }
         }
       }
