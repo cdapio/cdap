@@ -171,6 +171,10 @@ public class JsonStructuredRecordDatumWriter extends StructuredRecordDatumWriter
           }
           encoder.writeString(bigDecimal.toString());
           break;
+        case DATETIME:
+          //expecting value to be already in the correct format
+          encoder.writeString(value.toString());
+          break;
       }
       return;
     }

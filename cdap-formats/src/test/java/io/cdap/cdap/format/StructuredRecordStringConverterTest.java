@@ -19,20 +19,28 @@ package io.cdap.cdap.format;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.Gson;
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import org.junit.Assert;
+import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Test for {@link StructuredRecordStringConverter} class from {@link StructuredRecord} to json string
@@ -40,6 +48,9 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public class StructuredRecordStringConverterTest {
   Schema schema;
+
+  @Rule
+  public ExpectedException thrown = ExpectedException.none();
 
   @SuppressWarnings("AssertEqualsBetweenInconvertibleTypes")
   @Test
@@ -158,6 +169,68 @@ public class StructuredRecordStringConverterTest {
     StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
 
     assertRecordsEqual(record, recordOfJson);
+  }
+
+  @Test
+  public void testDatetimeLogicalTypeConversion() throws Exception {
+    Schema dateSchema = Schema.recordOf(
+      "date",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("datetimefield", Schema.nullableOf(Schema.of(Schema.LogicalType.DATETIME))));
+
+    StructuredRecord record = StructuredRecord.builder(dateSchema).set("id", 1)
+      .set("name", "alice")
+      .setDateTime("datetimefield", LocalDateTime.now()).build();
+
+    String jsonOfRecord = StructuredRecordStringConverter.toJsonString(record);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(jsonOfRecord, dateSchema);
+
+    assertRecordsEqual(record, recordOfJson);
+  }
+
+  //Ignore till CDAP-15317 is fixed
+  @Ignore
+  @Test
+  public void testInvalidDatetimeLogicalTypeConversion() throws Exception {
+    Schema dateSchema = Schema.recordOf(
+      "date",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("datetime_field", Schema.nullableOf(Schema.of(Schema.LogicalType.DATETIME))));
+
+    StructuredRecord record = StructuredRecord.builder(dateSchema).set("id", 1)
+      .set("name", "alice")
+      .set("datetime_field", "random").build();
+    thrown.expect(IOException.class);
+    thrown.expectMessage("Unsupported format. DateTime type should be in ISO-8601 format.");
+    StructuredRecordStringConverter.toJsonString(record);
+  }
+
+  //Ignore till CDAP-15317 is fixed
+  @Ignore
+  @Test
+  public void testInvalidDatetimeLogicalTypeJSON() throws Exception {
+    Schema dateSchema = Schema.recordOf(
+      "date",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("datetime_field", Schema.nullableOf(Schema.of(Schema.LogicalType.DATETIME))));
+    String validDate = "2021-01-27T02:25:52.088";
+    Map<String, String> jsonMap = new HashMap<>();
+    jsonMap.put("id", "1");
+    jsonMap.put("name", "alice");
+    jsonMap.put("datetime_field", validDate);
+    Gson gson = new Gson();
+    String json = gson.toJson(jsonMap);
+    StructuredRecord recordOfJson = StructuredRecordStringConverter.fromJsonString(json, dateSchema);
+    Assert.assertEquals(LocalDateTime.parse(validDate), recordOfJson.getDateTime("datetime_field"));
+
+    jsonMap.put("datetime_field", "1234");
+    String invalidJson = gson.toJson(jsonMap);
+    thrown.expect(IOException.class);
+    thrown.expectMessage("Unsupported format. DateTime type should be in ISO-8601 format.");
+    StructuredRecordStringConverter.fromJsonString(invalidJson, dateSchema);
   }
 
   @Test

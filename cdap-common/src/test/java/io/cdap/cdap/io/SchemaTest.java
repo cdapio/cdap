@@ -25,6 +25,7 @@ import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.data.schema.UnsupportedTypeException;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
+import org.apache.avro.LogicalType;
 import org.apache.avro.LogicalTypes;
 import org.codehaus.jackson.node.IntNode;
 import org.codehaus.jackson.node.TextNode;
@@ -492,6 +493,7 @@ public class SchemaTest {
     Schema timeMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIME_MILLIS));
     Schema tsMicrosType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MICROS));
     Schema tsMillisType = Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS));
+    Schema dateTimeType = Schema.nullableOf(Schema.of(Schema.LogicalType.DATETIME));
 
     Assert.assertEquals(dateType, Schema.parseJson(dateType.toString()));
     Assert.assertEquals(timeMicrosType, Schema.parseJson(timeMicrosType.toString()));
@@ -499,6 +501,7 @@ public class SchemaTest {
     Assert.assertEquals(tsMicrosType, Schema.parseJson(tsMicrosType.toString()));
     Assert.assertEquals(tsMillisType, Schema.parseJson(tsMillisType.toString()));
     Assert.assertEquals(convertSchema(dateType).toString(), dateType.toString());
+    Assert.assertEquals(dateTimeType, Schema.parseJson(dateTimeType.toString()));
 
     Schema complexSchema = Schema.recordOf(
       "union",
@@ -515,7 +518,8 @@ public class SchemaTest {
                                                        Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)))),
       Schema.Field.of("f", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
       Schema.Field.of("g", Schema.nullableOf(Schema.of(Schema.LogicalType.DATE))),
-      Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))));
+      Schema.Field.of("h", Schema.nullableOf(Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))),
+      Schema.Field.of("i", Schema.nullableOf(Schema.of(Schema.LogicalType.DATETIME))));
 
     Assert.assertEquals(complexSchema, Schema.parseJson(complexSchema.toString()));
   }
@@ -537,6 +541,8 @@ public class SchemaTest {
                                       Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS))),
                                     Schema.Field.of("timestamp_micros", Schema.unionOf(
                                       Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))),
+                                    Schema.Field.of("datetime", Schema.unionOf(
+                                      Schema.of(Schema.Type.NULL), Schema.of(Schema.LogicalType.DATETIME))),
                                     Schema.Field.of("union",
                                                     Schema.unionOf(Schema.of(Schema.Type.STRING),
                                                                    Schema.of(Schema.LogicalType.TIMESTAMP_MICROS))));
@@ -584,6 +590,12 @@ public class SchemaTest {
                                          LogicalTypes.timestampMicros().addToSchema(
                                            org.apache.avro.Schema.create(org.apache.avro.Schema.Type.LONG)))),
                                        null, null),
+      new org.apache.avro.Schema.Field("datetime",
+                                       org.apache.avro.Schema.createUnion(ImmutableList.of(
+                                         org.apache.avro.Schema.create(org.apache.avro.Schema.Type.NULL),
+                                         new LogicalType("datetime").addToSchema(
+                                           org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING)))),
+                                       null, null),
       new org.apache.avro.Schema.Field("union",
                                        org.apache.avro.Schema.createUnion(ImmutableList.of(
                                          org.apache.avro.Schema.create(org.apache.avro.Schema.Type.STRING),
@@ -618,6 +630,7 @@ public class SchemaTest {
                                     Schema.Field.of("ts_millis", Schema.of(Schema.LogicalType.TIMESTAMP_MILLIS)),
                                     Schema.Field.of("time_micros", Schema.of(Schema.LogicalType.TIME_MICROS)),
                                     Schema.Field.of("time_millis", Schema.of(Schema.LogicalType.TIME_MILLIS)),
+                                    Schema.Field.of("datetime", Schema.of(Schema.LogicalType.DATETIME)),
                                     Schema.Field.of("map",
                                                     Schema.nullableOf(Schema.mapOf(Schema.of(Schema.Type.STRING),
                                                                                    Schema.of(Schema.Type.INT)))),
@@ -634,6 +647,8 @@ public class SchemaTest {
     Assert.assertEquals("time of day in milliseconds", schema.getField("time_millis").getSchema().getDisplayName());
     Assert.assertEquals("map", schema.getField("map").getSchema().getNonNullable().getDisplayName());
     Assert.assertEquals("union", schema.getField("union").getSchema().getDisplayName());
+    Assert.assertEquals("datetime in ISO-8601 format without timezone",
+                        schema.getField("datetime").getSchema().getDisplayName());
   }
 
   @Test(expected = IllegalArgumentException.class)
