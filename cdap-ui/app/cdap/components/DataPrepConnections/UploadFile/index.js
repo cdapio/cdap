@@ -129,6 +129,7 @@ export default class ConnectionsUpload extends Component {
           allowSidePanelToggle={true}
           toggle={this.props.toggle}
           browserTitle={T.translate(`${PREFIX}.title`)}
+          showPanelToggle={this.props.showPanelToggle}
         />
 
         <div className="upload-content-container">
@@ -173,4 +174,5 @@ export default class ConnectionsUpload extends Component {
 ConnectionsUpload.propTypes = {
   toggle: PropTypes.func,
   onWorkspaceCreate: PropTypes.func,
+  showPanelToggle: PropTypes.bool,
 };

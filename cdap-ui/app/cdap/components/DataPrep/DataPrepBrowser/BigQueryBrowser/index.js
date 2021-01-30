@@ -36,6 +36,7 @@ export default class BiqQueryBrowser extends Component {
     onWorkspaceCreate: PropTypes.func,
     enableRouting: PropTypes.bool,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    showPanelToggle: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -58,6 +59,7 @@ export default class BiqQueryBrowser extends Component {
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.title`)}
+            showPanelToggle={this.props.showPanelToggle}
           />
           {this.props.enableRouting ? (
             <Switch>

@@ -46,6 +46,7 @@ export default class S3Browser extends Component {
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    showPanelToggle: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -127,6 +128,7 @@ export default class S3Browser extends Component {
             allowSidePanelToggle={true}
             toggle={this.props.toggle}
             browserTitle={T.translate(`${PREFIX}.TopPanel.selectData`)}
+            showPanelToggle={this.props.showPanelToggle}
           />
           <div
             className={classnames('sub-panel', { 'routing-disabled': !this.props.enableRouting })}

@@ -45,6 +45,7 @@ export default class KafkaBrowser extends Component {
     enableRouting: PropTypes.bool,
     onWorkspaceCreate: PropTypes.func,
     scope: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+    showPanelToggle: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -233,6 +234,7 @@ export default class KafkaBrowser extends Component {
           allowSidePanelToggle={true}
           toggle={this.props.toggle}
           browserTitle={T.translate(`${PREFIX}.title`)}
+          showPanelToggle={this.props.showPanelToggle}
         />
         <If condition={!this.state.error}>
           <div className="kafka-browser-header">
