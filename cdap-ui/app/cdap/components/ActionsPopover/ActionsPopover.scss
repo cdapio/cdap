@@ -25,14 +25,15 @@ $popover-width: 100px;
 .actions-popover {
   display: inline-block;
 
-  .default-target.icon-svg.icon-cog-empty {
-    fill: none;
+  .default-target.icon-svg.icon-more {
+    fill: $cog-icon-color;
     stroke: $cog-icon-color;
     font-size: 23px;
     cursor: pointer;
 
     &:hover,
     &.active {
+      fill: $cog-icon-hover-color;
       stroke: $cog-icon-hover-color;
     }
   }
