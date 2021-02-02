@@ -32,6 +32,7 @@ const PREFIX = 'features.AbstractWidget.PluginListWidget';
 
 interface IPluginListWidgetProps {
   'plugin-type': string;
+  placeholder?: string;
 }
 
 interface IPluginListProps extends IWidgetProps<IPluginListWidgetProps> {}
@@ -69,6 +70,7 @@ const PluginListWidget: React.FC<IPluginListProps> = ({
 }) => {
   const [options, setOptions] = React.useState<IOption[]>([LOADING_OPTION]);
   const eventEmitter = ee(ee);
+  const placeholder = objectQuery(widgetProps, 'placeholder') || 'Select one';
 
   function setEmptyOptions(extension) {
     const emptyOptions = [
@@ -134,6 +136,7 @@ const PluginListWidget: React.FC<IPluginListProps> = ({
         options,
       }}
       disabled={disabled}
+      placeholder={placeholder}
       dataCy={dataCy}
     />
   );
