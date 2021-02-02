@@ -322,6 +322,17 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
     });
   };
 
+  private isSaveDisabled = () => {
+    if (
+      this.state.selectedReplication === ReplicateSelect.individual &&
+      this.state.selectedColumns.size === 0
+    ) {
+      return true;
+    }
+
+    return this.state.loading;
+  };
+
   private renderContent = () => {
     const { classes } = this.props;
 
@@ -454,7 +465,7 @@ class SelectColumnsView extends React.PureComponent<ISelectColumnsProps, ISelect
                 variant="contained"
                 color="primary"
                 onClick={this.handleSave}
-                disabled={this.state.loading}
+                disabled={this.isSaveDisabled()}
               >
                 Save
               </Button>
