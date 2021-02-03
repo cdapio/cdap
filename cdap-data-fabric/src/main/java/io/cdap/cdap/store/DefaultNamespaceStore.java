@@ -100,4 +100,11 @@ public class DefaultNamespaceStore implements NamespaceStore {
       return getNamespaceTable(context).list();
     });
   }
+
+  @Override
+  public long getNamespaceCount() {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return getNamespaceTable(context).getNamespaceCount();
+    });
+  }
 }

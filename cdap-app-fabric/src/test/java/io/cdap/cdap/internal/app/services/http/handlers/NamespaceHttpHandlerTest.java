@@ -24,6 +24,7 @@ import com.google.gson.reflect.TypeToken;
 import io.cdap.cdap.AppForUnrecoverableResetTest;
 import io.cdap.cdap.AppWithDataset;
 import io.cdap.cdap.AppWithServices;
+import io.cdap.cdap.api.metrics.MetricStore;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -39,6 +40,7 @@ import io.cdap.cdap.proto.ProgramStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.test.MetricsManager;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.apache.twill.filesystem.LocationFactory;
@@ -46,9 +48,11 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.lang.reflect.Type;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for {@link NamespaceHttpHandler}
@@ -70,6 +74,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
   private static final String INVALID_NAME = "!nv@l*d/";
   private static final String OTHER_NAME = "test1";
   private static final Gson GSON = new Gson();
+  private static final MetricsManager metricsManager = new MetricsManager(getInjector().getInstance(MetricStore.class));
 
   private void assertResponseCode(int expected, HttpResponse response) {
     Assert.assertEquals(expected, response.getResponseCode());
@@ -343,6 +348,16 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     assertResponseCode(404, getNamespace(NAME));
   }
 
+  private void waitForAndCheckNamespaceCount(long expected) throws Exception {
+    //test metrics are expected
+    metricsManager.waitForExactMetricCount(Collections.emptyMap(),
+                                           "system." + Constants.Metrics.Program.NAMESPACE_COUNT,
+                                           expected, 20, TimeUnit.SECONDS);
+    Assert.assertEquals(expected,
+                        metricsManager.getTotalMetric(Collections.emptyMap(),
+                                                      "system." + Constants.Metrics.Program.NAMESPACE_COUNT));
+  }
+
   @Test
   public void testNamespaceClient() throws Exception {
     // tests the NamespaceClient's ability to interact with Namespace service/handlers.
@@ -375,6 +390,7 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     NamespaceMeta receivedMeta = namespaceClient.get(fooNamespace);
     Assert.assertNotNull(receivedMeta);
     Assert.assertEquals(toCreate, new NamespaceMeta.Builder(receivedMeta).setGeneration(0L).build());
+    waitForAndCheckNamespaceCount(4);
 
     namespaceClient.delete(fooNamespace);
     try {
@@ -383,6 +399,8 @@ public class NamespaceHttpHandlerTest extends AppFabricTestBase {
     } catch (NotFoundException expected) {
       // expected
     }
+
+    waitForAndCheckNamespaceCount(3);
   }
 
   @Test

@@ -74,4 +74,10 @@ public interface NamespaceStore {
    * @return a list of all registered namespaces
    */
   List<NamespaceMeta> list();
+
+  /**
+   * Counts all namespaces.
+   * @return long of the count
+   */
+  long getNamespaceCount();
 }

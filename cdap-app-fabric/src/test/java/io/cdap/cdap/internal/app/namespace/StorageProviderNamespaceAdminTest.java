@@ -43,6 +43,7 @@ import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * Tests for {@link StorageProviderNamespaceAdmin}
@@ -101,6 +102,17 @@ public class StorageProviderNamespaceAdminTest {
     Assert.assertTrue(namespaceLocation.exists());
     storageProviderNamespaceAdmin.delete(myspace);
     Assert.assertFalse(namespaceLocation.exists());
+  }
+
+  @Test
+  public void testCountNamespaces() {
+    for (String namespace : Arrays.asList("myspace1", "myspace2", "myspace3")) {
+      NamespaceId namespaceId = new NamespaceId(namespace);
+      NamespaceMeta namespaceMeta = new NamespaceMeta.Builder().setName(namespaceId.getNamespace()).build();
+      namespaceStore.create(namespaceMeta);
+    }
+
+    Assert.assertEquals(3, namespaceStore.getNamespaceCount());
   }
 
   @Test

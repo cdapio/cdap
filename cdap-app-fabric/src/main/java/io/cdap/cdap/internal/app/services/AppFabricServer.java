@@ -42,6 +42,7 @@ import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
+import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import org.apache.twill.common.Cancellable;
@@ -171,11 +172,15 @@ public class AppFabricServer extends AbstractIdleService {
     }
 
     cancelHttpService = startHttpService(httpServiceBuilder.build());
-    long count = TransactionRunners.run(transactionRunner,
-                                        (TxCallable<Long>) context ->
-                                          AppMetadataStore.create(context).getApplicationCount());
+    long applicationCount = TransactionRunners.run(transactionRunner,
+                                                   (TxCallable<Long>) context ->
+                                                     AppMetadataStore.create(context).getApplicationCount());
+    long namespaceCount = new DefaultNamespaceStore(transactionRunner).getNamespaceCount();
+
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.APPLICATION_COUNT,
-                                                                      count);
+                                                                      applicationCount);
+    metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
+                                                                      namespaceCount);
   }
 
   @Override
