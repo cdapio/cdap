@@ -48,12 +48,14 @@ import com.google.cloud.dataproc.v1.EndpointConfig;
 import com.google.cloud.dataproc.v1.GceClusterConfig;
 import com.google.cloud.dataproc.v1.GetClusterRequest;
 import com.google.cloud.dataproc.v1.InstanceGroupConfig;
+import com.google.cloud.dataproc.v1.LifecycleConfig;
 import com.google.cloud.dataproc.v1.NodeInitializationAction;
 import com.google.cloud.dataproc.v1.SoftwareConfig;
 import com.google.cloud.dataproc.v1.UpdateClusterRequest;
 import com.google.common.base.Strings;
 import com.google.longrunning.Operation;
 import com.google.longrunning.OperationsClient;
+import com.google.protobuf.Duration;
 import com.google.protobuf.FieldMask;
 import com.google.rpc.Status;
 import io.cdap.cdap.runtime.spi.common.DataprocUtils;
@@ -80,6 +82,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -425,6 +428,7 @@ final class DataprocClient implements AutoCloseable {
         primaryWorkerConfig.setImageUri(conf.getCustomImageUri());
         secondaryWorkerConfig.setImageUri(conf.getCustomImageUri());
       }
+
       ClusterConfig.Builder builder = ClusterConfig.newBuilder()
         .setEndpointConfig(EndpointConfig.newBuilder()
                              .setEnableHttpPortAccess(conf.isComponentGatewayEnabled())
@@ -442,6 +446,13 @@ final class DataprocClient implements AutoCloseable {
         .setSecondaryWorkerConfig(secondaryWorkerConfig.build())
         .setGceClusterConfig(clusterConfig.build())
         .setSoftwareConfig(softwareConfigBuilder);
+
+      //Cluster TTL if one should be set
+      if (conf.getIdleTTLMinutes() > 0) {
+        long seconds = TimeUnit.MINUTES.toSeconds(conf.getIdleTTLMinutes());
+        builder.setLifecycleConfig(LifecycleConfig.newBuilder()
+                                     .setIdleDeleteTtl(Duration.newBuilder().setSeconds(seconds).build()).build());
+      }
 
       //Add any Node Initialization action scripts
       for (String action : conf.getInitActions()) {
