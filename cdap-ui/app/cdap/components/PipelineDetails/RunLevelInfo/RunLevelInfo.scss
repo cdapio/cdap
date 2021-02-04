@@ -178,63 +178,6 @@ $border-color: $grey-05;
       transform: rotate(90deg);
       font-size: 18px;
     }
-
-    .popper {
-      width: auto;
-      margin-left: 50px;
-      &[data-placement^="right"] {
-        margin-left: 10px;
-        z-index: 100;
-        margin-top: 50px;
-        margin-bottom: 100px;
-      }
-      .pipeline-modeless-old-container .pipeline-modeless-content {
-        .historical-runtime-args-wrapper {
-          display: flex;
-          flex-direction: column;
-          justify-content: space-between;
-          width: 100%;
-          h4 {
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .historical-runtimeargs-keyvalues {
-            text-align: left;
-            padding: 10px 0;
-            height: calc(100% - 45px);
-            overflow-y: auto;
-            margin-bottom: 10px;
-
-            > div {
-              display: grid;
-              padding: 5px 0;
-              grid-gap: 10px;
-              grid-template-columns: repeat(2, 1fr);
-              &:first-child {
-                color: gray;
-                font-weight: 500;
-              }
-              .form-control {
-                font-size: 14px;
-              }
-            }
-          }
-        }
-      }
-      .runconfig-modeless-title {
-        display: flex;
-        .copyable-id {
-          font-size: 12px;
-        }
-      }
-      .runconfig-tab-footer {
-        border-top: 1px solid $grey-05;
-        text-align: right;
-        padding: 15px 0;
-      }
-    }
   }
 
   .run-status-container {
@@ -245,5 +188,55 @@ $border-color: $grey-05;
     &:after {
       display: none;
     }
+  }
+}
+
+.pipeline-modeless-container {
+  .historical-runtime-args-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0 30px 30px;
+    h4 {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .historical-runtimeargs-keyvalues {
+      text-align: left;
+      padding: 10px 0;
+      height: calc(100% - 45px);
+      overflow-y: auto;
+      margin-bottom: 10px;
+
+      > div {
+        display: grid;
+        padding: 5px 0;
+        grid-gap: 10px;
+        grid-template-columns: repeat(2, 1fr);
+        &:first-child {
+          color: gray;
+          font-weight: 500;
+        }
+        .form-control {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+
+  .runconfig-modeless-title {
+    display: flex;
+    .copyable-id {
+      font-size: 12px;
+    }
+  }
+
+  .runconfig-tab-footer {
+    border-top: 1px solid $grey-05;
+    text-align: right;
+    padding: 15px 0;
   }
 }

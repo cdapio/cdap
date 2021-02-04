@@ -17,7 +17,7 @@
 @import "../../styles/variables.scss";
 
 $modeless-width: 830px;
-$modeless-height: 496px;
+$modeless-height: 450px;
 $top-panel-height: 54px;
 $right-position: -360px;
 $sidepanel-width: 170px;
@@ -30,42 +30,8 @@ $sidepanel-width: 170px;
   color: $grey-01;
   background-color: white;
 
-  .pipeline-configurations-header {
-    background-color: $grey-08;
-    height: 60px;
-    padding: 0;
-    border-radius: 4px 4px 0 0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid $grey-05;
-    border-radius: 0;
-
-    .modeless-title {
-      color: $grey-01;
-      padding-left: 15px;
-      max-width: 80%;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      overflow: hidden;
-      font-weight: 500;
-      margin: 0 auto 0 0;
-      font-size: 16px;
-      line-height: 20px;
-    }
-
-    .btn .fa-remove,
-    .btn .icon-close {
-      color: $grey-01;
-      width: 16px;
-      height: 16px;
-      font-size: 16px;
-      margin-right: 5px;
-    }
-  }
-
   .pipeline-config-tabs-wrapper {
-    height: calc(100% - 60px); // .modeless-header height set at common.less :sigh:
+    height: 100%;
     position: relative;
 
     .configuration-step-navigation {

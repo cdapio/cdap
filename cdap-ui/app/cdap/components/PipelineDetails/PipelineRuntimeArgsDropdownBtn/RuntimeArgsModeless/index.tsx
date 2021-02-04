@@ -40,7 +40,7 @@ const styles = (theme): StyleRules => {
       margin: '0',
       textAlign: 'left',
       width: '100%',
-      paddingTop: '10px',
+      padding: '10px 30px 30px',
     },
     loading: {
       minHeight: '200px',

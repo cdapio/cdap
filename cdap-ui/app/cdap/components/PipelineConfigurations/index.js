@@ -26,6 +26,7 @@ import T from 'i18n-react';
 import ConfigurableTab from 'components/ConfigurableTab';
 import TabConfig from 'components/PipelineConfigurations/TabConfig';
 import { GLOBALS } from 'services/global-constants';
+import PipelineModeless from 'components/PipelineDetails/PipelineModeless';
 
 require('./PipelineConfigurations.scss');
 require('./ConfigurationsContent/ConfigurationsContent.scss');
@@ -34,7 +35,9 @@ const PREFIX = 'features.PipelineConfigurations';
 
 export default class PipelineConfigurations extends Component {
   static propTypes = {
+    open: PropTypes.func,
     onClose: PropTypes.func,
+    anchorEl: PropTypes.oneOf([PropTypes.element, PropTypes.string]),
     isDetailView: PropTypes.bool,
     isPreview: PropTypes.bool,
     pipelineType: PropTypes.string,
@@ -87,6 +90,19 @@ export default class PipelineConfigurations extends Component {
     }
   }
 
+  getHeaderLabel() {
+    let headerLabel;
+    if (this.props.isHistoricalRun) {
+      headerLabel = T.translate(`${PREFIX}.titleHistorical`);
+    } else {
+      headerLabel = T.translate(`${PREFIX}.title`);
+      if (this.props.pipelineName.length) {
+        headerLabel += ` "${this.props.pipelineName}"`;
+      }
+    }
+    return headerLabel;
+  }
+
   renderHeader() {
     let headerLabel;
     if (this.props.isHistoricalRun) {
@@ -133,15 +149,24 @@ export default class PipelineConfigurations extends Component {
       });
     }
     return (
-      <Provider store={PipelineConfigurationsStore}>
-        <div className="pipeline-configurations-content" ref={(ref) => (this.configModeless = ref)}>
-          {this.renderHeader()}
-          <div className="pipeline-config-tabs-wrapper">
-            <ConfigurableTab tabConfig={tabConfig} />
-            <ConfigModelessActionButtons onClose={this.props.onClose} />
+      <PipelineModeless
+        open={this.props.open}
+        anchorEl={this.props.anchorEl}
+        onClose={this.props.onClose}
+        title={this.getHeaderLabel()}
+      >
+        <Provider store={PipelineConfigurationsStore}>
+          <div
+            className="pipeline-configurations-content"
+            ref={(ref) => (this.configModeless = ref)}
+          >
+            <div className="pipeline-config-tabs-wrapper">
+              <ConfigurableTab tabConfig={tabConfig} />
+              <ConfigModelessActionButtons onClose={this.props.onClose} />
+            </div>
           </div>
-        </div>
-      </Provider>
+        </Provider>
+      </PipelineModeless>
     );
   }
 }
