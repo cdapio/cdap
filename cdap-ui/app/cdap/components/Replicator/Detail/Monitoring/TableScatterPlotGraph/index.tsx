@@ -31,6 +31,7 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import ChartTableSwitcher from 'components/Replicator/Detail/ChartTableSwitcher';
 import ScatterPlotTable from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/ScatterPlotTable';
 import ScatterPlotTooltip from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/ScatterPlotTooltip';
+import isEqual from 'lodash/isEqual';
 
 const styles = (): StyleRules => {
   return {
@@ -123,15 +124,25 @@ const TableScatterPlotGraphView: React.FC<WithStyles<typeof styles>> = ({ classe
 
     const params = [start, end, aggregate, groupBy, tagsParams, metrics].join('&');
 
-    MyMetricApi.queryTags({ params }).subscribe(
+    const metricsPoll$ = MyMetricApi.pollQueryTags({ params }).subscribe(
       (res) => {
-        setData(parseTableMetrics(res, tables.toList().toJS()));
+        const parsedMetrics = parseTableMetrics(res, tables.toList().toJS());
+
+        if (!isEqual(parsedMetrics, data)) {
+          setData(parsedMetrics);
+        }
       },
       (err) => {
         // tslint:disable-next-line: no-console
         console.log('err', err);
       }
     );
+
+    return () => {
+      if (metricsPoll$ && typeof metricsPoll$.unsubscribe === 'function') {
+        metricsPoll$.unsubscribe();
+      }
+    };
   }, [tables, timeRange]);
 
   const chart = (

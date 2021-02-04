@@ -25,6 +25,7 @@ import { DetailContext } from 'components/Replicator/Detail';
 import { MyMetricApi } from 'api/metric';
 import { throughputLatencyParser } from 'components/Replicator/Detail/Monitoring/ThroughputLatencyGraphs/parser';
 import { getFullyQualifiedTableName } from 'components/Replicator/utilities';
+import isEqual from 'lodash/isEqual';
 
 const styles = (): StyleRules => {
   return {
@@ -92,15 +93,25 @@ const ThroughputLatencyGraphsView: React.FC<WithStyles<typeof styles>> = ({ clas
 
     const params = [start, end, aggregate, resolution, tagsParams, metrics].join('&');
 
-    MyMetricApi.queryTags({ params }).subscribe(
+    const metricsPoll$ = MyMetricApi.pollQueryTags({ params }).subscribe(
       (res) => {
-        setData(throughputLatencyParser(res, tables.size, activeTable));
+        const parsedMetrics = throughputLatencyParser(res, tables.size, activeTable);
+
+        if (!isEqual(parsedMetrics, data)) {
+          setData(parsedMetrics);
+        }
       },
       (err) => {
         // tslint:disable-next-line: no-console
         console.log('err', err);
       }
     );
+
+    return () => {
+      if (metricsPoll$ && typeof metricsPoll$.unsubscribe === 'function') {
+        metricsPoll$.unsubscribe();
+      }
+    };
   }, [tables, activeTable, timeRange]);
 
   return (

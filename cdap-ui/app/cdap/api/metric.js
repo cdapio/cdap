@@ -23,5 +23,6 @@ const basepath = '/metrics/query';
 export const MyMetricApi = {
   query: apiCreator(dataSrc, 'POST', 'REQUEST', basepath),
   queryTags: apiCreator(dataSrc, 'POST', 'REQUEST', `${basepath}?:params`),
+  pollQueryTags: apiCreator(dataSrc, 'POST', 'POLL', `${basepath}?:params`),
   search: apiCreator(dataSrc, 'POST', 'REQUEST', '/metrics/search'),
 };

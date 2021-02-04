@@ -194,7 +194,7 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
     const params = [start, end, aggregate, groupBy, tagsParams, metrics].join('&');
 
-    MyMetricApi.queryTags({ params }).subscribe(
+    const metricsPoll$ = MyMetricApi.pollQueryTags({ params }).subscribe(
       (res) => {
         setTableMetricsMap(parseOverviewMetrics(res, tables.toList().toJS()));
       },
@@ -203,6 +203,12 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
         console.log('err', err);
       }
     );
+
+    return () => {
+      if (metricsPoll$ && typeof metricsPoll$.unsubscribe === 'function') {
+        metricsPoll$.unsubscribe();
+      }
+    };
   }, [timeRange, tables]);
   return (
     <div className={classes.root}>
