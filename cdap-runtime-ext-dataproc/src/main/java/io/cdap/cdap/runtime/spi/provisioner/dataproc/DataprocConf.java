@@ -17,7 +17,6 @@
 package io.cdap.cdap.runtime.spi.provisioner.dataproc;
 
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
-import com.google.api.services.compute.Compute;
 import com.google.auth.oauth2.ComputeEngineCredentials;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.common.base.Strings;
@@ -81,6 +80,7 @@ final class DataprocConf {
   private final int masterMemoryMB;
   private final int masterDiskGB;
   private final String masterDiskType;
+  private final String masterMachineType;
 
   private final int workerNumNodes;
   private final int secondaryWorkerNumNodes;
@@ -88,6 +88,7 @@ final class DataprocConf {
   private final int workerMemoryMB;
   private final int workerDiskGB;
   private final String workerDiskType;
+  private final String workerMachineType;
 
   private final long pollCreateDelay;
   private final long pollCreateJitter;
@@ -109,26 +110,29 @@ final class DataprocConf {
   private final List<String> networkTags;
   private final String initActions;
   private final String autoScalingPolicy;
+  private final int idleTTLMinutes;
 
   private final boolean runtimeJobManagerEnabled;
 
   DataprocConf(DataprocConf conf, String network, String subnet) {
     this(conf.accountKey, conf.region, conf.zone, conf.projectId, conf.networkHostProjectID, network, subnet,
          conf.masterNumNodes, conf.masterCPUs, conf.masterMemoryMB, conf.masterDiskGB, conf.masterDiskType,
-         conf.workerNumNodes, conf.secondaryWorkerNumNodes, conf.workerCPUs, conf.workerMemoryMB, conf.workerDiskGB,
-         conf.workerDiskType, conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
+         conf.masterMachineType, conf.workerNumNodes, conf.secondaryWorkerNumNodes, conf.workerCPUs,
+         conf.workerMemoryMB, conf.workerDiskGB, conf.workerDiskType, conf.workerMachineType,
+         conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
          conf.componentGatewayEnabled, conf.publicKey, conf.imageVersion, conf.customImageUri,
          conf.clusterMetaData, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
-         conf.clusterProperties, conf.autoScalingPolicy);
+         conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes);
   }
 
   private DataprocConf(@Nullable String accountKey, String region, String zone, String projectId,
                        @Nullable String networkHostProjectId, @Nullable String network, @Nullable String subnet,
                        int masterNumNodes, int masterCPUs, int masterMemoryMB,
-                       int masterDiskGB, String masterDiskType, int workerNumNodes, int secondaryWorkerNumNodes,
-                       int workerCPUs, int workerMemoryMB, int workerDiskGB, String workerDiskType,
+                       int masterDiskGB, String masterDiskType, @Nullable String masterMachineType,
+                       int workerNumNodes, int secondaryWorkerNumNodes, int workerCPUs, int workerMemoryMB,
+                       int workerDiskGB, String workerDiskType, @Nullable String workerMachineType,
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
@@ -137,7 +141,8 @@ final class DataprocConf {
                        @Nullable String customImageUri,
                        @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
                        @Nullable String initActions, boolean runtimeJobManagerEnabled,
-                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy) {
+                       Map<String, String> clusterProperties, @Nullable String autoScalingPolicy,
+                       int idleTTLMinutes) {
     this.accountKey = accountKey;
     this.region = region;
     this.zone = zone;
@@ -150,12 +155,14 @@ final class DataprocConf {
     this.masterMemoryMB = masterMemoryMB;
     this.masterDiskGB = masterDiskGB;
     this.masterDiskType = masterDiskType;
+    this.masterMachineType = masterMachineType;
     this.workerNumNodes = workerNumNodes;
     this.secondaryWorkerNumNodes = secondaryWorkerNumNodes;
     this.workerCPUs = workerCPUs;
     this.workerMemoryMB = workerMemoryMB;
     this.workerDiskGB = workerDiskGB;
     this.workerDiskType = workerDiskType;
+    this.workerMachineType = workerMachineType;
     this.pollCreateDelay = pollCreateDelay;
     this.pollCreateJitter = pollCreateJitter;
     this.pollDeleteDelay = pollDeleteDelay;
@@ -176,6 +183,7 @@ final class DataprocConf {
     this.runtimeJobManagerEnabled = runtimeJobManagerEnabled;
     this.clusterProperties = clusterProperties;
     this.autoScalingPolicy = autoScalingPolicy;
+    this.idleTTLMinutes = idleTTLMinutes;
   }
 
   String getRegion() {
@@ -234,11 +242,11 @@ final class DataprocConf {
   }
 
   String getMasterMachineType() {
-    return getMachineType(masterCPUs, masterMemoryMB);
+    return getMachineType(masterMachineType, masterCPUs, masterMemoryMB);
   }
 
   String getWorkerMachineType() {
-    return getMachineType(workerCPUs, workerMemoryMB);
+    return getMachineType(workerMachineType, workerCPUs, workerMemoryMB);
   }
 
   @Nullable
@@ -332,6 +340,10 @@ final class DataprocConf {
     return autoScalingPolicy;
   }
 
+  public int getIdleTTLMinutes() {
+    return idleTTLMinutes;
+  }
+
   /**
    * @return GoogleCredential for use with Compute
    * @throws IOException if there was an error reading the account key
@@ -372,10 +384,12 @@ final class DataprocConf {
     }
   }
 
-  private String getMachineType(int cpus, int memoryGB) {
-    // TODO: there are special names for pre-defined cpu and memory
-    // for example, 4cpu 3.6gb memory is 'n1-highcpu-4', 4cpu 15gb memory is 'n1-standard-4'
-    return String.format("custom-%d-%d", cpus, memoryGB);
+  private String getMachineType(@Nullable String type, int cpus, int memoryMB) {
+    // n1 is of format custom-cpu-memory
+    // other types are of format type-custom-cpu-memory. For example, n2d-custom-4-16
+    String typePrefix = type == null || type.isEmpty() || "n1".equals(type.toLowerCase()) ?
+      "" : type.toLowerCase() + "-";
+    return String.format("%scustom-%d-%d", typePrefix, cpus, memoryMB);
   }
 
   /**
@@ -462,11 +476,13 @@ final class DataprocConf {
 
     int masterDiskGB = getInt(properties, "masterDiskGB", 1000);
     String masterDiskType = getString(properties, "masterDiskType");
+    String masterMachineType = getString(properties, "masterMachineType");
     if (masterDiskType == null) {
       masterDiskType = "pd-standard";
     }
     int workerDiskGB = getInt(properties, "workerDiskGB", 1000);
     String workerDiskType = getString(properties, "workerDiskType");
+    String workerMachineType = getString(properties, "workerMachineType");
     if (workerDiskType == null) {
       workerDiskType = "pd-standard";
     }
@@ -485,11 +501,13 @@ final class DataprocConf {
                                                                                         "true"));
     boolean componentGatewayEnabled = Boolean.parseBoolean(properties.get(COMPONENT_GATEWAY_ENABLED));
 
-    Map<String, String> clusterProps = Collections.unmodifiableMap(
-      properties.entrySet().stream()
-        .filter(e -> CLUSTER_PROPERTIES_PATTERN.matcher(e.getKey()).find())
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
-    );
+    Map<String, String> clusterPropOverrides =
+      DataprocUtils.parseKeyValueConfig(getString(properties, "clusterProperties"), ";", "=");
+
+    Map<String, String> clusterProps = properties.entrySet().stream()
+      .filter(e -> CLUSTER_PROPERTIES_PATTERN.matcher(e.getKey()).find())
+      .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    clusterProps.putAll(clusterPropOverrides);
 
     String imageVersion = getString(properties, IMAGE_VERSION);
     String customImageUri = getString(properties, CUSTOM_IMAGE_URI);
@@ -512,15 +530,18 @@ final class DataprocConf {
     String initActions = getString(properties, "initActions");
     boolean runtimeJobManagerEnabled = Boolean.parseBoolean(properties.get(RUNTIME_JOB_MANAGER));
     String autoScalingPolicy = getString(properties, "autoScalingPolicy");
+    int idleTTL = getInt(properties, "idleTTL", 0);
 
     return new DataprocConf(accountKey, region, zone, projectId, networkHostProjectID, network, subnet,
-                            masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB, masterDiskType,
+                            masterNumNodes, masterCPUs, masterMemoryGB, masterDiskGB,
+                            masterDiskType, masterMachineType,
                             workerNumNodes, secondaryWorkerNumNodes, workerCPUs, workerMemoryGB, workerDiskGB,
-                            workerDiskType, pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
+                            workerDiskType, workerMachineType,
+                            pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
                             stackdriverLoggingEnabled, stackdriverMonitoringEnabled, componentGatewayEnabled,
                             publicKey, imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
-                            runtimeJobManagerEnabled, clusterProps, autoScalingPolicy);
+                            runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL);
   }
 
   // the UI never sends nulls, it only sends empty strings.

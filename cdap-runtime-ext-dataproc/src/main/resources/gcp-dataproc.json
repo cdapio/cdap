@@ -136,6 +136,22 @@
         },
         {
           "widget-type": "select",
+          "label": "Master Machine Type",
+          "name": "masterMachineType",
+          "description": "The type of master machine to use",
+          "widget-attributes": {
+            "values": [
+              "n1",
+              "n2",
+              "n2d",
+              "e2"
+            ],
+            "default": "n1",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "select",
           "label": "Master Cores",
           "name": "masterCPUs",
           "description": "The number of virtual cores to allocate to a master node",
@@ -152,7 +168,7 @@
               96
             ],
             "size": "medium",
-            "default": 1
+            "default": 2
           }
         },
         {
@@ -161,7 +177,7 @@
           "name": "masterMemoryMB",
           "description": "The amount of memory in GB to allocate for a master node",
           "widget-attributes": {
-            "default": 4096,
+            "default": 8192,
             "min": 1024,
             "size": "medium"
           }
@@ -221,6 +237,22 @@
           "widget-attributes": {
             "default": 0,
             "min": 0,
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "select",
+          "label": "Worker Machine Type",
+          "name": "workerMachineType",
+          "description": "The type of worker machine to use",
+          "widget-attributes": {
+            "values": [
+              "n1",
+              "n2",
+              "n2d",
+              "e2"
+            ],
+            "default": "n1",
             "size": "medium"
           }
         },
@@ -373,6 +405,48 @@
           }
         },
         {
+          "widget-type": "keyvalue",
+          "label": "Cluster Properties",
+          "name": "clusterProperties",
+          "description": "Cluster properties used to override default configuration properties for the Hadoop services. For example, the default Spark parallelism can be overriden by setting a value for spark:spark.default.parallelism. See https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/cluster-properties for more information.",
+          "widget-attributes": {
+            "showDelimiter": "false",
+            "key-placeholder": "prefix:key",
+            "value-placeholder": "value",
+            "kv-delimiter" : "=",
+            "delimiter" : ";",
+            "size": "large"
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Max Idle Time",
+          "name": "idleTTL",
+          "description": "Configure Dataproc to delete the cluster if it has been idle for longer than this many minutes. Clusters are normally deleted directly after a run ends, but this delete may fail in rare situations. For example, if permissions are revoked in the middle of a run, or if there is a Dataproc outage. Use this to ensure that clusters are eventually deleted even if the instance is unable to delete the cluster for any reason.",
+          "widget-attributes": {
+            "placeholder": "time in minutes",
+            "size": "medium"
+          }
+        },
+        {
+          "widget-type": "toggle",
+          "label": "Skip Cluster Delete",
+          "name": "skipDelete",
+          "description": "Whether to skip cluster deletion at the end of a run. Clusters will need to be deleted manually. This should only be used when debugging a failed run.",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            },
+            "size": "medium"
+          }
+        },
+        {
           "widget-type": "toggle",
           "label": "Enable Stackdriver Logging Integration",
           "name": "stackdriverLoggingEnabled",
@@ -413,24 +487,6 @@
           "label": "Enable Component Gateway",
           "name": "componentGatewayEnabled",
           "description": "Enable Component Gateway to allow access to cluster UIs like the YARN ResourceManager and Spark HistoryServer.",
-          "widget-attributes": {
-            "default": "false",
-            "on": {
-              "value": "true",
-              "label": "True"
-            },
-            "off": {
-              "value": "false",
-              "label": "False"
-            },
-            "size": "medium"
-          }
-        },
-        {
-          "widget-type": "toggle",
-          "label": "Skip Cluster Delete",
-          "name": "skipDelete",
-          "description": "Whether to skip cluster deletion at the end of a run. Clusters will need to be deleted manually. This should only be used when debugging a failed run.",
           "widget-attributes": {
             "default": "false",
             "on": {
