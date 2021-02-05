@@ -115,7 +115,7 @@ const MetricsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
 
     const params = [start, end, aggregate, resolution, tagsParams, metrics].join('&');
 
-    MyMetricApi.queryTags({ params }).subscribe(
+    const metricsPoll$ = MyMetricApi.pollQueryTags({ params }).subscribe(
       (res) => {
         setData(parseAggregateMetric(res, tables.size));
       },
@@ -124,6 +124,12 @@ const MetricsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
         console.log('err', err);
       }
     );
+
+    return () => {
+      if (metricsPoll$ && typeof metricsPoll$.unsubscribe === 'function') {
+        metricsPoll$.unsubscribe();
+      }
+    };
   }, [timeRange, tables]);
 
   const parsedLatency = parseLatencySeconds(data.latency);
