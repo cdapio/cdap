@@ -41,6 +41,7 @@ import {
   IColumnsStore,
   IColumnsList,
   IDMLStore,
+  ITableInfo,
 } from 'components/Replicator/types';
 
 const styles = (theme): StyleRules => {
@@ -156,6 +157,9 @@ const styles = (theme): StyleRules => {
     },
     pointer: {
       cursor: 'pointer',
+    },
+    unselectedTable: {
+      opacity: 0.4,
     },
   };
 };
@@ -322,15 +326,20 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     return this.state.columns.get(generateTableKey(this.state.openTable));
   };
 
-  public onColumnsSelection = (tableKey: string, columns: IColumnsList) => {
+  public onColumnsSelection = (tableInfo: ITableInfo, columns: IColumnsList) => {
+    const tableKey = generateTableKey(tableInfo);
     let newColumns = this.state.columns.set(tableKey, columns);
 
     if (!columns || columns.size === 0) {
       newColumns = newColumns.delete(tableKey);
     }
 
+    // set table as selected
+    const selectedTables = this.state.selectedTables.set(tableKey, Map(tableInfo));
+
     this.setState({
       columns: newColumns,
+      selectedTables,
     });
   };
 
@@ -400,7 +409,9 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
     });
   };
 
-  private toggleDML = (key: string, dmlEvent: DML) => {
+  private toggleDML = (row: ITable, dmlEvent: DML) => {
+    const key = generateTableKey(row);
+
     // get current blacklist
     const tableDML = this.state.dmlBlacklist.get(key);
     let dmlSet: Set<DML>;
@@ -412,8 +423,12 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
       dmlSet = tableDML.add(dmlEvent);
     }
 
+    // set the table as selected
+    const selectedTables = this.state.selectedTables.set(key, Map(row));
+
     this.setState({
       dmlBlacklist: this.state.dmlBlacklist.set(key, dmlSet),
+      selectedTables,
     });
   };
 
@@ -572,9 +587,11 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                         control={
                           <Checkbox
                             color="primary"
-                            onClick={this.toggleDML.bind(this, key, DML.insert)}
+                            onClick={this.toggleDML.bind(this, row, DML.insert)}
                             checked={!tableDML.has(DML.insert)}
-                            className={classes.checkbox}
+                            className={classnames(classes.checkbox, {
+                              [classes.unselectedTable]: !checked,
+                            })}
                           />
                         }
                         label="Inserts"
@@ -586,9 +603,11 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                         control={
                           <Checkbox
                             color="primary"
-                            onClick={this.toggleDML.bind(this, key, DML.update)}
+                            onClick={this.toggleDML.bind(this, row, DML.update)}
                             checked={!tableDML.has(DML.update)}
-                            className={classes.checkbox}
+                            className={classnames(classes.checkbox, {
+                              [classes.unselectedTable]: !checked,
+                            })}
                           />
                         }
                         label="Updates"
@@ -600,9 +619,11 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                         control={
                           <Checkbox
                             color="primary"
-                            onClick={this.toggleDML.bind(this, key, DML.delete)}
+                            onClick={this.toggleDML.bind(this, row, DML.delete)}
                             checked={!tableDML.has(DML.delete)}
-                            className={classes.checkbox}
+                            className={classnames(classes.checkbox, {
+                              [classes.unselectedTable]: !checked,
+                            })}
                           />
                         }
                         label="Deletes"
