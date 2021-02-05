@@ -337,6 +337,13 @@ function checkForLogicalType(field: Partial<IFieldType | IFieldTypeNullable>) {
           logicalType: type.logicalType,
         },
       };
+    case AvroSchemaTypesEnum.DATETIME:
+      return {
+        typeProperties: {
+          type: AvroSchemaTypesEnum.STRING,
+          logicalType: type.logicalType,
+        },
+      };
     case AvroSchemaTypesEnum.TIMEMICROS:
       return {
         typeProperties: {

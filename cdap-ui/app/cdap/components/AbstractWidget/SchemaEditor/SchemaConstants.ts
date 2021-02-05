@@ -21,6 +21,7 @@ enum AvroSchemaTypesEnum {
   BOOLEAN = 'boolean',
   BYTES = 'bytes',
   DATE = 'date',
+  DATETIME = 'datetime',
   DECIMAL = 'decimal',
   DOUBLE = 'double',
   ENUM = 'enum',
@@ -68,6 +69,7 @@ const logicalTypes = [
   AvroSchemaTypesEnum.TIMESTAMP,
   AvroSchemaTypesEnum.DECIMAL,
   AvroSchemaTypesEnum.DATE,
+  AvroSchemaTypesEnum.DATETIME,
 ];
 const defaultPrecision = 32;
 const defaultScale = 3;
@@ -88,6 +90,10 @@ const defaultTimeStampTypeProperties = {
 const defaultDateTypeProperties = {
   type: AvroSchemaTypesEnum.INT,
   logicalType: AvroSchemaTypesEnum.DATE,
+};
+const defaultDateTimeTypeProperties = {
+  type: AvroSchemaTypesEnum.STRING,
+  logicalType: AvroSchemaTypesEnum.DATETIME,
 };
 
 const defaultArrayType = {
@@ -139,6 +145,7 @@ const logicalTypeToSimpleTypeMap = {
   'timestamp-micros': AvroSchemaTypesEnum.TIMESTAMP,
   date: AvroSchemaTypesEnum.DATE,
   decimal: AvroSchemaTypesEnum.DECIMAL,
+  datetime: AvroSchemaTypesEnum.DATETIME,
 };
 
 const INDENTATION_SPACING = 10;
@@ -170,6 +177,7 @@ export {
   defaultDecimalTypeProperties,
   defaultTimeTypeProperties,
   defaultDateTypeProperties,
+  defaultDateTimeTypeProperties,
   defaultArrayType,
   defaultEnumType,
   defaultMapType,

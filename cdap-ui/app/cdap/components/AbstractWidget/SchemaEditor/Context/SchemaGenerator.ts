@@ -200,6 +200,7 @@ function generateSchemaFromComplexType(type: string, currentChild, nullable: boo
     case AvroSchemaTypesEnum.TIMESTAMP:
     case AvroSchemaTypesEnum.DECIMAL:
     case AvroSchemaTypesEnum.DATE:
+    case AvroSchemaTypesEnum.DATETIME:
       return generateLogicalType(currentChild);
     default:
       return type;

@@ -19,4 +19,5 @@ export enum LogicalTypes {
   DATE = 'date',
   TIME_MICROS = 'time-micros',
   DECIMAL = 'decimal',
+  DATETIME = 'datetime',
 }

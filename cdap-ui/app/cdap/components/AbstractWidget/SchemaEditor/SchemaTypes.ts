@@ -30,6 +30,7 @@ type ISimpleType =
   | AvroSchemaTypesEnum.BOOLEAN
   | AvroSchemaTypesEnum.BYTES
   | AvroSchemaTypesEnum.DATE
+  | AvroSchemaTypesEnum.DATETIME
   | AvroSchemaTypesEnum.DECIMAL
   | AvroSchemaTypesEnum.DOUBLE
   | AvroSchemaTypesEnum.FLOAT
@@ -41,6 +42,7 @@ type ISimpleType =
 type ILogicalTypeNames =
   | AvroSchemaTypesEnum.TIMESTAMPMICROS
   | AvroSchemaTypesEnum.DATE
+  | AvroSchemaTypesEnum.DATETIME
   | AvroSchemaTypesEnum.TIMEMICROS
   | AvroSchemaTypesEnum.DECIMAL;
 

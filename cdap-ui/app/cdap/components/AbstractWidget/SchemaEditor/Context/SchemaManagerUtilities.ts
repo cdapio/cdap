@@ -29,6 +29,7 @@ import {
   defaultDecimalTypeProperties,
   defaultTimeTypeProperties,
   defaultDateTypeProperties,
+  defaultDateTimeTypeProperties,
   defaultArrayType,
   defaultEnumType,
   defaultMapType,
@@ -117,6 +118,8 @@ const initTypeProperties = (tree: INode) => {
       return defaultTimeStampTypeProperties;
     case AvroSchemaTypesEnum.DATE:
       return defaultDateTypeProperties;
+    case AvroSchemaTypesEnum.DATETIME:
+      return defaultDateTimeTypeProperties;
     default:
       return {};
   }
