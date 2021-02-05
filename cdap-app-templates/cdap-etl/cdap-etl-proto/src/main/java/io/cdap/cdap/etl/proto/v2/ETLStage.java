@@ -22,7 +22,6 @@ import io.cdap.cdap.api.artifact.ArtifactId;
 import io.cdap.cdap.api.artifact.ArtifactVersionRange;
 import io.cdap.cdap.etl.proto.ArtifactSelectorConfig;
 import io.cdap.cdap.etl.proto.UpgradeContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,6 +36,8 @@ import javax.annotation.Nullable;
 public final class ETLStage {
   private final String name;
   private final ETLPlugin plugin;
+  private final StageInformation information;
+
   // removed in 5.0.0, but keeping it here so that we can validate that nobody is trying to use it.
   private final String errorDatasetName;
 
@@ -56,10 +57,12 @@ public final class ETLStage {
     outputSchema = null;
     label = null;
     id = null;
+    information = null;
   }
 
   // Used only for upgrade stage purpose.
-  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema, Object outputSchema, String id) {
+  private ETLStage(String name, ETLPlugin plugin, String label, Object inputSchema, Object outputSchema, String id,
+                   StageInformation info) {
     this.name = name;
     this.plugin = plugin;
     this.errorDatasetName = null;
@@ -67,6 +70,7 @@ public final class ETLStage {
     this.outputSchema = outputSchema;
     this.label = label;
     this.id = id;
+    this.information = info;
   }
 
   public String getName() {
@@ -124,7 +128,7 @@ public final class ETLStage {
       switch (updateAction) {
         case UPGRADE_ARTIFACT:
           return new io.cdap.cdap.etl.proto.v2.ETLStage(name, upgradePlugin(updateContext), label, inputSchema,
-                                                        outputSchema, id);
+                                                        outputSchema, id, information);
         default:
           return this;
         }
