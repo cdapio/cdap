@@ -40,6 +40,7 @@ export default class ColumnsTab extends Component {
       headers: dataprepstate.headers.map((res) => ({
         name: res,
         uniqueId: uuidV4(), // FIXME: This might be costly. Need to find a better way to avoid having unique IDs
+        isNew: false,
       })),
       selectedHeaders: dataprepstate.selectedHeaders,
       workspaceId: dataprepstate.workspaceId,
@@ -55,6 +56,7 @@ export default class ColumnsTab extends Component {
     this.clearAllColumns = this.clearAllColumns.bind(this);
     this.selectAllColumns = this.selectAllColumns.bind(this);
     this.setSelect = this.setSelect.bind(this);
+    this.lastNewRowRef = null;
   }
 
   componentDidMount() {
@@ -69,6 +71,7 @@ export default class ColumnsTab extends Component {
             let obj = {
               name: res,
               uniqueId: uuidV4(),
+              isNew: dataprepstate.newHeaders.includes(res),
             };
             return obj;
           }),
@@ -88,6 +91,9 @@ export default class ColumnsTab extends Component {
   componentDidUpdate() {
     if (this.state.searchFocus) {
       this.searchBox.focus();
+    }
+    if (this.lastNewRowRef) {
+      this.lastNewRowRef.scrollIntoView({ behavior: 'smooth' });
     }
   }
 
@@ -150,6 +156,13 @@ export default class ColumnsTab extends Component {
     );
   }
 
+  setNewRowRef(isNew, element) {
+    if (isNew) {
+      // Capture last new column
+      this.lastNewRowRef = element;
+    }
+  }
+
   showDetail(rowId) {
     let index = findIndex(this.state.headers, (header) => header.uniqueId === rowId);
     let match = this.state.headers[index];
@@ -185,6 +198,7 @@ export default class ColumnsTab extends Component {
       );
     }
 
+    this.lastNewRowRef;
     let index = -1;
     let displayHeaders = this.state.headers.map((header) => {
       if (!header.isDetail) {
@@ -250,7 +264,7 @@ export default class ColumnsTab extends Component {
                 if (head.isDetail) {
                   return (
                     <ColumnsTabDetail
-                      key={head.uniqueId}
+                      key={`${head.name}_detail`}
                       columnInfo={this.state.columns[head.name]}
                     />
                   );
@@ -261,9 +275,11 @@ export default class ColumnsTab extends Component {
                     onShowDetails={this.showDetail.bind(this, head.uniqueId)}
                     columnName={head.name}
                     index={head.index}
-                    key={head.uniqueId}
+                    key={head.name}
                     selected={this.state.selectedHeaders.indexOf(head.name) !== -1}
                     setSelect={this.setSelect}
+                    isNew={head.isNew}
+                    ref={this.setNewRowRef.bind(this, head.isNew)}
                   />
                 );
               })}
