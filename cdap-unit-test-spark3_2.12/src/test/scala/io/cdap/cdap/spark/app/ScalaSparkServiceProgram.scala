@@ -1,5 +1,5 @@
 /*
- * Copyright © 2018 Cask Data, Inc.
+ * Copyright © 2017 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,24 +14,24 @@
  * the License.
  */
 
-package io.cdap.cdap.runtime.spi;
+package io.cdap.cdap.spark.app
 
+import io.cdap.cdap.api.spark.AbstractExtendedSpark
+import io.cdap.cdap.api.spark.SparkExecutionContext
+import io.cdap.cdap.api.spark.SparkMain
+import org.apache.spark.SparkContext
 
 /**
- * Spark compat versions.
- */
-public enum SparkCompat {
-  SPARK1_2_10("spark1_2.10"),
-  SPARK2_2_11("spark2_2.11"),
-  SPARK3_2_12("spark3_2.12");
+  *
+  */
+class ScalaSparkServiceProgram extends AbstractExtendedSpark with SparkMain {
 
-  private final String compat;
-
-  SparkCompat(String compat) {
-    this.compat = compat;
+  override protected def configure() = {
+    setMainClass(classOf[ScalaSparkServiceProgram])
+    addHandlers(new ScalaSparkServiceHandler)
   }
 
-  public String getCompat() {
-    return compat;
+  override def run(implicit sec: SparkExecutionContext): Unit = {
+    new SparkContext()
   }
 }

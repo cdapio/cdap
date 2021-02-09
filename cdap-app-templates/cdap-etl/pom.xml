@@ -32,8 +32,10 @@
   <modules>
     <module>cdap-data-pipeline</module>
     <module>cdap-data-pipeline2_2.11</module>
+    <module>cdap-data-pipeline3_2.12</module>
     <module>cdap-data-streams</module>
     <module>cdap-data-streams2_2.11</module>
+    <module>cdap-data-streams3_2.12</module>
     <module>cdap-etl-api</module>
     <module>cdap-etl-api-spark</module>
     <module>cdap-etl-archetypes</module>
@@ -43,6 +45,7 @@
     <module>cdap-etl-tools</module>
     <module>hydrator-spark-core</module>
     <module>hydrator-spark-core2_2.11</module>
+    <module>hydrator-spark-core3_2.12</module>
     <module>hydrator-test</module>
   </modules>
 
