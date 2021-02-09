@@ -39,17 +39,19 @@ import scala.Tuple2;
 public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
   implements FlatMapFunc<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<Tuple2<GROUP_KEY, Iterable<GROUP_VAL>>, OUT> aggregateTransform;
   private transient CombinedEmitter<OUT> emitter;
 
-  public AggregatorAggregateFunction(PluginFunctionContext pluginFunctionContext) {
+  public AggregatorAggregateFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, Iterable<GROUP_VAL>> input) throws Exception {
     if (aggregateTransform == null) {
-      Object plugin = pluginFunctionContext.createPlugin();
+      Object plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
       BatchAggregator<GROUP_KEY, GROUP_VAL, OUT> aggregator;
       if (plugin instanceof BatchReducibleAggregator) {
         BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, OUT> reducibleAggregator =
@@ -58,7 +60,6 @@ public class AggregatorAggregateFunction<GROUP_KEY, GROUP_VAL, OUT>
       } else {
         aggregator = (BatchAggregator<GROUP_KEY, GROUP_VAL, OUT>) plugin;
       }
-      aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),
                                                   Constants.Metrics.AGG_GROUPS,

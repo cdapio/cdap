@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -35,19 +36,21 @@ import org.apache.spark.streaming.Time;
  */
 public class DynamicJoinOn<JOIN_KEY, T> implements Function2<JavaRDD<T>, Time, JavaPairRDD<JOIN_KEY, T>> {
   private final DynamicDriverContext dynamicDriverContext;
+  private final FunctionCache functionCache;
   private final String inputStageName;
   private transient PairFlatMapFunction<T, JOIN_KEY, T> function;
 
-  public DynamicJoinOn(DynamicDriverContext dynamicDriverContext, String inputStageName) {
+  public DynamicJoinOn(DynamicDriverContext dynamicDriverContext, FunctionCache functionCache, String inputStageName) {
     this.dynamicDriverContext = dynamicDriverContext;
+    this.functionCache = functionCache;
     this.inputStageName = inputStageName;
   }
 
   @Override
   public JavaPairRDD<JOIN_KEY, T> call(JavaRDD<T> input, Time batchTime) throws Exception {
     if (function == null) {
-      function = Compat.convert(
-        new JoinOnFunction<JOIN_KEY, T>(dynamicDriverContext.getPluginFunctionContext(), inputStageName));
+      function = Compat.convert(new JoinOnFunction<JOIN_KEY, T>(
+        dynamicDriverContext.getPluginFunctionContext(), functionCache, inputStageName));
     }
     return input.flatMapToPair(function);
   }

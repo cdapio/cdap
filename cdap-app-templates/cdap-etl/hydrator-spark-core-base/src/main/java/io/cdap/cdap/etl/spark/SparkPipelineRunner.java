@@ -67,6 +67,7 @@ import io.cdap.cdap.etl.spark.function.AlertPassFilter;
 import io.cdap.cdap.etl.spark.function.BatchSinkFunction;
 import io.cdap.cdap.etl.spark.function.ErrorPassFilter;
 import io.cdap.cdap.etl.spark.function.ErrorTransformFunction;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.InitialJoinFunction;
 import io.cdap.cdap.etl.spark.function.JoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.LeftJoinFlattenFunction;
@@ -104,6 +105,8 @@ public abstract class SparkPipelineRunner {
   private static final Set<String> UNCOMBINABLE_PLUGIN_TYPES = ImmutableSet.of(
     BatchJoiner.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, Constants.Connector.PLUGIN_TYPE,
     SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
+
+  protected final FunctionCache.Factory functionCacheFactory = FunctionCache.Factory.newInstance();
 
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
                                                                    StageStatisticsCollector collector) throws Exception;
@@ -253,8 +256,8 @@ public abstract class SparkPipelineRunner {
 
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || isConnectorSink) {
 
-        sinkRunnables.add(stageData.createStoreTask(stageSpec,
-                                                    Compat.convert(new BatchSinkFunction(pluginFunctionContext))));
+        sinkRunnables.add(stageData.createStoreTask(stageSpec, Compat.convert(new BatchSinkFunction(
+          pluginFunctionContext, functionCacheFactory.newCache()))));
 
       } else if (Transform.PLUGIN_TYPE.equals(pluginType)) {
 
@@ -285,8 +288,8 @@ public abstract class SparkPipelineRunner {
         }
 
         if (inputErrors != null) {
-          SparkCollection<RecordInfo<Object>> combinedData =
-            inputErrors.flatMap(stageSpec, Compat.convert(new ErrorTransformFunction<>(pluginFunctionContext)));
+          SparkCollection<RecordInfo<Object>> combinedData = inputErrors.flatMap(stageSpec, Compat.convert(
+            new ErrorTransformFunction<>(pluginFunctionContext, functionCacheFactory.newCache())));
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                       combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         }

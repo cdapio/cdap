@@ -43,17 +43,19 @@ import java.util.List;
 public class JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>
   implements FlatMapFunc<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> joinFunction;
   private transient DefaultEmitter<OUT> emitter;
 
-  public JoinMergeFunction(PluginFunctionContext pluginFunctionContext) {
+  public JoinMergeFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<OUT> call(Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input) throws Exception {
     if (joinFunction == null) {
-      BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = createInitializedJoiner();
+      BatchJoiner<JOIN_KEY, INPUT_RECORD, OUT> joiner = functionCache.getValue(this::createInitializedJoiner);
       joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner),
                                             pluginFunctionContext.createStageMetrics(),
                                             Constants.Metrics.JOIN_KEYS,

@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.etl.api.JoinElement;
 import io.cdap.cdap.etl.spark.Compat;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
 import org.apache.spark.api.java.JavaPairRDD;
@@ -41,18 +42,20 @@ import java.util.List;
 public class DynamicJoinMerge<JOIN_KEY, INPUT_RECORD, OUT>
   implements Function2<JavaPairRDD<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, Time, JavaRDD<OUT>> {
   private final DynamicDriverContext dynamicDriverContext;
+  private final FunctionCache functionCache;
   private transient FlatMapFunction<Tuple2<JOIN_KEY, List<JoinElement<INPUT_RECORD>>>, OUT> function;
 
-  public DynamicJoinMerge(DynamicDriverContext dynamicDriverContext) {
+  public DynamicJoinMerge(DynamicDriverContext dynamicDriverContext, FunctionCache functionCache) {
     this.dynamicDriverContext = dynamicDriverContext;
+    this.functionCache = functionCache;
   }
   
   @Override
   public JavaRDD<OUT> call(JavaPairRDD<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input,
                            Time batchTime) throws Exception {
     if (function == null) {
-      function = Compat.convert(
-        new JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>(dynamicDriverContext.getPluginFunctionContext()));
+      function = Compat.convert(new JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>(
+        dynamicDriverContext.getPluginFunctionContext(), functionCache));
     }
     return input.flatMap(function);
   }

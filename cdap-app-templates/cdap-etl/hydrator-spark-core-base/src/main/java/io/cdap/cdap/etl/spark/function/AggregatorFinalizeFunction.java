@@ -37,18 +37,20 @@ import scala.Tuple2;
 public class AggregatorFinalizeFunction<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT>
   implements FlatMapFunc<Tuple2<GROUP_KEY, AGG_VAL>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<Tuple2<GROUP_KEY, AGG_VAL>, OUT> aggregateTransform;
   private transient CombinedEmitter<OUT> emitter;
 
-  public AggregatorFinalizeFunction(PluginFunctionContext pluginFunctionContext) {
+  public AggregatorFinalizeFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(Tuple2<GROUP_KEY, AGG_VAL> input) throws Exception {
     if (aggregateTransform == null) {
-      BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT> aggregator = pluginFunctionContext.createPlugin();
-      aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, AGG_VAL, OUT> aggregator =
+        pluginFunctionContext.createAndInitializePlugin(functionCache);
       aggregateTransform = new TrackedTransform<>(new AggregateTransform<>(aggregator),
                                                   pluginFunctionContext.createStageMetrics(),
                                                   Constants.Metrics.AGG_GROUPS,

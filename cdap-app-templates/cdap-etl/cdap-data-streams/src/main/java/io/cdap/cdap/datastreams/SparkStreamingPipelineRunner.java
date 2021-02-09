@@ -122,8 +122,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
                                                            StageStatisticsCollector collector) throws Exception {
     DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaDStream<Object> dStream = inputCollection.getUnderlying();
-    JavaPairDStream<Object, Object> result =
-      dStream.transformToPair(new DynamicJoinOn<>(dynamicDriverContext, inputStageName));
+    JavaPairDStream<Object, Object> result = dStream.transformToPair(
+      new DynamicJoinOn<>(dynamicDriverContext, functionCacheFactory.newCache(), inputStageName));
     return new PairDStreamCollection<>(sec, result);
   }
 
@@ -134,7 +134,8 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
     DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaPairDStream<Object, List<JoinElement<Object>>> pairDStream = joinedInputs.getUnderlying();
-    JavaDStream<Object> result = pairDStream.transform(new DynamicJoinMerge<>(dynamicDriverContext));
+    JavaDStream<Object> result = pairDStream.transform(
+      new DynamicJoinMerge<>(dynamicDriverContext, functionCacheFactory.newCache()));
     return new DStreamCollection<>(sec, result);
   }
 

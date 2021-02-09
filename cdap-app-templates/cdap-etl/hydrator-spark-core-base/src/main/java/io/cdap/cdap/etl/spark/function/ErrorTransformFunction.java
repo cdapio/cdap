@@ -31,18 +31,19 @@ import io.cdap.cdap.etl.spark.CombinedEmitter;
  */
 public class ErrorTransformFunction<T, U> implements FlatMapFunc<ErrorRecord<T>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<ErrorRecord<T>, U> transform;
   private transient CombinedEmitter<U> emitter;
 
-  public ErrorTransformFunction(PluginFunctionContext pluginFunctionContext) {
+  public ErrorTransformFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(ErrorRecord<T> inputError) throws Exception {
     if (transform == null) {
-      ErrorTransform<T, U> plugin = pluginFunctionContext.createPlugin();
-      plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      ErrorTransform<T, U> plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer(),
                                          pluginFunctionContext.getStageStatisticsCollector());
