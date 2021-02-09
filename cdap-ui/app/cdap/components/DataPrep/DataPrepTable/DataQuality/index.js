@@ -28,7 +28,7 @@ export default function DataQuality({ columnInfo }) {
   let nonNull = columnInfo.general['non-null'] || 0,
     empty = columnInfo.general['empty'] || 0;
 
-  let filled = Math.round(nonNull - empty);
+  let filled = nonNull - empty;
 
   return (
     <div className="quality-bar">
