@@ -17,8 +17,6 @@
 package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.etl.common.RecordInfo;
-import io.cdap.cdap.etl.spark.Compat;
-import io.cdap.cdap.etl.spark.function.FlatMapFunc;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
@@ -52,10 +50,9 @@ public class DynamicTransform<T> implements Function2<JavaRDD<T>, Time, JavaRDD<
   @Override
   public JavaRDD<RecordInfo<Object>> call(JavaRDD<T> input, Time batchTime) throws Exception {
     if (function == null) {
-      FlatMapFunc<T, RecordInfo<Object>> flatMap = isMultiOutput ?
+      function = isMultiOutput ?
         new MultiOutputTransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache) :
         new TransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache);
-      function = Compat.convert(flatMap);
     }
     return input.flatMap(function);
   }

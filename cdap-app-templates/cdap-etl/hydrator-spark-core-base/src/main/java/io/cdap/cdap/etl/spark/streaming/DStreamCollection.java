@@ -32,7 +32,6 @@ import io.cdap.cdap.etl.common.PipelineRuntime;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
@@ -51,12 +50,16 @@ import io.cdap.cdap.etl.spark.streaming.function.StreamingBatchSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingMultiSinkFunction;
 import io.cdap.cdap.etl.spark.streaming.function.StreamingSparkSinkFunction;
 import org.apache.spark.SparkConf;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.apache.spark.api.java.function.VoidFunction2;
 import org.apache.spark.storage.StorageLevel;
 import org.apache.spark.streaming.Durations;
+import org.apache.spark.streaming.Time;
 import org.apache.spark.streaming.api.java.JavaDStream;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
 
@@ -183,7 +186,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache()));
+        stream.foreachRDD(new StreamingBatchSinkFunction<T>(sec, stageSpec, functionCacheFactory.newCache()));
       }
     };
   }
@@ -194,8 +197,8 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        Compat.foreachRDD((JavaDStream<RecordInfo<Object>>) stream,
-                          new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors));
+        ((JavaDStream<RecordInfo<Object>>) stream).foreachRDD(
+              new StreamingMultiSinkFunction(sec, phaseSpec, group, sinks, collectors));
       }
     };
   }
@@ -205,14 +208,14 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        Compat.foreachRDD(stream, new StreamingSparkSinkFunction<T>(sec, stageSpec));
+        stream.foreachRDD(new StreamingSparkSinkFunction<T>(sec, stageSpec));
       }
     };
   }
 
   @Override
   public void publishAlerts(StageSpec stageSpec, StageStatisticsCollector collector) throws Exception {
-    Compat.foreachRDD((JavaDStream<Alert>) stream, new StreamingAlertPublishFunction(sec, stageSpec));
+    ((JavaDStream<Alert>) stream).foreachRDD(new StreamingAlertPublishFunction(sec, stageSpec));
   }
 
   @Override

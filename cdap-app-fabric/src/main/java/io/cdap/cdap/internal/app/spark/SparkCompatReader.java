@@ -19,6 +19,9 @@ package io.cdap.cdap.internal.app.spark;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.runtime.spi.SparkCompat;
+import org.apache.spark.package$;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ import java.util.List;
  * Determines the SparkCompat version.
  */
 public class SparkCompatReader {
+  private static final Logger LOG = LoggerFactory.getLogger(SparkCompatReader.class);
 
   private SparkCompatReader() {
     // no-op for helper class
@@ -34,7 +38,7 @@ public class SparkCompatReader {
 
   /**
    * Read {@link SparkCompat} from the system properties, environment, or the {@link CConfiguration}.
-   * Returns {@link SparkCompat#SPARK1_2_10} if it is not defined in any place.
+   * Tries to detect or falls back to {@link SparkCompat#SPARK2_2_11} if it is not defined in any place.
    *
    * @param cConf the {@link CConfiguration} for CDAP
    * @return the configured {@link SparkCompat}
@@ -48,7 +52,12 @@ public class SparkCompatReader {
     compatStr = compatStr == null ? cConf.get(Constants.AppFabric.SPARK_COMPAT) : compatStr;
 
     if (compatStr == null) {
-      return SparkCompat.SPARK1_2_10;
+      try {
+        return getCurrentSparkCompat();
+      } catch (Throwable e) {
+        LOG.info("Can't detect spark version({}), using default {}", e, SparkCompat.SPARK2_2_11);
+        return SparkCompat.SPARK2_2_11;
+      }
     }
 
     for (SparkCompat sparkCompat : SparkCompat.values()) {
@@ -64,5 +73,17 @@ public class SparkCompatReader {
 
     throw new IllegalArgumentException(
       String.format("Invalid SparkCompat version '%s'. Must be one of %s", compatStr, allowedCompatStrings));
+  }
+
+  private static SparkCompat getCurrentSparkCompat() {
+    String sparkVersion = package$.MODULE$.SPARK_VERSION();
+    switch (sparkVersion.charAt(0)) {
+      case '3':
+        return SparkCompat.SPARK3_2_12;
+      case '2':
+        return SparkCompat.SPARK2_2_11;
+      default:
+        throw new IllegalStateException("Spark version " + sparkVersion + " is not known");
+    }
   }
 }

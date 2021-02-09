@@ -16,21 +16,24 @@
 
 package io.cdap.cdap.etl.spark.function;
 
+import com.google.common.collect.Iterators;
 import io.cdap.cdap.etl.api.Alert;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.RecordType;
+import org.apache.spark.api.java.function.FlatMapFunction;
 
 import java.util.Collections;
+import java.util.Iterator;
 
 /**
  * Filters a SparkCollection containing both output and errors to one that just contains alerts.
  */
-public class AlertPassFilter implements FlatMapFunc<RecordInfo<Object>, Alert> {
+public class AlertPassFilter implements FlatMapFunction<RecordInfo<Object>, Alert> {
 
   @Override
-  public Iterable<Alert> call(RecordInfo<Object> input) throws Exception {
+  public Iterator<Alert> call(RecordInfo<Object> input) throws Exception {
     //noinspection unchecked
     return input.getType() == RecordType.ALERT ?
-      Collections.singletonList((Alert) input.getValue()) : Collections.<Alert>emptyList();
+      Iterators.singletonIterator(((Alert) input.getValue())) : Iterators.emptyIterator();
   }
 }

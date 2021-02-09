@@ -21,15 +21,17 @@ import io.cdap.cdap.etl.api.Transformation;
 import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.TrackedTransform;
-import io.cdap.cdap.etl.common.preview.LimitingTransform;
 import io.cdap.cdap.etl.spark.CombinedEmitter;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import scala.Tuple2;
+
+import java.util.Iterator;
 
 /**
  * Function that uses a BatchSource to transform a pair of objects into a single object.
  * Non-serializable fields are lazily created since this is used in a Spark closure.
  */
-public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> {
+public class BatchSourceFunction implements FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
   private final FunctionCache functionCache;
   private transient Transformation<KeyValue<Object, Object>, Object> transform;
@@ -41,7 +43,7 @@ public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, 
   }
 
   @Override
-  public Iterable<RecordInfo<Object>> call(Tuple2<Object, Object> input) throws Exception {
+  public Iterator<RecordInfo<Object>> call(Tuple2<Object, Object> input) throws Exception {
     if (transform == null) {
       BatchSource<Object, Object, Object> batchSource = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedTransform<>(batchSource,
@@ -53,6 +55,6 @@ public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, 
     emitter.reset();
     KeyValue<Object, Object> inputKV = new KeyValue<>(input._1(), input._2());
     transform.transform(inputKV, emitter);
-    return emitter.getEmitted();
+    return emitter.getEmitted().iterator();
   }
 }

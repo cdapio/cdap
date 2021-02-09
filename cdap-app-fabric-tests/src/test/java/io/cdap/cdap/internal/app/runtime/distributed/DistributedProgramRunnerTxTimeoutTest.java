@@ -80,7 +80,7 @@ public class DistributedProgramRunnerTxTimeoutTest {
     serviceRunner = new DistributedServiceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
     workerRunner = new DistributedWorkerProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
     mapreduceRunner = new DistributedMapReduceProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null);
-    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK1_2_10, cConf, yConf, null, null,
+    sparkRunner = new DistributedSparkProgramRunner(SparkCompat.SPARK2_2_11, cConf, yConf, null, null,
                                                     ClusterMode.ON_PREMISE, null);
     workflowRunner = new DistributedWorkflowProgramRunner(cConf, yConf, null, ClusterMode.ON_PREMISE, null, null);
   }

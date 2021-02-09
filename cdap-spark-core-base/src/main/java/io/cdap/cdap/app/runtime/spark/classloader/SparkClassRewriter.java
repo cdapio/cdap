@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2020 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -937,27 +937,11 @@ public class SparkClassRewriter implements ClassRewriter {
               Type stringType = Type.getType(String.class);
 
               // Generates
-              // if (SparkRuntimeEnv.getProperty("cdap.spark.pyFiles") != null) {
-              //   <stringOnStack>.concat(File.pathSeparator).concat(SparkRuntimeEnv.getProperty("cdap.spark.pyFiles"))
-              // }
+              //   SparkRuntimeUtils.appendPyFiles(<stringOnStack>)
               // The result will be back on the stack
               // The "cdap.spark.pyFiles" property is only set in local mode by SparkRuntimeService
-              Label nullLabel = adapter.newLabel();
-              // The if condition
-              adapter.push("cdap.spark.pyFiles");
-              adapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
-                                   Methods.getMethod(String.class, "getProperty", String.class));
-              adapter.ifNull(nullLabel);
-
-              // Inside the if block
-              adapter.push(File.pathSeparator);
-              adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
-              adapter.push("cdap.spark.pyFiles");
-              adapter.invokeStatic(SPARK_RUNTIME_ENV_TYPE,
-                                   Methods.getMethod(String.class, "getProperty", String.class));
-              adapter.invokeVirtual(stringType, Methods.getMethod(String.class, "concat", String.class));
-              // End of if block
-              adapter.mark(nullLabel);
+              adapter.invokeStatic(SPARK_RUNTIME_UTILS_TYPE,
+                                   Methods.getMethod(String.class, "appendPyFiles", String.class));
             }
 
             super.visitFieldInsn(opcode, owner, name, desc);

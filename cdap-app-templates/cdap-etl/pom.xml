@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2014 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -30,10 +30,10 @@
   <packaging>pom</packaging>
 
   <modules>
-    <module>cdap-data-pipeline</module>
     <module>cdap-data-pipeline2_2.11</module>
-    <module>cdap-data-streams</module>
+    <module>cdap-data-pipeline3_2.12</module>
     <module>cdap-data-streams2_2.11</module>
+    <module>cdap-data-streams3_2.12</module>
     <module>cdap-etl-api</module>
     <module>cdap-etl-api-spark</module>
     <module>cdap-etl-archetypes</module>
@@ -41,8 +41,8 @@
     <module>cdap-etl-core</module>
     <module>cdap-etl-proto</module>
     <module>cdap-etl-tools</module>
-    <module>hydrator-spark-core</module>
     <module>hydrator-spark-core2_2.11</module>
+    <module>hydrator-spark-core3_2.12</module>
     <module>hydrator-test</module>
   </modules>
 

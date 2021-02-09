@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2017 Cask Data, Inc.
+  Copyright © 2017-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -85,16 +85,6 @@
       <artifactId>cdap-unit-test</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-spark-core</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>io.cdap.cdap</groupId>
-          <artifactId>cdap-api-spark</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>io.cdap.cdap</groupId>
@@ -147,7 +137,7 @@
       </plugins>
     </pluginManagement>
     <plugins>
-      <!-- copy the source from cdap-data-streams in order to compile everything as scala 2.11 -->
+      <!-- copy the source from cdap-data-streams-base in order to compile everything as scala 2.11 -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-resources-plugin</artifactId>
@@ -160,10 +150,10 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/generated-sources/cdap-data-streams/src/main</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-sources/cdap-data-streams-base/src/main</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.parent.basedir}/cdap-data-streams/src/main</directory>
+                  <directory>${project.parent.basedir}/cdap-data-streams-base/src/main</directory>
                 </resource>
               </resources>
             </configuration>
@@ -175,10 +165,10 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/generated-test-sources/cdap-data-streams/src/test</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-test-sources/cdap-data-streams-base/src/test</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${project.parent.basedir}/cdap-data-streams/src/test</directory>
+                  <directory>${project.parent.basedir}/cdap-data-streams-base/src/test</directory>
                 </resource>
               </resources>
             </configuration>
@@ -198,7 +188,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-sources/cdap-data-streams/src/main/java</source>
+                <source>${project.build.directory}/generated-sources/cdap-data-streams-base/src/main/java</source>
               </sources>
             </configuration>
           </execution>
@@ -210,7 +200,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>${project.build.directory}/generated-test-sources/cdap-data-streams/src/test/java</source>
+                <source>${project.build.directory}/generated-test-sources/cdap-data-streams-base/src/test/java</source>
               </sources>
             </configuration>
           </execution>
@@ -228,13 +218,13 @@
   <profiles>
     <profile>
       <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
-      <id>spark2-dev</id>
+      <id>spark-dev</id>
       <properties>
-        <cdap.data.streams.base.dir>${project.basedir}/../cdap-data-streams</cdap.data.streams.base.dir>
+        <cdap.data.streams.base.dir>${project.basedir}/../cdap-data-streams-base</cdap.data.streams.base.dir>
       </properties>
       <build>
         <plugins>
-          <!-- Disable the copying of files from cdap-data-streams -->
+          <!-- Disable the copying of files from cdap-data-streams-base -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-resources-plugin</artifactId>
@@ -269,8 +259,8 @@
                 <configuration combine.self="override">
                   <skip>false</skip>
                   <target>
-                    <mkdir dir="${project.build.directory}/generated-sources/cdap-data-streams/src"/>
-                    <symlink link="${project.build.directory}/generated-sources/cdap-data-streams/src/main" resource="${cdap.data.streams.base.dir}/src/main" overwrite="true" />
+                    <mkdir dir="${project.build.directory}/generated-sources/cdap-data-streams-base/src"/>
+                    <symlink link="${project.build.directory}/generated-sources/cdap-data-streams-base/src/main" resource="${cdap.data.streams.base.dir}/src/main" overwrite="true" />
                   </target>
                 </configuration>
               </execution>
@@ -283,8 +273,8 @@
                 <configuration combine.self="override">
                   <skip>false</skip>
                   <target>
-                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-data-streams/src"/>
-                    <symlink link="${project.build.directory}/generated-test-sources/cdap-data-streams/src/test" resource="${cdap.data.streams.base.dir}/src/test" overwrite="true" />
+                    <mkdir dir="${project.build.directory}/generated-test-sources/cdap-data-streams-base/src"/>
+                    <symlink link="${project.build.directory}/generated-test-sources/cdap-data-streams-base/src/test" resource="${cdap.data.streams.base.dir}/src/test" overwrite="true" />
                   </target>
                 </configuration>
               </execution>

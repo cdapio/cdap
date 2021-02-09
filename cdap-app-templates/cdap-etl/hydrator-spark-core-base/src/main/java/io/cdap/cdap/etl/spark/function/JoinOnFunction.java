@@ -31,7 +31,10 @@ import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.common.DefaultEmitter;
 import io.cdap.cdap.etl.common.TrackedTransform;
 import io.cdap.cdap.etl.common.plugin.JoinerBridge;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import scala.Tuple2;
+
+import java.util.Iterator;
 
 /**
  * Function that uses a BatchJoiner to perform the joinOn part of the join.
@@ -41,7 +44,7 @@ import scala.Tuple2;
  * @param <INPUT_RECORD> the type of input records to the join stage
  */
 public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
-  implements PairFlatMapFunc<INPUT_RECORD, JOIN_KEY, INPUT_RECORD> {
+  implements PairFlatMapFunction<INPUT_RECORD, JOIN_KEY, INPUT_RECORD> {
 
   private final PluginFunctionContext pluginFunctionContext;
   private final FunctionCache functionCache;
@@ -58,7 +61,7 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
   }
 
   @Override
-  public Iterable<Tuple2<JOIN_KEY, INPUT_RECORD>> call(INPUT_RECORD input) throws Exception {
+  public Iterator<Tuple2<JOIN_KEY, INPUT_RECORD>> call(INPUT_RECORD input) throws Exception {
     if (joinFunction == null) {
       joinFunction = new TrackedTransform<>(functionCache.getValue(this::createInitializedJoinOnTransform),
                                             pluginFunctionContext.createStageMetrics(),
@@ -69,7 +72,7 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
     }
     emitter.reset();
     joinFunction.transform(input, emitter);
-    return emitter.getEntries();
+    return emitter.getEntries().iterator();
   }
 
   private JoinOnTransform<INPUT_RECORD, JOIN_KEY> createInitializedJoinOnTransform() throws Exception {

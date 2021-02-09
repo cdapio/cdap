@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Copyright © 2017-2019 Cask Data, Inc.
+  Copyright © 2017-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -273,7 +273,7 @@
   <profiles>
     <profile>
       <!-- This profile is just for Spark development in IDE, don't use it in normal Maven build -->
-      <id>spark2-dev</id>
+      <id>spark-dev</id>
       <properties>
         <spark.base.dir>${project.basedir}/../cdap-spark-core-base</spark.base.dir>
       </properties>
@@ -349,7 +349,7 @@
               </execution>
             </executions>
           </plugin>
-          <!-- Copy cdap-api-spark -->
+          <!-- Copy cdap-api-spark2_2.11 -->
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-dependency-plugin</artifactId>

@@ -43,7 +43,6 @@ import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.common.TrackedIterator;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
@@ -55,11 +54,9 @@ import io.cdap.cdap.etl.spark.function.AggregatorMergePartitionFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorMergeValueFunction;
 import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
-import io.cdap.cdap.etl.spark.function.FlatMapFunc;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
 import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
-import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
@@ -143,16 +140,16 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   @Override
   public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return wrap(rdd.flatMap(Compat.convert(new TransformFunction<T>(
-      pluginFunctionContext, functionCacheFactory.newCache()))));
+    return wrap(rdd.flatMap(new TransformFunction<T>(
+      pluginFunctionContext, functionCacheFactory.newCache())));
   }
 
   @Override
   public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
                                                                   StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return wrap(rdd.flatMap(Compat.convert(new MultiOutputTransformFunction<T>(
-      pluginFunctionContext, functionCacheFactory.newCache()))));
+    return wrap(rdd.flatMap(new MultiOutputTransformFunction<T>(
+      pluginFunctionContext, functionCacheFactory.newCache())));
   }
 
   @Override
@@ -169,19 +166,16 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                        StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(
+    PairFlatMapFunction<T, Object, T> groupByFunction = new AggregatorGroupByFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache());
-    PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
 
-    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(sparkGroupByFunction);
+    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(groupByFunction);
 
     JavaPairRDD<Object, Iterable<T>> groupedCollection = partitions == null ?
       keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
 
-    FlatMapFunc<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> aggregateFunction =
-      new AggregatorAggregateFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
     FlatMapFunction<Tuple2<Object, Iterable<T>>, RecordInfo<Object>> sparkAggregateFunction =
-      Compat.convert(aggregateFunction);
+      new AggregatorAggregateFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
 
     return wrap(groupedCollection.flatMap(sparkAggregateFunction));
   }
@@ -190,11 +184,10 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                              StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorReduceGroupByFunction<>(
+    PairFlatMapFunction<T, Object, T> groupByFunction = new AggregatorReduceGroupByFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache());
-    PairFlatMapFunction<T, Object, T> sparkGroupByFunction = Compat.convert(groupByFunction);
 
-    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(sparkGroupByFunction);
+    JavaPairRDD<Object, T> keyedCollection = rdd.flatMapToPair(groupByFunction);
 
     Function<T, Object> initializeFunction = new AggregatorInitializeFunction<>(
       pluginFunctionContext, functionCacheFactory.newCache());
@@ -206,11 +199,10 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
       keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction) :
       keyedCollection.combineByKey(initializeFunction, mergeValueFunction, mergePartitionFunction, partitions);
 
-    FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =
       new AggregatorFinalizeFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
-    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postReduceFunction = Compat.convert(postFunction);
 
-    return wrap(groupedCollection.flatMap(postReduceFunction));
+    return wrap(groupedCollection.flatMap(postFunction));
   }
 
   @Override
@@ -258,7 +250,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
       public void run() {
         PairFlatMapFunction<T, String, KeyValue<Object, Object>> multiSinkFunction =
           (PairFlatMapFunction<T, String, KeyValue<Object, Object>>)
-            Compat.convert(new MultiSinkFunction(sec, phaseSpec, group, collectors));
+            new MultiSinkFunction(sec, phaseSpec, group, collectors);
         JavaPairRDD<String, KeyValue<Object, Object>> taggedOutput = rdd.flatMapToPair(multiSinkFunction);
         for (String outputName : sinkFactory.writeCombinedRDD(taggedOutput, sec, sinks)) {
           recordLineage(outputName);

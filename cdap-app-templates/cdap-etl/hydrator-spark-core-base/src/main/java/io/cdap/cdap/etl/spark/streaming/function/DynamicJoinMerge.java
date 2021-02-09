@@ -17,7 +17,6 @@
 package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.etl.api.JoinElement;
-import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
@@ -54,8 +53,8 @@ public class DynamicJoinMerge<JOIN_KEY, INPUT_RECORD, OUT>
   public JavaRDD<OUT> call(JavaPairRDD<JOIN_KEY, List<JoinElement<INPUT_RECORD>>> input,
                            Time batchTime) throws Exception {
     if (function == null) {
-      function = Compat.convert(new JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>(
-        dynamicDriverContext.getPluginFunctionContext(), functionCache));
+      function = new JoinMergeFunction<JOIN_KEY, INPUT_RECORD, OUT>(
+        dynamicDriverContext.getPluginFunctionContext(), functionCache);
     }
     return input.flatMap(function);
   }

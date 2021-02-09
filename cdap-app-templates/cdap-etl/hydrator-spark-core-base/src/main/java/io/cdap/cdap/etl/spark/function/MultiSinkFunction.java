@@ -37,11 +37,13 @@ import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.exec.PipeTransformExecutor;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkTransformExecutorFactory;
+import org.apache.spark.api.java.function.PairFlatMapFunction;
 import scala.Tuple2;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -70,7 +72,7 @@ import javax.annotation.Nullable;
  * This function is meant to be executed right before saving the Spark collection using a Multi OutputFormat that
  * delegates to underlying output formats.
  */
-public class MultiSinkFunction implements PairFlatMapFunc<RecordInfo<Object>, String, KeyValue<Object, Object>> {
+public class MultiSinkFunction implements PairFlatMapFunction<RecordInfo<Object>, String, KeyValue<Object, Object>> {
   private final PipelineRuntime pipelineRuntime;
   private final PhaseSpec phaseSpec;
   private final Set<String> group;
@@ -99,7 +101,7 @@ public class MultiSinkFunction implements PairFlatMapFunc<RecordInfo<Object>, St
   }
 
   @Override
-  public Iterable<Tuple2<String, KeyValue<Object, Object>>> call(RecordInfo<Object> input) throws Exception {
+  public Iterator<Tuple2<String, KeyValue<Object, Object>>> call(RecordInfo<Object> input) throws Exception {
     if (branchExecutors == null) {
       // branch executors must be created lazily here instead of passed into the constructor to ensure that
       // they are not serialized in the function. This ensures that macros are evaluated each run instead of just for
@@ -138,7 +140,7 @@ public class MultiSinkFunction implements PairFlatMapFunc<RecordInfo<Object>, St
       branchExecutors.get(groupSource).runOneIteration(record);
     }
 
-    return emitter.getEntries();
+    return emitter.getEntries().iterator();
   }
 
   private void initializeBranchExecutors() {
