@@ -179,10 +179,7 @@ object AbstractSparkCompiler {
     */
   def setClassPath(settings: Settings): Settings = {
     // Find the plugin classloader if it is called from plugin
-    val classLoaderOption = CallerClassSecurityManager.getCallerClasses
-      .map(_.getClassLoader)
-      .find(cl => cl != null && cl.isInstanceOf[PluginClassLoader])
-
+    val classLoaderOption = Option.apply(CallerClassSecurityManager.findCallerClassLoader(classOf[PluginClassLoader]))
     val contextClassLoader = Thread.currentThread().getContextClassLoader
 
     // Use a combine classloder of plugin + context if the call is from plugin,
@@ -192,9 +189,16 @@ object AbstractSparkCompiler {
       .getOrElse(contextClassLoader)
     settings.embeddedDefaults(classLoader)
 
+    // Adding all classpaths to the compiler settings. We have to exclude directories that ended with .zip or .jar to
+    // avoid Scala trying to expand them and fail (due to they are not file).
+    // When a directory is ended with .zip or .jar, it is a result of archive expansion on Hadoop, in which we only
+    // need the directory content in the classpath, but not the directory itself.
     val classpath = ClassLoaders.getClassLoaderURLs(classLoader, true, new java.util.LinkedHashSet[URL]).toSet[URL]
-    settings.classpath.value = classpath.map(url => new File(url.getPath()).getAbsolutePath)
-                                        .mkString(File.pathSeparator)
+    settings.classpath.value = classpath
+      .map(url => new File(url.getPath()))
+      .filter(f => f.isFile || !(f.getName.endsWith(".zip") || f.getName.endsWith(".jar")))
+      .map(_.getAbsolutePath)
+      .mkString(File.pathSeparator)
     settings
   }
 

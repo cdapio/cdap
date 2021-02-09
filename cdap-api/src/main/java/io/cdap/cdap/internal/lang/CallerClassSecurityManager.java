@@ -16,6 +16,9 @@
 
 package io.cdap.cdap.internal.lang;
 
+import java.util.Arrays;
+import javax.annotation.Nullable;
+
 /**
  * A {@link SecurityManager} to help get access to classes in the call stack.
  */
@@ -30,6 +33,19 @@ public final class CallerClassSecurityManager extends SecurityManager {
    */
   public static Class[] getCallerClasses() {
     return INSTANCE.getClassContext();
+  }
+
+  /**
+   * Finds the {@link ClassLoader} of the given type along the caller class chain. It returns {@code null} if it cannot
+   * find any.
+   */
+  @Nullable
+  public static ClassLoader findCallerClassLoader(Class<? extends ClassLoader> classloaderType) {
+    return Arrays.stream(INSTANCE.getClassContext())
+      .map(Class::getClassLoader)
+      .filter(classloaderType::isInstance)
+      .findFirst()
+      .orElse(null);
   }
 
   private CallerClassSecurityManager() {
