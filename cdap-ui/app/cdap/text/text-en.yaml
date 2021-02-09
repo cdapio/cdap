@@ -541,7 +541,7 @@ features:
         columnTypeLabel:
           numeric: Numeric
         destinationColumnInputLabel: Name destination column
-        disabledTooltip: "Calculate can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double'"
+        disabledTooltip: "Calculate can only be applied on columns of data type 'string', 'integer', 'short', 'long', 'float', 'double', 'decimal'"
         newColumnInputCountSuffix: _count
         Options:
           POWEROF:
@@ -571,6 +571,32 @@ features:
           SQUAREROOT: Square root
           SUBTRACT: Subtract
           TAN: Tan
+          DECIMALADD: Add
+          DECIMALSUBTRACT: Subtract
+          DECIMALMULTIPLY: Multiply
+          DECIMALDIVIDEQ: Divide
+          DECIMALDIVIDER: Modulo
+          DECIMALABSVALUE: Absolute value
+          DECIMALPOWEROF: Power of
+          DECIMALSQUARE: Square
+          DECIMALCUBE: Cube
+          PRECISION: Precision
+          SCALE: Scale
+          UNSCALED: Unscaled
+          DECIMALLEFT: Decimal left
+          DECIMALRIGHT: Decimal right
+          NEGATE: Negate
+          STRIPZERO: Strip trailing zeros
+          SIGN: Sign
+          CROSSADD: Add
+          CROSSSUBTRACT: Subtract
+          CROSSMULTIPLY: Multiply
+          CROSSDIVIDEQ: Divide
+          CROSSDIVIDER: Modulo
+          CROSSLCM: LCM
+          CROSSEQUAL: Equal
+          CROSSMAX: Max
+          CROSSMIN: Min
         title: Calculate
       ChangeDataType:
         disabledTooltip: "Change data type is not available on columns of data type 'LocalDate', 'LocalTime', or 'ZonedDateTime'"
@@ -583,6 +609,7 @@ features:
           long: Long
           short: Short
           string: String
+          decimal: Decimal
         title: Change data type
       ColumnActions:
         label: Column names

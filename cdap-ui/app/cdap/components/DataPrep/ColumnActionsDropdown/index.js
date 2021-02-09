@@ -125,7 +125,7 @@ export default class ColumnActionsDropdown extends Component {
       {
         id: uuidV4(),
         tag: Calculate,
-        requiredColCount: 1,
+        requiredColCount: 0,
       },
       {
         id: uuidV4(),
@@ -394,6 +394,8 @@ export default class ColumnActionsDropdown extends Component {
                 >
                   <Tag
                     column={column}
+                    // Needed for the destination column where the result should be saved
+                    ddSelected={this.props.column}
                     onComplete={this.toggleDropdown.bind(this, false)}
                     isOpen={this.state.open === directive.id}
                     isDisabled={disabled}

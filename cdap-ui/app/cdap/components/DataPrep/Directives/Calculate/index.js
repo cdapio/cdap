@@ -30,7 +30,7 @@ import WarningContainer from 'components/WarningContainer';
 import { UncontrolledTooltip } from 'components/UncontrolledComponents';
 import { columnNameAlreadyExists } from 'components/DataPrep/helper';
 import { preventPropagation } from 'services/helpers';
-import { NUMBER_TYPES } from 'services/global-constants';
+import { NUMBER_TYPES, NATIVE_NUMBER_TYPES } from 'services/global-constants';
 import capitalize from 'lodash/capitalize';
 import Mousetrap from 'mousetrap';
 
@@ -44,14 +44,19 @@ export default class Calculate extends Component {
     super(props);
     this.VALID_TYPES = NUMBER_TYPES.concat(['string']);
 
-    this.columnType = DataPrepStore.getState().dataprep.typesCheck[this.props.column];
+    const {isDisabled, crossColumn, columns, columnType} = this.parseColumns();
+
+    this.isDisabled = isDisabled;
+    this.crossColumn = crossColumn;
+    this.columns = columns;
+    this.columnType = columnType;
 
     this.defaultState = {
       operationPopoverOpen: null,
       operationInput: 1,
       createNewColumn: false,
       newColumnInput: this.props.column + T.translate(`${COPY_NEW_COLUMN_PREFIX}.inputSuffix`),
-      isDisabled: this.VALID_TYPES.indexOf(this.columnType) === -1,
+      isDisabled: this.VALID_TYPES.indexOf(this.columnType) === -1 || this.isDisabled,
     };
 
     this.state = Object.assign({}, this.defaultState);
@@ -68,28 +73,53 @@ export default class Calculate extends Component {
       },
       {
         name: 'ADD',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `${this.props.column} + ${this.state.operationInput}`,
       },
       {
         name: 'SUBTRACT',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `${this.props.column} - ${this.state.operationInput}`,
       },
       {
         name: 'MULTIPLY',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `${this.props.column} * ${this.state.operationInput}`,
       },
       {
         name: 'DIVIDE',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `${this.props.column} / ${this.state.operationInput}`,
       },
       {
         name: 'MODULO',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `${this.props.column} % ${this.state.operationInput}`,
+      },
+      {
+        name: 'DECIMALADD',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:add(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALSUBTRACT',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:subtract(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALMULTIPLY',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:multiply(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALDIVIDEQ',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:divideq(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALDIVIDER',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:divider(${this.props.column}, ${this.state.operationInput})`,
       },
       {
         name: 'divider',
@@ -97,110 +127,218 @@ export default class Calculate extends Component {
       },
       {
         name: 'POWEROF',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:pow(${this.props.column}, ${this.state.operationInput})`,
       },
       {
         name: 'SQUARE',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:pow(${this.props.column}, 2)`,
       },
       {
         name: 'SQUAREROOT',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:sqrt(${this.props.column})`,
       },
       {
         name: 'CUBE',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:pow(${this.props.column}, 3)`,
       },
       {
         name: 'CUBEROOT',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:cbrt(${this.props.column})`,
       },
       {
         name: 'LOG',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:log10(${this.props.column})`,
       },
       {
         name: 'NATURALLOG',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:log(${this.props.column})`,
       },
       {
         name: 'divider',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
       },
       {
         name: 'ABSVALUE',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:abs(${this.props.column})`,
       },
       {
         name: 'CEIL',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:ceil(${this.props.column})`,
       },
       {
         name: 'FLOOR',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:floor(${this.props.column})`,
       },
       {
         name: 'divider',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
       },
       {
         name: 'SIN',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:sin(${this.props.column})`,
       },
       {
         name: 'COS',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:cos(${this.props.column})`,
       },
       {
         name: 'TAN',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:tan(${this.props.column})`,
       },
       {
         name: 'ARCCOS',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:acos(${this.props.column})`,
       },
       {
         name: 'ARCSIN',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:asin(${this.props.column})`,
       },
       {
         name: 'ARCTAN',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:atan(${this.props.column})`,
       },
       {
         name: 'divider',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
       },
       {
         name: 'ROUND',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => `math:round(${this.props.column})`,
       },
       {
         name: 'RANDOM',
-        validColTypes: NUMBER_TYPES,
+        validColTypes: NATIVE_NUMBER_TYPES,
         expression: () => 'math:random()',
       },
       {
         name: 'CHARCOUNT',
         validColTypes: ['string'],
         expression: () => `string:length(${this.props.column})`,
+      },
+      {
+        name: 'PRECISION',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:precision(${this.props.column})`,
+      },
+      {
+        name: 'SCALE',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:scale(${this.props.column})`,
+      },
+      {
+        name: 'UNSCALED',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:unscaled(${this.props.column})`,
+      },
+      {
+        name: 'DECIMALLEFT',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:decimal_left(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALRIGHT',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:decimal_right(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALABSVALUE',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:abs(${this.props.column})`,
+      },
+      {
+        name: 'DECIMALPOWEROF',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:pow(${this.props.column}, ${this.state.operationInput})`,
+      },
+      {
+        name: 'DECIMALSQUARE',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:pow(${this.props.column}, 2)`,
+      },
+      {
+        name: 'DECIMALCUBE',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:pow(${this.props.column}, 3)`,
+      },
+      {
+        name: 'NEGATE',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:negate(${this.props.column})`,
+      },
+      {
+        name: 'STRIPZERO',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:strip_zero(${this.props.column})`,
+      },
+      {
+        name: 'SIGN',
+        validColTypes: ['bigdecimal'],
+        expression: () => `decimal:sign(${this.props.column})`,
+      },
+    ];
+
+    this.CROSS_COLUMN_CALCULATE_OPTIONS = [
+      {
+        name: 'CROSSADD',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:add(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSSUBTRACT',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:minus(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSMULTIPLY',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:multiply(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSDIVIDEQ',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:divideq(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSDIVIDER',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:divider(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSLCM',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:lcm(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSEQUAL',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:equal(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSMAX',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:max(${this.columns[0]}, ${this.columns[1]})`,
+      },
+      {
+        name: 'CROSSMIN',
+        validColTypes: NUMBER_TYPES,
+        expression: () => `arithmetic:min(${this.columns[0]}, ${this.columns[1]})`,
       },
     ];
 
@@ -222,6 +360,24 @@ export default class Calculate extends Component {
       'ARCTAN',
       'ROUND',
       'RANDOM',
+      'PRECISION',
+      'SCALE',
+      'UNSCALED',
+      'NEGATE',
+      'STRIPZERO',
+      'SIGN',
+      'DECIMALABSVALUE',
+      'CROSSADD',
+      'CROSSSUBTRACT',
+      'CROSSMULTIPLY',
+      'CROSSDIVIDEQ',
+      'CROSSDIVIDER',
+      'CROSSLCM',
+      'CROSSEQUAL',
+      'CROSSMAX',
+      'CROSSMIN',
+      'DECIMALSQUARE',
+      'DECIMALCUBE',
     ];
   }
 
@@ -308,13 +464,53 @@ export default class Calculate extends Component {
     this.setState(newState);
   }
 
+  parseColumns = () => {
+    let columns = typeof this.props.column === 'string' ? [this.props.column] : this.props.column;
+
+    let type1 = DataPrepStore.getState().dataprep.typesCheck[columns[0]];
+    if (columns.length === 1) {
+      return {
+        isDisabled: false,
+        crossColumn: false,
+        columns: columns[0],
+        columnType: type1
+      };
+    }
+
+    if (columns.length === 2) {
+      const type2 = DataPrepStore.getState().dataprep.typesCheck[columns[1]];
+      let index = columns.indexOf(this.props.ddSelected);
+      if (type1 === type2 && index !== -1) {
+        columns = index === 0 ? columns : [this.props.ddSelected, columns[0]];
+        return {
+          isDisabled: false,
+          crossColumn: true,
+          columns: columns,
+          columnType: type1
+        };
+      }
+    }
+
+    type1 = DataPrepStore.getState().dataprep.typesCheck[columns];
+    return {
+      isDisabled: true,
+      crossColumn: false,
+      columns: columns,
+      columnType: type1
+    };
+  }
+
+  getCalculateOperations = () => {
+    return this.crossColumn ? this.CROSS_COLUMN_CALCULATE_OPTIONS : this.CALCULATE_OPTIONS;
+  }
+
   getExpressionAndApply() {
     if (this.isApplyDisabled()) {
       return;
     }
 
     let expression;
-    let operationObj = this.CALCULATE_OPTIONS.filter(
+    let operationObj = this.getCalculateOperations().filter(
       (option) => this.state.operationPopoverOpen === option.name
     )[0];
 
@@ -334,7 +530,7 @@ export default class Calculate extends Component {
   }
 
   applyDirective(expression) {
-    let destinationColumn = this.props.column;
+    let destinationColumn = this.props.ddSelected;
     if (
       (this.state.createNewColumn || this.state.operationPopoverOpen === 'CHARCOUNT') &&
       this.state.newColumnInput.length > 0
@@ -360,7 +556,7 @@ export default class Calculate extends Component {
   }
 
   renderOptions() {
-    return this.CALCULATE_OPTIONS.filter(
+    return this.getCalculateOperations().filter(
       (option) => option.name === 'label' || option.validColTypes.indexOf(this.columnType) !== -1
     ).map((option, i) => {
       const key = `${option.name}${i}`;
