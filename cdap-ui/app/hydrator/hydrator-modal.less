@@ -45,19 +45,16 @@
 
   .modal-dialog {
     .modal-header {
-      display: flex;
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      grid-template-rows: 60px;
       align-items: center;
-      justify-content: space-between;
       .modal-title {
         padding-left: 15px;
-        // 340px for all the buttons and error validation message
-        width: 100%;
-        max-width: ~"calc(100% - 340px)";
         text-overflow: ellipsis;
         white-space: nowrap;
         overflow: hidden;
         font-weight: 500;
-        margin-right: auto;
         line-height: 1.4;
 
         // Adjust max-width of modal title when my-jump-link is present
@@ -73,6 +70,12 @@
           white-space: nowrap;
           line-height: 1.4;
         }
+      }
+      .plugin-modal-btns {
+        display: grid;
+        grid-template-columns: 30px 1fr 60px;
+        grid-template-rows: inherit;
+        align-items: center;
       }
 
       div.btn-group {

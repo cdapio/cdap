@@ -60,6 +60,7 @@
   &.selected {
     border-color: @node-color;
     color: white;
+    z-index: 2000;
     .node {
       background-color: @node-color;
 
@@ -102,6 +103,24 @@ my-dag-plus {
         i.fa {
           opacity: 0.5;
         }
+      }
+    }
+    .toggle-comments-action-btn {
+      &.toggle-enabled {
+        background-color: #6a7387;
+        color: white;
+        &:before {
+          background-color: #7cd2eb;
+        }
+      }
+      &:before {
+        content: ' ';
+        position: absolute;
+        height: 5px;
+        width: 5px;
+        background: #1a73e8;
+        border-radius: 50%;
+        right: 5px;
       }
     }
   }
@@ -194,6 +213,18 @@ my-dag-plus {
 
       &.node-menu-open {
         z-index: 3;
+      }
+
+      .comments-wrapper {
+        position: absolute;
+        top: -30px;
+        right: 0;
+        color: #1a73e8;
+        z-index: 2;
+
+        [comment] {
+          display: block;
+        }
       }
 
       .node {

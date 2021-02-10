@@ -19,6 +19,7 @@ import { ContextMenu, IContextMenuOption } from 'components/ContextMenu';
 import PropTypes from 'prop-types';
 import { copyToClipBoard } from 'services/Clipboard';
 import IconSVG from 'components/IconSVG';
+import CommentIcon from 'components/AbstractWidget/Comment/CommentIcon';
 
 export default function PluginContextMenu({
   nodeId,
@@ -27,8 +28,17 @@ export default function PluginContextMenu({
   getSelectedNodes,
   onDelete,
   onOpen,
+  onAddComment,
 }) {
   const PluginContextMenuOptions: IContextMenuOption[] = [
+    {
+      name: 'plugin comment',
+      label: 'Add a comment',
+      icon: <CommentIcon size="small" />,
+      onClick: () => {
+        onAddComment(nodeId);
+      },
+    },
     {
       name: 'plugin copy',
       label: () => (getSelectedNodes().length > 1 ? 'Copy Plugins' : 'Copy Plugin'),
@@ -82,4 +92,5 @@ export default function PluginContextMenu({
   getSelectedNodes: PropTypes.func,
   onDelete: PropTypes.func,
   onOpen: PropTypes.func,
+  onAddComment: PropTypes.func,
 };
