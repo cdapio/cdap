@@ -26,6 +26,7 @@ import {
   orange,
   yellow,
   white,
+  primary,
 } from 'components/ThemeWrapper/colors';
 
 interface IThemeWraperProps {
@@ -38,7 +39,7 @@ export default class ThemeWrapper extends React.PureComponent<IThemeWraperProps>
   private baseTheme: Theme = createMuiTheme({
     palette: {
       primary: {
-        main: '#1a73e8',
+        main: primary,
       },
       blue,
       grey,

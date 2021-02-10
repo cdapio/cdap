@@ -17,24 +17,25 @@ import PropTypes from 'prop-types';
 import React, { createElement } from 'react';
 import marksy from 'marksy';
 import ThemeWrapper from 'components/ThemeWrapper';
-import withStyles, { WithStyles } from '@material-ui/core/styles/withStyles';
 import { MarkdownToReactMapping } from 'components/Markdown/MarkdownToReactMapping';
 import prism from 'prismjs';
 import 'prismjs/components/prism-json.js';
 import 'prismjs/themes/prism.css';
+import makeStyles from '@material-ui/core/styles/makeStyles';
 
-const styles = () => {
+const useStyles = makeStyles(() => {
   return {
     markdownRoot: {
       fontSize: '14px',
     },
   };
-};
-interface IMarkdownProps extends WithStyles<typeof styles> {
+});
+interface IMarkdownProps {
   markdown: string;
 }
 
-const Markdown: React.SFC<IMarkdownProps> = ({ markdown, classes }) => {
+const Markdown = ({ markdown }: IMarkdownProps) => {
+  const classes = useStyles();
   const compile = marksy({
     createElement,
     elements: MarkdownToReactMapping,
@@ -50,18 +51,17 @@ const Markdown: React.SFC<IMarkdownProps> = ({ markdown, classes }) => {
 };
 
 function MarkdownWithStyles({ markdown }) {
-  const MDWithStyles = withStyles(styles)(Markdown);
   if (!markdown) {
     return null;
   }
   if (typeof window.angular !== 'undefined' && window.angular.version) {
     return (
       <ThemeWrapper>
-        <MDWithStyles markdown={markdown} />
+        <Markdown markdown={markdown} />
       </ThemeWrapper>
     );
   }
-  return <MDWithStyles markdown={markdown} />;
+  return <Markdown markdown={markdown} />;
 }
 
 // purely for ng-react
@@ -69,4 +69,4 @@ function MarkdownWithStyles({ markdown }) {
   classes: PropTypes.object,
   markdown: PropTypes.string,
 };
-export { MarkdownWithStyles };
+export default MarkdownWithStyles;
