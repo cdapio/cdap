@@ -60,18 +60,6 @@
     <i class="icon-clean"></i>
   </button>
 
-
-  <!-- Adding Comments -->
-  <button class="btn btn-default"
-          ng-click="DAGPlusPlusCtrl.addComment()"
-          ng-if="!DAGPlusPlusCtrl.isDisabled"
-          uib-tooltip="Add Comments"
-          tooltip-append-to-body="true"
-          tooltip-placement="left"
-          tooltip-popup-delay="500">
-    <i class="fa fa-commenting"></i>
-  </button>
-
   <!-- Undo Nodes Action -->
   <button class="btn btn-default"
           ng-click="DAGPlusPlusCtrl.undoActions()"
@@ -110,6 +98,13 @@
   >
     <i class="fa fa-arrows"></i>
   </button>
+
+  <pipeline-comments-action-btn
+    does-stages-have-comments="DAGPlusPlusCtrl.doesStagesHaveComments"
+    tooltip="'Show/Hide Comments'"
+    on-comments-toggle="DAGPlusPlusCtrl.toggleComments"
+    toggle="DAGPlusPlusCtrl.commentsState"
+  ></pipeline-comments-action-btn>
 </div>
 
 <div class="my-js-dag"
@@ -131,12 +126,26 @@
                ng-class="{
                  'wrangler': node.plugin.name === 'Wrangler',
                  'node-menu-open': DAGPlusPlusCtrl.nodeMenuOpen === node.name,
-                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.id),
+                 'selected': DAGPlusPlusCtrl.isNodeSelected(node.id) || DAGPlusPlusCtrl.activePluginToComment == node.id,
                }"
-               ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
+        >
+          <div class="comments-wrapper"
+            ng-if="(DAGPlusPlusCtrl.commentsState == true && (node.information.comments.list && node.information.comments.list.length > 0)) || DAGPlusPlusCtrl.activePluginToComment == node.id">
+            <comment
+              comments="node.information.comments.list"
+              comments-id="node.id"
+              on-change="DAGPlusPlusCtrl.setComments"
+              placement="'bottom-start'"
+              is-open="DAGPlusPlusCtrl.activePluginToComment == node.id"
+              on-open="DAGPlusPlusCtrl.setPluginActiveForComment"
+              on-close="DAGPlusPlusCtrl.setPluginActiveForComment"
+              disabled="DAGPlusPlusCtrl.isDisabled"
+            ></comment>
+          </div>
           <div class="node"
                 ng-mouseenter="DAGPlusPlusCtrl.nodeMouseEnter(node)"
-                ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)">
+                ng-mouseleave="DAGPlusPlusCtrl.nodeMouseLeave(node)"
+                ng-click="DAGPlusPlusCtrl.selectNode($event, node)">
             <div class="inner" ng-if="['action', 'sparkprogram'].indexOf(node.type) !== -1"></div>
             <div class="endpoint-circle"
                   ng-if="node.type !== 'splittertransform'"
@@ -299,33 +308,9 @@
               get-selected-nodes="DAGPlusPlusCtrl.getSelectedNodes"
               on-delete="DAGPlusPlusCtrl.deleteSelectedNodes"
               on-open="DAGPlusPlusCtrl.onPluginContextMenuOpen"
+              on-add-comment="DAGPlusPlusCtrl.setPluginActiveForComment"
             ></plugin-context-menu>
           </div>
-        </div>
-
-        <div ng-repeat="comment in DAGPlusPlusCtrl.comments"
-              class="comment-box"
-              ng-click="!DAGPlusPlusCtrl.isDisabled && DAGPlusPlusCtrl.commentSelect($event, comment)"
-              ng-style="comment._uiPosition"
-              id="{{comment.id}}">
-          <div ng-if="comment.isActive">
-            <textarea
-              ng-model="comment.content"
-              class="form-control"
-              my-focus-watch="comment.isActive">
-            </textarea>
-          </div>
-
-          <div class="comment-content"
-               ng-if="!comment.isActive"
-               marked="comment.content">
-          </div>
-
-          <div class="fa fa-close"
-               ng-click="DAGPlusPlusCtrl.deleteComment(comment)"
-               ng-if="!DAGPlusPlusCtrl.isDisabled">
-          </div>
-
         </div>
       </div>
       <div ng-if="!DAGPlusPlusCtrl.isDisabled">

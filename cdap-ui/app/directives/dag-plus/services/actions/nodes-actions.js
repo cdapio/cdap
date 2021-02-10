@@ -110,27 +110,14 @@ class DAGPlusPlusNodesActionsFactory {
     this.nodesDispatcher.dispatch('onSetCanvasPanning', panning);
   }
 
-  createGraphFromConfig(nodes, connections, comments) {
+  createGraphFromConfig(nodes, connections) {
     this.DAGPlusPlusNodesStore.setDefaults();
-    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections, comments);
+    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections);
   }
 
-  createGraphFromConfigOnPaste(nodes, connections, comments) {
+  createGraphFromConfigOnPaste(nodes, connections) {
     this.DAGPlusPlusNodesStore.addStateToHistory();
-    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections, comments);
-  }
-
-  addComment(comment) {
-    this.nodesDispatcher.dispatch('onAddComment', comment);
-  }
-  setComments(comments) {
-    this.nodesDispatcher.dispatch('onSetComments', comments);
-  }
-  deleteComment(comment) {
-    this.nodesDispatcher.dispatch('onDeleteComment', comment);
-  }
-  updateComment(commentId, config) {
-    this.nodesDispatcher.dispatch('onUpdateComment', commentId, config);
+    this.nodesDispatcher.dispatch('onCreateGraphFromConfig', nodes, connections);
   }
 
   undoActions() {

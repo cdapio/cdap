@@ -74,7 +74,7 @@ var AuthRefresher = require('../cdap/components/AuthRefresher').default;
 var ToggleSwitch = require('../cdap/components/ToggleSwitch').default;
 var PipelineList = require('../cdap/components/PipelineList').default;
 var AppHeader = require('../cdap/components/AppHeader').default;
-var Markdown = require('../cdap/components/Markdown').MarkdownWithStyles;
+var Markdown = require('../cdap/components/Markdown').default;
 var CodeEditor = require('../cdap/components/AbstractWidget/CodeEditorWidget').default;
 var JSONEditor = require('../cdap/components/CodeEditor/JSONEditor').default;
 var TextBox = require('../cdap/components/AbstractWidget/FormInputs/TextBox').default;
@@ -128,7 +128,9 @@ var PreviewLogs = require('../cdap/components/PreviewLogs').default;
 var SchemaEditor = require('../cdap/components/AbstractWidget/SchemaEditor').SchemaEditor;
 var PluginSchemaEditor = require('../cdap/components/PluginSchemaEditor').PluginSchemaEditor;
 var ALERT_STATUS = require('../cdap/services/AlertStatus').ALERT_STATUS;
-
+var Comment = require('../cdap/components/AbstractWidget/Comment').default;
+var PipelineCommentsActionBtn = require('../cdap/components/PipelineCanvasActions/PipelineCommentsActionBtn')
+  .default;
 export {
   Store,
   NameSpaceStoreActions,
@@ -230,4 +232,6 @@ export {
   SchemaEditor,
   PluginSchemaEditor,
   ALERT_STATUS,
+  Comment,
+  PipelineCommentsActionBtn,
 };

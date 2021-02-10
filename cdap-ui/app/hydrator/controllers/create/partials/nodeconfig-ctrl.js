@@ -66,6 +66,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.initializeMetrics = this.initializeMetrics.bind(this);
     this.showContents = this.showContents.bind(this);
     this.initializePreview = this.initializePreview.bind(this);
+    this.setComments = this.setComments.bind(this);
     this.tabs = [
       {
         label: 'Properties',
@@ -797,6 +798,11 @@ class HydratorPlusPlusNodeConfigCtrl {
       },
     });
     return actionsMap;
+  }
+
+  setComments(nodeId, comments) {
+    this.state.node.information = this.state.node.information || {};
+    this.state.node.information.comments = { list: comments };
   }
 }
 

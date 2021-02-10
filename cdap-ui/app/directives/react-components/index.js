@@ -177,4 +177,10 @@ angular
   })
   .directive('pluginSchemaEditor', function(reactDirective) {
     return reactDirective(window.CaskCommon.PluginSchemaEditor);
+  })
+  .directive('comment', function(reactDirective) {
+    return reactDirective(window.CaskCommon.Comment);
+  })
+  .directive('pipelineCommentsActionBtn', function(reactDirective) {
+    return reactDirective(window.CaskCommon.PipelineCommentsActionBtn);
   });

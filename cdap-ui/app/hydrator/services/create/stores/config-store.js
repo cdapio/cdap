@@ -83,13 +83,14 @@ class HydratorPlusPlusConfigStore {
         nodes: [],
       },
       description: '',
-      name: ''
+      name: '',
     };
     Object.assign(this.state, { config: this.getDefaultConfig() });
 
     // This will be eventually used when we just pass on a config to the store to draw the dag.
     if (config) {
       angular.extend(this.state, config);
+      this.setComments(this.state.config.comments);
       this.setArtifact(this.state.artifact);
       this.setProperties(this.state.config.properties);
       this.setDriverResources(this.state.config.driverResources);
@@ -194,8 +195,9 @@ class HydratorPlusPlusConfigStore {
           label: node.plugin.label,
           artifact: node.plugin.artifact,
           properties: node.plugin.properties ,
-          _backendProperties: node._backendProperties
+          _backendProperties: node._backendProperties,
         },
+        information: node.information,
         outputSchema: node.outputSchema,
         inputSchema: node.inputSchema
       };
@@ -292,12 +294,11 @@ class HydratorPlusPlusConfigStore {
       };
     }
 
+    config.comments = this.getComments();
+
     if (this.state.description) {
       config.description = this.state.description;
     }
-
-    config.comments = this.getComments();
-
     // Removing UUID from postactions name
     let postActions = this.getPostActions();
     postActions = _.sortBy(postActions, (action) => {
@@ -361,12 +362,6 @@ class HydratorPlusPlusConfigStore {
       }
     });
     delete stateCopy.__ui__;
-
-    angular.forEach(stateCopy.config.comments, (comment) => {
-      delete comment.isActive;
-      delete comment.id;
-      delete comment._uiPosition;
-    });
 
     return stateCopy;
   }
