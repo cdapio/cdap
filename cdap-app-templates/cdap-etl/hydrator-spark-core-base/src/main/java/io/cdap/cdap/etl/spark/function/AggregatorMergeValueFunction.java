@@ -29,17 +29,18 @@ import org.apache.spark.api.java.function.Function2;
 public class AggregatorMergeValueFunction<AGG_VALUE, GROUP_VALUE>
   implements Function2<AGG_VALUE, GROUP_VALUE, AGG_VALUE> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient BatchReducibleAggregator<?, GROUP_VALUE, AGG_VALUE, ?> aggregator;
 
-  public AggregatorMergeValueFunction(PluginFunctionContext pluginFunctionContext) {
+  public AggregatorMergeValueFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public AGG_VALUE call(AGG_VALUE aggValue, GROUP_VALUE groupValue) throws Exception {
     if (aggregator == null) {
-      aggregator = pluginFunctionContext.createPlugin();
-      aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      aggregator = pluginFunctionContext.createAndInitializePlugin(functionCache);
     }
     return aggregator.mergeValues(aggValue, groupValue);
   }

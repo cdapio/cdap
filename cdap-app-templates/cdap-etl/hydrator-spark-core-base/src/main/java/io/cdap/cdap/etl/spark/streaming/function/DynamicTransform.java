@@ -19,6 +19,7 @@ package io.cdap.cdap.etl.spark.streaming.function;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.function.FlatMapFunc;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.MultiOutputTransformFunction;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
@@ -36,11 +37,15 @@ import org.apache.spark.streaming.Time;
  */
 public class DynamicTransform<T> implements Function2<JavaRDD<T>, Time, JavaRDD<RecordInfo<Object>>> {
   private final DynamicDriverContext dynamicDriverContext;
+  private final FunctionCache functionCache;
   private final boolean isMultiOutput;
   private transient FlatMapFunction<T, RecordInfo<Object>> function;
 
-  public DynamicTransform(DynamicDriverContext dynamicDriverContext, boolean isMultiOutput) {
+  public DynamicTransform(DynamicDriverContext dynamicDriverContext,
+                          FunctionCache functionCache,
+                          boolean isMultiOutput) {
     this.dynamicDriverContext = dynamicDriverContext;
+    this.functionCache = functionCache;
     this.isMultiOutput = isMultiOutput;
   }
 
@@ -48,8 +53,8 @@ public class DynamicTransform<T> implements Function2<JavaRDD<T>, Time, JavaRDD<
   public JavaRDD<RecordInfo<Object>> call(JavaRDD<T> input, Time batchTime) throws Exception {
     if (function == null) {
       FlatMapFunc<T, RecordInfo<Object>> flatMap = isMultiOutput ?
-        new MultiOutputTransformFunction<T>(dynamicDriverContext.getPluginFunctionContext()) :
-        new TransformFunction<T>(dynamicDriverContext.getPluginFunctionContext());
+        new MultiOutputTransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache) :
+        new TransformFunction<T>(dynamicDriverContext.getPluginFunctionContext(), functionCache);
       function = Compat.convert(flatMap);
     }
     return input.flatMap(function);

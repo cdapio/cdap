@@ -37,6 +37,7 @@ import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.ComputeTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
@@ -71,10 +72,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   private final JavaSparkExecutionContext sec;
   private final JavaDStream<T> stream;
+  private final FunctionCache.Factory functionCacheFactory;
 
   public DStreamCollection(JavaSparkExecutionContext sec, JavaDStream<T> stream) {
     this.sec = sec;
     this.stream = stream;
+    this.functionCacheFactory = FunctionCache.Factory.newInstance();
   }
 
   @SuppressWarnings("unchecked")
@@ -104,13 +107,19 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public SparkCollection<RecordInfo<Object>> transform(StageSpec stageSpec, StageStatisticsCollector collector) {
-    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec, collector), false)));
+    return wrap(stream.transform(new DynamicTransform<T>(
+      new DynamicDriverContext(stageSpec, sec, collector),
+      functionCacheFactory.newCache(),
+      false)));
   }
 
   @Override
   public SparkCollection<RecordInfo<Object>> multiOutputTransform(StageSpec stageSpec,
                                                                   StageStatisticsCollector collector) {
-    return wrap(stream.transform(new DynamicTransform<T>(new DynamicDriverContext(stageSpec, sec, collector), true)));
+    return wrap(stream.transform(new DynamicTransform<T>(
+      new DynamicDriverContext(stageSpec, sec, collector),
+      functionCacheFactory.newCache(),
+      true)));
   }
 
   @Override
@@ -132,13 +141,14 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   public SparkCollection<RecordInfo<Object>> aggregate(StageSpec stageSpec, @Nullable Integer partitions,
                                                        StageStatisticsCollector collector) {
     DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
-    JavaPairDStream<Object, T> keyedCollection =
-      stream.transformToPair(new DynamicAggregatorGroupBy<Object, T>(dynamicDriverContext));
+    JavaPairDStream<Object, T> keyedCollection = stream.transformToPair(
+      new DynamicAggregatorGroupBy<Object, T>(dynamicDriverContext, functionCacheFactory.newCache()));
 
     JavaPairDStream<Object, Iterable<T>> groupedCollection = partitions == null ?
       keyedCollection.groupByKey() : keyedCollection.groupByKey(partitions);
 
-    return wrap(groupedCollection.transform(new DynamicAggregatorAggregate<Object, T, Object>(dynamicDriverContext)));
+    return wrap(groupedCollection.transform(new DynamicAggregatorAggregate<Object, T, Object>(
+      dynamicDriverContext, functionCacheFactory.newCache())));
   }
 
   @Override
@@ -170,7 +180,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
     return new Runnable() {
       @Override
       public void run() {
-        Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sec, stageSpec));
+        Compat.foreachRDD(stream, new StreamingBatchSinkFunction<>(sec, stageSpec, functionCacheFactory.newCache()));
       }
     };
   }

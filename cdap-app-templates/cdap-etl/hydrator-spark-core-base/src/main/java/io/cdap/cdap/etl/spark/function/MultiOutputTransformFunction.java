@@ -29,18 +29,19 @@ import io.cdap.cdap.etl.spark.CombinedEmitter;
  */
 public class MultiOutputTransformFunction<T> implements FlatMapFunc<T, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedMultiOutputTransform<T, Object> transform;
   private transient CombinedEmitter<Object> emitter;
 
-  public MultiOutputTransformFunction(PluginFunctionContext pluginFunctionContext) {
+  public MultiOutputTransformFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(T input) throws Exception {
     if (transform == null) {
-      SplitterTransform<T, Object> plugin = pluginFunctionContext.createPlugin();
-      plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      SplitterTransform<T, Object> plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedMultiOutputTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
                                                     pluginFunctionContext.getDataTracer());
       emitter = new CombinedEmitter<>(pluginFunctionContext.getStageName());

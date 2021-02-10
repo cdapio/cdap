@@ -44,62 +44,23 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
   implements PairFlatMapFunc<INPUT_RECORD, JOIN_KEY, INPUT_RECORD> {
 
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private final String inputStageName;
   private transient TrackedTransform<INPUT_RECORD, Tuple2<JOIN_KEY, INPUT_RECORD>> joinFunction;
   private transient DefaultEmitter<Tuple2<JOIN_KEY, INPUT_RECORD>> emitter;
 
-  public JoinOnFunction(PluginFunctionContext pluginFunctionContext, String inputStageName) {
+  public JoinOnFunction(PluginFunctionContext pluginFunctionContext,
+                        FunctionCache functionCache,
+                        String inputStageName) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
     this.inputStageName = inputStageName;
   }
 
   @Override
   public Iterable<Tuple2<JOIN_KEY, INPUT_RECORD>> call(INPUT_RECORD input) throws Exception {
     if (joinFunction == null) {
-      Object plugin = pluginFunctionContext.createPlugin();
-      BatchJoiner<JOIN_KEY, INPUT_RECORD, Object> joiner;
-      boolean filterNullKeys = false;
-      if (plugin instanceof BatchAutoJoiner) {
-        BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
-        AutoJoinerContext autoJoinerContext = pluginFunctionContext.createAutoJoinerContext();
-        JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
-        autoJoinerContext.getFailureCollector().getOrThrowException();
-        String stageName = pluginFunctionContext.getStageName();
-        if (joinDefinition == null) {
-          throw new IllegalStateException(String.format(
-            "Join stage '%s' did not specify a join definition. " +
-              "Check with the plugin developer to ensure it is implemented correctly.", stageName));
-        }
-        JoinCondition condition = joinDefinition.getCondition();
-        /*
-           Filter out the record if it comes from an optional stage
-           and the key is null, or if any of the fields in the key is null.
-           For example, suppose we are performing a left outer join on:
-
-            A (id, name) = (0, alice), (null, bob)
-            B (id, email) = (0, alice@example.com), (null, placeholder@example.com)
-
-           The final output should be:
-
-           joined (A.id, A.name, B.email) = (0, alice, alice@example.com), (null, bob, null, null)
-
-           that is, the bob record should not be joined to the placeholder@example email, even though both their
-           ids are null.
-         */
-        if (condition.getOp() == JoinCondition.Op.KEY_EQUALITY && !((JoinCondition.OnKeys) condition).isNullSafe()) {
-          filterNullKeys = joinDefinition.getStages().stream()
-            .filter(s -> !s.isRequired())
-            .map(JoinStage::getStageName)
-            .anyMatch(s -> s.equals(inputStageName));
-        }
-        joiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
-      } else {
-        joiner = (BatchJoiner<JOIN_KEY, INPUT_RECORD, Object>) plugin;
-        BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
-        joiner.initialize(context);
-      }
-
-      joinFunction = new TrackedTransform<>(new JoinOnTransform<>(joiner, inputStageName, filterNullKeys),
+      joinFunction = new TrackedTransform<>(functionCache.getValue(this::createInitializedJoinOnTransform),
                                             pluginFunctionContext.createStageMetrics(),
                                             Constants.Metrics.RECORDS_IN,
                                             null, pluginFunctionContext.getDataTracer(),
@@ -109,6 +70,53 @@ public class JoinOnFunction<JOIN_KEY, INPUT_RECORD>
     emitter.reset();
     joinFunction.transform(input, emitter);
     return emitter.getEntries();
+  }
+
+  private JoinOnTransform<INPUT_RECORD, JOIN_KEY> createInitializedJoinOnTransform() throws Exception {
+    Object plugin = pluginFunctionContext.createPlugin();
+    BatchJoiner<JOIN_KEY, INPUT_RECORD, Object> joiner;
+    boolean filterNullKeys = false;
+    if (plugin instanceof BatchAutoJoiner) {
+      BatchAutoJoiner autoJoiner = (BatchAutoJoiner) plugin;
+      AutoJoinerContext autoJoinerContext = pluginFunctionContext.createAutoJoinerContext();
+      JoinDefinition joinDefinition = autoJoiner.define(autoJoinerContext);
+      autoJoinerContext.getFailureCollector().getOrThrowException();
+      String stageName = pluginFunctionContext.getStageName();
+      if (joinDefinition == null) {
+        throw new IllegalStateException(String.format(
+          "Join stage '%s' did not specify a join definition. " +
+            "Check with the plugin developer to ensure it is implemented correctly.", stageName));
+      }
+      JoinCondition condition = joinDefinition.getCondition();
+      /*
+         Filter out the record if it comes from an optional stage
+         and the key is null, or if any of the fields in the key is null.
+         For example, suppose we are performing a left outer join on:
+
+          A (id, name) = (0, alice), (null, bob)
+          B (id, email) = (0, alice@example.com), (null, placeholder@example.com)
+
+         The final output should be:
+
+         joined (A.id, A.name, B.email) = (0, alice, alice@example.com), (null, bob, null, null)
+
+         that is, the bob record should not be joined to the placeholder@example email, even though both their
+         ids are null.
+       */
+      if (condition.getOp() == JoinCondition.Op.KEY_EQUALITY && !((JoinCondition.OnKeys) condition).isNullSafe()) {
+        filterNullKeys = joinDefinition.getStages().stream()
+          .filter(s -> !s.isRequired())
+          .map(JoinStage::getStageName)
+          .anyMatch(s -> s.equals(inputStageName));
+      }
+      joiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
+    } else {
+      joiner = (BatchJoiner<JOIN_KEY, INPUT_RECORD, Object>) plugin;
+      BatchJoinerRuntimeContext context = pluginFunctionContext.createBatchRuntimeContext();
+      joiner.initialize(context);
+    }
+
+    return new JoinOnTransform<>(joiner, inputStageName, filterNullKeys);
   }
 
   private static class JoinOnTransform<INPUT, JOIN_KEY> implements Transformation<INPUT, Tuple2<JOIN_KEY, INPUT>> {

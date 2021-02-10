@@ -35,18 +35,20 @@ import scala.Tuple2;
 public class AggregatorReduceGroupByFunction<GROUP_KEY, GROUP_VAL>
   implements PairFlatMapFunc<GROUP_VAL, GROUP_KEY, GROUP_VAL> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<GROUP_VAL, Tuple2<GROUP_KEY, GROUP_VAL>> groupByFunction;
   private transient DefaultEmitter<Tuple2<GROUP_KEY, GROUP_VAL>> emitter;
 
-  public AggregatorReduceGroupByFunction(PluginFunctionContext pluginFunctionContext) {
+  public AggregatorReduceGroupByFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<Tuple2<GROUP_KEY, GROUP_VAL>> call(GROUP_VAL input) throws Exception {
     if (groupByFunction == null) {
-      BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, ?> aggregator = pluginFunctionContext.createPlugin();
-      aggregator.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      BatchReducibleAggregator<GROUP_KEY, GROUP_VAL, ?, ?> aggregator =
+        pluginFunctionContext.createAndInitializePlugin(functionCache);
       groupByFunction = new TrackedTransform<>(new GroupByTransform<>(aggregator),
                                                pluginFunctionContext.createStageMetrics(),
                                                Constants.Metrics.RECORDS_IN,

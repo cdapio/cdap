@@ -29,18 +29,19 @@ import io.cdap.cdap.etl.spark.CombinedEmitter;
  */
 public class TransformFunction<T> implements FlatMapFunc<T, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<T, Object> transform;
   private transient CombinedEmitter<Object> emitter;
 
-  public TransformFunction(PluginFunctionContext pluginFunctionContext) {
+  public TransformFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(T input) throws Exception {
     if (transform == null) {
-      Transform<T, Object> plugin = pluginFunctionContext.createPlugin();
-      plugin.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      Transform<T, Object> plugin = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedTransform<>(plugin, pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer(),
                                          pluginFunctionContext.getStageStatisticsCollector());

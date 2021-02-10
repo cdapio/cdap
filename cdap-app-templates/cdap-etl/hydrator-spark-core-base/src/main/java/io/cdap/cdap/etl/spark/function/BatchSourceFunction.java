@@ -31,18 +31,19 @@ import scala.Tuple2;
  */
 public class BatchSourceFunction implements FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient Transformation<KeyValue<Object, Object>, Object> transform;
   private transient CombinedEmitter<Object> emitter;
 
-  public BatchSourceFunction(PluginFunctionContext pluginFunctionContext) {
+  public BatchSourceFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<RecordInfo<Object>> call(Tuple2<Object, Object> input) throws Exception {
     if (transform == null) {
-      BatchSource<Object, Object, Object> batchSource = pluginFunctionContext.createPlugin();
-      batchSource.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      BatchSource<Object, Object, Object> batchSource = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedTransform<>(batchSource,
                                          pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer(),

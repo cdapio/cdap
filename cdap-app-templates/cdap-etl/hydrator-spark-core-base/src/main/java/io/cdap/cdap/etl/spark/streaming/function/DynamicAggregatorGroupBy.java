@@ -18,6 +18,7 @@ package io.cdap.cdap.etl.spark.streaming.function;
 
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.function.AggregatorGroupByFunction;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.streaming.DynamicDriverContext;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -35,17 +36,19 @@ import org.apache.spark.streaming.Time;
 public class DynamicAggregatorGroupBy<GROUP_KEY, GROUP_VAL>
   implements Function2<JavaRDD<GROUP_VAL>, Time, JavaPairRDD<GROUP_KEY, GROUP_VAL>> {
   private final DynamicDriverContext dynamicDriverContext;
+  private final FunctionCache functionCache;
   private transient PairFlatMapFunction<GROUP_VAL, GROUP_KEY, GROUP_VAL> function;
 
-  public DynamicAggregatorGroupBy(DynamicDriverContext dynamicDriverContext) {
+  public DynamicAggregatorGroupBy(DynamicDriverContext dynamicDriverContext, FunctionCache functionCache) {
     this.dynamicDriverContext = dynamicDriverContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public JavaPairRDD<GROUP_KEY, GROUP_VAL> call(JavaRDD<GROUP_VAL> input, Time batchTime) throws Exception {
     if (function == null) {
-      function = Compat.convert(
-        new AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>(dynamicDriverContext.getPluginFunctionContext()));
+      function = Compat.convert(new AggregatorGroupByFunction<GROUP_KEY, GROUP_VAL>(
+        dynamicDriverContext.getPluginFunctionContext(), functionCache));
     }
     return input.flatMapToPair(function);
   }

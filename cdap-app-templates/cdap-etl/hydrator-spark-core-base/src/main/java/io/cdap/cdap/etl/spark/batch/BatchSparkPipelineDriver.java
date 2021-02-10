@@ -23,7 +23,6 @@ import io.cdap.cdap.api.Transactionals;
 import io.cdap.cdap.api.TxRunnable;
 import io.cdap.cdap.api.data.DatasetContext;
 import io.cdap.cdap.api.data.batch.InputFormatProvider;
-import io.cdap.cdap.api.data.batch.OutputFormatProvider;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.JavaSparkMain;
@@ -50,7 +49,9 @@ import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.internal.io.SchemaTypeAdapter;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.SQLContext;
+import scala.Tuple2;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -82,9 +83,12 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   @Override
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec, StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
+      Compat.convert(new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache()));
     return new RDDCollection<>(sec, jsc, new SQLContext(jsc), datasetContext, sinkFactory,
-                               sourceFactory.createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-                                 .flatMap(Compat.convert(new BatchSourceFunction(pluginFunctionContext))));
+                               sourceFactory
+                                 .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+                                 .flatMap(sourceFunction));
   }
 
   @Override
@@ -93,7 +97,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
                                                            StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     return inputCollection.flatMapToPair(
-      Compat.convert(new JoinOnFunction<>(pluginFunctionContext, inputStageName)));
+      Compat.convert(new JoinOnFunction<>(pluginFunctionContext, functionCacheFactory.newCache(), inputStageName)));
   }
 
   @Override
@@ -102,7 +106,8 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
     SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
     StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
-    return joinedInputs.flatMap(Compat.convert(new JoinMergeFunction<>(pluginFunctionContext)));
+    return joinedInputs.flatMap(Compat.convert(new JoinMergeFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache())));
   }
 
   @Override

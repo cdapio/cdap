@@ -33,18 +33,19 @@ import scala.Tuple2;
  */
 public class BatchSinkFunction<IN, OUT_KEY, OUT_VAL> implements PairFlatMapFunc<IN, OUT_KEY, OUT_VAL> {
   private final PluginFunctionContext pluginFunctionContext;
+  private final FunctionCache functionCache;
   private transient TrackedTransform<IN, KeyValue<OUT_KEY, OUT_VAL>> transform;
   private transient TransformingEmitter<KeyValue<OUT_KEY, OUT_VAL>, Tuple2<OUT_KEY, OUT_VAL>> emitter;
 
-  public BatchSinkFunction(PluginFunctionContext pluginFunctionContext) {
+  public BatchSinkFunction(PluginFunctionContext pluginFunctionContext, FunctionCache functionCache) {
     this.pluginFunctionContext = pluginFunctionContext;
+    this.functionCache = functionCache;
   }
 
   @Override
   public Iterable<Tuple2<OUT_KEY, OUT_VAL>> call(IN input) throws Exception {
     if (transform == null) {
-      BatchSink<IN, OUT_KEY, OUT_VAL> batchSink = pluginFunctionContext.createPlugin();
-      batchSink.initialize(pluginFunctionContext.createBatchRuntimeContext());
+      BatchSink<IN, OUT_KEY, OUT_VAL> batchSink = pluginFunctionContext.createAndInitializePlugin(functionCache);
       transform = new TrackedTransform<>(batchSink, pluginFunctionContext.createStageMetrics(),
                                          pluginFunctionContext.getDataTracer(),
                                          pluginFunctionContext.getStageStatisticsCollector());
