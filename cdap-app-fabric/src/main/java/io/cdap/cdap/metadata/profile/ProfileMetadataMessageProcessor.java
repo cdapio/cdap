@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.metadata.profile;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
@@ -24,11 +25,9 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.config.PreferencesTable;
 import io.cdap.cdap.data2.metadata.writer.MetadataMessage;
 import io.cdap.cdap.internal.app.ApplicationSpecificationAdapter;
@@ -128,6 +127,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
           emitPluginCountMetric();
+
+          ApplicationSpecification spec = message.getPayload(GSON, ApplicationSpecification.class);
+          emitApplicationPluginCountMetric(spec);
         }
         break;
       case ENTITY_DELETION:
@@ -135,10 +137,10 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
           ApplicationSpecification spec = message.getPayload(GSON, ApplicationSpecification.class);
-          Set<ImmutablePair<String, String>> deletedPlugins = spec.getPlugins().entrySet().stream()
+          Set<ImmutableList<String>> deletedPlugins = spec.getPlugins().entrySet().stream()
             .map(Map.Entry::getValue)
-            .map(Plugin::getPluginClass)
-            .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+            .map(e -> ImmutableList.of(e.getPluginClass().getName(), e.getPluginClass().getType(),
+                                       e.getArtifactId().getVersion().getVersion()))
             .collect(Collectors.toSet());
           emitPluginCountMetric(deletedPlugins);
         }
@@ -314,8 +316,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   }
 
   /**
-   * Get the profile id for the provided entity id from the resolved preferences from preference dataset,
-   * if no profile is inside, it will return the default profile
+   * Get the profile id for the provided entity id from the resolved preferences from preference dataset, if no profile
+   * is inside, it will return the default profile
    *
    * @param entityId entity id to lookup the profile id
    * @return the profile id which will be used by this entity id, default profile if not find
@@ -379,26 +381,38 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     }
   }
 
+  /**
+   * Emit the application count metric.
+   *
+   * @param spec
+   */
+  private void emitApplicationPluginCountMetric(ApplicationSpecification spec) {
+    metricsCollectionService
+      .getContext(Collections.singletonMap(Constants.Metrics.Tag.APP, spec.getName()))
+      .gauge(Constants.Metrics.Program.APPLICATION_PLUGIN_COUNT, spec.getPlugins().size());
+  }
+
   private void emitPluginCountMetric() {
     emitPluginCountMetric(null);
   }
 
-  private void emitPluginCountMetric(Set<ImmutablePair<String, String>> deletedPlugins) {
+  private void emitPluginCountMetric(Set<ImmutableList<String>> deletedPlugins) {
     try {
-      List<ImmutablePair<String, String>> remainingPlugins = appMetadataStore.getAllApplications().stream()
+      List<ImmutableList<String>> remainingPlugins = appMetadataStore.getAllApplications().stream()
         .map(ApplicationMeta::getSpec)
         .map(ApplicationSpecification::getPlugins)
         .map(Map::values)
         .flatMap(Collection::stream)
-        .map(Plugin::getPluginClass)
-        .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+        .map(p -> ImmutableList
+          .of(p.getPluginClass().getName(), p.getPluginClass().getType(), p.getArtifactId().getVersion().getVersion()))
         .collect(Collectors.toList());
 
-      Map<ImmutablePair<String, String>, Long> pluginCounts = remainingPlugins.stream()
+      Map<ImmutableList<String>, Long> pluginCounts = remainingPlugins.stream()
         .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
-      for (Map.Entry<ImmutablePair<String, String>, Long> entry : pluginCounts.entrySet()) {
-        Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().getFirst(),
-                                                   Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().getSecond());
+      for (Map.Entry<ImmutableList<String>, Long> entry : pluginCounts.entrySet()) {
+        Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().get(0),
+                                                   Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().get(1),
+                                                   Constants.Metrics.Tag.PLUGIN_VERSION, entry.getKey().get(2));
         metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, entry.getValue());
       }
 
@@ -407,9 +421,10 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       }
 
       // emit 0 metric for deleted plugins
-      for (ImmutablePair<String, String> pair: Sets.difference(deletedPlugins, Sets.newHashSet(remainingPlugins))) {
-        Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, pair.getFirst(),
-                                                   Constants.Metrics.Tag.PLUGIN_TYPE, pair.getSecond());
+      for (ImmutableList<String> list : Sets.difference(deletedPlugins, Sets.newHashSet(remainingPlugins))) {
+        Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, list.get(0),
+                                                   Constants.Metrics.Tag.PLUGIN_TYPE, list.get(1),
+                                                   Constants.Metrics.Tag.PLUGIN_VERSION, list.get(2));
         metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, 0);
       }
     } catch (IOException e) {

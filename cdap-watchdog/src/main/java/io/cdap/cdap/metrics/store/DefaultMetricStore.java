@@ -196,10 +196,10 @@ public class DefaultMetricStore implements MetricStore {
       ImmutableList.of(Constants.Metrics.Tag.NAMESPACE, Constants.Metrics.Tag.COMPONENT)));
 
     // Plugins:
-    aggs.put(BY_PLUGIN, new DefaultAggregation(
-      // Plugin name and plugin type are required dimensions as they uniquely identify a plugin
-      ImmutableList.of(Constants.Metrics.Tag.PLUGIN_NAME, Constants.Metrics.Tag.PLUGIN_TYPE),
-      ImmutableList.of(Constants.Metrics.Tag.PLUGIN_NAME, Constants.Metrics.Tag.PLUGIN_TYPE)));
+    // Plugin name, plugin type and plugin version are required dimensions as they uniquely identify a plugin
+    ImmutableList<String> byPluginList = ImmutableList
+      .of(Constants.Metrics.Tag.PLUGIN_NAME, Constants.Metrics.Tag.PLUGIN_TYPE, Constants.Metrics.Tag.PLUGIN_VERSION);
+    aggs.put(BY_PLUGIN, new DefaultAggregation(byPluginList, byPluginList));
 
     AGGREGATIONS = Collections.unmodifiableMap(aggs);
   }
@@ -247,7 +247,7 @@ public class DefaultMetricStore implements MetricStore {
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
   }
-  
+
   @Override
   public void add(MetricValues metricValues) {
     add(ImmutableList.of(metricValues));

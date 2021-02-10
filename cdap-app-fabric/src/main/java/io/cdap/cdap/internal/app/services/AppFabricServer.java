@@ -24,7 +24,6 @@ import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
-import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -36,7 +35,6 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.metrics.MetricsReporterHook;
 import io.cdap.cdap.common.security.HttpsEnabler;
-import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
@@ -190,28 +188,27 @@ public class AppFabricServer extends AbstractIdleService {
                                                                       applicationCount);
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
                                                                       namespaceCount);
-                                                                      count);
 
-    Map<ImmutablePair<String, String>, Long> pluginCounts = TransactionRunners.run(transactionRunner,
-                                                            (TxCallable<Map<ImmutablePair<String, String>, Long>>)
-                                                              context ->
-                                                              getPluginCounts(AppMetadataStore.create(context)));
-    for (Map.Entry<ImmutablePair<String, String>, Long> entry : pluginCounts.entrySet()) {
-      Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().getFirst(),
-                                                 Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().getSecond());
+    Map<ImmutableList<String>, Long> pluginCounts = TransactionRunners
+      .run(transactionRunner,
+           (TxCallable<Map<ImmutableList<String>, Long>>) context -> getPluginCounts(AppMetadataStore.create(context)));
+    for (Map.Entry<ImmutableList<String>, Long> entry : pluginCounts.entrySet()) {
+      Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().get(0),
+                                                 Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().get(1),
+                                                 Constants.Metrics.Tag.PLUGIN_VERSION, entry.getKey().get(2));
 
       metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, entry.getValue());
     }
   }
 
-  private Map<ImmutablePair<String, String>, Long> getPluginCounts(AppMetadataStore appMetadataStore)
+  private Map<ImmutableList<String>, Long> getPluginCounts(AppMetadataStore appMetadataStore)
     throws IOException {
     return appMetadataStore.getAllApplications().stream().map(ApplicationMeta::getSpec)
       .map(ApplicationSpecification::getPlugins)
       .map(Map::values)
       .flatMap(Collection::stream)
-      .map(Plugin::getPluginClass)
-      .map(e -> ImmutablePair.of(e.getName(), e.getType()))
+      .map(p -> ImmutableList
+        .of(p.getPluginClass().getName(), p.getPluginClass().getType(), p.getArtifactId().getVersion().getVersion()))
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
   }
 

@@ -729,6 +729,7 @@ public final class Constants {
       public static final String PROGRAM_ENTITY = "ent";
       public static final String PLUGIN_NAME = "plg";
       public static final String PLUGIN_TYPE = "plt";
+      public static final String PLUGIN_VERSION = "plv";
     }
 
     /**
@@ -787,6 +788,7 @@ public final class Constants {
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
       public static final String PLUGIN_COUNT = "plugin.count";
+      public static final String APPLICATION_PLUGIN_COUNT = "application.plugin.count";
     }
 
     /**
