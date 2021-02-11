@@ -70,6 +70,7 @@ import javax.ws.rs.PathParam;
 public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   private static final Gson GSON = new GsonBuilder()
     .registerTypeAdapter(Schema.class, new SchemaTypeAdapter())
+    .serializeNulls()
     .create();
   private static final Type APP_REQUEST_TYPE = new TypeToken<AppRequest<JsonObject>>() { }.getType();
 
