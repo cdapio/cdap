@@ -34,7 +34,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * Utility to encode and decode {@link AccessToken} and {@link AccessTokenIdentifier} instances to and from
+ * Utility to encode and decode {@link AccessToken} and {@link UserIdentity} instances to and from
  * byte array representations.
  */
 public class AccessTokenCodec implements Codec<AccessToken> {

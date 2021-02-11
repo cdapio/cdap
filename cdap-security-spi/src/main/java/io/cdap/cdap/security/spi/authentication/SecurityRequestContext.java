@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2016 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,6 +24,7 @@ import javax.annotation.Nullable;
  */
 public final class SecurityRequestContext {
   private static final ThreadLocal<String> userId = new InheritableThreadLocal<>();
+  private static final ThreadLocal<String> userCredential = new InheritableThreadLocal<>();
   private static final ThreadLocal<String> userIP = new InheritableThreadLocal<>();
 
   private SecurityRequestContext() {
@@ -35,6 +36,14 @@ public final class SecurityRequestContext {
   @Nullable
   public static String getUserId() {
     return userId.get();
+  }
+
+  /**
+   * @return the user credential set on the current thread or null if user credential is not set
+   */
+  @Nullable
+  public static String getUserCredential() {
+    return userCredential.get();
   }
 
   /**
@@ -55,6 +64,15 @@ public final class SecurityRequestContext {
   }
 
   /**
+   * Set the user credential on the current thread.
+   *
+   * @param userCredentialParam user credential to be set
+   */
+  public static void setUserCredential(@Nullable String userCredentialParam) {
+    userCredential.set(userCredentialParam);
+  }
+
+  /**
    * Set the userIP on the current thread.
    *
    * @param userIPParam userIP to be set
@@ -67,6 +85,6 @@ public final class SecurityRequestContext {
    * Returns a {@link Principal} for the user set on the current thread
    */
   public static Principal toPrincipal() {
-    return new Principal(userId.get(), Principal.PrincipalType.USER);
+    return new Principal(userId.get(), Principal.PrincipalType.USER, userCredential.get());
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -91,6 +91,7 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
+import io.cdap.cdap.security.auth.AuthenticationMode;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
@@ -137,6 +138,7 @@ public class StandaloneMain {
   private final InMemoryTransactionService txService;
   private final MetadataService metadataService;
   private final boolean securityEnabled;
+  private final AuthenticationMode authenticationMode;
   private final boolean sslEnabled;
   private final CConfiguration cConf;
   private final DatasetService datasetService;
@@ -199,7 +201,9 @@ public class StandaloneMain {
 
     sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
     securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    if (securityEnabled) {
+    authenticationMode = cConf.getEnum(Constants.Security.Authentication.AUTHENTICATION_MODE,
+                                       AuthenticationMode.MANAGED);
+    if (securityEnabled && authenticationMode.equals(AuthenticationMode.MANAGED)) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
@@ -293,7 +297,7 @@ public class StandaloneMain {
       userInterfaceService.startAndWait();
     }
 
-    if (securityEnabled) {
+    if (securityEnabled && authenticationMode.equals(AuthenticationMode.MANAGED)) {
       externalAuthenticationServer.startAndWait();
     }
 
@@ -361,7 +365,7 @@ public class StandaloneMain {
         txService.stopAndWait();
       }
 
-      if (securityEnabled) {
+      if (securityEnabled && authenticationMode.equals(AuthenticationMode.MANAGED)) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
       }

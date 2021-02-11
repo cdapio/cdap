@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,10 +30,10 @@ import java.security.InvalidKeyException;
 public class TokenManager extends AbstractIdleService {
 
   protected final KeyManager keyManager;
-  private final Codec<AccessTokenIdentifier> identifierCodec;
+  private final Codec<UserIdentity> identifierCodec;
 
   @Inject
-  public TokenManager(KeyManager keyManager, Codec<AccessTokenIdentifier> identifierCodec) {
+  public TokenManager(KeyManager keyManager, Codec<UserIdentity> identifierCodec) {
     this.keyManager = keyManager;
     this.identifierCodec = identifierCodec;
   }
@@ -53,7 +53,7 @@ public class TokenManager extends AbstractIdleService {
    * @param identifier Verified identity for which a token should be generated.
    * @return A token containing the verified identify and a digest of its contents.
    */
-  public AccessToken signIdentifier(AccessTokenIdentifier identifier) {
+  public AccessToken signIdentifier(UserIdentity identifier) {
     try {
       KeyManager.DigestId digest = keyManager.generateMAC(identifierCodec.encode(identifier));
       return new AccessToken(identifier, digest.getId(), digest.getDigest());

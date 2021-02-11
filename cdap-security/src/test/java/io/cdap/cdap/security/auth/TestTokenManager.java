@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -49,15 +49,15 @@ public abstract class TestTokenManager {
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
-    AccessTokenIdentifier ident1 = new AccessTokenIdentifier(user, groups,
-                                                             now, now + TOKEN_DURATION);
+    UserIdentity ident1 = new UserIdentity(user, groups,
+                                           now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     LOG.info("Signed token is: " + Bytes.toStringBinary(tokenCodec.encode(token1)));
     // should be valid since we just signed it
     tokenManager.validateSecret(token1);
 
     // test token expiration
-    AccessTokenIdentifier expiredIdent = new AccessTokenIdentifier(user, groups, now - 1000, now - 1);
+    UserIdentity expiredIdent = new UserIdentity(user, groups, now - 1000, now - 1);
     AccessToken expiredToken = tokenManager.signIdentifier(expiredIdent);
     try {
       tokenManager.validateSecret(expiredToken);
@@ -98,8 +98,8 @@ public abstract class TestTokenManager {
     long now = System.currentTimeMillis();
     String user = "testuser";
     List<String> groups = Lists.newArrayList("users", "admins");
-    AccessTokenIdentifier ident1 = new AccessTokenIdentifier(user, groups,
-                                                             now, now + TOKEN_DURATION);
+    UserIdentity ident1 = new UserIdentity(user, groups,
+                                           now, now + TOKEN_DURATION);
     AccessToken token1 = tokenManager.signIdentifier(ident1);
     byte[] tokenBytes = tokenCodec.encode(token1);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -90,15 +90,15 @@ public class DistributedKeyManagerTest extends TestTokenManager {
     TimeUnit.MILLISECONDS.sleep(1000);
 
     TestingTokenManager tokenManager1 =
-      new TestingTokenManager(manager1, injector1.getInstance(AccessTokenIdentifierCodec.class));
+      new TestingTokenManager(manager1, injector1.getInstance(UserIdentityCodec.class));
     TestingTokenManager tokenManager2 =
-      new TestingTokenManager(manager2, injector2.getInstance(AccessTokenIdentifierCodec.class));
+      new TestingTokenManager(manager2, injector2.getInstance(UserIdentityCodec.class));
     tokenManager1.startAndWait();
     tokenManager2.startAndWait();
 
     long now = System.currentTimeMillis();
-    AccessTokenIdentifier ident1 = new AccessTokenIdentifier("testuser", Lists.newArrayList("users", "admins"),
-                                                             now, now + 60 * 60 * 1000);
+    UserIdentity ident1 = new UserIdentity("testuser", Lists.newArrayList("users", "admins"),
+                                           now, now + 60 * 60 * 1000);
     AccessToken token1 = tokenManager1.signIdentifier(ident1);
     // make sure the second token manager has the secret key required to validate the signature
     tokenManager2.waitForKey(tokenManager1.getCurrentKey().getKeyId(), 2000, TimeUnit.MILLISECONDS);
@@ -119,6 +119,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   public void testGetACLs() throws Exception {
     CConfiguration kerbConf = CConfiguration.create();
     kerbConf.set(Constants.Security.KERBEROS_ENABLED, "true");
+    kerbConf.set(Constants.Security.Authentication.AUTHENTICATION_MODE, "MANAGED");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
     Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, DistributedKeyManager.getACLs(kerbConf));
@@ -131,7 +132,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   @Override
   protected ImmutablePair<TokenManager, Codec<AccessToken>> getTokenManagerAndCodec() throws Exception {
     DistributedKeyManager keyManager = getKeyManager(injector1, true);
-    TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(AccessTokenIdentifierCodec.class));
+    TokenManager tokenManager = new TokenManager(keyManager, injector1.getInstance(UserIdentityCodec.class));
     tokenManager.startAndWait();
     return new ImmutablePair<>(tokenManager, injector1.getInstance(AccessTokenCodec.class));
   }
@@ -166,7 +167,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   }
 
   private static class TestingTokenManager extends TokenManager {
-    private TestingTokenManager(KeyManager keyManager, Codec<AccessTokenIdentifier> identifierCodec) {
+    private TestingTokenManager(KeyManager keyManager, Codec<UserIdentity> identifierCodec) {
       super(keyManager, identifierCodec);
     }
 

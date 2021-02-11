@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -24,9 +24,11 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
-import io.cdap.cdap.security.auth.AccessTokenTransformer;
-import io.cdap.cdap.security.auth.TokenState;
 import io.cdap.cdap.security.auth.TokenValidator;
+import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
+import io.cdap.cdap.security.auth.UserIdentityExtractionState;
+import io.cdap.cdap.security.auth.UserIdentityExtractor;
+import io.cdap.cdap.security.auth.UserIdentityPair;
 import io.cdap.cdap.security.server.GrantAccessToken;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -74,24 +76,22 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
 
   private final CConfiguration cConf;
   private final String realm;
-  private final TokenValidator tokenValidator;
   private final Pattern bypassPattern;
   private final boolean auditLogEnabled;
   private final List<String> authServerURLs;
   private final DiscoveryServiceClient discoveryServiceClient;
-  private final AccessTokenTransformer tokenTransformer;
+  private final UserIdentityExtractor userIdentityExtractor;
 
   public AuthenticationHandler(CConfiguration cConf, TokenValidator tokenValidator,
                                DiscoveryServiceClient discoveryServiceClient,
-                               AccessTokenTransformer tokenTransformer) {
+                               UserIdentityExtractor userIdentityExtractor) {
     this.cConf = cConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
-    this.tokenValidator = tokenValidator;
     this.bypassPattern = createBypassPattern(cConf);
     this.auditLogEnabled = cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED);
     this.authServerURLs = getConfiguredAuthServerURLs(cConf);
     this.discoveryServiceClient = discoveryServiceClient;
-    this.tokenTransformer = tokenTransformer;
+    this.userIdentityExtractor = userIdentityExtractor;
   }
 
   @Override
@@ -108,8 +108,23 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       ctx.fireChannelRead(msg);
       return;
     }
-    TokenState tokenState = validateAccessToken(request, ctx.channel());
-    if (tokenState.isValid()) {
+    UserIdentityExtractionResponse extractionResponse = userIdentityExtractor.extract(request);
+    if (extractionResponse.success()) {
+      UserIdentityPair userIdentityPair = extractionResponse.getIdentityPair();
+      // User identity extraction succeeded, so set some header properties and allow the call through
+      request.headers().remove(HttpHeaderNames.AUTHORIZATION);
+      String credential = userIdentityPair.getUserCredential();
+      // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
+      if (cConf.getBoolean(Constants.Security.Authentication.AUTH_PROPAGATE_USER_CREDENTIAL, true) &&
+        credential != null) {
+        request.headers().set(HttpHeaderNames.AUTHORIZATION, "CDAP-verified " + credential);
+      }
+      request.headers().set(Constants.Security.Headers.USER_ID,
+                            userIdentityPair.getUserIdentity().getUsername());
+      String clientIP = Networks.getIP(ctx.channel().remoteAddress());
+      if (clientIP != null) {
+        request.headers().set(Constants.Security.Headers.USER_IP, clientIP);
+      }
       ctx.fireChannelRead(msg);
       return;
     }
@@ -118,16 +133,18 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
     try {
       HttpHeaders headers = new DefaultHttpHeaders();
       JsonObject jsonObject = new JsonObject();
-      if (tokenState == TokenState.MISSING) {
+      if (extractionResponse.getState().equals(UserIdentityExtractionState.ERROR_MISSING_CREDENTIAL)) {
         headers.add(HttpHeaderNames.WWW_AUTHENTICATE, String.format("Bearer realm=\"%s\"", realm));
-        LOG.debug("Authentication failed due to missing token");
+        LOG.debug("Authentication failed due to missing credentials");
       } else {
+        String shortError = extractionResponse.getState().toString();
+        String errorDescription = extractionResponse.getErrorDescription();
         headers.add(HttpHeaderNames.WWW_AUTHENTICATE,
-                    String.format("Bearer realm=\"%s\" error=\"invalid_token\"" +
-                                    " error_description=\"%s\"", realm, tokenState.getMsg()));
-        jsonObject.addProperty("error", "invalid_token");
-        jsonObject.addProperty("error_description", tokenState.getMsg());
-        LOG.debug("Authentication failed due to invalid token, reason={};", tokenState);
+                    String.format("Bearer realm=\"%s\" error=\"%s\" error_description=\"%s\"", realm, shortError,
+                                  errorDescription));
+        jsonObject.addProperty("error", shortError);
+        jsonObject.addProperty("error_description", errorDescription);
+        LOG.debug("Authentication failed due to error {}, reason={};", shortError, errorDescription);
       }
 
       jsonObject.add("auth_uri", getAuthenticationURLs());
@@ -153,55 +170,6 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
    */
   private boolean isBypassed(HttpRequest request) {
     return bypassPattern != null && bypassPattern.matcher(request.uri()).matches();
-  }
-
-  /**
-   * Validates the access token in authorization header.
-   *
-   * @param request the http request. The request headers will be modified if the validation succeeded to carry
-   *                user information extracted from the token.
-   * @return the {@link TokenState} indicating the result of the validation.
-   */
-  private TokenState validateAccessToken(HttpRequest request, Channel channel) {
-    String auth = request.headers().get(HttpHeaderNames.AUTHORIZATION);
-
-    /*
-     * Parse the access token from authorization header.  The header will be in the form:
-     *     Authorization: Bearer TOKEN
-     *
-     * where TOKEN is the base64 encoded serialized AccessToken instance.
-     */
-    String accessToken = null;
-    if (auth != null) {
-      int idx = auth.trim().indexOf(' ');
-      if (idx < 0) {
-        return TokenState.MISSING;
-      }
-
-      accessToken = auth.substring(idx + 1).trim();
-    }
-    TokenState state = tokenValidator.validate(accessToken);
-
-    if (state.isValid()) {
-      try {
-        AccessTokenTransformer.AccessTokenIdentifierPair tokenPair = tokenTransformer.transform(accessToken);
-        // Update message header
-        request.headers().set(HttpHeaderNames.AUTHORIZATION,
-                              "CDAP-verified " + tokenPair.getAccessTokenIdentifierStr());
-        request.headers().set(Constants.Security.Headers.USER_ID,
-                              tokenPair.getAccessTokenIdentifierObj().getUsername());
-        String clientIP = Networks.getIP(channel.remoteAddress());
-        if (clientIP != null) {
-          request.headers().set(Constants.Security.Headers.USER_IP, clientIP);
-        }
-      } catch (Exception e) {
-        // This shouldn't happen in normal case, since the token is already validated
-        LOG.debug("Exception raised when getting token information from a validate token", e);
-        return TokenState.INVALID;
-      }
-    }
-
-    return state;
   }
 
   /**

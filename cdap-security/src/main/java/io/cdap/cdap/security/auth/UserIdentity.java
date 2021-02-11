@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Represents a verified user identity.
  */
-public class AccessTokenIdentifier {
+public class UserIdentity {
   static final class Schemas {
     private static final int VERSION = 1;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
@@ -58,8 +58,8 @@ public class AccessTokenIdentifier {
   private final long issueTimestamp;
   private final long expireTimestamp;
 
-  public AccessTokenIdentifier(String username, Collection<String> groups, long issueTimestamp,
-                               long expireTimestamp) {
+  public UserIdentity(String username, Collection<String> groups, long issueTimestamp,
+                      long expireTimestamp) {
     this.username = username;
     this.groups = ImmutableList.copyOf(groups);
     this.issueTimestamp = issueTimestamp;
@@ -96,10 +96,10 @@ public class AccessTokenIdentifier {
 
   @Override
   public boolean equals(Object other) {
-    if (other == null || !(other instanceof AccessTokenIdentifier)) {
+    if (other == null || !(other instanceof UserIdentity)) {
       return false;
     }
-    AccessTokenIdentifier otherToken = (AccessTokenIdentifier) other;
+    UserIdentity otherToken = (UserIdentity) other;
 
     return Objects.equal(username, otherToken.username) &&
       Objects.equal(groups, otherToken.groups) &&
