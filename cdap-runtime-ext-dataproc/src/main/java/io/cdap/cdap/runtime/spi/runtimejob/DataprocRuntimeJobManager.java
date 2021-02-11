@@ -70,8 +70,8 @@ import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 
 /**
- * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and
- * managing it. An instance of this class is created by {@code DataprocProvisioner}.
+ * Dataproc runtime job manager. This class is responsible for launching a hadoop job on dataproc cluster and managing
+ * it. An instance of this class is created by {@code DataprocProvisioner}.
  */
 public class DataprocRuntimeJobManager implements RuntimeJobManager {
 
@@ -85,6 +85,10 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
   private static final String CDAP_RUNTIME_PROGRAM = "cdap.runtime.program";
   private static final String CDAP_RUNTIME_RUNID = "cdap.runtime.runid";
   private static final Pattern DATAPROC_JOB_ID_PATTERN = Pattern.compile("[a-zA-Z0-9_-]{0,100}$");
+
+  //dataproc job labels (must match '[\p{Ll}\p{Lo}][\p{Ll}\p{Lo}\p{N}_-]{0,62}' pattern)
+  private static final String LABEL_CDAP_PROGRAM = "cdap-program";
+  private static final String LABEL_CDAP_PROGRAM_TYPE = "cdap-program-type";
 
   private final ProvisionerContext provisionerContext;
   private final String clusterName;
@@ -245,7 +249,7 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
     String jobFilter = Joiner.on(" AND ").join(filters);
 
     LOG.debug("Getting a list of jobs under project {}, region {}, cluster {} with filter {}.", projectId, region,
-             clusterName, jobFilter);
+              clusterName, jobFilter);
     JobControllerClient.ListJobsPagedResponse listJobsPagedResponse =
       getJobControllerClient().listJobs(
         ListJobsRequest.newBuilder()
@@ -396,6 +400,11 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
                 .setPlacement(JobPlacement.newBuilder().setClusterName(clusterName).build())
                 // add same labels as provisioned cluster
                 .putAllLabels(labels)
+                // Job label values must match the pattern '[\p{Ll}\p{Lo}\p{N}_-]{0,63}'
+                // Since program name and type are class names they should follow that pattern once we remove all
+                // capitals
+                .putLabels(LABEL_CDAP_PROGRAM, runInfo.getProgram().toLowerCase())
+                .putLabels(LABEL_CDAP_PROGRAM_TYPE, runInfo.getProgramType().toLowerCase())
                 .setHadoopJob(hadoopJobBuilder.build())
                 .build())
       .build();
@@ -448,7 +457,6 @@ public class DataprocRuntimeJobManager implements RuntimeJobManager {
         throw new IllegalStateException(String.format("Unsupported job state %s of the dataproc job %s on cluster %s.",
                                                       job.getStatus().getState(), job.getReference().getJobId(),
                                                       job.getPlacement().getClusterName()));
-
     }
     return runtimeJobStatus;
   }
