@@ -126,9 +126,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         updateProfileMetadata(entityId, message);
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
-          emitPluginCountMetric();
-
+          //          emitPluginCountMetric();
           ApplicationSpecification spec = message.getPayload(GSON, ApplicationSpecification.class);
+          emitPluginCountMetric(spec, true);
           emitApplicationPluginCountMetric(spec);
         }
         break;
@@ -137,12 +137,13 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
           ApplicationSpecification spec = message.getPayload(GSON, ApplicationSpecification.class);
-          Set<ImmutableList<String>> deletedPlugins = spec.getPlugins().entrySet().stream()
-            .map(Map.Entry::getValue)
-            .map(e -> ImmutableList.of(e.getPluginClass().getName(), e.getPluginClass().getType(),
-                                       e.getArtifactId().getVersion().getVersion()))
-            .collect(Collectors.toSet());
-          emitPluginCountMetric(deletedPlugins);
+          //          Set<ImmutableList<String>> deletedPlugins = spec.getPlugins().entrySet().stream()
+          //            .map(Map.Entry::getValue)
+          //            .map(e -> ImmutableList.of(e.getPluginClass().getName(), e.getPluginClass().getType(),
+          //                                       e.getArtifactId().getVersion().getVersion()))
+          //            .collect(Collectors.toSet());
+          emitPluginCountMetric(spec, false);
+          //          emitPluginCountMetric(deletedPlugins);
         }
         break;
 
@@ -387,6 +388,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
    * @param spec
    */
   private void emitApplicationPluginCountMetric(ApplicationSpecification spec) {
+
     metricsCollectionService
       .getContext(Collections.singletonMap(Constants.Metrics.Tag.APP, spec.getName()))
       .gauge(Constants.Metrics.Program.APPLICATION_PLUGIN_COUNT, spec.getPlugins().size());
@@ -394,6 +396,22 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
 
   private void emitPluginCountMetric() {
     emitPluginCountMetric(null);
+  }
+
+  private void emitPluginCountMetric(ApplicationSpecification spec, boolean increment) {
+    Map<ImmutableList<String>, Long> pluginCounts = spec.getPlugins().values().stream()
+      .map(p -> ImmutableList
+        .of(p.getPluginClass().getName(), p.getPluginClass().getType(), p.getArtifactId().getVersion().getVersion()))
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    int multiplier = increment ? 1 : -1;
+    for (Map.Entry<ImmutableList<String>, Long> entry : pluginCounts.entrySet()) {
+      Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().get(0),
+                                                 Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().get(1),
+                                                 Constants.Metrics.Tag.PLUGIN_VERSION, entry.getKey().get(2));
+      metricsCollectionService.getContext(tags)
+        .increment(Constants.Metrics.Program.PLUGIN_COUNT, multiplier * entry.getValue());
+    }
   }
 
   private void emitPluginCountMetric(Set<ImmutableList<String>> deletedPlugins) {
