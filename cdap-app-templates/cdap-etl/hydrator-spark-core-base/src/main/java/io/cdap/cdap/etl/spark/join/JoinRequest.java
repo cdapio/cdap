@@ -24,7 +24,7 @@ import java.util.List;
 import javax.annotation.Nullable;
 
 /**
- * Request to join some collection to another collection.
+ * Request to join some collection to another collection on key equality.
  */
 public class JoinRequest {
   private final String stageName;

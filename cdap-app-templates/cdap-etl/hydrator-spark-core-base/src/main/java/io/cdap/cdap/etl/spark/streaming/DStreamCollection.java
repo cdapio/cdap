@@ -38,6 +38,7 @@ import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRuntime;
 import io.cdap.cdap.etl.spark.batch.BasicSparkExecutionPluginContext;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
+import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.ComputeTransformFunction;
 import io.cdap.cdap.etl.spark.streaming.function.CountingTransformFunction;
@@ -224,6 +225,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   @Override
   public SparkCollection<T> join(JoinRequest joinRequest) {
     // auto joins are implemented using the JoinerBridge to convert it into a BatchJoiner, so this should never happen
+    throw new UnsupportedOperationException("auto join not supported");
+  }
+
+  @Override
+  public SparkCollection<T> join(JoinExpressionRequest joinRequest) {
+    // auto joins on arbitrary expressions are not supported in streaming, this should have been checked at deploy time
     throw new UnsupportedOperationException("auto join not supported");
   }
 

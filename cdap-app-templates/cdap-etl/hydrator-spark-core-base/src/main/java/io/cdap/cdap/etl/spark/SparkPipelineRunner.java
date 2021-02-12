@@ -75,6 +75,7 @@ import io.cdap.cdap.etl.spark.function.OuterJoinFlattenFunction;
 import io.cdap.cdap.etl.spark.function.OutputPassFilter;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
+import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.streaming.function.RecordInfoWrapper;
 import io.cdap.cdap.etl.validation.LoggingFailureCollector;
@@ -476,13 +477,27 @@ public abstract class SparkPipelineRunner {
     }
   }
 
+  private SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
+                                                 Map<String, SparkCollection<Object>> inputDataCollections,
+                                                 @Nullable Integer numPartitions) {
+    JoinCondition.Op conditionType = joinDefinition.getCondition().getOp();
+    if (conditionType == JoinCondition.Op.KEY_EQUALITY) {
+      return handleAutoJoinOnKeys(stageName, joinDefinition, inputDataCollections, numPartitions);
+    } else if (conditionType == JoinCondition.Op.EXPRESSION) {
+      return handleAutoJoinWithSQL(stageName, joinDefinition, inputDataCollections);
+    }
+
+    // should never happen
+    throw new IllegalStateException(conditionType + " join conditions are not supported");
+  }
+
   /**
    * The purpose of this method is to collect various pieces of information together into a JoinRequest.
    * This amounts to gathering the SparkCollection, schema, join key, and join type for each stage involved in the join.
    */
-  private SparkCollection<Object> handleAutoJoin(String stageName, JoinDefinition joinDefinition,
-                                                 Map<String, SparkCollection<Object>> inputDataCollections,
-                                                 @Nullable Integer numPartitions) {
+  private SparkCollection<Object> handleAutoJoinOnKeys(String stageName, JoinDefinition joinDefinition,
+                                                       Map<String, SparkCollection<Object>> inputDataCollections,
+                                                       @Nullable Integer numPartitions) {
     // sort stages to join so that broadcasts happen last. This is to ensure that the left side is not a broadcast
     // so that we don't try to broadcast both sides of the join. It also causes less data to be shuffled for the
     // non-broadcast joins.
@@ -503,10 +518,6 @@ public abstract class SparkPipelineRunner {
     Schema leftSchema = left.getSchema();
 
     JoinCondition condition = joinDefinition.getCondition();
-    // currently this is the only operation, but check this for future changes
-    if (condition.getOp() != JoinCondition.Op.KEY_EQUALITY) {
-      throw new IllegalStateException("Unsupport join condition operation " + condition.getOp());
-    }
     JoinCondition.OnKeys onKeys = (JoinCondition.OnKeys) condition;
 
     // If this is a join on A.x = B.y = C.z and A.k = B.k = C.k, then stageKeys will look like:
@@ -581,6 +592,39 @@ public abstract class SparkPipelineRunner {
                                               joinDefinition.getOutputSchema(), toJoin, numPartitions,
                                               joinDefinition.getDistribution());
     return leftCollection.join(joinRequest);
+  }
+
+  /*
+      Implement a join by generating a SQL query that Spark will execute.
+      Joins on key equality are not implemented this way because they have special repartitioning
+      that allows them to specify a different number of partitions for different joins in the same pipeline.
+
+      When Spark handles SQL queries, it uses spark.sql.shuffle.partitions number of partitions, which is a global
+      setting that applies to any SQL join in the pipeline.
+   */
+  private SparkCollection<Object> handleAutoJoinWithSQL(String stageName, JoinDefinition joinDefinition,
+                                                        Map<String, SparkCollection<Object>> inputDataCollections) {
+    JoinCondition.OnExpression condition = (JoinCondition.OnExpression) joinDefinition.getCondition();
+    Map<String, String> aliases = condition.getDatasetAliases();
+
+    // earlier validation ensure there are exactly 2 inputs being joined
+    JoinStage leftStage = joinDefinition.getStages().get(0);
+    JoinStage rightStage = joinDefinition.getStages().get(1);
+    String leftStageName = leftStage.getStageName();
+    String rightStageName = rightStage.getStageName();
+
+    SparkCollection<Object> leftData = inputDataCollections.get(leftStageName);
+    JoinCollection leftCollection = new JoinCollection(leftStageName, inputDataCollections.get(leftStageName),
+                                                       leftStage.getSchema(), Collections.emptyList(),
+                                                       leftStage.isRequired(), leftStage.isBroadcast());
+    JoinCollection rightCollection = new JoinCollection(rightStageName, inputDataCollections.get(rightStageName),
+                                                        rightStage.getSchema(), Collections.emptyList(),
+                                                        rightStage.isRequired(), rightStage.isBroadcast());
+    JoinExpressionRequest joinRequest = new JoinExpressionRequest(stageName, joinDefinition.getSelectedFields(),
+                                                                  leftCollection, rightCollection, condition,
+                                                                  joinDefinition.getOutputSchema());
+
+    return leftData.join(joinRequest);
   }
 
   /**

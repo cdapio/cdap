@@ -17,6 +17,7 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.join.error.ExpressionConditionError;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
@@ -96,6 +97,17 @@ public class JoinCondition {
 
     public Map<String, String> getDatasetAliases() {
       return datasetAliases;
+    }
+
+    @Override
+    public Collection<JoinError> validate(List<JoinStage> joinStages) {
+      List<JoinError> errors = new ArrayList<>();
+      if (joinStages.size() != 2) {
+        errors.add(
+          new ExpressionConditionError("Join expressions are only supported for joins between two datasets.", null));
+      }
+      // TODO: (CDAP-17606) validate aliases, schema, etc
+      return errors;
     }
 
     /**

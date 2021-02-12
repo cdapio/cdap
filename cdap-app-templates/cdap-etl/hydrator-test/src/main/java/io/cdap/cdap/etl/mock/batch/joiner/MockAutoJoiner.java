@@ -82,7 +82,8 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     Set<String> broadcast = new HashSet<>(conf.getBroadcast());
     List<JoinField> selectedFields = conf.getSelect();
     boolean shouldGenerateSelected = selectedFields.isEmpty();
-    JoinCondition.OnKeys.Builder condition = JoinCondition.onKeys()
+    JoinCondition condition = conf.getJoinConditionExpr();
+    JoinCondition.OnKeys.Builder conditionBuilder = condition != null ? null : JoinCondition.onKeys()
       .setNullSafe(conf.isNullSafe());
     for (String stageName : conf.getStages()) {
       JoinStage.Builder stageBuilder = JoinStage.builder(inputStages.get(stageName));
@@ -95,7 +96,9 @@ public class MockAutoJoiner extends BatchAutoJoiner {
       JoinStage stage = stageBuilder.build();
       from.add(stage);
 
-      condition.addKey(new JoinKey(stageName, conf.getKey()));
+      if (conditionBuilder != null) {
+        conditionBuilder.addKey(new JoinKey(stageName, conf.getKey()));
+      }
 
       Schema stageSchema = stage.getSchema();
       if (!shouldGenerateSelected || stageSchema == null) {
@@ -109,9 +112,10 @@ public class MockAutoJoiner extends BatchAutoJoiner {
       }
     }
 
+    condition = condition == null ? conditionBuilder.build() : condition;
     JoinDefinition.Builder builder = JoinDefinition.builder()
       .select(selectedFields)
-      .on(condition.build())
+      .on(condition)
       .from(from)
       .setOutputSchemaName(String.join(".", conf.getStages()));
     Schema outputSchema = conf.getSchema();
@@ -140,6 +144,7 @@ public class MockAutoJoiner extends BatchAutoJoiner {
   public static class Conf extends PluginConfig {
     public static final String STAGES = "stages";
     public static final String KEY = "key";
+    public static final String CONDITION_EXPR = "conditionExpr";
     public static final String REQUIRED = "required";
     public static final String NULL_SAFE = "nullSafe";
     public static final String SELECT = "select";
@@ -152,7 +157,11 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     private String stages;
 
     @Macro
+    @Nullable
     private String key;
+
+    @Nullable
+    private String conditionExpr;
 
     @Macro
     @Nullable
@@ -174,6 +183,11 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     private String distributionName;
 
     private Integer distributionSize;
+
+    @Nullable
+    public JoinCondition getJoinConditionExpr() {
+      return conditionExpr == null ? null : GSON.fromJson(conditionExpr, JoinCondition.OnExpression.class);
+    }
 
     public String getDistributionName() {
       return distributionName;
@@ -220,26 +234,35 @@ public class MockAutoJoiner extends BatchAutoJoiner {
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
                                     List<String> broadcast, List<JoinField> select, boolean nullSafe) {
     return new ETLPlugin(NAME, BatchAutoJoiner.PLUGIN_TYPE,
-                         getProperties(stages, key, required, broadcast, select, nullSafe, null));
+                         getProperties(stages, key, required, broadcast, select, nullSafe, null, null));
   }
 
   public static ETLPlugin getPlugin(List<String> stages, List<String> key, List<String> required,
                                     List<JoinField> select, boolean nullSafe, JoinDistribution distribution) {
     return new ETLPlugin(NAME, BatchAutoJoiner.PLUGIN_TYPE,
-                         getProperties(stages, key, required, Collections.emptyList(), select, nullSafe, distribution));
+                         getProperties(stages, key, required, Collections.emptyList(), select, nullSafe, distribution,
+                                       null));
   }
 
   public static Map<String, String> getProperties(List<String> stages, List<String> key, List<String> required,
                                                   List<String> broadcast, List<JoinField> select, boolean nullSafe) {
-    return getProperties(stages, key, required, broadcast, select, nullSafe, null);
+    return getProperties(stages, key, required, broadcast, select, nullSafe, null, null);
   }
+
   public static Map<String, String> getProperties(List<String> stages, List<String> key, List<String> required,
-                                                  List<String> broadcast, List<JoinField> select, boolean nullSafe,
-                                                  JoinDistribution distribution) {
+                                                  List<String> broadcast,
+                                                  List<JoinField> select, boolean nullSafe,
+                                                  @Nullable JoinDistribution distribution,
+                                                  @Nullable JoinCondition.OnExpression condition) {
     Map<String, String> properties = new HashMap<>();
     properties.put(Conf.STAGES, GSON.toJson(stages));
     properties.put(Conf.REQUIRED, GSON.toJson(required));
-    properties.put(Conf.KEY, GSON.toJson(key));
+    if (!key.isEmpty()) {
+      properties.put(Conf.KEY, GSON.toJson(key));
+    }
+    if (condition != null) {
+      properties.put(Conf.CONDITION_EXPR, GSON.toJson(condition));
+    }
     properties.put(Conf.BROADCAST, GSON.toJson(broadcast));
     properties.put(Conf.SELECT, GSON.toJson(select));
     properties.put(Conf.NULL_SAFE, Boolean.toString(nullSafe));
@@ -253,7 +276,7 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     Map<String, PluginPropertyField> properties = new HashMap<>();
     properties.put(Conf.STAGES, new PluginPropertyField(Conf.STAGES, "", "string", true, true));
     properties.put(Conf.REQUIRED, new PluginPropertyField(Conf.REQUIRED, "", "string", false, true));
-    properties.put(Conf.KEY, new PluginPropertyField(Conf.KEY, "", "string", true, true));
+    properties.put(Conf.KEY, new PluginPropertyField(Conf.KEY, "", "string", false, true));
     properties.put(Conf.NULL_SAFE, new PluginPropertyField(Conf.NULL_SAFE, "", "boolean", false, false));
     properties.put(Conf.BROADCAST, new PluginPropertyField(Conf.BROADCAST, "", "string", false, false));
     properties.put(Conf.SELECT, new PluginPropertyField(Conf.SELECT, "", "string", false, true));
@@ -261,6 +284,7 @@ public class MockAutoJoiner extends BatchAutoJoiner {
     properties.put(Conf.DISTRIBUTION_SIZE, new PluginPropertyField(Conf.DISTRIBUTION_SIZE, "", "integer", false,
                                                                    false));
     properties.put(Conf.DISTRIBUTION_NAME, new PluginPropertyField(Conf.DISTRIBUTION_NAME, "", "string", false, false));
+    properties.put(Conf.CONDITION_EXPR, new PluginPropertyField(Conf.CONDITION_EXPR, "", "string", false, false));
     return new PluginClass(BatchJoiner.PLUGIN_TYPE, NAME, "", MockAutoJoiner.class.getName(), "conf", properties);
   }
 }
