@@ -133,7 +133,7 @@
               <goal>copy-resources</goal>
             </goals>
             <configuration>
-              <outputDirectory>${project.build.directory}/generated-sources/hydrator-spark-core-base/src/test</outputDirectory>
+              <outputDirectory>${project.build.directory}/generated-test-sources/hydrator-spark-core-base/src/test</outputDirectory>
               <resources>
                 <resource>
                   <directory>${project.parent.basedir}/hydrator-spark-core-base/src/test</directory>
@@ -196,6 +196,10 @@
             <executions>
               <execution>
                 <id>copy-base</id>
+                <phase>none</phase>
+              </execution>
+              <execution>
+                <id>copy-base-test</id>
                 <phase>none</phase>
               </execution>
             </executions>

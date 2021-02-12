@@ -139,7 +139,7 @@ public class SecretManagerSecureStoreService extends AbstractIdleService impleme
       throw new RuntimeException("Secret manager is either not initialized or not loaded. ");
     }
     NamespaceId namespaceId = new NamespaceId(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
+    if (!NamespaceId.SYSTEM.equals(namespaceId) && !namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
   }

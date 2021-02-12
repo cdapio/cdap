@@ -242,7 +242,7 @@ public class FileSecureStoreService extends AbstractIdleService implements Secur
 
   private void checkNamespaceExists(String namespace) throws Exception {
     NamespaceId namespaceId = new NamespaceId(namespace);
-    if (!namespaceQueryAdmin.exists(namespaceId)) {
+    if (!NamespaceId.SYSTEM.equals(namespaceId) && !namespaceQueryAdmin.exists(namespaceId)) {
       throw new NamespaceNotFoundException(namespaceId);
     }
   }
