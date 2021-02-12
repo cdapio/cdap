@@ -65,11 +65,73 @@ public class JoinCondition {
    * Condition operation.
    */
   public enum Op {
-    KEY_EQUALITY
+    KEY_EQUALITY,
+    EXPRESSION
+  }
+
+  public static OnExpression.Builder onExpression() {
+    return new OnExpression.Builder();
   }
 
   public static OnKeys.Builder onKeys() {
     return new OnKeys.Builder();
+  }
+
+  /**
+   * Join on an arbitrary expression.
+   */
+  public static class OnExpression extends JoinCondition {
+    private final String expression;
+    private final Map<String, String> datasetAliases;
+
+    private OnExpression(Op op, String expression, Map<String, String> datasetAliases) {
+      super(op);
+      this.expression = expression;
+      this.datasetAliases = Collections.unmodifiableMap(new HashMap<>(datasetAliases));
+    }
+
+    public String getExpression() {
+      return expression;
+    }
+
+    public Map<String, String> getDatasetAliases() {
+      return datasetAliases;
+    }
+
+    /**
+     * Builder for expression join conditions
+     */
+    public static class Builder {
+      private String expression;
+      private final Map<String, String> datasetAliases;
+
+      private Builder() {
+        datasetAliases = new HashMap<>();
+      }
+
+      public Builder setExpression(String expression) {
+        this.expression = expression;
+        return this;
+      }
+
+      public Builder setDatasetAliases(Map<String, String> aliases) {
+        this.datasetAliases.clear();
+        this.datasetAliases.putAll(aliases);
+        return this;
+      }
+
+      public Builder addDatasetAlias(String from, String to) {
+        this.datasetAliases.put(from, to);
+        return this;
+      }
+
+      public OnExpression build() {
+        if (expression == null || expression.isEmpty()) {
+          throw new InvalidJoinException("Must specify a join condition.");
+        }
+        return new OnExpression(Op.EXPRESSION, expression, datasetAliases);
+      }
+    }
   }
 
   /**
