@@ -62,11 +62,14 @@ class ColumnsTabRow extends Component {
   }
 
   render() {
-    let rowInfo = this.props.rowInfo || {};
-    let general = rowInfo.general || {};
-    let { empty: empty = 0, 'non-null': nonEmpty = 100 } = general;
+    const rowInfo = this.props.rowInfo || {};
+    const general = rowInfo.general || {};
+    const { empty: empty = 0, 'non-null': nonEmpty = 100 } = general;
 
-    let nonNull = Math.ceil(nonEmpty - empty);
+    // Round number to next lowest .1%
+    // Number.toFixed() can round up and leave .0 on integers
+    const nonNull = Math.floor((nonEmpty - empty) * 10) / 10;
+
     return (
       <CSSTransition in={this.props.isNew} timeout={4000} classNames="is-new" appear>
         <tr
