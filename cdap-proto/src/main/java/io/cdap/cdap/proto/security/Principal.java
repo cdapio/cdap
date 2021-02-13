@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -39,18 +39,24 @@ public class Principal {
   private final String name;
   private final PrincipalType type;
   private final String kerberosPrincipal;
+  private final String credential;
   // This needs to be transient because we don't want this to be populated during deserialization since that
   // value will not be provided by the client.
   private transient int hashCode;
 
   public Principal(String name, PrincipalType type) {
-    this(name, type, null);
+    this(name, type, null, null);
   }
 
-  public Principal(String name, PrincipalType type, @Nullable String kerberosPrincipal) {
+  public Principal(String name, PrincipalType type, @Nullable String credentials) {
+    this(name, type, null, credentials);
+  }
+
+  public Principal(String name, PrincipalType type, @Nullable String kerberosPrincipal, @Nullable String credential) {
     this.name = name;
     this.type = type;
     this.kerberosPrincipal = kerberosPrincipal;
+    this.credential = credential;
   }
 
   public String getName() {
@@ -64,6 +70,11 @@ public class Principal {
   @Nullable
   public String getKerberosPrincipal() {
     return kerberosPrincipal;
+  }
+
+  @Nullable
+  public String getCredential() {
+    return credential;
   }
 
   @Override

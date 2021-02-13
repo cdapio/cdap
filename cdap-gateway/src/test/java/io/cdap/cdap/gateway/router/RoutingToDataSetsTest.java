@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -27,7 +27,7 @@ import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.internal.guice.AppFabricTestModule;
-import io.cdap.cdap.security.auth.AccessTokenTransformer;
+import io.cdap.cdap.security.auth.UserIdentityExtractor;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
@@ -67,7 +67,7 @@ public class RoutingToDataSetsTest {
 
     // Starting router
     DiscoveryServiceClient discoveryServiceClient = injector.getInstance(DiscoveryServiceClient.class);
-    AccessTokenTransformer accessTokenTransformer = injector.getInstance(AccessTokenTransformer.class);
+    UserIdentityExtractor userIdentityExtractor = injector.getInstance(UserIdentityExtractor.class);
 
     SConfiguration sConf = SConfiguration.create();
     cConf.set(Constants.Router.ADDRESS, "localhost");
@@ -76,7 +76,7 @@ public class RoutingToDataSetsTest {
     cConf.setInt(Constants.Router.ROUTER_PORT, port);
     nettyRouter = new NettyRouter(cConf, sConf, InetAddresses.forString("127.0.0.1"),
                                   new RouterServiceLookup(cConf, discoveryServiceClient, new RouterPathLookup()),
-                                  new SuccessTokenValidator(), accessTokenTransformer, discoveryServiceClient);
+                                  new SuccessTokenValidator(), userIdentityExtractor, discoveryServiceClient);
     nettyRouter.startAndWait();
 
     // Starting mock DataSet service

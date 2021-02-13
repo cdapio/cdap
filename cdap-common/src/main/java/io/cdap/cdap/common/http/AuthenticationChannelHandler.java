@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.codec.http.HttpResponseStatus;
@@ -37,6 +38,7 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
   private static final Logger LOG = LoggerFactory.getLogger(AuthenticationChannelHandler.class);
 
   private String currentUserId;
+  private String currentUserCredential;
   private String currentUserIP;
 
   /**
@@ -50,10 +52,22 @@ public class AuthenticationChannelHandler extends ChannelInboundHandlerAdapter {
       HttpRequest request = (HttpRequest) msg;
       currentUserId = request.headers().get(Constants.Security.Headers.USER_ID);
       currentUserIP = request.headers().get(Constants.Security.Headers.USER_IP);
+      String authHeader = request.headers().get(HttpHeaderNames.AUTHORIZATION);
+      if (authHeader != null) {
+        int idx = authHeader.trim().indexOf(' ');
+        if (idx < 0) {
+          LOG.warn("Invalid Authorization header format for {}@{}", currentUserId, currentUserIP);
+        } else {
+          currentUserCredential = authHeader.substring(idx + 1).trim();
+          SecurityRequestContext.setUserCredential(currentUserCredential);
+        }
+      }
+
       SecurityRequestContext.setUserId(currentUserId);
       SecurityRequestContext.setUserIP(currentUserIP);
     } else if (msg instanceof HttpContent) {
       SecurityRequestContext.setUserId(currentUserId);
+      SecurityRequestContext.setUserCredential(currentUserCredential);
       SecurityRequestContext.setUserIP(currentUserIP);
     }
 

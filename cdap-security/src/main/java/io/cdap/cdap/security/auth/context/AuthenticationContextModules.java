@@ -57,9 +57,8 @@ public class AuthenticationContextModules {
       protected void configure() {
         String username = getUsername();
         bind(AuthenticationContext.class)
-          .toInstance(new ProgramContainerAuthenticationContext(new Principal(username,
-                                                                              Principal.PrincipalType.USER,
-                                                                              principal)));
+          .toInstance(new ProgramContainerAuthenticationContext(new Principal(username, Principal.PrincipalType.USER,
+                                                                              principal, null)));
       }
     };
   }

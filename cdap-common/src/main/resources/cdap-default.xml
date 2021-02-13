@@ -3729,6 +3729,36 @@
   </property>
 
   <property>
+    <name>security.authentication.mode</name>
+    <value>MANAGED</value>
+    <description>
+      Determines the mode of authentication to use if security is enabled. Supported modes include MANAGED and PROXY.
+      MANAGED mode supports a CDAP-managed authentication server and uses CDAP's access tokens to authenticate the user.
+      PROXY mode assumes that authentication has already been performed upstream and instead extracts the user's
+      identity and credentials from the configured headers.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authentication.propagate.user.credentials</name>
+    <value>false</value>
+    <description>
+      Determines whether credentials in the Authorization header of requests are propagated from the request router
+      to the rest of the backend handlers. Should be false unless the authorization extension requires the end-user
+      credential to authorize users.
+    </description>
+  </property>
+
+  <property>
+    <name>security.authentication.proxy.user.identity.header</name>
+    <value>CDAP-UserId</value>
+    <description>
+      The header to extract the user identity from. The user identity header must be provided for PROXY mode to
+      function, and CDAP requires that the header must be set on all requests to the backend.
+    </description>
+  </property>
+
+  <property>
     <name>cdap.master.kerberos.principal</name>
     <value></value>
     <description>

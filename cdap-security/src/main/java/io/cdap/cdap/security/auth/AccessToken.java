@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -26,7 +26,7 @@ import java.util.Map;
 /**
  * Represents a verified identity used for client authentication.  The token consists of two parts:
  * <ul>
- *   <li>the token identity - represented by the {@link AccessTokenIdentifier}, this contains the authenticated
+ *   <li>the token identity - represented by the {@link UserIdentity}, this contains the authenticated
  *   username, group memberships, and valid token lifetime,</li>
  *   <li>the token digest - a signature computed on the token identity components plus a server-side secret key,
  *   this ensures that the token is authentic (was issued by a trusted server) and has not been modified.</li>
@@ -38,14 +38,14 @@ import java.util.Map;
  * secret key.  If the recomputed digest matches that provided by the client, we know that, barring compromise of the
  * secret keys or exposure of the token itself, the token was issued by CDAP for this client.
  */
-public class AccessToken implements Signed<AccessTokenIdentifier> {
+public class AccessToken implements Signed<UserIdentity> {
   static final class Schemas {
     private static final int VERSION = 1;
     private static final Map<Integer, Schema> schemas = Maps.newHashMap();
     static {
       schemas.put(1,
           Schema.recordOf("AccessToken",
-              Schema.Field.of("identifier", AccessTokenIdentifier.Schemas.getSchemaVersion(1)),
+              Schema.Field.of("identifier", UserIdentity.Schemas.getSchemaVersion(1)),
               Schema.Field.of("keyId", Schema.of(Schema.Type.INT)),
               Schema.Field.of("digest", Schema.of(Schema.Type.BYTES))));
     }
@@ -64,11 +64,11 @@ public class AccessToken implements Signed<AccessTokenIdentifier> {
     }
   }
 
-  private final AccessTokenIdentifier identifier;
+  private final UserIdentity identifier;
   private final int keyId;
   private final byte[] digest;
 
-  public AccessToken(AccessTokenIdentifier identifier, int keyId, byte[] digest) {
+  public AccessToken(UserIdentity identifier, int keyId, byte[] digest) {
     this.identifier = identifier;
     this.keyId = keyId;
     this.digest = digest;
@@ -85,12 +85,12 @@ public class AccessToken implements Signed<AccessTokenIdentifier> {
   /**
    * Returns the identity portion of the token (username, group memberships, etc).
    */
-  public AccessTokenIdentifier getIdentifier() {
+  public UserIdentity getIdentifier() {
     return identifier;
   }
 
   @Override
-  public AccessTokenIdentifier getMessage() {
+  public UserIdentity getMessage() {
     return identifier;
   }
 

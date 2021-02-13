@@ -43,6 +43,7 @@ public class MasterAuthenticationContext implements AuthenticationContext {
     // When requests come in via rest endpoints, the userId is updated inside SecurityRequestContext, so give that
     // precedence.
     String userId = SecurityRequestContext.getUserId();
+    String userCredential = SecurityRequestContext.getUserCredential();
     // This userId can be null, when the master itself is asynchoronously updating the policy cache, since
     // during that process the router will not set the SecurityRequestContext. In that case, obtain the userId from
     // the UserGroupInformation, which will be the user that the master is running as.
@@ -53,6 +54,6 @@ public class MasterAuthenticationContext implements AuthenticationContext {
         throw Throwables.propagate(e);
       }
     }
-    return new Principal(userId, Principal.PrincipalType.USER);
+    return new Principal(userId, Principal.PrincipalType.USER, userCredential);
   }
 }

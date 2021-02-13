@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -60,10 +60,10 @@ public class NettyRouterPipelineAuthTest {
 
   @Test
   public void testRouterAuthBypass() throws Exception {
-    // mock token validator passes for no token and any token other than "Bearer failme"
-    testGet(200, "hello", "/v1/echo/hello");
+    // mock token validator passes for any token other than "Bearer failme"
     testGet(200, "hello", "/v1/echo/hello", ImmutableMap.of("Authorization", "Bearer x"));
     // so this should fail
+    testGet(401, null, "/v1/echo/hello");
     testGet(401, null, "/v1/echo/hello", ImmutableMap.of("Authorization", "Bearer failme"));
     // but /v1/echo/dontfail is configured to bypass auth
     testGet(200, "dontfail", "/v1/echo/dontfail", ImmutableMap.of("Authorization", "Bearer failme"));

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2020 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -1051,6 +1051,21 @@ public final class Constants {
       public static final String INTERNAL_CERT_PATH = "ssl.internal.cert.path";
       /** Password for the SSL certificate. */
       public static final String INTERNAL_CERT_PASSWORD = "ssl.internal.cert.password";
+    }
+
+    /**
+     * Authentication.
+     */
+    public static final class Authentication {
+      /**
+       * Determines which authentication mode to use.
+       * Should be chosen from the {@link io.cdap.cdap.security.auth.AuthenticationMode} enum.
+       */
+      public static final String AUTHENTICATION_MODE = "security.authentication.mode";
+      /** The header from which CDAP should expect to receive the end user identity when using proxy auth mode. */
+      public static final String AUTH_PROXY_USER_ID_HEADER = "security.authentication.proxy.user.identity.header";
+      /** Determines whether to propagate the end user credential as part of the Principal. */
+      public static final String AUTH_PROPAGATE_USER_CREDENTIAL = "security.authentication.propagate.user.credentials";
     }
 
     /**

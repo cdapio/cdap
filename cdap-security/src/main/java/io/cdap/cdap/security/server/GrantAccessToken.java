@@ -23,8 +23,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.AccessToken;
-import io.cdap.cdap.security.auth.AccessTokenIdentifier;
 import io.cdap.cdap.security.auth.TokenManager;
+import io.cdap.cdap.security.auth.UserIdentity;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +122,7 @@ public class GrantAccessToken {
     long issueTime = System.currentTimeMillis();
     long expireTime = issueTime + tokenValidity;
     // Create and sign a new AccessTokenIdentifier to generate the AccessToken.
-    AccessTokenIdentifier tokenIdentifier = new AccessTokenIdentifier(username, userGroups, issueTime, expireTime);
+    UserIdentity tokenIdentifier = new UserIdentity(username, userGroups, issueTime, expireTime);
     AccessToken token = tokenManager.signIdentifier(tokenIdentifier);
     LOG.debug("Issued token for user {}", username);
 

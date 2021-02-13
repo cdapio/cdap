@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.security.auth.AuthenticationMode;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import org.apache.hadoop.security.UserGroupInformation;
 import org.apache.hadoop.security.authentication.util.KerberosName;
@@ -127,7 +128,9 @@ public final class SecurityUtil {
    */
   public static boolean isKerberosEnabled(CConfiguration cConf) {
     return cConf.getBoolean(Constants.Security.KERBEROS_ENABLED,
-                            cConf.getBoolean(Constants.Security.ENABLED));
+                            cConf.getBoolean(Constants.Security.ENABLED) &&
+                              cConf.getEnum(Constants.Security.Authentication.AUTHENTICATION_MODE,
+                                            AuthenticationMode.MANAGED).equals(AuthenticationMode.MANAGED));
   }
 
   public static String getMasterPrincipal(CConfiguration cConf) {

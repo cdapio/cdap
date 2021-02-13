@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2017 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,41 +34,41 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * Utility to handle serialization and deserialization of {@link AccessTokenIdentifier} objects.
+ * Utility to handle serialization and deserialization of {@link UserIdentity} objects.
  */
-public class AccessTokenIdentifierCodec implements Codec<AccessTokenIdentifier> {
-  private static final TypeToken<AccessTokenIdentifier> ACCESS_TOKEN_IDENTIFIER_TYPE =
-    new TypeToken<AccessTokenIdentifier>() { };
+public class UserIdentityCodec implements Codec<UserIdentity> {
+  private static final TypeToken<UserIdentity> ACCESS_TOKEN_IDENTIFIER_TYPE =
+    new TypeToken<UserIdentity>() { };
 
   private final DatumReaderFactory readerFactory;
   private final DatumWriterFactory writerFactory;
 
   @Inject
-  public AccessTokenIdentifierCodec(DatumReaderFactory readerFactory, DatumWriterFactory writerFactory) {
+  public UserIdentityCodec(DatumReaderFactory readerFactory, DatumWriterFactory writerFactory) {
     this.readerFactory = readerFactory;
     this.writerFactory = writerFactory;
   }
 
   @Override
-  public byte[] encode(AccessTokenIdentifier identifier) throws IOException {
+  public byte[] encode(UserIdentity identifier) throws IOException {
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     Encoder encoder = new BinaryEncoder(bos);
 
-    encoder.writeInt(AccessTokenIdentifier.Schemas.getVersion());
-    DatumWriter<AccessTokenIdentifier> writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
-                                                                     AccessTokenIdentifier.Schemas.getCurrentSchema());
+    encoder.writeInt(UserIdentity.Schemas.getVersion());
+    DatumWriter<UserIdentity> writer = writerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
+                                                            UserIdentity.Schemas.getCurrentSchema());
     writer.encode(identifier, encoder);
     return bos.toByteArray();
   }
 
   @Override
-  public AccessTokenIdentifier decode(byte[] data) throws IOException {
+  public UserIdentity decode(byte[] data) throws IOException {
     ByteArrayInputStream bis = new ByteArrayInputStream(data);
     Decoder decoder = new BinaryDecoder(bis);
-    DatumReader<AccessTokenIdentifier> reader = readerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
-                                                                     AccessTokenIdentifier.Schemas.getCurrentSchema());
+    DatumReader<UserIdentity> reader = readerFactory.create(ACCESS_TOKEN_IDENTIFIER_TYPE,
+                                                            UserIdentity.Schemas.getCurrentSchema());
     int readVersion = decoder.readInt();
-    Schema readSchema = AccessTokenIdentifier.Schemas.getSchemaVersion(readVersion);
+    Schema readSchema = UserIdentity.Schemas.getSchemaVersion(readVersion);
     if (readSchema == null) {
       throw new IOException("Unknown schema version for AccessTokenIdentifier: " + readVersion);
     }

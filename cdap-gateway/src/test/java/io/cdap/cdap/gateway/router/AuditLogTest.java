@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.AuditDetail;
 import io.cdap.cdap.common.security.AuditPolicy;
+import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.cdap.http.NettyHttpService;
@@ -95,8 +96,9 @@ public class AuditLogTest {
 
     RouterServiceLookup serviceLookup = new RouterServiceLookup(cConf, discoveryService, new RouterPathLookup());
 
-    router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, new SuccessTokenValidator(),
-                             new MockAccessTokenTransfomer(), discoveryService);
+    TokenValidator successValidator = new SuccessTokenValidator();
+    router = new NettyRouter(cConf, sConf, InetAddress.getLoopbackAddress(), serviceLookup, successValidator,
+                             new MockAccessTokenIdentityExtractor(successValidator), discoveryService);
     router.startAndWait();
 
     httpService = NettyHttpService.builder("test").setHttpHandlers(new TestHandler()).build();
