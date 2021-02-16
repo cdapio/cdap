@@ -113,6 +113,7 @@ interface ICreateState {
   getReplicatorConfig: () => any;
   saveDraft: () => Observable<any>;
   setColumns: (columns, callback) => void;
+  isStateFilled: (stateKeys: string[]) => boolean;
 }
 
 export type ICreateContext = Partial<ICreateState>;
@@ -242,6 +243,21 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     return config;
   };
 
+  private isStateFilled = (stateKeys: string[]) => {
+    for (const stateKey of stateKeys) {
+      const stateObj = this.state[stateKey];
+      if (
+        !stateObj ||
+        (typeof stateObj === 'object' && Object.keys(stateObj).length === 0) ||
+        (Map.isMap(stateObj) && stateObj.size === 0)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   public state = {
     name: '',
     description: '',
@@ -255,7 +271,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     columns: Map() as IColumnsStore,
     dmlBlacklist: Map() as IDMLStore,
     offsetBasePath: window.CDAP_CONFIG.delta.defaultCheckpointDir || '',
-    numInstances: 1,
+    numInstances: null,
 
     parentArtifact: null,
     draftId: null,
@@ -277,6 +293,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
     getReplicatorConfig: this.getReplicatorConfig,
     saveDraft: this.saveDraft,
     setColumns: this.setColumns,
+    isStateFilled: this.isStateFilled,
   };
 
   public componentDidMount() {

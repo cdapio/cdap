@@ -66,15 +66,31 @@ const styles = (theme): StyleRules => {
 interface ILeftPanelProps extends WithStyles<typeof styles> {
   activeStep: number;
   setActiveStep: (step: number) => void;
+  isStateFilled: (stateKeys: string[]) => boolean;
 }
 
-const LeftPanelView: React.FC<ILeftPanelProps> = ({ classes, setActiveStep, activeStep }) => {
+const LeftPanelView: React.FC<ILeftPanelProps> = ({
+  classes,
+  setActiveStep,
+  activeStep,
+  isStateFilled,
+}) => {
   function handleStepClick(step) {
-    if (step >= activeStep) {
+    if (!isRowFinished(step)) {
       return;
     }
 
     setActiveStep(step);
+  }
+
+  function isRowFinished(step) {
+    const rowRequirement = STEPS[step];
+
+    if (rowRequirement.required) {
+      return isStateFilled(rowRequirement.required);
+    }
+
+    return step <= activeStep;
   }
 
   return (
@@ -86,7 +102,7 @@ const LeftPanelView: React.FC<ILeftPanelProps> = ({ classes, setActiveStep, acti
           <div
             key={step.label}
             className={classnames(classes.row, {
-              [classes.finishedRow]: i <= activeStep,
+              [classes.finishedRow]: isRowFinished(i),
               [classes.active]: i === activeStep,
             })}
             onClick={handleStepClick.bind(null, i)}

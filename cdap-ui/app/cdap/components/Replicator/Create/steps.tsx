@@ -14,6 +14,7 @@
  * the License.
  */
 
+import React from 'react';
 import NameDescription from 'components/Replicator/Create/Content/NameDescription';
 import SourceConfig from 'components/Replicator/Create/Content/SourceConfig';
 import SelectTables from 'components/Replicator/Create/Content/SelectTables';
@@ -22,30 +23,42 @@ import Assessment from 'components/Replicator/Create/Content/Assessment';
 import Advanced from 'components/Replicator/Create/Content/Advanced';
 import Summary from 'components/Replicator/Create/Content/Summary';
 
-export const STEPS = [
+interface IStep {
+  label: string;
+  component: React.ComponentType;
+  required?: string[];
+}
+
+export const STEPS: IStep[] = [
   {
     label: 'Specify basic information',
     component: NameDescription,
+    required: ['name'],
   },
   {
     label: 'Configure source',
     component: SourceConfig,
+    required: ['sourceConfig'],
   },
   {
     label: 'Select tables',
     component: SelectTables,
+    required: ['tables'],
   },
   {
     label: 'Configure target',
     component: TargetConfig,
+    required: ['targetConfig'],
   },
   {
     label: 'Configure advanced properties',
     component: Advanced,
+    required: ['numInstances'],
   },
   {
     label: 'Review assessment',
     component: Assessment,
+    required: ['name', 'sourceConfig', 'tables', 'targetConfig', 'numInstances'],
   },
   {
     label: 'View summary',
