@@ -23,7 +23,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.runtime.ProgramRuntimeService;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -40,11 +44,16 @@ import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.internal.bootstrap.BootstrapService;
 import io.cdap.cdap.internal.provision.ProvisioningService;
 import io.cdap.cdap.internal.sysapp.SystemAppManagementService;
+import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.scheduler.CoreSchedulerService;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.data.transaction.TxCallable;
+import io.cdap.cdap.spi.metadata.Metadata;
+import io.cdap.cdap.spi.metadata.MetadataMutation;
+import io.cdap.cdap.spi.metadata.MetadataStorage;
+import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.store.DefaultNamespaceStore;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
@@ -57,7 +66,6 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -89,6 +97,7 @@ public class AppFabricServer extends AbstractIdleService {
   private final SConfiguration sConf;
   private final boolean sslEnabled;
   private final TransactionRunner transactionRunner;
+  private final MetadataStorage metadataStorage;
 
   private Cancellable cancelHttpService;
   private Set<HttpHandler> handlers;
@@ -113,7 +122,7 @@ public class AppFabricServer extends AbstractIdleService {
                          ProvisioningService provisioningService,
                          BootstrapService bootstrapService,
                          SystemAppManagementService systemAppManagementService,
-                         TransactionRunner transactionRunner) {
+                         TransactionRunner transactionRunner, MetadataStorage metadataStorage) {
     this.hostname = hostname;
     this.discoveryService = discoveryService;
     this.handlers = handlers;
@@ -132,6 +141,7 @@ public class AppFabricServer extends AbstractIdleService {
     this.bootstrapService = bootstrapService;
     this.systemAppManagementService = systemAppManagementService;
     this.transactionRunner = transactionRunner;
+    this.metadataStorage = metadataStorage;
   }
 
   /**
@@ -188,28 +198,63 @@ public class AppFabricServer extends AbstractIdleService {
                                                                       applicationCount);
     metricsCollectionService.getContext(Collections.emptyMap()).gauge(Constants.Metrics.Program.NAMESPACE_COUNT,
                                                                       namespaceCount);
+    //
+    Map<ApplicationId, ApplicationMeta> apps =
+      TransactionRunners
+        .run(transactionRunner, (TxCallable<Map<ApplicationId, ApplicationMeta>>) context -> AppMetadataStore
+          .create(context).getAllAppIdsAndMeta());
 
-    Map<ImmutableList<String>, Long> pluginCounts = TransactionRunners
-      .run(transactionRunner,
-           (TxCallable<Map<ImmutableList<String>, Long>>) context -> getPluginCounts(AppMetadataStore.create(context)));
-    for (Map.Entry<ImmutableList<String>, Long> entry : pluginCounts.entrySet()) {
-      Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().get(0),
-                                                 Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().get(1),
-                                                 Constants.Metrics.Tag.PLUGIN_VERSION, entry.getKey().get(2));
+    getPluginCounts(apps);
+    //    for (Map.Entry<ImmutableList<String>, Long> entry : pluginCounts.entrySet()) {
+    //      Map<String, String> tags = ImmutableMap.of(Constants.Metrics.Tag.PLUGIN_NAME, entry.getKey().get(0),
+    //                                                 Constants.Metrics.Tag.PLUGIN_TYPE, entry.getKey().get(1),
+    //                                                 Constants.Metrics.Tag.PLUGIN_VERSION, entry.getKey().get(2));
+    //
+    //      metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, entry.getValue());
+    //    }
+    //    metadataStorage.batch(updates, MutationOptions.DEFAULT);
+  }
 
-      metricsCollectionService.getContext(tags).gauge(Constants.Metrics.Program.PLUGIN_COUNT, entry.getValue());
+  private void getPluginCounts(Map<ApplicationId, ApplicationMeta> apps)
+    throws IOException {
+    List<MetadataMutation> updates = new ArrayList<>();
+    for (Map.Entry<ApplicationId, ApplicationMeta> app : apps.entrySet()) {
+      collectPluginMetadata(app.getKey(), app.getValue().getSpec(), updates);
+    }
+    metadataStorage.batch(updates, MutationOptions.DEFAULT);
+  }
+
+  private void collectPluginMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
+                                     List<MetadataMutation> updates) {
+    String namespace = applicationId.getNamespace();
+    Map<MetadataEntity, Long> pluginCounts = appSpec.getPlugins().values().stream()
+      .map(p -> pluginToMetadataEntity(namespace, p))
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    String appKey = String.format("%s:%s", namespace, appSpec.getName());
+    for (Map.Entry<MetadataEntity, Long> entry : pluginCounts.entrySet()) {
+      //      LOG.trace("Setting plugin metadata for {} to {}", entry.getKey().getValue("plugin"), );
+
+      updates.add(new MetadataMutation.Update(entry.getKey(),
+                                              new Metadata(MetadataScope.SYSTEM,
+                                                           ImmutableMap.of(appKey, entry.getValue().toString()))
+      ));
     }
   }
 
-  private Map<ImmutableList<String>, Long> getPluginCounts(AppMetadataStore appMetadataStore)
-    throws IOException {
-    return appMetadataStore.getAllApplications().stream().map(ApplicationMeta::getSpec)
-      .map(ApplicationSpecification::getPlugins)
-      .map(Map::values)
-      .flatMap(Collection::stream)
-      .map(p -> ImmutableList
-        .of(p.getPluginClass().getName(), p.getPluginClass().getType(), p.getArtifactId().getVersion().getVersion()))
-      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+  private MetadataEntity pluginToMetadataEntity(String appNamespace, Plugin p) {
+    // If the plugin is in the system scope then the namespace is system, otherwise the plugin namespace is
+    // the same as the app namespace
+    String pluginNamespace = p.getArtifactId().getScope() == ArtifactScope.SYSTEM ? ArtifactScope.SYSTEM
+      .toString().toLowerCase() : appNamespace;
+    return MetadataEntity.builder()
+      .append(MetadataEntity.NAMESPACE, pluginNamespace)
+      //      .append(MetadataEntity.SCOPE, p.getArtifactId().getScope().name())
+      .append(MetadataEntity.ARTIFACT, p.getArtifactId().getName())
+      .append(MetadataEntity.VERSION, p.getArtifactId().getVersion().getVersion())
+      .append(MetadataEntity.TYPE, p.getPluginClass().getType())
+      .appendAsType(MetadataEntity.PLUGIN, p.getPluginClass().getName())
+      .build();
   }
 
   @Override

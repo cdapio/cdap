@@ -298,6 +298,20 @@ public class AppMetadataStore {
       StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD);
   }
 
+  public Map<ApplicationId, ApplicationMeta> getAllAppIdsAndMeta() throws IOException {
+    HashMap<ApplicationId, ApplicationMeta> result = new HashMap<>();
+    try (CloseableIterator<StructuredRow> iterator =
+           getApplicationSpecificationTable().scan(Range.all(),
+                                                   Integer.MAX_VALUE)) {
+      while (iterator.hasNext()) {
+        StructuredRow row = iterator.next();
+        result.put(getApplicationIdFromRow(row),
+          GSON.fromJson(row.getString(StoreDefinition.AppMetadataStore.APPLICATION_DATA_FIELD), ApplicationMeta.class));
+      }
+    }
+    return result;
+  }
+
   public List<ApplicationId> getAllAppVersionsAppIds(String namespaceId, String appId) throws IOException {
     List<ApplicationId> appIds = new ArrayList<>();
     try (CloseableIterator<StructuredRow> iterator =

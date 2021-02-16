@@ -83,6 +83,8 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
   public static final String PROGRAM = "program";
   public static final String SCHEDULE = "schedule";
   public static final String PROGRAM_RUN = "program_run";
+  public static final String PLUGIN = "plugin";
+//  public static final String SCOPE = "scope";
 
   private final LinkedHashMap<String, String> details;
   private String type;
@@ -95,6 +97,7 @@ public class MetadataEntity implements Iterable<MetadataEntity.KeyValue> {
     typesToKeys.put(DATASET, new String[][]{{NAMESPACE, DATASET}, {DATASET}});
     typesToKeys.put(APPLICATION, new String[][]{{NAMESPACE, APPLICATION, VERSION}, {NAMESPACE, APPLICATION}});
     typesToKeys.put(ARTIFACT, new String[][]{{NAMESPACE, ARTIFACT, VERSION}});
+    typesToKeys.put(PLUGIN, new String[][]{{NAMESPACE, ARTIFACT, VERSION, TYPE, PLUGIN}});
     typesToKeys.put(PROGRAM, new String[][]{{NAMESPACE, APPLICATION, VERSION, TYPE, PROGRAM},
       {NAMESPACE, APPLICATION, TYPE, PROGRAM}});
     typesToKeys.put(SCHEDULE, new String[][]{{NAMESPACE, APPLICATION, VERSION, SCHEDULE},
