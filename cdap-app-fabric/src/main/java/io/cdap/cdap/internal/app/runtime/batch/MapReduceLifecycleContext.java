@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -53,6 +53,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.util.Collection;
@@ -213,6 +214,13 @@ public class MapReduceLifecycleContext<KEY, VALUE> implements MapReduceTaskConte
   @Override
   public URL getServiceURL(String serviceId) {
     return delegate.getServiceURL(serviceId);
+  }
+
+  @Nullable
+  @Override
+  public HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                          String serviceId, String methodPath) throws IOException {
+    return delegate.openConnection(namespaceId, applicationId, serviceId, methodPath);
   }
 
   // TODO: Document usage of ProgramLifeCycle<MapReduceTaskContext> instead of ProgramLifeCycle<MapReduceContext>

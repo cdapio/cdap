@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import io.cdap.cdap.etl.mock.common.MockArguments;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 import io.cdap.cdap.proto.id.NamespaceId;
 
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collection;
 import java.util.Collections;
@@ -140,6 +141,13 @@ public class MockActionContext implements ActionContext {
   @Override
   public URL getServiceURL(String serviceId) {
     //no-op
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                          String serviceId, String methodPath) {
     return null;
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -25,6 +25,7 @@ import io.cdap.cdap.internal.app.runtime.distributed.runtimejob.DefaultRuntimeJo
 import io.cdap.cdap.internal.app.runtime.monitor.proxy.ServiceSocksProxy;
 import io.cdap.cdap.master.spi.discovery.DefaultServiceDiscovered;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.runtime.spi.RuntimeMonitorType;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
@@ -88,9 +89,11 @@ public class RemoteExecutionDiscoveryService implements DiscoveryServiceClient, 
 
   @Override
   public ServiceDiscovered discover(String name) {
-    // In Remote runtime, we don't support program discovery, hence always return an empty ServiceDiscovered
+    // In Remote runtime, we don't support program discovery except for the SYSTEM namespace.
     for (ProgramType programType : ProgramType.values()) {
-      if (programType.isDiscoverable() && name.startsWith(programType.getDiscoverableTypeName() + ".")) {
+      if (programType.isDiscoverable()
+          && name.startsWith(programType.getDiscoverableTypeName() + ".")
+          && !name.startsWith(programType.getDiscoverableTypeName() + "." + NamespaceId.SYSTEM.getNamespace() + ".")) {
         return new DefaultServiceDiscovered(name);
       }
     }

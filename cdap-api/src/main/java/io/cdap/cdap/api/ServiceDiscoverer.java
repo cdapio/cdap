@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -16,6 +16,8 @@
 
 package io.cdap.cdap.api;
 
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import javax.annotation.Nullable;
 
@@ -56,4 +58,21 @@ public interface ServiceDiscoverer {
    */
   @Nullable
   URL getServiceURL(String serviceId);
+
+  /**
+   * Opens a {@link HttpURLConnection} for connecting to the given Service endpoint.
+   *
+   * @param namespaceId Namespace of the application
+   * @param applicationId Application name
+   * @param serviceId Service name
+   * @param methodPath Service method path as declared by the service handler
+   * @return a {@link HttpURLConnection} for communicating with the Service endpoint, or {@code null} if the service
+   *         is not found
+   * @throws IOException if Service is found but failed to open a connection to the given Service endpoint
+   */
+  @Nullable
+  default HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                           String serviceId, String methodPath) throws IOException {
+    throw new UnsupportedOperationException("Connection is not supported");
+  }
 }
