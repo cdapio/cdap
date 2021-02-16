@@ -86,7 +86,11 @@ const LogLevelView: React.FC<ILogLevelProps> = ({ classes, dataFetcher, changeLo
 
   const target = (props) => {
     return (
-      <span {...props} className={`${props.className} ${classes.target}`}>
+      <span
+        {...props}
+        className={`${props.className} ${classes.target}`}
+        data-cy="log-viewer-log-level-toggle"
+      >
         <span>Level</span>
         <ArrowDropDown />
       </span>
@@ -104,7 +108,7 @@ const LogLevelView: React.FC<ILogLevelProps> = ({ classes, dataFetcher, changeLo
   return (
     <div className={classes.root}>
       <Popover target={target} placement="bottom" className={classes.popoverContainer}>
-        <div>
+        <div data-cy="log-viewer-log-level-popover">
           {LEVEL_OPTIONS.map((level, i) => {
             const shouldShowCheckmark = i <= logLevel || i <= mouseHover;
 
@@ -115,10 +119,15 @@ const LogLevelView: React.FC<ILogLevelProps> = ({ classes, dataFetcher, changeLo
                 onClick={handleSetLogLevel.bind(null, i)}
                 onMouseEnter={() => setMouseHover(i)}
                 onMouseLeave={() => setMouseHover(null)}
+                data-cy={`log-level-row-${level}`}
               >
                 <span>
                   <If condition={shouldShowCheckmark}>
-                    <IconSVG name="icon-check" className={getIconClassName(i)} />
+                    <IconSVG
+                      name="icon-check"
+                      className={getIconClassName(i)}
+                      dataCy="log-level-check"
+                    />
                   </If>
                 </span>
                 <span>{level}</span>

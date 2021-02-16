@@ -1,0 +1,120 @@
+{
+  "artifact": {
+    "name": "cdap-data-pipeline",
+    "version": "[6.1.0-SNAPSHOT, 6.3.0-SNAPSHOT]",
+    "scope": "SYSTEM"
+  },
+  "description": "generate logs",
+  "name": "logs_generator",
+  "config": {
+    "resources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "driverResources": {
+      "memoryMB": 1024,
+      "virtualCores": 1
+    },
+    "connections": [
+      {
+        "from": "logs_data_source",
+        "to": "LogsGenerator"
+      },
+      {
+        "from": "LogsGenerator",
+        "to": "logs_data_sink"
+      }
+    ],
+    "comments": [],
+    "postActions": [],
+    "properties": {},
+    "processTimingEnabled": true,
+    "stageLoggingEnabled": true,
+    "stages": [
+      {
+        "name": "logs_data_source",
+        "plugin": {
+          "name": "File",
+          "type": "batchsource",
+          "label": "logs_data_source",
+          "artifact": {
+            "name": "core-plugins",
+            "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "format": "text",
+            "skipHeader": "false",
+            "filenameOnly": "false",
+            "recursive": "false",
+            "ignoreNonExistingFolders": "false",
+            "copyHeader": "true",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+            "path": "file:/tmp/cdap-ui-integration-fixtures/airports.csv",
+            "referenceName": "logs_data_source"
+          }
+        },
+        "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+        "id": "logs_data_source"
+      },
+      {
+        "name": "LogsGenerator",
+        "plugin": {
+          "name": "JavaScript",
+          "type": "transform",
+          "label": "LogsGenerator",
+          "artifact": {
+            "name": "core-plugins",
+            "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "script": "/**\n * @summary Transforms the provided input record into zero or more output records or errors.\n\n * Input records are available in JavaScript code as JSON objects. \n\n * @param input an object that contains the input record as a JSON.   e.g. to access a field called 'total' from the input record, use input.total.\n * @param emitter an object that can be used to emit zero or more records (using the emitter.emit() method) or errors (using the emitter.emitError() method) \n * @param context an object that provides access to:\n *            1. CDAP Metrics - context.getMetrics().count('output', 1);\n *            2. CDAP Logs - context.getLogger().debug('Received a record');\n *            3. Lookups - context.getLookup('blacklist').lookup(input.id); or\n *            4. Runtime Arguments - context.getArguments().get('priceThreshold') \n */ \nfunction transform(input, emitter, context) {\n  /**\n  * Delay for a number of milliseconds\n  */\n  function sleep(delay) {\n      var start = new Date().getTime();\n      while (new Date().getTime() < start + delay);\n  }\n  \n  sleep(15000);\n  var split = input.body.split(',');\n  var logger = context.getLogger();\n  logger.warn('This is a WARN');\n  for (var i = 0; i < 100; i++) {\n    logger.debug('DEBUG ' + split[0] + ' ' + i);\n  }\n  \n  emitter.emit(input);\n}",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        },
+        "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+        "inputSchema": [
+          {
+            "name": "logs_data_source",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        ],
+        "id": "LogsGenerator"
+      },
+      {
+        "name": "logs_data_sink",
+        "plugin": {
+          "name": "File",
+          "type": "batchsink",
+          "label": "logs_data_sink",
+          "artifact": {
+            "name": "core-plugins",
+            "version": "[2.3.0-SNAPSHOT, 3.0.0-SNAPSHOT)",
+            "scope": "SYSTEM"
+          },
+          "properties": {
+            "suffix": "yyyy-MM-dd-HH-mm",
+            "format": "csv",
+            "referenceName": "logs_data_sink",
+            "path": "/tmp/cdap-ui-integration-fixtures",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        },
+        "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}",
+        "inputSchema": [
+          {
+            "name": "LogsGenerator",
+            "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"body\",\"type\":\"string\"}]}"
+          }
+        ],
+        "id": "logs_data_sink"
+      }
+    ],
+    "schedule": "0 * * * *",
+    "engine": "mapreduce",
+    "numOfRecordsPreview": 100,
+    "description": "generate logs",
+    "maxConcurrentRuns": 1
+  }
+}

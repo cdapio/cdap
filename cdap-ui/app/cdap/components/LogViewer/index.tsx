@@ -440,7 +440,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
   public render() {
     const { classes } = this.props;
     return (
-      <div className={classes.root}>
+      <div className={classes.root} data-cy="log-viewer">
         <TopPanel
           dataFetcher={this.props.dataFetcher}
           isPolling={this.state.isPolling}
@@ -455,7 +455,11 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
           </div>
           <div className={classes.cell}>Message</div>
         </div>
-        <div className={classes.logsContainer} ref={this.logsContainer}>
+        <div
+          className={classes.logsContainer}
+          ref={this.logsContainer}
+          data-cy="log-viewer-content"
+        >
           <div ref={this.topIndicator} className={classes.indicator} />
           {this.renderContent()}
           <div ref={this.bottomIndicator} className={classes.indicator} id="bottom" />

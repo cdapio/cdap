@@ -164,7 +164,7 @@ const TopPanelView: React.FC<ITopPanelProps> = ({
   }
 
   return (
-    <div className={classes.root}>
+    <div className={classes.root} data-cy="log-viewer-top-panel">
       <Button
         variant="contained"
         className={classnames(classes.actionButton, { [classes.disabled]: isPolling })}
@@ -213,7 +213,7 @@ const TopPanelView: React.FC<ITopPanelProps> = ({
         </Popover>
       </div>
       <If condition={typeof onClose === 'function'}>
-        <span onClick={onClose} className={classes.closeButton}>
+        <span onClick={onClose} className={classes.closeButton} data-cy="log-viewer-close-btn">
           <IconSVG name="icon-close" />
         </span>
       </If>
