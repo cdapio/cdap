@@ -35,6 +35,7 @@ const displayTypes: Array<ISimpleType | IComplexTypeNames | ILogicalTypeNames> =
   AvroSchemaTypesEnum.BOOLEAN,
   AvroSchemaTypesEnum.BYTES,
   AvroSchemaTypesEnum.DATE,
+  AvroSchemaTypesEnum.DATETIME,
   AvroSchemaTypesEnum.DECIMAL,
   AvroSchemaTypesEnum.DOUBLE,
   AvroSchemaTypesEnum.FLOAT,
@@ -117,6 +118,7 @@ const isDisplayTypeLogical = ({ type }) => {
   switch (type) {
     case AvroSchemaTypesEnum.DECIMAL:
     case AvroSchemaTypesEnum.DATE:
+    case AvroSchemaTypesEnum.DATETIME:
     case AvroSchemaTypesEnum.TIME:
     case AvroSchemaTypesEnum.TIMESTAMP:
       return true;

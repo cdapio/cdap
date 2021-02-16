@@ -20,6 +20,7 @@ import DateLogicalType from 'services/cdapavscwrapper/DateLogicalType';
 import TimestampMicrosLogicalType from 'services/cdapavscwrapper/TimestampMicrosLogicalType';
 import TimeMicrosLogicalType from 'services/cdapavscwrapper/TimeMicrosLogicalType';
 import DecimalLogicalType from 'services/cdapavscwrapper/DecimalLogicalType';
+import DateTimeLogicalType from 'services/cdapavscwrapper/DateTimeLogicalType';
 import invert from 'lodash/invert';
 
 // this dictionary is keeping the real AVRO logical type as the key
@@ -28,6 +29,7 @@ const LogicalTypesDictionary = {
   [LogicalTypes.TIMESTAMP_MICROS]: TimestampMicrosLogicalType,
   [LogicalTypes.TIME_MICROS]: TimeMicrosLogicalType,
   [LogicalTypes.DECIMAL]: DecimalLogicalType,
+  [LogicalTypes.DATETIME]: DateTimeLogicalType,
 };
 
 // this is mapping the UI display type to the AVRO logical type
@@ -36,6 +38,7 @@ enum UI_TYPES {
   TIME = 'time',
   TIMESTAMP = 'timestamp',
   DECIMAL = 'decimal',
+  DATETIME = 'datetime',
 }
 
 type IUiToAvro = { [key in UI_TYPES]: LogicalTypes };
@@ -47,6 +50,7 @@ const UI_TO_AVRO_MAPPING: IUiToAvro = {
   [UI_TYPES.TIME]: LogicalTypes.TIME_MICROS,
   [UI_TYPES.TIMESTAMP]: LogicalTypes.TIMESTAMP_MICROS,
   [UI_TYPES.DECIMAL]: LogicalTypes.DECIMAL,
+  [UI_TYPES.DATETIME]: LogicalTypes.DATETIME,
 };
 
 const AVRO_TO_UI_MAPPING: IAvroToUi = invert(UI_TO_AVRO_MAPPING) as IAvroToUi;
