@@ -23,16 +23,20 @@ import { IComment } from 'components/AbstractWidget/Comment/CommentConstants';
 import ThemeWrapper from 'components/ThemeWrapper';
 import { preventPropagation } from 'services/helpers';
 import DynamicAnchoredComment from 'components/AbstractWidget/Comment/DynamicAnchoredComment';
+import { Theme } from '@material-ui/core/styles/createMuiTheme';
+import { createStyles } from '@material-ui/core/styles';
 import uuidv4 from 'uuid/v4';
 
-const useStyles = makeStyles(() => {
-  return {
+const useStyles = makeStyles<Theme, { highlight: boolean }>((theme) =>
+  createStyles({
     root: {
       position: 'relative',
-      display: 'block',
+      display: 'flex',
+      justifyContent: 'center',
+      color: ({ highlight }) => (highlight ? theme.palette.primary.main : 'inherit'),
     },
-  };
-});
+  })
+);
 
 interface ICommentProps {
   comments?: IComment[];
@@ -54,7 +58,9 @@ function Comment({
   isOpen,
   disabled = false,
 }: ICommentProps) {
-  const classes = useStyles();
+  const isThereExistingComment = () =>
+    Array.isArray(comments) ? comments.length > 0 && comments[0].content.length > 0 : false;
+  const classes = useStyles({ highlight: isThereExistingComment() });
   const [anchorRef, setAnchorRef] = React.useState(null);
   const [anchorId] = React.useState(`id-${uuidv4()}`);
   const [isCommentOpen, setIsCommentOpen] = React.useState(false);

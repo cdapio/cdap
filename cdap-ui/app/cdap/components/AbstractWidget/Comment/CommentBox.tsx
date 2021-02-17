@@ -37,6 +37,8 @@ const useStyles = makeStyle<Theme, ICommentStyleProps>((theme) => {
       userSelect: 'text',
     },
     contentRoot: {
+      maxHeight: '300px',
+      overflowY: 'auto',
       paddingTop: ({ editMode }) => (!editMode ? 0 : theme.spacing(2)),
     },
     cardAction: {
@@ -115,8 +117,7 @@ export default function CommentBox({
         <CardHeader
           avatar={<AccountCircleOutlinedIcon />}
           action={CommentMenuLocal}
-          title="Comment"
-          subheader={humanReadableDate(localComment.createDate, true) || '--'}
+          title={humanReadableDate(comment.createDate, true) || '--'}
         />
         <CardContent className={classes.contentRoot}>
           <Markdown markdown={`${localComment.content}`} />

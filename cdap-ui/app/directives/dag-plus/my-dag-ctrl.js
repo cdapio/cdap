@@ -61,8 +61,6 @@ angular.module(PKG.name + '.commons')
 
     vm.selectedNode = [];
 
-    vm.commentsState = vm.isDisabled ? false : true;
-
     vm.activePluginToComment = null;
 
     vm.doesStagesHaveComments = false;
@@ -1732,17 +1730,6 @@ angular.module(PKG.name + '.commons')
       document.body.onpaste = null;
     }
 
-    vm.toggleComments = () => {
-      vm.commentsState = !vm.commentsState;
-      if (!vm.commentsState) {
-        vm.resetActivePluginForComment();
-      }
-    };
-
-    vm.showComments = () => {
-      vm.commentsState = true;
-    };
-
     vm.setComments = (nodeId, comments) => {
       if (!(myHelpers.objectQuery(comments, 0, 'content') || '').length) {
         return;
@@ -1761,7 +1748,6 @@ angular.module(PKG.name + '.commons')
         return stage;
       }));
       vm.doesStagesHaveComments = vm.checkIfAnyStageHasComment();
-      vm.showComments();
     };
 
     vm.setPluginActiveForComment = (nodeId) => {
@@ -1777,5 +1763,27 @@ angular.module(PKG.name + '.commons')
       vm.activePluginToComment = nodeId;
     };
 
+    vm.initPipelineComments = () => {
+      let comments;
+      if (vm.isDisabled) {
+        comments = window.CaskCommon.PipelineDetailStore.getState().config.comments;
+      } else {
+        comments = HydratorPlusPlusConfigStore.getComments();
+      }
+      vm.pipelineComments = comments;
+    };
+
+    vm.setPipelineComments = (comments) => {
+      if (vm.isDisabled) {
+        return;
+      }
+      HydratorPlusPlusConfigStore.setComments(comments);
+      vm.pipelineComments = comments;
+    };
+
+    vm.togglePipelineComments = (disableCanvasPan) => {
+      vm.secondInstance.setDraggable('diagram-container', disableCanvasPan);
+    };
     $scope.$on('$destroy', cleanupOnDestroy);
+    vm.initPipelineComments();
   });

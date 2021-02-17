@@ -754,4 +754,5 @@ export {
   sanitizeNodeNamesInPluginProperties,
   isValidEntityName,
   setupExperiments,
+  defaultEventObject,
 };

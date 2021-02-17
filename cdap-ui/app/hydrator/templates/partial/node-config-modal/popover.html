@@ -39,11 +39,17 @@
     </ng-pluralize>
   </span>
   <div class="plugin-modal-btns">
-    <comment
-      comments="HydratorPlusPlusNodeConfigCtrl.state.node.information.comments.list"
-      comments-id="HydratorPlusPlusNodeConfigCtrl.state.node.id"
-      on-change="HydratorPlusPlusNodeConfigCtrl.setComments"
-    ></comment>
+    <div
+      ng-if="!isDisabled || HydratorPlusPlusNodeConfigCtrl.state.node.information.comments.list"
+      class="plugin-comments-wrapper"
+    >
+      <comment
+        comments="HydratorPlusPlusNodeConfigCtrl.state.node.information.comments.list"
+        comments-id="HydratorPlusPlusNodeConfigCtrl.state.node.id"
+        on-change="HydratorPlusPlusNodeConfigCtrl.setComments"
+        disabled="isDisabled"
+      ></comment>
+    </div>
     <button class="btn btn-primary validate-btn" type="button"
             data-cy="plugin-properties-validate-btn"
             ng-if="!isDisabled"
