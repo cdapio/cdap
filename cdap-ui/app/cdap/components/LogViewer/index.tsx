@@ -447,6 +447,7 @@ class LogViewerView extends React.PureComponent<ILogViewerProps, ILogViewerState
           getLatestLogs={this.getLatestLogs}
           setSystemLogs={this.setIncludeSystemLogs}
           onClose={this.props.onClose}
+          loading={this.state.isFetching}
         />
         <div className={classes.logsTableHeader}>
           <div className={classes.cell}>Time</div>

@@ -26,6 +26,7 @@ import If from 'components/If';
 import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 import Popover from 'components/Popover';
 import IconSVG from 'components/IconSVG';
+import LoadingSVG from 'components/LoadingSVG';
 
 export const TOP_PANEL_HEIGHT = '50px';
 
@@ -40,6 +41,9 @@ const styles = (theme): StyleRules => {
       paddingLeft: '20px',
       paddingRight: '20px',
       position: 'relative',
+    },
+    loadingContainer: {
+      marginRight: 'auto',
     },
     actionButton: {
       margin: theme.spacing(1),
@@ -123,6 +127,7 @@ const styles = (theme): StyleRules => {
 interface ITopPanelProps extends WithStyles<typeof styles> {
   dataFetcher: DataFetcher;
   isPolling: boolean;
+  loading: boolean;
   getLatestLogs: () => void;
   setSystemLogs: (includeSystemLogs: boolean) => void;
   onClose?: () => void;
@@ -135,6 +140,7 @@ const TopPanelView: React.FC<ITopPanelProps> = ({
   getLatestLogs,
   setSystemLogs,
   onClose,
+  loading,
 }) => {
   const [includeSystemLogs, setLocalIncludeSystemLogs] = React.useState(
     dataFetcher.getIncludeSystemLogs()
@@ -165,6 +171,11 @@ const TopPanelView: React.FC<ITopPanelProps> = ({
 
   return (
     <div className={classes.root} data-cy="log-viewer-top-panel">
+      <If condition={loading}>
+        <div className={classes.loadingContainer}>
+          <LoadingSVG />
+        </div>
+      </If>
       <Button
         variant="contained"
         className={classnames(classes.actionButton, { [classes.disabled]: isPolling })}
