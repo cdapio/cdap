@@ -23,8 +23,11 @@ import makeStyles from '@material-ui/core/styles/makeStyles';
 import Tooltip from '@material-ui/core/Tooltip';
 import If from 'components/If';
 import { Theme } from '@material-ui/core/styles/createMuiTheme';
+import uuidv4 from 'uuid/v4';
+import { PipelineComments } from 'components/PipelineCanvasActions/PipelineComments';
+import { IPipelineComment } from 'components/PipelineCanvasActions/PipelineCommentsConstants';
 
-const useStyle = makeStyles<Theme, Partial<IPipelineCommentsActionBtnProps>>((theme) => {
+const useStyle = makeStyles<Theme, { toggle: boolean }>((theme) => {
   return {
     tooltip: {
       position: 'relative',
@@ -71,34 +74,40 @@ const useStyle = makeStyles<Theme, Partial<IPipelineCommentsActionBtnProps>>((th
 
 interface IPipelineCommentsActionBtnProps {
   tooltip: string;
-  doesStagesHaveComments: boolean;
-  onCommentsToggle: () => void;
-  toggle: boolean;
+  shouldShowMarker: boolean;
+  onCommentsToggle: (toggle: boolean) => void;
+  onChange: (comments: IPipelineComment[]) => void;
+  comments: IPipelineComment[];
+  disabled?: boolean;
 }
 
 function PipelineCommentsActionBtn({
   tooltip,
-  doesStagesHaveComments,
   onCommentsToggle,
-  toggle,
+  onChange,
+  comments = [],
+  disabled,
 }: IPipelineCommentsActionBtnProps) {
-  const [localToggle, setLocalToggle] = React.useState(toggle);
-  const [showMarker, setShowMarker] = React.useState(doesStagesHaveComments);
+  const [localToggle, setLocalToggle] = React.useState(false);
+  const [showMarker, setShowMarker] = React.useState(comments.length > 0);
+  const [anchorId] = React.useState(`id-${uuidv4()}`);
+  const [anchorEl, setAnchorEl] = React.useState(null);
   const classes = useStyle({ toggle: localToggle });
-  const onClick = () => {
-    setLocalToggle(!toggle);
-    if (typeof onCommentsToggle === 'function') {
-      onCommentsToggle();
-    }
+
+  const onClick = (e) => {
+    setLocalToggle(true);
+    setAnchorEl(e.currentTarget);
+    onCommentsToggle(false);
   };
+  const onClose = () => {
+    setLocalToggle(false);
+    setAnchorEl(null);
+    onCommentsToggle(true);
+  };
+
   React.useEffect(() => {
-    if (typeof doesStagesHaveComments === 'boolean') {
-      setShowMarker(doesStagesHaveComments);
-    }
-  }, [doesStagesHaveComments]);
-  React.useEffect(() => {
-    setLocalToggle(toggle);
-  }, [toggle]);
+    setShowMarker(Array.isArray(comments) && comments.length > 0);
+  }, [comments]);
   return (
     <Tooltip
       title={tooltip}
@@ -107,11 +116,23 @@ function PipelineCommentsActionBtn({
       classes={{ tooltip: classes.tooltip, arrow: classes.arrow }}
       arrow
     >
-      <IconButton onClick={onClick} className={classes.iconButton} disableRipple={true}>
+      <IconButton
+        id={anchorId}
+        onClick={onClick}
+        className={classes.iconButton}
+        disableRipple={true}
+      >
         <If condition={showMarker}>
           <span className={classes.marker}></span>
         </If>
         <CommentRounded className={classes.iconRoot} />
+        <PipelineComments
+          comments={comments}
+          onChange={onChange}
+          anchorEl={anchorEl}
+          onClose={onClose}
+          disabled={disabled}
+        />
       </IconButton>
     </Tooltip>
   );
@@ -125,9 +146,12 @@ export default function ThemeWrappedPipelineComments(props) {
   );
 }
 
+export { PipelineCommentsActionBtn };
+
 (ThemeWrappedPipelineComments as any).propTypes = {
-  doesStagesHaveComments: PropTypes.bool,
   tooltip: PropTypes.string,
   onCommentsToggle: PropTypes.func,
-  toggle: PropTypes.bool,
+  onChange: PropTypes.func,
+  comments: PropTypes.object,
+  disabled: PropTypes.bool,
 };

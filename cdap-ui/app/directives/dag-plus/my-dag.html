@@ -100,10 +100,11 @@
   </button>
 
   <pipeline-comments-action-btn
-    does-stages-have-comments="DAGPlusPlusCtrl.doesStagesHaveComments"
-    tooltip="'Show/Hide Comments'"
-    on-comments-toggle="DAGPlusPlusCtrl.toggleComments"
-    toggle="DAGPlusPlusCtrl.commentsState"
+    tooltip="'Show/Hide Pipeline Comments'"
+    on-comments-toggle="DAGPlusPlusCtrl.togglePipelineComments"
+    comments="DAGPlusPlusCtrl.pipelineComments"
+    on-change="DAGPlusPlusCtrl.setPipelineComments"
+    disabled='DAGPlusPlusCtrl.isDisabled'
   ></pipeline-comments-action-btn>
 </div>
 
@@ -129,8 +130,10 @@
                  'selected': DAGPlusPlusCtrl.isNodeSelected(node.id) || DAGPlusPlusCtrl.activePluginToComment == node.id,
                }"
         >
-          <div class="comments-wrapper"
-            ng-if="(DAGPlusPlusCtrl.commentsState == true && (node.information.comments.list && node.information.comments.list.length > 0)) || DAGPlusPlusCtrl.activePluginToComment == node.id">
+          <div
+            class="comments-wrapper"
+            ng-if="node.information.comments.list.length > 0 || DAGPlusPlusCtrl.activePluginToComment == node.id"
+          >
             <comment
               comments="node.information.comments.list"
               comments-id="node.id"

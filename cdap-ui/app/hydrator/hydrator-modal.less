@@ -72,10 +72,13 @@
         }
       }
       .plugin-modal-btns {
-        display: grid;
-        grid-template-columns: 30px 1fr 60px;
-        grid-template-rows: inherit;
-        align-items: center;
+        > * {
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .plugin-comments-wrapper {
+          margin-right: 10px;
+        }
       }
 
       div.btn-group {
