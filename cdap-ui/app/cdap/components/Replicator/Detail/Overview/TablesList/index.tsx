@@ -39,6 +39,7 @@ import { compare } from 'natural-orderby';
 import TableColumnGroup from 'components/Table/TableColumnGroup';
 import ColumnGroup from 'components/Table/ColumnGroup';
 import TimePeriodDropdown from 'components/Replicator/Detail/TimePeriodDropdown';
+import capitalize from 'lodash/capitalize';
 
 const styles = (theme): StyleRules => {
   return {
@@ -291,7 +292,9 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             return (
               <TableRow key={tableKey.toString()}>
                 <TableCell>
-                  <IconSVG name={icon} className={classes[tableStatus]} />
+                  <span title={capitalize(tableStatus)}>
+                    <IconSVG name={icon} className={classes[tableStatus]} />
+                  </span>
                 </TableCell>
                 <TableCell>{tableDisplayName}</TableCell>
                 <TableCell textAlign="right">{numColumns === 0 ? 'All' : numColumns}</TableCell>
