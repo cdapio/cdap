@@ -16,31 +16,29 @@
 
 package io.cdap.cdap.datapipeline;
 
+import com.google.common.collect.ImmutableMap;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.common.Constants;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.Map;
 
-public class ReducibleAggregatorTest extends ReducibleAggregatorTestBase {
+public class ReducibleDatasetAggregatorTest extends ReducibleAggregatorTestBase {
   /**
-   * Common arguments for spark 1 and 2 to test without dataset aggregation
+   * Settings to test with dataset aggregation.
    */
-  private static final Map<String, String> DEFAULT_ARGUMENTS = Collections.singletonMap(
-    Constants.DATASET_AGGREGATE_ENABLED, "false"
+  private static final Map<String, String> DATASET_AGGREGATE = ImmutableMap.of(
+    Constants.DATASET_AGGREGATE_ENABLED, "true",
+    Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, "false"
   );
 
   @Test
   public void testSimpleAggregator() throws Exception {
-    testSimpleAggregator(Engine.MAPREDUCE, DEFAULT_ARGUMENTS);
-    testSimpleAggregator(Engine.SPARK, DEFAULT_ARGUMENTS);
+    testSimpleAggregator(Engine.SPARK, DATASET_AGGREGATE);
   }
 
   @Test
   public void testFieldCountAgg() throws Exception {
-    testFieldCountAgg(Engine.MAPREDUCE, DEFAULT_ARGUMENTS);
-    testFieldCountAgg(Engine.SPARK, DEFAULT_ARGUMENTS);
+    testFieldCountAgg(Engine.SPARK, DATASET_AGGREGATE);
   }
-
 }

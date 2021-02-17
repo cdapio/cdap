@@ -35,6 +35,9 @@ public final class Constants {
   public static final String SPARK_PIPELINE_CACHING_STORAGE_LEVEL = "spark.cdap.pipeline.caching.storage.level";
   public static final String CONSOLIDATE_STAGES = "spark.cdap.pipeline.consolidate.stages";
   public static final String CACHE_FUNCTIONS = "spark.cdap.pipeline.functioncache.enable";
+  public static final String DATASET_AGGREGATE_ENABLED = "spark.cdap.pipeline.aggregate.dataset.enable";
+  public static final String DATASET_AGGREGATE_IGNORE_PARTITIONS =
+    "spark.cdap.pipeline.aggregate.dataset.partitions.ignore";
   public static final String DEFAULT_CACHING_STORAGE_LEVEL = "DISK_ONLY";
 
   private Constants() {
