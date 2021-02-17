@@ -23,22 +23,41 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.function.AggregatorFinalizeFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorInitializeFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergePartitionFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorMergeValueFunction;
+import io.cdap.cdap.etl.spark.function.AggregatorReduceGroupByFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
+import io.cdap.cdap.etl.spark.function.FlatMapFunc;
+import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
+import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.plugin.LiteralsBridge;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.ReduceFunction;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoder;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.KeyValueGroupedDataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -51,6 +70,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 
 import static org.apache.spark.sql.functions.floor;
 
@@ -295,5 +315,59 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
       Column defaultCol = new Column(LiteralsBridge.defaultLiteral(dataType));
       return functions.coalesce(df.col(keyCol), defaultCol);
     }).collect(Collectors.toList());
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec, @Nullable Integer partitions, StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    PairFlatMapFunc<T, Object, T> groupByFunction = new AggregatorReduceGroupByFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+
+    Encoder encoder = Encoders.kryo(Object.class);
+    Encoder tupleEncoder = Encoders.tuple(encoder, encoder);
+    Dataset<T> dataset = sqlContext.createDataset(rdd.rdd(), encoder);
+    Dataset<Tuple2<Object, T>> keyedDataset = dataset.flatMap((FlatMapFunction<T, Tuple2<Object, T>>)t ->groupByFunction.call(t).iterator(), tupleEncoder);
+
+    Function<T, Object> initializeFunction = new AggregatorInitializeFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+    Function2<Object, T, Object> mergeValueFunction = new AggregatorMergeValueFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+    Function2<Object, Object, Object> mergePartitionFunction =
+      new AggregatorMergePartitionFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
+
+    KeyValueGroupedDataset<Object, Tuple2<Object, T>> grouped = keyedDataset.groupByKey(t -> t._1(), encoder);
+    KeyValueGroupedDataset<Object, Tuple2<Object, T>> groupedInitialized = grouped.mapValues(
+      tIn -> Tuple2.apply(null, tIn._2()), tupleEncoder
+    );
+
+    ReduceFunction<Tuple2<Object,T>> reduceFunction = (t1, t2) -> {
+      if (t1._1() == null && t2._1() == null) {
+        return Tuple2.apply(mergeValueFunction.call(initializeFunction.call(t1._2()), t2._2()), null);
+      } else if (t2._1() == null) {
+        return Tuple2.apply(mergeValueFunction.call(t1._1(), t2._2()), null);
+      } else {
+        return Tuple2.apply(mergePartitionFunction.call(t1._1(), t2._1()), null);
+      }
+    };
+    Dataset<Tuple2<Object, Tuple2<Object, T>>> groupedCollection = groupedInitialized.reduceGroups(reduceFunction);
+
+    FlatMapFunc<Tuple2<Object, Object>, RecordInfo<Object>> postFunction =
+      new AggregatorFinalizeFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
+    FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> postReduceFunction = Compat.convert(postFunction);
+    Dataset finalDataset = groupedCollection.flatMap(kv -> {
+      Object value = kv._2()._1();
+      if (value == null) {
+        value = initializeFunction.call(kv._2()._2());
+      }
+      return postReduceFunction.call(Tuple2.apply(kv._1(), value));
+    }, encoder);
+
+    if (partitions != null) {
+      finalDataset = finalDataset.coalesce(partitions);
+    }
+
+    finalDataset.explain(true);
+
+    return wrap(finalDataset.toJavaRDD());
   }
 }
