@@ -20,7 +20,7 @@ import React, { Component } from 'react';
 import classnames from 'classnames';
 import T from 'i18n-react';
 import { Input } from 'reactstrap';
-import SimpleDateModal from 'components/DataPrep/Directives/Parse/Modals/SimpleDateModal';
+import DateFormatModal from 'components/DataPrep/Directives/Parse/Modals/DateFormatModal';
 import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import DataPrepStore from 'components/DataPrep/store';
 import DataPrepActions from 'components/DataPrep/store/DataPrepActions';
@@ -35,7 +35,7 @@ import Mousetrap from 'mousetrap';
 
 const PREFIX = 'features.DataPrep.Directives.Format';
 const COPY_NEW_COLUMN_PREFIX = 'features.DataPrep.DataPrepTable.copyToNewColumn';
-const VALID_TYPES = ['string', 'date'];
+const VALID_TYPES = ['string', 'date', 'datetime'];
 
 export default class Format extends Component {
   static propTypes = {
@@ -82,7 +82,15 @@ export default class Format extends Component {
   formatToDateTime = () => {
     this.setState({
       activeModal: (
-        <SimpleDateModal source="format" toggle={this.toggleModal} onApply={this.applyDateFormat} />
+        <DateFormatModal source="format" toggle={this.toggleModal} onApply={this.applyDateFormat} />
+      ),
+    });
+  };
+
+  formatDateTimeAsString = () => {
+    this.setState({
+      activeModal: (
+        <DateFormatModal source="format" toggle={this.toggleModal} onApply={this.applyDateTimeAsStringFormat} />
       ),
     });
   };
@@ -92,6 +100,11 @@ export default class Format extends Component {
       name: 'DATE_TIME',
       onClick: this.formatToDateTime,
       validColTypes: ['date'],
+    },
+    {
+      name: 'DATETIME_AS_STRING',
+      onClick: this.formatDateTimeAsString,
+      validColTypes: ['datetime'],
     },
     {
       name: 'UPPERCASE',
@@ -191,8 +204,13 @@ export default class Format extends Component {
     });
   };
 
-  applyDateFormat = (name, format) => {
+  applyDateFormat = (format) => {
     let directive = `format-date :${this.props.column} ${format}`;
+    this.applyDirective(directive);
+  };
+
+  applyDateTimeAsStringFormat = (format) => {
+    let directive = `format-datetime :${this.props.column} '${format}'`;
     this.applyDirective(directive);
   };
 

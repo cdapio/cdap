@@ -22,7 +22,7 @@ import { execute } from 'components/DataPrep/store/DataPrepActionCreator';
 import SingleFieldModal from 'components/DataPrep/Directives/Parse/Modals/SingleFieldModal';
 import CSVModal from 'components/DataPrep/Directives/Parse/Modals/CSVModal';
 import LogModal from 'components/DataPrep/Directives/Parse/Modals/LogModal';
-import SimpleDateModal from 'components/DataPrep/Directives/Parse/Modals/SimpleDateModal';
+import DateFormatModal from 'components/DataPrep/Directives/Parse/Modals/DateFormatModal';
 import ExcelModal from 'components/DataPrep/Directives/Parse/Modals/ExcelModal';
 import T from 'i18n-react';
 import DataPrepStore from 'components/DataPrep/store';
@@ -40,6 +40,7 @@ const DIRECTIVE_MAP = {
   XMLTOJSON: 'parse-xml-to-json',
   LOG: 'parse-as-log',
   SIMPLEDATE: 'parse-as-simple-date',
+  DATETIME: 'parse-as-datetime',
   FIXEDLENGTH: 'parse-as-fixed-length',
   HL7: 'parse-as-hl7',
   AVRO: 'parse-as-avro-file',
@@ -64,6 +65,7 @@ export default class ParseDirective extends Component {
       'XMLTOJSON',
       'LOG',
       'SIMPLEDATE',
+      'DATETIME',
       'FIXEDLENGTH',
       'HL7',
     ];
@@ -175,10 +177,22 @@ export default class ParseDirective extends Component {
 
   renderSimpleDateModal() {
     return (
-      <SimpleDateModal
+      <DateFormatModal
         source="parse"
         toggle={this.selectParse.bind(this, null)}
-        onApply={this.applyDirective.bind(this)}
+        parserName={T.translate(`${SUFFIX}.Parsers.SIMPLEDATE.label`)}
+        onApply={this.applyDirective.bind(this, 'SIMPLEDATE')}
+      />
+    );
+  }
+
+  renderDateTimeModal() {
+    return (
+      <DateFormatModal
+        source="parse"
+        toggle={this.selectParse.bind(this, null)}
+        parserName={T.translate(`${SUFFIX}.Parsers.DATETIME.label`)}
+        onApply={(format) => this.applyDirective('DATETIME', `'${format}'`)}
       />
     );
   }
@@ -203,6 +217,8 @@ export default class ParseDirective extends Component {
       return this.renderLogModal();
     } else if (this.state.selectedParse === 'SIMPLEDATE') {
       return this.renderSimpleDateModal();
+    } else if (this.state.selectedParse === 'DATETIME') {
+      return this.renderDateTimeModal();
     } else if (this.state.selectedParse === 'EXCEL') {
       return this.renderExcelModal();
     } else {
