@@ -37,9 +37,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
@@ -56,6 +58,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -63,6 +66,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.Deflater;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -92,6 +99,8 @@ public final class SparkPackageUtils {
   private static final String PYSPARK_ARCHIVES_PATH = "PYSPARK_ARCHIVES_PATH";
   // File name for the spark default config
   private static final String SPARK_DEFAULTS_CONF = "spark-defaults.conf";
+  // File name for the spark environment script
+  private static final String SPARK_ENV_SH = "spark-env.sh";
   // Spark1 conf key for spark-assembly jar location
   private static final String SPARK_YARN_JAR = "spark.yarn.jar";
   // Spark2 conf key for spark archive (zip of jars) location
@@ -390,7 +399,8 @@ public final class SparkPackageUtils {
       return sparkEnv;
     }
 
-    Map<String, String> env = new LinkedHashMap<>(System.getenv());
+    Map<String, String> env = new LinkedHashMap<>(loadSparkEnv(System.getenv(SPARK_HOME)));
+    env.putAll(System.getenv());
 
     // Overwrite the system environments with the one set up by the startup script in functions.sh
     for (Map.Entry<String, String> entry : System.getenv().entrySet()) {
@@ -621,6 +631,74 @@ public final class SparkPackageUtils {
     org.apache.hadoop.fs.Path path = new org.apache.hadoop.fs.Path(location.toURI().getPath());
     path = path.getFileSystem(hConf).makeQualified(path);
     return ((FileContextLocationFactory) locationFactory).getFileContext().resolvePath(path).toUri();
+  }
+
+  /**
+   * Loads the enviroment variables setup by the spark-env.sh file.
+   * @return
+   */
+  private static Map<String, String> loadSparkEnv(@Nullable String sparkHome) {
+    if (sparkHome == null) {
+      return Collections.emptyMap();
+    }
+    Path sparkEnvSh = Paths.get(sparkHome, "conf", SPARK_ENV_SH);
+    if (!Files.isReadable(sparkEnvSh)) {
+      LOG.debug("Skip reading {} for Spark environment due to unreadable file");
+      return Collections.emptyMap();
+    }
+
+    try {
+      // Run the spark-env.sh script and capture the environment variables in the output
+      ProcessBuilder processBuilder = new ProcessBuilder()
+        .command("/bin/sh", "-ac", String.format(". %s; printenv", sparkEnvSh.toAbsolutePath().toString()))
+        .redirectErrorStream(true);
+
+      processBuilder.environment().clear();
+      Process process = processBuilder.start();
+
+      CompletableFuture<Map<String, String>> output = new CompletableFuture<>();
+      Thread t = new Thread(() -> {
+        Map<String, String> envs = new HashMap<>();
+        Pattern pattern = Pattern.compile("(SPARK_.*?)=(.+)");
+
+        // Parse the output to extract environment variables
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(),
+                                                                              StandardCharsets.UTF_8))) {
+          String line = reader.readLine();
+          while (line != null) {
+            Matcher matcher = pattern.matcher(line);
+            if (matcher.matches()) {
+              envs.put(matcher.group(1), matcher.group(2));
+            }
+            line = reader.readLine();
+          }
+
+          output.complete(envs);
+        } catch (IOException e) {
+          output.completeExceptionally(e);
+        }
+      });
+      t.setDaemon(true);
+      t.start();
+
+      // Should not take long for the shell command to complete
+      if (!process.waitFor(10, TimeUnit.SECONDS)) {
+        process.destroyForcibly();
+        LOG.warn("Failed to read Spark environment from {} with process taking longer than 10 seconds to complete",
+                 sparkEnvSh);
+        return Collections.emptyMap();
+      }
+      int exitValue = process.exitValue();
+      if (exitValue != 0) {
+        LOG.warn("Failed to read Spark environment from {} with process failed with exit code {}",
+                 sparkEnvSh, exitValue);
+        return Collections.emptyMap();
+      }
+      return output.get();
+    } catch (Exception e) {
+      LOG.warn("Failed to read Spark enviroment from {} due to failure", sparkEnvSh, e);
+      return Collections.emptyMap();
+    }
   }
 
   private SparkPackageUtils() {
