@@ -23,7 +23,8 @@ const pluginLabels = {
   action: 'Conditions and Actions',
   erroralert: 'Error Handlers and Alerts',
 };
-const NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double'];
+const NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double', 'bigdecimal'];
+const NATIVE_NUMBER_TYPES = ['integer', 'int', 'short', 'long', 'float', 'double'];
 const GLOBALS = {
   pageLevelErrors: {
     'UNKNOWN-NAMESPACE': (invalidNS) => { return `\'namespace:${invalidNS}' was not found.`},
@@ -363,6 +364,7 @@ const PIPELINE_LOGS_FILTER =
 
 export {
   NUMBER_TYPES,
+  NATIVE_NUMBER_TYPES,
   GLOBALS,
   HYDRATOR_DEFAULT_VALUES,
   PROGRAM_STATUSES,

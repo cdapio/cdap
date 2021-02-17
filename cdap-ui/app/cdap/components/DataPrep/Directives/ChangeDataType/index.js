@@ -41,6 +41,7 @@ const DATATYPE_OPTIONS = [
   'short',
   'float',
   'double',
+  'decimal',
   'bytes',
 ];
 
@@ -51,6 +52,7 @@ export default class ChangeDataTypeDirective extends Component {
     super(props);
 
     this.columnType = DataPrepStore.getState().dataprep.typesCheck[this.props.column];
+    this.columnType = this.columnType === 'bigdecimal' ? 'decimal' : this.columnType;
 
     this.state = {
       selectedChangeDataType: null,
