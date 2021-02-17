@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.format;
 
+import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.format.UnexpectedFormatException;
 import io.cdap.cdap.api.data.schema.Schema;
@@ -61,22 +62,28 @@ public class StructuredRecordBuilderTest {
 
   @Test
   public void testDateConversion() {
+    String a = "123456789012345678901234567890";
+    byte [] b = Bytes.toBytes(a);
+    BigDecimal big = new BigDecimal(new BigInteger(b));
     long ts = 0L;
     Date date = new Date(ts);
     SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
     dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
     Schema schema = Schema.recordOf("x1",
                                     Schema.Field.of("ts", Schema.of(Schema.Type.LONG)),
+                                    Schema.Field.of("TS", Schema.of(Schema.Type.LONG)),
                                     Schema.Field.of("date1", Schema.of(Schema.Type.STRING)),
                                     Schema.Field.of("date2", Schema.of(Schema.Type.STRING)));
 
     StructuredRecord expected = StructuredRecord.builder(schema)
-      .set("ts", 0L)
+      .set("ts", new BigDecimal("122222222222222222222222222"))
+      .set("TS", 0L)
       .set("date1", "1970-01-01T00:00:00 UTC")
       .set("date2", "1970-01-01")
       .build();
 
     StructuredRecord actual = StructuredRecord.builder(schema)
+      .convertAndSet("ts", date)
       .convertAndSet("ts", date)
       .convertAndSet("date1", date)
       .convertAndSet("date2", date, dateFormat)

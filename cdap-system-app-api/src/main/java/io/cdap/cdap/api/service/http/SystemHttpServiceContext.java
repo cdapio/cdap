@@ -23,13 +23,12 @@ import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
 import java.util.Map;
-import java.util.Set;
 
 /**
  * A System HttpServiceContext that exposes capabilities beyond those available to service contexts for user services.
  */
 @Beta
-public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner {
+public interface SystemHttpServiceContext extends HttpServiceContext, TransactionRunner, ConnectionManager {
 
   /**
    * Evaluates lookup macros and the 'secure' macro function using provided macro evaluator.
