@@ -41,7 +41,7 @@ function extractMarketUrls(cdapConfig) {
   if (defaultMarketUrl && !marketUrls) {
     return [defaultMarketUrl];
   }
-  marketUrls = marketUrls.split('+');
+  marketUrls = marketUrls.split('+').filter((url) => url !== '');
   let filteredMarketUrls;
   if (!defaultMarketUrl) {
     filteredMarketUrls = marketUrls;
