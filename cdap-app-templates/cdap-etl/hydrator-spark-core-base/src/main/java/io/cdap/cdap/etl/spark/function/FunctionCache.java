@@ -20,10 +20,8 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 
 import java.io.Serializable;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,35 +52,18 @@ import java.util.concurrent.atomic.AtomicLong;
  * </p>
  * @see PluginFunctionContext#createAndInitializePlugin 
  */
-public class FunctionCache implements Serializable {
-  private static final ThreadLocal<Cache<String, Object>> VALUES_CACHE = ThreadLocal.withInitial(
-    () -> CacheBuilder.newBuilder().softValues().build());
-
-  /**
-   * Defines unique key that allows to match values between partition tasks. It consist of factory key and
-   * value number.
-   */
-  private final String key;
-
-  private FunctionCache(String key) {
-    this.key = key;
-  }
-
+public abstract class FunctionCache implements Serializable {
   /**
    * Gets value from a thread-local cache or constructs it using loader.
    * @param loader function to produce a value when it's not present in cache
    * @param <T> value type
-   * @throws ExecutionException
    */
-  public <T> T getValue(Callable<T> loader) throws ExecutionException {
-    T rc = (T) ((Cache) VALUES_CACHE.get()).get(key, loader);
-    return rc;
-  }
+  public abstract <T> T getValue(Callable<T> loader) throws Exception;
 
   /**
    * Factory class allows to create cache instances.
    */
-  public static class Factory {
+  public abstract static class Factory {
     private static final String KEY_SEPARATOR = ":";
     /**
      * Key that should help to distinguish factories from different processed in the hypotetical case of constructing
@@ -93,6 +74,66 @@ public class FunctionCache implements Serializable {
      * Value that is used to differentiate factories created in same JVM.
      */
     private static final AtomicLong FACTORY_COUNTER = new AtomicLong();
+
+    /**
+     *
+     * @return new instance of cache factory with unique internal id
+     */
+    public static Factory newInstance(boolean enabled) {
+      return enabled
+        ? new EnabledFactory(PROCESS_KEY + KEY_SEPARATOR + FACTORY_COUNTER.incrementAndGet())
+        : new DisabledFactory();
+    }
+
+    /**
+     *
+     * @return a cache object that can cache a single value and can be serialized.
+     */
+    public abstract FunctionCache newCache();
+
+  }
+
+  /**
+   * Enabled Function Cache that will actually do caching
+   */
+  public static class EnabledCache extends FunctionCache {
+    private static final long serialVersionUID = -4391812024087297065L;
+    private static final ThreadLocal<Cache<String, Object>> VALUES_CACHE = ThreadLocal.withInitial(
+      () -> CacheBuilder.newBuilder().softValues().build());
+
+    /**
+     * Defines unique key that allows to match values between partition tasks. It consist of factory key and
+     * value number.
+     */
+    private final String key;
+
+    private EnabledCache(String key) {
+      this.key = key;
+    }
+
+    /**
+     * Gets value from a thread-local cache or constructs it using loader.
+     * @param loader function to produce a value when it's not present in cache
+     * @param <T> value type
+     * @throws ExecutionException
+     */
+    public <T> T getValue(Callable<T> loader) throws Exception {
+      try {
+        T rc = (T) ((Cache) VALUES_CACHE.get()).get(key, loader);
+        return rc;
+      } catch (ExecutionException e) {
+        if (e.getCause() instanceof Exception) {
+          throw (Exception) e.getCause();
+        }
+        throw e;
+      }
+    }
+  }
+
+  /**
+   * Factory that will return cache instances that do caching.
+   */
+  public static class EnabledFactory extends Factory {
     /**
      * Factory key
      */
@@ -102,25 +143,41 @@ public class FunctionCache implements Serializable {
      */
     private final AtomicInteger counter = new AtomicInteger();
 
-    private Factory(String key) {
+    private EnabledFactory(String key) {
       this.key = key;
-    }
-
-    /**
-     *
-     * @return new instance of cache factory with unique internal id
-     */
-    public static Factory newInstance() {
-      return new Factory(PROCESS_KEY + KEY_SEPARATOR + FACTORY_COUNTER.incrementAndGet());
     }
 
     /**
      *
      * @return a cache object that can cache a single value and can be serialized.
      */
+    @Override
     public FunctionCache newCache() {
-      return new FunctionCache(key + KEY_SEPARATOR + counter.getAndIncrement());
+      return new EnabledCache(key + Factory.KEY_SEPARATOR + counter.getAndIncrement());
     }
+  }
 
+  /**
+   * NOP cache that will be used if caching is disabled. Will call loader each time.
+   */
+  public static class DisabledCache extends FunctionCache {
+
+    private static final long serialVersionUID = -7757374847132258803L;
+
+    @Override
+    public <T> T getValue(Callable<T> loader) throws Exception {
+      return loader.call();
+    }
+  }
+
+  /**
+   * Factory that returns NOP caches. It's used if caching is disabled.
+   */
+  public static class DisabledFactory extends Factory {
+
+    @Override
+    public FunctionCache newCache() {
+      return new DisabledCache();
+    }
   }
 }

@@ -25,6 +25,7 @@ import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.plugin.LiteralsBridge;
@@ -61,9 +62,11 @@ import static org.apache.spark.sql.functions.floor;
  */
 public class RDDCollection<T> extends BaseRDDCollection<T> {
 
-  public RDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
-                       DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
-    super(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+  public RDDCollection(JavaSparkExecutionContext sec, FunctionCache.Factory functionCacheFactory,
+                       JavaSparkContext jsc, SQLContext sqlContext,
+                       DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
+                       JavaRDD<T> rdd) {
+    super(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
   }
 
 

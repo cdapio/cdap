@@ -22,6 +22,7 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.spark.Compat;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -37,16 +38,22 @@ import scala.Tuple2;
  */
 public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
   private final JavaSparkExecutionContext sec;
+  private final FunctionCache.Factory functionCacheFactory;
   private final JavaSparkContext jsc;
   private final SQLContext sqlContext;
   private final DatasetContext datasetContext;
   private final SparkBatchSinkFactory sinkFactory;
   private final JavaPairRDD<K, V> pairRDD;
 
-  public PairRDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
-                           DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
+  public PairRDDCollection(JavaSparkExecutionContext sec,
+                           FunctionCache.Factory functionCacheFactory,
+                           JavaSparkContext jsc,
+                           SQLContext sqlContext,
+                           DatasetContext datasetContext,
+                           SparkBatchSinkFactory sinkFactory,
                            JavaPairRDD<K, V> pairRDD) {
     this.sec = sec;
+    this.functionCacheFactory = functionCacheFactory;
     this.jsc = jsc;
     this.sqlContext = sqlContext;
     this.datasetContext = datasetContext;
@@ -62,7 +69,8 @@ public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
 
   @Override
   public <T> SparkCollection<T> flatMap(FlatMapFunction<Tuple2<K, V>, T> function) {
-    return new RDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, pairRDD.flatMap(function));
+    return new RDDCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext,
+                               sinkFactory, pairRDD.flatMap(function));
   }
 
   @Override
@@ -109,6 +117,7 @@ public class PairRDDCollection<K, V> implements SparkPairCollection<K, V> {
   }
 
   private <X, Y> SparkPairCollection<X, Y> wrap(JavaPairRDD<X, Y> javaPairRDD) {
-    return new PairRDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, javaPairRDD);
+    return new PairRDDCollection<>(sec, functionCacheFactory, jsc, sqlContext,
+                                   datasetContext, sinkFactory, javaPairRDD);
   }
 }

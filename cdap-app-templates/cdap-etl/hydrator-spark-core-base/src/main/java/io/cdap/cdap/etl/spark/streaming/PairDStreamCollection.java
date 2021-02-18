@@ -21,6 +21,7 @@ import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.StreamingCompat;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.streaming.api.java.JavaPairDStream;
@@ -34,10 +35,14 @@ import scala.Tuple2;
  */
 public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   private final JavaSparkExecutionContext sec;
+  private final FunctionCache.Factory functionCacheFactory;
   private final JavaPairDStream<K, V> pairStream;
 
-  public PairDStreamCollection(JavaSparkExecutionContext sec, JavaPairDStream<K, V> pairStream) {
+  public PairDStreamCollection(JavaSparkExecutionContext sec,
+                               FunctionCache.Factory functionCacheFactory,
+                               JavaPairDStream<K, V> pairStream) {
     this.sec = sec;
+    this.functionCacheFactory = functionCacheFactory;
     this.pairStream = pairStream;
   }
 
@@ -49,7 +54,7 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
 
   @Override
   public <T> SparkCollection<T> flatMap(FlatMapFunction<Tuple2<K, V>, T> function) {
-    return new DStreamCollection<>(sec, pairStream.flatMap(function));
+    return new DStreamCollection<>(sec, functionCacheFactory, pairStream.flatMap(function));
   }
 
   @Override
@@ -98,6 +103,6 @@ public class PairDStreamCollection<K, V> implements SparkPairCollection<K, V> {
   }
 
   private <T, U> PairDStreamCollection<T, U> wrap(JavaPairDStream<T, U> pairStream) {
-    return new PairDStreamCollection<>(sec, pairStream);
+    return new PairDStreamCollection<>(sec, functionCacheFactory, pairStream);
   }
 }

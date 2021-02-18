@@ -106,18 +106,17 @@ public abstract class SparkPipelineRunner {
     BatchJoiner.PLUGIN_TYPE, BatchAggregator.PLUGIN_TYPE, Constants.Connector.PLUGIN_TYPE,
     SparkCompute.PLUGIN_TYPE, SparkSink.PLUGIN_TYPE, AlertPublisher.PLUGIN_TYPE);
 
-  protected final FunctionCache.Factory functionCacheFactory = FunctionCache.Factory.newInstance();
-
   protected abstract SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
+                                                                   FunctionCache.Factory functionCacheFactory,
                                                                    StageStatisticsCollector collector) throws Exception;
 
   protected abstract SparkPairCollection<Object, Object> addJoinKey(
-    StageSpec stageSpec, String inputStageName,
+    StageSpec stageSpec, FunctionCache.Factory functionCacheFactory, String inputStageName,
     SparkCollection<Object> inputCollection, StageStatisticsCollector collector) throws Exception;
 
   protected abstract SparkCollection<Object> mergeJoinResults(
     StageSpec stageSpec,
-    SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
+    FunctionCache.Factory functionCacheFactory, SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
     StageStatisticsCollector collector) throws Exception;
 
   public void runPipeline(PhaseSpec phaseSpec, String sourcePluginType,
@@ -126,9 +125,11 @@ public abstract class SparkPipelineRunner {
                           PluginContext pluginContext,
                           Map<String, StageStatisticsCollector> collectors,
                           Set<String> uncombinableSinks,
-                          boolean consolidateStages) throws Exception {
+                          boolean consolidateStages,
+                          boolean cacheFunctions) throws Exception {
     PipelinePhase pipelinePhase = phaseSpec.getPhase();
     BasicArguments arguments = new BasicArguments(sec);
+    FunctionCache.Factory functionCacheFactory = FunctionCache.Factory.newInstance(cacheFunctions);
     MacroEvaluator macroEvaluator =
       new DefaultMacroEvaluator(arguments, sec.getLogicalStartTime(), sec, sec.getNamespace());
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
@@ -247,7 +248,7 @@ public abstract class SparkPipelineRunner {
         // this if-else is nested inside the stageRDD null check to avoid warnings about stageRDD possibly being
         // null in the other else-if conditions
         if (sourcePluginType.equals(pluginType) || isConnectorSource) {
-          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, collector);
+          SparkCollection<RecordInfo<Object>> combinedData = getSource(stageSpec, functionCacheFactory, collector);
           emittedBuilder = addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                                       combinedData, groupedDag, branchers, shufflers, hasErrorOutput, hasAlertOutput);
         } else {
@@ -327,7 +328,8 @@ public abstract class SparkPipelineRunner {
         Integer numPartitions = stagePartitions.get(stageName);
         Object plugin = pluginContext.newPluginInstance(stageName, macroEvaluator);
         SparkCollection<Object> joined = handleJoin(inputDataCollections, pipelinePhase, pluginFunctionContext,
-                                                    stageSpec, plugin, numPartitions, collector, shufflers);
+                                                    stageSpec, functionCacheFactory, plugin,
+                                                    numPartitions, collector, shufflers);
         addEmitted(emittedBuilder, pipelinePhase, stageSpec,
                    joined.map(new RecordInfoWrapper<>(stageName)), groupedDag, branchers, shufflers, false, false);
 
@@ -441,7 +443,8 @@ public abstract class SparkPipelineRunner {
 
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
                                                PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
-                                               StageSpec stageSpec, Object plugin, Integer numPartitions,
+                                               StageSpec stageSpec, FunctionCache.Factory functionCacheFactory,
+                                               Object plugin, Integer numPartitions,
                                                StageStatisticsCollector collector,
                                                Set<String> shufflers) throws Exception {
     String stageName = stageSpec.getName();
@@ -450,7 +453,7 @@ public abstract class SparkPipelineRunner {
       BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
       joiner.initialize(joinerRuntimeContext);
       shufflers.add(stageName);
-      return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector);
+      return handleJoin(joiner, inputDataCollections, stageSpec, functionCacheFactory, numPartitions, collector);
     } else if (plugin instanceof AutoJoiner) {
       AutoJoiner autoJoiner = (AutoJoiner) plugin;
       Map<String, Schema> inputSchemas = new HashMap<>();
@@ -746,13 +749,15 @@ public abstract class SparkPipelineRunner {
 
   protected SparkCollection<Object> handleJoin(BatchJoiner<?, ?, ?> joiner,
                                                Map<String, SparkCollection<Object>> inputDataCollections,
-                                               StageSpec stageSpec, Integer numPartitions,
+                                               StageSpec stageSpec,
+                                               FunctionCache.Factory functionCacheFactory,
+                                               Integer numPartitions,
                                                StageStatisticsCollector collector) throws Exception {
     Map<String, SparkPairCollection<Object, Object>> preJoinStreams = new HashMap<>();
     for (Map.Entry<String, SparkCollection<Object>> inputStreamEntry : inputDataCollections.entrySet()) {
       String inputStage = inputStreamEntry.getKey();
       SparkCollection<Object> inputStream = inputStreamEntry.getValue();
-      preJoinStreams.put(inputStage, addJoinKey(stageSpec, inputStage, inputStream, collector));
+      preJoinStreams.put(inputStage, addJoinKey(stageSpec, functionCacheFactory, inputStage, inputStream, collector));
     }
 
     Set<String> remainingInputs = new HashSet<>();
@@ -803,7 +808,7 @@ public abstract class SparkPipelineRunner {
       throw new IllegalStateException("There are no inputs into join stage " + stageSpec.getName());
     }
 
-    return mergeJoinResults(stageSpec, joinedInputs, collector);
+    return mergeJoinResults(stageSpec, functionCacheFactory, joinedInputs, collector);
   }
 
 

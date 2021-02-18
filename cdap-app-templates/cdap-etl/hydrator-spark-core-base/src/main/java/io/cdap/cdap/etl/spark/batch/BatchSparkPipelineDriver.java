@@ -44,6 +44,7 @@ import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
 import io.cdap.cdap.etl.spark.SparkStageStatisticsCollector;
 import io.cdap.cdap.etl.spark.function.BatchSourceFunction;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.JoinMergeFunction;
 import io.cdap.cdap.etl.spark.function.JoinOnFunction;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
@@ -81,18 +82,23 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   private transient Map<String, Integer> stagePartitions;
 
   @Override
-  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec, StageStatisticsCollector collector) {
+  protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
+                                                          FunctionCache.Factory functionCacheFactory,
+                                                          StageStatisticsCollector collector) {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
     FlatMapFunction<Tuple2<Object, Object>, RecordInfo<Object>> sourceFunction =
       Compat.convert(new BatchSourceFunction(pluginFunctionContext, functionCacheFactory.newCache()));
-    return new RDDCollection<>(sec, jsc, new SQLContext(jsc), datasetContext, sinkFactory,
-                               sourceFactory
-                                 .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
-                                 .flatMap(sourceFunction));
+    return new RDDCollection<>(sec, functionCacheFactory, jsc,
+                               new SQLContext(jsc), datasetContext, sinkFactory, sourceFactory
+      .createRDD(sec, jsc, stageSpec.getName(), Object.class, Object.class)
+      .flatMap(sourceFunction)
+    );
   }
 
   @Override
-  protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec, String inputStageName,
+  protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec,
+                                                           FunctionCache.Factory functionCacheFactory,
+                                                           String inputStageName,
                                                            SparkCollection<Object> inputCollection,
                                                            StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
@@ -103,6 +109,7 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
   @Override
   protected SparkCollection<Object> mergeJoinResults(
     StageSpec stageSpec,
+    FunctionCache.Factory functionCacheFactory,
     SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
     StageStatisticsCollector collector) throws Exception {
     PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
@@ -152,8 +159,10 @@ public class BatchSparkPipelineDriver extends SparkPipelineRunner implements Jav
         new PipelinePluginInstantiator(pluginContext, sec.getMetrics(), phaseSpec, new SingleConnectorFactory());
       boolean shouldConsolidateStages = Boolean.parseBoolean(
         sec.getRuntimeArguments().getOrDefault(Constants.CONSOLIDATE_STAGES, Boolean.TRUE.toString()));
+      boolean shouldCacheFunctions = Boolean.parseBoolean(
+        sec.getRuntimeArguments().getOrDefault(Constants.CACHE_FUNCTIONS, Boolean.TRUE.toString()));
       runPipeline(phaseSpec, BatchSource.PLUGIN_TYPE, sec, stagePartitions, pluginInstantiator, collectors,
-                  sinkFactory.getUncombinableSinks(), shouldConsolidateStages);
+                  sinkFactory.getUncombinableSinks(), shouldConsolidateStages, shouldCacheFunctions);
     } finally {
       updateWorkflowToken(sec.getWorkflowToken(), collectors);
     }

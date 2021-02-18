@@ -99,15 +99,17 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   protected final JavaRDD<T> rdd;
   protected final FunctionCache.Factory functionCacheFactory;
 
-  protected BaseRDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
-                              DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
+  protected BaseRDDCollection(JavaSparkExecutionContext sec, FunctionCache.Factory functionCacheFactory,
+                              JavaSparkContext jsc, SQLContext sqlContext,
+                              DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
+                              JavaRDD<T> rdd) {
     this.sec = sec;
     this.jsc = jsc;
     this.sqlContext = sqlContext;
     this.datasetContext = datasetContext;
     this.sinkFactory = sinkFactory;
+    this.functionCacheFactory = functionCacheFactory;
     this.rdd = rdd;
-    this.functionCacheFactory = FunctionCache.Factory.newInstance();
   }
 
   @SuppressWarnings("unchecked")
@@ -210,7 +212,9 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
 
   @Override
   public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function) {
-    return new PairRDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd.flatMapToPair(function));
+    return new PairRDDCollection<>(sec, functionCacheFactory, jsc,
+                                   sqlContext, datasetContext, sinkFactory,
+                                   rdd.flatMapToPair(function));
   }
 
   @Override
@@ -313,7 +317,7 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
   }
 
   protected <U> RDDCollection<U> wrap(JavaRDD<U> rdd) {
-    return new RDDCollection<>(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+    return new RDDCollection<>(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
   }
 
   protected Column eq(Column left, Column right, boolean isNullSafe) {

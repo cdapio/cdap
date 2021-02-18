@@ -33,6 +33,7 @@ public final class Constants {
   public static final String SPARK_PIPELINE_AUTOCACHE_ENABLE_FLAG = "spark.cdap.pipeline.autocache.enable";
   public static final String SPARK_PIPELINE_CACHING_STORAGE_LEVEL = "spark.cdap.pipeline.caching.storage.level";
   public static final String CONSOLIDATE_STAGES = "spark.cdap.pipeline.consolidate.stages";
+  public static final String CACHE_FUNCTIONS = "spark.cdap.pipeline.functioncache.enable";
   public static final String DEFAULT_CACHING_STORAGE_LEVEL = "DISK_ONLY";
 
   private Constants() {

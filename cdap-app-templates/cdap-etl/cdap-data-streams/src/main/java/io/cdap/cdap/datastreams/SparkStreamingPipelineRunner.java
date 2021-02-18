@@ -39,6 +39,7 @@ import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.SparkPairCollection;
 import io.cdap.cdap.etl.spark.SparkPipelineRunner;
+import io.cdap.cdap.etl.spark.function.FunctionCache;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.plugin.SparkPipelinePluginContext;
 import io.cdap.cdap.etl.spark.streaming.DStreamCollection;
@@ -80,6 +81,7 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
 
   @Override
   protected SparkCollection<RecordInfo<Object>> getSource(StageSpec stageSpec,
+                                                          FunctionCache.Factory functionCacheFactory,
                                                           StageStatisticsCollector collector) throws Exception {
     StreamingSource<Object> source;
     if (checkpointsDisabled) {
@@ -113,36 +115,39 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     JavaDStream<RecordInfo<Object>> outputDStream = javaDStream
       .transform(new CountingTransformFunction<>(stageSpec.getName(), sec.getMetrics(), "records.out", dataTracer))
       .map(new WrapOutputTransformFunction<>(stageSpec.getName()));
-    return new DStreamCollection<>(sec, outputDStream);
+    return new DStreamCollection<>(sec, functionCacheFactory, outputDStream);
   }
 
   @Override
-  protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec, String inputStageName,
+  protected SparkPairCollection<Object, Object> addJoinKey(StageSpec stageSpec,
+                                                           FunctionCache.Factory functionCacheFactory,
+                                                           String inputStageName,
                                                            SparkCollection<Object> inputCollection,
                                                            StageStatisticsCollector collector) throws Exception {
     DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaDStream<Object> dStream = inputCollection.getUnderlying();
     JavaPairDStream<Object, Object> result = dStream.transformToPair(
       new DynamicJoinOn<>(dynamicDriverContext, functionCacheFactory.newCache(), inputStageName));
-    return new PairDStreamCollection<>(sec, result);
+    return new PairDStreamCollection<>(sec, functionCacheFactory, result);
   }
 
   @Override
   protected SparkCollection<Object> mergeJoinResults(
-    StageSpec stageSpec, SparkPairCollection<Object, List<JoinElement<Object>>> joinedInputs,
-    StageStatisticsCollector collector) throws Exception {
+    StageSpec stageSpec, FunctionCache.Factory functionCacheFactory, SparkPairCollection<Object,
+    List<JoinElement<Object>>> joinedInputs, StageStatisticsCollector collector) throws Exception {
 
     DynamicDriverContext dynamicDriverContext = new DynamicDriverContext(stageSpec, sec, collector);
     JavaPairDStream<Object, List<JoinElement<Object>>> pairDStream = joinedInputs.getUnderlying();
     JavaDStream<Object> result = pairDStream.transform(
       new DynamicJoinMerge<>(dynamicDriverContext, functionCacheFactory.newCache()));
-    return new DStreamCollection<>(sec, result);
+    return new DStreamCollection<>(sec, functionCacheFactory, result);
   }
 
   @Override
   protected SparkCollection<Object> handleJoin(Map<String, SparkCollection<Object>> inputDataCollections,
                                                PipelinePhase pipelinePhase, PluginFunctionContext pluginFunctionContext,
-                                               StageSpec stageSpec, Object plugin, Integer numPartitions,
+                                               StageSpec stageSpec, FunctionCache.Factory functionCacheFactory,
+                                               Object plugin, Integer numPartitions,
                                                StageStatisticsCollector collector,
                                                Set<String> shufflers) throws Exception {
     String stageName = stageSpec.getName();
@@ -178,6 +183,6 @@ public class SparkStreamingPipelineRunner extends SparkPipelineRunner {
     BatchJoinerRuntimeContext joinerRuntimeContext = pluginFunctionContext.createBatchRuntimeContext();
     joiner.initialize(joinerRuntimeContext);
     shufflers.add(stageName);
-    return handleJoin(joiner, inputDataCollections, stageSpec, numPartitions, collector);
+    return handleJoin(joiner, inputDataCollections, stageSpec, functionCacheFactory, numPartitions, collector);
   }
 }
