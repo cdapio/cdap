@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.etl.spark;
 
+import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.dataset.lib.KeyValue;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
@@ -25,6 +26,7 @@ import io.cdap.cdap.etl.common.PhaseSpec;
 import io.cdap.cdap.etl.common.RecordInfo;
 import io.cdap.cdap.etl.common.StageStatisticsCollector;
 import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
+import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.api.java.function.Function;
@@ -82,4 +84,6 @@ public interface SparkCollection<T> {
   SparkCollection<T> window(StageSpec stageSpec, Windower windower);
 
   SparkCollection<T> join(JoinRequest joinRequest);
+
+  SparkCollection<T> join(JoinExpressionRequest joinRequest);
 }

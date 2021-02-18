@@ -24,6 +24,7 @@ import io.cdap.cdap.api.dataset.table.Table;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.batch.BatchJoiner;
+import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDistribution;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.mock.batch.MockSink;
@@ -1128,6 +1129,294 @@ public class AutoJoinerTest extends HydratorTestBase {
                            true, true);
     testAutoJoinWithMacros(Engine.SPARK, Collections.singletonList("purchases"), expectedSchema, expected,
                            true, true);
+  }
+
+  @Test
+  public void testOuterOrJoin() throws Exception {
+    /*
+         users ------|
+                     |--> join --> sink
+         emails -----|
+
+         joinOn: users.first_name = emails.name or users.full_name = emails.name
+     */
+    Schema userSchema = Schema.recordOf(
+      "user",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("first_name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("full name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Schema emailSchema = Schema.recordOf(
+      "email",
+      Schema.Field.of("email", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Schema expectedSchema = Schema.recordOf(
+      "user names.emails",
+      Schema.Field.of("user_id", Schema.nullableOf(Schema.of(Schema.Type.INT))),
+      Schema.Field.of("name", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("email", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    String userInput = UUID.randomUUID().toString();
+    String emailsInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+
+    List<JoinField> select = new ArrayList<>();
+    select.add(new JoinField("user names", "id", "user_id"));
+    select.add(new JoinField("emails", "name"));
+    select.add(new JoinField("emails", "email"));
+
+    JoinCondition.OnExpression condition = JoinCondition.onExpression()
+      .addDatasetAlias("user names", "U")
+      .addDatasetAlias("emails", "E")
+      .setExpression("U.first_name = E.name OR U.`full name` = E.name")
+      .build();
+    Map<String, String> joinerProperties = MockAutoJoiner.getProperties(Arrays.asList("user names", "emails"),
+                                                                        Collections.emptyList(),
+                                                                        Collections.emptyList(),
+                                                                        Collections.emptyList(),
+                                                                        select, false, null, condition);
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("user names", MockSource.getPlugin(userInput, userSchema)))
+      .addStage(new ETLStage("emails", MockSource.getPlugin(emailsInput, emailSchema)))
+      .addStage(new ETLStage("join", new ETLPlugin(MockAutoJoiner.NAME, BatchJoiner.PLUGIN_TYPE, joinerProperties)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("user names", "join")
+      .addConnection("emails", "join")
+      .addConnection("join", "sink")
+      .setEngine(Engine.SPARK)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    List<StructuredRecord> records = new ArrayList<>();
+    records.add(StructuredRecord.builder(userSchema).set("id", 0).set("first_name", "Billy").build());
+    records.add(StructuredRecord.builder(userSchema).set("id", 1).set("full name", "Bobby Bob").build());
+    records.add(StructuredRecord.builder(userSchema).set("id", 2)
+                  .set("first_name", "Bob").set("full name", "Bob Loblaw").build());
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, records);
+
+    records.clear();
+    records.add(StructuredRecord.builder(emailSchema).set("email", "billy@example.com").set("name", "Billy").build());
+    records.add(StructuredRecord.builder(emailSchema).set("email", "b@example.com").set("name", "Bob Loblaw").build());
+    records.add(StructuredRecord.builder(emailSchema).set("email", "c@example.com").set("name", "Chris").build());
+    inputManager = getDataset(emailsInput);
+    MockSource.writeInput(inputManager, records);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("user_id", 0).set("name", "Billy").set("email", "billy@example.com").build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("user_id", 1).build());
+    expected.add(StructuredRecord.builder(expectedSchema)
+                   .set("user_id", 2).set("name", "Bob Loblaw").set("email", "b@example.com").build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("name", "Chris").set("email", "c@example.com").build());
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+  }
+
+  @Test
+  public void testInnerBetweenCondition() throws Exception {
+    /*
+         users ----------|
+                         |--> join --> sink
+         age_groups -----|
+
+         joinOn: users.age > age_groups.lo and (users.age <= age_groups.hi or age_groups.hi is null)
+     */
+    Schema userSchema = Schema.recordOf(
+      "user",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+    Schema ageGroupSchema = Schema.recordOf(
+      "age_group",
+      Schema.Field.of("name", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("lo", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("hi", Schema.nullableOf(Schema.of(Schema.Type.INT))));
+    Schema expectedSchema = Schema.recordOf(
+      "users.age_groups",
+      Schema.Field.of("username", Schema.of(Schema.Type.STRING)),
+      Schema.Field.of("age_group", Schema.of(Schema.Type.STRING)));
+    String userInput = UUID.randomUUID().toString();
+    String agesInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+
+    List<JoinField> select = new ArrayList<>();
+    select.add(new JoinField("users", "name", "username"));
+    select.add(new JoinField("age_groups", "name", "age_group"));
+
+    JoinCondition.OnExpression condition = JoinCondition.onExpression()
+      .setExpression("users.age >= age_groups.lo and (users.age < age_groups.hi or age_groups.hi is null)")
+      .build();
+    Map<String, String> joinerProperties = MockAutoJoiner.getProperties(Arrays.asList("users", "age_groups"),
+                                                                        Collections.emptyList(),
+                                                                        Arrays.asList("users", "age_groups"),
+                                                                        Collections.emptyList(),
+                                                                        select, false, null, condition);
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("users", MockSource.getPlugin(userInput, userSchema)))
+      .addStage(new ETLStage("age_groups", MockSource.getPlugin(agesInput, ageGroupSchema)))
+      .addStage(new ETLStage("join", new ETLPlugin(MockAutoJoiner.NAME, BatchJoiner.PLUGIN_TYPE, joinerProperties)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("users", "join")
+      .addConnection("age_groups", "join")
+      .addConnection("join", "sink")
+      .setEngine(Engine.SPARK)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    List<StructuredRecord> records = new ArrayList<>();
+    records.add(StructuredRecord.builder(userSchema).set("name", "Alice").set("age", 35).build());
+    records.add(StructuredRecord.builder(userSchema).set("name", "Bob").build());
+    records.add(StructuredRecord.builder(userSchema).set("name", "Carl").set("age", 13).build());
+    records.add(StructuredRecord.builder(userSchema).set("name", "Dave").set("age", 0).build());
+    records.add(StructuredRecord.builder(userSchema).set("name", "Elaine").set("age", 68).build());
+    records.add(StructuredRecord.builder(userSchema).set("name", "Fred").set("age", 4).build());
+    DataSetManager<Table> inputManager = getDataset(userInput);
+    MockSource.writeInput(inputManager, records);
+
+    records.clear();
+    records.add(StructuredRecord.builder(ageGroupSchema).set("name", "infant").set("lo", 0).set("hi", 2).build());
+    records.add(StructuredRecord.builder(ageGroupSchema).set("name", "toddler").set("lo", 2).set("hi", 5).build());
+    records.add(StructuredRecord.builder(ageGroupSchema).set("name", "child").set("lo", 5).set("hi", 13).build());
+    records.add(StructuredRecord.builder(ageGroupSchema).set("name", "teen").set("lo", 13).set("hi", 20).build());
+    records.add(StructuredRecord.builder(ageGroupSchema).set("name", "adult").set("lo", 20).set("hi", 65).build());
+    records.add(StructuredRecord.builder(ageGroupSchema).set("name", "senior").set("lo", 65).build());
+    inputManager = getDataset(agesInput);
+    MockSource.writeInput(inputManager, records);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema).set("username", "Alice").set("age_group", "adult").build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("username", "Carl").set("age_group", "teen").build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("username", "Dave").set("age_group", "infant").build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("username", "Elaine").set("age_group", "senior").build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("username", "Fred").set("age_group", "toddler").build());
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
+  }
+
+  @Test
+  public void testLeftOuterComplexConditionBroadcast() throws Exception {
+    /*
+         sales ----------|
+                         |--> join --> sink
+         categories -----|
+
+         joinOn:
+           sales.price > 1000 and sales.date > 2020-01-01 and
+           (sales.category <=> categories.id or (sales.category is null and sales.department = categories.department))
+     */
+    Schema salesSchema = Schema.recordOf(
+      "sale",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("price", Schema.of(Schema.Type.DOUBLE)),
+      Schema.Field.of("date", Schema.of(Schema.LogicalType.DATETIME)),
+      Schema.Field.of("category", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("department", Schema.nullableOf(Schema.of(Schema.Type.STRING))));
+    Schema categorySchema = Schema.recordOf(
+      "category",
+      Schema.Field.of("id", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("department", Schema.nullableOf(Schema.of(Schema.Type.STRING))),
+      Schema.Field.of("flag", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))));
+    Schema expectedSchema = Schema.recordOf(
+      "sales.categories",
+      Schema.Field.of("id", Schema.of(Schema.Type.INT)),
+      Schema.Field.of("flag", Schema.nullableOf(Schema.of(Schema.Type.BOOLEAN))));
+    String salesInput = UUID.randomUUID().toString();
+    String categoriesInput = UUID.randomUUID().toString();
+    String output = UUID.randomUUID().toString();
+
+    List<JoinField> select = new ArrayList<>();
+    select.add(new JoinField("sales", "id"));
+    select.add(new JoinField("categories", "flag"));
+
+    /*
+           sales.price > 1000 and sales.date > 2020-01-01 and
+           (sales.category <=> categories.id or (sales.category is null and sales.department = categories.department))
+     */
+    JoinCondition.OnExpression condition = JoinCondition.onExpression()
+      .addDatasetAlias("sales", "S")
+      .addDatasetAlias("categories", "C")
+      .setExpression("S.price > 1000 and S.date > '2020-01-01 00:00:00' and " +
+                       "(S.category = C.id or (S.category is null and S.department = C.department))")
+      .build();
+    Map<String, String> joinerProperties = MockAutoJoiner.getProperties(Arrays.asList("sales", "categories"),
+                                                                        Collections.emptyList(),
+                                                                        Collections.singletonList("sales"),
+                                                                        Collections.singletonList("categories"),
+                                                                        select, false, null, condition);
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("sales", MockSource.getPlugin(salesInput, salesSchema)))
+      .addStage(new ETLStage("categories", MockSource.getPlugin(categoriesInput, categorySchema)))
+      .addStage(new ETLStage("join", new ETLPlugin(MockAutoJoiner.NAME, BatchJoiner.PLUGIN_TYPE, joinerProperties)))
+      .addStage(new ETLStage("sink", MockSink.getPlugin(output)))
+      .addConnection("sales", "join")
+      .addConnection("categories", "join")
+      .addConnection("join", "sink")
+      .setEngine(Engine.SPARK)
+      .build();
+
+    AppRequest<ETLBatchConfig> appRequest = new AppRequest<>(APP_ARTIFACT, config);
+    ApplicationId appId = NamespaceId.DEFAULT.app(UUID.randomUUID().toString());
+    ApplicationManager appManager = deployApplication(appId, appRequest);
+
+    List<StructuredRecord> records = new ArrayList<>();
+    records.add(StructuredRecord.builder(salesSchema)
+                  .set("id", 0).set("price", 123.45d).set("date", "2021-01-01 00:00:00")
+                  .set("category", "electronics").set("department", "entertainment").build());
+    records.add(StructuredRecord.builder(salesSchema)
+                  .set("id", 1).set("price", 1000.01d).set("date", "2020-01-01 00:00:01")
+                  .set("department", "home").build());
+    records.add(StructuredRecord.builder(salesSchema)
+                  .set("id", 2).set("price", 5000d).set("date", "2021-01-01 00:00:00")
+                  .set("category", "furniture").build());
+    records.add(StructuredRecord.builder(salesSchema)
+                  .set("id", 3).set("price", 2000d).set("date", "2019-12-31 23:59:59")
+                  .set("category", "furniture").build());
+    records.add(StructuredRecord.builder(salesSchema)
+                  .set("id", 4).set("price", 2000d).set("date", "2020-01-01 12:00:00")
+                  .set("category", "tv").set("department", "entertainment").build());
+    DataSetManager<Table> inputManager = getDataset(salesInput);
+    MockSource.writeInput(inputManager, records);
+
+    records.clear();
+    records.add(StructuredRecord.builder(categorySchema)
+                  .set("id", "electronics").set("department", "entertainment").set("flag", false).build());
+    records.add(StructuredRecord.builder(categorySchema)
+                  .set("id", "furniture").set("department", "home").set("flag", true).build());
+    records.add(StructuredRecord.builder(categorySchema)
+                  .set("id", "tv").set("department", "entertainment").set("flag", false).build());
+    inputManager = getDataset(categoriesInput);
+    MockSource.writeInput(inputManager, records);
+
+    WorkflowManager workflowManager = appManager.getWorkflowManager(SmartWorkflow.NAME);
+    workflowManager.startAndWaitForRun(ProgramRunStatus.COMPLETED, 5, TimeUnit.MINUTES);
+
+    DataSetManager<Table> outputManager = getDataset(output);
+    List<StructuredRecord> outputRecords = MockSink.readOutput(outputManager);
+
+    Set<StructuredRecord> expected = new HashSet<>();
+    expected.add(StructuredRecord.builder(expectedSchema).set("id", 0).build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("id", 1).set("flag", true).build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("id", 2).set("flag", true).build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("id", 3).build());
+    expected.add(StructuredRecord.builder(expectedSchema).set("id", 4).set("flag", false).build());
+
+    Assert.assertEquals(expected, new HashSet<>(outputRecords));
   }
 
   private void testAutoJoinWithMacros(Engine engine, List<String> required, Schema expectedSchema,

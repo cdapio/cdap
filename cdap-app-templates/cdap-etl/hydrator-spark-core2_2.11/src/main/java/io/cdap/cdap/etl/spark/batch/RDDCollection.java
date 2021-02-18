@@ -21,11 +21,13 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
+import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.common.Constants;
 import io.cdap.cdap.etl.spark.SparkCollection;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
+import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
 import io.cdap.cdap.etl.spark.plugin.LiteralsBridge;
 import org.apache.spark.api.java.JavaRDD;
@@ -39,6 +41,8 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -60,12 +64,12 @@ import static org.apache.spark.sql.functions.floor;
  * @param <T> type of object in the collection
  */
 public class RDDCollection<T> extends BaseRDDCollection<T> {
+  private static final Logger LOG = LoggerFactory.getLogger(RDDCollection.class);
 
   public RDDCollection(JavaSparkExecutionContext sec, JavaSparkContext jsc, SQLContext sqlContext,
                        DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory, JavaRDD<T> rdd) {
     super(sec, jsc, sqlContext, datasetContext, sinkFactory, rdd);
   }
-
 
   @SuppressWarnings("unchecked")
   @Override
@@ -75,7 +79,7 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     Function<StructuredRecord, StructuredRecord> recordsInCounter =
       new CountingFunction<>(stageName, sec.getMetrics(), Constants.Metrics.RECORDS_IN, sec.getDataTracer(stageName));
     StructType leftSparkSchema = DataFrames.toDataType(joinRequest.getLeftSchema());
-    Dataset<Row> left = toDataset(stageName, ((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), leftSparkSchema);
+    Dataset<Row> left = toDataset(((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), leftSparkSchema);
     collections.put(joinRequest.getLeftStage(), left);
 
     List<Column> leftJoinColumns = joinRequest.getLeftKey().stream()
@@ -104,7 +108,7 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     for (JoinCollection toJoin : joinRequest.getToJoin()) {
       RDDCollection<StructuredRecord> data = (RDDCollection<StructuredRecord>) toJoin.getData();
       StructType sparkSchema = DataFrames.toDataType(toJoin.getSchema());
-      Dataset<Row> right = toDataset(stageName, data.rdd.map(recordsInCounter), sparkSchema);
+      Dataset<Row> right = toDataset(data.rdd.map(recordsInCounter), sparkSchema);
       collections.put(toJoin.getStage(), right);
 
       List<Column> rightJoinColumns = toJoin.getKey().stream()
@@ -232,6 +236,57 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     return (SparkCollection<T>) wrap(output);
   }
 
+  @SuppressWarnings("unchecked")
+  @Override
+  public SparkCollection<T> join(JoinExpressionRequest joinRequest) {
+    Function<StructuredRecord, StructuredRecord> recordsInCounter =
+      new CountingFunction<>(joinRequest.getStageName(), sec.getMetrics(), Constants.Metrics.RECORDS_IN,
+                             sec.getDataTracer(joinRequest.getStageName()));
+
+    JoinCollection leftInfo = joinRequest.getLeft();
+    StructType leftSchema = DataFrames.toDataType(leftInfo.getSchema());
+    Dataset<Row> leftDF = toDataset(((JavaRDD<StructuredRecord>) rdd).map(recordsInCounter), leftSchema);
+
+    JoinCollection rightInfo = joinRequest.getRight();
+    SparkCollection<?> rightData = rightInfo.getData();
+    StructType rightSchema = DataFrames.toDataType(rightInfo.getSchema());
+    Dataset<Row> rightDF = toDataset(((JavaRDD<StructuredRecord>) rightData.getUnderlying()).map(recordsInCounter),
+                                     rightSchema);
+
+    // register using unique names to avoid collisions.
+    String leftId = UUID.randomUUID().toString().replaceAll("-", "");
+    String rightId = UUID.randomUUID().toString().replaceAll("-", "");
+    leftDF.registerTempTable(leftId);
+    rightDF.registerTempTable(rightId);
+
+    /*
+        Suppose the join was originally:
+
+          select P.id as id, users.name as username
+          from purchases as P join users
+          on P.user_id = users.id or P.user_id = 0
+
+        After registering purchases as uuid0 and users as uuid1,
+        the query needs to be rewritten to replace the original names with the new generated ids,
+        as the query needs to be:
+
+          select P.id as id, uuid1.name as username
+          from uuid0 as P join uuid1
+          on P.user_id = uuid1.id or P.user_id = 0
+     */
+    String sql = getSQL(joinRequest.rename(leftId, rightId));
+    LOG.debug("Executing join stage {} using SQL: \n{}", joinRequest.getStageName(), sql);
+    Dataset<Row> joined = sqlContext.sql(sql);
+
+    Schema outputSchema = joinRequest.getOutputSchema();
+    JavaRDD<StructuredRecord> output = joined.javaRDD()
+      .map(r -> DataFrames.fromRow(r, outputSchema))
+      .map(new CountingFunction<>(joinRequest.getStageName(), sec.getMetrics(),
+                                  Constants.Metrics.RECORDS_OUT,
+                                  sec.getDataTracer(joinRequest.getStageName())));
+    return (SparkCollection<T>) wrap(output);
+  }
+
   /**
    * Helper method that adds a salt column to a dataframe for join distribution
    *
@@ -269,7 +324,7 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     return explodedData;
   }
 
-  protected Dataset<Row> toDataset(String stageName, JavaRDD<StructuredRecord> rdd, StructType sparkSchema) {
+  protected Dataset<Row> toDataset(JavaRDD<StructuredRecord> rdd, StructType sparkSchema) {
     JavaRDD<Row> rowRDD = rdd.map(record -> DataFrames.toRow(record, sparkSchema));
     return sqlContext.createDataFrame(rowRDD.rdd(), sparkSchema);
   }

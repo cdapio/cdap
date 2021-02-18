@@ -29,6 +29,8 @@ import io.cdap.cdap.etl.api.StageMetrics;
 import io.cdap.cdap.etl.api.batch.SparkCompute;
 import io.cdap.cdap.etl.api.batch.SparkExecutionPluginContext;
 import io.cdap.cdap.etl.api.batch.SparkSink;
+import io.cdap.cdap.etl.api.join.JoinCondition;
+import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.api.lineage.AccessType;
 import io.cdap.cdap.etl.api.streaming.Windower;
 import io.cdap.cdap.etl.common.Constants;
@@ -60,6 +62,7 @@ import io.cdap.cdap.etl.spark.function.MultiSinkFunction;
 import io.cdap.cdap.etl.spark.function.PairFlatMapFunc;
 import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.function.TransformFunction;
+import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -321,5 +324,55 @@ public abstract class BaseRDDCollection<T> implements SparkCollection<T> {
       return left.eqNullSafe(right);
     }
     return left.equalTo(right);
+  }
+
+  static String getSQL(JoinExpressionRequest join) {
+    JoinCondition.OnExpression condition = join.getCondition();
+    Map<String, String> datasetAliases = condition.getDatasetAliases();
+    String leftName = join.getLeft().getStage();
+    String leftAlias = datasetAliases.getOrDefault(leftName, leftName);
+    String rightName = join.getRight().getStage();
+    String rightAlias = datasetAliases.getOrDefault(rightName, rightName);
+
+    StringBuilder query = new StringBuilder("SELECT ");
+    // SELECT /*+ BROADCAST(t1), BROADCAST(t2) */
+    // see https://spark.apache.org/docs/3.0.0/sql-ref-syntax-qry-select-hints.html for more info on join hints
+    if (join.getLeft().isBroadcast() && join.getRight().isBroadcast()) {
+      query.append("/*+ BROADCAST(").append(leftAlias).append("), BROADCAST(").append(rightAlias).append(") */ ");
+    } else if (join.getLeft().isBroadcast()) {
+      query.append("/*+ BROADCAST(").append(leftAlias).append(") */ ");
+    } else if (join.getRight().isBroadcast()) {
+      query.append("/*+ BROADCAST(").append(rightAlias).append(") */ ");
+    }
+
+    for (JoinField field : join.getFields()) {
+      String outputName = field.getAlias() == null ? field.getFieldName() : field.getAlias();
+      String datasetName = datasetAliases.getOrDefault(field.getStageName(), field.getStageName());
+      // `datasetName`.`fieldName` as outputName
+      query.append("`").append(datasetName).append("`.`")
+        .append(field.getFieldName()).append("` as ").append(outputName).append(", ");
+    }
+    // remove trailing ', '
+    query.setLength(query.length() - 2);
+
+    String joinType;
+    boolean leftRequired = join.getLeft().isRequired();
+    boolean rightRequired = join.getRight().isRequired();
+    if (leftRequired && rightRequired) {
+      joinType = "JOIN";
+    } else if (leftRequired && !rightRequired) {
+      joinType = "LEFT OUTER JOIN";
+    } else if (!leftRequired && rightRequired) {
+      joinType = "RIGHT OUTER JOIN";
+    } else {
+      joinType = "FULL OUTER JOIN";
+    }
+
+    // FROM `leftDataset` as `leftAlias` JOIN `rightDataset` as `rightAlias`
+    query.append(" FROM `").append(leftName).append("` as `").append(leftAlias).append("` ");
+    query.append(joinType).append(" `").append(rightName).append("` as `").append(rightAlias).append("` ");
+    // ON [expr]
+    query.append(" ON ").append(condition.getExpression());
+    return query.toString();
   }
 }
