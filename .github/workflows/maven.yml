@@ -26,7 +26,7 @@ jobs:
   build:
 
     if: contains(github.event.pull_request.labels.*.name, 'build') || github.event_name == 'workflow_dispatch'
-    runs-on: k8s-runner-build
+    runs-on: k8s-runner-build-beta
 
     steps:
       - uses: actions/checkout@v2.3.4
