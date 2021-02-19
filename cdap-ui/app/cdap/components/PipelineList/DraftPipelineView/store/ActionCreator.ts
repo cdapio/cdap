@@ -44,12 +44,13 @@ function getOldDrafts(oldDrafts) {
 }
 
 export function getDrafts() {
+  const namespace = getCurrentNamespace();
   Observable.forkJoin<
     any,
     any /** setting as 'any'. We should remove user store reference in the next major release */
   >(
     MyPipelineApi.getDrafts({
-      context: 'default',
+      context: namespace,
     }).catch((err) => Observable.of(err)),
     MyUserStoreApi.get().catch((err) => Observable.of(err))
   ).subscribe(([newDrafts, userStore]) => {
