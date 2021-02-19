@@ -197,7 +197,9 @@ public class SparkStreamingPipelineDriver implements JavaSparkMain {
                                                                     pipelineSpec.isProcessTimingEnabled());
     PipelineRuntime pipelineRuntime = new SparkPipelineRuntime(sec);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
-                                                         sec.getLogicalStartTime(), sec,
+                                                         sec.getLogicalStartTime(),
+                                                         sec.getSecureStore(),
+                                                         sec.getServiceDiscoverer(),
                                                          sec.getNamespace());
     SparkStreamingPreparer preparer = new SparkStreamingPreparer(pluginContext, sec.getMetrics(), evaluator,
                                                                  pipelineRuntime, sec);

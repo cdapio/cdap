@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,18 +14,20 @@
  * the License.
  */
 
-package io.cdap.cdap.datapipeline.service;
+package io.cdap.cdap.etl.common;
 
 import io.cdap.cdap.api.common.Bytes;
 import io.cdap.cdap.api.macro.InvalidMacroException;
 import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.security.store.SecureStore;
-import io.cdap.cdap.api.security.store.SecureStoreData;
 
 /**
  * Evaluates secure store macros if the key exists. Otherwise, returns the input.
  */
 public class SecureStoreMacroEvaluator implements MacroEvaluator {
+
+  public static final String FUNCTION_NAME = "secure";
+
   private final String namespace;
   private final SecureStore secureStore;
 
@@ -41,13 +43,19 @@ public class SecureStoreMacroEvaluator implements MacroEvaluator {
   }
 
   @Override
-  public String evaluate(String macroFunction, String... arguments) throws InvalidMacroException {
+  public String evaluate(String macroFunction, String... args) throws InvalidMacroException {
+    if (!FUNCTION_NAME.equals(macroFunction)) {
+      // This shouldn't happen
+      throw new IllegalArgumentException("Invalid function name " + macroFunction
+                                           + ". Expecting " + FUNCTION_NAME);
+    }
+    if (args.length != 1) {
+      throw new InvalidMacroException("Macro '" + FUNCTION_NAME + "' should have exactly 1 argument");
+    }
     try {
-      SecureStoreData secureStoreData = secureStore.get(namespace, arguments[0]);
-      return Bytes.toString(secureStoreData.get());
+      return Bytes.toString(secureStore.get(namespace, args[0]).get());
     } catch (Exception e) {
-      throw new InvalidMacroException("Unable to get the secure value for " + arguments[0]);
+      throw new InvalidMacroException("Failed to resolve macro '" + FUNCTION_NAME + "(" + args[0] + ")'", e);
     }
   }
-
 }

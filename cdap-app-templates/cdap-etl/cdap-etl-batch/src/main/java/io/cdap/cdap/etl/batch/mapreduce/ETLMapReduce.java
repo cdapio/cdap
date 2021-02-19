@@ -186,7 +186,7 @@ public class ETLMapReduce extends AbstractMapReduce {
                                                   CONNECTOR_DATASETS_TYPE);
     MacroEvaluator evaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                          context.getLogicalStartTime(),
-                                                         context, context.getNamespace());
+                                                         context, context, context.getNamespace());
     MapReducePreparer preparer = new MapReducePreparer(context, mrMetrics, evaluator,
                                                        pipelineRuntime, connectorDatasets);
     List<Finisher> finishers = preparer.prepare(phaseSpec, job);

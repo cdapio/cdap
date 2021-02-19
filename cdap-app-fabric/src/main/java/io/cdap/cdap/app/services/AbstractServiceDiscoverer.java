@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2018 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,19 +17,18 @@
 package io.cdap.cdap.app.services;
 
 import io.cdap.cdap.api.ServiceDiscoverer;
+import io.cdap.cdap.common.ServiceUnavailableException;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.discovery.RandomEndpointStrategy;
-import io.cdap.cdap.common.discovery.URIScheme;
+import io.cdap.cdap.common.internal.remote.RemoteClient;
+import io.cdap.cdap.common.service.ServiceDiscoverable;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
-import org.apache.twill.discovery.Discoverable;
+import io.cdap.common.http.HttpRequestConfig;
 import org.apache.twill.discovery.DiscoveryServiceClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
+import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
@@ -38,8 +37,6 @@ import javax.annotation.Nullable;
  * for {@link AbstractServiceDiscoverer#getDiscoveryServiceClient}.
  */
 public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractServiceDiscoverer.class);
 
   private final String namespaceId;
   private final String applicationId;
@@ -51,10 +48,11 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
 
   @Override
   public URL getServiceURL(String namespaceId, String applicationId, String serviceId) {
-    String discoveryName = String.format("%s.%s.%s.%s", ProgramType.SERVICE.getDiscoverableTypeName(), namespaceId,
-                                         applicationId, serviceId);
-    return createURL(new RandomEndpointStrategy(() -> getDiscoveryServiceClient().discover(discoveryName))
-                       .pick(1, TimeUnit.SECONDS), namespaceId, applicationId, serviceId);
+    try {
+      return createRemoteClient(namespaceId, applicationId, serviceId).resolve("");
+    } catch (ServiceUnavailableException e) {
+      return null;
+    }
   }
 
   @Override
@@ -67,23 +65,34 @@ public abstract class AbstractServiceDiscoverer implements ServiceDiscoverer {
     return getServiceURL(applicationId, serviceId);
   }
 
+  @Nullable
+  @Override
+  public HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                          String serviceId, String methodPath) throws IOException {
+    try {
+      return createRemoteClient(namespaceId, applicationId, serviceId).openConnection(methodPath);
+    } catch (ServiceUnavailableException e) {
+      return null;
+    }
+  }
+
   /**
    * @return the {@link DiscoveryServiceClient} for Service Discovery
    */
   protected abstract DiscoveryServiceClient getDiscoveryServiceClient();
 
-  @Nullable
-  private URL createURL(@Nullable Discoverable discoverable, String namespaceId, String applicationId,
-                        String serviceId) {
-    if (discoverable == null) {
-      return null;
-    }
-    try {
-      return URIScheme.createURI(discoverable, "%s/namespaces/%s/apps/%s/services/%s/methods/",
-                                 Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId).toURL();
-    } catch (MalformedURLException e) {
-      LOG.error("Got exception while creating serviceURL", e);
-      return null;
-    }
+  /**
+   * Creates a {@link RemoteClient} for connecting to the given service endpoint.
+   *
+   * @param namespaceId namespace of the service
+   * @param applicationId application of the service
+   * @param serviceId service name of the service
+   * @return a {@link RemoteClient} that is setup to be used in the current execution environment.
+   */
+  private RemoteClient createRemoteClient(String namespaceId, String applicationId, String serviceId) {
+    String discoveryName = ServiceDiscoverable.getName(namespaceId, applicationId, ProgramType.SERVICE, serviceId);
+    String basePath = String.format("%s/namespaces/%s/apps/%s/services/%s/methods/",
+                                    Constants.Gateway.API_VERSION_3_TOKEN, namespaceId, applicationId, serviceId);
+    return new RemoteClient(getDiscoveryServiceClient(), discoveryName, HttpRequestConfig.DEFAULT, basePath);
   }
 }

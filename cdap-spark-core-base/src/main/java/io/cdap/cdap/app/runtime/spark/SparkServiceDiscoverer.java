@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -22,6 +22,7 @@ import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import javax.annotation.Nullable;
 
@@ -64,6 +65,13 @@ public final class SparkServiceDiscoverer implements ServiceDiscoverer, External
   @Override
   public URL getServiceURL(String serviceId) {
     return delegate.getServiceURL(serviceId);
+  }
+
+  @Nullable
+  @Override
+  public HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                          String serviceId, String methodPath) throws IOException {
+    return delegate.openConnection(namespaceId, applicationId, serviceId, methodPath);
   }
 
   @Override

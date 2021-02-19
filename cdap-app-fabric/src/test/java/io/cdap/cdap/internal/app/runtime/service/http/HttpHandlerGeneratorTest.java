@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -748,6 +748,13 @@ public class HttpHandlerGeneratorTest {
 
     @Override
     public URL getServiceURL(String serviceId) {
+      return null;
+    }
+
+    @Nullable
+    @Override
+    public HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                            String serviceId, String methodPath) {
       return null;
     }
 

@@ -132,7 +132,11 @@ public abstract class SparkPipelineRunner {
     BasicArguments arguments = new BasicArguments(sec);
     FunctionCache.Factory functionCacheFactory = FunctionCache.Factory.newInstance(cacheFunctions);
     MacroEvaluator macroEvaluator =
-      new DefaultMacroEvaluator(arguments, sec.getLogicalStartTime(), sec, sec.getNamespace());
+      new DefaultMacroEvaluator(arguments,
+                                sec.getLogicalStartTime(),
+                                sec.getSecureStore(),
+                                sec.getServiceDiscoverer(),
+                                sec.getNamespace());
     Map<String, EmittedRecords> emittedRecords = new HashMap<>();
 
     // should never happen, but removes warning

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -17,6 +17,7 @@
 
 package io.cdap.cdap.datapipeline.service;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -37,8 +38,12 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.batch.BatchPipelineSpec;
 import io.cdap.cdap.etl.batch.BatchPipelineSpecGenerator;
+import io.cdap.cdap.etl.common.BasicArguments;
+import io.cdap.cdap.etl.common.DefaultMacroEvaluator;
 import io.cdap.cdap.etl.common.DefaultPipelineConfigurer;
 import io.cdap.cdap.etl.common.DefaultStageConfigurer;
+import io.cdap.cdap.etl.common.OAuthMacroEvaluator;
+import io.cdap.cdap.etl.common.SecureStoreMacroEvaluator;
 import io.cdap.cdap.etl.proto.v2.ETLBatchConfig;
 import io.cdap.cdap.etl.proto.v2.ETLPlugin;
 import io.cdap.cdap.etl.proto.v2.ETLStage;
@@ -119,13 +124,18 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
       new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
 
     // evaluate secure macros
-    MacroEvaluator macroEvaluator = new SecureStoreMacroEvaluator(namespace, getContext());
+    Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
+      SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
+      OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext())
+    );
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(Collections.emptyMap()), evaluators);
+
     Map<String, String> evaluatedProperties = getContext()
       .evaluateMacros(namespace, stageConfig.getPlugin().getProperties(), macroEvaluator,
                       MacroParserOptions.builder()
                         .skipInvalidMacros()
                         .setEscaping(false)
-                        .setFunctionWhitelist("secure")
+                        .setFunctionWhitelist(evaluators.keySet())
                         .build());
     ETLPlugin originalConfig = stageConfig.getPlugin();
     ETLPlugin evaluatedConfig = new ETLPlugin(originalConfig.getName(), originalConfig.getType(),

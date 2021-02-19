@@ -85,7 +85,6 @@ import io.cdap.cdap.test.artifacts.AppWithPlugin;
 import io.cdap.cdap.test.artifacts.plugins.ToStringPlugin;
 import io.cdap.cdap.test.base.TestFrameworkTestBase;
 import io.cdap.common.http.HttpRequest;
-import io.cdap.common.http.HttpRequests;
 import io.cdap.common.http.HttpResponse;
 import org.apache.twill.filesystem.Location;
 import org.hamcrest.CoreMatchers;
@@ -2067,23 +2066,30 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
 
   private int callServiceGetResponseCode(URL serviceURL, String path) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-
-    return connection.getResponseCode();
+    try {
+      return connection.getResponseCode();
+    } finally {
+      connection.disconnect();
+    }
   }
 
   private String callServiceGet(URL serviceURL, String path) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    int responseCode = connection.getResponseCode();
+    try {
+      int responseCode = connection.getResponseCode();
 
-    if (responseCode != 200) {
-      try (InputStream errStream = connection.getErrorStream()) {
-        String error = CharStreams.toString(new InputStreamReader(errStream, StandardCharsets.UTF_8));
-        throw new IOException("Error response " + responseCode + " from " + serviceURL + ": " + error);
+      if (responseCode != 200) {
+        try (InputStream errStream = connection.getErrorStream()) {
+          String error = CharStreams.toString(new InputStreamReader(errStream, StandardCharsets.UTF_8));
+          throw new IOException("Error response " + responseCode + " from " + serviceURL + ": " + error);
+        }
       }
-    }
 
-    try (InputStream in = connection.getInputStream()) {
-      return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
+      try (InputStream in = connection.getInputStream()) {
+        return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
+      }
+    } finally {
+      connection.disconnect();
     }
   }
 
@@ -2094,31 +2100,39 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
   @Nullable
   private String callServicePut(URL serviceURL, String path, String body, Integer expectedStatus) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    connection.setDoOutput(true);
-    connection.setRequestMethod("PUT");
-    try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
-      out.write(body);
-    }
-    int expected = expectedStatus == null ? 200 : expectedStatus;
-    Assert.assertEquals(expected, connection.getResponseCode());
-    if (expectedStatus != null) {
-      return null;
-    }
-    try (InputStream in = connection.getInputStream()) {
-      return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
+    try {
+      connection.setDoOutput(true);
+      connection.setRequestMethod("PUT");
+      try (OutputStreamWriter out = new OutputStreamWriter(connection.getOutputStream())) {
+        out.write(body);
+      }
+      int expected = expectedStatus == null ? 200 : expectedStatus;
+      Assert.assertEquals(expected, connection.getResponseCode());
+      if (expectedStatus != null) {
+        return null;
+      }
+      try (InputStream in = connection.getInputStream()) {
+        return new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8)).readLine();
+      }
+    } finally {
+      connection.disconnect();
     }
   }
 
   private void callServiceDelete(URL serviceURL, String path) throws IOException {
     HttpURLConnection connection = (HttpURLConnection) new URL(serviceURL.toString() + path).openConnection();
-    connection.setRequestMethod("DELETE");
-    int responseCode = connection.getResponseCode();
+    try {
+      connection.setRequestMethod("DELETE");
+      int responseCode = connection.getResponseCode();
 
-    if (responseCode != 200) {
-      try (InputStream errStream = connection.getErrorStream()) {
-        String error = CharStreams.toString(new InputStreamReader(errStream, StandardCharsets.UTF_8));
-        throw new IOException("Error response " + responseCode + " from " + serviceURL + ": " + error);
+      if (responseCode != 200) {
+        try (InputStream errStream = connection.getErrorStream()) {
+          String error = CharStreams.toString(new InputStreamReader(errStream, StandardCharsets.UTF_8));
+          throw new IOException("Error response " + responseCode + " from " + serviceURL + ": " + error);
+        }
       }
+    } finally {
+      connection.disconnect();
     }
   }
 }

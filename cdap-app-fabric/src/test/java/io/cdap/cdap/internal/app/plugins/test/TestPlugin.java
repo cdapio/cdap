@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -38,7 +38,8 @@ public class TestPlugin implements Callable<String> {
   public String call() throws Exception {
     if (config.nullableLongFlag != null && config.nullableLongFlag % 2 == 0) {
         return config.host + "," + Joiner.on(',').join(config.aBoolean, config.aByte, config.aChar, config.aDouble,
-                                                       config.aFloat, config.anInt, config.aLong, config.aShort);
+                                                       config.aFloat, config.anInt, config.aLong, config.aShort,
+                                                       config.authInfo == null ? "null" : config.authInfo);
     }
     return null;
   }
@@ -75,5 +76,27 @@ public class TestPlugin implements Callable<String> {
 
     @Macro
     private short aShort;
+
+    @Macro
+    @Nullable
+    private AuthInfo authInfo;
+  }
+
+  public static final class AuthInfo {
+    private String token;
+    private String id;
+
+    public AuthInfo(String token, String id) {
+      this.token = token;
+      this.id = id;
+    }
+
+    @Override
+    public String toString() {
+      return "AuthInfo{" +
+        "token='" + token + '\'' +
+        ", id='" + id + '\'' +
+        '}';
+    }
   }
 }

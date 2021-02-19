@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2019 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -332,7 +332,7 @@ public class ArtifactRepositoryTest {
                                            .add("aShort", "${aShort}")
                                            .build());
           Callable<String> plugin = instantiator.newInstance(pluginInfo);
-          Assert.assertEquals("example.com,false,0,\u0000,0.0,0.0,0,0,0", plugin.call());
+          Assert.assertEquals("example.com,false,0,\u0000,0.0,0.0,0,0,0,null", plugin.call());
         }
       }
     }
@@ -450,6 +450,7 @@ public class ArtifactRepositoryTest {
       .put("anInt", "42")
       .put("aLong", "32")
       .put("aShort", "81")
+      .put("authInfo", new Gson().toJson(new TestPlugin.AuthInfo("token", "id")))
       .build();
 
     // Instantiate the plugins and execute them
@@ -469,11 +470,13 @@ public class ArtifactRepositoryTest {
                                            .add("aFloat", "${aFloat}")
                                            .add("aLong", "${aLong}")
                                            .add("aShort", "${aShort}")
+                                           .add("authInfo", "${authInfo}")
                                            .build());
 
           TestMacroEvaluator testMacroEvaluator = new TestMacroEvaluator(propertySubstitutions, new HashMap<>());
           Callable<String> plugin = instantiator.newInstance(pluginInfo, testMacroEvaluator);
-          Assert.assertEquals("localhost/index.html:80,true,101,k,64.0,52.0,42,32,81", plugin.call());
+          Assert.assertEquals("localhost/index.html:80,true,101,k,64.0,52.0,42,32,81,AuthInfo{token='token', id='id'}",
+                              plugin.call());
 
           String pluginId = "5";
           PluginContext pluginContext = new DefaultPluginContext(instantiator,
@@ -492,6 +495,7 @@ public class ArtifactRepositoryTest {
           expected.put("aFloat", "52.0");
           expected.put("aLong", "32");
           expected.put("aShort", "81");
+          expected.put("authInfo", propertySubstitutions.get("authInfo"));
           Assert.assertEquals(expected, resolvedProperties.getProperties());
         }
       }

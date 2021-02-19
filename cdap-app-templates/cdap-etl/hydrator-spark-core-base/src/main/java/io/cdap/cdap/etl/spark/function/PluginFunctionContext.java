@@ -95,7 +95,8 @@ public class PluginFunctionContext implements Serializable {
         return (T) new SingleConnectorSink(null, null);
       }
     }
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore, namespace);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(arguments, logicalStartTime, secureStore,
+                                                              serviceDiscoverer, namespace);
     return getPluginContext().newPluginInstance(stageSpec.getName(), macroEvaluator);
   }
 

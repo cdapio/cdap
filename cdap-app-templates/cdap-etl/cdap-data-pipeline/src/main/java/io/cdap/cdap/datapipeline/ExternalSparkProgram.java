@@ -112,8 +112,8 @@ public class ExternalSparkProgram extends AbstractSpark {
     // If the external program implements Spark, instantiate it and call initialize() to provide full lifecycle support
     if (Spark.class.isAssignableFrom(externalProgramClass)) {
       MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(context),
-                                                                context.getLogicalStartTime(), context,
-                                                                context.getNamespace());
+                                                                context.getLogicalStartTime(),
+                                                                context, context, context.getNamespace());
       delegateSpark = context.newPluginInstance(stageName, macroEvaluator);
       if (delegateSpark instanceof AbstractSpark) {
         //noinspection unchecked

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2019 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -133,9 +133,9 @@ public class RemoteClient {
   }
 
   /**
-   * Opens a {@link HttpURLConnection} for the given request method on the given resource path.
+   * Opens a {@link HttpURLConnection} for the given resource path.
    */
-  public HttpURLConnection openConnection(HttpMethod method, String resource) throws IOException {
+  public HttpURLConnection openConnection(String resource) throws IOException {
     URL url = resolve(resource);
     HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
     if (urlConn instanceof HttpsURLConnection && !httpRequestConfig.isVerifySSLCert()) {
@@ -144,15 +144,22 @@ public class RemoteClient {
     urlConn.setConnectTimeout(httpRequestConfig.getConnectTimeout());
     urlConn.setReadTimeout(httpRequestConfig.getReadTimeout());
     urlConn.setDoInput(true);
-    if (EnumSet.of(HttpMethod.POST, HttpMethod.PUT).contains(method)) {
-      urlConn.setDoOutput(true);
-    }
     RemoteAuthenticator authenticator = getAuthenticator();
     if (authenticator != null) {
       urlConn.setRequestProperty(HttpHeaders.AUTHORIZATION,
                                  String.format("%s %s", authenticator.getType(), authenticator.getCredentials()));
     }
+    return urlConn;
+  }
 
+  /**
+   * Opens a {@link HttpURLConnection} for the given request method on the given resource path.
+   */
+  public HttpURLConnection openConnection(HttpMethod method, String resource) throws IOException {
+    HttpURLConnection urlConn = openConnection(resource);
+    if (EnumSet.of(HttpMethod.POST, HttpMethod.PUT).contains(method)) {
+      urlConn.setDoOutput(true);
+    }
     urlConn.setRequestMethod(method.name());
     return urlConn;
   }

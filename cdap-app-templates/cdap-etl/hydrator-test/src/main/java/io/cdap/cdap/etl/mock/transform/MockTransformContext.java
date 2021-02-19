@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -33,6 +33,7 @@ import io.cdap.cdap.etl.mock.common.MockLookupProvider;
 import io.cdap.cdap.etl.mock.common.MockStageMetrics;
 import io.cdap.cdap.etl.mock.validation.MockFailureCollector;
 
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Collections;
 import java.util.HashMap;
@@ -57,7 +58,7 @@ public class MockTransformContext implements TransformContext {
   }
 
   public MockTransformContext(String stageName) {
-    this(stageName, new HashMap<String, String>());
+    this(stageName, new HashMap<>());
   }
 
   public MockTransformContext(String stageName, Map<String, String> args) {
@@ -227,6 +228,13 @@ public class MockTransformContext implements TransformContext {
   @Override
   public URL getServiceURL(String serviceId) {
     //no-op
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public HttpURLConnection openConnection(String namespaceId, String applicationId,
+                                          String serviceId, String methodPath) {
     return null;
   }
 

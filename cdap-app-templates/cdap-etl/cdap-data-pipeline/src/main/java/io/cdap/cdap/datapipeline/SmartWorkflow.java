@@ -471,7 +471,7 @@ public class SmartWorkflow extends AbstractWorkflow {
     stageSpecs = new HashMap<>();
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
                                                               context.getLogicalStartTime(), context,
-                                                              context.getNamespace());
+                                                              context, context.getNamespace());
     PluginContext pluginContext = new PipelinePluginContext(context, workflowMetrics,
                                                             spec.isStageLoggingEnabled(),
                                                             spec.isProcessTimingEnabled());
@@ -557,7 +557,8 @@ public class SmartWorkflow extends AbstractWorkflow {
     }
 
     MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(pipelineRuntime.getArguments(),
-                                                              workflowContext.getLogicalStartTime(), workflowContext,
+                                                              workflowContext.getLogicalStartTime(),
+                                                              workflowContext, workflowContext,
                                                               workflowContext.getNamespace());
     // Get resolved plugin properties
     Map<String, Map<String, String>> resolvedProperties = new HashMap<>();

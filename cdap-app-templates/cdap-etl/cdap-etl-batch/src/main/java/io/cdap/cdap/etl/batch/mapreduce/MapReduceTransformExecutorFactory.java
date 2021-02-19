@@ -100,7 +100,7 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                            boolean collectStageStatistics,
                                            OutputWriter<Object, Object> outputWriter) {
     super(pluginInstantiator, new DefaultMacroEvaluator(arguments, taskContext.getLogicalStartTime(),
-                                                        taskContext, taskContext.getNamespace()),
+                                                        taskContext, taskContext, taskContext.getNamespace()),
           metrics, sourceStageName, collectStageStatistics);
     this.taskContext = taskContext;
     JobContext hadoopContext = (JobContext) taskContext.getHadoopContext();
