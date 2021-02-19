@@ -14,8 +14,10 @@
 
 package io.cdap.cdap.proto.id;
 
+import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.metadata.MetadataEntity;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.proto.element.EntityType;
 
 import java.util.Arrays;
@@ -45,6 +47,19 @@ public class PluginId extends NamespacedEntityId implements ParentedId<ArtifactI
     if (artifactVersion.getVersion() == null) {
       throw new IllegalArgumentException("Invalid artifact version " + version);
     }
+  }
+
+  public PluginId(String appNamespace, Plugin plugin) {
+    super(resolveNamespace(appNamespace, plugin), EntityType.PLUGIN);
+    this.artifact = Objects.requireNonNull(plugin.getArtifactId().getName(), "Artifact ID cannot be null.");
+    this.version = Objects.requireNonNull(plugin.getArtifactId().getVersion().getVersion(), "Version cannot be null.");
+    this.plugin = Objects.requireNonNull(plugin.getPluginClass().getName(), "Plugin cannot be null.");
+    this.type = Objects.requireNonNull(plugin.getPluginClass().getType(), "Type cannot be null.");
+  }
+
+  private static String resolveNamespace(String namespace, Plugin plugin) {
+    return plugin.getArtifactId().getScope() == ArtifactScope.SYSTEM ? ArtifactScope.SYSTEM
+      .toString().toLowerCase() : namespace;
   }
 
   public String getArtifact() {

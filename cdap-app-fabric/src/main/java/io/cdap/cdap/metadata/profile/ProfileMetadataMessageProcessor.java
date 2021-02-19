@@ -21,8 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
-import io.cdap.cdap.api.artifact.ArtifactScope;
-import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.Plugin;
@@ -48,6 +46,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
+import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ScheduleId;
@@ -264,32 +263,18 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
   private void collectPluginMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
                                      List<MetadataMutation> updates) {
     String namespace = applicationId.getNamespace();
-    Map<MetadataEntity, Long> pluginCounts = appSpec.getPlugins().values().stream()
-      .map(p -> pluginToMetadataEntity(namespace, p))
+    Map<PluginId, Long> pluginCounts = appSpec.getPlugins().values().stream()
+      .map(p -> new PluginId(namespace, p))
       .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
     String appKey = String.format("%s:%s", namespace, appSpec.getName());
-    for (Map.Entry<MetadataEntity, Long> entry : pluginCounts.entrySet()) {
-      LOG.trace("Adding application {} to plugin metadata for {}", appKey, entry.getKey().getValue("plugin"));
-      updates.add(new MetadataMutation.Update(entry.getKey(),
+    for (Map.Entry<PluginId, Long> entry : pluginCounts.entrySet()) {
+      LOG.trace("Adding application {} to plugin metadata for {}", appKey, entry.getKey().getPlugin());
+      updates.add(new MetadataMutation.Update(entry.getKey().toMetadataEntity(),
                                               new Metadata(MetadataScope.SYSTEM,
                                                            ImmutableMap.of(appKey, entry.getValue().toString()))
       ));
     }
-  }
-
-  private MetadataEntity pluginToMetadataEntity(String appNamespace, Plugin p) {
-    // If the plugin is in the system scope then the namespace is system, otherwise the plugin namespace is
-    // the same as the app namespace
-    String pluginNamespace = p.getArtifactId().getScope() == ArtifactScope.SYSTEM ? ArtifactScope.SYSTEM
-      .toString().toLowerCase() : appNamespace;
-    return MetadataEntity.builder()
-      .append(MetadataEntity.NAMESPACE, pluginNamespace)
-      .append(MetadataEntity.ARTIFACT, p.getArtifactId().getName())
-      .append(MetadataEntity.VERSION, p.getArtifactId().getVersion().getVersion())
-      .append(MetadataEntity.TYPE, p.getPluginClass().getType())
-      .appendAsType(MetadataEntity.PLUGIN, p.getPluginClass().getName())
-      .build();
   }
 
   private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
@@ -348,7 +333,8 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     Set<ScopedNameOfKind> pluginSet = Collections.singleton(
       new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, appKey));
     for (Plugin plugin : appSpec.getPlugins().values()) {
-      deletes.add(new MetadataMutation.Remove(pluginToMetadataEntity(namespace, plugin), pluginSet));
+      PluginId pluginId = new PluginId(namespace, plugin);
+      deletes.add(new MetadataMutation.Remove(pluginId.toMetadataEntity(), pluginSet));
     }
   }
 
