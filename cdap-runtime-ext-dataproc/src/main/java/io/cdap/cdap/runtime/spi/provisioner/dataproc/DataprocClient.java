@@ -92,8 +92,6 @@ import javax.annotation.Nullable;
 final class DataprocClient implements AutoCloseable {
 
   private static final Logger LOG = LoggerFactory.getLogger(DataprocClient.class);
-  // something like 2018-04-16T12:09:03.943-07:00
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
   private static final List<IPRange> PRIVATE_IP_RANGES = DataprocUtils.parseIPRanges(Arrays.asList("10.0.0.0/8",
                                                                                                    "172.16.0.0/12",
                                                                                                    "192.168.0.0/16"));
@@ -876,7 +874,9 @@ final class DataprocClient implements AutoCloseable {
 
     long ts;
     try {
-      ts = DATE_FORMAT.parse(instance.getCreationTimestamp()).getTime();
+      // something like 2018-04-16T12:09:03.943-07:00
+      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSX");
+      ts = sdf.parse(instance.getCreationTimestamp()).getTime();
     } catch (ParseException | NumberFormatException e) {
       LOG.debug("Fail to parse creation ts {}", instance.getCreationTimestamp(), e);
       ts = -1L;
