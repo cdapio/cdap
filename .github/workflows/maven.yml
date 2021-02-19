@@ -47,10 +47,3 @@ jobs:
           path: |
             **/target/rat.txt
             **/target/surefire-reports/*
-      - name: Surefire Report
-        # Pinned 1.0.5 version
-        uses: ScaCap/action-surefire-report@ad808943e6bfbd2e6acba7c53fdb5c89534da533
-        if: always()
-        with:
-          # GITHUB_TOKEN
-          github_token: ${{ secrets.GITHUB_TOKEN }}
