@@ -23,6 +23,10 @@ import javax.annotation.Nullable;
  */
 public class ExpressionConditionError extends JoinError {
 
+  public ExpressionConditionError(String message) {
+    this(message, null);
+  }
+
   public ExpressionConditionError(String message, @Nullable String correctiveAction) {
     super(Type.INVALID_CONDITION, message, correctiveAction);
   }

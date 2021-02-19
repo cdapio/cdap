@@ -185,9 +185,16 @@ public class MapReduceTransformExecutorFactory<T> extends TransformExecutorFacto
                                                                          failureCollector);
         // definition will be non-null due to validate by PipelinePhasePreparer at the start of the run
         JoinDefinition joinDefinition = autoJoiner.define(context);
+        JoinCondition condition = joinDefinition.getCondition();
+        // should never happen as it's checked at deployment time, but add this to be safe.
+        if (condition.getOp() != JoinCondition.Op.KEY_EQUALITY) {
+          failureCollector.addFailure(
+            String.format("Join stage '%s' uses a %s condition, which is not supported with the MapReduce engine.",
+                          stageName, condition.getOp()),
+            "Switch to a different execution engine.");
+        }
         failureCollector.getOrThrowException();
         batchJoiner = new JoinerBridge(stageName, autoJoiner, joinDefinition);
-        JoinCondition condition = joinDefinition.getCondition();
         // null safe equality means A.id = B.id will match when the id is null
         // if it's not null safe, A.id = B.id will not match when the id is null
         // this is the same as filtering out records that have a null key if they are from an optional stage

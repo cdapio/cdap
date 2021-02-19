@@ -17,11 +17,13 @@
 package io.cdap.cdap.etl.api.join;
 
 import io.cdap.cdap.api.data.schema.Schema;
+import io.cdap.cdap.etl.api.Engine;
 import io.cdap.cdap.etl.api.join.error.JoinError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyError;
 import io.cdap.cdap.etl.api.join.error.JoinKeyFieldError;
 import io.cdap.cdap.etl.api.join.error.OutputSchemaError;
 import io.cdap.cdap.etl.api.join.error.SelectedFieldError;
+import io.cdap.cdap.etl.api.validation.ValidationException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -29,10 +31,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Tests for {@link JoinDefinition} and related builders.
@@ -385,6 +384,23 @@ public class JoinDefinitionTest {
         badFields.put(outputSchemaError.getField(), outputSchemaError.getExpectedType());
       }
       Assert.assertEquals(expected, badFields);
+    }
+  }
+
+  @Test
+  public void testJoinExpressionWithDynamicSchemaFails() {
+    try {
+      JoinDefinition.builder()
+        .select(new JoinField("s1", "a"), new JoinField("s2", "b"))
+        .from(JoinStage.builder("s1", null).isRequired().build(),
+              JoinStage.builder("s2", null).isOptional().build())
+        .on(JoinCondition.onExpression().setExpression("s1.a = s2.b").build())
+        .build();
+      Assert.fail("Join expression condition did not fail on dynamic schema as expected.");
+    } catch (InvalidJoinException e) {
+      for (JoinError error : e.getErrors()) {
+        Assert.assertEquals(JoinError.Type.INVALID_CONDITION, error.getType());
+      }
     }
   }
 

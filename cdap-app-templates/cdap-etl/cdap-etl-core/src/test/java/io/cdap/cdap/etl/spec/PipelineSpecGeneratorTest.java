@@ -623,6 +623,29 @@ public class PipelineSpecGeneratorTest {
     Assert.assertEquals(expected, actual);
   }
 
+  @Test(expected = ValidationException.class)
+  public void testJoinExpressionMapReduceFails() {
+    joinDefinition = JoinDefinition.builder()
+      .select(new JoinField("s1", "a"), new JoinField("s2", "b"))
+      .from(JoinStage.builder("s1", SCHEMA_A).isRequired().build(),
+            JoinStage.builder("s2", SCHEMA_ABC).isOptional().build())
+      .on(JoinCondition.onExpression().setExpression("s1.a = s2.b").build())
+      .build();
+
+    ETLBatchConfig config = ETLBatchConfig.builder()
+      .addStage(new ETLStage("s1", MOCK_SOURCE))
+      .addStage(new ETLStage("s2", MOCK_SOURCE))
+      .addStage(new ETLStage("autojoin", MOCK_AUTO_JOINER))
+      .addStage(new ETLStage("sink", MOCK_SINK))
+      .addConnection("s1", "autojoin")
+      .addConnection("s2", "autojoin")
+      .addConnection("autojoin", "sink")
+      .setEngine(Engine.MAPREDUCE)
+      .build();
+
+    specGenerator.generateSpec(config);
+  }
+
   @Test
   public void testConditionSchemaPropagation() throws ValidationException {
     /*
