@@ -45,6 +45,7 @@ import io.cdap.cdap.etl.api.batch.BatchSource;
 import io.cdap.cdap.etl.api.condition.Condition;
 import io.cdap.cdap.etl.api.join.AutoJoiner;
 import io.cdap.cdap.etl.api.join.AutoJoinerContext;
+import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinDefinition;
 import io.cdap.cdap.etl.api.join.JoinStage;
 import io.cdap.cdap.etl.api.validation.InvalidConfigPropertyException;
@@ -354,6 +355,15 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     return specBuilder;
   }
 
+  protected void validateJoinCondition(String stageName, JoinCondition condition, FailureCollector collector) {
+    if (engine == Engine.MAPREDUCE && condition.getOp() != JoinCondition.Op.KEY_EQUALITY) {
+      collector.addFailure(
+        String.format("Join stage '%s' uses a %s condition, which is not supported with the MapReduce engine.",
+                      stageName, condition.getOp()),
+        "Switch to a different execution engine.");
+    }
+  }
+
   private void configureAutoJoiner(String stageName, AutoJoiner autoJoiner, DefaultStageConfigurer stageConfigurer,
                                    FailureCollector collector) {
     AutoJoinerContext autoContext = DefaultAutoJoinerContext.from(stageConfigurer.getInputSchemas(),
@@ -362,6 +372,8 @@ public abstract class PipelineSpecGenerator<C extends ETLConfig, P extends Pipel
     if (joinDefinition == null) {
       return;
     }
+
+    validateJoinCondition(stageName, joinDefinition.getCondition(), collector);
 
     stageConfigurer.setOutputSchema(joinDefinition.getOutputSchema());
     Set<String> inputStages = stageConfigurer.getInputSchemas().keySet();

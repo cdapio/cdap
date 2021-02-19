@@ -19,6 +19,8 @@ package io.cdap.cdap.datastreams;
 import io.cdap.cdap.api.DatasetConfigurer;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.etl.api.Engine;
+import io.cdap.cdap.etl.api.FailureCollector;
+import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.validation.ValidationException;
 import io.cdap.cdap.etl.common.macro.TimeParser;
 import io.cdap.cdap.etl.proto.v2.DataStreamsConfig;
@@ -65,5 +67,15 @@ public class DataStreamsPipelineSpecGenerator
     }
     configureStages(config, specBuilder);
     return specBuilder.build();
+  }
+
+  @Override
+  protected void validateJoinCondition(String stageName, JoinCondition condition, FailureCollector collector) {
+    if (condition.getOp() != JoinCondition.Op.KEY_EQUALITY) {
+      collector.addFailure(
+        String.format("Join stage '%s' uses a %s condition, which is not supported in streaming pipelines.",
+                      stageName, condition.getOp()),
+        "Only basic joins on key equality are supported.");
+    }
   }
 }

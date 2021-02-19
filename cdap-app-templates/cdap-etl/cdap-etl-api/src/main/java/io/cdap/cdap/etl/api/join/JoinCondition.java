@@ -104,9 +104,17 @@ public class JoinCondition {
       List<JoinError> errors = new ArrayList<>();
       if (joinStages.size() != 2) {
         errors.add(
-          new ExpressionConditionError("Join expressions are only supported for joins between two datasets.", null));
+          new ExpressionConditionError("Join expressions are only supported for joins between two datasets."));
       }
-      // TODO: (CDAP-17606) validate aliases, schema, etc
+      for (JoinStage stage : joinStages) {
+        if (stage.getSchema() == null) {
+          errors.add(
+            new ExpressionConditionError(
+              String.format("Input stage '%s' does not have a set schema. " +
+                              "Advanced join conditions cannot be used with dynamic or unknown input schemas.",
+                            stage.getStageName())));
+        }
+      }
       return errors;
     }
 
