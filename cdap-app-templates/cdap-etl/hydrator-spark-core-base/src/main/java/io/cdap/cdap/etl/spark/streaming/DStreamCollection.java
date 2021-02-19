@@ -75,10 +75,12 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   private final JavaDStream<T> stream;
   private final FunctionCache.Factory functionCacheFactory;
 
-  public DStreamCollection(JavaSparkExecutionContext sec, JavaDStream<T> stream) {
+  public DStreamCollection(JavaSparkExecutionContext sec,
+                           FunctionCache.Factory functionCacheFactory,
+                           JavaDStream<T> stream) {
     this.sec = sec;
+    this.functionCacheFactory = functionCacheFactory;
     this.stream = stream;
-    this.functionCacheFactory = FunctionCache.Factory.newInstance();
   }
 
   @SuppressWarnings("unchecked")
@@ -135,7 +137,7 @@ public class DStreamCollection<T> implements SparkCollection<T> {
 
   @Override
   public <K, V> SparkPairCollection<K, V> flatMapToPair(PairFlatMapFunction<T, K, V> function) {
-    return new PairDStreamCollection<>(sec, stream.flatMapToPair(function));
+    return new PairDStreamCollection<>(sec, functionCacheFactory, stream.flatMapToPair(function));
   }
 
   @Override
@@ -235,6 +237,6 @@ public class DStreamCollection<T> implements SparkCollection<T> {
   }
 
   private <U> SparkCollection<U> wrap(JavaDStream<U> stream) {
-    return new DStreamCollection<>(sec, stream);
+    return new DStreamCollection<>(sec, functionCacheFactory, stream);
   }
 }
