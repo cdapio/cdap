@@ -33,7 +33,8 @@ import {
 import DetailContent from 'components/Replicator/Detail/DetailContent';
 import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import ContentHeading from 'components/Replicator/Detail/ContentHeading';
-import { ITableInfo } from '../types';
+import { ITableInfo, IArtifactInfo } from '../types';
+import DownloadFile from 'services/download-file';
 
 export const DetailContext = React.createContext<Partial<IDetailState>>({});
 
@@ -76,9 +77,10 @@ interface IColumn {
 
 interface IDetailState {
   name: string;
+  parentArtifact: IArtifactInfo;
   description: string;
   status: string;
-  redirect: boolean;
+  redirect: string;
   rawAppConfig: Map<string, any>;
   runId: string;
   sourcePluginInfo: any;
@@ -102,6 +104,8 @@ interface IDetailState {
   deleteReplicator: () => void;
   setActiveTable: (table: ITableInfo) => void;
   setTimeRange: (timeRange: string) => void;
+  exportPipeline: () => void;
+  duplicatePipeline: () => void;
 }
 
 export type IDetailContext = Partial<IDetailState>;
@@ -161,7 +165,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
   private deleteReplicator = () => {
     MyReplicatorApi.delete(this.getBaseParams()).subscribe(
       () => {
-        this.setState({ redirect: true });
+        const listViewLink = `/ns/${getCurrentNamespace()}/replication`;
+        this.setState({ redirect: listViewLink });
       },
       (err) => {
         // tslint:disable-next-line: no-console
@@ -183,12 +188,42 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     });
   };
 
+  private getPipelineConfig = () => {
+    const config = this.state.rawAppConfig.toJS();
+
+    const pipelineConfig = {
+      name: this.state.name,
+      artifact: this.state.parentArtifact,
+      config,
+    };
+
+    return pipelineConfig;
+  };
+
+  private duplicatePipeline = () => {
+    const pipelineConfig = this.getPipelineConfig();
+    const cloneId = pipelineConfig.name;
+    pipelineConfig.name = '';
+
+    window.localStorage.setItem(cloneId, JSON.stringify(pipelineConfig));
+    const createViewLink = `/ns/${getCurrentNamespace()}/replication/create?cloneId=${cloneId}`;
+    this.setState({
+      redirect: createViewLink,
+    });
+  };
+
+  private exportPipeline = () => {
+    const pipelineConfig = this.getPipelineConfig();
+    DownloadFile(pipelineConfig);
+  };
+
   public state = {
     name: objectQuery(this.props, 'match', 'params', 'replicatorId'),
+    parentArtifact: null,
     description: null,
     status: null,
     runId: null,
-    redirect: false,
+    redirect: null,
     rawAppConfig: null,
     sourcePluginInfo: null,
     sourcePluginWidget: null,
@@ -211,6 +246,8 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     deleteReplicator: this.deleteReplicator,
     setActiveTable: this.setActiveTable,
     setTimeRange: this.setTimeRange,
+    exportPipeline: this.exportPipeline,
+    duplicatePipeline: this.duplicatePipeline,
   };
 
   public componentDidMount() {
@@ -334,6 +371,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
       });
 
       this.setState({
+        parentArtifact,
         rawAppConfig: fromJS(config),
         name: objectQuery(this.props, 'match', 'params', 'replicatorId'),
         description: app.description,
@@ -376,8 +414,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
   };
 
   private redirect = () => {
-    const listViewLink = `/ns/${getCurrentNamespace()}/replication`;
-    return <Redirect to={listViewLink} />;
+    return <Redirect to={this.state.redirect} />;
   };
 
   public render() {
