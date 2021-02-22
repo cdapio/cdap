@@ -21,8 +21,11 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ArtifactScope;
+import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
+import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.common.ConflictException;
 import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.Constants;
@@ -68,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
@@ -122,6 +126,9 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
         updateProfileMetadata(entityId, message);
         if (entityId.getEntityType() == EntityType.APPLICATION) {
           emitApplicationCountMetric();
+
+          ApplicationSpecification spec = message.getPayload(GSON, ApplicationSpecification.class);
+          emitApplicationPluginCountMetric(spec);
         }
         break;
       case ENTITY_DELETION:
@@ -193,6 +200,7 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
           return;
         }
         collectAppProfileMetadata(appId, meta.getSpec(), null, updates);
+        collectPluginMetadata(appId, meta.getSpec(), updates);
         break;
       case PROGRAM:
         ProgramId programId = (ProgramId) entityId;
@@ -244,12 +252,44 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
       for (ScheduleId scheduleId : getSchedulesInApp(appId, appSpec.getProgramSchedules())) {
         addProfileMetadataDelete(scheduleId, deletes);
       }
+      addPluginMetadataDelete(appId, appSpec, deletes);
     } else if (entity.getEntityType().equals(EntityType.SCHEDULE)) {
       addProfileMetadataDelete((NamespacedEntityId) entity, deletes);
     }
     if (!deletes.isEmpty()) {
       metadataStorage.batch(deletes, MutationOptions.DEFAULT);
     }
+  }
+
+  private void collectPluginMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
+                                     List<MetadataMutation> updates) {
+    String namespace = applicationId.getNamespace();
+    Map<MetadataEntity, Long> pluginCounts = appSpec.getPlugins().values().stream()
+      .map(p -> pluginToMetadataEntity(namespace, p))
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    String appKey = String.format("%s:%s", namespace, appSpec.getName());
+    for (Map.Entry<MetadataEntity, Long> entry : pluginCounts.entrySet()) {
+      LOG.trace("Adding application {} to plugin metadata for {}", appKey, entry.getKey().getValue("plugin"));
+      updates.add(new MetadataMutation.Update(entry.getKey(),
+                                              new Metadata(MetadataScope.SYSTEM,
+                                                           ImmutableMap.of(appKey, entry.getValue().toString()))
+      ));
+    }
+  }
+
+  private MetadataEntity pluginToMetadataEntity(String appNamespace, Plugin p) {
+    // If the plugin is in the system scope then the namespace is system, otherwise the plugin namespace is
+    // the same as the app namespace
+    String pluginNamespace = p.getArtifactId().getScope() == ArtifactScope.SYSTEM ? ArtifactScope.SYSTEM
+      .toString().toLowerCase() : appNamespace;
+    return MetadataEntity.builder()
+      .append(MetadataEntity.NAMESPACE, pluginNamespace)
+      .append(MetadataEntity.ARTIFACT, p.getArtifactId().getName())
+      .append(MetadataEntity.VERSION, p.getArtifactId().getVersion().getVersion())
+      .append(MetadataEntity.TYPE, p.getPluginClass().getType())
+      .appendAsType(MetadataEntity.PLUGIN, p.getPluginClass().getName())
+      .build();
   }
 
   private void collectAppProfileMetadata(ApplicationId applicationId, ApplicationSpecification appSpec,
@@ -300,9 +340,21 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     deletes.add(new MetadataMutation.Remove(entityId.toMetadataEntity(), PROFILE_METADATA_KEY_SET));
   }
 
+  private void addPluginMetadataDelete(ApplicationId appId, ApplicationSpecification appSpec,
+                                       List<MetadataMutation> deletes) {
+    LOG.trace("Deleting plugin metadata for {}", appSpec.getName());
+    String namespace = appId.getNamespace();
+    String appKey = String.format("%s:%s", namespace, appSpec.getName());
+    Set<ScopedNameOfKind> pluginSet = Collections.singleton(
+      new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.SYSTEM, appKey));
+    for (Plugin plugin : appSpec.getPlugins().values()) {
+      deletes.add(new MetadataMutation.Remove(pluginToMetadataEntity(namespace, plugin), pluginSet));
+    }
+  }
+
   /**
-   * Get the profile id for the provided entity id from the resolved preferences from preference dataset,
-   * if no profile is inside, it will return the default profile
+   * Get the profile id for the provided entity id from the resolved preferences from preference dataset, if no profile
+   * is inside, it will return the default profile
    *
    * @param entityId entity id to lookup the profile id
    * @return the profile id which will be used by this entity id, default profile if not find
@@ -364,5 +416,16 @@ public class ProfileMetadataMessageProcessor implements MetadataMessageProcessor
     } catch (IOException e) {
       LOG.warn("Failed to get application count", e);
     }
+  }
+
+  /**
+   * Emit the application count metric.
+   *
+   * @param spec app spec to emit the metric for
+   */
+  private void emitApplicationPluginCountMetric(ApplicationSpecification spec) {
+    metricsCollectionService
+      .getContext(Collections.singletonMap(Constants.Metrics.Tag.APP, spec.getName()))
+      .gauge(Constants.Metrics.Program.APPLICATION_PLUGIN_COUNT, spec.getPlugins().size());
   }
 }

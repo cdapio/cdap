@@ -784,6 +784,7 @@ public final class Constants {
       public static final String RUN_TIME_SECONDS = "program.run.seconds";
       public static final String APPLICATION_COUNT = "application.count";
       public static final String NAMESPACE_COUNT = "namespace.count";
+      public static final String APPLICATION_PLUGIN_COUNT = "application.plugin.count";
     }
 
     /**

@@ -240,7 +240,7 @@ public class DefaultMetricStore implements MetricStore {
   public void setMetricsContext(MetricsContext metricsContext) {
     this.metricsContext = metricsContext;
   }
-  
+
   @Override
   public void add(MetricValues metricValues) {
     add(ImmutableList.of(metricValues));
