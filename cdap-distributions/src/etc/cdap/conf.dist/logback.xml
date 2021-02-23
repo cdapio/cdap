@@ -29,6 +29,7 @@
     <logger name="org.spark-project" level="WARN"/>
     <logger name="org.spark_project" level="WARN"/>
     <logger name="org.apache.hadoop" level="WARN"/>
+    <logger name="io.debezium" level="WARN" />
     <!--See CDAP-7948-->
     <logger name="org.apache.hadoop.ipc.Client" level="ERROR"/>
     <logger name="org.apache.hive" level="WARN"/>
