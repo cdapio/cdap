@@ -104,7 +104,7 @@ public abstract class PipelinePhasePreparer {
       SubmitterPlugin submitterPlugin;
       if (BatchSource.PLUGIN_TYPE.equals(pluginType) || isConnectorSource) {
         BatchConfigurable<BatchSourceContext> batchSource =
-          pluginInstantiator.newPluginInstance(stageName, macroEvaluator);
+          pluginInstantiator.newPluginInstance(stageName, macroEvaluator, Map<>);
         submitterPlugin = createSource(batchSource, stageSpec);
       } else if (BatchSink.PLUGIN_TYPE.equals(pluginType) || AlertPublisher.PLUGIN_TYPE.equals(pluginType) ||
         isConnectorSink) {
