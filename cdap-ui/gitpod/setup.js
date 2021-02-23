@@ -24,7 +24,7 @@ const start = require('./start');
 
 
 // Get CDAP version from the pom file.
-async function getCDAPVersion() {
+async function getCDAPVersionFromPOM() {
   return new Promise((resolve, reject) => {
     var parser = new xml2js.Parser();
     fs.readFile(path.join(__dirname , '..', '..', 'pom.xml'), function(err, data) {
@@ -54,48 +54,63 @@ async function downloadSDK(res, pathToZipFile) {
   });
 }
 
-async function main() {
-  // Get the last successful build from appropriate plan branch. This plan branch corresponds to bamboo plan name for respective branches
-  const branchResultsRaw = await fetch(`https://builds.cask.co/rest/api/latest/result/${branchInfo.planName}.json?buildstate=successful&max-result=1`);
-  const branchResults = await branchResultsRaw.json();
-  if (!branchResults.results.result.length) {
-    throw `No successful build found in ${branchInfo.planName}`;
-  }
-  const latestSuccessfulBuildName = branchResults.results.result[0].key;
+async function getLatestBuildName() {
+   // Get the last successful build from appropriate plan branch. This plan branch corresponds to bamboo plan name for respective branches
+   const branchResultsRaw = await fetch(`https://builds.cask.co/rest/api/latest/result/${branchInfo.planName}.json?buildstate=successful&max-result=1`);
+   const branchResults = await branchResultsRaw.json();
+   if (!branchResults.results.result.length) {
+     throw `No successful build found in ${branchInfo.planName}`;
+   }
+   return branchResults.results.result[0].key;
+}
+
+async function getCDAPVersion() {
   let cdapversion;
   try {
-    cdapversion = await getCDAPVersion();
+    cdapversion = await getCDAPVersionFromPOM();
     console.log('CDAP version: ', cdapversion);
   } catch(e) {
     throw 'Unable to fetch CDAP version from pom.xml file';
   }
+  return cdapversion;
+}
 
-  // Based on the version of CDAP construct the path to the SDK zip file from bamboo build plan.
-  const SDKZipPath = `https://builds.cask.co/browse/${latestSuccessfulBuildName}/artifact/shared/SDK/cdap/cdap-standalone/target/cdap-sandbox-${cdapversion}.zip`;
-  console.log('SDK zip path: ', SDKZipPath);
-  let res;
-  try {
-    res = await fetch(SDKZipPath);
-  } catch(e) {
-    throw `Invalid url to SDK zip file: ${SDKZipPath} - ${e}` 
-  }
+async function downloadAndInstallCDAP({ latestSuccessfulBuildName, cdapversion }) {
+   // Based on the version of CDAP construct the path to the SDK zip file from bamboo build plan.
+   const SDKZipPath = `https://builds.cask.co/browse/${latestSuccessfulBuildName}/artifact/shared/SDK/cdap/cdap-standalone/target/cdap-sandbox-${cdapversion}.zip`;
+   console.log('SDK zip path: ', SDKZipPath);
+   let res;
+   try {
+     res = await fetch(SDKZipPath);
+   } catch(e) {
+     throw `Invalid url to SDK zip file: ${SDKZipPath} - ${e}`
+   }
 
-  // Download and unzip SDK
-  const pathToZipFile = path.join('/workspace', `cdap-sandbox-${cdapversion}.zip`);
-  try {
-    await downloadSDK(res, pathToZipFile);
-    await unzip(pathToZipFile);
-    console.log(`SDK is unzipped and ready to start!`);
-  } catch(e) {
-    console.error('Unable to download or unzip the SDK');
-    throw e.message;
-  }
+   // Download and unzip SDK
+   const pathToZipFile = path.join('/workspace', `cdap-sandbox-${cdapversion}.zip`);
+   try {
+     await downloadSDK(res, pathToZipFile);
+     await unzip(pathToZipFile);
+     console.log(`SDK is unzipped and ready to start!`);
+   } catch(e) {
+     console.error('Unable to download or unzip the SDK');
+     throw e.message;
+   }
+}
 
+async function restartCDAP({ cdapversion }) {
   try {
     await start(path.join('/workspace', `cdap-sandbox-${cdapversion}`, 'bin', 'cdap'));
   } catch(e) {
     throw e;
   }
+}
+
+async function main() {
+  const latestSuccessfulBuildName = await getLatestBuildName();
+  const cdapversion = await getCDAPVersion();
+  await downloadAndInstallCDAP({ latestSuccessfulBuildName, cdapversion });
+  await restartCDAP({ cdapversion });
 }
 
 main();
