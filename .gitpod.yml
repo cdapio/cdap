@@ -23,6 +23,8 @@ tasks:
       yarn &&
       yarn setup
     command: >-
+      cd /workspace/cdap/cdap-ui/gitpod &&
+      yarn start &&
       cd /workspace/cdap/cdap-ui &&
       yarn &&
       ./node_modules/bower/bin/bower install &&
