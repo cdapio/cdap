@@ -106,11 +106,22 @@ async function restartCDAP({ cdapversion }) {
   }
 }
 
-async function main() {
-  const latestSuccessfulBuildName = await getLatestBuildName();
+async function main({ isRestart }) {
   const cdapversion = await getCDAPVersion();
+  if (isRestart) {
+    return await restartCDAP({ cdapversion });
+  }
+  const latestSuccessfulBuildName = await getLatestBuildName();
   await downloadAndInstallCDAP({ latestSuccessfulBuildName, cdapversion });
-  await restartCDAP({ cdapversion });
 }
 
-main();
+let isRestart = false;
+if (process.argv && process.argv.length > 1) {
+  process.argv.forEach(function (val) {
+    if (val === 'restart') {
+      isRestart = true;
+    }
+  });
+}
+
+main({ isRestart });
