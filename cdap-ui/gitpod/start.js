@@ -27,7 +27,7 @@ function stringifyop(data) {
 }
 function startCDAP(pathToCDAP) {
   return new Promise((resolve, reject) => {
-    const tool = spawn(path.join(pathToCDAP), ['sandbox', 'start']);
+    const tool = spawn(path.join(pathToCDAP), ['sandbox', 'restart']);
     tool.stdout.on('data', stringifyop);
     tool.stderr.on('data', stringifyop);
     tool.on('exit', function(code) {
