@@ -16,6 +16,7 @@
 
 package io.cdap.cdap.common.utils;
 
+import java.util.Objects;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,7 @@ public final class Tasks {
     while (System.currentTimeMillis() - startTime < timeoutMs) {
       try {
         actualValue = callable.call();
-        if (desiredValue.equals(actualValue)) {
+        if (Objects.equals(desiredValue, actualValue)) {
           return;
         }
       } catch (Exception e) {
