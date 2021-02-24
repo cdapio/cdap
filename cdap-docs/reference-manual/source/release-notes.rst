@@ -6425,7 +6425,7 @@ Improvements
 **Tools**
 
 - Added a tool (`HBaseQueueDebugger
-  <https://github.com/caskdata/cdap/blob/release/3.0/cdap-master/src/main/java/co/cask/cdap/data/tools/HBaseQueueDebugger.java>`__)
+  <https://github.com/cdapio/cdap/blob/release/3.0/cdap-master/src/main/java/io/cdap/cdap/data/tools/HBaseQueueDebugger.java>`__)
   that counts consumed and unconsumed entries in a flowlet queue
   (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 
@@ -6784,7 +6784,7 @@ New Features
   programs, and applications, and vice-versa
   (`CDAP-2214 <https://issues.cask.co/browse/CDAP-2214>`__).
 
-- Created a `queue introspection tool <https://github.com/caskdata/cdap/pull/2290>`__,
+- Created a `queue introspection tool <https://github.com/cdapio/cdap/pull/2290>`__,
   for counting processed and unprocessed entries in a
   flowlet queue (`CDAP-2105 <https://issues.cask.co/browse/CDAP-2105>`__).
 

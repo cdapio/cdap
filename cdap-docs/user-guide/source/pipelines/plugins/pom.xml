@@ -24,7 +24,7 @@
   <packaging>pom</packaging>
   <name>Hydrator Plugin Collection</name>
   <description>A collection of plugins for Cask Hydrator.</description>
-  <url>https://github.com/caskdata/hydrator-plugins</url>
+  <url>https://github.com/cdapio/hydrator-plugins</url>
 
   <modules>
     <module>hydrator-common</module>
@@ -63,9 +63,9 @@
   </developers>
 
   <scm>
-    <connection>scm:git:https://github.com/caskdata/hydrator-plugins.git</connection>
-    <developerConnection>scm:git:git@github.com:caskdata/hydrator-plugins.git</developerConnection>
-    <url>https://github.com/caskdata/hydrator-plugins.git</url>
+    <connection>scm:git:https://github.com/cdapio/hydrator-plugins.git</connection>
+    <developerConnection>scm:git:git@github.com:cdapio/hydrator-plugins.git</developerConnection>
+    <url>https://github.com/cdapio/hydrator-plugins.git</url>
     <tag>HEAD</tag>
   </scm>
 

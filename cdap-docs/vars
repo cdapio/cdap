@@ -60,7 +60,7 @@ GIT_BRANCH_CDAP_APPS="release/cdap-4.3-compatible"
 GIT_VERSION_CDAP_APPS="0.8.0"
 
 # Used for pipelines documentation in developer-manual
-# From https://github.com/caskdata/hydrator-plugins
+# From https://github.com/cdapio/hydrator-plugins
 GIT_BRANCH_CDAP_PIPELINES="release/1.8"
 GIT_BRANCH_HYDRATOR_PLUGINS="release/1.8"
 
