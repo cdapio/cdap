@@ -21,12 +21,20 @@ import io.cdap.cdap.api.data.format.StructuredRecord;
 import io.cdap.cdap.api.data.schema.Schema;
 import io.cdap.cdap.api.spark.JavaSparkExecutionContext;
 import io.cdap.cdap.api.spark.sql.DataFrames;
-import io.cdap.cdap.etl.api.join.JoinCondition;
 import io.cdap.cdap.etl.api.join.JoinField;
 import io.cdap.cdap.etl.common.Constants;
+import io.cdap.cdap.etl.common.RecordInfo;
+import io.cdap.cdap.etl.common.StageStatisticsCollector;
+import io.cdap.cdap.etl.proto.v2.spec.StageSpec;
 import io.cdap.cdap.etl.spark.SparkCollection;
+import io.cdap.cdap.etl.spark.function.AggregatorInitializeFunction;
 import io.cdap.cdap.etl.spark.function.CountingFunction;
+import io.cdap.cdap.etl.spark.function.DatasetAggregationAccumulator;
+import io.cdap.cdap.etl.spark.function.DatasetAggregationFinalizeFunction;
+import io.cdap.cdap.etl.spark.function.DatasetAggregationGetKeyFunction;
+import io.cdap.cdap.etl.spark.function.DatasetAggregationReduceFunction;
 import io.cdap.cdap.etl.spark.function.FunctionCache;
+import io.cdap.cdap.etl.spark.function.PluginFunctionContext;
 import io.cdap.cdap.etl.spark.join.JoinCollection;
 import io.cdap.cdap.etl.spark.join.JoinExpressionRequest;
 import io.cdap.cdap.etl.spark.join.JoinRequest;
@@ -34,8 +42,12 @@ import io.cdap.cdap.etl.spark.plugin.LiteralsBridge;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.MapFunction;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Encoder;
+import org.apache.spark.sql.Encoders;
+import org.apache.spark.sql.KeyValueGroupedDataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SQLContext;
 import org.apache.spark.sql.functions;
@@ -44,6 +56,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import scala.Tuple2;
 import scala.collection.JavaConversions;
 import scala.collection.Seq;
 
@@ -56,6 +69,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import javax.annotation.Nullable;
 
 import static org.apache.spark.sql.functions.floor;
 
@@ -66,12 +80,23 @@ import static org.apache.spark.sql.functions.floor;
  */
 public class RDDCollection<T> extends BaseRDDCollection<T> {
   private static final Logger LOG = LoggerFactory.getLogger(RDDCollection.class);
+  private static final Encoder KRYO_OBJECT_ENCODER = Encoders.kryo(Object.class);
+  private static final Encoder KRYO_TUPLE_ENCODER = Encoders.tuple(
+    KRYO_OBJECT_ENCODER, KRYO_OBJECT_ENCODER);
+
+  private final boolean useDatasetAggregation;
+  private final boolean ignorePartitionsDuringDatasetAggregation;
 
   public RDDCollection(JavaSparkExecutionContext sec, FunctionCache.Factory functionCacheFactory,
                        JavaSparkContext jsc, SQLContext sqlContext,
                        DatasetContext datasetContext, SparkBatchSinkFactory sinkFactory,
                        JavaRDD<T> rdd) {
     super(sec, functionCacheFactory, jsc, sqlContext, datasetContext, sinkFactory, rdd);
+    this.useDatasetAggregation = Boolean.parseBoolean(
+      sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_ENABLED, Boolean.TRUE.toString()));
+    this.ignorePartitionsDuringDatasetAggregation = Boolean.parseBoolean(
+      sec.getRuntimeArguments().getOrDefault(Constants.DATASET_AGGREGATE_IGNORE_PARTITIONS, Boolean.TRUE.toString()));
+
   }
 
   @SuppressWarnings("unchecked")
@@ -353,5 +378,62 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
       Column defaultCol = new Column(LiteralsBridge.defaultLiteral(dataType));
       return functions.coalesce(df.col(keyCol), defaultCol);
     }).collect(Collectors.toList());
+  }
+
+  @Override
+  public SparkCollection<RecordInfo<Object>> reduceAggregate(StageSpec stageSpec,
+                                                             @Nullable Integer partitions,
+                                                             StageStatisticsCollector collector) {
+    if (!useDatasetAggregation) {
+      return super.reduceAggregate(stageSpec, partitions, collector);
+    }
+    return this.reduceDatasetAggregate(stageSpec, partitions, collector);
+  }
+
+  /**
+   * helper function to provide a generified encoder for any serializable type
+   */
+  private <V> Encoder<V> kryoEncoder() {
+    return KRYO_OBJECT_ENCODER;
+  }
+
+  /**
+   * helper function to provide a generified encoder for tuple of two serializable types
+   */
+  private <V1, V2> Encoder<Tuple2<V1, V2>> kryoTupleEncoder() {
+    return KRYO_TUPLE_ENCODER;
+  }
+
+  /**
+   * Performs reduce aggregate using Dataset API. This allows SPARK to perform various optimizations that
+   * are not available when working on the RDD level.
+   */
+  private <GROUP_KEY, AGG_VALUE> SparkCollection<RecordInfo<Object>> reduceDatasetAggregate(
+    StageSpec stageSpec, @Nullable Integer partitions, StageStatisticsCollector collector) {
+    PluginFunctionContext pluginFunctionContext = new PluginFunctionContext(stageSpec, sec, collector);
+    DatasetAggregationGetKeyFunction<GROUP_KEY, T, AGG_VALUE> groupByFunction = new DatasetAggregationGetKeyFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+    DatasetAggregationReduceFunction<T, AGG_VALUE> reduceFunction = new DatasetAggregationReduceFunction<>(
+      pluginFunctionContext, functionCacheFactory.newCache());
+    DatasetAggregationFinalizeFunction<GROUP_KEY, T, AGG_VALUE, ?> postFunction =
+      new DatasetAggregationFinalizeFunction<>(pluginFunctionContext, functionCacheFactory.newCache());
+    MapFunction<Tuple2<GROUP_KEY, DatasetAggregationAccumulator<T, AGG_VALUE>>, GROUP_KEY> keyFromTuple = Tuple2::_1;
+    MapFunction<Tuple2<GROUP_KEY, DatasetAggregationAccumulator<T, AGG_VALUE>>,
+      DatasetAggregationAccumulator<T, AGG_VALUE>> valueFromTuple = Tuple2::_2;
+
+    Dataset<T> dataset = sqlContext.createDataset(rdd.rdd(), kryoEncoder());
+
+    Dataset<RecordInfo<Object>> groupedDataset = dataset
+      .flatMap(groupByFunction, kryoTupleEncoder())
+      .groupByKey(keyFromTuple, kryoEncoder())
+      .mapValues(valueFromTuple, kryoEncoder())
+      .reduceGroups(reduceFunction)
+      .flatMap(postFunction, kryoEncoder());
+
+    if (!ignorePartitionsDuringDatasetAggregation && partitions != null) {
+      groupedDataset = groupedDataset.coalesce(partitions);
+    }
+
+    return wrap(groupedDataset.toJavaRDD());
   }
 }
