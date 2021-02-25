@@ -35,6 +35,7 @@
   <logger name="org.mortbay.log" level="WARN"/>
   <logger name="SecurityLogger.org.apache.hadoop.security.authorize.ServiceAuthorizationManager" level="WARN"/>
   <logger name="SecurityLogger.org.apache.hadoop.ipc.Server" level="WARN"/>
+  <logger name="io.debezium" level="WARN" />
   <!-- Because of HADOOP-11180 move this to Error -->
   <logger name="org.apache.hadoop.security.token.Token" level="ERROR"/>
   <logger name="org.apache.hadoop.metrics2" level="ERROR"/>

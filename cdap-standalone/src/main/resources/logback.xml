@@ -34,6 +34,7 @@
   <logger name="org.spark_project" level="WARN"/>
   <logger name="org.apache.hadoop" level="WARN"/>
   <logger name="org.apache.hive" level="WARN"/>
+  <logger name="io.debezium" level="WARN" />
   <!-- TODO Remove suppressing of Tephra logs once CDAP-8806 is fixed. -->
   <logger name="org.apache.tephra.TransactionManager" level="WARN"/>
   <logger name="org.apache.tephra.distributed.AbstractClientProvider" level="WARN"/>
