@@ -10,5 +10,8 @@ import java.util.List;
 public interface DirectConnector extends Connector {
   String PLUGIN_TYPE = "directconnector";
 
+  /**
+   * Sample the resources and return the result back
+   */
   List<StructuredRecord> sample(SampleRequest sampleRequest);
 }

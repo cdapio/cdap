@@ -13,7 +13,13 @@ import java.util.List;
 public interface BatchConnector<VAL_IN> extends Connector {
   String PLUGIN_TYPE = "batchconnector";
 
+  /**
+   * Return the input format this connector will use to do the sampling
+   */
   InputFormatProvider getInputFormatProvider();
 
+  /**
+   * Transform the sampled records back to StructuredRecord
+   */
   List<StructuredRecord> transform(VAL_IN records);
 }
