@@ -1295,7 +1295,7 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
       callServicePut(serviceManager.getServiceURL(), "notx", AppWithCustomTx.FAIL_PRODUCER, 200);
       callServicePut(serviceManager.getServiceURL(), "notx", AppWithCustomTx.FAIL_CONSUMER, 500);
       serviceManager.stop();
-      serviceManager.waitForStopped(10, TimeUnit.SECONDS);
+      serviceManager.waitForRun(ProgramRunStatus.KILLED, 10, TimeUnit.SECONDS);
 
       txMRManager.waitForRun(ProgramRunStatus.FAILED, 10L, TimeUnit.SECONDS);
       notxMRManager.waitForRun(ProgramRunStatus.FAILED, 10L, TimeUnit.SECONDS);
@@ -1483,8 +1483,11 @@ public class TestFrameworkTestRun extends TestFrameworkTestBase {
         String row = (String) writeToValidate[0];
         String column = (String) writeToValidate[1];
         String expectedValue = writeToValidate[2] == null ? null : String.valueOf(writeToValidate[2]);
-        Assert.assertEquals("Error for " + row + "." + column,
-                            expectedValue, t.get(new Get(row, column)).getString(column));
+        Tasks.waitFor(expectedValue,
+                     () -> t.get(new Get(row, column)).getString(column),
+                     30L, TimeUnit.SECONDS, 1, TimeUnit.SECONDS,
+                      String.format("Error getting value for %s.%s. Expected: %s, Got: %s",
+                                    row, column, expectedValue, t.get(new Get(row, column)).getString(column)));
       }
 
     } finally {
