@@ -52,6 +52,7 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   targetConfig,
   name,
   description,
+  numInstances,
 }) => {
   return (
     <div className={classes.root}>
@@ -67,6 +68,7 @@ const SummaryView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
           targetPluginWidget={targetPluginWidget}
           sourceConfig={sourceConfig}
           targetConfig={targetConfig}
+          numInstances={numInstances}
         />
       </div>
 

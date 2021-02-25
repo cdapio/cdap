@@ -91,6 +91,7 @@ const ContentHeadingView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
     targetPluginInfo,
     targetPluginWidget,
     targetConfig,
+    numInstances,
   } = useContext(DetailContext);
 
   const [configExpanded, setConfigExpanded] = useState(false);
@@ -131,6 +132,7 @@ const ContentHeadingView: React.FC<WithStyles<typeof styles>> = ({ classes }) =>
           targetPluginWidget={targetPluginWidget}
           sourceConfig={sourceConfig}
           targetConfig={targetConfig}
+          numInstances={numInstances}
         />
         <hr />
       </If>

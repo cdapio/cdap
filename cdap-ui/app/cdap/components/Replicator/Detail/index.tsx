@@ -98,6 +98,7 @@ interface IDetailState {
   lastUpdated: number;
   startTime: number;
   endTime: number;
+  numInstances: number;
 
   start: () => void;
   stop: () => void;
@@ -240,6 +241,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
     lastUpdated: Date.now(),
     startTime: null,
     end: null,
+    numInstances: null,
 
     start: this.start,
     stop: this.stop,
@@ -380,6 +382,7 @@ class DetailView extends React.PureComponent<IDetailProps, IDetailContext> {
         offsetBasePath: config.offsetBasePath,
         loading: false,
         lastUpdated: Date.now(),
+        numInstances: objectQuery(config, 'config', 'parallelism', 'numInstances') || 1,
       });
     });
 

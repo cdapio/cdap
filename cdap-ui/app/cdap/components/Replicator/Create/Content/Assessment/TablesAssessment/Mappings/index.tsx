@@ -243,12 +243,14 @@ const MappingsView: React.FC<IMappingsProps> = ({
     let updatedColumns;
     if (existingColumns && existingColumns.size > 0) {
       updatedColumns = existingColumns.filter((value) => {
-        return value.get('name') !== column.sourceName || value.get('type') !== column.sourceType;
+        return !(
+          value.get('name') === column.sourceName && value.get('type') === column.sourceType
+        );
       });
     } else {
       const selectedColumns = assessmentColumns
         .filter((col) => {
-          return !(col.sourceName !== column.sourceName || col.sourceType !== column.sourceType);
+          return !(col.sourceName === column.sourceName && col.sourceType === column.sourceType);
         })
         .map((col) => {
           return Map({
@@ -393,7 +395,7 @@ const MappingsView: React.FC<IMappingsProps> = ({
                               className={classes.columnAction}
                               onClick={deleteColumn.bind(null, row)}
                             >
-                              Delete
+                              Remove
                             </span>
                           </If>
                         </If>

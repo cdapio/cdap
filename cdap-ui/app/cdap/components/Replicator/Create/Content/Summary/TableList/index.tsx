@@ -17,7 +17,7 @@
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
-import { generateTableKey } from 'components/Replicator/utilities';
+import { generateTableKey, getTableDisplayName } from 'components/Replicator/utilities';
 import TextField from '@material-ui/core/TextField';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import Search from '@material-ui/icons/Search';
@@ -125,7 +125,7 @@ const TableListView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
 
               return (
                 <div key={tableKey} className="grid-row">
-                  <div>{row.get('table')}</div>
+                  <div>{getTableDisplayName(row)}</div>
                   <div>
                     {selectedColumns && selectedColumns.size > 0 ? selectedColumns.size : 'All'}
                   </div>

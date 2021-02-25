@@ -21,7 +21,7 @@ import Heading, { HeadingTypes } from 'components/Heading';
 import { IPluginInfo, IPluginConfig } from 'components/Replicator/types';
 import { IWidgetJson } from 'components/ConfigurationGroup/types';
 
-const styles = (): StyleRules => {
+const styles = (theme): StyleRules => {
   return {
     container: {
       paddingTop: '15px',
@@ -33,6 +33,13 @@ const styles = (): StyleRules => {
     sectionTitle: {
       marginBottom: '5px',
     },
+    advanced: {
+      marginBottom: '15px',
+    },
+    advancedLabel: {
+      color: theme.palette.grey[100],
+      marginRight: '10px',
+    },
   };
 };
 
@@ -43,6 +50,7 @@ interface IConfigDisplayProps extends WithStyles<typeof styles> {
   targetPluginWidget: IWidgetJson;
   sourceConfig: IPluginConfig;
   targetConfig: IPluginConfig;
+  numInstances: number;
 }
 
 const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
@@ -53,6 +61,7 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
   targetPluginWidget,
   sourceConfig,
   targetConfig,
+  numInstances,
 }) => {
   return (
     <div className={classes.root}>
@@ -73,6 +82,14 @@ const ConfigDisplayView: React.FC<IConfigDisplayProps> = ({
             pluginWidget={targetPluginWidget}
             pluginConfig={targetConfig}
           />
+        </div>
+      </div>
+
+      <div className={classes.advanced}>
+        <Heading type={HeadingTypes.h4} className={classes.sectionTitle} label="Advanced" />
+        <div>
+          <strong className={classes.advancedLabel}>Number of tasks:</strong>
+          <span>{numInstances}</span>
         </div>
       </div>
     </div>
