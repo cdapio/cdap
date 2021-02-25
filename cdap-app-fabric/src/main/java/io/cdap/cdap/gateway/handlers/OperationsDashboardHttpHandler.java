@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -62,7 +63,7 @@ import javax.ws.rs.QueryParam;
 
 /**
  * {@link io.cdap.http.HttpHandler} to handle program run operation dashboard and reports for v3 REST APIs
- *
+ * <p>
  * TODO: [CDAP-13355] Move this handler into report generation app
  */
 @Singleton
@@ -103,9 +104,41 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       throw new BadRequestException("'namespace' cannot be empty, please provide at least one namespace.");
     }
     long endTimeSecs = startTimeSecs + durationTimeSecs;
+
+    // Get current running timestamp.
+    long currentTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+    // Find tasks that have been running for up to 30 days before the start timestamp.
+    // If there are updates for any of these programs in the selected window, we'll use the record from the window.
+    Collection<RunRecordDetail> programsRunningAtStartTime =
+      programHeartbeatService.findRunningAtTimestamp(startTimeSecs, namespaces);
+
     // end time is exclusive
-    Collection<RunRecordDetail> runRecordMetas =
+    Collection<RunRecordDetail> programsInWindow =
       programHeartbeatService.scan(startTimeSecs, endTimeSecs + 1, namespaces);
+
+    // Get all the ProgramRunId for records in the selected window.
+    Set<ProgramRunId> inWindowRunIds = programsInWindow.stream()
+      .map(RunRecordDetail::getProgramRunId)
+      .collect(Collectors.toSet());
+
+    // If there are records that were running before the start time, but have an update in the window, remove them
+    // from the programs running result. This allows us to remove duplicate entries.
+    programsRunningAtStartTime = programsRunningAtStartTime.stream()
+      .filter(rrd -> !inWindowRunIds.contains(rrd.getProgramRunId()))
+      .collect(Collectors.toList());
+
+    // Initialize result set.
+    Collection<RunRecordDetail> runRecordMetas = new ArrayList<>();
+    // Add all programs running before the start time.
+    runRecordMetas.addAll(programsRunningAtStartTime);
+    // Add all programs in the window.
+    runRecordMetas.addAll(programsInWindow);
+
+    // Sort result by start time.
+    runRecordMetas = runRecordMetas.stream()
+      .sorted(Comparator.comparingLong(RunRecordDetail::getStartTs))
+      .collect(java.util.stream.Collectors.toList());
 
     List<DashboardProgramRunRecord> result = new ArrayList<>();
     for (RunRecordDetail runRecordMeta : runRecordMetas) {
@@ -114,7 +147,6 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
 
     Set<NamespaceId> namespaceIds = namespaces.stream().map(NamespaceId::new).collect(Collectors.toSet());
     // if the end time is in the future, also add scheduled program runs to the result
-    long currentTimeInSeconds = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     // if start time in query is earlier than current time, use currentTime as start when querying future schedules
     long scheduleStartTimeSeconds = startTimeSecs > currentTimeInSeconds ? startTimeSecs : currentTimeInSeconds;
     if (endTimeSecs > currentTimeInSeconds) {
@@ -127,11 +159,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   /**
    * Gets all the scheduled program run in the given time range from the given namespaces.
    *
-   * @param namespaceIds the namespaces to get the program runs from
-   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
-   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
-   *                    will be returned)
+   * @param namespaceIds  the namespaces to get the program runs from
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or equal to the
+   *                      start will be returned)
+   * @param endTimeSecs   the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end will
+   *                      be returned)
    * @return a list of dashboard program run records with scheduled time as start time
    */
   private List<DashboardProgramRunRecord> getAllScheduledRuns(Set<NamespaceId> namespaceIds,
@@ -164,11 +196,11 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
   /**
    * For a given time schedule, gets all the scheduled program run in the given time range
    *
-   * @param schedule the schedule to get scheduled program run with
-   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or
-   *                      equal to the start will be returned)
-   * @param endTimeSecs the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end
-   *                    will be returned)
+   * @param schedule      the schedule to get scheduled program run with
+   * @param startTimeSecs the start of the time range in seconds (inclusive, i.e. scheduled time larger or equal to the
+   *                      start will be returned)
+   * @param endTimeSecs   the end of the time range in seconds (exclusive, i.e. scheduled time smaller than the end will
+   *                      be returned)
    * @return a list of dashboard program run records with scheduled time as start time
    * @throws Exception
    */
@@ -219,6 +251,6 @@ public class OperationsDashboardHttpHandler extends AbstractAppFabricHttpHandler
       user = new KerberosName(user).getShortName();
     }
     return new DashboardProgramRunRecord(runId, meta, meta.getArtifactId(),
-                                        user, startMethod);
+                                         user, startMethod);
   }
 }
