@@ -141,7 +141,7 @@ const AdvancedView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   numInstances,
   setAdvanced,
 }) => {
-  const [localNumInstances, setLocalNumInstances] = React.useState(numInstances);
+  const [localNumInstances, setLocalNumInstances] = React.useState(numInstances || 1);
   const [taskSelection, setTaskSelection] = React.useState(TASK_OPTIONS.calculate);
   const [dataAmount, setDataAmount] = React.useState(1);
 
@@ -151,7 +151,8 @@ const AdvancedView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
   }, []);
 
   function getInitialTaskSelection() {
-    const initialDataAmount = options.find((opt) => opt.value === numInstances);
+    const initialNumInstances = numInstances || 1;
+    const initialDataAmount = options.find((opt) => opt.value === initialNumInstances);
     if (initialDataAmount) {
       setDataAmount(initialDataAmount.value);
       return TASK_OPTIONS.calculate;
