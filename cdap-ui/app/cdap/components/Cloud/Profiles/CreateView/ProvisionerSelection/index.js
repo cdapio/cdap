@@ -73,9 +73,13 @@ class ProfileCreateProvisionerSelection extends Component {
     }
 
     return (
-      <Link to={`/ns/${namespace}/profiles/create/${provisioner.name}`} className="provisioner-box">
+      <Link
+        to={`/ns/${namespace}/profiles/create/${provisioner.name}`}
+        className="provisioner-box"
+        key={provisioner.name}
+      >
         {provisioner.beta ? <ExperimentalBanner /> : null}
-        <div className="provisioner-content">
+        <div className="provisioner-content" data-cy={`provisioner-${provisioner.name}`}>
           <div className="provisioner-icon">
             {src ? <img src={src} /> : <IconSVG name={icon} />}
           </div>

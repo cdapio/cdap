@@ -35,6 +35,7 @@ export default class SecureKeyTextarea extends Component {
   static propTypes = {
     ...WIDGET_PROPTYPES,
     inputTextType: PropTypes.oneOf(['textarea', 'text', 'password']),
+    dataCy: PropTypes.string,
   };
   static defaultProps = DEFAULT_WIDGET_PROPS;
 
@@ -219,6 +220,7 @@ export default class SecureKeyTextarea extends Component {
           className="form-control raw-text-input"
           onChange={this.handleOnInputChange}
           value={this.props.value}
+          data-cy={this.props.dataCy}
           {...this.props.widgetProps}
         />
       );
@@ -230,6 +232,7 @@ export default class SecureKeyTextarea extends Component {
         className="form-control raw-text-input"
         onChange={this.handleOnInputChange}
         value={this.props.value}
+        data-cy={this.props.dataCy}
         {...this.props.widgetProps}
       />
     );

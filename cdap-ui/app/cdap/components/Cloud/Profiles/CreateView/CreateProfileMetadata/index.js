@@ -32,6 +32,7 @@ function ProfileName({ profileName }) {
   return (
     <WidgetWrapper
       pluginProperty={{
+        name: 'profileName',
         required: true,
       }}
       widgetProperty={{
@@ -44,6 +45,7 @@ function ProfileName({ profileName }) {
       }}
       value={profileName}
       disabled={true}
+      dataCy="profile-name"
     />
   );
 }
@@ -61,6 +63,7 @@ function ProfileLabel({ profileLabel }) {
   return (
     <WidgetWrapper
       pluginProperty={{
+        name: 'profileLabel',
         required: true,
       }}
       widgetProperty={{
@@ -92,6 +95,7 @@ function ProfileDescription({ profileDescription }) {
   return (
     <WidgetWrapper
       pluginProperty={{
+        name: 'profileDescription',
         required: true,
       }}
       widgetProperty={{
