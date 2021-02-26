@@ -41,7 +41,7 @@ const OPTIONS_MAP = {
   CUSTOM: 'CUSTOM',
 };
 
-export default class SimpleDateModal extends Component {
+export default class DateFormatModal extends Component {
   constructor(props) {
     super(props);
 
@@ -69,7 +69,7 @@ export default class SimpleDateModal extends Component {
       format = this.state.customFormat;
     }
 
-    this.props.onApply('SIMPLEDATE', `${format}`);
+    this.props.onApply(format);
     this.props.toggle();
   }
 
@@ -117,7 +117,7 @@ export default class SimpleDateModal extends Component {
         <ModalHeader>
           <span>
             {T.translate(`${PREFIX}.Parsers.SIMPLEDATE.ModalHeader.${this.props.source}`, {
-              parser: 'Simple Date',
+              parser: this.props.parserName,
             })}
           </span>
 
@@ -162,8 +162,9 @@ export default class SimpleDateModal extends Component {
   }
 }
 
-SimpleDateModal.propTypes = {
+DateFormatModal.propTypes = {
   source: PropTypes.string,
   toggle: PropTypes.func,
+  parserName: PropTypes.string,
   onApply: PropTypes.func,
 };

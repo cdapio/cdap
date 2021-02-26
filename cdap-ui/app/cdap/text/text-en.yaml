@@ -780,7 +780,7 @@ features:
         replaceWith: Replace with
         title: Find and replace
       Format:
-        disabledTooltip: "Format can only be executed on columns of data type 'string' or 'date'"
+        disabledTooltip: "Format can only be executed on columns of data type 'string', 'date', or 'datetime'"
         Formats:
           CONCATENATE:
             addDescription: of the content of each row
@@ -792,6 +792,8 @@ features:
             label: Concatenate
           DATE_TIME:
             label: Date and time
+          DATETIME_AS_STRING:
+            label: Datetime
           LOWERCASE:
             label: lowercase
           TITLECASE:
@@ -1035,6 +1037,9 @@ features:
               OPTION12: "EEE, MMM d, 'yy"
               OPTION13: "h:mm AM/PM"
               OPTION14: "H:mm with timezone"
+          DATETIME:
+            customPlaceholder: "e.g. yyyy.MM.dd G 'at' HH:mm:ss z"
+            label: Datetime
           XMLTOJSON:
             fieldLabel: Depth
             label: XML to JSON
