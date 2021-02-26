@@ -84,6 +84,13 @@
     <dependency>
       <groupId>io.cdap.common</groupId>
       <artifactId>common-http</artifactId>
+      <!-- CDAP-17719: avoid pulling in an old asm version that conflicts with asm versions in core cdap -->
+      <exclusions>
+        <exclusion>
+          <groupId>org.ow2.asm</groupId>
+          <artifactId>asm-all</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>
     <dependency>
       <groupId>com.google.guava</groupId>
