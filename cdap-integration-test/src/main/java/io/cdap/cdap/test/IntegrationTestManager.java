@@ -24,6 +24,7 @@ import com.google.gson.Gson;
 import io.cdap.cdap.api.Config;
 import io.cdap.cdap.api.app.Application;
 import io.cdap.cdap.api.artifact.ArtifactRange;
+import io.cdap.cdap.api.artifact.ArtifactSummary;
 import io.cdap.cdap.api.artifact.ArtifactVersion;
 import io.cdap.cdap.api.dataset.DatasetAdmin;
 import io.cdap.cdap.api.dataset.DatasetProperties;
@@ -65,6 +66,7 @@ import io.cdap.cdap.proto.id.ScheduleId;
 import io.cdap.cdap.security.authentication.client.AccessToken;
 import io.cdap.cdap.test.remote.RemoteApplicationManager;
 import io.cdap.cdap.test.remote.RemoteArtifactManager;
+import io.cdap.common.ContentProvider;
 import org.apache.twill.api.ClassAcceptor;
 import org.apache.twill.filesystem.LocalLocationFactory;
 import org.apache.twill.filesystem.Location;
@@ -94,6 +96,7 @@ import javax.annotation.Nullable;
  */
 public class IntegrationTestManager extends AbstractTestManager {
 
+  private static final String VERSION = "1.0.0-SNAPSHOT";
   private static final Logger LOG = LoggerFactory.getLogger(IntegrationTestManager.class);
   private static final Gson GSON = new Gson();
   private static final ClassAcceptor CLASS_ACCEPTOR = new ClassAcceptor() {
@@ -156,7 +159,7 @@ public class IntegrationTestManager extends AbstractTestManager {
 
     String appConfig = "";
     Type configType = Artifacts.getConfigType(applicationClz);
-
+    RemoteApplicationManager manager;
     try {
       if (configObject != null) {
         appConfig = GSON.toJson(configObject);
@@ -165,31 +168,45 @@ public class IntegrationTestManager extends AbstractTestManager {
       }
 
       // Create and deploy application jar
-      File appJarFile = new File(tmpFolder, String.format("%s-1.0.0-SNAPSHOT.jar", applicationClz.getSimpleName()));
+      File appJarFile = new File(tmpFolder, String.format("%s-%s.jar", applicationClz.getSimpleName(), VERSION));
       try {
+
         if ("jar".equals(appClassURL.getProtocol())) {
           copyJarFile(appClassURL, appJarFile);
         } else {
-          Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, new Manifest(),
+          Manifest manifest = new Manifest();
+          manifest.getMainAttributes().put(ManifestFields.BUNDLE_VERSION, VERSION);
+          Location appJar = AppJarHelper.createDeploymentJar(locationFactory, applicationClz, manifest,
                                                              CLASS_ACCEPTOR, bundleEmbeddedJars);
 
           try (InputStream input = appJar.getInputStream()) {
             Files.copy(input, appJarFile.toPath());
           }
         }
-        applicationClient.deploy(namespace, appJarFile, appConfig);
+
+        // Extracts application id from the application class
+        Application application = applicationClz.newInstance();
+        MockAppConfigurer configurer = new MockAppConfigurer(application);
+        application.configure(configurer, new DefaultApplicationContext<>(configObject));
+        String applicationId = configurer.getName();
+
+        // Upload artifact for application
+        ContentProvider<InputStream> artifactStream = locationFactory.create(appJarFile.toURI())::getInputStream;
+        artifactClient.add(namespace, applicationClz.getSimpleName(), artifactStream, null);
+
+        // Deploy application
+        ArtifactSummary summary = new ArtifactSummary(applicationClz.getSimpleName(), VERSION);
+        AppRequest<?> request = new AppRequest<>(summary, appConfig);
+        ApplicationId id = namespace.app(applicationId);
+        applicationClient.deploy(id, request);
+
+        manager = new RemoteApplicationManager(namespace.app(applicationId), clientConfig, restClient);
       } finally {
         if (!appJarFile.delete()) {
           LOG.warn("Failed to delete temporary app jar {}", appJarFile.getAbsolutePath());
         }
       }
-
-      // Extracts application id from the application class
-      Application application = applicationClz.newInstance();
-      MockAppConfigurer configurer = new MockAppConfigurer(application);
-      application.configure(configurer, new DefaultApplicationContext<>(configObject));
-      String applicationId = configurer.getName();
-      return new RemoteApplicationManager(namespace.app(applicationId), clientConfig, restClient);
+      return manager;
     } catch (Exception e) {
       throw Throwables.propagate(e);
     }
@@ -388,8 +405,8 @@ public class IntegrationTestManager extends AbstractTestManager {
   /**
    * Copies the jar content to a local file
    *
-   * @param jarURL URL representing the jar location or an entry in the jar. An entry URL has format of
-   *               {@code jar:[jarURL]!/path/to/entry}
+   * @param jarURL URL representing the jar location or an entry in the jar. An entry URL has format of {@code
+   *   jar:[jarURL]!/path/to/entry}
    * @param file the local file to copy to
    */
   private void copyJarFile(URL jarURL, File file) {
