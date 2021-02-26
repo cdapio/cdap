@@ -349,7 +349,11 @@ class ProfilesListView extends Component {
             <IconSVG name="icon-star-o" className="not-default-profile" />
           )}
         </div>
-        <div className="profile-label" title={profile.label || profile.name}>
+        <div
+          className="profile-label"
+          title={profile.label || profile.name}
+          data-cy={`profile-list-${profile.name}`}
+        >
           {profile.label || profile.name}
         </div>
         <div>{profile.provisioner.label}</div>

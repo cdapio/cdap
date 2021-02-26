@@ -27,6 +27,7 @@ export default function BtnWithLoading({
   loading,
   disabled,
   onClick,
+  dataCy = null,
   ...restProps
 }) {
   return (
@@ -36,6 +37,7 @@ export default function BtnWithLoading({
       })}
       onClick={onClick}
       disabled={disabled || loading}
+      data-cy={dataCy}
       {...restProps}
     >
       {!loading ? (
@@ -57,4 +59,5 @@ BtnWithLoading.propTypes = {
   loading: PropTypes.bool,
   disabled: PropTypes.bool,
   onClick: PropTypes.func,
+  dataCy: PropTypes.string,
 };
