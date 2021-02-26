@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2020 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -30,6 +30,7 @@ import com.google.inject.Scopes;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import com.google.inject.util.Modules;
+import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
 import io.cdap.cdap.app.preview.PreviewManager;
@@ -51,6 +52,7 @@ import io.cdap.cdap.common.logging.LoggingContextAccessor;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
+import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.common.utils.Networks;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -78,7 +80,6 @@ import io.cdap.cdap.messaging.guice.MessagingServerRuntimeModule;
 import io.cdap.cdap.metadata.DefaultMetadataAdmin;
 import io.cdap.cdap.metadata.MetadataAdmin;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
-import io.cdap.cdap.metrics.collect.MessagingMetricsCollectionService;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.metrics.query.MetricsQueryHelper;
 import io.cdap.cdap.proto.ProgramType;
@@ -88,6 +89,7 @@ import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
@@ -199,7 +201,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public ApplicationId start(NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
+  @AuthEnforce(entities = "namespaceId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public ApplicationId start(@Name("namespaceId") NamespaceId namespace, AppRequest<?> appRequest) throws Exception {
     // make sure preview id is unique for each run
     ApplicationId previewApp = namespace.app(RunIds.generate().getId());
     ProgramId programId = getProgramIdFromRequest(previewApp, appRequest);
@@ -214,7 +217,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public PreviewStatus getStatus(ApplicationId applicationId) throws NotFoundException {
+  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public PreviewStatus getStatus(@Name("applicationId") ApplicationId applicationId) throws NotFoundException {
     PreviewStatus status = previewStore.getPreviewStatus(applicationId);
     if (status == null) {
       throw new NotFoundException(applicationId);
@@ -232,7 +236,8 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public void stopPreview(ApplicationId applicationId) throws Exception {
+  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public void stopPreview(@Name("applicationId") ApplicationId applicationId) throws Exception {
     PreviewStatus status = getStatus(applicationId);
     if (status.getStatus().isEndState()) {
       throw new BadRequestException(String.format("Preview run cannot be stopped. It is already in %s state.",
@@ -247,12 +252,14 @@ public class DefaultPreviewManager extends AbstractIdleService implements Previe
   }
 
   @Override
-  public Map<String, List<JsonElement>> getData(ApplicationId applicationId, String tracerName) {
+  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public Map<String, List<JsonElement>> getData(@Name("applicationId") ApplicationId applicationId, String tracerName) {
     return previewStore.get(applicationId, tracerName);
   }
 
   @Override
-  public ProgramRunId getRunId(ApplicationId applicationId) throws Exception {
+  @AuthEnforce(entities = "applicationId", enforceOn = NamespaceId.class, actions = Action.ADMIN)
+  public ProgramRunId getRunId(@Name("applicationId") ApplicationId applicationId) throws Exception {
     return previewStore.getProgramRunId(applicationId);
   }
 

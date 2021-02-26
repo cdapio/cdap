@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -296,12 +296,27 @@ public class AuthEnforceRewriter implements ClassRewriter {
           Preconditions.checkArgument(!entityPartDetails.isEmpty(), "Entity Details for the annotation cannot be " +
             "empty");
           Type entityPartType = entityPartDetails.get(0).getType();
-          // if the first entity part is not string then it should be of same type specified in enforce on
-          // TODO: Later change this to even work with parent type as we will support enforceOn parent type
+          // if the first entity part is not string then it or its parent should be of same type specified in enforce on
           if (!entityPartType.equals(Type.getType(String.class))) {
-            Preconditions.checkArgument(entityPartType.equals(enforceOn), "Found invalid entity type '%s' for " +
-                                          "enforceOn '%s' in annotation on '%s' method in '%s' class.",
-                                        entityPartType.getClassName(), enforceOn.getClassName(), methodName, className);
+            if (!entityPartType.equals(enforceOn) && entityPartType.getSort() == Type.OBJECT) {
+              Class entityPartClass;
+              Class enforceOnClass;
+              try {
+                entityPartClass = Class.forName(entityPartType.getClassName());
+                enforceOnClass = Class.forName(enforceOn.getClassName());
+              } catch (ClassNotFoundException e) {
+                // this shouldn't happen
+                throw new IllegalArgumentException(String.format("Unexpected class type not found: '%s'",
+                                                                 entityPartType.getClassName()), e);
+              }
+              if (!AuthEnforceUtil.verifyEntityIdParents(entityPartClass, enforceOnClass)) {
+                throw new IllegalArgumentException(String.format("Found invalid entity type '%s' for enforceOn '%s' " +
+                                                                   "in annotation on '%s' method in '%s' class.",
+                                                                 entityPartType.getClassName(),
+                                                                 enforceOn.getClassName(), methodName, className));
+              }
+            }
+
             AuthEnforceUtil.getEntityIdPartsCount(enforceOn);
           } else {
             // Since the entity part/parts provided is of String type so validate that we have sufficient part for
