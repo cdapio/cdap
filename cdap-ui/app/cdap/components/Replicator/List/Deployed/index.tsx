@@ -116,10 +116,11 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             return;
           }
 
-          const replicatorObj = {};
-          config.stages.forEach((stage) => {
-            replicatorObj[stage.plugin.type] = stage.plugin.name;
-          });
+          const connection = objectQuery(config, 'connections', 0);
+          const replicatorObj = {
+            from: connection.from,
+            to: connection.to,
+          };
 
           map[replicator.name] = {
             name: replicator.name,
@@ -189,9 +190,8 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
           <div className="grid-body">
             {replicators.map((replicator) => {
               const source =
-                objectQuery(configMap, replicator.name, 'pluginDisplay', PluginType.source) || '--';
-              const target =
-                objectQuery(configMap, replicator.name, 'pluginDisplay', PluginType.target) || '--';
+                objectQuery(configMap, replicator.name, 'pluginDisplay', 'from') || '--';
+              const target = objectQuery(configMap, replicator.name, 'pluginDisplay', 'to') || '--';
 
               const actions: IAction[] = [
                 {

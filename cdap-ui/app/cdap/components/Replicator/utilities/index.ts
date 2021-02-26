@@ -390,3 +390,20 @@ export function getFullyQualifiedTableName(tableInput) {
   tableName = `${tableName}.${tableInfo.table}`;
   return tableName;
 }
+
+export function getTableDisplayName(row) {
+  let table = row.table;
+  let schema = row.schema;
+
+  if (Map.isMap(row)) {
+    table = row.get('table');
+    schema = row.get('schema');
+  }
+
+  let displayName = table;
+  if (schema) {
+    displayName = `${schema}.${displayName}`;
+  }
+
+  return displayName;
+}

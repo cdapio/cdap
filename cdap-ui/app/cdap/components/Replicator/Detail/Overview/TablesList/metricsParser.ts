@@ -30,7 +30,7 @@ interface IOverviewMetricsData {
   dataReplicated: number;
 }
 
-const INITIAL_DATA = {
+export const INITIAL_DATA = {
   inserts: 0,
   updates: 0,
   deletes: 0,

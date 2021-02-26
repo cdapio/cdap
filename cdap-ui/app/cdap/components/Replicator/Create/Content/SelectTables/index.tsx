@@ -27,7 +27,7 @@ import LoadingSVGCentered from 'components/LoadingSVGCentered';
 import SelectColumns from 'components/Replicator/Create/Content/SelectColumns';
 import If from 'components/If';
 import { extractErrorMessage } from 'services/helpers';
-import { generateTableKey } from 'components/Replicator/utilities';
+import { generateTableKey, getTableDisplayName } from 'components/Replicator/utilities';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Heading, { HeadingTypes } from 'components/Heading';
 import ManualSelectTable from 'components/Replicator/Create/Content/SelectTables/ManualSelectTable';
@@ -570,7 +570,7 @@ class SelectTablesView extends React.PureComponent<ISelectTablesProps, ISelectTa
                       })}
                       title={errorDescription}
                     >
-                      {row.table}
+                      {getTableDisplayName(row)}
                     </div>
                     <div
                       className={`${classes.pointer} ${classes.count}`}

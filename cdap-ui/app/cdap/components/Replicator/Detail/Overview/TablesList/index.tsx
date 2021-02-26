@@ -17,7 +17,11 @@
 import React, { useContext, useEffect, useState } from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { DetailContext } from 'components/Replicator/Detail';
-import { generateTableKey, getFullyQualifiedTableName } from 'components/Replicator/utilities';
+import {
+  generateTableKey,
+  getFullyQualifiedTableName,
+  getTableDisplayName,
+} from 'components/Replicator/utilities';
 import { Map } from 'immutable';
 import { MyReplicatorApi } from 'api/replicator';
 import { getCurrentNamespace } from 'services/NamespaceStore';
@@ -34,7 +38,10 @@ import IconSVG from 'components/IconSVG';
 import MetricsQueryHelper from 'services/MetricsQueryHelper';
 import { PROGRAM_INFO } from 'components/Replicator/constants';
 import { MyMetricApi } from 'api/metric';
-import { parseOverviewMetrics } from 'components/Replicator/Detail/Overview/TablesList/metricsParser';
+import {
+  parseOverviewMetrics,
+  INITIAL_DATA,
+} from 'components/Replicator/Detail/Overview/TablesList/metricsParser';
 import { compare } from 'natural-orderby';
 import TableColumnGroup from 'components/Table/TableColumnGroup';
 import ColumnGroup from 'components/Table/ColumnGroup';
@@ -285,9 +292,9 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             const numColumns = tableColumns ? tableColumns.size : 0;
             const tableStatus = statusMap.get(tableKey) || 'IDLE';
             const icon = tableStatus === 'SNAPSHOTTING' ? 'icon-circle-o' : 'icon-circle';
-            const tableDisplayName = row.get('table');
+            const tableDisplayName = getTableDisplayName(row);
             const tableMetricsKey = getFullyQualifiedTableName(row);
-            const tableMetrics = tableMetricsMap[tableMetricsKey] || {};
+            const tableMetrics = tableMetricsMap[tableMetricsKey] || { ...INITIAL_DATA };
 
             return (
               <TableRow key={tableKey.toString()}>

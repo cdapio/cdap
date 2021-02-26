@@ -148,7 +148,7 @@ class CreateView extends React.PureComponent<ICreateProps, ICreateContext> {
 
   public setSourceConfig = (sourceConfig) => {
     this.setState({ sourceConfig }, () => {
-      this.props.history.push(
+      this.props.history.replace(
         `/ns/${getCurrentNamespace()}/replication/drafts/${this.state.draftId}`
       );
     });
