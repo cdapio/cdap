@@ -77,7 +77,13 @@ public final class Classes {
     // Inspect the bytecode and check the super class/interfaces recursively
     boolean result = false;
     try (InputStream input = url.openStream()) {
-      ClassReader cr = new ClassReader(input);
+      ClassReader cr = null;
+      try {
+        cr = new ClassReader(input);
+      } catch (Exception e) {
+        LOG.error("Failed to create classreader. className: {}, superTypeName: {}, url: {}",
+                  className, superTypeName, url.toString());
+      }
       String superName = cr.getSuperName();
       if (superName != null) {
         result = isSubTypeOf(Type.getObjectType(superName).getClassName(), superTypeName, resourceProvider, cache);
