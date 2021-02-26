@@ -19,12 +19,15 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.conf.Constants.Security;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
+import io.cdap.cdap.security.server.BasicAuthenticationHandler;
+import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
 import org.junit.AfterClass;
@@ -59,16 +62,13 @@ public class MasterServiceMainTestBase {
     new LinkedHashMap<>();
   protected static String[] initArgs;
 
-  protected static CConfiguration cConf;
-  protected static SConfiguration sConf;
+  protected static CConfiguration cConf = CConfiguration.create();
+  protected static SConfiguration sConf = SConfiguration.create();
 
   @BeforeClass
   public static void init() throws Exception {
     zkServer = InMemoryZKServer.builder().setAutoCleanDataDir(false).setDataDir(TEMP_FOLDER.newFolder()).build();
     zkServer.startAndWait();
-
-    cConf = CConfiguration.create();
-    sConf = SConfiguration.create();
 
     // Set the HDFS directory as well as we are using DFSLocationModule in the master services
     cConf.set(Constants.CFG_HDFS_NAMESPACE, TEMP_FOLDER.newFolder().getAbsolutePath());
@@ -116,7 +116,8 @@ public class MasterServiceMainTestBase {
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
                     RuntimeServiceMain.class,
-                    AppFabricServiceMain.class);
+                    AppFabricServiceMain.class,
+                    AuthenticationServiceMain.class);
     for (Class<? extends AbstractServiceMain> serviceMainClass : serviceMainClasses) {
       startService(serviceMainClass);
     }
@@ -159,6 +160,16 @@ public class MasterServiceMainTestBase {
   static URI getRouterBaseURI() {
     NettyRouter router = getServiceMainInstance(RouterServiceMain.class).getInjector().getInstance(NettyRouter.class);
     InetSocketAddress addr = router.getBoundAddress().orElseThrow(IllegalStateException::new);
+    return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
+  }
+
+  /**
+   * Returns the base URI for the authentication.
+   */
+  static URI getAuthenticationBaseURI() {
+    ExternalAuthenticationServer externalAuthenticationServer = getServiceMainInstance(AuthenticationServiceMain.class)
+        .getInjector().getInstance(ExternalAuthenticationServer.class);
+    InetSocketAddress addr = externalAuthenticationServer.getSocketAddress();
     return URI.create(String.format("https://%s:%d/", addr.getHostName(), addr.getPort()));
   }
 
