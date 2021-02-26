@@ -15,7 +15,32 @@
  */
 
 class HydratorPlusPlusNodeConfigCtrl {
-  constructor($scope, $timeout, $state, HydratorPlusPlusPluginConfigFactory, EventPipe, GLOBALS, HydratorPlusPlusConfigActions, myHelpers, NonStorePipelineErrorFactory, $uibModal, HydratorPlusPlusConfigStore, rPlugin, rDisabled, HydratorPlusPlusHydratorService, myPipelineApi, HydratorPlusPlusPreviewStore, rIsStudioMode, HydratorPlusPlusOrderingFactory, avsc, DAGPlusPlusNodesActionsFactory, rNodeMetricsContext, HydratorPlusPlusNodeService, HydratorPlusPlusPreviewActions, myAlertOnValium) {
+  constructor($scope,
+    $timeout,
+    $state,
+    HydratorPlusPlusPluginConfigFactory,
+    EventPipe,
+    GLOBALS,
+    HydratorPlusPlusConfigActions,
+    myHelpers,
+    NonStorePipelineErrorFactory,
+    $uibModal,
+    HydratorPlusPlusConfigStore,
+    rPlugin,
+    rDisabled,
+    HydratorPlusPlusHydratorService,
+    myPipelineApi,
+    HydratorPlusPlusPreviewStore,
+    rIsStudioMode,
+    HydratorPlusPlusOrderingFactory,
+    avsc,
+    DAGPlusPlusNodesActionsFactory,
+    rNodeMetricsContext,
+    HydratorPlusPlusNodeService,
+    HydratorPlusPlusPreviewActions,
+    myAlertOnValium,
+    HydratorPlusPlusCanvasFactory
+  ) {
     'ngInject';
     this.$scope = $scope;
     this.$timeout = $timeout;
@@ -48,6 +73,7 @@ class HydratorPlusPlusNodeConfigCtrl {
     this.metricsContext = rNodeMetricsContext;
     this.isStudioMode = rIsStudioMode;
     this.rPlugin = rPlugin;
+    this.HydratorPlusPlusCanvasFactory = HydratorPlusPlusCanvasFactory;
     this.validatePluginProperties = this.validatePluginProperties.bind(this);
     this.getPreviewId = this.getPreviewId.bind(this);
     this.previewId = this.getPreviewId();
@@ -528,7 +554,9 @@ class HydratorPlusPlusNodeConfigCtrl {
   }
 
   validatePluginProperties(callback, validationFromGetSchema) {
-    const nodeInfo = this.state.node;
+    const nodeInfo = this.HydratorPlusPlusCanvasFactory.pruneProperties({
+      stages: [angular.copy(this.state.node)]
+    }).stages[0];
     let vm = this;
     vm.propertyErrors = {};
     vm.inputSchemaErrors = {};

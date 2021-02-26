@@ -322,12 +322,21 @@ class HydratorPlusPlusConfigStore {
 
     return config;
   }
-  getConfigForExport() {
+  getConfigForExport(configOptions = {}) {
     var state = this.getState();
     // Stripping of uuids and generating configs is what is going on here.
-
     var config = angular.copy(this.generateConfigFromState());
-    this.HydratorPlusPlusCanvasFactory.pruneProperties(config);
+    if (typeof configOptions.shouldPruneProperties === 'undefined') {
+      configOptions.shouldPruneProperties = true;
+    }
+    if (configOptions.shouldPruneProperties) {
+      /**
+       * If the pipeline is saved as draft we don't want to prune properties
+       * The empty properties are needed to understand the defaults the user wants
+       * to override when publishing the pipeline.
+       */
+      this.HydratorPlusPlusCanvasFactory.pruneProperties(config);
+    }
     state.config = angular.copy(config);
 
     var nodes = angular.copy(this.getNodes()).map( node => {
@@ -1067,7 +1076,7 @@ class HydratorPlusPlusConfigStore {
       return;
     }
 
-    let config = this.getConfigForExport();
+    let config = this.getConfigForExport({ shouldPruneProperties: false });
     const draftId = this.getDraftId() || this.uuid.v4();
     const params = {
       context: this.$stateParams.namespace,
