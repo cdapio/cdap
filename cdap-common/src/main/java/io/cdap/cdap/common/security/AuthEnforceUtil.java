@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -23,6 +23,7 @@ import io.cdap.cdap.proto.id.DatasetId;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.ParentedId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -32,6 +33,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.ParameterizedType;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -88,11 +90,19 @@ public final class AuthEnforceUtil {
       // If EntityId was passed in then the size of the array should be one
       // if entities length is 1 and the first element is an instance of EntityId then we know that the enforcement is
       // being done the specified entities itself. Check that the entity class (the one which was provided in the
-      // enforceOn) is same and return the EntityId
+      // enforceOn) is same as the entity of one of its parents and return the EntityId
       EntityId entityId = (EntityId) entities[0];
       if (entityId.getClass() == entityClass) {
         return entityId;
       }
+      // Check if parent is one of the entity types being enforced.
+      while (entityId instanceof ParentedId) {
+        entityId = ((ParentedId) entityId).getParent();
+        if (entityId != null && entityId.getClass() == entityClass) {
+          return entityId;
+        }
+      }
+
       throw new IllegalArgumentException(String.format("Enforcement was specified on %s but an instance of %s was " +
                                                          "provided.", entityClass, entityId.getClass()));
     } else {
@@ -154,5 +164,39 @@ public final class AuthEnforceUtil {
     // since constructor was not found throw an exception
     throw new IllegalStateException(String.format("Failed to find constructor for %s whose parameters are only of " +
                                                     "String type", entityClass.getName()));
+  }
+
+  /**
+   * Helper method for traversing a class's {@link ParentedId} tree using DFS.
+   *
+   * @param entityIdClass The entityId class to check
+   * @param enforceOnClass The enforceOn class to check against
+   * @return whether the entityIdClass or its parent classes are equal to the enforceOn class
+   */
+  public static boolean verifyEntityIdParents(Class entityIdClass, Class enforceOnClass) {
+    if (entityIdClass.equals(enforceOnClass)) {
+      return true;
+    }
+    if (!ParentedId.class.isAssignableFrom(entityIdClass)) {
+      return false;
+    }
+    java.lang.reflect.Type[] implementedInterfaces = entityIdClass.getGenericInterfaces();
+    for (java.lang.reflect.Type implementedInterface : implementedInterfaces) {
+      if (implementedInterface instanceof ParameterizedType) {
+        ParameterizedType parameterizedType = (ParameterizedType) implementedInterface;
+        if (parameterizedType.getRawType().getTypeName().equals(ParentedId.class.getCanonicalName())) {
+          java.lang.reflect.Type[] parameterTypes = parameterizedType.getActualTypeArguments();
+          if (parameterTypes.length != 1) {
+            return false;
+          }
+          java.lang.reflect.Type parameter = parameterTypes[0];
+          if (parameter instanceof Class && verifyEntityIdParents((Class) parameter, enforceOnClass)) {
+            return true;
+          }
+        }
+      }
+    }
+    // If no interfaces match, check superclass
+    return verifyEntityIdParents(entityIdClass.getSuperclass(), enforceOnClass);
   }
 }
