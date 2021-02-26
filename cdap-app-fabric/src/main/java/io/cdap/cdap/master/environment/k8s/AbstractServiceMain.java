@@ -21,8 +21,10 @@ import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.AbstractModule;
+import com.google.inject.Binding;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.app.preview.PreviewConfigModule;
@@ -249,8 +251,13 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
 
   protected void initializeDataSourceConnection(CConfiguration cConf) throws SQLException {
     if (cConf.get(Constants.Dataset.DATA_STORAGE_IMPLEMENTATION).equals(Constants.Dataset.DATA_STORAGE_SQL)) {
+      Binding<DataSource> binding = injector.getExistingBinding(Key.get(DataSource.class));
+      if (binding == null) {
+        return;
+      }
+
       // instantiate the data source and create a connection
-      DataSource dataSource = injector.getInstance(DataSource.class);
+      DataSource dataSource = binding.getProvider().get();
       try (Connection connection = dataSource.getConnection()) {
         // Just to ping the connection and close it to populate the connection pool.
         connection.isValid(5);

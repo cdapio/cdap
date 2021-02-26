@@ -1063,11 +1063,11 @@ public final class Constants {
        * Determines which authentication mode to use.
        * Should be chosen from the {@link io.cdap.cdap.security.auth.AuthenticationMode} enum.
        */
-      public static final String AUTHENTICATION_MODE = "security.authentication.mode";
+      public static final String MODE = "security.authentication.mode";
       /** The header from which CDAP should expect to receive the end user identity when using proxy auth mode. */
-      public static final String AUTH_PROXY_USER_ID_HEADER = "security.authentication.proxy.user.identity.header";
+      public static final String PROXY_USER_ID_HEADER = "security.authentication.proxy.user.identity.header";
       /** Determines whether to propagate the end user credential as part of the Principal. */
-      public static final String AUTH_PROPAGATE_USER_CREDENTIAL = "security.authentication.propagate.user.credentials";
+      public static final String PROPAGATE_USER_CREDENTIAL = "security.authentication.propagate.user.credentials";
     }
 
     /**

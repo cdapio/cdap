@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.auth;
 
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.util.concurrent.AbstractIdleService;
 import io.cdap.cdap.api.common.Bytes;
@@ -70,9 +71,7 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
 
   @Override
   public final void startUp() throws NoSuchAlgorithmException, IOException {
-    keyGenerator = KeyGenerator.getInstance(keyAlgo);
-    keyGenerator.init(keyLength);
-
+    keyGenerator = createKeyGenerator();
     threadLocalMac = new ThreadLocal<Mac>() {
       @Override
       public Mac initialValue() {
@@ -118,14 +117,32 @@ public abstract class AbstractKeyManager extends AbstractIdleService implements 
       nextId = rand.nextInt(Integer.MAX_VALUE);
     } while (hasKey(nextId));
 
-    long now = System.currentTimeMillis();
-    SecretKey nextKey = keyGenerator.generateKey();
-    KeyIdentifier keyIdentifier =
-      new KeyIdentifier(nextKey, nextId, keyExpirationPeriod > 0 ? (now + keyExpirationPeriod) : Long.MAX_VALUE);
+    KeyIdentifier keyIdentifier = generateKey(keyGenerator, nextId);
     addKey(keyIdentifier);
     this.currentKey = keyIdentifier;
     LOG.info("Changed current key to {}", currentKey);
     return keyIdentifier;
+  }
+
+  /**
+   * Generates a new {@link KeyIdentifier} with the given {@link KeyGenerator} and key id.
+   */
+  @VisibleForTesting
+  public final KeyIdentifier generateKey(KeyGenerator keyGenerator, int keyId) {
+    long now = System.currentTimeMillis();
+    SecretKey key = keyGenerator.generateKey();
+    return new KeyIdentifier(key, keyId, keyExpirationPeriod > 0 ? (now + keyExpirationPeriod) : Long.MAX_VALUE);
+  }
+
+
+  /**
+   * Creates a new {@link KeyGenerator} based on the configuration of this key manager.
+   */
+  @VisibleForTesting
+  public final KeyGenerator createKeyGenerator() throws NoSuchAlgorithmException {
+    KeyGenerator keyGenerator = KeyGenerator.getInstance(keyAlgo);
+    keyGenerator.init(keyLength);
+    return keyGenerator;
   }
 
   @Override

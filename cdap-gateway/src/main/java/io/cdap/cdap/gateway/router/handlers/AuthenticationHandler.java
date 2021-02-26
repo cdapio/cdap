@@ -115,7 +115,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
       request.headers().remove(HttpHeaderNames.AUTHORIZATION);
       String credential = userIdentityPair.getUserCredential();
       // For backwards compatibility, we continue propagating credentials by default. This may change in the future.
-      if (cConf.getBoolean(Constants.Security.Authentication.AUTH_PROPAGATE_USER_CREDENTIAL, true) &&
+      if (cConf.getBoolean(Constants.Security.Authentication.PROPAGATE_USER_CREDENTIAL, true) &&
         credential != null) {
         request.headers().set(HttpHeaderNames.AUTHORIZATION, "CDAP-verified " + credential);
       }

@@ -17,13 +17,8 @@
 package io.cdap.cdap.security.guice;
 
 import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.FileBasedKeyManager;
-import io.cdap.cdap.security.auth.KeyIdentifier;
 import io.cdap.cdap.security.auth.KeyManager;
 
 /**
@@ -34,22 +29,6 @@ public class FileBasedSecurityModule extends SecurityModule {
 
   @Override
   protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).toProvider(FileBasedKeyManagerProvider.class).in(Scopes.SINGLETON);
-  }
-
-  private static final class FileBasedKeyManagerProvider implements  Provider<KeyManager> {
-    private CConfiguration cConf;
-    private Codec<KeyIdentifier> keyIdentifierCodec;
-
-    @Inject
-    FileBasedKeyManagerProvider(CConfiguration cConf, Codec<KeyIdentifier> keyIdentifierCodec) {
-      this.cConf = cConf;
-      this.keyIdentifierCodec = keyIdentifierCodec;
-    }
-
-    @Override
-    public KeyManager get() {
-      return new FileBasedKeyManager(cConf, keyIdentifierCodec);
-    }
+    binder.bind(KeyManager.class).to(FileBasedKeyManager.class).in(Scopes.SINGLETON);
   }
 }

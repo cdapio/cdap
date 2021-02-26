@@ -16,13 +16,11 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
+import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
-import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.DFSLocationModule;
@@ -35,23 +33,19 @@ import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.guice.SecurityModule;
 import io.cdap.cdap.security.guice.SecurityModules;
-import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nullable;
 
 /**
  * The main class to run router service.
  */
 public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(RouterServiceMain.class);
 
   /**
    * Main entry point
@@ -61,81 +55,41 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   }
 
   @Override
-  protected List<Module> getServiceModules(
-      MasterEnvironment masterEnv,
-      EnvironmentOptions options, CConfiguration cConf) {
-    return Arrays.asList(
-        new MessagingClientModule(),
-        new RouterModules().getDistributedModules(),
-        new DFSLocationModule(),
-        new ZKClientModule(),
-        securityModuleBasedOn(cConf)
-    );
+  protected List<Module> getServiceModules(MasterEnvironment masterEnv,
+                                           EnvironmentOptions options, CConfiguration cConf) {
+    List<Module> modules = new ArrayList<>();
+    modules.add(new MessagingClientModule());
+    modules.add(new RouterModules().getDistributedModules());
+    modules.add(new DFSLocationModule());
+    modules.addAll(getSecurityModules(cConf));
+
+    return modules;
   }
 
-  private Module securityModuleBasedOn(CConfiguration cConf) {
-    if (cConf.getBoolean(Constants.Security.ENABLED)) {
-      return new SecurityModules().getDistributedModules();
-    } else {
-      return new SecurityModules().getStandaloneModules();
+  private List<Module> getSecurityModules(CConfiguration cConf) {
+    if (!cConf.getBoolean(Constants.Security.ENABLED)) {
+      return Collections.singletonList(new SecurityModules().getStandaloneModules());
     }
+
+    List<Module> modules = new ArrayList<>();
+    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf);
+    modules.add(securityModule);
+    if (securityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
+    }
+
+    return modules;
   }
 
   @Override
-  protected void addServices(
-      Injector injector, List<? super Service> services,
-      List<? super AutoCloseable> closeableResources,
-      MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
-      EnvironmentOptions options) {
-    CConfiguration configuration = injector.getInstance(CConfiguration.class);
-
-    if (configuration.getBoolean(Constants.Security.ENABLED)) {
-      services.add(new AbstractService() {
-
-        @Override
-        protected void doStart() {
-
-          ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-
-          try {
-            LOG.info("Connecting to Zookeeper.");
-
-            io.cdap.cdap.common.service.Services.startAndWait(
-                zkClientService,
-                configuration.getLong(
-                    Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
-                TimeUnit.MILLISECONDS,
-                String.format(
-                    "Connection timed out while trying to start " +
-                        "ZooKeeper client. Please verify that the " +
-                        "ZooKeeper quorum settings are correct in " +
-                        "cdap-site.xml. Currently configured as: %s",
-                    configuration.get(Constants.Zookeeper.QUORUM)));
-
-            notifyStarted();
-          } catch (Exception e) {
-            Throwable rootCause = Throwables.getRootCause(e);
-            if (rootCause instanceof ServiceBindException) {
-              LOG.error("Failed to connect to Zookeeper: {}", rootCause.getMessage());
-            } else {
-              LOG.error("Failed to connect to Zookeeper", e);
-            }
-          }
-        }
-
-        @Override
-        protected void doStop() {
-
-          ZKClientService zkClientService = injector.getInstance(ZKClientService.class);
-
-          LOG.info("Stopping Zookeeper client service.");
-          Futures.getUnchecked(Services.chainStop(zkClientService));
-
-          notifyStopped();
-        }
-      });
+  protected void addServices(Injector injector, List<? super Service> services,
+                             List<? super AutoCloseable> closeableResources,
+                             MasterEnvironment masterEnv, MasterEnvironmentContext masterEnvContext,
+                             EnvironmentOptions options) {
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
     }
-
     services.add(injector.getInstance(NettyRouter.class));
   }
 

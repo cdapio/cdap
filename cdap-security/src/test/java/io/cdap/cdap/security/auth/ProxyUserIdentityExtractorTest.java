@@ -54,7 +54,7 @@ public class ProxyUserIdentityExtractorTest {
     String testUserIdHeader = "X-User-Id";
     String testAuthToken = "test-auth-token";
     CConfiguration config = Mockito.mock(CConfiguration.class);
-    when(config.get(Constants.Security.Authentication.AUTH_PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
+    when(config.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
 
     ProxyUserIdentityExtractor extractor = new ProxyUserIdentityExtractor(config);
 
@@ -73,7 +73,7 @@ public class ProxyUserIdentityExtractorTest {
     String testUserIdHeader = "X-User-Id";
     String testAuthToken = "test-auth-token";
     CConfiguration config = Mockito.mock(CConfiguration.class);
-    when(config.get(Constants.Security.Authentication.AUTH_PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
+    when(config.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
 
     ProxyUserIdentityExtractor extractor = new ProxyUserIdentityExtractor(config);
 
@@ -95,7 +95,7 @@ public class ProxyUserIdentityExtractorTest {
     String testUserId = "test-user-id";
     String testUserIdHeader = "X-User-Id";
     CConfiguration config = Mockito.mock(CConfiguration.class);
-    when(config.get(Constants.Security.Authentication.AUTH_PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
+    when(config.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER)).thenReturn(testUserIdHeader);
 
     ProxyUserIdentityExtractor extractor = new ProxyUserIdentityExtractor(config);
 

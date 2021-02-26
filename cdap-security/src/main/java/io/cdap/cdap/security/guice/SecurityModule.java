@@ -58,6 +58,10 @@ public abstract class SecurityModule extends PrivateModule {
 
   private static final Logger EXTERNAL_AUTH_AUDIT_LOG = LoggerFactory.getLogger("external-auth-access");
 
+  public boolean requiresZKClient() {
+    return false;
+  }
+
   @Override
   protected final void configure() {
     bind(new TypeLiteral<Codec<AccessToken>>() { }).to(AccessTokenCodec.class).in(Scopes.SINGLETON);
@@ -128,7 +132,7 @@ public abstract class SecurityModule extends PrivateModule {
                                             Provider<UserIdentityExtractor> proxyExtractorProvider) {
       this.accessTokenExtractorProvider = accessTokenExtractorProvider;
       this.proxyExtractorProvider = proxyExtractorProvider;
-      this.mode = configuration.getEnum(Constants.Security.Authentication.AUTHENTICATION_MODE,
+      this.mode = configuration.getEnum(Constants.Security.Authentication.MODE,
                                         AuthenticationMode.MANAGED);
     }
 

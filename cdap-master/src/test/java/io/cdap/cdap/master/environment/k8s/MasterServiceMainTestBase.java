@@ -19,14 +19,13 @@ package io.cdap.cdap.master.environment.k8s;
 import com.google.common.collect.Lists;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
-import io.cdap.cdap.common.conf.Constants.Security;
 import io.cdap.cdap.common.conf.SConfiguration;
 import io.cdap.cdap.common.security.KeyStores;
 import io.cdap.cdap.common.security.KeyStoresTest;
 import io.cdap.cdap.gateway.router.NettyRouter;
 import io.cdap.cdap.logging.gateway.handlers.ProgramRunRecordFetcher;
 import io.cdap.cdap.logging.gateway.handlers.RemoteProgramRunRecordFetcher;
-import io.cdap.cdap.security.server.BasicAuthenticationHandler;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.internal.zookeeper.InMemoryZKServer;
@@ -109,15 +108,18 @@ public class MasterServiceMainTestBase {
                    RemoteProgramRunRecordFetcher.class, ProgramRunRecordFetcher.class);
 
     // Starting all master service mains
-    List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses =
+    List<Class<? extends AbstractServiceMain<EnvironmentOptions>>> serviceMainClasses = new ArrayList<>(
       Arrays.asList(RouterServiceMain.class,
                     MessagingServiceMain.class,
                     MetricsServiceMain.class,
                     LogsServiceMain.class,
                     MetadataServiceMain.class,
                     RuntimeServiceMain.class,
-                    AppFabricServiceMain.class,
-                    AuthenticationServiceMain.class);
+                    AppFabricServiceMain.class));
+
+    if (SecurityUtil.isManagedSecurity(cConf)) {
+      serviceMainClasses.add(AuthenticationServiceMain.class);
+    }
     for (Class<? extends AbstractServiceMain> serviceMainClass : serviceMainClasses) {
       startService(serviceMainClass);
     }

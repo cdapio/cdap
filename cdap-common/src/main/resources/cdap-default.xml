@@ -3929,7 +3929,9 @@
     <name>security.data.keyfile.path</name>
     <value>${local.data.dir}/security/keyfile</value>
     <description>
-      Path to the secret key file (only used in CDAP Local Sandbox)
+      Path to the secret key file. In distributed CDAP, if the zookeeper.quorum
+      properties is overridden, then
+      Zookeeper will be used for storing secret key and this property will be ignore.
     </description>
   </property>
 

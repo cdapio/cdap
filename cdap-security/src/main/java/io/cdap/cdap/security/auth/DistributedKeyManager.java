@@ -17,6 +17,7 @@
 package io.cdap.cdap.security.auth;
 
 import com.google.common.base.Throwables;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
@@ -64,7 +65,8 @@ public class DistributedKeyManager extends AbstractKeyManager implements Resourc
   private ZKClient zookeeper;
   private final long maxTokenExpiration;
 
-  public DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
+  @Inject
+  DistributedKeyManager(CConfiguration conf, Codec<KeyIdentifier> codec, ZKClient zookeeper) {
     this(conf, codec, zookeeper, getACLs(conf));
   }
 
