@@ -23,6 +23,7 @@ import { PluginType } from 'components/Replicator/constants';
 import { Link } from 'react-router-dom';
 import ActionsPopover, { IAction } from 'components/ActionsPopover';
 import DeleteConfirmation, { InstanceType } from 'components/Replicator/DeleteConfirmation';
+import DownloadFile from 'services/download-file';
 
 const styles = (theme): StyleRules => {
   return {
@@ -58,18 +59,33 @@ const styles = (theme): StyleRules => {
 const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   const [drafts, setDrafts] = React.useState([]);
   const [deleteReplicatorDraft, setDeleteReplicatorDraft] = React.useState(null);
+  const [parentArtifact, setParentArtifact] = React.useState();
 
   function fetchDrafts() {
     const params = {
       namespace: getCurrentNamespace(),
     };
 
-    MyReplicatorApi.listDrafts(params).subscribe((list) => {
-      setDrafts(list);
+    MyReplicatorApi.getDeltaApp().subscribe((appInfo) => {
+      setParentArtifact(appInfo.artifact);
+
+      MyReplicatorApi.listDrafts(params).subscribe((list) => {
+        setDrafts(list);
+      });
     });
   }
 
   React.useEffect(fetchDrafts, []);
+
+  function exportPipeline(replicationConfig) {
+    const spec = {
+      name: replicationConfig.label,
+      artifact: parentArtifact,
+      config: replicationConfig.config,
+    };
+
+    DownloadFile(spec);
+  }
 
   return (
     <div className={classes.root}>
@@ -101,6 +117,13 @@ const DraftsView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
               const target = stageMap[PluginType.target] || '--';
 
               const actions: IAction[] = [
+                {
+                  label: 'Export',
+                  actionFn: () => exportPipeline(draft),
+                },
+                {
+                  label: 'separator',
+                },
                 {
                   label: 'Delete',
                   actionFn: () => setDeleteReplicatorDraft(draft.name),

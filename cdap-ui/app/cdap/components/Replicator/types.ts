@@ -64,14 +64,16 @@ export interface ITableObj {
 
 export type IPluginConfig = Record<string, string>;
 
+export interface IArtifactInfo {
+  name: string;
+  version: string;
+  scope: string;
+}
+
 export interface IPluginInfo {
   name: string;
   type: string;
-  artifact: {
-    name: string;
-    version: string;
-    scope: string;
-  };
+  artifact: IArtifactInfo;
   properties: PluginProperties;
 }
 

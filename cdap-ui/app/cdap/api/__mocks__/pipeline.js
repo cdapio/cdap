@@ -14,9 +14,51 @@
  * the License.
 */
 
+import { Subject } from 'rxjs/Subject';
+
 const MyPipelineApi = {};
 
-MyPipelineApi.publish = function() {
+MyPipelineApi.publish = function() {};
 
+MyPipelineApi.getPluginProperties = function() {
+  const subject = new Subject();
+  setTimeout(() => {
+    subject.next([
+      {
+        name: 'someplugin',
+      },
+    ]);
+  });
+  return subject;
 };
+
+MyPipelineApi.fetchWidgetJson = function(params) {
+  const subject = new Subject();
+
+  const widget = {
+    metadata: {
+      'spec-version': '1.6',
+    },
+    'configuration-groups': [
+      {
+        label: 'group1',
+        properties: [
+          {
+            'widget-type': 'textbox',
+            label: 'prop-label',
+            name: 'prop-name',
+          },
+        ],
+      },
+    ],
+  };
+
+  setTimeout(() => {
+    subject.next({
+      [params.keys]: JSON.stringify(widget),
+    });
+  });
+  return subject;
+};
+
 module.exports = MyPipelineApi;

@@ -14,7 +14,11 @@
  * the License.
  */
 
-import { generateTableKey, constructTablesSelection } from 'components/Replicator/utilities';
+import {
+  generateTableKey,
+  constructTablesSelection,
+  convertConfigToState,
+} from 'components/Replicator/utilities';
 import { DML } from 'components/Replicator/types';
 import { List, Map, Set } from 'immutable';
 
@@ -121,6 +125,66 @@ describe('Replication Utilities', () => {
       expect(result[0].columns).toHaveLength(2);
       expect(result[0].columns[0].name).toBe('col-table1-1');
       expect(result[0].columns[1].name).toBe('col-table1-2');
+    });
+  });
+
+  describe('Convert JSON Config to State', () => {
+    let replicationJSON;
+    const parentArtifact = {
+      name: 'parent-artifact',
+      version: 'parent-version',
+      scope: 'parent-scope',
+    };
+
+    beforeEach(() => {
+      replicationJSON = {
+        name: 'replication-name',
+        artifact: {
+          name: 'replication-artifact',
+          version: 'artifact-version',
+          scope: 'artifact-scope',
+        },
+        config: {
+          description: 'some description',
+          connections: [],
+          stages: [],
+          tables: [
+            {
+              database: 'db',
+              table: 'table1',
+              schema: 'schema',
+            },
+            {
+              database: 'db',
+              table: 'table2',
+              schema: 'schema',
+            },
+          ],
+          offsetBasePath: 'offset-path',
+          parallelism: {
+            numInstances: 2,
+          },
+        },
+      };
+    });
+
+    // TODO: add tests for source and target config
+    // need to figure out how to mock API call with toPromise
+
+    it('should generate valid state object', async () => {
+      const stateObj = await convertConfigToState(replicationJSON, parentArtifact);
+
+      expect(stateObj.name).toBe('replication-name');
+      expect(stateObj.description).toBe('some description');
+      expect(stateObj.offsetBasePath).toBe('offset-path');
+      expect(stateObj.numInstances).toBe(2);
+      expect(stateObj.tables.size).toBe(2);
+    });
+
+    it('should generate the correct activeStep', async () => {
+      const stateObj = await convertConfigToState(replicationJSON, parentArtifact);
+
+      expect(stateObj.activeStep).toBe(3);
     });
   });
 });

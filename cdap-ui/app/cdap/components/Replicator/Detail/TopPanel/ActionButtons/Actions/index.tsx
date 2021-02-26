@@ -60,7 +60,12 @@ const styles = (theme): StyleRules => {
   };
 };
 
-const ActionsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({ classes, name }) => {
+const ActionsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
+  classes,
+  name,
+  exportPipeline,
+  duplicatePipeline,
+}) => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = React.useState(false);
   const [redirect, setRedirect] = React.useState(false);
 
@@ -69,6 +74,17 @@ const ActionsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({ cla
   }
 
   const actions: IAction[] = [
+    {
+      label: 'Export',
+      actionFn: exportPipeline,
+    },
+    {
+      label: 'Duplicate',
+      actionFn: duplicatePipeline,
+    },
+    {
+      label: 'separator',
+    },
     {
       label: 'Delete',
       actionFn: () => setShowDeleteConfirmation(true),

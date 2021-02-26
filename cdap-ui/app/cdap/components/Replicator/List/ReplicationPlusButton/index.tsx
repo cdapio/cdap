@@ -18,6 +18,8 @@ import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import PlusButton from 'components/PlusButton';
 import { getCurrentNamespace } from 'services/NamespaceStore';
+import { objectQuery } from 'services/helpers';
+import { Redirect } from 'react-router-dom';
 
 const styles = (): StyleRules => {
   return {
@@ -27,14 +29,63 @@ const styles = (): StyleRules => {
       right: '25px',
       zIndex: 1,
     },
+    label: {
+      cursor: 'pointer',
+      width: '100%',
+    },
+    fileInput: {
+      display: 'none',
+    },
   };
 };
 
+const importBtnId = 'replication-import-btn';
+
 const ReplicationPlusButtonView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
+  const [redirect, setRedirect] = React.useState<string>();
+
+  function handleFile(event) {
+    if (!objectQuery(event, 'target', 'files', 0)) {
+      return;
+    }
+    const uploadedFile = event.target.files[0];
+
+    const reader = new FileReader();
+    reader.readAsText(uploadedFile, 'UTF-8');
+
+    reader.onload = (evt) => {
+      const replicationConfig = evt.target.result.toString();
+      const importId = 'replicationImport';
+
+      window.localStorage.setItem(importId, replicationConfig);
+
+      const createViewLink = `/ns/${getCurrentNamespace()}/replication/create?cloneId=${importId}`;
+      setRedirect(createViewLink);
+    };
+  }
+
+  if (redirect) {
+    return <Redirect to={redirect} />;
+  }
+
   const contextItems = [
     {
       label: 'Create a replication pipeline',
       to: `/ns/${getCurrentNamespace()}/replication/create`,
+    },
+    {
+      label: (
+        <label htmlFor={importBtnId} className={classes.label}>
+          Import
+          <input
+            id={importBtnId}
+            type="file"
+            accept=".json"
+            onChange={handleFile}
+            className={classes.fileInput}
+          />
+        </label>
+      ),
     },
   ];
 
