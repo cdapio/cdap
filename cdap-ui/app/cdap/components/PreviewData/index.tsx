@@ -91,12 +91,17 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     off: { value: PreviewMode.Table, label: PreviewMode.Table },
   };
 
+  // CDAP-17114 - Don't show record view if the node is batch joiner or aggregator
+  const shouldShowRecordView =
+    ['batchaggregator', 'batchjoiner'].indexOf(selectedNode.nodeType) === -1;
+
   const updatePreviewCb = (updatedPreview: IPreviewData) => {
     setPreviewData(updatedPreview);
     const parsedData = getTableData(updatedPreview);
     setTableData(parsedData);
     setViewMode(
-      parsedData.inputFieldCount > maxSchemaSize || parsedData.outputFieldCount > maxSchemaSize
+      shouldShowRecordView &&
+        (parsedData.inputFieldCount > maxSchemaSize || parsedData.outputFieldCount > maxSchemaSize)
         ? PreviewMode.Record
         : PreviewMode.Table
     );
@@ -195,12 +200,14 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     return (
       <React.Fragment>
         <span className={classes.recordToggle}>
-          <ToggleSwitchWidget
-            onChange={setViewMode}
-            value={viewMode}
-            widgetProps={widgetProps}
-            disabled={selectedNode.isCondition}
-          />
+          <If condition={shouldShowRecordView}>
+            <ToggleSwitchWidget
+              onChange={setViewMode}
+              value={viewMode}
+              widgetProps={widgetProps}
+              disabled={selectedNode.isCondition}
+            />
+          </If>
         </span>
         <If condition={viewMode === PreviewMode.Table}>
           <PreviewTableContainer
@@ -209,7 +216,7 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
             previewStatus={previewStatus}
           />
         </If>
-        <If condition={viewMode === PreviewMode.Record}>
+        <If condition={viewMode === PreviewMode.Record && shouldShowRecordView}>
           <RecordContainer
             tableData={tableData}
             selectedNode={selectedNode}
