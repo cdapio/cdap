@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
-import { MarkdownWithStyles } from 'components/Markdown';
+import Markdown from 'components/Markdown';
 import { getCurrentNamespace } from 'services/NamespaceStore';
 import { MyReplicatorApi } from 'api/replicator';
 import { IPluginInfo } from 'components/Replicator/types';
@@ -52,7 +52,7 @@ const DocumentationView: React.FC<IDocumentationProps> = ({ classes, pluginInfo 
 
   return (
     <div className={classes.root}>
-      <MarkdownWithStyles markdown={docs} />
+      <Markdown markdown={docs} />
     </div>
   );
 };

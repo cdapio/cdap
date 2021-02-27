@@ -49,7 +49,6 @@ class HydratorPlusPlusCreateCanvasCtrl {
     this.connections = this.DAGPlusPlusNodesStore.getConnections();
     this.HydratorPlusPlusConfigStore.setNodes(this.nodes);
     this.HydratorPlusPlusConfigStore.setConnections(this.connections);
-    this.HydratorPlusPlusConfigStore.setComments(this.DAGPlusPlusNodesStore.getComments());
   }
 
   setActiveNode() {

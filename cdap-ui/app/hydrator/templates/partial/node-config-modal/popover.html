@@ -15,7 +15,7 @@
 -->
 <div class="modal-header clearfix">
 
-  <h5 class="modal-title pull-left"
+  <h5 class="modal-title"
       ng-class="{'with-jump': HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.jumpConfig.datasets.length}">
     <span>
       {{ HydratorPlusPlusNodeConfigCtrl.state.config['display-name'] || HydratorPlusPlusNodeConfigCtrl.state.node.plugin.name }} Properties
@@ -38,7 +38,18 @@
                              'other': '{} errors found.'}">
     </ng-pluralize>
   </span>
-  <div class="btn-group pull-right">
+  <div class="plugin-modal-btns">
+    <div
+      ng-if="!isDisabled || HydratorPlusPlusNodeConfigCtrl.state.node.information.comments.list"
+      class="plugin-comments-wrapper"
+    >
+      <comment
+        comments="HydratorPlusPlusNodeConfigCtrl.state.node.information.comments.list"
+        comments-id="HydratorPlusPlusNodeConfigCtrl.state.node.id"
+        on-change="HydratorPlusPlusNodeConfigCtrl.setComments"
+        disabled="isDisabled"
+      ></comment>
+    </div>
     <button class="btn btn-primary validate-btn" type="button"
             data-cy="plugin-properties-validate-btn"
             ng-if="!isDisabled"
