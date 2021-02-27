@@ -195,7 +195,10 @@ const AssessmentView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
             })}
           >
             <If condition={view === VIEWS.tables}>
-              <TablesAssessment tables={assessment.tables} runAssessment={runAssessment} />
+              <TablesAssessment
+                assessmentTables={assessment.tables}
+                runAssessment={runAssessment}
+              />
             </If>
 
             <If condition={view === VIEWS.features}>

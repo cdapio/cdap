@@ -20,6 +20,8 @@ import If from 'components/If';
 import Mappings from './Mappings';
 import WithIssuesTables from 'components/Replicator/Create/Content/Assessment/TablesAssessment/WithIssuesTables';
 import NoIssuesTables from 'components/Replicator/Create/Content/Assessment/TablesAssessment/NoIssuesTables';
+import { createContextConnect, ICreateContext } from 'components/Replicator/Create';
+import { generateTableKey } from 'components/Replicator/utilities';
 
 const styles = (): StyleRules => {
   return {
@@ -37,25 +39,33 @@ export interface ITable {
   numColumnsNotSupported: number;
 }
 
-interface ITablesAssessmentProps extends WithStyles<typeof styles> {
-  tables: ITable[];
+interface ITablesAssessmentProps extends WithStyles<typeof styles>, ICreateContext {
+  assessmentTables: ITable[];
   runAssessment: () => void;
 }
 
 const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({
   classes,
   tables,
+  assessmentTables,
   runAssessment,
 }) => {
   const [openTable, setOpenTable] = React.useState(null);
   const [tablesWithIssues, setTablesWithIssues] = React.useState([]);
   const [tablesNoIssues, setTablesNoIssues] = React.useState([]);
+  const [haveMissingTables, setHaveMissingTables] = React.useState(0);
 
   React.useEffect(() => {
     const updatedTablesWithIssues = [];
     const updatedTablesNoIssues = [];
 
-    tables.forEach((table) => {
+    let nonAssessedTables = tables;
+    assessmentTables.forEach((table) => {
+      const tableKey = generateTableKey(table);
+      if (nonAssessedTables.get(tableKey)) {
+        nonAssessedTables = nonAssessedTables.remove(tableKey);
+      }
+
       if (table.numColumnsPartiallySupported === 0 && table.numColumnsNotSupported === 0) {
         updatedTablesNoIssues.push(table);
       } else {
@@ -63,9 +73,13 @@ const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({
       }
     });
 
+    if (nonAssessedTables.size > 0) {
+      setHaveMissingTables(nonAssessedTables.size);
+    }
+
     setTablesWithIssues(updatedTablesWithIssues);
     setTablesNoIssues(updatedTablesNoIssues);
-  }, [tables]);
+  }, [assessmentTables]);
 
   function onMappingClose(rerunAssessment) {
     setOpenTable(null);
@@ -76,9 +90,21 @@ const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({
 
   return (
     <React.Fragment>
-      <div className={classes.tableContainer}>
-        <WithIssuesTables tables={tablesWithIssues} setOpenTable={setOpenTable} />
-      </div>
+      <If condition={haveMissingTables > 0}>
+        <div>
+          There{' '}
+          {haveMissingTables === 1
+            ? `is ${haveMissingTables} table`
+            : `are ${haveMissingTables} tables`}{' '}
+          that cannot be assessed. Please check the Connectivity issues tab.
+        </div>
+      </If>
+
+      <If condition={!(haveMissingTables > 0 && tablesWithIssues.length === 0)}>
+        <div className={classes.tableContainer}>
+          <WithIssuesTables tables={tablesWithIssues} setOpenTable={setOpenTable} />
+        </div>
+      </If>
 
       <div className={classes.tableContainer}>
         <NoIssuesTables tables={tablesNoIssues} setOpenTable={setOpenTable} />
@@ -91,5 +117,6 @@ const TablesAssessmentView: React.FC<ITablesAssessmentProps> = ({
   );
 };
 
-const TablesAssessment = withStyles(styles)(TablesAssessmentView);
+const StyledTablesAssessment = withStyles(styles)(TablesAssessmentView);
+const TablesAssessment = createContextConnect(StyledTablesAssessment);
 export default TablesAssessment;
