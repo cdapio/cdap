@@ -286,6 +286,7 @@ class HydratorPlusPlusNodeConfigCtrl {
       this.previewData = null;
       this.updatePreviewStatus();
       this.selectedNode = {
+        nodeType: this.state.node.type,
         name: this.state.node.plugin.label,
         plugin: this.state.node.plugin,
         isSource: this.state.isSource,

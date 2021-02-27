@@ -30,6 +30,7 @@ export interface IConnection {
 }
 
 export interface INode {
+  nodeType?: string;
   plugin?: any;
   isSource?: boolean;
   isSink?: boolean;
