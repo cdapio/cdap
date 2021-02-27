@@ -30,6 +30,7 @@ import io.cdap.cdap.app.runtime.Arguments;
 import io.cdap.cdap.common.ApplicationNotFoundException;
 import io.cdap.cdap.common.ArtifactNotFoundException;
 import io.cdap.cdap.common.InvalidArtifactException;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.service.Retries;
 import io.cdap.cdap.common.service.RetryStrategies;
@@ -176,12 +177,11 @@ class CapabilityApplier {
         .put(getProgramId(systemProgram), new BasicArguments(systemProgram.getArgs())));
       String capability = capabilityConfig.getCapability();
       CapabilityConfig existingConfig = configs.get(capability);
-      if (capabilityConfig.equals(existingConfig)) {
-        capabilityStatusStore.deleteCapabilityOperation(capability);
-        continue;
+      //Check and log so logs are not flooded
+      if (!capabilityConfig.equals(existingConfig)) {
+        LOG.debug("Enabling capability {}", capability);
       }
       capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.ENABLE, capabilityConfig);
-      LOG.debug("Enabling capability {}", capability);
       //If already deployed, will be ignored
       deployAllSystemApps(capability, capabilityConfig.getApplications());
     }
@@ -202,12 +202,11 @@ class CapabilityApplier {
     for (CapabilityConfig capabilityConfig : disableSet) {
       String capability = capabilityConfig.getCapability();
       CapabilityConfig existingConfig = configs.get(capability);
-      if (capabilityConfig.equals(existingConfig)) {
-        capabilityStatusStore.deleteCapabilityOperation(capability);
-        continue;
+      //Check and log so logs are not flooded
+      if (!capabilityConfig.equals(existingConfig)) {
+        LOG.debug("Disabling capability {}", capability);
       }
       capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.DISABLE, capabilityConfig);
-      LOG.debug("Disabling capability {}", capability);
       capabilityStatusStore
         .addOrUpdateCapability(capabilityConfig.getCapability(), CapabilityStatus.DISABLED, capabilityConfig);
       //stop all the programs having capability metadata. Services will be stopped by SystemProgramManagementService
@@ -223,26 +222,32 @@ class CapabilityApplier {
     for (CapabilityConfig capabilityConfig : deleteSet) {
       String capability = capabilityConfig.getCapability();
       CapabilityConfig existingConfig = configs.get(capability);
-      //already deleted
-      if (existingConfig == null) {
-        capabilityStatusStore.deleteCapabilityOperation(capability);
-        continue;
+      if (existingConfig != null) {
+        LOG.debug("Deleting capability {}", capability);
       }
       capabilityStatusStore.addOrUpdateCapabilityOperation(capability, CapabilityAction.DELETE, capabilityConfig);
-      LOG.debug("Deleting capability {}", capability);
       //disable first
       disableCapabilities(deleteSet);
       //remove all applications having capability metadata.
       doForAllAppsWithCapability(capability,
                                  applicationId -> doWithRetry(applicationId,
-                                                              applicationLifecycleService::removeApplication));
+                                                              this::removeApplication));
       //remove deployments of system applications
       for (SystemApplication application : capabilityConfig.getApplications()) {
         ApplicationId applicationId = getApplicationId(application);
-        doWithRetry(applicationId, applicationLifecycleService::removeApplication);
+        doWithRetry(applicationId, this::removeApplication);
       }
       capabilityStatusStore.deleteCapability(capability);
       capabilityStatusStore.deleteCapabilityOperation(capability);
+    }
+  }
+
+  private void removeApplication(ApplicationId applicationId) throws Exception {
+    try {
+      applicationLifecycleService.removeApplication(applicationId);
+    } catch (NotFoundException ex) {
+      //ignore, could have been removed with REST api or was not deployed
+      LOG.debug("Application is already removed. ", ex);
     }
   }
 
@@ -273,10 +278,8 @@ class CapabilityApplier {
 
   private void deployApp(SystemApplication application) throws Exception {
     ApplicationId applicationId = getApplicationId(application);
-    LOG.debug("Deploying app {}", applicationId);
     if (!shouldDeployApp(applicationId, application)) {
-      //Already deployed with latest app artifact.
-      LOG.debug("Application {} is already deployed", applicationId);
+      //skip logging here to prevent flooding the logs
       return;
     }
     LOG.debug("Application {} is being deployed", applicationId);

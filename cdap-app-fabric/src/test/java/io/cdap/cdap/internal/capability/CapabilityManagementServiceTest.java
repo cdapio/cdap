@@ -22,16 +22,19 @@ import com.google.gson.JsonObject;
 import io.cdap.cdap.AllProgramsApp;
 import io.cdap.cdap.CapabilityAppWithWorkflow;
 import io.cdap.cdap.CapabilitySleepingWorkflowApp;
+import io.cdap.cdap.CapabilitySleepingWorkflowPluginApp;
 import io.cdap.cdap.WorkflowAppWithFork;
 import io.cdap.cdap.api.annotation.Requirements;
 import io.cdap.cdap.api.artifact.ArtifactScope;
 import io.cdap.cdap.api.artifact.ArtifactSummary;
+import io.cdap.cdap.app.program.ManifestFields;
 import io.cdap.cdap.app.program.ProgramDescriptor;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.test.AppJarHelper;
+import io.cdap.cdap.common.test.PluginJarHelper;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.deploy.pipeline.ApplicationWithPrograms;
 import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
@@ -51,7 +54,6 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -64,6 +66,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 
 /**
@@ -407,7 +410,7 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     Assert.assertFalse(appList.isEmpty());
     // Verify that application is still same as before.
     Assert.assertEquals(artifactVersion,
-      appList.get(0).get("artifact").getAsJsonObject().get("version").getAsString());
+                        appList.get(0).get("artifact").getAsJsonObject().get("version").getAsString());
     // Capability management service might not yet have deployed application.
     // So wait till program exists and is in running state.
     waitState(programId, "RUNNING");
@@ -510,8 +513,6 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     capabilityManagementService.runTask();
   }
 
-  //TODO(CDAP-17589): Re-enable this test once fix.
-  @Ignore
   @Test
   public void testProgramStart() throws Exception {
     String externalConfigPath = tmpFolder.newFolder("capability-config-program").getAbsolutePath();
@@ -569,6 +570,87 @@ public class CapabilityManagementServiceTest extends AppFabricTestBase {
     for (ProgramDescriptor program : programs) {
       try {
         programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+        Assert.fail("expecting exception");
+      } catch (CapabilityNotAvailableException ex) {
+        //expecting exception
+      }
+    }
+    new File(externalConfigPath, capability).delete();
+    capabilityManagementService.runTask();
+    Assert.assertTrue(capabilityStatusStore.getConfigs(Collections.singleton(capability)).isEmpty());
+  }
+
+  @Test
+  public void testProgramWithPluginStart() throws Exception {
+    String externalConfigPath = tmpFolder.newFolder("capability-config-program-plugin").getAbsolutePath();
+    cConfiguration.set(Constants.Capability.CONFIG_DIR, externalConfigPath);
+    String appName = CapabilitySleepingWorkflowPluginApp.NAME;
+    Class<CapabilitySleepingWorkflowPluginApp> appClass = CapabilitySleepingWorkflowPluginApp.class;
+    String version = "1.0.0";
+    String namespace = "default";
+    //deploy the artifact
+    deployTestArtifact(namespace, appName, version, appClass);
+
+    //deploy the plugin artifact
+    Manifest manifest = new Manifest();
+    String pluginName = CapabilitySleepingWorkflowPluginApp.SimplePlugin.class.getPackage().getName();
+    manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, pluginName);
+    Location pluginJar = PluginJarHelper
+      .createPluginJar(locationFactory, manifest, CapabilitySleepingWorkflowPluginApp.SimplePlugin.class);
+    Id.Artifact pluginArtifactId = Id.Artifact.from(Id.Namespace.from(namespace), pluginName, version);
+    File pluginJarFile = new File(tmpFolder.newFolder(),
+                                  String.format("%s-%s.jar", pluginArtifactId.getName(), version));
+    Files.copy(Locations.newInputSupplier(pluginJar), pluginJarFile);
+    pluginJar.delete();
+    artifactRepository.addArtifact(pluginArtifactId, pluginJarFile);
+
+    //enable a capability with no system apps and programs
+    CapabilityConfig enabledConfig = new CapabilityConfig("Enable healthcare", CapabilityStatus.ENABLED,
+                                                          "healthcare", Collections.emptyList(),
+                                                          Collections.emptyList());
+    writeConfigAsFile(externalConfigPath, enabledConfig.getCapability(), enabledConfig);
+    capabilityManagementService.runTask();
+    String capability = enabledConfig.getCapability();
+    capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
+
+    //deploy an app with this capability and start a workflow
+    ApplicationId applicationId = new ApplicationId(namespace, appName);
+    Id.Artifact artifactId = Id.Artifact
+      .from(new Id.Namespace(namespace), appName, version);
+    ApplicationWithPrograms applicationWithPrograms = applicationLifecycleService
+      .deployApp(new NamespaceId(namespace), appName, null, artifactId, null, op -> {
+      });
+    Iterable<ProgramDescriptor> programs = applicationWithPrograms.getPrograms();
+    for (ProgramDescriptor program : programs) {
+      programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+    }
+    ProgramId programId = new ProgramId(applicationId, ProgramType.WORKFLOW,
+                                        CapabilitySleepingWorkflowPluginApp.SleepWorkflow.class.getSimpleName());
+    // Capability management service might not yet have deployed application.
+    // So wait till program exists and is in running state.
+    waitState(programId, "RUNNING");
+    assertProgramRuns(programId, ProgramRunStatus.RUNNING, 1);
+
+    //disable the capability -  the program that was started should stop
+    CapabilityConfig disabledConfig = new CapabilityConfig("Disable healthcare", CapabilityStatus.DISABLED,
+                                                           "healthcare", Collections.emptyList(),
+                                                           Collections.emptyList());
+    writeConfigAsFile(externalConfigPath, capability, disabledConfig);
+    capabilityManagementService.runTask();
+    assertProgramRuns(programId, ProgramRunStatus.KILLED, 1);
+    assertProgramRuns(programId, ProgramRunStatus.RUNNING, 0);
+    try {
+      capabilityStatusStore.checkAllEnabled(Collections.singleton(capability));
+      Assert.fail("expecting exception");
+    } catch (CapabilityNotAvailableException ex) {
+
+    }
+
+    //try starting programs
+    for (ProgramDescriptor program : programs) {
+      try {
+        programLifecycleService.start(program.getProgramId(), new HashMap<>(), false);
+        Assert.fail("expecting exception");
       } catch (CapabilityNotAvailableException ex) {
         //expecting exception
       }

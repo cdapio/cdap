@@ -28,6 +28,7 @@ import com.google.inject.Inject;
 import io.cdap.cdap.api.ProgramSpecification;
 import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.app.ApplicationSpecification;
+import io.cdap.cdap.api.artifact.ApplicationClass;
 import io.cdap.cdap.api.plugin.Plugin;
 import io.cdap.cdap.app.guice.ClusterMode;
 import io.cdap.cdap.app.program.ProgramDescriptor;
@@ -53,8 +54,8 @@ import io.cdap.cdap.internal.app.runtime.BasicArguments;
 import io.cdap.cdap.internal.app.runtime.ProgramOptionConstants;
 import io.cdap.cdap.internal.app.runtime.SimpleProgramOptions;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
+import io.cdap.cdap.internal.app.runtime.artifact.ArtifactRepository;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
-import io.cdap.cdap.internal.capability.CapabilityNotAvailableException;
 import io.cdap.cdap.internal.capability.CapabilityReader;
 import io.cdap.cdap.internal.pipeline.PluginRequirement;
 import io.cdap.cdap.internal.profile.ProfileService;
@@ -134,6 +135,7 @@ public class ProgramLifecycleService {
   private final ProgramStateWriter programStateWriter;
   private final CapabilityReader capabilityReader;
   private final int maxConcurrentRuns;
+  private final ArtifactRepository artifactRepository;
 
   @Inject
   ProgramLifecycleService(CConfiguration cConf,
@@ -142,7 +144,8 @@ public class ProgramLifecycleService {
                           PreferencesService preferencesService, AuthorizationEnforcer authorizationEnforcer,
                           AuthenticationContext authenticationContext,
                           ProvisionerNotifier provisionerNotifier, ProvisioningService provisioningService,
-                          ProgramStateWriter programStateWriter, CapabilityReader capabilityReader) {
+                          ProgramStateWriter programStateWriter, CapabilityReader capabilityReader,
+                          ArtifactRepository artifactRepository) {
     this.maxConcurrentRuns = cConf.getInt(Constants.AppFabric.MAX_CONCURRENT_RUNS);
     this.store = store;
     this.profileService = profileService;
@@ -155,6 +158,7 @@ public class ProgramLifecycleService {
     this.provisioningService = provisioningService;
     this.programStateWriter = programStateWriter;
     this.capabilityReader = capabilityReader;
+    this.artifactRepository = artifactRepository;
   }
 
   /**
@@ -509,10 +513,10 @@ public class ProgramLifecycleService {
    * @throws IOException if there is an error starting the program
    * @throws NotFoundException if the namespace, application, or program is not found
    * @throws ProfileConflictException if the profile is disabled
+   * @throws Exception if there were other exceptions
    */
   public RunId runInternal(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
-                           boolean debug) throws NotFoundException, IOException, ConflictException,
-    CapabilityNotAvailableException {
+                           boolean debug) throws Exception {
     RunId runId = RunIds.generate();
     ProgramOptions programOptions = createProgramOptions(programId, userArgs, sysArgs, debug);
     ProgramDescriptor programDescriptor = store.loadProgram(programId);
@@ -615,8 +619,15 @@ public class ProgramLifecycleService {
     return startInternal(programDescriptor, options, programRunId);
   }
 
-  private void checkCapability(ProgramDescriptor programDescriptor) throws IOException,
-    CapabilityNotAvailableException {
+  private void checkCapability(ProgramDescriptor programDescriptor) throws Exception {
+    //check for capability at application class level
+    Set<ApplicationClass> applicationClasses = artifactRepository
+      .getArtifact(Id.Artifact.fromEntityId(programDescriptor.getArtifactId())).getMeta().getClasses()
+      .getApps();
+    for (ApplicationClass applicationClass : applicationClasses) {
+      Set<String> capabilities = applicationClass.getRequirements().getCapabilities();
+      capabilityReader.checkAllEnabled(capabilities);
+    }
     for (Map.Entry<String, Plugin> pluginEntry : programDescriptor.getApplicationSpecification().getPlugins()
       .entrySet()) {
       Set<String> capabilities = pluginEntry.getValue().getPluginClass().getRequirements().getCapabilities();
