@@ -115,6 +115,13 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
   protected abstract String processMessages(Iterator<ImmutablePair<String, T>> messages) throws Exception;
 
   /**
+   * Perform pre-processing before a batch of messages will be processed.
+   */
+  protected void preProcess() {
+    // no-op
+  }
+
+  /**
    * Perform post processing after a batch of messages has been processed and before the next batch of
    * messages is fetched.
    */
@@ -140,6 +147,11 @@ public abstract class AbstractMessagingPollingService<T> extends AbstractRetryab
 
   @Override
   protected final long runTask() throws Exception {
+    try {
+      preProcess();
+    } catch (Exception e) {
+      LOG.warn("Failed to perform pre-processing before processing messages.", e);
+    }
     long delayMillis = fetchAndProcessMessages();
     try {
       postProcess();

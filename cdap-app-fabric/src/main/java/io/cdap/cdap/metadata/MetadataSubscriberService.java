@@ -20,6 +20,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.inject.Inject;
+import io.cdap.cdap.api.app.ApplicationSpecification;
 import io.cdap.cdap.api.lineage.field.Operation;
 import io.cdap.cdap.api.messaging.Message;
 import io.cdap.cdap.api.messaging.MessagingContext;
@@ -43,21 +44,25 @@ import io.cdap.cdap.data2.registry.DatasetUsage;
 import io.cdap.cdap.data2.registry.UsageTable;
 import io.cdap.cdap.internal.app.runtime.workflow.BasicWorkflowToken;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
+import io.cdap.cdap.internal.app.store.ApplicationMeta;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.context.MultiThreadMessagingContext;
 import io.cdap.cdap.messaging.subscriber.AbstractMessagingSubscriberService;
 import io.cdap.cdap.metadata.profile.ProfileMetadataMessageProcessor;
+import io.cdap.cdap.proto.NamespaceMeta;
 import io.cdap.cdap.proto.WorkflowNodeStateDetail;
 import io.cdap.cdap.proto.codec.EntityIdTypeAdapter;
 import io.cdap.cdap.proto.codec.OperationTypeAdapter;
 import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.proto.id.PluginId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
+import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataDirective;
@@ -66,23 +71,28 @@ import io.cdap.cdap.spi.metadata.MetadataMutation;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 import io.cdap.cdap.spi.metadata.MutationOptions;
 import io.cdap.cdap.spi.metadata.ScopedNameOfKind;
+import io.cdap.cdap.store.DefaultNamespaceStore;
+import io.cdap.cdap.store.NamespaceStore;
 import org.apache.tephra.TxConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 
 /**
- * Service responsible for consuming metadata messages from TMS and persist it to metadata store.
- * This is a wrapping service to host multiple {@link AbstractMessagingSubscriberService}s for lineage, usage
- * and metadata subscriptions.
+ * Service responsible for consuming metadata messages from TMS and persist it to metadata store. This is a wrapping
+ * service to host multiple {@link AbstractMessagingSubscriberService}s for lineage, usage and metadata subscriptions.
  * No transactions should be started in any of the overrided methods since they are already wrapped in a transaction.
  */
 public class MetadataSubscriberService extends AbstractMessagingSubscriberService<MetadataMessage> {
@@ -112,6 +122,9 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
   private String conflictMessageId = null;
   private int conflictCount = 0;
+
+  private boolean didBackfill = false;
+  private int backfillAttempts = 0;
 
   @Inject
   MetadataSubscriberService(CConfiguration cConf, MessagingService messagingService,
@@ -178,6 +191,80 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     // operations at the instance or namespace level can take time. Stop here to process in a new transaction
     EntityType entityType = message.getSecond().getEntityId().getEntityType();
     return entityType.equals(EntityType.INSTANCE) || entityType.equals(EntityType.NAMESPACE);
+  }
+
+  @Override
+  protected void preProcess() {
+    if (didBackfill) {
+      return;
+    }
+
+    if (backfillAttempts > 10) {
+      LOG.info("Skipping attempt to backfill plugin metadata after 10 failures.");
+      return;
+    }
+
+    // Backfill plugin metadata
+    backfillAttempts++;
+    LOG.info("Starting backfill process(attempt {}) for plugin metadata", backfillAttempts);
+
+    boolean updateFailed = false;
+    NamespaceStore namespaceStore = new DefaultNamespaceStore(this.transactionRunner);
+    List<String> namespaces = namespaceStore.list().stream().map(NamespaceMeta::getName).collect(Collectors.toList());
+
+    LOG.debug("Backfilling plugin metadata for {} namespaces", namespaces.size());
+    for (String namespace : namespaces) {
+      List<ApplicationMeta> apps = TransactionRunners.run(this.transactionRunner, context -> {
+        AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
+        return appMetadataStore.getAllApplications(namespace);
+      });
+
+      LOG.debug("Backfilling plugin metadata for namespace '{}' with {} applications", namespace, apps.size());
+      try {
+        this.getPluginCounts(namespace, apps);
+      } catch (IOException e) {
+        updateFailed = true;
+        LOG.warn("Failed to write plugin metadata updates for namespace '{}': {}", namespace, e);
+      }
+    }
+
+    if (!updateFailed) {
+      LOG.info("Successfully backfilled plugin metadata for {} namespaces.", namespaces.size());
+      didBackfill = true;
+    }
+  }
+
+  private void getPluginCounts(String namespace, List<ApplicationMeta> apps) throws IOException {
+    List<MetadataMutation> updates = new ArrayList<>();
+    for (ApplicationMeta app : apps) {
+      this.collectPluginMetadata(namespace, app.getSpec(), updates);
+    }
+    metadataStorage.batch(updates, MutationOptions.DEFAULT);
+  }
+
+  /**
+   * Helper method to emit plugin metadata for a given application
+   *
+   * @param namespace the namespace that the app is deployed to
+   * @param appSpec Application specification for the app
+   * @param updates List to keep track of Metadata Mutations that need to be executed
+   */
+  private void collectPluginMetadata(String namespace, ApplicationSpecification appSpec,
+                                     List<MetadataMutation> updates) {
+
+    Map<PluginId, Long> pluginCounts = appSpec.getPlugins().values().stream()
+      .map(p -> new PluginId(namespace, p))
+      .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    String appKey = String.format("%s:%s", namespace, appSpec.getName());
+    for (Map.Entry<PluginId, Long> entry : pluginCounts.entrySet()) {
+      LOG.trace("Adding application {} to plugin metadata for {}", appKey,
+                entry.getKey().getPlugin());
+      updates.add(new MetadataMutation.Update(entry.getKey().toMetadataEntity(),
+                                              new Metadata(MetadataScope.SYSTEM,
+                                                           ImmutableMap.of(appKey, entry.getValue().toString()))
+      ));
+    }
   }
 
   @Override
@@ -271,7 +358,6 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
 
     FieldLineageProcessor() {}
 
-
     @Override
     public void processMessage(MetadataMessage message, StructuredTableContext context) throws IOException {
       if (!(message.getEntityId() instanceof ProgramRunId)) {
@@ -346,8 +432,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
   }
 
   /**
-   * The {@link MetadataMessageProcessor} for metadata operations.
-   * It receives operations and applies them to the metadata store.
+   * The {@link MetadataMessageProcessor} for metadata operations. It receives operations and applies them to the
+   * metadata store.
    */
   private class MetadataOperationProcessor extends MetadataValidator implements MetadataMessageProcessor {
 
