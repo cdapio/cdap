@@ -381,11 +381,21 @@ class HydratorPlusPlusTopPanelCtrl {
             - Multiple macros (e.g. '${macro1}${macro2}')
             - And combined (e,g, '${function(${macro1})}${macro2}')
             More complicated cases will be handled by the backend
+
+            TODO: CDAP-17726 - We need API from backend to get macros, given a pipeline config
+            The logic UI uses to parse and understand a macro is faulty and does not cover
+            complex cases while running preview.
+
+            This is a temporary fix to not surface simple cases of macro functions.
+            Hence the specific check for known macro functions that doesn't need user input.
           */
           if (macroString &&
             typeof macroString === 'string' &&
             macroString.indexOf('${') !== -1 &&
-            macroString.indexOf('}') !== -1
+            macroString.indexOf('}') !== -1 &&
+            macroString !== '${logicalStartTime()}' &&
+            macroString.indexOf('${secure(') === -1 &&
+            macroString.indexOf('${oauth(') === -1
           ) {
             let macroKeys = [];
             let currentMacroDepth = 0;
