@@ -23,6 +23,7 @@ import { getCurrentNamespace } from 'services/NamespaceStore';
 import PipelineDetailStore from 'components/PipelineDetails/store';
 import { GLOBALS } from 'services/global-constants';
 import T from 'i18n-react';
+import If from 'components/If';
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
 
@@ -77,18 +78,20 @@ export default class PipelineSummaryButton extends Component {
         })}
       >
         {this.renderSummaryButton()}
-        <PipelineSummary
-          pipelineType={pipelineType}
-          namespaceId={getCurrentNamespace()}
-          appId={this.props.pipelineName}
-          programType={programType}
-          programId={programId}
-          pipelineConfig={PipelineDetailStore.getState()}
-          totalRunsCount={PipelineDetailStore.getState().runs.length}
-          onClose={this.toggleSummary.bind(this, false)}
-          anchorEl={this.buttonRef.current}
-          open={this.state.showSummary}
-        />
+        <If condition={this.state.showSummary}>
+          <PipelineSummary
+            pipelineType={pipelineType}
+            namespaceId={getCurrentNamespace()}
+            appId={this.props.pipelineName}
+            programType={programType}
+            programId={programId}
+            pipelineConfig={PipelineDetailStore.getState()}
+            totalRunsCount={PipelineDetailStore.getState().runs.length}
+            onClose={this.toggleSummary.bind(this, false)}
+            anchorEl={this.buttonRef.current}
+            open={this.state.showSummary}
+          />
+        </If>
       </div>
     );
   }

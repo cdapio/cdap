@@ -20,6 +20,10 @@ $legend_font_color: black;
 $container_border_color: lightgray;
 
 .logs-metrics-graph {
+  .logs-metrics-legend-container {
+    position: absolute;
+    bottom: -15px;
+  }
   .rv-discrete-color-legend.horizontal {
     .rv-discrete-color-legend-item {
       display: inline-block;
