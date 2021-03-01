@@ -17,7 +17,7 @@
 /*
   New start. Define colors used throughout CDAP. Use these colors from now on.
 */
-
+$primary: #1a73e8;
 $blue-01: #045599;
 $blue-02: #0076dc;
 $blue-03: #0099ff;
@@ -113,4 +113,6 @@ $green-05: #0b8043;
   yellow01: $yellow-01;
   yellow02: $yellow-02;
   yellow02lighter: $yellow-02-lighter;
+
+  primary: $primary;
 }

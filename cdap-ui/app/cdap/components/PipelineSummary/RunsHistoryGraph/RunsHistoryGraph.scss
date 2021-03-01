@@ -22,6 +22,8 @@ $container_border_color: lightgray;
 
 .runs-history-graph {
   .run-history-legend-container {
+    position: absolute;
+    bottom: -15px;
     &.rv-discrete-color-legend.horizontal {
       .rv-discrete-color-legend-item {
         display: inline-block;

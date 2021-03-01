@@ -40,7 +40,7 @@ import {
   getTimeResolution,
   getYAxisProps,
 } from 'components/PipelineSummary/RunsGraphHelpers';
-import { humanReadableDuration, preventPropagation } from 'services/helpers';
+import { humanReadableDuration, preventPropagation, objectQuery } from 'services/helpers';
 import CopyableID from 'components/CopyableID';
 import SortableStickyTable from 'components/SortableStickyTable';
 import ee from 'event-emitter';
@@ -60,20 +60,24 @@ const PENDINGSTATUSFILLCOLOR = colorVariables.white01;
 const PENDINGSTATUSSTROKECOLOR = colorVariables.blue02;
 const RUNNINGSTATUSCOLOR = colorVariables.blue02;
 const LINECOLOR = colorVariables.grey06;
+const HOVERCOLOR = 'black';
 const PREFIX = `features.PipelineSummary.runsHistoryGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 const COLORLEGENDS = [
   {
     title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.FAILED),
     color: FAILEDRUNCOLOR,
+    strokeWidth: 20,
   },
   {
     title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.SUCCEEDED),
     color: SUCCESSRUNCOLOR,
+    strokeWidth: 20,
   },
   {
     title: StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.PENDING),
     color: PENDINGSTATUSFILLCOLOR,
+    strokeWidth: 20,
   },
   {
     title:
@@ -81,6 +85,7 @@ const COLORLEGENDS = [
       '/' +
       StatusMapper.lookupDisplayStatus(PROGRAM_STATUSES.RUNNING),
     color: RUNNINGSTATUSCOLOR,
+    strokeWidth: 20,
   },
 ];
 const tableHeaders = [
@@ -165,6 +170,7 @@ export default class RunsHistoryGraph extends Component {
           stroke: this.getRunStatusStrokeColor(run.status),
           fill: this.getRunStatusFillColor(run.status),
           runid: run.runid,
+          status: run.status,
         };
       });
     return data;
@@ -261,16 +267,33 @@ export default class RunsHistoryGraph extends Component {
             fillType="literal"
             data={this.state.data}
             onValueMouseOver={(d) => {
-              if (isEqual(this.state.currentHoveredElement, d)) {
+              if (objectQuery(this.state.currentHoveredElement, 'runid') === d.runid) {
                 return;
               }
+              const newData = this.state.data.map((datum) => {
+                if (datum.runid === d.runid) {
+                  return {
+                    ...datum,
+                    fill: HOVERCOLOR,
+                  };
+                }
+                return datum;
+              });
               this.setState({
                 currentHoveredElement: d,
+                data: newData,
               });
             }}
             onValueMouseOut={() => {
+              const newData = this.state.data.map((datum) => {
+                return {
+                  ...datum,
+                  fill: this.getRunStatusFillColor(datum.status),
+                };
+              });
               this.setState({
                 currentHoveredElement: null,
+                data: newData,
               });
             }}
             onValueClick={(d) => {
@@ -285,8 +308,15 @@ export default class RunsHistoryGraph extends Component {
                 <IconSVG
                   name="icon-close"
                   onClick={(e) => {
+                    const newData = this.state.data.map((datum) => {
+                      return {
+                        ...datum,
+                        fill: this.getRunStatusFillColor(datum.status),
+                      };
+                    });
                     this.setState({
                       currentHoveredElement: null,
+                      data: newData,
                     });
                     preventPropagation(e);
                   }}
