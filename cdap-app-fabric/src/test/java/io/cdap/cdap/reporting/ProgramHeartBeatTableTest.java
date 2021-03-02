@@ -90,19 +90,19 @@ public abstract class ProgramHeartBeatTableTest {
       Collection<RunRecordDetail> result =
         programHeartbeatTable.scan(startTime1, startTime2, ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
 
-      Assert.assertEquals(1 , result.size());
+      Assert.assertEquals(1, result.size());
       Assert.assertEquals(meta, result.iterator().next());
       // scanning from x : x + 10, should return both
       Set<RunRecordDetail> expected = ImmutableSet.of(meta, meta2);
       result = programHeartbeatTable.scan(startTime1, endTime,
                                           ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
-      Assert.assertEquals(expected.size() , result.size());
+      Assert.assertEquals(expected.size(), result.size());
       Assert.assertTrue(result.containsAll(expected));
 
       // scanning from x + 5 : x + 10, should return both
       result = programHeartbeatTable.scan(startTime2, endTime,
                                           ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
-      Assert.assertEquals(expected.size() , result.size());
+      Assert.assertEquals(expected.size(), result.size());
       Assert.assertTrue(result.containsAll(expected));
     });
   }
@@ -174,14 +174,109 @@ public abstract class ProgramHeartBeatTableTest {
       // end row key is exclusive, scanning from x : x + 5 should only return run1
       Collection<RunRecordDetail> runRecordMetaList =
         programHeartbeatTable.scan(startTime1, heartBeatEndTime, ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
-      Assert.assertEquals(1 , runRecordMetaList.size());
+      Assert.assertEquals(1, runRecordMetaList.size());
       Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMetaList.iterator().next().getStatus());
       Assert.assertEquals(metaRunning, runRecordMetaList.iterator().next());
       // scanning from x : x + (5 min + 1s), should return run1 with status KILLED
       runRecordMetaList = programHeartbeatTable.scan(startTime1, programEndTime + 1,
                                                      ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
-      Assert.assertEquals(1 , runRecordMetaList.size());
+      Assert.assertEquals(1, runRecordMetaList.size());
       Assert.assertEquals(metaKilled, runRecordMetaList.iterator().next());
+    });
+  }
+
+  @Test
+  public void testFindRunningPipelines() throws Exception {
+    //Set a baseline time of current_time - 100 seconds.
+    long startTime = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
+
+    //  write program status "running" for program 1 starting at x - 100
+    // This record should NOT be returned as it falls outside the 30 day window
+    long startTime0 = startTime - 2592001;
+    RunId runId0 = RunIds.generate();
+    RunRecordDetail.Builder metaRunningBuilder0 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId0);
+    metaRunningBuilder0.setStatus(ProgramRunStatus.RUNNING);
+    metaRunningBuilder0.setRunTime(startTime0);
+    RunRecordDetail metaRunning0 = metaRunningBuilder0.build();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.writeRunRecordMeta(metaRunning0, startTime0);
+    });
+
+    //  write program status "running" for program 1 starting at x - 100
+    // This record SHOULD be returned.
+    long startTime1 = startTime - 100;
+    RunId runId1 = RunIds.generate();
+    RunRecordDetail.Builder metaRunningBuilder1 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId1);
+    metaRunningBuilder1.setStatus(ProgramRunStatus.RUNNING);
+    metaRunningBuilder1.setRunTime(startTime1);
+    RunRecordDetail metaRunning1 = metaRunningBuilder1.build();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.writeRunRecordMeta(metaRunning1, startTime1);
+    });
+
+    // write program status "failed" for program 1 starting at x - 75
+    // This record should NOT be returned (not the status we care about)
+    long startTime2 = startTime - 75;
+    RunId runId2 = RunIds.generate();
+    RunRecordDetail.Builder metaRunningBuilder2 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId2);
+    metaRunningBuilder2.setStatus(ProgramRunStatus.FAILED);
+    metaRunningBuilder2.setRunTime(startTime1);
+    RunRecordDetail metaRunning2 = metaRunningBuilder2.build();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.writeRunRecordMeta(metaRunning2, startTime2);
+    });
+
+    //  write program status "starting" for program 1 starting at x - 50
+    // This record should NOT be returned.
+    long startTime3 = startTime - 50;
+    RunId runId3 = RunIds.generate();
+    RunRecordDetail.Builder metaRunningBuilder3 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId3);
+    metaRunningBuilder3.setStatus(ProgramRunStatus.STARTING);
+    metaRunningBuilder3.setRunTime(startTime1);
+    RunRecordDetail metaRunning3 = metaRunningBuilder3.build();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.writeRunRecordMeta(metaRunning3, startTime3);
+    });
+
+    //  write program status "completed" for program 1 starting at x - 25
+    // This record should NOT be returned.
+    long startTime4 = startTime - 25;
+    RunId runId4 = RunIds.generate();
+    RunRecordDetail.Builder metaRunningBuilder4 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId4);
+    metaRunningBuilder4.setStatus(ProgramRunStatus.COMPLETED);
+    metaRunningBuilder4.setRunTime(startTime1);
+    RunRecordDetail metaRunning4 = metaRunningBuilder4.build();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.writeRunRecordMeta(metaRunning4, startTime4);
+    });
+
+    //  write program status "running" for program 1 starting at x
+    // This record should NOT be returned as X is not inclusive.
+    long startTime5 = startTime;
+    RunId runId5 = RunIds.generate();
+    RunRecordDetail.Builder metaRunningBuilder5 = getMockRunRecordMeta(NamespaceId.DEFAULT, runId5);
+    metaRunningBuilder5.setStatus(ProgramRunStatus.RUNNING);
+    metaRunningBuilder5.setRunTime(startTime1);
+    RunRecordDetail metaRunning5 = metaRunningBuilder5.build();
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      programHeartbeatTable.writeRunRecordMeta(metaRunning5, startTime5);
+    });
+
+    // perform findRunning checks
+    TransactionRunners.run(transactionRunner, context -> {
+      ProgramHeartbeatTable programHeartbeatTable = new ProgramHeartbeatTable(context);
+      // Find all running tasks as of the start time.
+      Collection<RunRecordDetail> runRecordMetaList =
+        programHeartbeatTable.findRunningAtTimestamp(startTime, ImmutableSet.of(NamespaceId.DEFAULT.getNamespace()));
+      Assert.assertEquals(1, runRecordMetaList.size());
+      Assert.assertEquals(ProgramRunStatus.RUNNING, runRecordMetaList.iterator().next().getStatus());
+      Assert.assertEquals(metaRunning1, runRecordMetaList.iterator().next());
     });
   }
 }

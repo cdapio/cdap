@@ -22,6 +22,7 @@ import com.google.gson.GsonBuilder;
 import io.cdap.cdap.api.dataset.lib.CloseableIterator;
 import io.cdap.cdap.internal.app.runtime.schedule.TriggeringScheduleInfoAdapter;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
+import io.cdap.cdap.proto.ProgramRunStatus;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.spi.data.StructuredRow;
@@ -39,14 +40,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
- * Heartbeat Store that writes heart beat messages and program status messages
- * to program heartbeat table. This is used for efficiently
- * scanning and returning results for dashboard status queries.
+ * Heartbeat Store that writes heart beat messages and program status messages to program heartbeat table. This is used
+ * for efficiently scanning and returning results for dashboard status queries.
  */
 public class ProgramHeartbeatTable {
   private static final Gson GSON = TriggeringScheduleInfoAdapter.addTypeAdapters(new GsonBuilder()).create();
+  public static final int SECONDS_IN_30_DAYS = 2592000;
   private final StructuredTable table;
 
   // TODO: CDAP-14950 add service to clean up this table periodically
@@ -57,7 +59,7 @@ public class ProgramHeartbeatTable {
   /**
    * Write {@link RunRecordDetail} to heart beat table as value.
    *
-   * @param runRecordMeta row value to write
+   * @param runRecordMeta      row value to write
    * @param timestampInSeconds used for creating rowKey
    */
   public void writeRunRecordMeta(RunRecordDetail runRecordMeta, long timestampInSeconds) throws IOException {
@@ -89,6 +91,7 @@ public class ProgramHeartbeatTable {
 
   /**
    * Add namespace and timestamp and return it as the scan key.
+   *
    * @return scan key
    */
   private List<Field<?>> getScanKey(String namespace, long timestamp) {
@@ -99,49 +102,95 @@ public class ProgramHeartbeatTable {
   }
 
   /**
-   * Scan the table for the time range for each of the namespace provided
-   * and return collection of latest {@link RunRecordDetail}
-   * we maintain the latest {@link RunRecordDetail} identified by {@link ProgramRunId},
-   * Since there can be more than one RunRecordDetail for the
-   * same runId due to multiple state changes and heart beat messages.
+   * Scan the table for the time range for each of the namespace provided and return collection of latest {@link
+   * RunRecordDetail} we maintain the latest {@link RunRecordDetail} identified by {@link ProgramRunId}, Since there can
+   * be more than one RunRecordDetail for the same runId due to multiple state changes and heart beat messages.
    *
    * @param startTimestampInSeconds inclusive start rowKey
-   * @param endTimestampInSeconds exclusive end rowKey
-   * @param namespaces set of namespaces
+   * @param endTimestampInSeconds   exclusive end rowKey
+   * @param namespaces              set of namespaces
    * @return collection of {@link RunRecordDetail}
    */
   public Collection<RunRecordDetail> scan(long startTimestampInSeconds, long endTimestampInSeconds,
                                           Set<String> namespaces) throws IOException {
+    Collection<Range> ranges = new ArrayList<>();
     List<RunRecordDetail> resultRunRecordList = new ArrayList<>();
     for (String namespace : namespaces) {
       List<Field<?>> startRowKey = getScanKey(namespace, startTimestampInSeconds);
       List<Field<?>> endRowKey = getScanKey(namespace, endTimestampInSeconds);
-      performScanAddToList(startRowKey, endRowKey, resultRunRecordList);
+      Range range = Range.create(startRowKey, Range.Bound.INCLUSIVE, endRowKey, Range.Bound.EXCLUSIVE);
+      ranges.add(range);
     }
+    performMultiScanAddToList(ranges, resultRunRecordList);
     return resultRunRecordList;
   }
 
   /**
-   * Scan is executed based on the given startRowKey and endRowKey, for each of the scanned rows, we maintain
-   * the latest {@link RunRecordDetail} identified by its {@link ProgramRunId} in a map. Finally after scan is
-   * complete add the runrecords to the result list
+   * Find all running pipelines as of the supplied timestamp, for each of the scanned rows, we maintain the latest
+   * {@link RunRecordDetail} identified by {@link ProgramRunId}, Since there can be more than one RunRecordDetail for
+   * the same runId due to multiple state changes and heart beat messages.
    *
-   * @param startRowKey byte array used as start row key in scan
-   * @param endRowKey byte array used as end row key in scan
+   * @param namespaces set of namespaces
+   * @return collection of {@link RunRecordDetail}
+   */
+  public Collection<RunRecordDetail> findRunningAtTimestamp(long runningOnTimestamp,
+                                                            Set<String> namespaces) throws IOException {
+    long rangeStart = Math.max(0, runningOnTimestamp - SECONDS_IN_30_DAYS);
+    Collection<Range> ranges = new ArrayList<>();
+    List<RunRecordDetail> resultRunRecordList = new ArrayList<>();
+    for (String namespace : namespaces) {
+      //Scan from the beggining of time until the desired timestamp.
+      List<Field<?>> startRowKey = getScanKey(namespace, rangeStart);
+      List<Field<?>> endRowKey = getScanKey(namespace, runningOnTimestamp);
+      Range range = Range.create(startRowKey, Range.Bound.INCLUSIVE, endRowKey, Range.Bound.EXCLUSIVE);
+      ranges.add(range);
+    }
+    performMultiScanAddToList(ranges, resultRunRecordList, (rrd) -> rrd.getStatus() == ProgramRunStatus.RUNNING);
+    return resultRunRecordList;
+  }
+
+  /**
+   * Scan is executed based on the given startRowKey and endRowKey, for each of the scanned rows, we maintain the latest
+   * {@link RunRecordDetail} with a status of RUNNING, identified by its {@link ProgramRunId} in a map. If a record has
+   * a status other than RUNNING, is removed from the result set. Finally after scan is complete add the runrecords to
+   * the result list
+   *
+   * @param ranges         the ranges to query
    * @param runRecordMetas result list to which the run records to be added
    */
-  private void performScanAddToList(List<Field<?>> startRowKey, List<Field<?>> endRowKey,
-                                    List<RunRecordDetail> runRecordMetas) throws IOException {
-    Map<ProgramRunId, RunRecordDetail> latestRunRecords = new LinkedHashMap<>();;
-    try (CloseableIterator<StructuredRow> iterator =
-      table.scan(Range.create(startRowKey, Range.Bound.INCLUSIVE, endRowKey, Range.Bound.EXCLUSIVE),
-                 Integer.MAX_VALUE)) {
+  private void performMultiScanAddToList(Collection<Range> ranges,
+                                         List<RunRecordDetail> runRecordMetas) throws IOException {
+    performMultiScanAddToList(ranges, runRecordMetas, x -> true);
+  }
+
+  /**
+   * Scan is executed based on the given startRowKey and endRowKey, for each of the scanned rows, we maintain the latest
+   * {@link RunRecordDetail} with a status of RUNNING, identified by its {@link ProgramRunId} in a map. If a record has
+   * a status other than RUNNING, is removed from the result set. Finally after scan is complete add the runrecords to
+   * the result list
+   *
+   * @param ranges         the ranges to query
+   * @param runRecordMetas result list to which the run records to be added
+   * @param predicate      the predicate used to filter results in the output.
+   */
+  private void performMultiScanAddToList(Collection<Range> ranges,
+                                         List<RunRecordDetail> runRecordMetas,
+                                         Function<RunRecordDetail, Boolean> predicate) throws IOException {
+    Map<ProgramRunId, RunRecordDetail> latestRunRecords = new LinkedHashMap<>();
+    try (CloseableIterator<StructuredRow> iterator = table.multiScan(ranges, Integer.MAX_VALUE)) {
       while (iterator.hasNext()) {
         StructuredRow row = iterator.next();
         RunRecordDetail existing = GSON.fromJson(row.getString(StoreDefinition.ProgramHeartbeatStore.RUN_RECORD),
                                                  RunRecordDetail.class);
         ProgramRunId runId = getProgramRunIdFromRow(row);
-        latestRunRecords.put(runId, RunRecordDetail.builder(existing).setProgramRunId(runId).build());
+
+        // If the supplied predicate is null OR the result of evaluating this predicate is TRUE, include this record
+        // in the esult set. Otherwise, remove it  from the result set.
+        if (predicate.apply(existing)) {
+          latestRunRecords.put(runId, RunRecordDetail.builder(existing).setProgramRunId(runId).build());
+        } else {
+          latestRunRecords.remove(runId);
+        }
       }
     }
     runRecordMetas.addAll(latestRunRecords.values());

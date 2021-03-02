@@ -38,6 +38,7 @@ public class ProgramHeartbeatService {
 
   /**
    * Performs the {@link ProgramHeartbeatTable#scan(long, long, Set)}
+   *
    * @param startTimestampInSeconds starting timestamp inclusive
    * @param endTimestampInSeconds ending timestamp exclusive
    * @param namespaces set of namespaces to scan for the timerange
@@ -47,6 +48,20 @@ public class ProgramHeartbeatService {
                                           long endTimestampInSeconds, Set<String> namespaces) {
     return TransactionRunners.run(transactionRunner, context -> {
       return new ProgramHeartbeatTable(context).scan(startTimestampInSeconds, endTimestampInSeconds, namespaces);
+    });
+  }
+
+  /**
+   * Performs the {@link ProgramHeartbeatTable#findRunningAtTimestamp(long, Set)}
+   *
+   * @param runningOnTimestamp timestamp to query
+   * @param namespaces         set of namespaces to scan for the supplied timestamp
+   * @return collection of run record meta
+   */
+  public Collection<RunRecordDetail> findRunningAtTimestamp(long runningOnTimestamp,
+                                                            Set<String> namespaces) {
+    return TransactionRunners.run(transactionRunner, context -> {
+      return new ProgramHeartbeatTable(context).findRunningAtTimestamp(runningOnTimestamp, namespaces);
     });
   }
 }
