@@ -91,11 +91,11 @@ import io.cdap.cdap.metrics.process.loader.MetricsWriterModule;
 import io.cdap.cdap.metrics.query.MetricsQueryService;
 import io.cdap.cdap.operations.OperationalStatsService;
 import io.cdap.cdap.operations.guice.OperationalStatsModule;
-import io.cdap.cdap.security.auth.AuthenticationMode;
 import io.cdap.cdap.security.authorization.AuthorizationEnforcementModule;
 import io.cdap.cdap.security.authorization.AuthorizerInstantiator;
 import io.cdap.cdap.security.guice.SecureStoreServerModule;
 import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
 import io.cdap.cdap.security.store.SecureStoreService;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
@@ -137,8 +137,6 @@ public class StandaloneMain {
   private final LogAppenderInitializer logAppenderInitializer;
   private final InMemoryTransactionService txService;
   private final MetadataService metadataService;
-  private final boolean securityEnabled;
-  private final AuthenticationMode authenticationMode;
   private final boolean sslEnabled;
   private final CConfiguration cConf;
   private final DatasetService datasetService;
@@ -200,10 +198,7 @@ public class StandaloneMain {
     }
 
     sslEnabled = cConf.getBoolean(Constants.Security.SSL.EXTERNAL_ENABLED);
-    securityEnabled = cConf.getBoolean(Constants.Security.ENABLED);
-    authenticationMode = cConf.getEnum(Constants.Security.Authentication.AUTHENTICATION_MODE,
-                                       AuthenticationMode.MANAGED);
-    if (securityEnabled && authenticationMode.equals(AuthenticationMode.MANAGED)) {
+    if (SecurityUtil.isManagedSecurity(cConf)) {
       externalAuthenticationServer = injector.getInstance(ExternalAuthenticationServer.class);
     }
 
@@ -217,19 +212,16 @@ public class StandaloneMain {
     metadataService = injector.getInstance(MetadataService.class);
     secureStoreService = injector.getInstance(SecureStoreService.class);
 
-    Runtime.getRuntime().addShutdownHook(new Thread() {
-      @Override
-      public void run() {
-        try {
-          shutDown();
-        } catch (Throwable e) {
-          LOG.error("Failed to shutdown", e);
-          // Because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
-          System.err.println("Failed to shutdown: " + e.getMessage());
-          e.printStackTrace(System.err);
-        }
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+      try {
+        shutDown();
+      } catch (Throwable e) {
+        LOG.error("Failed to shutdown", e);
+        // Because shutdown hooks execute concurrently, the logger may be closed already: thus also print it.
+        System.err.println("Failed to shutdown: " + e.getMessage());
+        e.printStackTrace(System.err);
       }
-    });
+    }));
   }
 
   /**
@@ -285,9 +277,7 @@ public class StandaloneMain {
     }
 
     previewHttpServer.startAndWait();
-    if (previewRunnerManager instanceof Service) {
-      ((Service) previewRunnerManager).startAndWait();
-    }
+    previewRunnerManager.startAndWait();
 
     metricsQueryService.startAndWait();
     logQueryService.startAndWait();
@@ -297,7 +287,7 @@ public class StandaloneMain {
       userInterfaceService.startAndWait();
     }
 
-    if (securityEnabled && authenticationMode.equals(AuthenticationMode.MANAGED)) {
+    if (SecurityUtil.isManagedSecurity(cConf)) {
       externalAuthenticationServer.startAndWait();
     }
 
@@ -345,9 +335,7 @@ public class StandaloneMain {
       metadataService.stopAndWait();
       remoteExecutionTwillRunnerService.stop();
       serviceStore.stopAndWait();
-      if (previewRunnerManager instanceof Service) {
-        ((Service) previewRunnerManager).stopAndWait();
-      }
+      previewRunnerManager.stopAndWait();
       previewHttpServer.stopAndWait();
       // app fabric will also stop all programs
       appFabricServer.stopAndWait();
@@ -365,7 +353,7 @@ public class StandaloneMain {
         txService.stopAndWait();
       }
 
-      if (securityEnabled && authenticationMode.equals(AuthenticationMode.MANAGED)) {
+      if (SecurityUtil.isManagedSecurity(cConf)) {
         // auth service is on the side anyway
         externalAuthenticationServer.stopAndWait();
       }

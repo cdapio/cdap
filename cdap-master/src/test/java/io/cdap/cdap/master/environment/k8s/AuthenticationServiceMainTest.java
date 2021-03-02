@@ -72,8 +72,8 @@ public class AuthenticationServiceMainTest extends MasterServiceMainTestBase {
     HttpResponse response = HttpRequests.execute(HttpRequest.get(getAuthenticationBaseURI().toURL()).build()
         , new HttpRequestConfig(0, 0, false));
 
-    Assert.assertEquals("basic realm=\"null\"", response.getHeaders().get("WWW-Authenticate")
-        .stream().findFirst().get());
+    Assert.assertEquals("basic realm=\"null\"",
+                        response.getHeaders().get("WWW-Authenticate").stream().findFirst().orElse(null));
     Assert.assertEquals(HttpURLConnection.HTTP_UNAUTHORIZED, response.getResponseCode());
 
     Injector injector = getServiceMainInstance(AuthenticationServiceMain.class).getInjector();

@@ -28,7 +28,6 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.ZKClientModule;
 import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.runtime.DaemonMain;
-import io.cdap.cdap.security.auth.AuthenticationMode;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
@@ -59,9 +58,7 @@ public class AuthenticationServerMain extends DaemonMain {
                                              new SecurityModules().getDistributedModules());
     configuration = injector.getInstance(CConfiguration.class);
 
-    if (configuration.getBoolean(Constants.Security.ENABLED) &&
-      configuration.getEnum(Constants.Security.Authentication.AUTHENTICATION_MODE, AuthenticationMode.MANAGED)
-        .equals(AuthenticationMode.MANAGED)) {
+    if (SecurityUtil.isManagedSecurity(configuration)) {
       this.zkClientService = injector.getInstance(ZKClientService.class);
       this.authServer = injector.getInstance(ExternalAuthenticationServer.class);
     }

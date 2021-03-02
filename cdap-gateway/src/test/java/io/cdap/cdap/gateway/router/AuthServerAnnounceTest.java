@@ -128,7 +128,7 @@ public class AuthServerAnnounceTest {
       cConf.setInt(Constants.Router.ROUTER_PORT, 0);
       cConf.setInt(Constants.Router.CONNECTION_TIMEOUT_SECS, CONNECTION_IDLE_TIMEOUT_SECS);
       cConf.setBoolean(Constants.Security.ENABLED, true);
-      cConf.setEnum(Constants.Security.Authentication.AUTHENTICATION_MODE, AuthenticationMode.MANAGED);
+      cConf.setEnum(Constants.Security.Authentication.MODE, AuthenticationMode.MANAGED);
 
       router =
         new NettyRouter(cConf, sConfiguration, InetAddresses.forString(hostname),

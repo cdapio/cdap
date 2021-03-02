@@ -17,42 +17,23 @@
 package io.cdap.cdap.security.guice;
 
 import com.google.inject.Binder;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.inject.Scopes;
-import io.cdap.cdap.common.conf.CConfiguration;
-import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.security.auth.DistributedKeyManager;
-import io.cdap.cdap.security.auth.KeyIdentifier;
 import io.cdap.cdap.security.auth.KeyManager;
-import org.apache.twill.zookeeper.ZKClientService;
 
 /**
  * Configures dependency injection with all security class implementations required to run in a distributed
  * environment.
  */
 final class DistributedSecurityModule extends SecurityModule {
+
   @Override
-  protected void bindKeyManager(Binder binder) {
-    binder.bind(KeyManager.class).toProvider(DistributedKeyManagerProvider.class).in(Scopes.SINGLETON);
+  public boolean requiresZKClient() {
+    return true;
   }
 
-  private static final class DistributedKeyManagerProvider implements Provider<KeyManager> {
-    private final CConfiguration cConf;
-    private final Codec<KeyIdentifier> keyCodec;
-    private final ZKClientService zkClient;
-
-
-    @Inject
-    DistributedKeyManagerProvider(CConfiguration cConf, Codec<KeyIdentifier> codec, ZKClientService zkClient) {
-      this.cConf = cConf;
-      this.keyCodec = codec;
-      this.zkClient = zkClient;
-    }
-
-    @Override
-    public KeyManager get() {
-      return new DistributedKeyManager(cConf, keyCodec, zkClient);
-    }
+  @Override
+  protected void bindKeyManager(Binder binder) {
+    binder.bind(KeyManager.class).to(DistributedKeyManager.class).in(Scopes.SINGLETON);
   }
 }

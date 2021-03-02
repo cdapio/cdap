@@ -20,6 +20,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import com.google.inject.Module;
 import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
@@ -30,6 +31,7 @@ import io.cdap.cdap.common.guice.ZKDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
 import io.cdap.cdap.common.utils.Tasks;
+import io.cdap.cdap.security.guice.SecurityModule;
 import io.cdap.cdap.security.guice.SecurityModules;
 import org.apache.hadoop.hbase.HBaseTestingUtility;
 import org.apache.hadoop.hbase.HConstants;
@@ -43,6 +45,8 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -70,12 +74,31 @@ public class DistributedKeyManagerTest extends TestTokenManager {
 
     CConfiguration cConf2 = CConfiguration.create();
     cConf2.set(Constants.Zookeeper.QUORUM, zkConnectString);
-    injector1 = Guice.createInjector(new ConfigModule(cConf1, testUtil.getConfiguration()), new IOModule(),
-                                     new SecurityModules().getDistributedModules(), new ZKClientModule(),
-                                     new ZKDiscoveryModule());
-    injector2 = Guice.createInjector(new ConfigModule(cConf2, testUtil.getConfiguration()), new IOModule(),
-                                     new SecurityModules().getDistributedModules(), new ZKClientModule(),
-                                     new ZKDiscoveryModule());
+
+    List<Module> modules = new ArrayList<>();
+    modules.add(new ConfigModule(cConf1, testUtil.getConfiguration()));
+    modules.add(new IOModule());
+
+    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf1);
+    modules.add(securityModule);
+    if (securityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+    }
+    injector1 = Guice.createInjector(modules);
+
+    modules.clear();
+    modules.add(new ConfigModule(cConf2, testUtil.getConfiguration()));
+    modules.add(new IOModule());
+
+    securityModule = SecurityModules.getDistributedModule(cConf2);
+    modules.add(securityModule);
+    if (securityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
+      modules.add(new ZKDiscoveryModule());
+    }
+
+    injector2 = Guice.createInjector(modules);
   }
 
   @AfterClass
@@ -119,7 +142,7 @@ public class DistributedKeyManagerTest extends TestTokenManager {
   public void testGetACLs() throws Exception {
     CConfiguration kerbConf = CConfiguration.create();
     kerbConf.set(Constants.Security.KERBEROS_ENABLED, "true");
-    kerbConf.set(Constants.Security.Authentication.AUTHENTICATION_MODE, "MANAGED");
+    kerbConf.set(Constants.Security.Authentication.MODE, "MANAGED");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_PRINCIPAL, "prinicpal@REALM.NET");
     kerbConf.set(Constants.Security.CFG_CDAP_MASTER_KRB_KEYTAB_PATH, "/path/to/keytab");
     Assert.assertEquals(ZooDefs.Ids.CREATOR_ALL_ACL, DistributedKeyManager.getACLs(kerbConf));

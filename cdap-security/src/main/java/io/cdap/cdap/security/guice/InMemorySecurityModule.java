@@ -36,7 +36,7 @@ final class InMemorySecurityModule extends SecurityModule {
   }
 
   private static final class InMemoryKeyManagerProvider implements Provider<KeyManager> {
-    private CConfiguration cConf;
+    private final CConfiguration cConf;
 
     @Inject
     InMemoryKeyManagerProvider(CConfiguration conf) {

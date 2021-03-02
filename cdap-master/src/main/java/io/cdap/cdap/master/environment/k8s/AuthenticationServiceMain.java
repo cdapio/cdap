@@ -16,15 +16,11 @@
 
 package io.cdap.cdap.master.environment.k8s;
 
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.AbstractService;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.Service;
 import com.google.inject.Binding;
 import com.google.inject.Injector;
+import com.google.inject.Key;
 import com.google.inject.Module;
-import com.google.inject.TypeLiteral;
-import io.cdap.cdap.common.ServiceBindException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ZKClientModule;
@@ -32,29 +28,21 @@ import io.cdap.cdap.common.logging.LoggingContext;
 import io.cdap.cdap.common.logging.ServiceLoggingContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
-import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
+import io.cdap.cdap.security.guice.SecurityModule;
 import io.cdap.cdap.security.guice.SecurityModules;
 import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.server.ExternalAuthenticationServer;
-import org.apache.twill.internal.Services;
 import org.apache.twill.zookeeper.ZKClientService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * The main class responsible for Authentication  .
  */
 public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOptions> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AuthenticationServiceMain.class);
-  private ZKClientService zkClientService;
-  private ExternalAuthenticationServer authServer;
 
   public static void main(String[] args) throws Exception {
     main(AuthenticationServiceMain.class, args);
@@ -64,11 +52,21 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
   protected List<Module> getServiceModules(MasterEnvironment masterEnv,
                                            EnvironmentOptions options,
                                            CConfiguration cConf) {
-    return Arrays.asList(
-        getDataFabricModule(),
-        new ZKClientModule(),
-        new SecurityModules().getDistributedModules(),
-        new MessagingClientModule());
+
+    if (!SecurityUtil.isManagedSecurity(cConf)) {
+      throw new RuntimeException("Security is not enabled. Authentication service shouldn't be used");
+    }
+
+    List<Module> modules = new ArrayList<>();
+    modules.add(new MessagingClientModule());
+
+    SecurityModule securityModule = SecurityModules.getDistributedModule(cConf);
+    modules.add(securityModule);
+    if (securityModule.requiresZKClient()) {
+      modules.add(new ZKClientModule());
+    }
+
+    return modules;
   }
 
   @Override
@@ -78,63 +76,15 @@ public class AuthenticationServiceMain extends AbstractServiceMain<EnvironmentOp
                              MasterEnvironment masterEnv,
                              MasterEnvironmentContext masterEnvContext,
                              EnvironmentOptions options) {
-    MessagingService messagingService = injector.getInstance(MessagingService.class);
-    if (messagingService instanceof Service) {
-      services.add((Service) messagingService);
+    Binding<ZKClientService> zkBinding = injector.getExistingBinding(Key.get(ZKClientService.class));
+    if (zkBinding != null) {
+      services.add(zkBinding.getProvider().get());
     }
-    CConfiguration configuration = injector.getInstance(CConfiguration.class);
-    if (configuration.getBoolean(Constants.Security.ENABLED)) {
-      services.add(new AbstractService() {
-        @Override
-        protected void doStart() {
-          zkClientService = injector.getInstance(ZKClientService.class);
-          authServer = injector.getInstance(ExternalAuthenticationServer.class);
-          try {
-            LOG.info("Starting AuthenticationServer.");
-            // Enable Kerberos login
-            SecurityUtil.enableKerberosLogin(configuration);
-            io.cdap.cdap.common.service.Services.startAndWait(
-                zkClientService,
-                configuration.getLong(
-                    Constants.Zookeeper.CLIENT_STARTUP_TIMEOUT_MILLIS),
-                TimeUnit.MILLISECONDS,
-                String.format(
-                    "Connection timed out while trying to start " +
-                        "ZooKeeper client. Please verify that the " +
-                        "ZooKeeper quorum settings are correct in " +
-                        "cdap-site.xml. Currently configured as: %s",
-                    configuration.get(Constants.Zookeeper.QUORUM)));
-            authServer.startAndWait();
-            notifyStarted();
-          } catch (Exception e) {
-            Throwable rootCause = Throwables.getRootCause(e);
-            if (rootCause instanceof ServiceBindException) {
-              LOG.error("Failed to start Authentication Server: {}", rootCause.getMessage());
-            } else {
-              LOG.error("Failed to start Authentication Server", e);
-            }
-            System.exit(1);
-          }
-        }
-
-        @Override
-        protected void doStop() {
-          LOG.info("Stopping AuthenticationServer.");
-          Futures.getUnchecked(Services.chainStop(authServer, zkClientService));
-          notifyStopped();
-        }
-      });
-    } else {
-      String warning = "AuthenticationServer not started since security is disabled." +
-          " To enable security, set \"security.enabled\" = \"true\" in cdap-site.xml" +
-          " and edit the appropriate configuration.";
-      LOG.warn(warning);
-    }
+    services.add(injector.getInstance(ExternalAuthenticationServer.class));
   }
 
   @Override
-  protected LoggingContext getLoggingContext(
-      EnvironmentOptions options) {
+  protected LoggingContext getLoggingContext(EnvironmentOptions options) {
     return new ServiceLoggingContext(
         NamespaceId.SYSTEM.getNamespace(),
         Constants.Logging.COMPONENT_NAME,

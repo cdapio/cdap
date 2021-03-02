@@ -36,7 +36,7 @@ public class ProxyUserIdentityExtractor implements UserIdentityExtractor {
 
   @Inject
   public ProxyUserIdentityExtractor(CConfiguration cConf) {
-    this.userIdentityHeader = cConf.get(Constants.Security.Authentication.AUTH_PROXY_USER_ID_HEADER);
+    this.userIdentityHeader = cConf.get(Constants.Security.Authentication.PROXY_USER_ID_HEADER);
   }
 
   /**

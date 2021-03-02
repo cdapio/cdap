@@ -19,6 +19,8 @@ package io.cdap.cdap.security.auth;
 import com.google.common.collect.Lists;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.inject.Key;
+import com.google.inject.TypeLiteral;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.guice.ConfigModule;
@@ -26,19 +28,26 @@ import io.cdap.cdap.common.guice.IOModule;
 import io.cdap.cdap.common.guice.InMemoryDiscoveryModule;
 import io.cdap.cdap.common.io.Codec;
 import io.cdap.cdap.common.utils.ImmutablePair;
+import io.cdap.cdap.common.utils.Tasks;
 import io.cdap.cdap.security.guice.FileBasedSecurityModule;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Tests for a key manager that saves keys to file.
  */
-public class TestFileBasedTokenManager extends TestTokenManager {
+public class FileBasedTokenManagerTest extends TestTokenManager {
 
   @ClassRule
   public static final TemporaryFolder TEMP_FOLDER = new TemporaryFolder();
@@ -59,7 +68,6 @@ public class TestFileBasedTokenManager extends TestTokenManager {
 
   /**
    * Test that two token managers can share a key that is written to a file.
-   * @throws Exception
    */
   @Test
   public void testFileBasedKey() throws Exception {
@@ -93,5 +101,56 @@ public class TestFileBasedTokenManager extends TestTokenManager {
     // Since both tokenManagers have the same key, they must both be able to validate the secret.
     tokenManager.validateSecret(token);
     tokenManager2.validateSecret(token);
+  }
+
+  @Test
+  public void testKeyUpdate() throws Exception {
+    File keyDir = TEMP_FOLDER.newFolder();
+    File keyFile = new File(keyDir, "key");
+
+    CConfiguration cConf = CConfiguration.create();
+    cConf.set(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH, keyFile.getAbsolutePath());
+
+    Injector injector = Guice.createInjector(
+      new IOModule(),
+      new ConfigModule(cConf),
+      new FileBasedSecurityModule(),
+      new InMemoryDiscoveryModule()
+    );
+
+    Codec<KeyIdentifier> codec = injector.getInstance(Key.get(new TypeLiteral<Codec<KeyIdentifier>>() { }));
+    FileBasedKeyManager keyManager = injector.getInstance(FileBasedKeyManager.class);
+
+    KeyIdentifier keyIdentifier = generateAndSaveKey(keyFile.toPath(), keyManager, codec, 0);
+
+    // Set the last modified time to 10 seconds ago to workaround the MacOS FS timestamp granularity (1 second)
+    // so that test can run faster.
+    // noinspection ResultOfMethodCallIgnored
+    keyFile.setLastModified(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(10));
+
+    try {
+      keyManager.startAndWait();
+      // Upon the key manager starts, the current key should be the same as the one from the key file.
+      Assert.assertEquals(keyIdentifier, keyManager.currentKey);
+
+      // Now update the key by doing an atomic move
+      Path tempFile = TEMP_FOLDER.newFile().toPath();
+      keyIdentifier = generateAndSaveKey(tempFile, keyManager, codec, 1);
+      Files.move(tempFile, keyFile.toPath(), StandardCopyOption.ATOMIC_MOVE);
+
+      // Wait for the key change in the key manager
+      Tasks.waitFor(keyIdentifier, () -> keyManager.currentKey, 20, TimeUnit.SECONDS, 100, TimeUnit.MILLISECONDS);
+
+    } finally {
+      keyManager.stopAndWait();
+    }
+  }
+
+  private KeyIdentifier generateAndSaveKey(Path keyFile, FileBasedKeyManager keyManager,
+                                           Codec<KeyIdentifier> codec,
+                                           int keyId) throws NoSuchAlgorithmException, IOException {
+    KeyIdentifier keyIdentifier = keyManager.generateKey(keyManager.createKeyGenerator(), keyId);
+    Files.write(keyFile, codec.encode(keyIdentifier));
+    return keyIdentifier;
   }
 }

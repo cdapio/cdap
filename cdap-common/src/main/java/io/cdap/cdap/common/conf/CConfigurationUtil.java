@@ -157,6 +157,15 @@ public class CConfigurationUtil extends Configuration {
     assertAlphanumeric(cConf, Constants.Dataset.TABLE_PREFIX);
   }
 
+  /**
+   * Returns {@code true} if the given key is explicitly
+   * defined (i.e. not coming from cdap-default.xml) in the given configuration.
+   */
+  public static boolean isOverridden(CConfiguration cConf, String key) {
+    String[] sources = cConf.getPropertySources(key);
+    return !(sources == null || sources.length < 1 || "cdap-default.xml".equals(sources[0]));
+  }
+
   private static void assertAlphanumeric(CConfiguration cConf, String key) {
     String value = cConf.get(key);
     Preconditions.checkNotNull(value, "Entry of CConf with key: %s is null", key);

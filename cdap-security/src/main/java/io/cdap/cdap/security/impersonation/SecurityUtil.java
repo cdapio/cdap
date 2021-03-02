@@ -123,14 +123,27 @@ public final class SecurityUtil {
   }
 
   /**
+   * Check if {@link Constants.Security#KERBEROS_ENABLED} is set. The value is default to the value of
+   * {@link Constants.Security#ENABLED}.
+   *
    * @param cConf CConfiguration object.
    * @return true, if Kerberos is enabled.
    */
   public static boolean isKerberosEnabled(CConfiguration cConf) {
-    return cConf.getBoolean(Constants.Security.KERBEROS_ENABLED,
-                            cConf.getBoolean(Constants.Security.ENABLED) &&
-                              cConf.getEnum(Constants.Security.Authentication.AUTHENTICATION_MODE,
-                                            AuthenticationMode.MANAGED).equals(AuthenticationMode.MANAGED));
+    return cConf.getBoolean(Constants.Security.KERBEROS_ENABLED, cConf.getBoolean(Constants.Security.ENABLED));
+  }
+
+  /**
+   * Checks if perimeter security is enabled in managed mode.
+   *
+   * @return {@code true} if security enabled in managed mode
+   * @see Constants.Security#ENABLED
+   * @see Constants.Security.Authentication#MODE
+   */
+  public static boolean isManagedSecurity(CConfiguration cConf) {
+    return cConf.getBoolean(Constants.Security.ENABLED)
+      && cConf.getEnum(Constants.Security.Authentication.MODE,
+                       AuthenticationMode.MANAGED).equals(AuthenticationMode.MANAGED);
   }
 
   public static String getMasterPrincipal(CConfiguration cConf) {

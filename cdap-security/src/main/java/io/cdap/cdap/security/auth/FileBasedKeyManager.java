@@ -16,69 +16,103 @@
 
 package io.cdap.cdap.security.auth;
 
-import com.google.common.base.Preconditions;
-import com.google.common.io.Files;
+import com.google.inject.Inject;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.io.Codec;
+import io.cdap.cdap.common.utils.DirUtils;
+import org.apache.twill.common.Threads;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Maintains secret keys used to sign and validate authentication tokens.
  * Writes and loads a serialized secret key from file.
  */
 public class FileBasedKeyManager extends MapBackedKeyManager {
-  private final String keyFilePath;
 
+  private static final Logger LOG = LoggerFactory.getLogger(FileBasedKeyManager.class);
+  private static final long KEY_FILE_POLL_INTERVAL_MILLIS = TimeUnit.SECONDS.toMillis(5);
+
+  private final Path keyFile;
   private final Codec<KeyIdentifier> keyIdentifierCodec;
+  private ScheduledExecutorService scheduler;
+  private long keyFileLastModified;
 
   /**
    * Create a new FileBasedKeyManager instance that persists keys in a local file.
-   * @param conf
    */
+  @Inject
   public FileBasedKeyManager(CConfiguration conf, Codec<KeyIdentifier> keyIdentifierCodec) {
     super(conf);
-    this.keyFilePath = conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH);
+    this.keyFile = Paths.get(conf.get(Constants.Security.CFG_FILE_BASED_KEYFILE_PATH));
     this.keyIdentifierCodec = keyIdentifierCodec;
   }
 
   @Override
   public void doInit() throws IOException {
-    File keyFile = new File(keyFilePath);
-    String keyFileDirectory = keyFile.getParent();
-    File keyFileDir = new File(keyFileDirectory);
-
     // Create directory for keyfile if it doesn't exist already.
-    if (!keyFileDir.exists() && !keyFileDir.mkdir()) {
-      throw new IOException("Failed to create directory " + keyFileDirectory + " for keyfile storage.");
-    } else {
-      Preconditions.checkState(keyFileDir.isDirectory(),
-                               "Configured keyFile directory " + keyFileDirectory + " is not a directory!");
-      Preconditions.checkState(keyFileDir.canRead(),
-                               "Configured keyFile directory " + keyFileDirectory + " exists but is not readable!");
+    if (!DirUtils.mkdirs(keyFile.toFile().getParentFile())) {
+      throw new IOException("Failed to create directory " + keyFile.getParent() + " for key file storage.");
     }
 
-    // Read existing key from file.
-    if (keyFile.exists()) {
-      KeyIdentifier storedKey = keyIdentifierCodec.decode(Files.toByteArray(keyFile));
-      this.currentKey = storedKey;
-      // the file-based key is considered valid forever
-      allKeys.put(storedKey.getKeyId(), storedKey);
-    } else {
-      Preconditions.checkState(keyFileDir.canWrite(),
-                               "Configured keyFile directory " + keyFileDirectory + " exists but is not writable!");
-      // Create a new key and write to file.
-      generateKey();
-      keyFile.createNewFile();
-      Files.write(keyIdentifierCodec.encode(currentKey), keyFile);
-    }
+    reloadKeyFile();
+
+    scheduler = Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("key-manager-watcher"));
+    scheduler.scheduleWithFixedDelay(this::checkKeyFileChange,
+                                     KEY_FILE_POLL_INTERVAL_MILLIS,
+                                     KEY_FILE_POLL_INTERVAL_MILLIS, TimeUnit.MILLISECONDS);
   }
-
 
   @Override
   public void shutDown() {
-    // nothing to do
+    if (scheduler != null) {
+      scheduler.shutdownNow();
+    }
+  }
+
+  /**
+   * Reloads the key from the configured key file.
+   */
+  private void reloadKeyFile() throws IOException {
+    if (Files.exists(keyFile)) {
+      keyFileLastModified = Files.getLastModifiedTime(keyFile).toMillis();
+      KeyIdentifier key = keyIdentifierCodec.decode(Files.readAllBytes(keyFile));
+      this.currentKey = key;
+      allKeys.put(key.getKeyId(), key);
+
+      LOG.debug("Key {} read from file {}", key.getKeyId(), keyFile);
+    } else {
+      // Create a new key and write to the file.
+      KeyIdentifier key = generateKey();
+      Files.write(keyFile, keyIdentifierCodec.encode(key), StandardOpenOption.CREATE_NEW);
+      // On creating new key, we leave the last modified time to 0. This will trigger
+      // and extra reload key call when the file poller thread see the newer timestamp.
+
+      LOG.debug("Generated key {} and written to file {}", key.getKeyId(), keyFile);
+    }
+  }
+
+  /**
+   * Watches for file system changes to the key file. On file change detected,
+   * {@link #reloadKeyFile()} will be called.
+   */
+  private void checkKeyFileChange() {
+    try {
+      if (!Files.exists(keyFile) || keyFileLastModified != Files.getLastModifiedTime(keyFile).toMillis()) {
+        reloadKeyFile();
+      }
+    } catch (Exception e) {
+      LOG.warn("Failed to check and reload key file. Will be retried", e);
+    }
   }
 }
