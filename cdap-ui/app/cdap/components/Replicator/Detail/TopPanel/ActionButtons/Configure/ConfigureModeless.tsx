@@ -239,9 +239,7 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
             appName={name}
             onProfileSelect={handleProfileSelect}
             selectedProfile={activeProfile}
-            tableTitle={
-              'Select the compute profile you want to use to run this replication pipeline'
-            }
+            tableTitle="Select the compute profile you want to use to run this replication job"
           />
         </div>
       </div>

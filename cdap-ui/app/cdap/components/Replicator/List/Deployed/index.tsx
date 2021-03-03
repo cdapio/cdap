@@ -112,7 +112,7 @@ const DeployedView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
             config = JSON.parse(replicator.configuration);
           } catch (e) {
             // tslint:disable-next-line: no-console
-            console.log('Failed to parse replication pipeline configuration', e);
+            console.log('Failed to parse replication job configuration', e);
             return;
           }
 

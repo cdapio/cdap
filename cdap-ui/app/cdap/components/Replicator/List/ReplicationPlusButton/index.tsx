@@ -70,7 +70,7 @@ const ReplicationPlusButtonView: React.FC<WithStyles<typeof styles>> = ({ classe
 
   const contextItems = [
     {
-      label: 'Create a replication pipeline',
+      label: 'Create a replication job',
       to: `/ns/${getCurrentNamespace()}/replication/create`,
     },
     {
