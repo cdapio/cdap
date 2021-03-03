@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -35,6 +35,7 @@ import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.guice.SecurityModule;
 import io.cdap.cdap.security.guice.SecurityModules;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.twill.zookeeper.ZKClientService;
 
 import java.util.ArrayList;
@@ -67,7 +68,7 @@ public class RouterServiceMain extends AbstractServiceMain<EnvironmentOptions> {
   }
 
   private List<Module> getSecurityModules(CConfiguration cConf) {
-    if (!cConf.getBoolean(Constants.Security.ENABLED)) {
+    if (!SecurityUtil.isManagedSecurity(cConf)) {
       return Collections.singletonList(new SecurityModules().getStandaloneModules());
     }
 
