@@ -47,6 +47,7 @@ import TableColumnGroup from 'components/Table/TableColumnGroup';
 import ColumnGroup from 'components/Table/ColumnGroup';
 import TimePeriodDropdown from 'components/Replicator/Detail/TimePeriodDropdown';
 import capitalize from 'lodash/capitalize';
+import { truncateNumber } from 'services/helpers';
 
 const styles = (theme): StyleRules => {
   return {
@@ -310,9 +311,9 @@ const TablesListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
                 <TableCell textAlign="right">{tableMetrics.eventsPerMin}</TableCell>
                 <TableCell textAlign="right">{tableMetrics.latency}</TableCell>
                 <TableCell />
-                <TableCell textAlign="right">{tableMetrics.inserts}</TableCell>
-                <TableCell textAlign="right">{tableMetrics.updates}</TableCell>
-                <TableCell textAlign="right">{tableMetrics.deletes}</TableCell>
+                <TableCell textAlign="right">{truncateNumber(tableMetrics.inserts)}</TableCell>
+                <TableCell textAlign="right">{truncateNumber(tableMetrics.updates)}</TableCell>
+                <TableCell textAlign="right">{truncateNumber(tableMetrics.deletes)}</TableCell>
               </TableRow>
             );
           })}
