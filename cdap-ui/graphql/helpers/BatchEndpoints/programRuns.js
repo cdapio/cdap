@@ -25,7 +25,7 @@ getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-export async function batchProgramRuns(req, auth) {
+export async function batchProgramRuns(req, auth, userIdProperty, userIdValue) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runs`);
@@ -34,7 +34,13 @@ export async function batchProgramRuns(req, auth) {
     return new ApolloError(error, statusCode, { errorOrigin: 'programRuns' });
   }
 
-  const runInfo = await requestPromiseWrapper(options, auth, null, errorModifiersFn);
+  const authContext = {
+    auth,
+    userIdProperty,
+    userIdValue
+  };
+
+  const runInfo = await requestPromiseWrapper(options, authContext, null, errorModifiersFn);
 
   const runsMap = {};
   runInfo.forEach((run) => {

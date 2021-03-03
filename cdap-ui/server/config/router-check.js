@@ -48,7 +48,8 @@ AuthAddress.prototype.doPing = function(cdapConfig) {
     deferred = q.defer(),
     attempts = 0,
     url = cdapConfig['router.server.address'],
-    checkTimeout = cdapConfig['dashboard.router.check.timeout.secs'];
+    checkTimeout = cdapConfig['dashboard.router.check.timeout.secs'],
+    authMode = cdapConfig['security.authentication.mode'];
 
   if (cdapConfig['ssl.external.enabled'] === 'true') {
     url = 'https://' + url + ':' + cdapConfig['router.ssl.server.port'];
@@ -71,11 +72,10 @@ AuthAddress.prototype.doPing = function(cdapConfig) {
         agent: false,
       },
       function(err, response, body) {
-        if (!err && (response && response.statusCode < 500)) {
-          if (response.statusCode === 401) {
-            self.enabled = true;
-            self.addresses = JSON.parse(body).auth_uri || [];
-          }
+        if (!err && (response && response.statusCode === 401)) {
+          self.enabled = true;
+          self.addresses = JSON.parse(body).auth_uri || [];
+          log.info('Authentication mode: ' + authMode);
           log.info('Successfully connected to CDAP Router.');
           log.info('CDAP security is ' + (self.enabled ? 'enabled' : 'disabled') + '.');
           deferred.resolve(self);

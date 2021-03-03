@@ -705,6 +705,17 @@ function setupExperiments() {
   });
 };
 
+function isAuthSetToProxyMode() {
+  return window.CDAP_CONFIG.securityEnabled &&  window.CDAP_CONFIG.securityMode === 'PROXY';
+}
+
+function isAuthSetToManagedMode() {
+  return (
+    window.CDAP_CONFIG.securityEnabled
+    && ['', undefined, 'MANAGED'].indexOf(window.CDAP_CONFIG.securityMode) !== -1
+  );
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -755,4 +766,6 @@ export {
   isValidEntityName,
   setupExperiments,
   defaultEventObject,
+  isAuthSetToProxyMode,
+  isAuthSetToManagedMode,
 };

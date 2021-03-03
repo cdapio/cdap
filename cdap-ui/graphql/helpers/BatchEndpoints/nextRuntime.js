@@ -24,7 +24,7 @@ getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-export async function batchNextRuntime(req, auth) {
+export async function batchNextRuntime(req, auth, userIdProperty, userIdValue) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/nextruntime`);
@@ -33,9 +33,14 @@ export async function batchNextRuntime(req, auth) {
   const errorModifiersFn = (error, statusCode) => {
     return new ApolloError(error, statusCode, { errorOrigin: "runs" });
   };
+  const authContext = {
+    auth,
+    userIdProperty,
+    userIdValue
+  };
   let nextRuntimeInfo = await requestPromiseWrapper(
     options,
-    auth,
+    authContext,
     null,
     errorModifiersFn
   );

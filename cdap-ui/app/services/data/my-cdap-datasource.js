@@ -14,7 +14,7 @@
  * the License.
  */
 angular.module(PKG.name + '.services')
-  .factory('MyCDAPDataSource', function(MyDataSource, $rootScope, myCdapUrl) {
+  .factory('MyCDAPDataSource', function(MyDataSource, $rootScope, myCdapUrl, $cookies) {
     function MyCDAPDataSource(scope) {
       scope = scope || $rootScope.$new();
 
@@ -29,9 +29,9 @@ angular.module(PKG.name + '.services')
 
       // FIXME: There is a circular dependency and that is why
       // myAuth.isAuthenticated is not used. There should be a better way to do this.
-      if (window.CDAP_CONFIG.securityEnabled && $rootScope.currentUser && $rootScope.currentUser.token) {
+      if (window.CDAP_CONFIG.securityEnabled && $cookies.get('CDAP_Auth_Token')) {
         resource.headers = {
-          Authorization: 'Bearer '+ $rootScope.currentUser.token
+          Authorization: 'Bearer '+ $cookies.get('CDAP_Auth_Token')
         };
       }
 
@@ -52,7 +52,11 @@ angular.module(PKG.name + '.services')
     };
 
     MyCDAPDataSource.prototype.request = function(resource, cb, errorCb) {
-      if (window.CDAP_CONFIG.securityEnabled && $rootScope.currentUser && $rootScope.currentUser.token) {
+      if (
+        window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode() &&
+        $rootScope.currentUser &&
+        $rootScope.currentUser.token
+      ) {
         resource.headers = {
           Authorization: 'Bearer '+ $rootScope.currentUser.token
         };
