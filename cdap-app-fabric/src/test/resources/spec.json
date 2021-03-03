@@ -1,0 +1,46 @@
+{
+  "specVersion": "1.0",
+  "label": "Label",
+  "description": "Description",
+  "author": "Author",
+  "org": "Org",
+  "created": 1603825065,
+  "categories": [ 
+    "hydrator-plugin" 
+  ],
+  "cdapVersion": "[6.1.1,7.0.0-SNAPSHOT)",
+  "preview": true,
+  "actions": [
+    {
+      "type": "one_step_deploy_plugin",
+      "label": "Label",
+      "arguments": [
+        {
+          "name": "name",
+          "value": "my-plugin",
+          "canModify": false
+        },
+        {
+          "name": "version",
+          "value": "1.3.0",
+          "canModify": false
+        },
+        {
+          "name": "scope",
+          "value": "user",
+          "canModify": false
+        },
+        {
+          "name": "config",
+          "value": "my-plugins-1.3.0.json",
+          "canModify": false
+        },
+        {
+          "name": "jar",
+          "value": "my-plugins-1.3.0.jar",
+          "canModify": false
+        }
+      ]
+    }
+  ]
+}

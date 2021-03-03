@@ -16,8 +16,10 @@
 
 package io.cdap.cdap.internal.capability;
 
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -31,15 +33,18 @@ public class CapabilityConfig {
   private final String capability;
   private final List<SystemApplication> applications;
   private final List<SystemProgram> programs;
+  private final List<URL> hubs;
 
   public CapabilityConfig(String label, CapabilityStatus status, String capability,
                           Collection<? extends SystemApplication> applications,
-                          Collection<? extends SystemProgram> programs) {
+                          Collection<? extends SystemProgram> programs,
+                          Collection<URL> hubs) {
     this.label = label;
     this.status = status;
     this.capability = capability;
     this.applications = new ArrayList<>(applications);
     this.programs = new ArrayList<>(programs);
+    this.hubs = new ArrayList<>(hubs);
   }
 
   /**
@@ -71,6 +76,13 @@ public class CapabilityConfig {
   }
 
   /**
+   * @return {@link List} of hubs from which resources will be auto installed when this capability is enabled.
+   */
+  public List<URL> getHubs() {
+    return hubs != null ? hubs : Collections.emptyList();
+  }
+
+  /**
    * @return {@link List} of {@link SystemProgram} for this capability.
    */
   public List<SystemProgram> getPrograms() {
@@ -90,11 +102,12 @@ public class CapabilityConfig {
       status == otherConfig.status &&
       Objects.equals(capability, otherConfig.capability) &&
       Objects.equals(applications, otherConfig.applications) &&
-      Objects.equals(programs, otherConfig.programs);
+      Objects.equals(programs, otherConfig.programs) &&
+      Objects.equals(hubs, otherConfig.hubs);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(label, status, capability, applications, programs);
+    return Objects.hash(label, status, capability, applications, programs, hubs);
   }
 }

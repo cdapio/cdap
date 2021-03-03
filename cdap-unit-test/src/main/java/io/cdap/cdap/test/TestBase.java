@@ -241,6 +241,7 @@ public class TestBase {
     File capabilityFolder = new File(localDataDir.toString(), "capability");
     capabilityFolder.mkdir();
     cConf.set(Constants.Capability.CONFIG_DIR, capabilityFolder.getAbsolutePath());
+    cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
 
     org.apache.hadoop.conf.Configuration hConf = new org.apache.hadoop.conf.Configuration();
     hConf.addResource("mapred-site-local.xml");
@@ -424,7 +425,8 @@ public class TestBase {
       File capabilityFile = new File(cConf.get(Constants.Capability.CONFIG_DIR),
                                      String.format("%s.json", capability));
       CapabilityConfig capabilityConfig = new CapabilityConfig("Enable", CapabilityStatus.ENABLED, capability,
-                                                               Collections.emptyList(), Collections.emptyList());
+                                                               Collections.emptyList(), Collections.emptyList(),
+                                                               Collections.emptyList());
       String content = new Gson().toJson(capabilityConfig);
       try (FileWriter writer = new FileWriter(capabilityFile)) {
         writer.write(content);

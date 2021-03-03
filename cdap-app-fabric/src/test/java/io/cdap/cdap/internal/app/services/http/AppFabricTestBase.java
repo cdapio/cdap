@@ -314,6 +314,7 @@ public abstract class AppFabricTestBase {
     cConf.set(Constants.CFG_LOCAL_DATA_DIR, tmpFolder.newFolder("data").getAbsolutePath());
     cConf.set(Constants.AppFabric.OUTPUT_DIR, System.getProperty("java.io.tmpdir"));
     cConf.set(Constants.AppFabric.TEMP_DIR, System.getProperty("java.io.tmpdir"));
+    cConf.setInt(Constants.Capability.AUTO_INSTALL_THREADS, 5);
     cConf.setBoolean(Constants.Dangerous.UNRECOVERABLE_RESET, true);
     String updateSchedules = System.getProperty(Constants.AppFabric.APP_UPDATE_SCHEDULES);
     if (updateSchedules != null) {
