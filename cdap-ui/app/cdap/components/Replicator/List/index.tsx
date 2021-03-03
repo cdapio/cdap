@@ -62,7 +62,7 @@ const styles = (theme): StyleRules => {
 const ListView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div className={classes.root}>
-      <EntityTopPanel title="Replication pipelines" />
+      <EntityTopPanel title="Replication jobs" />
       <ReplicationPlusButton />
       <div className={classes.content}>
         <div className={classes.linkContainer}>

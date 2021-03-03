@@ -94,7 +94,7 @@ const TopPanelView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         <div className={classes.contentContainer}>
           <Heading
             type={HeadingTypes.h5}
-            label={name ? name : 'Create new replication pipeline'}
+            label={name ? name : 'Create new replication job'}
             className={`${classes.heading} ${classes.contentHeading}`}
           />
 
@@ -123,7 +123,7 @@ const TopPanelView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
         <div className={classes.reviewContentContainer}>
           <Heading
             type={HeadingTypes.h5}
-            label="Review replication pipeline details"
+            label="Review replication job details"
             className={classes.heading}
           />
         </div>
