@@ -24,14 +24,14 @@ getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-export async function queryTypeStatusResolver(parent, args, context) {
+export async function queryTypeStatusResolver(parent, args, authContext) {
   const options = getGETRequestOptions();
   options.url = constructUrl(cdapConfig, '/ping');
   const errorModifiersFn = (error, statusCode) => {
     return new ApolloError(error, statusCode, { errorOrigin: 'statusPing' });
   }
 
-  const status = await requestPromiseWrapper(options, context.auth, null, errorModifiersFn);
+  const status = await requestPromiseWrapper(options, authContext, null, errorModifiersFn);
 
   return status.trim();
 }

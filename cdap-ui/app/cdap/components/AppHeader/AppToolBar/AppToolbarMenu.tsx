@@ -34,6 +34,7 @@ import Divider from '@material-ui/core/Divider';
 import AccessTokenModal from 'components/AppHeader/AccessTokenModal';
 import Cookies from 'universal-cookie';
 import RedirectToLogin from 'services/redirect-to-login';
+import { isAuthSetToManagedMode } from 'services/helpers';
 
 const cookie = new Cookies();
 
@@ -179,7 +180,7 @@ class AppToolbarMenu extends React.Component<IAppToolbarMenuProps, IAppToolbarSt
                         </a>
                       </MenuItem>
                     </If>
-                    <If condition={this.state.username && window.CDAP_CONFIG.securityEnabled}>
+                    <If condition={isAuthSetToManagedMode() && this.state.username !== ''}>
                       <React.Fragment>
                         <Divider />
                         <MenuItem
@@ -214,7 +215,7 @@ class AppToolbarMenu extends React.Component<IAppToolbarMenuProps, IAppToolbarSt
             </Grow>
           )}
         </Popper>
-        <If condition={this.state.username && window.CDAP_CONFIG.securityEnabled}>
+        <If condition={isAuthSetToManagedMode() && this.state.username !== ''}>
           <AccessTokenModal
             cdapVersion={cdapVersion}
             isOpen={this.state.accessTokenModalOpen}

@@ -20,7 +20,7 @@ angular.module(PKG.name + '.services')
     return new MyPersistentStorage('user');
   })
 
-  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers, $rootScope, myAuth, MYAUTH_EVENT, MY_CONFIG) {
+  .factory('MyPersistentStorage', function MyPersistentStorageFactory($q, MyCDAPDataSource, myHelpers, $rootScope, MYAUTH_EVENT) {
 
     var data = new MyCDAPDataSource();
     function MyPersistentStorage (type) {
@@ -28,7 +28,7 @@ angular.module(PKG.name + '.services')
       this.headers = {
         'Content-Type': 'application/json'
       };
-      if (MY_CONFIG.securityEnabled) {
+      if (window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode()) {
         $rootScope.$on (MYAUTH_EVENT.logoutSuccess, function () {
           this.data = [];
           delete this.headers['Authorization'];
@@ -51,7 +51,7 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.set = function (key, value) {
 
       myHelpers.deepSet(this.data, key, value);
-      if (window.CDAP_CONFIG.securityEnabled) {
+      if (window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode()) {
         this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
       }
       return data.request(
@@ -75,7 +75,7 @@ angular.module(PKG.name + '.services')
     MyPersistentStorage.prototype.get = function (key, force) {
 
       var val = myHelpers.deepGet(this.data, key, true);
-      if (window.CDAP_CONFIG.securityEnabled) {
+      if (window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode()) {
         this.headers['Authorization'] = ($rootScope.currentUser.token ? 'Bearer ' + $rootScope.currentUser.token: null);
       }
 
