@@ -82,6 +82,7 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
   @GET
   @Path("v1/health")
   public void healthCheck(HttpServiceRequest request, HttpServiceResponder responder) {
+    getContext()
     responder.sendStatus(HttpURLConnection.HTTP_OK);
   }
 
