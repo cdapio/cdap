@@ -151,7 +151,7 @@ const ActionButtonsView: React.FC<ICreateContext & WithStyles<typeof styles>> = 
           <If condition={deployLoading}>
             <LoadingSVG />
           </If>
-          Deploy Replication Pipeline
+          Deploy Replication Job
         </Button>
 
         <Button color="primary" onClick={saveAndClose}>

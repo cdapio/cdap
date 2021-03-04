@@ -102,9 +102,7 @@ const DeleteConfirmationView: React.FC<IDeleteConfirmationView> = ({
   return (
     <ConfirmationModal
       headerTitle={
-        type === InstanceType.app
-          ? 'Delete replication pipeline'
-          : 'Delete replication pipeline draft'
+        type === InstanceType.app ? 'Delete replication job' : 'Delete replication job draft'
       }
       toggleModal={closeModal}
       confirmationElem={confirmElem}
@@ -112,7 +110,7 @@ const DeleteConfirmationView: React.FC<IDeleteConfirmationView> = ({
       confirmFn={handleDelete}
       cancelFn={cancel}
       isOpen={show}
-      errorMessage={!error ? '' : 'Failed to delete replication pipeline'}
+      errorMessage={!error ? '' : 'Failed to delete replication job'}
       extendedMessage={error}
     />
   );

@@ -68,7 +68,7 @@ const NumInstancesEditor = ({ onChange, value }) => {
     required: true,
     name: 'numInstance',
     description:
-      'The tables in a replication pipeline are evenly distributed amongst all the tasks. Set this to a higher number to distribute the load amongst a larger number of tasks, thereby increasing the parallelism of the replication pipeline. This value cannot be changed after the pipeline is created.',
+      'The tables in a replication job are evenly distributed amongst all the tasks. Set this to a higher number to distribute the load amongst a larger number of tasks, thereby increasing the parallelism of the replication job. This value cannot be changed after the job is created.',
   };
 
   function handleChange(val) {

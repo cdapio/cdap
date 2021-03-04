@@ -29,7 +29,7 @@ const styles = (): StyleRules => {
 const TimePeriodSelectionView: React.FC<WithStyles<typeof styles>> = ({ classes }) => {
   return (
     <div>
-      <span className={classes.applyFont}>Replication pipeline activities - View</span>
+      <span className={classes.applyFont}>Replication job activities - View</span>
       <TimePeriodDropdown classes={{ selectRoot: classes.applyFont }} />
     </div>
   );
