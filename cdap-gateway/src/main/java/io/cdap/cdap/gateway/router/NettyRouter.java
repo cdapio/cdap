@@ -34,6 +34,7 @@ import io.cdap.cdap.gateway.router.handlers.HttpRequestRouter;
 import io.cdap.cdap.gateway.router.handlers.HttpStatusRequestHandler;
 import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.http.SSLConfig;
 import io.cdap.http.SSLHandlerFactory;
 import io.netty.bootstrap.ServerBootstrap;
@@ -125,7 +126,9 @@ public class NettyRouter extends AbstractIdleService {
 
   @Override
   protected void startUp() throws Exception {
-    tokenValidator.startAndWait();
+    if (SecurityUtil.isManagedSecurity(cConf)) {
+      tokenValidator.startAndWait();
+    }
     ChannelGroup channelGroup = new DefaultChannelGroup(ImmediateEventExecutor.INSTANCE);
     serverCancellable = startServer(createServerBootstrap(channelGroup), channelGroup);
   }
@@ -136,7 +139,9 @@ public class NettyRouter extends AbstractIdleService {
     LOG.info("Stopping Netty Router...");
 
     serverCancellable.cancel();
-    tokenValidator.stopAndWait();
+    if (SecurityUtil.isManagedSecurity(cConf)) {
+      tokenValidator.stopAndWait();
+    }
 
     LOG.info("Stopped Netty Router.");
   }
@@ -202,8 +207,7 @@ public class NettyRouter extends AbstractIdleService {
           pipeline.addLast("http-status-request-handler", new HttpStatusRequestHandler());
           if (securityEnabled) {
             pipeline.addLast("access-token-authenticator",
-                             new AuthenticationHandler(cConf, tokenValidator,
-                                                       discoveryServiceClient, userIdentityExtractor));
+                             new AuthenticationHandler(cConf, discoveryServiceClient, userIdentityExtractor));
           }
           if (cConf.getBoolean(Constants.Router.ROUTER_AUDIT_LOG_ENABLED)) {
             pipeline.addLast("audit-log", new AuditLogHandler());

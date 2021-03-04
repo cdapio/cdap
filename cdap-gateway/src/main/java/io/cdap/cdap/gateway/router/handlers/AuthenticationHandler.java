@@ -24,7 +24,6 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.logging.AuditLogEntry;
 import io.cdap.cdap.common.utils.Networks;
-import io.cdap.cdap.security.auth.TokenValidator;
 import io.cdap.cdap.security.auth.UserIdentityExtractionResponse;
 import io.cdap.cdap.security.auth.UserIdentityExtractionState;
 import io.cdap.cdap.security.auth.UserIdentityExtractor;
@@ -82,8 +81,7 @@ public class AuthenticationHandler extends ChannelInboundHandlerAdapter {
   private final DiscoveryServiceClient discoveryServiceClient;
   private final UserIdentityExtractor userIdentityExtractor;
 
-  public AuthenticationHandler(CConfiguration cConf, TokenValidator tokenValidator,
-                               DiscoveryServiceClient discoveryServiceClient,
+  public AuthenticationHandler(CConfiguration cConf, DiscoveryServiceClient discoveryServiceClient,
                                UserIdentityExtractor userIdentityExtractor) {
     this.cConf = cConf;
     this.realm = cConf.get(Constants.Security.CFG_REALM);
