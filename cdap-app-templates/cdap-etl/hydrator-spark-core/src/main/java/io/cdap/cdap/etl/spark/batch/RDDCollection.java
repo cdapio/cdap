@@ -42,6 +42,7 @@ import org.apache.spark.sql.functions;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.storage.StorageLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.collection.JavaConversions;
@@ -256,6 +257,19 @@ public class RDDCollection<T> extends BaseRDDCollection<T> {
     StructType rightSchema = DataFrames.toDataType(rightInfo.getSchema());
     DataFrame rightDF = toDataFrame(((JavaRDD<StructuredRecord>) rightData.getUnderlying()).map(recordsInCounter),
                                     rightSchema);
+
+    // if this is not a broadcast join, Spark will reprocess each side multiple times, depending on the number
+    // of partitions. If the left side has N partitions and the right side has M partitions,
+    // the left side gets reprocessed M times and the right side gets reprocessed N times.
+    // Cache the input to prevent confusing metrics and potential source re-reading.
+    // this is only necessary for inner joins, since outer joins are automatically changed to
+    // BroadcastNestedLoopJoins by Spark
+    boolean isInner = joinRequest.getLeft().isRequired() && joinRequest.getRight().isRequired();
+    boolean isBroadcast = joinRequest.getLeft().isBroadcast() || joinRequest.getRight().isBroadcast();
+    if (isInner && !isBroadcast) {
+      leftDF = leftDF.persist(StorageLevel.DISK_ONLY());
+      rightDF = rightDF.persist(StorageLevel.DISK_ONLY());
+    }
 
     // register using unique names to avoid collisions.
     String leftId = UUID.randomUUID().toString().replaceAll("-", "");
