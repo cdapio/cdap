@@ -1307,6 +1307,11 @@ public class AutoJoinerTest extends HydratorTestBase {
     expected.add(StructuredRecord.builder(expectedSchema).set("username", "Fred").set("age_group", "toddler").build());
 
     Assert.assertEquals(expected, new HashSet<>(outputRecords));
+
+    validateMetric(6, appId, "users.records.out");
+    validateMetric(6, appId, "age_groups.records.out");
+    validateMetric(12, appId, "join.records.in");
+    validateMetric(expected.size(), appId, "join.records.out");
   }
 
   @Test
