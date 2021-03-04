@@ -123,12 +123,28 @@ public class ValidationHandler extends AbstractSystemHttpServiceHandler {
     DefaultPipelineConfigurer pipelineConfigurer =
       new DefaultPipelineConfigurer(validatingConfigurer, stageConfig.getName(), Engine.SPARK, stageConfigurer);
 
+    Map<String, String> arguments = Collections.emptyMap();
+
+    // Fetch preferences for this instance and namespace and use them as program arguments if the user selects
+    // this option.
+    if (validationRequest.getResolveMacrosFromPreferences()) {
+      try {
+        arguments = getContext().getPreferencesForNamespace(namespace, true);
+      } catch (IllegalArgumentException iae) {
+        // If this method returns IllegalArgumentException, it means the namespace doesn't exist.
+        // If this is the case, we return a 404 error.
+        responder.sendError(HttpURLConnection.HTTP_NOT_FOUND,
+                            String.format("Namespace '%s' does not exist", namespace));
+        return;
+      }
+    }
+
     // evaluate secure macros
     Map<String, MacroEvaluator> evaluators = ImmutableMap.of(
       SecureStoreMacroEvaluator.FUNCTION_NAME, new SecureStoreMacroEvaluator(namespace, getContext()),
       OAuthMacroEvaluator.FUNCTION_NAME, new OAuthMacroEvaluator(getContext())
     );
-    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(Collections.emptyMap()), evaluators);
+    MacroEvaluator macroEvaluator = new DefaultMacroEvaluator(new BasicArguments(arguments), evaluators);
 
     Map<String, String> evaluatedProperties = getContext()
       .evaluateMacros(namespace, stageConfig.getPlugin().getProperties(), macroEvaluator,
