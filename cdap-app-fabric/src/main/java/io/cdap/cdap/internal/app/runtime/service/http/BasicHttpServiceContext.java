@@ -31,6 +31,7 @@ import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
 import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
+import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -46,6 +47,7 @@ import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import io.cdap.cdap.messaging.MessagingService;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
@@ -88,6 +90,7 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
   private final ArtifactManager artifactManager;
   private final PluginFinder pluginFinder;
   private final TransactionRunner transactionRunner;
+  private final PreferencesFetcher preferencesFetcher;
   private final Collection<Closeable> closeables;
 
   /**
@@ -117,7 +120,8 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
                                  PluginFinder pluginFinder, TransactionRunner transactionRunner,
-                                 FieldLineageWriter fieldLineageWriter) {
+                                 FieldLineageWriter fieldLineageWriter,
+                                 PreferencesFetcher preferencesFetcher) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
@@ -132,6 +136,7 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
     this.artifactManager = artifactManager;
     this.pluginFinder = pluginFinder;
     this.transactionRunner = transactionRunner;
+    this.preferencesFetcher = preferencesFetcher;
     this.closeables = new ArrayList<>();
   }
 
@@ -252,5 +257,24 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
     }
 
     return evaluated;
+  }
+
+  /**
+   * Get preferences for the supplied namespace.
+   *
+   * @param namespace the name of the namespace to fetch preferences for.
+   * @param resolved true if resolved properties are desired.
+   * @return Map containing the preferences for this namespace
+   * @throws IOException if the preferencesFetcher could not complete the request.
+   * @throws IllegalArgumentException if the supplied namespace doesn't exist.
+   */
+  @Override
+  public Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
+    throws IOException, IllegalArgumentException {
+    try {
+      return preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties();
+    } catch (NotFoundException nfe) {
+      throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
+    }
   }
 }
