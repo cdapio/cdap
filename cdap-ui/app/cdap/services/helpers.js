@@ -101,7 +101,7 @@ function truncateNumber(num, precision = 0) {
 
   let format = '0';
   if (precision === 0) {
-    return numeral(num).format(`${format}a`);
+    return numeral(num).format(`${format}a`).toUpperCase();
   }
 
   format = format.concat('.');
@@ -112,7 +112,7 @@ function truncateNumber(num, precision = 0) {
 
   format = `${format}a`;
 
-  return numeral(num).format(format);
+  return numeral(num).format(format).toUpperCase();
 }
 
 // FIXME: humanReadableDate(date, options = {isMilliseconds: false, shortForm: false}) would have been\
