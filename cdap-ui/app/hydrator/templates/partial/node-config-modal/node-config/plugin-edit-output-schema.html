@@ -114,7 +114,8 @@
       schema-title="'Output Schema'"
       is-schema-macro="HydratorPlusPlusNodeConfigCtrl.isSchemaMacro()"
       disabled="isDisabled || HydratorPlusPlusNodeConfigCtrl.datasetAlreadyExists || HydratorPlusPlusNodeConfigCtrl.state.groupsConfig.outputSchema.implicitSchema"
-      errors="HydratorPlusPlusNodeConfigCtrl.outputSchemaErrors">
+      errors="HydratorPlusPlusNodeConfigCtrl.outputSchemaErrors"
+      reset-errors="HydratorPlusPlusNodeConfigCtrl.validating">
     </plugin-schema-editor>
   </div>
 
