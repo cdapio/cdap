@@ -38,6 +38,7 @@ export default function PipelineModeless({
   fullScreen,
   arrow,
   placement = 'bottom',
+  popoverClassName = '',
 }) {
   let anchorElCb;
   if (typeof anchorEl === 'string') {
@@ -50,11 +51,14 @@ export default function PipelineModeless({
   return (
     <Popper
       id="pipeline-modeless"
-      className={classnames({
-        'pipeline-modeless': true,
-        'full-screen': fullScreen,
-        arrow,
-      })}
+      className={classnames(
+        {
+          'pipeline-modeless': true,
+          'full-screen': fullScreen,
+          arrow,
+        },
+        popoverClassName
+      )}
       open={open}
       anchorEl={anchorElCb || anchorEl}
       placement={placement}
@@ -119,4 +123,5 @@ PipelineModeless.propTypes = {
   fullScreen: PropTypes.bool,
   children: PropTypes.node,
   placement: PropTypes.string,
+  popoverClassName: PropTypes.string,
 };

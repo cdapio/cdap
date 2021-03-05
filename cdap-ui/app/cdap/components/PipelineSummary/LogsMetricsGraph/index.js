@@ -43,21 +43,26 @@ import SortableStickyTable from 'components/SortableStickyTable';
 import { getYAxisProps } from 'components/PipelineSummary/RunsGraphHelpers';
 import ee from 'event-emitter';
 import EmptyMessageContainer from 'components/PipelineSummary/EmptyMessageContainer';
-import isEqual from 'lodash/isEqual';
 import { getLogViewerPageUrl } from 'components/LogViewer/LogViewerPage';
+import colorVariables from 'styles/variables.scss';
 
+// TODO: CDAP-17725
 const WARNINGBARCOLOR = '#FDA639';
-const ERRORBARCOLOR = '#A40403';
+const ERRORBARCOLOR = colorVariables.red01;
+const HOVER_STROKE_COLOR = 'black';
+const STROKE_WIDTH = 2;
 const PREFIX = `features.PipelineSummary.logsMetricsGraph`;
 const GRAPHPREFIX = `features.PipelineSummary.graphs`;
 const COLOR_LEGEND = [
   {
     title: T.translate(`${PREFIX}.legend1`),
     color: WARNINGBARCOLOR,
+    strokeWidth: 20,
   },
   {
     title: T.translate(`${PREFIX}.legend2`),
     color: ERRORBARCOLOR,
+    strokeWidth: 20,
   },
 ];
 const tableHeaders = [
@@ -137,11 +142,23 @@ export default class LogsMetricsGraph extends Component {
           x,
           y: objectQuery(run, 'logsMetrics', 'system.app.log.warn') || 0,
           runid: run.runid,
+          color: WARNINGBARCOLOR,
+          fill: WARNINGBARCOLOR,
+          stroke:
+            objectQuery(this.state.currentHoveredElement, 'runid') === run.runid
+              ? HOVER_STROKE_COLOR
+              : WARNINGBARCOLOR,
         });
         errors.push({
           x,
           y: objectQuery(run, 'logsMetrics', 'system.app.log.error') || 0,
           runid: run.runid,
+          color: ERRORBARCOLOR,
+          fill: ERRORBARCOLOR,
+          stroke:
+            objectQuery(this.state.currentHoveredElement, 'runid') === run.runid
+              ? HOVER_STROKE_COLOR
+              : ERRORBARCOLOR,
         });
       });
     if (errors.length === 1 || warnings.length === 1) {
@@ -202,9 +219,9 @@ export default class LogsMetricsGraph extends Component {
           stackBy="y"
         >
           <DiscreteColorLegend
-            style={{ position: 'absolute', left: '40px', top: '0px' }}
             orientation="horizontal"
             items={COLOR_LEGEND}
+            className="logs-metrics-legend-container"
           />
           <HorizontalGridLines />
           <XAxis tickTotal={getTicksTotal(this.props)} tickFormat={xTickFormat(this.props)} />
@@ -212,9 +229,12 @@ export default class LogsMetricsGraph extends Component {
           {warnings.length > 0 ? (
             <BarSeries
               cluster="runs"
-              color={WARNINGBARCOLOR}
+              colorType="literal"
+              strokeType="literal"
+              fillType="literal"
+              style={{ strokeWidth: STROKE_WIDTH }}
               onValueMouseOver={(d) => {
-                if (isEqual(this.state.currentHoveredElement, d)) {
+                if (objectQuery(this.state, 'currentHoveredElement', 'runid') === d.runid) {
                   return;
                 }
                 this.setState({
@@ -232,9 +252,12 @@ export default class LogsMetricsGraph extends Component {
           {errors.length > 0 ? (
             <BarSeries
               cluster="runs"
-              color={ERRORBARCOLOR}
+              colorType="literal"
+              strokeType="literal"
+              fillType="literal"
+              style={{ strokeWidth: STROKE_WIDTH }} // BarSeries currently doesn't have a way to customize strokeWidth
               onValueMouseOver={(d) => {
-                if (isEqual(this.state.currentHoveredElement, d)) {
+                if (objectQuery(this.state, 'currentHoveredElement', 'runid') === d.runid) {
                   return;
                 }
                 this.setState({
@@ -250,7 +273,10 @@ export default class LogsMetricsGraph extends Component {
             />
           ) : null}
           {this.state.currentHoveredElement && popOverData ? (
-            <Hint value={this.state.currentHoveredElement}>
+            <Hint
+              value={this.state.currentHoveredElement}
+              align={{ vertical: 'bottom', horizontal: 'left' }}
+            >
               <div className="title">
                 <h4>{T.translate(`${PREFIX}.hint.title`)}</h4>
                 <IconSVG
@@ -260,6 +286,7 @@ export default class LogsMetricsGraph extends Component {
                       currentHoveredElement: null,
                     });
                     preventPropagation(e);
+                    return false;
                   }}
                 />
               </div>

@@ -277,6 +277,7 @@ export default class PipelineSummary extends Component {
         anchorEl={this.props.anchorEl}
         fullScreen={true}
         placement="bottom-end"
+        popoverClassName="pipeline-summary-modeless-wrapper"
       >
         <div className="pipeline-summary">
           <div className="filter-container">

@@ -24,6 +24,8 @@ $hint_bg_color: white;
     box-shadow: 0px 10px 15px -5px rgba(0, 0, 0, 0.4);
     color: $hint_body_font_color;
     pointer-events: auto;
+    height: max-content;
+    width: max-content;
 
     .title {
       display: flex;
