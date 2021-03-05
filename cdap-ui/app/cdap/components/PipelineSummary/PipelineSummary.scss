@@ -25,6 +25,10 @@ $run_menu_bg_color: gray;
 $graph_containers_border_color: lightgray;
 $min_height_of_graph: 340px;
 
+.pipeline-summary-modeless-wrapper {
+  width: 100%;
+}
+
 .pipeline-summary {
   width: 100%;
 

@@ -38,12 +38,14 @@ import IconSVG from 'components/IconSVG';
 import T from 'i18n-react';
 import moment from 'moment';
 import ee from 'event-emitter';
-import isEqual from 'lodash/isEqual';
-import { preventPropagation } from 'services/helpers';
+import { preventPropagation, objectQuery } from 'services/helpers';
+import colorVariables from 'styles/variables.scss';
 
 const PREFIX = `features.PipelineSummary.nodesMetricsGraph`;
-const RECORDS_IN_COLOR = '#58B7F6';
+const RECORDS_IN_COLOR = colorVariables.blue04;
+// TODO: CDAP-17725
 const RECORDS_OUT_COLOR = '#97A0BA';
+const HOVER_COLOR = 'black';
 const MARK_SERIES_FILL_COLOR = 'white';
 const MARK_SERIES_STROKE_COLOR = 'gray';
 
@@ -134,31 +136,52 @@ export default class NodesRecordsGraph extends Component {
           <AreaSeries
             curve="curveLinear"
             color={getAreaColor(this.props.recordType)}
+            fill={getAreaColor(this.props.recordType)}
             stroke={getAreaColor(this.props.recordType)}
-            data={this.state.data}
+            data={this.state.data.map((datum) => ({ x: datum.x, y: datum.y, runid: datum.runid }))}
             opacity={0.2}
           />
           <LineSeries
             color={getAreaColor(this.props.recordType)}
-            data={this.state.data}
+            stroke={getAreaColor(this.props.recordType)}
+            data={this.state.data.map((datum) => ({ x: datum.x, y: datum.y, runid: datum.runid }))}
             strokeWidth={4}
           />
           <MarkSeries
             data={this.state.data}
-            colorType={'literal'}
+            strokeType="literal"
+            fillType="literal"
             fill={MARK_SERIES_FILL_COLOR}
             stroke={MARK_SERIES_STROKE_COLOR}
+            strokeWidth={1}
             onValueMouseOver={(d) => {
-              if (isEqual(this.state.currentHoveredElement, d)) {
+              if (objectQuery(this.state.currentHoveredElement, 'runid') === d.runid) {
                 return;
               }
+              const newData = this.state.data.map((datum) => {
+                if (datum.runid === d.runid) {
+                  return {
+                    ...datum,
+                    fill: HOVER_COLOR,
+                  };
+                }
+                return datum;
+              });
               this.setState({
                 currentHoveredElement: d,
+                data: newData,
               });
             }}
             onValueMouseOut={() => {
+              const newData = this.state.data.map((datum) => {
+                return {
+                  ...datum,
+                  fill: MARK_SERIES_FILL_COLOR,
+                };
+              });
               this.setState({
                 currentHoveredElement: null,
+                data: newData,
               });
             }}
           />
@@ -170,8 +193,15 @@ export default class NodesRecordsGraph extends Component {
                 <IconSVG
                   name="icon-close"
                   onClick={(e) => {
+                    const newData = this.state.data.map((datum) => {
+                      return {
+                        ...datum,
+                        fill: MARK_SERIES_FILL_COLOR,
+                      };
+                    });
                     this.setState({
                       currentHoveredElement: null,
+                      data: newData,
                     });
                     preventPropagation(e);
                   }}
