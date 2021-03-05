@@ -122,6 +122,7 @@ interface IPluginSchemaEditorProps extends WithStyles<typeof styles> {
   schemaTitle?: string;
   isSchemaMacro?: boolean;
   errors?: Record<string, Record<string, string>>;
+  resetErrors?: boolean;
 }
 
 const EXPERIMENT_ID = 'schema-editor';
@@ -568,6 +569,7 @@ class PluginSchemaEditorBase extends React.PureComponent<
               ? objectQuery(this.props, 'errors', schema.name)
               : objectQuery(this.props, 'errors', 'noSchemaSection') || null
           }
+          resetErrors={this.props.resetErrors}
         />
       </fieldset>
     ));
@@ -677,5 +679,6 @@ const PluginSchemaEditor = (props) => {
   schemaTitle: PropTypes.string,
   isSchemaMacro: PropTypes.func,
   errors: PropTypes.object,
+  resetErrors: PropTypes.bool,
 };
 export { PluginSchemaEditor };
