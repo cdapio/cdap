@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -52,6 +52,7 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryService;
@@ -137,6 +138,8 @@ public abstract class AbstractServiceMain<T extends EnvironmentOptions> extends 
     OptionsParser.init(options, args, getClass().getSimpleName(), ProjectInfo.getVersion().toString(), System.out);
 
     CConfiguration cConf = CConfiguration.create();
+    SecurityUtil.loginForMasterService(cConf);
+
     SConfiguration sConf = SConfiguration.create();
     if (options.getExtraConfPath() != null) {
       cConf.addResource(new File(options.getExtraConfPath(), "cdap-site.xml").toURI().toURL());

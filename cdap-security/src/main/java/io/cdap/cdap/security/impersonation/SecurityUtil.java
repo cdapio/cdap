@@ -172,23 +172,25 @@ public final class SecurityUtil {
   }
 
   public static void loginForMasterService(CConfiguration cConf) throws IOException {
-    if (UserGroupInformation.isSecurityEnabled()) {
-      String expandedPrincipal = expandPrincipal(getMasterPrincipal(cConf));
-      File keytabFile = getMasterKeytabFile(cConf);
-
-      LOG.info("Logging in as: principal={}, keytab={}", expandedPrincipal, keytabFile);
-      UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabFile.getAbsolutePath());
-
-      long delaySec = cConf.getLong(Constants.Security.KERBEROS_KEYTAB_RELOGIN_INTERVAL);
-      Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("Kerberos keytab renewal"))
-        .scheduleWithFixedDelay(() -> {
-          try {
-            UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
-          } catch (IOException e) {
-            LOG.error("Failed to relogin from keytab", e);
-          }
-        }, delaySec, delaySec, TimeUnit.SECONDS);
+    if (!isKerberosEnabled(cConf) || !UserGroupInformation.isSecurityEnabled()) {
+      return;
     }
+
+    String expandedPrincipal = expandPrincipal(getMasterPrincipal(cConf));
+    File keytabFile = getMasterKeytabFile(cConf);
+
+    LOG.info("Logging in as: principal={}, keytab={}", expandedPrincipal, keytabFile);
+    UserGroupInformation.loginUserFromKeytab(expandedPrincipal, keytabFile.getAbsolutePath());
+
+    long delaySec = cConf.getLong(Constants.Security.KERBEROS_KEYTAB_RELOGIN_INTERVAL);
+    Executors.newSingleThreadScheduledExecutor(Threads.createDaemonThreadFactory("Kerberos keytab renewal"))
+      .scheduleWithFixedDelay(() -> {
+        try {
+          UserGroupInformation.getLoginUser().checkTGTAndReloginFromKeytab();
+        } catch (IOException e) {
+          LOG.error("Failed to relogin from keytab", e);
+        }
+      }, delaySec, delaySec, TimeUnit.SECONDS);
   }
 
   /**
