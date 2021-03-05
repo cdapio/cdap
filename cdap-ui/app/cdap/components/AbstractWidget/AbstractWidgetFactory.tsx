@@ -32,6 +32,7 @@ import JsonEditorWidget from 'components/AbstractWidget/CodeEditorWidget/JsonEdi
 import KeyValueDropdownWidget from 'components/AbstractWidget/KeyValueDropdownWidget';
 import KeyValueEncodedWidget from 'components/AbstractWidget/KeyValueWidget/KeyValueEncodedWidget';
 import KeyValueWidget from 'components/AbstractWidget/KeyValueWidget';
+import HierarchyWidget from 'components/AbstractWidget/HierarchyWidget';
 import MemorySelectWidget from 'components/AbstractWidget/MemorySelectWidget';
 import MemoryTextbox from 'components/AbstractWidget/MemoryTextbox';
 import MultiSelect from 'components/AbstractWidget/FormInputs/MultiSelect';
@@ -142,6 +143,7 @@ export const WIDGET_FACTORY = {
   'keyvalue-dropdown': KeyValueDropdownWidget,
   'keyvalue-encoded': KeyValueEncodedWidget,
   keyvalue: KeyValueWidget,
+  hierarchy: HierarchyWidget,
   'memory-dropdown': MemorySelectWidget,
   'memory-textbox': MemoryTextbox,
   'multi-select': MultiSelect,
