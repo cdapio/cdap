@@ -1,5 +1,5 @@
 /*
- * Copyright © 2019 Cask Data, Inc.
+ * Copyright © 2019-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -67,6 +67,7 @@ public class KubeMasterEnvironment implements MasterEnvironment {
   // Contains the list of configuration / secret names coming from the Pod information, which are
   // needed to propagate to deployments created via the KubeTwillRunnerService
   private static final Set<String> CONFIG_NAMES = ImmutableSet.of("cdap-conf", "hadoop-conf", "cdap-security");
+  private static final Set<String> CUSTOM_VOLUME_PREFIX = ImmutableSet.of("cdap-cm-vol-", "cdap-se-vol-");
 
   private static final String MASTER_MAX_INSTANCES = "master.service.max.instances";
   private static final String DATA_TX_ENABLED = "data.tx.enabled";
@@ -257,12 +258,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
 
     // Get the config volumes from the pod
     List<V1Volume> volumes = pod.getSpec().getVolumes().stream()
-      .filter(v -> CONFIG_NAMES.contains(v.getName()))
+      .filter(v -> CONFIG_NAMES.contains(v.getName()) || isCustomVolumePrefix(v.getName()))
       .collect(Collectors.toList());
 
     // Get the volume mounts from the container
     List<V1VolumeMount> mounts = container.getVolumeMounts().stream()
-      .filter(m -> CONFIG_NAMES.contains(m.getName()))
+      .filter(m -> CONFIG_NAMES.contains(m.getName()) || isCustomVolumePrefix(m.getName()))
       .collect(Collectors.toList());
 
     List<V1EnvVar> envs = container.getEnv();
@@ -276,5 +277,12 @@ public class KubeMasterEnvironment implements MasterEnvironment {
                        serviceAccountName, runtimeClassName,
                        volumes, containerLabelName, container.getImage(), mounts,
                        envs == null ? Collections.emptyList() : envs);
+  }
+
+  /**
+   * Returns {@code true} if the given volume name is prefixed with the custom volume mapping from the CRD.
+   */
+  private boolean isCustomVolumePrefix(String name) {
+    return CUSTOM_VOLUME_PREFIX.stream().anyMatch(name::startsWith);
   }
 }
