@@ -254,7 +254,7 @@ angular.module(PKG.name + '.commons')
         if (!Array.isArray(connectedNodes)) {
           return;
         }
-        const connectionsFromSource = vm.instance.getConnections({sourceId: id});
+        const connectionsFromSource = vm.instance.getAllConnections();
         connectedNodes.forEach(nodeId => {
           if (!selectedNodesMap[nodeId]) {
             return;
@@ -744,13 +744,28 @@ angular.module(PKG.name + '.commons')
 
     const addConnectionToErrorsAlerts = (conn, sourceNode, targetNode) => {
       let connObj = {
-        target: conn.to
+        target: conn.to.replace(/[ \/]/g, '-'),
       };
+      let errorSourceId = `endpoint_${sourceNode.id}_error`;
+      let alertSourceId = `endpoint_${sourceNode.id}_alert`;
 
+      let connectionExist = false;
+      if (targetNode.type === 'errortransform') {
+        connectionExist = vm.instance.getConnections('errorScope')
+          .map(connection => `${connection.sourceId}-##-${connection.targetId}`)
+          .find(connStr => connStr === `${errorSourceId}-##-${conn.to.replace(/[ \/]/g, '-')}`);
+      } else if (targetNode.type === 'alertpublisher') {
+        connectionExist = vm.instance.getConnections('alertScope')
+          .map(connection => `${connection.sourceId}-##-${connection.targetId}`)
+          .find(connStr => connStr === `${alertSourceId}-##-${conn.to.replace(/[ \/]/g, '-')}`);
+      }
+      if (connectionExist) {
+        return;
+      }
       if (targetNode.type === 'errortransform' && vm.shouldShowErrorsPort(sourceNode)) {
-        connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}_error`)[0];
+        connObj.source = vm.instance.getEndpoints(errorSourceId)[0];
       } else if (targetNode.type === 'alertpublisher' && vm.shouldShowAlertsPort(sourceNode)) {
-        connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}_alert`)[0];
+        connObj.source = vm.instance.getEndpoints(alertSourceId)[0];
       } else {
         connObj.source = vm.instance.getEndpoints(`endpoint_${sourceNode.id}`)[0];
         // this is for backwards compability with old pipelines where we don't specify
@@ -777,7 +792,6 @@ angular.module(PKG.name + '.commons')
         angular.forEach($scope.connections, (conn) => {
           var sourceNode = $scope.nodes.find(node => node.name === conn.from);
           var targetNode = $scope.nodes.find(node => node.name === conn.to);
-
           if (!sourceNode || !targetNode) {
             return;
           }
