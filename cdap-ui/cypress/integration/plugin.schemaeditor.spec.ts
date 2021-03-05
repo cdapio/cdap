@@ -25,12 +25,13 @@ describe('Plugin Schema Editor', () => {
       cy.getCookie('CDAP_Auth_Token')
         .then((cookie) => {
           if (!cookie) {
-            return Helpers.getSessionToken({});
+            return;
           }
           headers = {
             Authorization: 'Bearer ' + cookie.value,
           };
         })
+        .then(() => Helpers.getSessionToken(headers))
         .then(
           (sessionToken) =>
             (headers = Object.assign({}, headers, { 'Session-Token': sessionToken }))
@@ -674,11 +675,12 @@ describe('Plugin Schema Editor', () => {
     };
     const resetDirectives = (workspace) => {
       return cy
-        .request(
-          `http://${Cypress.env(
+        .request({
+          url: `http://${Cypress.env(
             'host'
-          )}:11015/v3/namespaces/system/apps/dataprep/services/service/methods/contexts/default/workspaces/${workspace}`
-        )
+          )}:11015/v3/namespaces/system/apps/dataprep/services/service/methods/contexts/default/workspaces/${workspace}`,
+          headers,
+        })
         .then((response) => {
           const res = JSON.parse(response.allRequestResponses[0]['Response Body']);
           const workspaceInfo = res.values[0];
@@ -774,6 +776,9 @@ describe('Plugin Schema Editor', () => {
       cy.connect_two_nodes(fileId, speechToTextId, Helpers.getGenericEndpoint);
 
       cy.open_node_property(fileId);
+      cy.wait(5000); // the format plugin has to fetch formats from backend.
+      cy.get('[data-cy="select-format"] [role="button"').click();
+      cy.get('[data-cy="option-text"]').click();
       cy.get(`[data-cy="schema-row-1"] input[placeholder="Field name"]`).type('{enter}');
       addField(2, 'unknownfield');
       addField(3, 'onemorefield');
@@ -793,6 +798,9 @@ describe('Plugin Schema Editor', () => {
           `The schema for the 'text' format must only contain the ''offset' and 'body' fields'. Remove additional field 'onemorefield'.`
         );
       });
+      cy.get('[data-cy="plugin-properties-validate-btn"]').click();
+      cy.get(`[data-cy="schema-row-2"] [data-cy="error-icon"]`).should('not.exist');
+      cy.get(`[data-cy="schema-row-3"] [data-cy="error-icon"]`).should('not.exist');
       removeField(2);
       removeField(2);
       cy.close_node_property();
