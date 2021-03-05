@@ -182,7 +182,7 @@
     "fuse.js": "3.4.6",
     "graphql": "14.5.8",
     "graphql-import": "0.7.1",
-    "helmet-csp": "2.7.1",
+    "helmet-csp": "2.9.1",
     "history": "4.10.1",
     "hsts": "2.2.0",
     "i18n-react": "0.7.0",
