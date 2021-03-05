@@ -160,7 +160,7 @@
     "ace-builds": "1.4.7",
     "apollo-boost": "0.4.7",
     "apollo-server": "2.9.15",
-    "apollo-server-express": "2.9.15",
+    "apollo-server-express": "2.14.2",
     "body-parser": "1.19.0",
     "bootstrap": "4.4.1",
     "cask-datavoyager": "2.0.0-alpha.12.9",
