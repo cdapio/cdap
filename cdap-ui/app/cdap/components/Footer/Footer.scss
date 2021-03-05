@@ -42,4 +42,10 @@ footer.app-footer {
     right: 10px;
     color: $grey-05;
   }
+  .selected-namespace {
+    position: absolute;
+    top: 0;
+    left: 10px;
+    color: $grey-05;
+  }
 }
