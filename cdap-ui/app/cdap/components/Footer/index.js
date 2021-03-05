@@ -34,6 +34,12 @@ class Footer extends Component {
     });
   }
 
+  componentWillUnmount() {
+    if (this.namespaceStoreSub) {
+      this.namespaceStoreSub();
+    }
+  }
+
   render() {
     const footerText = Theme.footerText;
     const footerUrl = Theme.footerLink;
