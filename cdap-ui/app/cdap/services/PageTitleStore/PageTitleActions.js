@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016 Cask Data, Inc.
+ * Copyright © 2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -14,32 +14,8 @@
  * the License.
  */
 
-@import "~styles/variables.scss";
-@import "~styles/colors.scss";
-
-footer.app-footer {
-  background-color: white;
-  font-size: 11px;
-  font-weight: 600;
-  z-index: 0;
-  position: absolute;
-  width: 100%;
-  bottom: 0;
-  border-top: solid 1px #cdcdcd;
-
-  p,
-  ul {
-    height: $height-of-footer;
-    line-height: $height-of-footer;
-    margin: 0;
-  }
-  a {
-    color: inherit;
-  }
-  .instance-metadata-id {
-    position: absolute;
-    top: 0;
-    right: 10px;
-    color: $grey-05;
-  }
-}
+const PageTitleActions = {
+    updatePageTitle: 'UPDATE_TITLE',
+  };
+  
+  export default PageTitleActions;
