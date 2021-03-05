@@ -14,27 +14,45 @@
  * the License.
  */
 
-import React from 'react';
+import React, { Component } from 'react';
 import { Theme } from 'services/ThemeHelper';
 import If from '../If';
 import { objectQuery } from 'services/helpers';
+import NamespaceStore from 'services/NamespaceStore';
 require('./Footer.scss');
 
-export default function Footer() {
-  const footerText = Theme.footerText;
-  const footerUrl = Theme.footerLink;
-  // 'project-id-30-characters-name1/instance-id-30-characters-name';
-  const instanceMetadataId = objectQuery(window, 'CDAP_CONFIG', 'instanceMetadataId');
-  return (
-    <footer className="app-footer">
-      <p className="text-center text-muted">
-        <a href={footerUrl} target="_blank" rel="noopener noreferrer">
-          {footerText}
-        </a>
-      </p>
-      <If condition={instanceMetadataId}>
-        <p className="instance-metadata-id">Instance Id: {instanceMetadataId}</p>
-      </If>
-    </footer>
-  );
+class Footer extends Component {
+  state = {
+    currentNamespace: NamespaceStore.getState().selectedNamespace,
+  };
+
+  componentWillMount() {
+    this.namespaceStoreSub = NamespaceStore.subscribe(() => {
+      this.setState({
+        currentNamespace: NamespaceStore.getState().selectedNamespace,
+      });
+    });
+  }
+
+  render() {
+    const footerText = Theme.footerText;
+    const footerUrl = Theme.footerLink;
+    // 'project-id-30-characters-name1/instance-id-30-characters-name';
+    const instanceMetadataId = objectQuery(window, 'CDAP_CONFIG', 'instanceMetadataId');
+    return (
+      <footer className="app-footer">
+        <p className="selected-namespace">Namespace: {this.state.currentNamespace}</p>
+        <p className="text-center text-muted">
+          <a href={footerUrl} target="_blank" rel="noopener noreferrer">
+            {footerText}
+          </a>
+        </p>
+        <If condition={instanceMetadataId}>
+          <p className="instance-metadata-id">Instance Id: {instanceMetadataId}</p>
+        </If>
+      </footer>
+    );
+  }
 }
+
+export default Footer;
