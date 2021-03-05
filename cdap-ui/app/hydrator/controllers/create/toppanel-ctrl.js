@@ -393,7 +393,7 @@ class HydratorPlusPlusTopPanelCtrl {
             typeof macroString === 'string' &&
             macroString.indexOf('${') !== -1 &&
             macroString.indexOf('}') !== -1 &&
-            macroString !== '${logicalStartTime()}' &&
+            macroString.indexOf('${logicalStartTime(') === -1 &&
             macroString.indexOf('${secure(') === -1 &&
             macroString.indexOf('${oauth(') === -1
           ) {
