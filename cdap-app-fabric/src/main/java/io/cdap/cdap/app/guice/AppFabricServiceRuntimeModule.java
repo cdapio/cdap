@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2020 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -20,8 +20,11 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.AbstractModule;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.PrivateModule;
+import com.google.inject.Provider;
 import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.TypeLiteral;
@@ -112,6 +115,7 @@ import io.cdap.cdap.security.auth.context.AuthenticationContextModules;
 import io.cdap.cdap.security.impersonation.DefaultOwnerAdmin;
 import io.cdap.cdap.security.impersonation.DefaultUGIProvider;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
+import io.cdap.cdap.security.impersonation.SecurityUtil;
 import io.cdap.cdap.security.impersonation.UGIProvider;
 import io.cdap.cdap.security.impersonation.UnsupportedUGIProvider;
 import io.cdap.cdap.security.store.SecureStoreHandler;
@@ -156,7 +160,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  .in(Scopes.SINGLETON);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-                               bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                               bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -197,7 +201,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                  .in(Scopes.SINGLETON);
                                bind(MRJobInfoFetcher.class).to(LocalMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class).to(LocalStorageProviderNamespaceAdmin.class);
-                               bind(UGIProvider.class).to(UnsupportedUGIProvider.class);
+                               bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -251,7 +255,7 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
                                bind(MRJobInfoFetcher.class).to(DistributedMRJobInfoFetcher.class);
                                bind(StorageProviderNamespaceAdmin.class)
                                  .to(DistributedStorageProviderNamespaceAdmin.class);
-                               bind(UGIProvider.class).to(DefaultUGIProvider.class);
+                               bind(UGIProvider.class).toProvider(UGIProviderProvider.class);
 
                                Multibinder<String> servicesNamesBinder =
                                  Multibinder.newSetBinder(binder(), String.class,
@@ -436,6 +440,32 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
 
       scheduler.getListenerManager().addTriggerListener(new TriggerMisfireLogger());
       return scheduler;
+    }
+  }
+
+  /**
+   * A Guice provider for the {@link UGIProvider} class based on the CDAP configuration.
+   *
+   * When Kerberos is enabled, it provides {@link DefaultUGIProvider} instance. Otherwise, an
+   * {@link UnsupportedUGIProvider} will be used.
+   */
+  private static final class UGIProviderProvider implements Provider<UGIProvider> {
+
+    private final Injector injector;
+    private final CConfiguration cConf;
+
+    @Inject
+    UGIProviderProvider(Injector injector, CConfiguration cConf) {
+      this.injector = injector;
+      this.cConf = cConf;
+    }
+
+    @Override
+    public UGIProvider get() {
+      if (SecurityUtil.isKerberosEnabled(cConf)) {
+        return injector.getInstance(DefaultUGIProvider.class);
+      }
+      return injector.getInstance(UnsupportedUGIProvider.class);
     }
   }
 }
