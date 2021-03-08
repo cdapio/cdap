@@ -155,6 +155,7 @@
     "@hot-loader/react-dom": "16.13.0",
     "@material-ui/core": "4.11.0",
     "@material-ui/icons": "^4.9.1",
+    "@material-ui/lab": "4.0.0-alpha.57",
     "@simonwep/selection-js": "1.4.0",
     "ace-builds": "1.4.7",
     "apollo-boost": "0.4.7",
