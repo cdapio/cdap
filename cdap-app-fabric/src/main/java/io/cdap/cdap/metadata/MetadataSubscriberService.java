@@ -63,6 +63,8 @@ import io.cdap.cdap.spi.data.StructuredTableContext;
 import io.cdap.cdap.spi.data.TableNotFoundException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
+import io.cdap.cdap.spi.data.transaction.TxCallable;
+import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import io.cdap.cdap.spi.metadata.Metadata;
 import io.cdap.cdap.spi.metadata.MetadataConstants;
 import io.cdap.cdap.spi.metadata.MetadataDirective;
@@ -103,6 +105,8 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     .registerTypeAdapter(MetadataOperation.class, new MetadataOperationTypeAdapter())
     .registerTypeAdapter(Operation.class, new OperationTypeAdapter())
     .create();
+
+  private static final String BACKFILL_SUBSCRIBER_NAME = "metadata.backfill";
 
   // directives for (re-)creation of system metadata:
   // - keep description if new metadata does not contain it
@@ -200,26 +204,26 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     }
 
     if (backfillAttempts > 10) {
-      LOG.info("Skipping attempt to backfill plugin metadata after 10 failures.");
+      LOG.info("Skipping attempt to back-fill plugin metadata after 10 failures.");
       return;
     }
 
     // Backfill plugin metadata
     backfillAttempts++;
-    LOG.info("Starting backfill process(attempt {}) for plugin metadata", backfillAttempts);
+    LOG.info("Starting back-fill process(attempt {}) for plugin metadata", backfillAttempts);
 
     boolean updateFailed = false;
     NamespaceStore namespaceStore = new DefaultNamespaceStore(this.transactionRunner);
     List<String> namespaces = namespaceStore.list().stream().map(NamespaceMeta::getName).collect(Collectors.toList());
 
-    LOG.debug("Backfilling plugin metadata for {} namespaces", namespaces.size());
+    LOG.debug("Back-filling plugin metadata for {} namespaces", namespaces.size());
     for (String namespace : namespaces) {
       List<ApplicationMeta> apps = TransactionRunners.run(this.transactionRunner, context -> {
         AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
         return appMetadataStore.getAllApplications(namespace);
       });
 
-      LOG.debug("Backfilling plugin metadata for namespace '{}' with {} applications", namespace, apps.size());
+      LOG.debug("Back-filling plugin metadata for namespace '{}' with {} applications", namespace, apps.size());
       try {
         this.getPluginCounts(namespace, apps);
       } catch (IOException e) {
@@ -229,7 +233,25 @@ public class MetadataSubscriberService extends AbstractMessagingSubscriberServic
     }
 
     if (!updateFailed) {
-      LOG.info("Successfully backfilled plugin metadata for {} namespaces.", namespaces.size());
+      LOG.info("Successfully back-filled plugin metadata for {} namespaces.", namespaces.size());
+      didBackfill = true;
+      TransactionRunners.run(transactionRunner,
+                             (TxRunnable) context -> AppMetadataStore.create(context)
+                               .persistSubscriberState(getTopicId().getTopic(), BACKFILL_SUBSCRIBER_NAME, "true"));
+    }
+  }
+
+  @Override
+  protected void doStartUp() throws Exception {
+    super.doStartUp();
+
+    // Checking if plugin metadata backfill had been done during a previous startup
+    String backfillComplete = TransactionRunners.run(transactionRunner, (TxCallable<String>) context ->
+      AppMetadataStore.create(context).retrieveSubscriberState(getTopicId().getTopic(), BACKFILL_SUBSCRIBER_NAME)
+    );
+
+    if (backfillComplete != null) {
+      LOG.debug("Plugin metadata back-fill was completed during a previous startup, skipping back-fill this time.");
       didBackfill = true;
     }
   }
