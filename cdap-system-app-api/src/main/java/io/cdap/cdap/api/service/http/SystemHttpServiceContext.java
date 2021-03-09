@@ -22,8 +22,8 @@ import io.cdap.cdap.api.macro.MacroEvaluator;
 import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 
-import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A System HttpServiceContext that exposes capabilities beyond those available to service contexts for user services.
@@ -34,9 +34,9 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
   /**
    * Evaluates lookup macros and the 'secure' macro function using provided macro evaluator.
    *
-   * @param namespace  namespace in which macros needs to be evaluated
+   * @param namespace namespace in which macros needs to be evaluated
    * @param properties key-value map of properties to evaluate
-   * @param evaluator  macro evaluator to be used to evaluate macros
+   * @param evaluator macro evaluator to be used to evaluate macros
    * @return map of evaluated macros
    * @throws InvalidMacroException indicates that there is an invalid macro
    */
@@ -52,33 +52,13 @@ public interface SystemHttpServiceContext extends HttpServiceContext, Transactio
   /**
    * Evaluates macros using provided macro evaluator with the provided parsing options.
    *
-   * @param namespace  namespace in which macros needs to be evaluated
+   * @param namespace namespace in which macros needs to be evaluated
    * @param properties key-value map of properties to evaluate
-   * @param evaluator  macro evaluator to be used to evaluate macros
-   * @param options    macro parsing options
+   * @param evaluator macro evaluator to be used to evaluate macros
+   * @param options macro parsing options
    * @return map of evaluated macros
    * @throws InvalidMacroException indicates that there is an invalid macro
    */
   Map<String, String> evaluateMacros(String namespace, Map<String, String> properties,
                                      MacroEvaluator evaluator, MacroParserOptions options) throws InvalidMacroException;
-
-  /**
-   * Get preferences for the given namespace.
-   * <p>
-   * This method fetches preferences for the supplied namespace when the method is unvoked, unlike {@link
-   * io.cdap.cdap.api.RuntimeContext#getRuntimeArguments()} which returns arguments at the time the context was
-   * created.
-   * <p>
-   * This might be a network call, depending on the underlying implementation.
-   *
-   * @param namespace the name of the namespace to fetch preferences for.
-   * @param resolved  true if resolved properties are desired.
-   * @return Map containing Preferences keys and values.
-   * @throws IOException is the preferences for the supplied namespace could not be fetched.
-   * @throws IllegalArgumentException if the namespace doesn't exist.
-   */
-  default Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
-    throws IOException, IllegalArgumentException {
-    throw new UnsupportedOperationException("Not implemented");
-  }
 }
