@@ -48,7 +48,6 @@ import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.services.ServiceHttpServer;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -81,7 +80,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final PluginFinder pluginFinder;
   private final TransactionRunner transactionRunner;
   private final FieldLineageWriter fieldLineageWriter;
-  private final PreferencesFetcher preferencesFetcher;
 
   @Inject
   public ServiceProgramRunner(CConfiguration cConf, MetricsCollectionService metricsCollectionService,
@@ -92,8 +90,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               ArtifactManagerFactory artifactManagerFactory,
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                               NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
-                              TransactionRunner transactionRunner, FieldLineageWriter fieldLineageWriter,
-                              PreferencesFetcher preferencesFetcher) {
+                              TransactionRunner transactionRunner, FieldLineageWriter fieldLineageWriter) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
     this.datasetFramework = datasetFramework;
@@ -110,7 +107,6 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.pluginFinder = pluginFinder;
     this.transactionRunner = transactionRunner;
     this.fieldLineageWriter = fieldLineageWriter;
-    this.preferencesFetcher = preferencesFetcher;
   }
 
   @Override
@@ -153,7 +149,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
-                                                          transactionRunner, fieldLineageWriter, preferencesFetcher);
+                                                          transactionRunner, fieldLineageWriter);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),
