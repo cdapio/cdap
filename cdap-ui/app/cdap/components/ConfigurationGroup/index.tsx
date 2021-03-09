@@ -82,6 +82,7 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     values?: Record<string, string>;
   }>({});
   const [filteredConfigurationGroups, setFilteredConfigurationGroups] = React.useState([]);
+  const [orphanErrors, setOrphanErrors] = React.useState([]);
 
   // Initialize the configurationGroups based on widgetJson and pluginProperties obtained from backend
   React.useEffect(() => {
@@ -98,39 +99,55 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     );
 
     setConfigurationGroups(processedConfigurationGroup.configurationGroups);
+
     // We don't need to add default values for plugins in published pipeline
     // as they should already have all the properties they are configured with.
+    let initialValues = values;
     if (!disabled) {
       // Only add default values for plugin properties that are not already configured
       // by user.
-      changeParentHandler(defaults(values, processedConfigurationGroup.defaultValues));
+      initialValues = defaults(values, processedConfigurationGroup.defaultValues);
+      changeParentHandler(initialValues);
     }
+
+    updateFilteredConfigurationGroup(
+      processedConfigurationGroup.configurationGroups,
+      initialValues
+    );
   }, [widgetJson, pluginProperties]);
 
-  // Watch for changes in values to determine dynamic widget
-  React.useEffect(() => {
+  function updateFilteredConfigurationGroup(configGroup, newValues) {
     let newFilteredConfigurationGroup;
 
     try {
       newFilteredConfigurationGroup = filterByCondition(
-        configurationGroups,
+        configGroup,
         widgetJson,
         pluginProperties,
-        values
+        newValues
       );
     } catch (e) {
-      newFilteredConfigurationGroup = configurationGroups;
+      newFilteredConfigurationGroup = configGroup;
       // tslint:disable:no-console
       console.log('Issue with applying filters: ', e);
     }
 
     referenceValueForUnMount.current = {
       configurationGroups: newFilteredConfigurationGroup,
-      values,
+      values: newValues,
     };
 
     setFilteredConfigurationGroups(newFilteredConfigurationGroup);
-  }, [values, configurationGroups]);
+    getOrphanedErrors();
+  }
+
+  // Watch for changes in values to determine dynamic widget
+  React.useEffect(() => {
+    if (!configurationGroups || configurationGroups.length === 0) {
+      return;
+    }
+    updateFilteredConfigurationGroup(configurationGroups, values);
+  }, [values]);
 
   // This onUnMount is to make sure we clear out all properties that are hidden.
   React.useEffect(() => {
@@ -141,6 +158,8 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
       changeParentHandler(updatedFilteredValues);
     };
   }, []);
+
+  React.useEffect(getOrphanedErrors, [errors]);
 
   function changeParentHandler(updatedValues) {
     if (!onChange || typeof onChange !== 'function') {
@@ -157,112 +176,45 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
     validateProperties,
   };
 
-  // Used to keep track of error messages that found a widget
-  // required to identify errors that did not find a widget,
-  // they will be marked as orphan errors.
-  const [usedErrors, setUsedErrors] = React.useState({});
-  const [groups, setGroups] = React.useState([]);
-  const [orphanErrors, setOrphanErrors] = React.useState([]);
-  // TODO: Revisit these hooks for errors. These don't seem to be necessary.
-  React.useEffect(() => {
-    setGroups(constructGroups);
-  }, [filteredConfigurationGroups, errors]);
-  React.useEffect(() => {
-    setOrphanErrors(constructOrphanErrors);
-  }, [usedErrors]);
-
-  function constructGroups() {
-    const newUsedErrors = {};
-    const newGroups = filteredConfigurationGroups.map((group, i) => {
-      if (group.show === false) {
-        return null;
-      }
-      return (
-        <div key={`${group.label}-${i}`} className={classes.group}>
-          <div className={classes.groupTitle}>
-            <h2 className={classes.h2Title}>{group.label}</h2>
-            <If condition={group.description && group.description.length > 0}>
-              <small className={classes.groupSubTitle}>{group.description}</small>
-            </If>
-          </div>
-
-          <div>
-            {group.properties.map((property, j) => {
-              if (property.show === false) {
-                return null;
-              }
-              // Hiding all plugin functions if pipeline is deployed
-              if (
-                disabled &&
-                property.hasOwnProperty('widget-category') &&
-                property['widget-category'] === 'plugin'
-              ) {
-                return null;
-              }
-              // Check if a field is present to display the error contextually
-              const errorObjs =
-                errors && errors.hasOwnProperty(property.name) ? errors[property.name] : null;
-              if (errorObjs) {
-                // Mark error as used
-                newUsedErrors[property.name] = errors[property.name];
-              }
-              return (
-                <PropertyRow
-                  key={`${property.name}-${j}`}
-                  widgetProperty={property}
-                  pluginProperty={pluginProperties[property.name]}
-                  value={values[property.name]}
-                  onChange={changeParentHandler}
-                  extraConfig={extraConfig}
-                  disabled={disabled}
-                  errors={errorObjs}
-                />
-              );
-            })}
-          </div>
-        </div>
-      );
-    });
-    setUsedErrors(newUsedErrors);
-    return newGroups;
+  function getPropertyError(propertyName) {
+    return errors && errors.hasOwnProperty(propertyName) ? errors[propertyName] : null;
   }
 
-  function constructOrphanErrors() {
+  function getOrphanedErrors() {
+    if (!errors) {
+      return;
+    }
+
     const orphanedErrors = new Set();
-    // Error messages that are already displayed in a field should not be
-    // displayed in the common area - orphan errors.
-    const usedMessages = new Set();
-    Object.values(usedErrors).forEach((errs: IErrorObj[]) => {
-      errs.forEach((error) => {
-        usedMessages.add(error.msg);
+    const shownErrors = new Set();
+
+    filteredConfigurationGroups.forEach((group) => {
+      if (group.show === false) {
+        return;
+      }
+      group.properties.forEach((property) => {
+        if (property.show === false) {
+          return;
+        }
+
+        const propertyError = getPropertyError(property.name);
+        if (propertyError) {
+          propertyError.forEach((error) => {
+            shownErrors.add(error.msg);
+          });
+        }
       });
     });
 
-    if (errors) {
-      Object.keys(errors).forEach((propName) => {
-        if (propName === 'orphanErrors') {
-          errors.orphanErrors.forEach((orphanError: IErrorObj) => {
-            // Making use the error msg has not been displayed contextually
-            // elsewhere.
-            if (!usedMessages.has(orphanError.msg)) {
-              orphanedErrors.add(orphanError.msg);
-            }
-          });
-        }
-        // If the error is not used and if the message is not used,
-        // add it to orphan errors.
-        else if (!usedErrors.hasOwnProperty(propName)) {
-          errors[propName].forEach((error: IErrorObj) => {
-            if (!usedMessages.has(error.msg)) {
-              // If any error is not displayed contextually, and the error message
-              // is not used by any other field, mark the error as orphan.
-              orphanedErrors.add(error.msg);
-            }
-          });
+    Object.values(errors).forEach((errorArr) => {
+      errorArr.forEach((error) => {
+        if (!shownErrors.has(error.msg)) {
+          orphanedErrors.add(error.msg);
         }
       });
-    }
-    return Array.from(orphanedErrors);
+    });
+
+    setOrphanErrors(Array.from(orphanedErrors));
   }
 
   return (
@@ -277,7 +229,53 @@ const ConfigurationGroupView: React.FC<IConfigurationGroupProps> = ({
           </div>
         </div>
       </If>
-      {groups}
+      {filteredConfigurationGroups.map((group, i) => {
+        if (group.show === false) {
+          return null;
+        }
+
+        return (
+          <div key={`${group.label}-${i}`} className={classes.group}>
+            <div className={classes.groupTitle}>
+              <h2 className={classes.h2Title}>{group.label}</h2>
+              <If condition={group.description && group.description.length > 0}>
+                <small className={classes.groupSubTitle}>{group.description}</small>
+              </If>
+            </div>
+
+            <div>
+              {group.properties.map((property, j) => {
+                if (property.show === false) {
+                  return null;
+                }
+                // Hiding all plugin functions if pipeline is deployed
+                if (
+                  disabled &&
+                  property.hasOwnProperty('widget-category') &&
+                  property['widget-category'] === 'plugin'
+                ) {
+                  return null;
+                }
+
+                const errorObjs = getPropertyError(property.name);
+
+                return (
+                  <PropertyRow
+                    key={`${property.name}-${j}`}
+                    widgetProperty={property}
+                    pluginProperty={pluginProperties[property.name]}
+                    value={values[property.name]}
+                    onChange={changeParentHandler}
+                    extraConfig={extraConfig}
+                    disabled={disabled}
+                    errors={errorObjs}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 };
