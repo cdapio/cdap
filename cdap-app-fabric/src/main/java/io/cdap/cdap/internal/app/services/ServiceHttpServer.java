@@ -52,7 +52,6 @@ import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.http.NettyHttpService;
@@ -89,7 +88,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            ArtifactManager artifactManager, MetadataReader metadataReader,
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
                            PluginFinder pluginFinder, TransactionRunner transactionRunner,
-                           FieldLineageWriter fieldLineageWriter, PreferencesFetcher preferencesFetcher) {
+                           FieldLineageWriter fieldLineageWriter) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -99,7 +98,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
-                                               pluginFinder, transactionRunner, fieldLineageWriter, preferencesFetcher);
+                                               pluginFinder, transactionRunner, fieldLineageWriter);
     this.context = contextFactory.create(null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
@@ -149,14 +148,13 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               MetadataPublisher metadataPublisher,
                                                               PluginFinder pluginFinder,
                                                               TransactionRunner transactionRunner,
-                                                              FieldLineageWriter fieldLineageWriter,
-                                                              PreferencesFetcher preferencesFetcher) {
+                                                              FieldLineageWriter fieldLineageWriter) {
     return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
                                                namespaceQueryAdmin, pluginFinder, transactionRunner,
-                                               fieldLineageWriter, preferencesFetcher);
+                                               fieldLineageWriter);
   }
 
   /**

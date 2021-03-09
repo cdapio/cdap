@@ -139,7 +139,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
         appManager.getInfo();
         throw new RetryableException(String.format("App %s not yet removed", pipeline));
       } catch (ApplicationNotFoundException exception) {
-        return false;
+        return true;
       }
     }, RetryStrategies.limit(10, RetryStrategies.fixDelay(15, TimeUnit.SECONDS)));
   }
@@ -158,8 +158,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     // this call happens when no value for 'field' is in the secure store, which should not result in
     // any failures because the macro could not be enabled so the check is skipped
     StageValidationRequest requestBody =
-      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)),
-                                 false);
+      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)));
     StageValidationResponse actual = sendRequest(requestBody);
     Assert.assertTrue(actual.getFailures().isEmpty());
 
@@ -175,39 +174,6 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     Assert.assertEquals(1, failure.getCauses().size());
     Assert.assertEquals("field", failure.getCauses().get(0).getAttribute(CauseAttributes.STAGE_CONFIG));
     Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(STAGE));
-  }
-
-  @Test
-  public void testMacroResolutionFromProperties() throws Exception {
-    // StringValueFilterTransform checks that the field exists in the input schema
-    String stageName = "tx";
-    Map<String, String> properties = new HashMap<>();
-    properties.put("field", "x");
-    properties.put("value", "${someProperty}");
-    ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
-                                                           properties));
-    Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.STRING)));
-
-    // Set the preference value in the store
-    getPreferencesService().setProperties(NamespaceId.DEFAULT, Collections.singletonMap("someProperty", "someValue"));
-
-    // This call should include the resolved value for Field
-    StageValidationRequest requestBody1 =
-      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)),
-                                 true);
-    StageValidationResponse actual1 = sendRequest(requestBody1);
-    Assert.assertTrue(actual1.getFailures().isEmpty());
-    Assert.assertNotNull(actual1.getSpec().getPlugin());
-    Assert.assertEquals("someValue", actual1.getSpec().getPlugin().getProperties().get("value"));
-
-    // This call should NOT include the resolved value for Field
-    StageValidationRequest requestBody2 =
-      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)),
-                                 false);
-    StageValidationResponse actual2 = sendRequest(requestBody2);
-    Assert.assertTrue(actual2.getFailures().isEmpty());
-    Assert.assertNotNull(actual2.getSpec().getPlugin());
-    Assert.assertEquals("${someProperty}", actual2.getSpec().getPlugin().getProperties().get("value"));
   }
 
   @Test
@@ -258,12 +224,12 @@ public class DataPipelineServiceTest extends HydratorTestBase {
 
     String stageName = "src";
     ETLStage stage = new ETLStage(stageName, new ETLPlugin(name, type, Collections.emptyMap(), requestedArtifact));
-    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), false));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
     Assert.assertEquals(1, actual.getFailures().size());
     ValidationFailure failure = actual.getFailures().iterator().next();
     Assert.assertEquals(stageName, failure.getCauses().get(0).getAttribute(CauseAttributes.PLUGIN_ID));
     Assert.assertEquals(type, failure.getCauses().get(0).getAttribute(CauseAttributes.PLUGIN_TYPE));
-    Assert.assertEquals(name, failure.getCauses().get(0).getAttribute(CauseAttributes.PLUGIN_NAME));
+    Assert.assertEquals(name, failure.getCauses ().get(0).getAttribute(CauseAttributes.PLUGIN_NAME));
     Assert.assertEquals(requestedArtifact.getName(), failure.getCauses().get(0)
       .getAttribute(CauseAttributes.REQUESTED_ARTIFACT_NAME));
     Assert.assertEquals(requestedArtifact.getScope(), failure.getCauses().get(0)
@@ -291,7 +257,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
 
     Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StageValidationRequest requestBody =
-      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)), false);
+      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)));
     StageValidationResponse actual = sendRequest(requestBody);
 
     Assert.assertNull(actual.getSpec());
@@ -320,10 +286,8 @@ public class DataPipelineServiceTest extends HydratorTestBase {
 
     Schema inputSchema = Schema.recordOf("x", Schema.Field.of("x", Schema.of(Schema.Type.INT)));
     StageValidationRequest requestBody =
-      new StageValidationRequest(stage,
-                                 ImmutableList.of(new StageSchema("input1", inputSchema),
-                                                  new StageSchema("input2", inputSchema)),
-                                 false);
+      new StageValidationRequest(stage, ImmutableList.of(new StageSchema("input1", inputSchema),
+                                                         new StageSchema("input2", inputSchema)));
     StageValidationResponse actual = sendRequest(requestBody);
 
     List<String> expectedInputs = ImmutableList.of("input1", "input2");
@@ -352,7 +316,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     properties.put("destinationFileset", "files");
     ETLStage stage = new ETLStage(stageName, new ETLPlugin(FileMoveAction.NAME, Action.PLUGIN_TYPE, properties));
 
-    StageValidationRequest request = new StageValidationRequest(stage, Collections.emptyList(), false);
+    StageValidationRequest request = new StageValidationRequest(stage, Collections.emptyList());
     StageValidationResponse actual = sendRequest(request);
 
     Assert.assertNull(actual.getSpec());
@@ -375,7 +339,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     String stageName = "tx";
     ETLStage stage = new ETLStage(stageName, new ETLPlugin(SleepTransform.NAME, Transform.PLUGIN_TYPE,
                                                            Collections.singletonMap("millis", "-1")));
-    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), false));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
 
     Assert.assertNull(actual.getSpec());
     Assert.assertEquals(1, actual.getFailures().size());
@@ -390,7 +354,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     // string filter requires the field name and the value
     ETLStage stage = new ETLStage(stageName, new ETLPlugin(StringValueFilterTransform.NAME, Transform.PLUGIN_TYPE,
                                                            Collections.emptyMap()));
-    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), false));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
 
     Assert.assertNull(actual.getSpec());
     Assert.assertEquals(2, actual.getFailures().size());
@@ -411,9 +375,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     Schema inputSchema = Schema.recordOf("id", Schema.Field.of("id", Schema.of(Schema.Type.STRING)));
 
     StageValidationRequest requestBody =
-      new StageValidationRequest(stage,
-                                 Collections.singletonList(new StageSchema("input", inputSchema)),
-                                 false);
+      new StageValidationRequest(stage, Collections.singletonList(new StageSchema("input", inputSchema)));
     StageValidationResponse actual = sendRequest(requestBody);
 
     Assert.assertNull(actual.getSpec());
@@ -438,7 +400,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
       "t2", Schema.recordOf("id", Schema.Field.of("cust_id", Schema.of(Schema.Type.INT)),
                             Schema.Field.of("cust_name", Schema.of(Schema.Type.STRING))));
     StageValidationRequest requestBody =
-      new StageValidationRequest(stage, ImmutableList.of(inputSchema1, inputSchema2), false);
+      new StageValidationRequest(stage, ImmutableList.of(inputSchema1, inputSchema2));
 
     StageValidationResponse actual = sendRequest(requestBody);
 
@@ -461,7 +423,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     String stageName = "npe";
     ETLStage stage = new ETLStage(stageName, NullErrorTransform.getPlugin());
 
-    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList(), false));
+    StageValidationResponse actual = sendRequest(new StageValidationRequest(stage, Collections.emptyList()));
 
     Assert.assertNull(actual.getSpec());
     Assert.assertEquals(1, actual.getFailures().size());
