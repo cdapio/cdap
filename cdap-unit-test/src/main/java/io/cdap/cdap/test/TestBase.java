@@ -72,6 +72,8 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.test.TestRunner;
 import io.cdap.cdap.common.twill.NoopTwillRunnerService;
 import io.cdap.cdap.common.utils.OSDetector;
+import io.cdap.cdap.config.PreferencesService;
+import io.cdap.cdap.config.PreferencesTable;
 import io.cdap.cdap.data.runtime.DataFabricModules;
 import io.cdap.cdap.data.runtime.DataSetServiceModules;
 import io.cdap.cdap.data.runtime.DataSetsModules;
@@ -103,6 +105,7 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;
@@ -220,6 +223,7 @@ public class TestBase {
   private static FieldLineageAdmin fieldLineageAdmin;
   private static LineageAdmin lineageAdmin;
   private static AppFabricServer appFabricServer;
+  private static PreferencesService preferencesService;
 
   // This list is to record ApplicationManager create inside @Test method
   private static final List<ApplicationManager> applicationManagers = new ArrayList<>();
@@ -393,6 +397,7 @@ public class TestBase {
     }
     appFabricServer = injector.getInstance(AppFabricServer.class);
     appFabricServer.startAndWait();
+    preferencesService = injector.getInstance(PreferencesService.class);
 
     scheduler = injector.getInstance(Scheduler.class);
     if (scheduler instanceof Service) {
@@ -1080,6 +1085,12 @@ public class TestBase {
    */
   protected static CConfiguration getConfiguration() {
     return cConf;
+  }
+  /**
+   * Returns the {@link PreferencesService} used in tests.
+   */
+  public static PreferencesService getPreferencesService() {
+    return preferencesService;
   }
 
   /**

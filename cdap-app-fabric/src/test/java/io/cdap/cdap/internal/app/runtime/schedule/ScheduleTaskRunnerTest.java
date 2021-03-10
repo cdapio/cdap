@@ -24,10 +24,9 @@ import io.cdap.cdap.common.namespace.NamespaceAdmin;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
 import io.cdap.cdap.internal.app.runtime.schedule.trigger.ProgramStatusTrigger;
 import io.cdap.cdap.internal.app.services.PropertiesResolver;
+import io.cdap.cdap.metadata.FakePreferencesFetcher;
 import io.cdap.cdap.metadata.PreferencesFetcher;
-import io.cdap.cdap.proto.PreferencesDetail;
 import io.cdap.cdap.proto.id.ApplicationId;
-import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.security.impersonation.NoOpOwnerAdmin;
 import io.cdap.cdap.security.impersonation.OwnerAdmin;
@@ -65,19 +64,4 @@ public class ScheduleTaskRunnerTest {
     Assert.assertEquals("val", userArgs.get("key"));
   }
 
-  /**
-   * Fake preferences that just returns whatever it is configured to return.
-   */
-  private static class FakePreferencesFetcher implements PreferencesFetcher {
-    private final Map<String, String> properties;
-
-    private FakePreferencesFetcher(Map<String, String> properties) {
-      this.properties = properties;
-    }
-
-    @Override
-    public PreferencesDetail get(EntityId entityId, boolean resolved) {
-      return new PreferencesDetail(properties, 0L, resolved);
-    }
-  }
 }

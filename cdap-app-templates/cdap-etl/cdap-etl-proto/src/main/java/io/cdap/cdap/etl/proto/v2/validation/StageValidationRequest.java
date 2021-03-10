@@ -28,11 +28,14 @@ import java.util.List;
 public class StageValidationRequest {
   private final ETLStage stage;
   private final List<StageSchema> inputSchemas;
+  private final Boolean resolveMacrosFromPreferences;
 
   public StageValidationRequest(ETLStage stage,
-                                List<StageSchema> inputSchemas) {
+                                List<StageSchema> inputSchemas,
+                                boolean resolveMacrosFromPreferences) {
     this.stage = stage;
     this.inputSchemas = inputSchemas;
+    this.resolveMacrosFromPreferences = resolveMacrosFromPreferences;
   }
 
   public ETLStage getStage() {
@@ -41,6 +44,10 @@ public class StageValidationRequest {
 
   public List<StageSchema> getInputSchemas() {
     return inputSchemas == null ? Collections.emptyList() : inputSchemas;
+  }
+
+  public boolean getResolveMacrosFromPreferences() {
+    return resolveMacrosFromPreferences != null ? resolveMacrosFromPreferences : false;
   }
 
   /**
