@@ -82,7 +82,13 @@ export default class Format extends Component {
   formatToDateTime = () => {
     this.setState({
       activeModal: (
-        <DateFormatModal source="format" toggle={this.toggleModal} onApply={this.applyDateFormat} />
+        <DateFormatModal
+          source="format"
+          toggle={this.toggleModal}
+          mustHaveDate={false}
+          mustHaveTime={false}
+          onApply={this.applyDateFormat}
+        />
       ),
     });
   };
@@ -90,7 +96,13 @@ export default class Format extends Component {
   formatDateTimeAsString = () => {
     this.setState({
       activeModal: (
-        <DateFormatModal source="format" toggle={this.toggleModal} onApply={this.applyDateTimeAsStringFormat} />
+        <DateFormatModal
+          source="format"
+          toggle={this.toggleModal}
+          mustHaveDate={false}
+          mustHaveTime={false}
+          onApply={this.applyDateTimeAsStringFormat}
+        />
       ),
     });
   };
@@ -210,7 +222,7 @@ export default class Format extends Component {
   };
 
   applyDateTimeAsStringFormat = (format) => {
-    let directive = `format-datetime :${this.props.column} '${format}'`;
+    let directive = `format-datetime :${this.props.column} "${format}"`;
     this.applyDirective(directive);
   };
 
