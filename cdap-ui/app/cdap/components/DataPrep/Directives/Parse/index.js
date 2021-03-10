@@ -180,6 +180,8 @@ export default class ParseDirective extends Component {
       <DateFormatModal
         source="parse"
         toggle={this.selectParse.bind(this, null)}
+        mustHaveDate={false} 
+        mustHaveTime={false}
         parserName={T.translate(`${SUFFIX}.Parsers.SIMPLEDATE.label`)}
         onApply={this.applyDirective.bind(this, 'SIMPLEDATE')}
       />
@@ -191,8 +193,10 @@ export default class ParseDirective extends Component {
       <DateFormatModal
         source="parse"
         toggle={this.selectParse.bind(this, null)}
+        mustHaveDate={true} 
+        mustHaveTime={true}
         parserName={T.translate(`${SUFFIX}.Parsers.DATETIME.label`)}
-        onApply={(format) => this.applyDirective('DATETIME', `'${format}'`)}
+        onApply={(format) => this.applyDirective('DATETIME', `"${format}"`)}
       />
     );
   }
