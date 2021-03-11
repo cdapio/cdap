@@ -103,9 +103,7 @@ export default function CommentBox({
 
   React.useEffect(() => {
     setLocalComment(comment);
-    if (!comment.content.length) {
-      setEditMode(true);
-    }
+    setEditMode(!comment.content.length);
   }, [comment]);
 
   const CommentMenuLocal = disabled ? null : (
