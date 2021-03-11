@@ -105,9 +105,21 @@ export default class DateFormatModal extends Component {
   constructor(props) {
     super(props);
 
+    const options = Object.keys(OPTIONS_MAP).filter(option => {
+      const optionObject = OPTIONS_MAP[option];
+      if (props.mustHaveDate && !optionObject.hasDate) {
+        return false;
+      }
+      if (props.mustHaveTime && !optionObject.hasTime) {
+        return false;
+      }
+      return true;
+    });
+
     this.state = {
-      format: 'OPTION1',
+      format: options[0],
       customFormat: '',
+      options,
     };
 
     this.apply = this.apply.bind(this);
@@ -161,17 +173,6 @@ export default class DateFormatModal extends Component {
   }
 
   render() {
-    const options = Object.keys(OPTIONS_MAP).filter(option => {
-      const optionObject = OPTIONS_MAP[option];
-      if (this.props.mustHaveDate && !optionObject.hasDate) {
-        return false;
-      }
-      if (this.props.mustHaveTime && !optionObject.hasTime) {
-        return false;
-      }
-      return true;
-    });
-
     const disabled = this.state.format === 'CUSTOM' && this.state.customFormat.length === 0;
 
     return (
@@ -200,7 +201,7 @@ export default class DateFormatModal extends Component {
           <br />
 
           <div className="list-options">
-            {options.map((option) => {
+            {this.state.options.map((option) => {
               return (
                 <div key={option} onClick={this.selectFormat.bind(this, option)}>
                   <span
