@@ -24,21 +24,81 @@ import MouseTrap from 'mousetrap';
 const PREFIX = 'features.DataPrep.Directives.Parse';
 
 const OPTIONS_MAP = {
-  OPTION1: 'MM/dd/yyyy',
-  OPTION2: 'dd/MM/yyyy',
-  OPTION3: 'MM-dd-yyyy',
-  OPTION4: 'MM-dd-yy',
-  OPTION5: 'yyyy-MM-dd',
-  OPTION6: 'yyyy-MM-dd HH:mm:ss',
-  OPTION7: "MM-dd-yyyy 'at' HH:mm:ss z",
-  OPTION8: 'dd/MM/yy HH:mm:ss',
-  OPTION9: "yyyy,MM.dd'T'HH:mm:ss.SSSZ",
-  OPTION10: 'MM.dd.yyyy HH:mm:ss.SSS',
-  OPTION11: 'EEE, d MMM yyyy HH:mm:ss',
-  OPTION12: "EEE, MMM d, ''yy",
-  OPTION13: 'h:mm a',
-  OPTION14: 'H:mm a, z',
-  CUSTOM: 'CUSTOM',
+  OPTION1: {
+    format: 'MM/dd/yyyy',
+    hasDate: true,
+    hasTime: false,
+  },
+  OPTION2: {
+    format: 'dd/MM/yyyy',
+    hasDate: true,
+    hasTime: false,
+  },
+  OPTION3: {
+    format: 'MM-dd-yyyy',
+    hasDate: true,
+    hasTime: false,
+  },
+  OPTION4: {
+    format: 'MM-dd-yy',
+    hasDate: true,
+    hasTime: false,
+  },
+  OPTION5: {
+    format: 'yyyy-MM-dd',
+    hasDate: true,
+    hasTime: false,
+  },
+  OPTION6: {
+    format: 'yyyy-MM-dd HH:mm:ss',
+    hasDate: true,
+    hasTime: true,
+  },
+  OPTION7: {
+    format: "MM-dd-yyyy 'at' HH:mm:ss z",
+    hasDate: true,
+    hasTime: true,
+  },
+  OPTION8: {
+    format: 'dd/MM/yy HH:mm:ss',
+    hasDate: true,
+    hasTime: true,
+  },
+  OPTION9: {
+    format: "yyyy,MM.dd'T'HH:mm:ss.SSSZ",
+    hasDate: true,
+    hasTime: true,
+  },
+  OPTION10: {
+    format: 'MM.dd.yyyy HH:mm:ss.SSS',
+    hasDate: true,
+    hasTime: true,
+  },
+  OPTION11: {
+    format: 'EEE, d MMM yyyy HH:mm:ss',
+    hasDate: true,
+    hasTime: true,
+  },
+  OPTION12: {
+    format: "EEE, MMM d, ''yy",
+    hasDate: true,
+    hasTime: false,
+  },
+  OPTION13: {
+    format: 'h:mm a',
+    hasDate: false,
+    hasTime: true,
+  },
+  OPTION14: {
+    format: 'H:mm a, z',
+    hasDate: false,
+    hasTime: true,
+  },
+  CUSTOM: {
+    format: 'CUSTOM',
+    hasDate: true,
+    hasTime: true,
+  }
 };
 
 export default class DateFormatModal extends Component {
@@ -63,7 +123,7 @@ export default class DateFormatModal extends Component {
   }
 
   apply() {
-    let format = OPTIONS_MAP[this.state.format];
+    let { format } = OPTIONS_MAP[this.state.format];
 
     if (this.state.format === 'CUSTOM') {
       format = this.state.customFormat;
@@ -101,9 +161,18 @@ export default class DateFormatModal extends Component {
   }
 
   render() {
-    let options = Object.keys(OPTIONS_MAP);
+    const options = Object.keys(OPTIONS_MAP).filter(option => {
+      const optionObject = OPTIONS_MAP[option];
+      if (this.props.mustHaveDate && !optionObject.hasDate) {
+        return false;
+      }
+      if (this.props.mustHaveTime && !optionObject.hasTime) {
+        return false;
+      }
+      return true;
+    });
 
-    let disabled = this.state.format === 'CUSTOM' && this.state.customFormat.length === 0;
+    const disabled = this.state.format === 'CUSTOM' && this.state.customFormat.length === 0;
 
     return (
       <Modal
@@ -166,5 +235,7 @@ DateFormatModal.propTypes = {
   source: PropTypes.string,
   toggle: PropTypes.func,
   parserName: PropTypes.string,
+  mustHaveDate: PropTypes.bool,
+  mustHaveTime: PropTypes.bool,
   onApply: PropTypes.func,
 };
