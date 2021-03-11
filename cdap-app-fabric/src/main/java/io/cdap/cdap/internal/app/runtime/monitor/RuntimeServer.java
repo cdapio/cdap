@@ -1,5 +1,5 @@
 /*
- * Copyright © 2020 Cask Data, Inc.
+ * Copyright © 2020-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -34,6 +34,7 @@ import io.cdap.http.HttpHandler;
 import io.cdap.http.NettyHttpService;
 import io.netty.channel.ChannelPipeline;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.util.concurrent.EventExecutor;
 import org.apache.twill.common.Cancellable;
 import org.apache.twill.discovery.Discoverable;
 import org.apache.twill.discovery.DiscoveryService;
@@ -66,6 +67,10 @@ public class RuntimeServer extends AbstractIdleService {
         @Override
         public void modify(ChannelPipeline pipeline) {
           pipeline.addAfter("compressor", "decompressor", new HttpContentDecompressor());
+          if (cConf.getBoolean(Constants.Security.ENABLED, false)) {
+            EventExecutor executor = pipeline.context("dispatcher").executor();
+            pipeline.addBefore(executor, "dispatcher", "identity-handler", new RuntimeIdentityHandler());
+          }
         }
       })
       .setHost(cConf.get(Constants.RuntimeMonitor.BIND_ADDRESS))
