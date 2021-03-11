@@ -834,10 +834,17 @@ angular.module(PKG.name + '.commons')
       };
     };
 
-    vm.handleCanvasClick = () => {
+    vm.handleCanvasClick = (e) => {
       if(vm.selectionBox.isSelectionInProgress) {
         vm.selectionBox.isSelectionInProgress = false;
         return;
+      }
+      if (e) {
+        const target = e.target;
+        const isTargetDAGContainer = target.getAttribute('id') === 'dag-container';
+        if (!isTargetDAGContainer) {
+          return;
+        }
       }
       if (vm.activePluginToComment) {
         vm.activePluginToComment = null;
@@ -1745,9 +1752,6 @@ angular.module(PKG.name + '.commons')
     }
 
     vm.setComments = (nodeId, comments) => {
-      if (!(myHelpers.objectQuery(comments, 0, 'content') || '').length) {
-        return;
-      }
       const existingStages = DAGPlusPlusNodesStore.getNodes();
       DAGPlusPlusNodesStore.setNodes(existingStages.map((stage) => {
         if (stage.id === nodeId){
