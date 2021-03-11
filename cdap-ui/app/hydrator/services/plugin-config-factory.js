@@ -332,6 +332,10 @@ class HydratorPlusPlusPluginConfigFactory {
       })
     };
 
+    if (validationFromGetSchema) {
+      requestBody.resolveMacrosFromPreferences = true;
+    }
+
     const parseResSchema = (res) => {
       if (res.name && res.type && res.fields) {
         return [this.HydratorPlusPlusNodeService.getOutputSchemaObj(res)];
