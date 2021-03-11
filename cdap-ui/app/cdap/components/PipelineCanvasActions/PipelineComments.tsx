@@ -86,7 +86,7 @@ interface IPipelineCommentsProps {
 }
 
 const DEFAULT_COMMENTS = [{ content: '', createDate: Date.now() }];
-const getDefaulComments = (comments) => {
+const getDefaultComments = (comments) => {
   if (!Array.isArray(comments) || (Array.isArray(comments) && !comments.length)) {
     return cloneDeep(DEFAULT_COMMENTS);
   }
@@ -98,7 +98,7 @@ export function PipelineComments({
   onChange,
   disabled = false,
 }: IPipelineCommentsProps) {
-  const [localComments, setLocalComments] = React.useState(getDefaulComments(comments));
+  const [localComments, setLocalComments] = React.useState(getDefaultComments(comments));
   const [localAnchorEl, setLocalAnchorEl] = React.useState(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const classes = useStyles();
@@ -118,7 +118,7 @@ export function PipelineComments({
   const onDelete = (id) => {
     if (typeof onChange === 'function') {
       const newComments = [...comments.slice(0, id), ...comments.slice(id + 1)];
-      setLocalComments(getDefaulComments(newComments));
+      setLocalComments(getDefaultComments(newComments));
       onChange(newComments);
     }
   };
