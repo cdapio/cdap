@@ -1775,6 +1775,7 @@ angular.module(PKG.name + '.commons')
       } else {
         vm.onPluginContextMenuOpen(nodeId);
       }
+      vm.nodeMenuOpen = null;
     };
 
     vm.resetActivePluginForComment = (nodeId = null) => {
