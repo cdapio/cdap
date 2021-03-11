@@ -38,7 +38,14 @@ module.constant('MYAUTH_ROLE', {
 });
 
 
-module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAuthPromise, $rootScope, $localStorage, $cookies) {
+module.service('myAuth', function myAuthService (
+  MYAUTH_EVENT,
+  MyAuthUser,
+  myAuthPromise,
+  $rootScope,
+  $localStorage,
+  $cookies
+) {
 
   /**
    * private method to sync the user everywhere
@@ -82,7 +89,10 @@ module.service('myAuth', function myAuthService (MYAUTH_EVENT, MyAuthUser, myAut
    * @return {Boolean}
    */
   this.isAuthenticated = function () {
-    if (this.currentUser) {
+    if (window.CaskCommon.CDAPHelpers.isAuthSetToProxyMode()) {
+      return true;
+    }
+    if (window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode() && this.currentUser) {
       return !!this.currentUser;
     }
 

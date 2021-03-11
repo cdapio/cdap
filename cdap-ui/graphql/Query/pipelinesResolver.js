@@ -40,6 +40,6 @@ export async function queryTypePipelinesResolver(parent, args, context) {
     return new ApolloError(error, statusCode, { errorOrigin: 'pipelines' });
   }
 
-  const apps = await requestPromiseWrapper(options, context.auth, null, errorModifiersFn);
+  const apps = await requestPromiseWrapper(options, context, null, errorModifiersFn);
   return orderBy(apps, [(app) => app.name], ['asc']);
 }

@@ -45,6 +45,11 @@ const getApolloServer = (cdapConfig, logger = console) =>
       }
       const sToken = req.headers['session-token'];
       const auth = req.headers.authorization;
+      let userIdValue, userIdProperty;
+      if (cdapConfig['security.authentication.mode'] === 'PROXY') {
+        userIdProperty = cdapConfig['security.authentication.proxy.user.identity.header'];
+        userIdValue = req.headers[userIdProperty];
+      }
 
       if (!sToken || (sToken && !sessionToken.validateToken(sToken, cdapConfig, logger, auth))) {
         throw new Error('Invalid Sesion Token');
@@ -52,7 +57,9 @@ const getApolloServer = (cdapConfig, logger = console) =>
 
       return {
         auth,
-        loaders: createLoaders(auth),
+        userIdProperty,
+        userIdValue,
+        loaders: createLoaders(auth, userIdProperty, userIdValue),
       };
     },
     introspection: env === 'production' ? false : true,

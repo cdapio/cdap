@@ -189,6 +189,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       },
       marketUrls: getMarketUrls(cdapConfig),
       securityEnabled: authAddress.enabled,
+      securityMode: cdapConfig['security.authentication.mode'],
       isEnterprise: isModeProduction(),
       sandboxMode: process.env.NODE_ENV,
       authRefreshURL: cdapConfig['dashboard.auth.refresh.path'] || false,
@@ -290,6 +291,16 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
       customHeaders = {
         authorization: 'Bearer ' + req.cookies['CDAP_Auth_Token'],
       };
+    }
+
+    if (req.headers.authorization) {
+      customHeaders = {
+        authorization: 'Bearer ' + req.headers.authorization,
+      };
+      if (cdapConfig['security.authentication.mode'] === 'PROXY') {
+        const userIdProperty = cdapConfig['security.authentication.proxy.user.identity.header'];
+        customHeaders[userIdProperty] = req.headers[userIdProperty];
+      }
     }
 
     if (customHeaders) {
@@ -503,6 +514,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
         },
         function(err, response) {
           if (err) {
+            log.info('Server responded with error: ' + err + ' for API : "/v3/namespaces"');
             res.status(500).send(err);
           } else {
             res.status(response.statusCode).send('OK');
