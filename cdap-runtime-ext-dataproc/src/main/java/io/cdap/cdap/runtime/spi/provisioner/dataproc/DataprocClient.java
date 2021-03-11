@@ -96,6 +96,9 @@ final class DataprocClient implements AutoCloseable {
                                                                                                    "172.16.0.0/12",
                                                                                                    "192.168.0.0/16"));
   static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
+  private static final int MIN_DEFAULT_CONCURRENCY = 32;
+  private static final int PARTITION_NUM_FACTOR = 32;
+  private static final int MAX_INITIAL_PARTITIONS_DEFAULT = 8192;
   private final DataprocConf conf;
   private final ClusterControllerClient client;
   private final Compute compute;
@@ -415,6 +418,21 @@ final class DataprocClient implements AutoCloseable {
         .setMachineTypeUri(conf.getWorkerMachineType())
         .setPreemptibility(InstanceGroupConfig.Preemptibility.NON_PREEMPTIBLE)
         .setDiskConfig(workerDiskConfig);
+
+      //Set default concurrency settings for fixed cluster
+      if (Strings.isNullOrEmpty(conf.getAutoScalingPolicy())) {
+        //Set spark.default.parallelism according to cluster size.
+        //Spark defaults it to number of current executors, but when we configure the job
+        //executors may not have started yet, so this value gets artificially low.
+        int defaultConcurrency = Math.max(conf.getTotalWorkerCPUs(), MIN_DEFAULT_CONCURRENCY);
+        //Set spark.sql.adaptive.coalescePartitions.initialPartitionNum as 32x of default parallelism,
+        //but no more than 8192. This value is used only in spark 3 with adaptive execution and
+        //according to our tests spark can handle really large numbers and 32x is a reasonable default.
+        int initialPartitionNum = Math.min(defaultConcurrency * PARTITION_NUM_FACTOR, MAX_INITIAL_PARTITIONS_DEFAULT);
+        clusterProperties.putIfAbsent("spark:spark.default.parallelism", Integer.toString(defaultConcurrency));
+        clusterProperties.putIfAbsent("spark:spark.sql.adaptive.coalescePartitions.initialPartitionNum",
+                                      Integer.toString(initialPartitionNum));
+      }
 
       SoftwareConfig.Builder softwareConfigBuilder = SoftwareConfig.newBuilder()
           .putAllProperties(clusterProperties);

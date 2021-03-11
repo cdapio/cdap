@@ -249,6 +249,10 @@ final class DataprocConf {
     return getMachineType(workerMachineType, workerCPUs, workerMemoryMB);
   }
 
+  int getTotalWorkerCPUs() {
+    return workerCPUs * (workerNumNodes + secondaryWorkerNumNodes);
+  }
+
   @Nullable
   String getImageVersion() {
     return imageVersion;
