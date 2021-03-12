@@ -79,8 +79,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
   private final MetadataPublisher metadataPublisher;
   private final NamespaceQueryAdmin namespaceQueryAdmin;
   private final PluginFinder pluginFinder;
-  private final TransactionRunner transactionRunner;
   private final FieldLineageWriter fieldLineageWriter;
+  private final TransactionRunner transactionRunner;
   private final PreferencesFetcher preferencesFetcher;
 
   @Inject
@@ -92,7 +92,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                               ArtifactManagerFactory artifactManagerFactory,
                               MetadataReader metadataReader, MetadataPublisher metadataPublisher,
                               NamespaceQueryAdmin namespaceQueryAdmin, PluginFinder pluginFinder,
-                              TransactionRunner transactionRunner, FieldLineageWriter fieldLineageWriter,
+                              FieldLineageWriter fieldLineageWriter, TransactionRunner transactionRunner,
                               PreferencesFetcher preferencesFetcher) {
     super(cConf);
     this.metricsCollectionService = metricsCollectionService;
@@ -108,8 +108,8 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
     this.metadataPublisher = metadataPublisher;
     this.namespaceQueryAdmin = namespaceQueryAdmin;
     this.pluginFinder = pluginFinder;
-    this.transactionRunner = transactionRunner;
     this.fieldLineageWriter = fieldLineageWriter;
+    this.transactionRunner = transactionRunner;
     this.preferencesFetcher = preferencesFetcher;
   }
 
@@ -153,7 +153,7 @@ public class ServiceProgramRunner extends AbstractProgramRunnerWithPlugin {
                                                           pluginInstantiator, secureStore, secureStoreManager,
                                                           messagingService, artifactManager, metadataReader,
                                                           metadataPublisher, namespaceQueryAdmin, pluginFinder,
-                                                          transactionRunner, fieldLineageWriter, preferencesFetcher);
+                                                          fieldLineageWriter, transactionRunner, preferencesFetcher);
 
       // Add a service listener to make sure the plugin instantiator is closed when the http server is finished.
       component.addListener(createRuntimeServiceListener(Collections.singleton(pluginInstantiator)),

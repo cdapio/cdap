@@ -100,11 +100,9 @@ import io.cdap.cdap.proto.Notification;
 import io.cdap.cdap.proto.id.ApplicationId;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.DatasetId;
-import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.KerberosPrincipalId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.NamespacedEntityId;
-import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.id.TopicId;
 import org.apache.tephra.RetryStrategies;
@@ -147,7 +145,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final Program program;
   private final ProgramOptions programOptions;
   private final ProgramRunId programRunId;
-  private final Iterable<? extends EntityId> owners;
   @Nullable
   private final TriggeringScheduleInfo triggeringScheduleInfo;
   private final Map<String, String> runtimeArguments;
@@ -160,7 +157,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
   private final long logicalStartTime;
   private final SecureStore secureStore;
   private final Transactional transactional;
-  private final int defaultTxTimeout;
   private final MessagingService messagingService;
   private final MultiThreadMessagingContext messagingContext;
   private final MetadataReader metadataReader;
@@ -193,7 +189,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     this.programRunId = program.getId().run(ProgramRunners.getRunId(programOptions));
     this.triggeringScheduleInfo = getTriggeringScheduleInfo(programOptions);
     this.discoveryServiceClient = discoveryServiceClient;
-    this.owners = createOwners(program.getId());
 
     Map<String, String> runtimeArgs = new HashMap<>(programOptions.getUserArguments().asMap());
     this.logicalStartTime = ProgramRunners.updateLogicalStartTime(runtimeArgs);
@@ -215,7 +210,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
       staticDatasets.put(name, runtimeArgs);
     }
     SystemDatasetInstantiator instantiator =
-      new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), owners);
+      new SystemDatasetInstantiator(dsFramework, program.getClassLoader(), Collections.singletonList(program.getId()));
 
     TransactionSystemClient retryingTxClient = new RetryingShortTransactionSystemClient(txClient, retryStrategy);
     this.datasetCache = multiThreaded
@@ -236,8 +231,7 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
                                   new BasicMessagingAdmin(messagingService, program.getId().getNamespaceId()),
                                   retryStrategy, principalId, namespaceQueryAdmin);
     this.secureStore = secureStore;
-    this.defaultTxTimeout = determineTransactionTimeout(cConf);
-    this.transactional = Transactions.createTransactional(getDatasetCache(), defaultTxTimeout);
+    this.transactional = Transactions.createTransactional(getDatasetCache(), determineTransactionTimeout(cConf));
     this.metadataReader = metadataReader;
     this.metadataPublisher = metadataPublisher;
     this.fieldLineageOperations = new HashSet<>();
@@ -271,10 +265,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
     return SystemArguments.getTransactionTimeout(getRuntimeArguments(), cConf);
   }
 
-  private Iterable<? extends EntityId> createOwners(ProgramId programId) {
-    return Collections.singletonList(programId);
-  }
-
   /**
    * Creates a {@link MetricsContext} for metrics emission of the program represented by this context.
    *
@@ -302,20 +292,6 @@ public abstract class AbstractContext extends AbstractServiceDiscoverer
    */
   public LoggingContext getLoggingContext() {
     return loggingContext;
-  }
-
-  /**
-   * @return the default transaction timeout.
-   */
-  public int getDefaultTxTimeout() {
-    return defaultTxTimeout;
-  }
-
-  /**
-   * Returns a list of ID who owns this program context.
-   */
-  public Iterable<? extends EntityId> getOwners() {
-    return owners;
   }
 
   /**

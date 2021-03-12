@@ -71,7 +71,7 @@ public class RemotePreferencesFetcherInternal implements PreferencesFetcher {
     String uri;
     switch (entityId.getEntityType()) {
       case INSTANCE:
-        uri = String.format("preferences");
+        uri = "preferences";
         break;
       case NAMESPACE:
         NamespaceId namespaceId = (NamespaceId) entityId;
