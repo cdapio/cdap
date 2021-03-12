@@ -39,8 +39,6 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentContext;
 import io.cdap.cdap.master.spi.environment.MasterEnvironmentRunnable;
-import io.cdap.cdap.metadata.FakePreferencesFetcher;
-import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -55,7 +53,6 @@ import org.junit.runners.Parameterized;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.function.Supplier;
 
 /**
@@ -92,11 +89,7 @@ public class ProgramTwillRunnableModuleTest {
         }
       }.createModule(CConfiguration.create(), new Configuration(),
                      createProgramOptions(programRunId, mode), programRunId);
-      Injector injector = Guice.createInjector(module, binder -> {
-        binder.bind(PreferencesFetcher.class)
-          .toInstance(new FakePreferencesFetcher(Collections.emptyMap()));
-      });
-      injector.getInstance(PreferencesFetcher.class);
+      Injector injector = Guice.createInjector(module);
       injector.getInstance(ServiceProgramRunner.class);
       injector.getInstance(ExploreClient.class);
     }
