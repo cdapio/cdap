@@ -19,19 +19,15 @@ package io.cdap.cdap.internal.app.runtime.service.http;
 import io.cdap.cdap.api.artifact.ArtifactInfo;
 import io.cdap.cdap.api.artifact.ArtifactManager;
 import io.cdap.cdap.api.artifact.CloseableClassLoader;
-import io.cdap.cdap.api.macro.InvalidMacroException;
-import io.cdap.cdap.api.macro.MacroEvaluator;
-import io.cdap.cdap.api.macro.MacroParserOptions;
 import io.cdap.cdap.api.metadata.MetadataReader;
 import io.cdap.cdap.api.metrics.MetricsCollectionService;
 import io.cdap.cdap.api.plugin.PluginConfigurer;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
+import io.cdap.cdap.api.service.http.HttpServiceContext;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
-import io.cdap.cdap.api.service.http.SystemHttpServiceContext;
 import io.cdap.cdap.app.program.Program;
 import io.cdap.cdap.app.runtime.ProgramOptions;
-import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.common.namespace.NamespaceQueryAdmin;
@@ -43,18 +39,10 @@ import io.cdap.cdap.internal.app.DefaultPluginConfigurer;
 import io.cdap.cdap.internal.app.runtime.AbstractContext;
 import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
-import io.cdap.cdap.internal.app.runtime.plugin.MacroParser;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
-import io.cdap.cdap.internal.app.services.DefaultSystemTableConfigurer;
 import io.cdap.cdap.messaging.MessagingService;
-import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.id.ArtifactId;
 import io.cdap.cdap.proto.id.NamespaceId;
-import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
-import io.cdap.cdap.spi.data.table.StructuredTableId;
-import io.cdap.cdap.spi.data.transaction.TransactionException;
-import io.cdap.cdap.spi.data.transaction.TransactionRunner;
-import io.cdap.cdap.spi.data.transaction.TxRunnable;
 import org.apache.tephra.TransactionSystemClient;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
@@ -77,26 +65,23 @@ import javax.annotation.Nullable;
  * Default implementation of HttpServiceContext which simply stores and retrieves the
  * spec provided when this class is instantiated
  */
-public class BasicHttpServiceContext extends AbstractContext implements SystemHttpServiceContext {
+public class BasicHttpServiceContext extends AbstractContext implements HttpServiceContext {
   private static final Logger LOG = LoggerFactory.getLogger(BasicHttpServiceContext.class);
-  private static final String SECURE_FUNCTION = "secure";
 
   private final CConfiguration cConf;
-  private final NamespaceId namespaceId;
   private final ArtifactId artifactId;
   private final HttpServiceHandlerSpecification spec;
   private final int instanceId;
   private final AtomicInteger instanceCount;
   private final ArtifactManager artifactManager;
   private final PluginFinder pluginFinder;
-  private final TransactionRunner transactionRunner;
-  private final PreferencesFetcher preferencesFetcher;
   private final Collection<Closeable> closeables;
 
   /**
    * Creates a BasicHttpServiceContext for the given HttpServiceHandlerSpecification.
    * @param program program of the context.
    * @param programOptions program options for the program execution context
+   * @param cConf the CDAP configuration
    * @param spec spec of the service handler of this context. If {@code null} is provided, this context
    *             is not associated with any service handler (e.g. for the http server itself).
    * @param instanceId instanceId of the component.
@@ -106,7 +91,15 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
    * @param discoveryServiceClient discoveryServiceClient used to do service discovery.
    * @param txClient txClient to do transaction operations.
    * @param pluginInstantiator {@link PluginInstantiator}
-   * @param secureStore The {@link SecureStore} for this context
+   * @param secureStore the {@link SecureStore} for this context
+   * @param secureStoreManager the {@link SecureStoreManager} for this context
+   * @param messagingService the {@link MessagingService} for interacting with TMS
+   * @param artifactManager the {@link ArtifactManager} for getting artifacts information
+   * @param metadataReader the {@link MetadataReader} for reading metadata
+   * @param metadataPublisher the {@link MetadataPublisher} for writing out metadata
+   * @param namespaceQueryAdmin the {@link NamespaceQueryAdmin} for querying namespace information
+   * @param pluginFinder the {@link PluginFinder} for plugin discovery
+   * @param fieldLineageWriter the {@link FieldLineageWriter} for writing out field level lineage
    */
   public BasicHttpServiceContext(Program program, ProgramOptions programOptions, CConfiguration cConf,
                                  @Nullable HttpServiceHandlerSpecification spec,
@@ -119,24 +112,20 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
                                  ArtifactManager artifactManager, MetadataReader metadataReader,
                                  MetadataPublisher metadataPublisher,
                                  NamespaceQueryAdmin namespaceQueryAdmin,
-                                 PluginFinder pluginFinder, TransactionRunner transactionRunner,
-                                 FieldLineageWriter fieldLineageWriter,
-                                 PreferencesFetcher preferencesFetcher) {
+                                 PluginFinder pluginFinder,
+                                 FieldLineageWriter fieldLineageWriter) {
     super(program, programOptions, cConf, spec == null ? Collections.emptySet() : spec.getDatasets(),
           dsFramework, txClient, discoveryServiceClient, false,
           metricsCollectionService, createMetricsTags(spec, instanceId),
           secureStore, secureStoreManager, messagingService, pluginInstantiator, metadataReader, metadataPublisher,
           namespaceQueryAdmin, fieldLineageWriter);
     this.cConf = cConf;
-    this.namespaceId = program.getId().getNamespaceId();
     this.artifactId = ProgramRunners.getArtifactId(programOptions);
     this.spec = spec;
     this.instanceId = instanceId;
     this.instanceCount = instanceCount;
     this.artifactManager = artifactManager;
     this.pluginFinder = pluginFinder;
-    this.transactionRunner = transactionRunner;
-    this.preferencesFetcher = preferencesFetcher;
     this.closeables = new ArrayList<>();
   }
 
@@ -216,19 +205,6 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
     return artifactManager.createClassLoader(namespace, artifactInfo, parentClassLoader);
   }
 
-  @Override
-  public void run(TxRunnable runnable) throws TransactionException {
-    if (!namespaceId.equals(NamespaceId.SYSTEM)) {
-      // should not happen in normal circumstances, as this is checked when the application is deployed.
-      // could possibly be called if the user is directly casting to a SystemHttpServiceContext in user services.
-      throw new UnauthorizedException("System table transactions can only be run by "
-                                        + "applications in the system namespace.");
-    }
-    // table names are prefixed to prevent clashes with CDAP platform tables.
-    transactionRunner.run(context -> runnable.run(
-      tableId -> context.getTable(new StructuredTableId(DefaultSystemTableConfigurer.PREFIX + tableId.getName()))));
-  }
-
   /**
    * Releases resources that were created for an endpoint call but are no longer needed for future calls.
    */
@@ -241,40 +217,5 @@ public class BasicHttpServiceContext extends AbstractContext implements SystemHt
       }
     }
     closeables.clear();
-  }
-
-  @Override
-  public Map<String, String> evaluateMacros(String namespace, Map<String, String> macros,
-                                            MacroEvaluator evaluator,
-                                            MacroParserOptions options) throws InvalidMacroException {
-    MacroParser macroParser = new MacroParser(evaluator, options);
-    Map<String, String> evaluated = new HashMap<>();
-
-    for (Map.Entry<String, String> property : macros.entrySet()) {
-      String key = property.getKey();
-      String val = property.getValue();
-      evaluated.put(key, macroParser.parse(val));
-    }
-
-    return evaluated;
-  }
-
-  /**
-   * Get preferences for the supplied namespace.
-   *
-   * @param namespace the name of the namespace to fetch preferences for.
-   * @param resolved true if resolved properties are desired.
-   * @return Map containing the preferences for this namespace
-   * @throws IOException if the preferencesFetcher could not complete the request.
-   * @throws IllegalArgumentException if the supplied namespace doesn't exist.
-   */
-  @Override
-  public Map<String, String> getPreferencesForNamespace(String namespace, boolean resolved)
-    throws IOException, IllegalArgumentException {
-    try {
-      return preferencesFetcher.get(new NamespaceId(namespace), resolved).getProperties();
-    } catch (NotFoundException nfe) {
-      throw new IllegalArgumentException(String.format("Namespace '%s' does not exist", namespace), nfe);
-    }
   }
 }

@@ -28,6 +28,7 @@ import io.cdap.cdap.api.metrics.MetricsContext;
 import io.cdap.cdap.api.security.store.SecureStore;
 import io.cdap.cdap.api.security.store.SecureStoreManager;
 import io.cdap.cdap.api.service.ServiceSpecification;
+import io.cdap.cdap.api.service.http.AbstractSystemHttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceContext;
 import io.cdap.cdap.api.service.http.HttpServiceHandler;
 import io.cdap.cdap.api.service.http.HttpServiceHandlerSpecification;
@@ -50,6 +51,7 @@ import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.app.runtime.service.http.AbstractDelegatorContext;
 import io.cdap.cdap.internal.app.runtime.service.http.AbstractServiceHttpServer;
 import io.cdap.cdap.internal.app.runtime.service.http.BasicHttpServiceContext;
+import io.cdap.cdap.internal.app.runtime.service.http.BasicSystemHttpServiceContext;
 import io.cdap.cdap.internal.lang.Reflections;
 import io.cdap.cdap.messaging.MessagingService;
 import io.cdap.cdap.metadata.PreferencesFetcher;
@@ -88,8 +90,8 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                            MessagingService messagingService,
                            ArtifactManager artifactManager, MetadataReader metadataReader,
                            MetadataPublisher metadataPublisher, NamespaceQueryAdmin namespaceQueryAdmin,
-                           PluginFinder pluginFinder, TransactionRunner transactionRunner,
-                           FieldLineageWriter fieldLineageWriter, PreferencesFetcher preferencesFetcher) {
+                           PluginFinder pluginFinder, FieldLineageWriter fieldLineageWriter,
+                           TransactionRunner transactionRunner, PreferencesFetcher preferencesFetcher) {
     super(host, program, programOptions, instanceId, serviceAnnouncer, TransactionControl.IMPLICIT);
 
     this.cConf = cConf;
@@ -99,8 +101,9 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                metricsCollectionService, datasetFramework, discoveryServiceClient,
                                                txClient, pluginInstantiator, secureStore, secureStoreManager,
                                                messagingService, artifactManager, metadataReader, metadataPublisher,
-                                               pluginFinder, transactionRunner, fieldLineageWriter, preferencesFetcher);
-    this.context = contextFactory.create(null);
+                                               pluginFinder, fieldLineageWriter, transactionRunner,
+                                               preferencesFetcher);
+    this.context = contextFactory.create(null, null);
     this.namespaceQueryAdmin = namespaceQueryAdmin;
   }
 
@@ -148,15 +151,24 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
                                                               MetadataReader metadataReader,
                                                               MetadataPublisher metadataPublisher,
                                                               PluginFinder pluginFinder,
-                                                              TransactionRunner transactionRunner,
                                                               FieldLineageWriter fieldLineageWriter,
+                                                              TransactionRunner transactionRunner,
                                                               PreferencesFetcher preferencesFetcher) {
-    return spec -> new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
-                                               metricsCollectionService, datasetFramework, discoveryServiceClient,
-                                               txClient, pluginInstantiator, secureStore, secureStoreManager,
-                                               messagingService, artifactManager, metadataReader, metadataPublisher,
-                                               namespaceQueryAdmin, pluginFinder, transactionRunner,
-                                               fieldLineageWriter, preferencesFetcher);
+    return (spec, handlerClass) -> {
+      if (handlerClass != null && AbstractSystemHttpServiceHandler.class.isAssignableFrom(handlerClass)) {
+        return new BasicSystemHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
+                                                 metricsCollectionService, datasetFramework, discoveryServiceClient,
+                                                 txClient, pluginInstantiator, secureStore, secureStoreManager,
+                                                 messagingService, artifactManager, metadataReader, metadataPublisher,
+                                                 namespaceQueryAdmin, pluginFinder, fieldLineageWriter,
+                                                 transactionRunner, preferencesFetcher);
+      }
+      return new BasicHttpServiceContext(program, programOptions, cConf, spec, instanceId, instanceCount,
+                                         metricsCollectionService, datasetFramework, discoveryServiceClient,
+                                         txClient, pluginInstantiator, secureStore, secureStoreManager,
+                                         messagingService, artifactManager, metadataReader, metadataPublisher,
+                                         namespaceQueryAdmin, pluginFinder, fieldLineageWriter);
+    };
   }
 
   /**
@@ -186,7 +198,7 @@ public class ServiceHttpServer extends AbstractServiceHttpServer<HttpServiceHand
 
     @Override
     protected HandlerTaskExecutor createTaskExecutor(InstantiatorFactory instantiatorFactory) throws Exception {
-      BasicHttpServiceContext context = contextFactory.create(spec);
+      BasicHttpServiceContext context = contextFactory.create(spec, getHandlerType().getRawType());
 
       HttpServiceHandler handler = instantiatorFactory.get(getHandlerType()).create();
       Reflections.visit(handler, getHandlerType().getType(),
