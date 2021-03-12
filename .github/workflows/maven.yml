@@ -16,9 +16,9 @@ name: Build with unit tests
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ develop, release/** ]
   pull_request:
-    branches: [ develop ]
+    branches: [ develop, release/** ]
     types: [opened, synchronize, reopened, labeled]
   workflow_dispatch:
 
