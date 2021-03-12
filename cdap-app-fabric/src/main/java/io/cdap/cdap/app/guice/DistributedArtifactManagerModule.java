@@ -36,6 +36,9 @@ public class DistributedArtifactManagerModule extends AbstractModule {
     bind(PluginFinder.class).to(RemotePluginFinder.class);
     bind(ArtifactFinder.class).to(RemotePluginFinder.class);
 
+    //TODO: remove if needed
+    //bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
+
     // Bind the ArtifactManager implementation
     install(new FactoryModuleBuilder()
               .implement(ArtifactManager.class, RemoteArtifactManager.class)

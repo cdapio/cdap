@@ -105,7 +105,6 @@ import io.cdap.cdap.metadata.MetadataReaderWriterModules;
 import io.cdap.cdap.metadata.MetadataService;
 import io.cdap.cdap.metadata.MetadataServiceModule;
 import io.cdap.cdap.metadata.MetadataSubscriberService;
-import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.ApplicationDetail;
 import io.cdap.cdap.proto.NamespaceMeta;

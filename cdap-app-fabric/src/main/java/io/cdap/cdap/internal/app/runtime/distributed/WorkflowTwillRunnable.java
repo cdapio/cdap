@@ -35,6 +35,8 @@ import io.cdap.cdap.internal.app.runtime.ProgramRunners;
 import io.cdap.cdap.internal.app.runtime.artifact.PluginFinder;
 import io.cdap.cdap.internal.app.runtime.batch.MapReduceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import io.cdap.cdap.proto.id.ProgramRunId;
 import org.apache.hadoop.conf.Configuration;
@@ -65,6 +67,8 @@ public final class WorkflowTwillRunnable extends AbstractProgramTwillRunnable<Wo
         @Override
         protected void configure() {
           bind(PluginFinder.class).to(UnsupportedPluginFinder.class);
+          //TODO: Remove if needed
+          //bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
         }
       });
     }

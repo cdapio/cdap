@@ -29,6 +29,9 @@ import io.cdap.cdap.internal.app.runtime.distributed.DistributedProgramRuntimeSe
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedServiceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.distributed.DistributedWorkflowProgramRunner;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.TwillRunner;
 
@@ -55,6 +58,9 @@ final class DistributedProgramRunnerModule extends PrivateModule {
     bind(ProgramRunnerFactory.class).to(DefaultProgramRunnerFactory.class).in(Scopes.SINGLETON);
     expose(ProgramRunnerFactory.class);
 
+    // Bind Preferences Fetcher
+    bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
+    expose(PreferencesFetcher.class);
 
     // The following are bindings are for ProgramRunners. They are private to this module and only
     // available to the remote execution ProgramRunnerFactory exposed.

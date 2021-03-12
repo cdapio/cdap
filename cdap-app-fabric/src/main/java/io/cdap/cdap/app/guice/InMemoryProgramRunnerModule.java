@@ -41,6 +41,8 @@ import io.cdap.cdap.internal.app.runtime.service.ServiceProgramRunner;
 import io.cdap.cdap.internal.app.runtime.worker.InMemoryWorkerRunner;
 import io.cdap.cdap.internal.app.runtime.worker.WorkerProgramRunner;
 import io.cdap.cdap.internal.app.runtime.workflow.WorkflowProgramRunner;
+import io.cdap.cdap.metadata.LocalPreferencesFetcherInternal;
+import io.cdap.cdap.metadata.PreferencesFetcher;
 import io.cdap.cdap.proto.ProgramType;
 import org.apache.twill.api.ServiceAnnouncer;
 import org.apache.twill.common.Cancellable;
@@ -73,6 +75,10 @@ final class InMemoryProgramRunnerModule extends PrivateModule {
 
     bind(ArtifactFinder.class).to(LocalPluginFinder.class);
     expose(ArtifactFinder.class);
+
+    // Bind Preferences Fetcher
+    bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class);
+    expose(PreferencesFetcher.class);
 
     // Bind ProgramRunner
     MapBinder<ProgramType, ProgramRunner> runnerFactoryBinder =

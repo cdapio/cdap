@@ -58,6 +58,8 @@ import io.cdap.cdap.master.environment.MasterEnvironments;
 import io.cdap.cdap.master.spi.environment.MasterEnvironment;
 import io.cdap.cdap.messaging.guice.MessagingClientModule;
 import io.cdap.cdap.metadata.MetadataReaderWriterModules;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import io.cdap.cdap.metrics.guice.MetricsClientRuntimeModule;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
@@ -248,7 +250,7 @@ public class DistributedProgramContainerModule extends AbstractModule {
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceSupplier()));
         bind(DiscoveryServiceClient.class)
           .toProvider(new SupplierProviderBridge<>(masterEnv.getDiscoveryServiceClientSupplier()));
-
+//        bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
         bind(OwnerAdmin.class).to(DefaultOwnerAdmin.class);
       }
     });

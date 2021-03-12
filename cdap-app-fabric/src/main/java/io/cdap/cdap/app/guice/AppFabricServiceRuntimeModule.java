@@ -329,7 +329,8 @@ public final class AppFabricServiceRuntimeModule extends RuntimeModule {
         }
       });
       bind(ProfileService.class).in(Scopes.SINGLETON);
-      bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
+      //TODO: Remove if needed
+      //bind(PreferencesFetcher.class).to(LocalPreferencesFetcherInternal.class).in(Scopes.SINGLETON);
 
       Multibinder<HttpHandler> handlerBinder = Multibinder.newSetBinder(
         binder(), HttpHandler.class, Names.named(Constants.AppFabric.HANDLERS_BINDING));

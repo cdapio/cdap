@@ -21,6 +21,8 @@ import com.google.inject.Scopes;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionAuthenticator;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionDiscoveryService;
 import io.cdap.cdap.internal.app.runtime.distributed.remote.RemoteExecutionProxySelector;
+import io.cdap.cdap.metadata.PreferencesFetcher;
+import io.cdap.cdap.metadata.RemotePreferencesFetcherInternal;
 import org.apache.twill.discovery.DiscoveryService;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 
@@ -43,6 +45,7 @@ public class RemoteExecutionDiscoveryModule extends PrivateModule {
     bind(RemoteExecutionDiscoveryService.class).in(Scopes.SINGLETON);
     bind(DiscoveryService.class).to(RemoteExecutionDiscoveryService.class);
     bind(DiscoveryServiceClient.class).to(RemoteExecutionDiscoveryService.class);
+    bind(PreferencesFetcher.class).to(RemotePreferencesFetcherInternal.class);
 
     expose(DiscoveryService.class);
     expose(DiscoveryServiceClient.class);

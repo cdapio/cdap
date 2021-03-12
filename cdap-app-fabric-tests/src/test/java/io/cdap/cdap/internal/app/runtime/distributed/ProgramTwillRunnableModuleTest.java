@@ -93,8 +93,8 @@ public class ProgramTwillRunnableModuleTest {
       }.createModule(CConfiguration.create(), new Configuration(),
                      createProgramOptions(programRunId, mode), programRunId);
       Injector injector = Guice.createInjector(module, binder -> {
-        binder.bind(PreferencesFetcher.class)
-          .toInstance(new FakePreferencesFetcher(Collections.emptyMap()));
+//        binder.bind(PreferencesFetcher.class)
+//          .toInstance(new FakePreferencesFetcher(Collections.emptyMap()));
       });
       injector.getInstance(PreferencesFetcher.class);
       injector.getInstance(ServiceProgramRunner.class);
