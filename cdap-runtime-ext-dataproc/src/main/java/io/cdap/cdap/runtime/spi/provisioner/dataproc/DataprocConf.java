@@ -51,6 +51,7 @@ final class DataprocConf {
   static final String STACKDRIVER_LOGGING_ENABLED = "stackdriverLoggingEnabled";
   static final String STACKDRIVER_MONITORING_ENABLED = "stackdriverMonitoringEnabled";
   static final String COMPONENT_GATEWAY_ENABLED = "componentGatewayEnabled";
+  static final String SKIP_DELETE = "skipDelete";
   static final String IMAGE_VERSION = "imageVersion";
   static final String CUSTOM_IMAGE_URI = "customImageUri";
   static final String RUNTIME_JOB_MANAGER = "runtime.job.manager";
@@ -103,6 +104,7 @@ final class DataprocConf {
   private final boolean stackdriverLoggingEnabled;
   private final boolean stackdriverMonitoringEnabled;
   private final boolean componentGatewayEnabled;
+  private final boolean skipDelete;
   private final SSHPublicKey publicKey;
   private final Map<String, String> clusterProperties;
 
@@ -122,7 +124,7 @@ final class DataprocConf {
          conf.pollCreateDelay, conf.pollCreateJitter, conf.pollDeleteDelay, conf.pollInterval,
          conf.encryptionKeyName, conf.gcsBucket, conf.serviceAccount,
          conf.preferExternalIP, conf.stackdriverLoggingEnabled, conf.stackdriverMonitoringEnabled,
-         conf.componentGatewayEnabled, conf.publicKey, conf.imageVersion, conf.customImageUri,
+         conf.componentGatewayEnabled, conf.skipDelete, conf.publicKey, conf.imageVersion, conf.customImageUri,
          conf.clusterMetaData, conf.networkTags, conf.initActions, conf.runtimeJobManagerEnabled,
          conf.clusterProperties, conf.autoScalingPolicy, conf.idleTTLMinutes);
   }
@@ -136,7 +138,7 @@ final class DataprocConf {
                        long pollCreateDelay, long pollCreateJitter, long pollDeleteDelay, long pollInterval,
                        @Nullable String encryptionKeyName, @Nullable String gcsBucket,
                        @Nullable String serviceAccount, boolean preferExternalIP, boolean stackdriverLoggingEnabled,
-                       boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable,
+                       boolean stackdriverMonitoringEnabled, boolean componentGatewayEnable, boolean skipDelete,
                        @Nullable SSHPublicKey publicKey, @Nullable String imageVersion,
                        @Nullable String customImageUri,
                        @Nullable Map<String, String> clusterMetaData, List<String> networkTags,
@@ -174,6 +176,7 @@ final class DataprocConf {
     this.stackdriverLoggingEnabled = stackdriverLoggingEnabled;
     this.stackdriverMonitoringEnabled = stackdriverMonitoringEnabled;
     this.componentGatewayEnabled = componentGatewayEnable;
+    this.skipDelete = skipDelete;
     this.publicKey = publicKey;
     this.imageVersion = imageVersion;
     this.customImageUri = customImageUri;
@@ -308,6 +311,10 @@ final class DataprocConf {
 
   boolean isComponentGatewayEnabled() {
     return componentGatewayEnabled;
+  }
+
+  public boolean isSkipDelete() {
+    return skipDelete;
   }
 
   @Nullable
@@ -504,6 +511,7 @@ final class DataprocConf {
     boolean stackdriverMonitoringEnabled = Boolean.parseBoolean(properties.getOrDefault(STACKDRIVER_MONITORING_ENABLED,
                                                                                         "true"));
     boolean componentGatewayEnabled = Boolean.parseBoolean(properties.get(COMPONENT_GATEWAY_ENABLED));
+    boolean skipDelete = Boolean.parseBoolean(properties.get(SKIP_DELETE));
 
     Map<String, String> clusterPropOverrides =
       DataprocUtils.parseKeyValueConfig(getString(properties, "clusterProperties"), ";", "=");
@@ -543,7 +551,8 @@ final class DataprocConf {
                             workerDiskType, workerMachineType,
                             pollCreateDelay, pollCreateJitter, pollDeleteDelay, pollInterval,
                             gcpCmekKeyName, gcpCmekBucket, serviceAccount, preferExternalIP,
-                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled, componentGatewayEnabled,
+                            stackdriverLoggingEnabled, stackdriverMonitoringEnabled,
+                            componentGatewayEnabled, skipDelete,
                             publicKey, imageVersion, customImageUri, clusterMetaData, networkTags, initActions,
                             runtimeJobManagerEnabled, clusterProps, autoScalingPolicy, idleTTL);
   }
