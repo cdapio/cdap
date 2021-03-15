@@ -81,10 +81,6 @@ public class TwillModule extends PrivateModule {
                                                                  zkConnectStr,
                                                                  LocationFactories.namespace(locationFactory, "twill"));
 
-      // Set JVM options based on configuration
-      String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
-      runner.setJVMOptions(jvmOpts);
-
       return new ImpersonatedTwillRunnerService(yarnConf, runner, impersonator, secureStoreRenewer);
     }
   }

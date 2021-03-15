@@ -299,6 +299,12 @@ public abstract class DistributedProgramRunner implements ProgramRunner, Program
           twillPreparer.setSchedulerQueue(schedulerQueueName);
         }
 
+        // Set JVM options based on configuration
+        String jvmOpts = cConf.get(Constants.AppFabric.PROGRAM_JVM_OPTS);
+        if (!Strings.isNullOrEmpty(jvmOpts)) {
+          twillPreparer.addJVMOptions(jvmOpts);
+        }
+
         if (logbackURI != null) {
           twillPreparer.addJVMOptions("-Dlogback.configurationFile=" + LOGBACK_FILE_NAME);
         }
