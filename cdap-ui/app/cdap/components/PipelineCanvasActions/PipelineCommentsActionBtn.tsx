@@ -26,6 +26,7 @@ import { Theme } from '@material-ui/core/styles/createMuiTheme';
 import uuidv4 from 'uuid/v4';
 import { PipelineComments } from 'components/PipelineCanvasActions/PipelineComments';
 import { IPipelineComment } from 'components/PipelineCanvasActions/PipelineCommentsConstants';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 
 const useStyle = makeStyles<Theme, { toggle: boolean }>((theme) => {
   return {
@@ -85,7 +86,7 @@ function PipelineCommentsActionBtn({
   tooltip,
   onCommentsToggle,
   onChange,
-  comments = [],
+  comments,
   disabled,
 }: IPipelineCommentsActionBtnProps) {
   const [localToggle, setLocalToggle] = React.useState(false);
@@ -95,9 +96,16 @@ function PipelineCommentsActionBtn({
   const classes = useStyle({ toggle: localToggle });
 
   const onClick = (e) => {
-    setLocalToggle(true);
-    setAnchorEl(e.currentTarget);
-    onCommentsToggle(false);
+    setLocalToggle((lt) => {
+      if (lt) {
+        setAnchorEl(null);
+        onCommentsToggle(true);
+        return false;
+      }
+      setAnchorEl(e.currentTarget);
+      onCommentsToggle(false);
+      return true;
+    });
   };
   const onClose = () => {
     setLocalToggle(false);
@@ -109,32 +117,33 @@ function PipelineCommentsActionBtn({
     setShowMarker(Array.isArray(comments) && comments.length > 0);
   }, [comments]);
   return (
-    <Tooltip
-      title={tooltip}
-      enterDelay={500}
-      placement="left"
-      classes={{ tooltip: classes.tooltip, arrow: classes.arrow }}
-      arrow
-    >
-      <IconButton
-        id={anchorId}
-        onClick={onClick}
-        className={classes.iconButton}
-        disableRipple={true}
+    <ClickAwayListener onClickAway={onClose}>
+      <Tooltip
+        title={tooltip}
+        enterDelay={500}
+        placement="left"
+        classes={{ tooltip: classes.tooltip, arrow: classes.arrow }}
+        arrow
       >
-        <If condition={showMarker}>
-          <span className={classes.marker}></span>
-        </If>
-        <CommentRounded className={classes.iconRoot} />
-        <PipelineComments
-          comments={comments}
-          onChange={onChange}
-          anchorEl={anchorEl}
-          onClose={onClose}
-          disabled={disabled}
-        />
-      </IconButton>
-    </Tooltip>
+        <IconButton
+          id={anchorId}
+          onClick={onClick}
+          className={classes.iconButton}
+          disableRipple={true}
+        >
+          <If condition={showMarker}>
+            <span className={classes.marker}></span>
+          </If>
+          <CommentRounded className={classes.iconRoot} />
+          <PipelineComments
+            comments={comments}
+            onChange={onChange}
+            anchorEl={anchorEl}
+            disabled={disabled}
+          />
+        </IconButton>
+      </Tooltip>
+    </ClickAwayListener>
   );
 }
 

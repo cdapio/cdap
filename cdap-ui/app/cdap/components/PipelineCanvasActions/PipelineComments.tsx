@@ -17,7 +17,6 @@
 import * as React from 'react';
 import Popper from '@material-ui/core/Popper';
 import CommentBox from 'components/AbstractWidget/Comment/CommentBox';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import { COMMENT_WIDTH } from 'components/AbstractWidget/Comment/CommentConstants';
 import makeStyles from '@material-ui/core/styles/makeStyles';
 import If from 'components/If';
@@ -27,7 +26,7 @@ import Button from '@material-ui/core/Button';
 import PostAddIcon from '@material-ui/icons/PostAdd';
 import { preventPropagation } from 'services/helpers';
 import { IComment } from 'components/AbstractWidget/Comment/CommentConstants';
-
+import cloneDeep from 'lodash/cloneDeep';
 const useStyles = makeStyles((theme) => {
   return {
     root: {
@@ -82,19 +81,24 @@ const useStyles = makeStyles((theme) => {
 interface IPipelineCommentsProps {
   comments: IComment[];
   anchorEl: React.ReactNode;
-  onClose: () => void;
   onChange: (comments: IComment[]) => void;
   disabled?: boolean;
 }
 
+const DEFAULT_COMMENTS = [{ content: '', createDate: Date.now() }];
+const getDefaultComments = (comments) => {
+  if (!Array.isArray(comments) || (Array.isArray(comments) && !comments.length)) {
+    return cloneDeep(DEFAULT_COMMENTS);
+  }
+  return comments;
+};
 export function PipelineComments({
-  comments = [],
+  comments,
   anchorEl,
-  onClose,
   onChange,
   disabled = false,
 }: IPipelineCommentsProps) {
-  const [localComments, setLocalComments] = React.useState(comments);
+  const [localComments, setLocalComments] = React.useState(getDefaultComments(comments));
   const [localAnchorEl, setLocalAnchorEl] = React.useState(null);
   const [isOpen, setIsOpen] = React.useState(false);
   const classes = useStyles();
@@ -103,17 +107,7 @@ export function PipelineComments({
   const filterEmptyComments = (lc: IComment[]) => {
     return lc.filter((comment: IComment) => comment.content.length);
   };
-  const onClickAway = (e) => {
-    if (!isOpen) {
-      return;
-    }
-    if (typeof onClose === 'function') {
-      onClose();
-    }
-    setLocalAnchorEl(null);
-    setIsOpen(false);
-    return preventPropagation(e);
-  };
+
   const onSave = (id, updatedComment) => {
     if (typeof onChange === 'function') {
       localComments[id] = updatedComment;
@@ -124,7 +118,7 @@ export function PipelineComments({
   const onDelete = (id) => {
     if (typeof onChange === 'function') {
       const newComments = [...comments.slice(0, id), ...comments.slice(id + 1)];
-      setLocalComments(newComments);
+      setLocalComments(getDefaultComments(newComments));
       onChange(newComments);
     }
   };
@@ -134,68 +128,68 @@ export function PipelineComments({
   };
 
   React.useEffect(() => {
-    if (typeof anchorEl === 'object') {
+    if (anchorEl !== null && typeof anchorEl === 'object') {
       setIsOpen(true);
       setLocalAnchorEl(anchorEl);
+    } else {
+      setIsOpen(false);
+      setLocalAnchorEl(null);
     }
   }, [anchorEl]);
-
   return (
-    <ClickAwayListener onClickAway={onClickAway} mouseEvent="onMouseDown">
-      <div className={classes.root} onClick={preventPropagation}>
-        <If condition={!isNil(localAnchorEl)}>
-          <Popper
-            className={classes.popper}
-            anchorEl={localAnchorEl}
-            open={isOpen}
-            placement="left"
-            modifiers={{
-              flip: {
-                enabled: true,
-              },
-              preventOverflow: {
-                enabled: true,
-                boundariesElement: 'scrollParent',
-              },
-              arrow: {
-                enabled: true,
-                element: arrowRef,
-              },
-              offset: {
-                enabled: true,
-                offset: '200%, 10%',
-              },
-            }}
-          >
-            <div className={classes.arrow} ref={setArrowRef} />
-            <Paper className={classes.pipelineCommentsWrapper}>
-              <If condition={!disabled}>
-                <div className={classes.popperHeading}>
-                  <Button
-                    onClick={onAddNewComment}
-                    disabled={localComments.length && !localComments[0].content.length}
-                  >
-                    <PostAddIcon />
-                    <span>Add Comment</span>
-                  </Button>
-                </div>
-              </If>
-              {localComments.map((comment, id) => {
-                return (
-                  <CommentBox
-                    key={id}
-                    comment={comment}
-                    onSave={onSave.bind(null, id)}
-                    onDelete={onDelete.bind(null, id)}
-                    focus={!comment.content.length}
-                    disabled={disabled}
-                  />
-                );
-              })}
-            </Paper>
-          </Popper>
-        </If>
-      </div>
-    </ClickAwayListener>
+    <div className={classes.root} onClick={preventPropagation}>
+      <If condition={!isNil(localAnchorEl)}>
+        <Popper
+          className={classes.popper}
+          anchorEl={localAnchorEl}
+          open={isOpen}
+          placement="left"
+          modifiers={{
+            flip: {
+              enabled: true,
+            },
+            preventOverflow: {
+              enabled: true,
+              boundariesElement: 'scrollParent',
+            },
+            arrow: {
+              enabled: true,
+              element: arrowRef,
+            },
+            offset: {
+              enabled: true,
+              offset: '200%, 10%',
+            },
+          }}
+        >
+          <div className={classes.arrow} ref={setArrowRef} />
+          <Paper className={classes.pipelineCommentsWrapper}>
+            <If condition={!disabled}>
+              <div className={classes.popperHeading}>
+                <Button
+                  onClick={onAddNewComment}
+                  disabled={localComments.length && !localComments[0].content.length}
+                >
+                  <PostAddIcon />
+                  <span>Add Comment</span>
+                </Button>
+              </div>
+            </If>
+            {localComments.map((comment, id) => {
+              return (
+                <CommentBox
+                  key={id}
+                  comment={comment}
+                  onSave={onSave.bind(null, id)}
+                  onDelete={onDelete.bind(null, id)}
+                  focus={!comment.content.length}
+                  disabled={disabled}
+                />
+              );
+            })}
+          </Paper>
+        </Popper>
+      </If>
+    </div>
   );
 }
