@@ -288,6 +288,13 @@
             <div class="menu-content">
               <div
                 class="menu-content-action"
+                ng-click="DAGPlusPlusCtrl.setPluginActiveForComment(node.id)"
+                data-cy="hamburgermenu-{{node.plugin.name}}-{{node.type}}-{{$index}}-delete"
+              >
+                Add Comment
+              </div>
+              <div
+                class="menu-content-action"
                 ng-click="DAGPlusPlusCtrl.onKeyboardCopy()"
                 data-cy="hamburgermenu-{{node.plugin.name}}-{{node.type}}-{{$index}}-copy"
               >
