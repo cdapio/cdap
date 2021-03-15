@@ -158,8 +158,15 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
   public ClusterStatus getClusterStatus(ProvisionerContext context, Cluster cluster) throws Exception {
     DataprocConf conf = DataprocConf.create(createContextProperties(context));
     String clusterName = getClusterName(context);
+
+    ClusterStatus status = cluster.getStatus();
+    // if we are skipping the delete, need to avoid checking the real cluster status and pretend like it is deleted.
+    if (conf.isSkipDelete() && status == ClusterStatus.DELETING) {
+      return ClusterStatus.NOT_EXISTS;
+    }
+
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
-      ClusterStatus status = client.getClusterStatus(clusterName);
+      status = client.getClusterStatus(clusterName);
       DataprocUtils.emitMetric(context, conf.getRegion(),
                                "provisioner.clusterStatus.response.count");
       return status;
@@ -188,6 +195,9 @@ public class DataprocProvisioner extends AbstractDataprocProvisioner {
 
   @Override
   protected void doDeleteCluster(ProvisionerContext context, Cluster cluster, DataprocConf conf) throws Exception {
+    if (conf.isSkipDelete()) {
+      return;
+    }
     String clusterName = getClusterName(context);
     try (DataprocClient client = DataprocClient.fromConf(conf)) {
       client.deleteCluster(clusterName);
