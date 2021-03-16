@@ -284,11 +284,12 @@ class HydratorUpgradeService {
      * We need the ids for adding context menus to plugin nodes.
      */
     const oldNameToNewNameMap = {};
+    const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
     jsonData.config.stages = jsonData.config.stages.map(stage => {
       if(stage.name.indexOf(' ') !== -1 || stage.name.indexOf('/') !== -1) {
-        oldNameToNewNameMap[stage.name] = stage.name.replace(/[ \/]/g, '-');
+        oldNameToNewNameMap[stage.name] = sanitize(stage.name);
         return Object.assign({}, stage, {
-          id: stage.name.replace(/[ \/]/g, '-')
+          id: sanitize(stage.name)
         });
       }
       return Object.assign({}, stage, {

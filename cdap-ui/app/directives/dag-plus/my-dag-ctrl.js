@@ -754,8 +754,9 @@ angular.module(PKG.name + '.commons')
     }
 
     const addConnectionToErrorsAlerts = (conn, sourceNode, targetNode) => {
+      const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
       let connObj = {
-        target: conn.to.replace(/[ \/]/g, '-'),
+        target: sanitize(conn.to),
       };
       let errorSourceId = `endpoint_${sourceNode.id}_error`;
       let alertSourceId = `endpoint_${sourceNode.id}_alert`;
@@ -764,11 +765,11 @@ angular.module(PKG.name + '.commons')
       if (targetNode.type === 'errortransform') {
         connectionExist = vm.instance.getConnections('errorScope')
           .map(connection => `${connection.sourceId}-##-${connection.targetId}`)
-          .find(connStr => connStr === `${errorSourceId}-##-${conn.to.replace(/[ \/]/g, '-')}`);
+          .find(connStr => connStr === `${errorSourceId}-##-${sanitize(conn.to)}`);
       } else if (targetNode.type === 'alertpublisher') {
         connectionExist = vm.instance.getConnections('alertScope')
           .map(connection => `${connection.sourceId}-##-${connection.targetId}`)
-          .find(connStr => connStr === `${alertSourceId}-##-${conn.to.replace(/[ \/]/g, '-')}`);
+          .find(connStr => connStr === `${alertSourceId}-##-${sanitize(conn.to)}`);
       }
       if (connectionExist) {
         return;
@@ -1617,6 +1618,7 @@ angular.module(PKG.name + '.commons')
     };
 
     function sanitizeNodesAndConnectionsBeforePaste(text) {
+      const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
       try {
         let config = {};
         if (typeof text === 'string') {
@@ -1635,7 +1637,7 @@ angular.module(PKG.name + '.commons')
           if (!node) { return; }
 
           // change name
-          let newName = `${node.plugin.label.replace(/[ \/]/g, '-')}`;
+          let newName = `${sanitize(node.plugin.label)}`;
           const randIndex = Math.floor(Math.random() * 100);
           newName = `${newName}${randIndex}`;
           let iconConfiguration = {};
