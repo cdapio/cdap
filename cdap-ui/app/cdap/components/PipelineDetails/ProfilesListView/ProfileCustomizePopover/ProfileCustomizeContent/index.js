@@ -141,10 +141,24 @@ export default class ProfileCustomizeContent extends PureComponent {
                     !propertiesFromProfileMap[property.name] ||
                     propertiesFromProfileMap[property.name].isEditable !== false
                 )
-                .map((property) => ({
-                  ...property,
-                  value: editablePropertiesMap[property.name],
-                }));
+                .map((property) => {
+                  if (property['widget-type'] === 'select') {
+                    return {
+                      ...property,
+                      value: editablePropertiesMap[property.name],
+                      ['widget-attributes']: {
+                        ...(property['widget-attributes'] || {}),
+                        MenuProps: {
+                          disablePortal: true,
+                        },
+                      },
+                    };
+                  }
+                  return {
+                    ...property,
+                    value: editablePropertiesMap[property.name],
+                  };
+                });
               return (
                 <AccordionPane id={i}>
                   <AccordionTitle>
