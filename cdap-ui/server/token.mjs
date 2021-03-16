@@ -117,7 +117,7 @@ function getSecretFromCDAPConfig(cdapConfig, logger) {
  * 1. Get the following from cdap config (cdap-site + cdap-security)
  *    - Secret key, - secret
  *    - environment specific ID, - instancename
- * 2. Create a hash of (creation time + authToken + instance name)
+ * 2. Create a hash of (creation time + instance name)
  * 3. Creation time here is epoch time in milliseconds
  * 4. Create a shasum (hex) out of the hash
  * 5. Salt the key to prevent rainbow attacks
@@ -127,14 +127,14 @@ function getSecretFromCDAPConfig(cdapConfig, logger) {
  * Example output (not representative of size but the structure)
  * eCEsJ32ACxFp7wkHnsKxZA==-eFM6EJU568EzM+xFl2eeVQ4ruEk6WjjCJ1sISpDU5jpTF4w==
  */
-export function generateToken(cdapConfig, logger = console, authToken = '') {
+export function generateToken(cdapConfig, logger = console) {
   const instanceName = cdapConfig['instance.metadata.id'];
   const secret = getSecretFromCDAPConfig(cdapConfig, logger);
   const salt = getSalt();
   const key = getKeyFromSecret(Buffer.from(secret), salt);
   const creationTime = Date.now();
   const hash = crypto.createHash('sha256');
-  hash.update(`${creationTime}-${authToken}-${instanceName}`);
+  hash.update(`${creationTime}-${instanceName}`);
   const shasum = hash.digest('hex');
   const payloadInHex = `${creationTime.toString(16)} ${shasum}`;
   return `${salt.toString('base64')}-${encrypt(payloadInHex, key).toString('base64')}`;
@@ -155,7 +155,7 @@ export function generateToken(cdapConfig, logger = console, authToken = '') {
  *  - Both the shasum should match
  *  - AND age of token shouldn't be more than an hour.
  */
-export function validateToken(encryptedToken, cdapConfig, logger = console, authToken = '') {
+export function validateToken(encryptedToken, cdapConfig, logger = console) {
   let timestamp, shasum, timeinmillis;
   if (!encryptedToken) {
     return false;
@@ -180,7 +180,7 @@ export function validateToken(encryptedToken, cdapConfig, logger = console, auth
 
   const instanceName = cdapConfig['instance.metadata.id'];
   const hash = crypto.createHash('sha256');
-  hash.update(`${timeinmillis}-${authToken}-${instanceName}`);
+  hash.update(`${timeinmillis}-${instanceName}`);
   const computed = hash.digest();
   if (computed.length != shasum.length) {
     return false;

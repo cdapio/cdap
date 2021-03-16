@@ -31,11 +31,16 @@ export function getPOSTRequestOptions() {
   };
 }
 
-export function requestPromiseWrapper(options, token, bodyModifiersFn, errorModifiersFn) {
+export function requestPromiseWrapper(options, { auth: token, userIdProperty, userIdValue }, bodyModifiersFn, errorModifiersFn) {
   if (token) {
     options.headers = {
       Authorization: token,
     };
+  }
+
+  if (userIdProperty) {
+    options.headers = options.headers || {};
+    options.headers[userIdProperty] = userIdValue;
   }
 
   return new Promise((resolve, reject) => {

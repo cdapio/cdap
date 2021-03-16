@@ -19,10 +19,10 @@ import { batchProgramRuns } from 'gql/helpers/BatchEndpoints/programRuns';
 import { batchTotalRuns } from 'gql/helpers/BatchEndpoints/totalRuns';
 import { batchNextRuntime } from 'gql/helpers/BatchEndpoints/nextRuntime';
 
-export function createLoaders(auth) {
+export function createLoaders(auth, userIdProperty, userIdValue) {
   return {
-    programRuns: new DataLoader((req) => batchProgramRuns(req, auth), { cache: false }),
-    totalRuns: new DataLoader((req) => batchTotalRuns(req, auth), { cache: false }),
-    nextRuntime: new DataLoader((req) => batchNextRuntime(req, auth), { cache: false }),
+    programRuns: new DataLoader((req) => batchProgramRuns(req, auth, userIdProperty, userIdValue), { cache: false }),
+    totalRuns: new DataLoader((req) => batchTotalRuns(req, auth, userIdProperty, userIdValue), { cache: false }),
+    nextRuntime: new DataLoader((req) => batchNextRuntime(req, auth, userIdProperty, userIdValue), { cache: false }),
   };
 }

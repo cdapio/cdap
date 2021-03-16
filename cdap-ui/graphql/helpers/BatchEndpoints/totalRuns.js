@@ -25,7 +25,7 @@ getCDAPConfig().then(function(value) {
   cdapConfig = value;
 });
 
-export async function batchTotalRuns(req, auth) {
+export async function batchTotalRuns(req, auth, userIdProperty, userIdValue) {
   const namespace = req[0].namespace;
   const options = getPOSTRequestOptions();
   options.url = constructUrl(cdapConfig, `/v3/namespaces/${namespace}/runcount`);
@@ -43,7 +43,12 @@ export async function batchTotalRuns(req, auth) {
         ...options,
         body: reqBody,
       };
-      return requestPromiseWrapper(reqOptions, auth, null, errorModifiersFn);
+      const authContext = {
+        auth,
+        userIdProperty,
+        userIdValue
+      };
+      return requestPromiseWrapper(reqOptions, authContext, null, errorModifiersFn);
     })
   );
 

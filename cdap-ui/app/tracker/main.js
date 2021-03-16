@@ -196,7 +196,7 @@ angular
 
             // This check is added because of HdInsight gateway security.
             // If we set Authorization to null, it strips off their Auth token
-            if (window.CDAP_CONFIG.securityEnabled) {
+            if (window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode()) {
               // Accessing stuff from $rootScope is bad. This is done as to resolve circular dependency.
               // $http <- myAuthPromise <- myAuth <- $http <- $templateFactory <- $view <- $state
               extendConfig.headers.Authorization = 'Bearer ' + $rootScope.currentUser.token;

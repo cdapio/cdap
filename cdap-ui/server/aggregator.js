@@ -210,7 +210,24 @@ function stripResource(key, value) {
  */
 function emitResponse(resource, error, response, body) {
   var timeDiff = Date.now() - resource.startTs;
-
+  let authMode = this.cdapConfig['security.authentication.mode'];
+  /**
+   * In proxy mode, we stub the 401 response from backend with 500.
+   * This is because the proxy is still using an auth token that is expired.
+   * The client (broweser UI) does not understand this and will redirect to login page
+   * But since security is not enabled from a ui perspective it will again redirect
+   * to the destination page causing an infinite loop.
+   *
+   * This is to break the cycle. This will never happen in an ideal case. This is an
+   * escape hatch when we go to the worst case.
+   * @param {*} response - response from backend
+   */
+  const getResponseCode = (response) => {
+    if (authMode === 'PROXY' && response && response.statusCode === 401) {
+      return 500;
+    }
+    return response && response.statusCode;
+  };
   if (error) {
     log.debug('[ERROR]: (id: ' + resource.id + ', url: ' + resource.url + ')');
     log.trace(
@@ -226,13 +243,17 @@ function emitResponse(resource, error, response, body) {
     let newResource = Object.assign({}, resource, {
       url: deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
     });
+    if (authMode === 'PROXY') {
+      delete newResource.headers.Authorization;
+      delete newResource.headers[this.cdapConfig['security.authentication.proxy.user.identity.header']];
+    }
     this.connection.write(
       JSON.stringify(
         {
           resource: newResource,
           error: error,
           warning: error.toString(),
-          statusCode: response && response.statusCode,
+          statusCode: getResponseCode(response),
           response: response && response.body,
         },
         stripResource
@@ -259,7 +280,7 @@ function emitResponse(resource, error, response, body) {
       JSON.stringify(
         {
           resource: newResource,
-          statusCode: response.statusCode,
+          statusCode: getResponseCode(response),
           response: body,
         },
         stripResource
@@ -305,6 +326,10 @@ function onSocketData(message) {
         break;
       case 'request':
         r.startTs = Date.now();
+        if (r.headers && this.cdapConfig['security.authentication.mode'] === 'PROXY') {
+          r.headers.Authorization = this.connection.authToken;
+          r.headers[this.cdapConfig['security.authentication.proxy.user.identity.header']] = this.connection.userid;
+        }
         log.debug('[REQUEST]: (method: ' + r.method + ', id: ' + r.id + ', url: ' + r.url + ')');
         request(r, emitResponse.bind(this, r)).on('error', function(err) {
           log.error('[ERROR]: (url: ' + r.url + ') ' + err.message);
