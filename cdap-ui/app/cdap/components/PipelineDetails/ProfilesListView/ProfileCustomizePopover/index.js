@@ -70,6 +70,11 @@ export default class ProfileCustomizePopover extends PureComponent {
           open={this.state.showPopover}
           anchorEl={this.state.anchorEl}
           onClose={this.onTogglePopover}
+          style={{
+            // Default modal zindex in theme is 1300. This is added as
+            // inline style by material-ui. Hence the inline style to override it
+            zIndex: 1400,
+          }}
           anchorOrigin={{
             vertical: 'center',
             horizontal: 'left',
