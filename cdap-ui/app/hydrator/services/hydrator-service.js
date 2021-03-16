@@ -37,12 +37,13 @@ class HydratorPlusPlusHydratorService {
   }
 
   getNodesFromStages(stages) {
+    const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
     let nodes = stages.map(stage => {
       let nodeInfo = angular.extend(stage, {
         type: stage.plugin.type,
         label: stage.plugin.label,
         icon: this.DAGPlusPlusFactory.getIcon(stage.plugin.name),
-        id: stage.id || `${stage.name.replace(/[ \/]/g, '-')}${this.uuid.v4()}`,
+        id: sanitize(stage.id) || `${sanitize(stage.name)}${this.uuid.v4()}`,
       });
       return nodeInfo;
     });
@@ -56,13 +57,15 @@ class HydratorPlusPlusHydratorService {
   }
 
   _parseNewConfigStages(config, isStudio) {
+    const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
     let nodes = [];
     let connections = [];
     config.stages.forEach( node => {
       let nodeInfo = angular.extend(node, {
         type: node.plugin.type,
         label: node.plugin.label,
-        icon: this.DAGPlusPlusFactory.getIcon(node.plugin.name)
+        icon: this.DAGPlusPlusFactory.getIcon(node.plugin.name),
+        id: sanitize(node.id)
       });
       nodes.push(nodeInfo);
     });

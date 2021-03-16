@@ -121,11 +121,12 @@ class DAGPlusPlusNodesStore {
   }
 
   addNode(nodeConfig) {
+    const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
     if (!nodeConfig.name) {
       nodeConfig.name = nodeConfig.plugin.label + '-' + this.uuid.v4();
     }
     if (!nodeConfig.id) {
-      nodeConfig.id = nodeConfig.plugin.label.replace(/[ \/]/g, '-') + '-' + this.uuid.v4();
+      nodeConfig.id = sanitize(nodeConfig.plugin.label) + '-' + this.uuid.v4();
     }
     this.addStateToHistory();
     switch (this.GLOBALS.pluginConvert[nodeConfig.type]) {
@@ -193,13 +194,14 @@ class DAGPlusPlusNodesStore {
   }
 
   setNodes(nodes) {
+    const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
     this.adjacencyMap = {};
     nodes.forEach(node => {
       if (!node.name) {
         node.name = node.label + '-' + this.uuid.v4();
       }
       if (!node.id) {
-        node.id = node.name.replace(/[ \/]/g, '-');
+        node.id = sanitize(node.name);
       }
 
       if (!node.type) {

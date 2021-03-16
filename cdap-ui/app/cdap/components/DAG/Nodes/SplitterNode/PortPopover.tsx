@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import withStyles, { StyleRules, WithStyles } from '@material-ui/core/styles/withStyles';
-import { IEndPointArgs } from 'components/DAG/DAGRenderer';
+import { santizeStringForHTMLID } from 'services/helpers';
 import { IPort } from 'components/DAG/Nodes/SplitterNode';
 import { AbstractNode } from 'components/DAG/Nodes/AbstractNode';
 import { endpointCircle, endpointCaret } from 'components/DAG/Nodes/utilities';
@@ -96,10 +96,6 @@ interface IPortPopoverProps extends WithStyles<typeof styles> {
     referenceParams: EndpointParams
   ) => void;
   removeEndpoint: (endpointId: string) => void;
-}
-
-function santizeStringForHTMLID(str) {
-  return str.replace(/[ \/]/g, '-');
 }
 
 export function getPortEndpointId(nodeName, portName) {
