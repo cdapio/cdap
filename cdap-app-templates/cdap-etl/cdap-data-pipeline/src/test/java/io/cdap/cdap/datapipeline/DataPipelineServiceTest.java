@@ -129,6 +129,7 @@ public class DataPipelineServiceTest extends HydratorTestBase {
     if (serviceManager == null) {
       return;
     }
+    serviceManager.stop();
     removeCapability("pipeline");
     waitForAppToBeRemoved(NamespaceId.SYSTEM.app("pipeline"));
   }

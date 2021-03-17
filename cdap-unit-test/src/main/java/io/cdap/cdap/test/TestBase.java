@@ -506,7 +506,7 @@ public class TestBase {
     cConf.setBoolean(Constants.Explore.START_ON_DEMAND, false);
     cConf.set(Constants.AppFabric.SYSTEM_ARTIFACTS_DIR, "");
     //Set this to artificially big value to effectively disable SystemProgramManagementService
-    cConf.setLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS, 3600*24*30);
+    cConf.setLong(Constants.AppFabric.SYSTEM_PROGRAM_SCAN_INTERVAL_SECONDS, 3600 * 24 * 30);
 
     // Setup test case specific configurations.
     // The system properties are usually setup by TestConfiguration class using @ClassRule
