@@ -77,7 +77,7 @@ export default function PluginContextMenu({
   return (
     <React.Fragment>
       <ContextMenu
-        selector={`#${nodeId}`}
+        selector={`[id="${nodeId}"]`}
         options={PluginContextMenuOptions}
         onOpen={onPluginContextMenuOpen}
       />

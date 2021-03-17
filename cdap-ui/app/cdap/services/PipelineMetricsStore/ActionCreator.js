@@ -84,9 +84,12 @@ const parseMetrics = (metrics) => {
   let metricObj = {};
   let logsMetrics = {};
   metrics.series.forEach(function(metric) {
-    let split = metric.metricName.split('.');
+    let split = metric.metricName.split(/user.(.*).records.*/);
     let key = split[1];
 
+    if (!key) {
+      return;
+    }
     if (key !== 'app' && !metricObj[key]) {
       metricObj[key] = {
         nodeName: key,
