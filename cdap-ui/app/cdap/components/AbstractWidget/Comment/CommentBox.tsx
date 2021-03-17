@@ -71,8 +71,8 @@ export default function CommentBox({
   focus = false,
   disabled = false,
 }: ICommentBoxProps) {
-  const isThereExistingComment = comment.content && comment.content.length > 0;
-  const [editMode, setEditMode] = React.useState(!isThereExistingComment);
+  const isThereExistingComment = comment.content && comment.content.length > 0 ? true : false;
+  const [editMode, setEditMode] = React.useState(!isThereExistingComment && !disabled);
   const [localComment, setLocalComment] = React.useState(comment);
 
   const classes = useStyles({ editMode });
@@ -103,7 +103,8 @@ export default function CommentBox({
 
   React.useEffect(() => {
     setLocalComment(comment);
-    setEditMode(!comment.content.length);
+    const commentExists = comment.content && comment.content.length > 0 ? true : false;
+    setEditMode(!commentExists && !disabled);
   }, [comment]);
 
   const CommentMenuLocal = disabled ? null : (

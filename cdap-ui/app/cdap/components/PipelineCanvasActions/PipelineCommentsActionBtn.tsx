@@ -96,6 +96,9 @@ function PipelineCommentsActionBtn({
   const classes = useStyle({ toggle: localToggle });
 
   const onClick = (e) => {
+    if (!showMarker && disabled) {
+      return;
+    }
     setLocalToggle((lt) => {
       if (lt) {
         setAnchorEl(null);
@@ -130,6 +133,7 @@ function PipelineCommentsActionBtn({
           onClick={onClick}
           className={classes.iconButton}
           disableRipple={true}
+          disabled={!showMarker && disabled}
         >
           <If condition={showMarker}>
             <span className={classes.marker}></span>

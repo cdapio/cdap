@@ -66,8 +66,16 @@ function Comment({
   const [isCommentOpen, setIsCommentOpen] = React.useState(false);
   const [localComments, setLocalComments] = React.useState(comments);
   const toggleComments = (e) => {
-    setAnchorRef(e.currentTarget);
-    setIsCommentOpen(!isCommentOpen);
+    setIsCommentOpen((commentOpen) => {
+      if (commentOpen) {
+        setAnchorRef(null);
+        return false;
+      } else {
+        setAnchorRef(e.currentTarget);
+        setIsCommentOpen(!isCommentOpen);
+      }
+      return true;
+    });
     preventPropagation(e);
   };
   React.useEffect(() => {
