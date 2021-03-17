@@ -84,7 +84,6 @@ interface IPipelineCommentsActionBtnProps {
 
 function PipelineCommentsActionBtn({
   tooltip,
-  onCommentsToggle,
   onChange,
   comments,
   disabled,
@@ -99,18 +98,23 @@ function PipelineCommentsActionBtn({
     setLocalToggle((lt) => {
       if (lt) {
         setAnchorEl(null);
-        onCommentsToggle(true);
         return false;
       }
       setAnchorEl(e.currentTarget);
-      onCommentsToggle(false);
       return true;
     });
   };
   const onClose = () => {
-    setLocalToggle(false);
-    setAnchorEl(null);
-    onCommentsToggle(true);
+    setLocalToggle((lt) => {
+      // If the toggle is already false onClose doesn't need to do anything.
+      // This gets called by `ClickAwayListener` which seems unnecessary.
+      // Need to separate out the popover from the button
+      if (!lt) {
+        return false;
+      }
+      setAnchorEl(null);
+      return false;
+    });
   };
 
   React.useEffect(() => {

@@ -1800,9 +1800,6 @@ angular.module(PKG.name + '.commons')
       vm.pipelineComments = comments;
     };
 
-    vm.togglePipelineComments = (disableCanvasPan) => {
-      vm.secondInstance.setDraggable('diagram-container', disableCanvasPan);
-    };
     $scope.$on('$destroy', cleanupOnDestroy);
     vm.initPipelineComments();
   });
