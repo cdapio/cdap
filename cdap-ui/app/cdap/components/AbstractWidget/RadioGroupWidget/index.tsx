@@ -84,7 +84,7 @@ const RadioGroupWidgetView: React.FC<IRadioGroupProps> = ({
 
   return (
     <div>
-      <If condition={error}>
+      <If condition={error && !disabled}>
         <div className="text-danger">{error}</div>
       </If>
       <RadioGroup
