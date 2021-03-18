@@ -120,7 +120,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                           @Nullable @QueryParam("scope") String scope,
                           @Nullable @QueryParam("type") String type,
                           @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws BadRequestException, IOException {
+    throws Exception {
     MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     MetadataScope theScope = validateScope(scope);
     Metadata metadata = scope == null ? metadataAdmin.getMetadata(entity) : metadataAdmin.getMetadata(entity, theScope);
@@ -134,7 +134,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                             @QueryParam("scope") String scope,
                             @QueryParam("type") String type,
                             @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws BadRequestException, IOException {
+    throws Exception {
     MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     MetadataScope theScope = validateScope(scope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
@@ -149,7 +149,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
                       @QueryParam("scope") String scope,
                       @QueryParam("type") String type,
                       @Nullable @QueryParam("responseFormat") @DefaultValue("v5") String responseFormat)
-    throws BadRequestException, IOException {
+    throws Exception {
     MetadataEntity entity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     MetadataScope theScope = validateScope(scope);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(
@@ -164,7 +164,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void addProperties(FullHttpRequest request, HttpResponder responder,
                             @QueryParam("type") String type,
                             @QueryParam("async") @DefaultValue("false") Boolean async)
-    throws BadRequestException, IOException {
+    throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.addProperties(metadataEntity, readProperties(request), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
@@ -177,7 +177,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void addTags(FullHttpRequest request, HttpResponder responder,
                       @QueryParam("type") String type,
                       @QueryParam("async") @DefaultValue("false") Boolean async)
-    throws BadRequestException, IOException {
+    throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.addTags(metadataEntity, readTags(request), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
@@ -188,7 +188,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/metadata")
   public void removeMetadata(HttpRequest request, HttpResponder responder,
                              @QueryParam("type") String type,
-                             @QueryParam("async") @DefaultValue("false") Boolean async) throws IOException {
+                             @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata");
     metadataAdmin.removeMetadata(metadataEntity, async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
@@ -199,7 +199,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/metadata/properties")
   public void removeProperties(HttpRequest request, HttpResponder responder,
                                @QueryParam("type") String type,
-                               @QueryParam("async") @DefaultValue("false") Boolean async) throws IOException {
+                               @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.removeProperties(metadataEntity, async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
@@ -211,7 +211,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void removeProperty(HttpRequest request, HttpResponder responder,
                              @PathParam("property") String property,
                              @QueryParam("type") String type,
-                             @QueryParam("async") @DefaultValue("false") Boolean async) throws IOException {
+                             @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/properties");
     metadataAdmin.removeProperties(metadataEntity, Collections.singleton(property), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
@@ -222,7 +222,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   @Path("/**/metadata/tags")
   public void removeTags(HttpRequest request, HttpResponder responder,
                          @QueryParam("type") String type,
-                         @QueryParam("async") @DefaultValue("false") Boolean async) throws IOException {
+                         @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.removeTags(metadataEntity, async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,
@@ -234,7 +234,7 @@ public class MetadataHttpHandler extends AbstractHttpHandler {
   public void removeTag(HttpRequest request, HttpResponder responder,
                         @PathParam("tag") String tag,
                         @QueryParam("type") String type,
-                        @QueryParam("async") @DefaultValue("false") Boolean async) throws IOException {
+                        @QueryParam("async") @DefaultValue("false") Boolean async) throws Exception {
     MetadataEntity metadataEntity = getMetadataEntityFromPath(request.uri(), type, "/metadata/tags");
     metadataAdmin.removeTags(metadataEntity, Collections.singleton(tag), async ? ASYNC : SYNC);
     responder.sendString(HttpResponseStatus.OK,

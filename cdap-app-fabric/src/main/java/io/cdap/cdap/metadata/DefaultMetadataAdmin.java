@@ -20,9 +20,10 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 import io.cdap.cdap.api.metadata.MetadataEntity;
 import io.cdap.cdap.api.metadata.MetadataScope;
-import io.cdap.cdap.common.InvalidMetadataException;
 import io.cdap.cdap.common.conf.CConfiguration;
+import io.cdap.cdap.proto.element.EntityType;
 import io.cdap.cdap.proto.id.EntityId;
+import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.authorization.AuthorizationUtil;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
 import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
@@ -66,93 +67,105 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
 
   @Override
   public void addProperties(MetadataEntity metadataEntity, Map<String, String> properties, MutationOptions options)
-    throws InvalidMetadataException, IOException {
+    throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     validateProperties(metadataEntity, properties);
     storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, properties)), options);
   }
 
   @Override
-  public void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
-    throws InvalidMetadataException, IOException {
+  public void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     validateTags(metadataEntity, tags);
     storage.apply(new MetadataMutation.Update(metadataEntity, new Metadata(MetadataScope.USER, tags)), options);
   }
 
   @Override
-  public Metadata getMetadata(MetadataEntity metadataEntity) throws IOException {
-    return storage.read(new Read(metadataEntity));
+  public Metadata getMetadata(MetadataEntity metadataEntity) throws Exception {
+    return getMetadata(metadataEntity, null, null);
   }
 
   @Override
-  public Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws IOException {
-    return storage.read(new Read(metadataEntity, scope));
+  public Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws Exception {
+    return getMetadata(metadataEntity, scope, null);
   }
 
   @Override
   public Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope, @Nullable MetadataKind kind)
-    throws IOException {
+    throws Exception {
+    if (isEntityType(entity)) {
+      AuthorizationUtil.ensureAccess(EntityId.fromMetadataEntity(entity), authorizationEnforcer,
+                                     authenticationContext.getPrincipal());
+    }
     Read read = kind != null ? (scope != null ? new Read(entity, scope, kind) : new Read(entity, kind))
       : scope != null ? new Read(entity, scope) : new Read(entity);
     return storage.read(read);
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataEntity metadataEntity) throws IOException {
+  public Map<String, String> getProperties(MetadataEntity metadataEntity) throws Exception {
     return doGetProperties(null, metadataEntity);
   }
 
   @Override
-  public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  public Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws Exception {
     return doGetProperties(scope, metadataEntity);
   }
 
   private Map<String, String> doGetProperties(@Nullable MetadataScope scope, MetadataEntity metadataEntity)
-    throws IOException {
+    throws Exception {
+    // the auth enforcement is in getMetadata
     Metadata metadata = getMetadata(metadataEntity, scope, MetadataKind.PROPERTY);
     return metadata.getProperties().entrySet().stream().collect(Collectors.toMap(
       entry -> entry.getKey().getName(), Map.Entry::getValue));
   }
 
   @Override
-  public Set<String> getTags(MetadataEntity metadataEntity) throws IOException {
+  public Set<String> getTags(MetadataEntity metadataEntity) throws Exception {
     return doGetTags(null, metadataEntity);
   }
 
   @Override
-  public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  public Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws Exception {
     return doGetTags(scope, metadataEntity);
   }
 
-  private Set<String> doGetTags(@Nullable MetadataScope scope, MetadataEntity metadataEntity) throws IOException {
+  private Set<String> doGetTags(@Nullable MetadataScope scope, MetadataEntity metadataEntity) throws Exception {
+    // the auth enforcement is in getMetadata
     Metadata metadata = getMetadata(metadataEntity, scope, MetadataKind.TAG);
     return metadata.getTags().stream().map(ScopedName::getName).collect(Collectors.toSet());
   }
 
   @Override
-  public void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+  public void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER), options);
   }
 
   @Override
-  public void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+  public void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.PROPERTY), options);
   }
 
   @Override
   public void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options)
-    throws IOException {
+    throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     storage.apply(new MetadataMutation.Remove(metadataEntity, keys.stream()
       .map(key -> new ScopedNameOfKind(MetadataKind.PROPERTY, MetadataScope.USER, key))
       .collect(Collectors.toSet())), options);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws IOException {
+  public void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     storage.apply(new MetadataMutation.Remove(metadataEntity, MetadataScope.USER, MetadataKind.TAG), options);
   }
 
   @Override
-  public void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException {
+  public void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws Exception {
+    enforce(metadataEntity, Action.ADMIN);
     storage.apply(new MetadataMutation.Remove(metadataEntity, tags.stream()
       .map(tag -> new ScopedNameOfKind(MetadataKind.TAG, MetadataScope.USER, tag))
       .collect(Collectors.toSet())), options);
@@ -161,17 +174,41 @@ public class DefaultMetadataAdmin extends MetadataValidator implements MetadataA
 
   @Override
   public void applyMutation(MetadataMutation mutation, MutationOptions options) throws IOException {
+    // TODO: CDAP-17803 add auth for this method, now it is not needed since this method is only used by internal
+    // REST endpoint
     storage.apply(mutation, options);
   }
 
   @Override
   public void applyMutations(List<? extends MetadataMutation> mutations, MutationOptions options) throws IOException {
+    // TODO: CDAP-17803 add auth for this method, now it is not needed since this method is only used by internal
+    // REST endpoint
     storage.batch(mutations, options);
   }
 
   @Override
   public SearchResponse search(SearchRequest request) throws Exception {
     return filterAuthorizedSearchResult(storage.search(request));
+  }
+
+  private void enforce(MetadataEntity metadataEntity, Action action) throws Exception {
+    if (isEntityType(metadataEntity)) {
+      authorizationEnforcer.enforce(EntityId.fromMetadataEntity(metadataEntity), authenticationContext.getPrincipal(),
+                                    action);
+    }
+  }
+
+  /**
+   * Check if the metadata entity is an entity type. It is possible that metadata entity has a type which is not among
+   * the entity ids. In those cases, do not enforce.
+   */
+  private boolean isEntityType(MetadataEntity metadataEntity) {
+    try {
+      EntityType.valueOf(metadataEntity.getType().toUpperCase());
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
   }
 
   /**

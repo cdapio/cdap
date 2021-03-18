@@ -25,7 +25,6 @@ import io.cdap.cdap.api.metadata.MetadataScope;
 import io.cdap.cdap.data2.metadata.MetadataCompatibility;
 import io.cdap.cdap.spi.metadata.MetadataStorage;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -48,7 +47,7 @@ public class DefaultMetadataReader implements MetadataReader {
   public Map<MetadataScope, Metadata> getMetadata(MetadataEntity metadataEntity) throws MetadataException {
     try {
       return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity));
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new MetadataException(e);
     }
   }
@@ -57,7 +56,7 @@ public class DefaultMetadataReader implements MetadataReader {
   public Metadata getMetadata(MetadataScope scope, MetadataEntity metadataEntity) throws MetadataException {
     try {
       return MetadataCompatibility.toV5Metadata(metadataAdmin.getMetadata(metadataEntity, scope), scope);
-    } catch (IOException e) {
+    } catch (Exception e) {
       throw new MetadataException(e);
     }
   }
