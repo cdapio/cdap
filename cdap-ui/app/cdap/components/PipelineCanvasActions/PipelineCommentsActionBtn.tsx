@@ -85,7 +85,7 @@ interface IPipelineCommentsActionBtnProps {
 function PipelineCommentsActionBtn({
   tooltip,
   onChange,
-  comments,
+  comments = [],
   disabled,
 }: IPipelineCommentsActionBtnProps) {
   const [localToggle, setLocalToggle] = React.useState(false);
@@ -148,6 +148,7 @@ function PipelineCommentsActionBtn({
             onChange={onChange}
             anchorEl={anchorEl}
             disabled={disabled}
+            onClose={onClose}
           />
         </IconButton>
       </Tooltip>
