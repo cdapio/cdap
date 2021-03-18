@@ -894,7 +894,7 @@ export default class DataPrepConnections extends Component {
                 match={match}
                 toggle={this.toggleSidePanel}
                 onWorkspaceCreate={this.onUploadSuccess}
-                setActiveConnetion={setActiveConnection}
+                setActiveConnection={setActiveConnection}
                 showPanelToggle={!this.state.sidePanelExpanded}
               />
             );
