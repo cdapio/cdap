@@ -28,6 +28,7 @@ import classnames from 'classnames';
 import { duplicatePipeline } from 'services/PipelineUtils';
 import cloneDeep from 'lodash/cloneDeep';
 import downloadFile from 'services/download-file';
+import { santizeStringForHTMLID } from 'services/helpers';
 require('./PipelineDetailsActionsButton.scss');
 
 const PREFIX = 'features.PipelineDetails.TopPanel';
@@ -49,7 +50,7 @@ const sanitizeConfig = (pipeline) => {
   });
   pipelineClone.config.stages = pipelineClone.config.stages.map((stage) => {
     return Object.assign({}, stage, {
-      id: stage.name.replace(/[ \/]/g, '-'),
+      id: santizeStringForHTMLID(stage.name),
     });
   });
 

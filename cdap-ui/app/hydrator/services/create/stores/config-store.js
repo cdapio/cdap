@@ -172,6 +172,7 @@ class HydratorPlusPlusConfigStore {
     };
 
     let addPluginToConfig = (node, id) => {
+      const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
       if (node.outputSchemaProperty) {
         try {
           let outputSchema = JSON.parse(node.outputSchema);
@@ -202,7 +203,7 @@ class HydratorPlusPlusConfigStore {
         inputSchema: node.inputSchema
       };
 
-      configObj.id = configObj.name.replace(/[ \/]/g, '-');
+      configObj.id = sanitize(configObj.name);
       if (node.errorDatasetName) {
         configObj.errorDatasetName = node.errorDatasetName;
       }

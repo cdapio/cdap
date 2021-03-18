@@ -97,9 +97,10 @@ angular.module(PKG.name + '.feature.hydrator')
             !this.fixAllDisabled
           ) {
             HydratorPlusPlusConfigStore.setState(HydratorPlusPlusConfigStore.getDefaults());
+            const sanitize =  window.CaskCommon.CDAPHelpers.santizeStringForHTMLID;
             rPipelineConfig.config.stages = rPipelineConfig.config.stages.map(stage => {
               return Object.assign({}, stage, {
-                id: stage.name.replace(/[ \/]/g, '-')
+                id: sanitize(stage.name)
               });
             });
             $state.go('hydrator.create', { data: rPipelineConfig });

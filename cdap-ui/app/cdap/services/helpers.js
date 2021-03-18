@@ -716,6 +716,10 @@ function isAuthSetToManagedMode() {
   );
 }
 
+function santizeStringForHTMLID(str) {
+  return str.replace(/[ \/]/g, '-');
+}
+
 export {
   objectQuery,
   convertBytesToHumanReadable,
@@ -768,4 +772,5 @@ export {
   defaultEventObject,
   isAuthSetToProxyMode,
   isAuthSetToManagedMode,
+  santizeStringForHTMLID,
 };
