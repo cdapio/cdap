@@ -31,8 +31,18 @@ angular.module(PKG.name + '.services')
       // myAuth.isAuthenticated is not used. There should be a better way to do this.
       if (window.CDAP_CONFIG.securityEnabled && $cookies.get('CDAP_Auth_Token')) {
         resource.headers = {
-          Authorization: 'Bearer '+ $cookies.get('CDAP_Auth_Token')
+          Authorization: 'Bearer ' + $cookies.get('CDAP_Auth_Token')
         };
+      } else if (
+        window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode() &&
+        $rootScope.currentUser &&
+        $rootScope.currentUser.token
+      ) {
+        resource.headers = {
+          Authorization: 'Bearer ' + $rootScope.currentUser.token
+        };
+      } else {
+        resource.headers = {};
       }
 
       if (!resource.url) {
@@ -52,7 +62,11 @@ angular.module(PKG.name + '.services')
     };
 
     MyCDAPDataSource.prototype.request = function(resource, cb, errorCb) {
-      if (
+      if (window.CDAP_CONFIG.securityEnabled && $cookies.get('CDAP_Auth_Token')) {
+        resource.headers = {
+          Authorization: 'Bearer ' + $cookies.get('CDAP_Auth_Token')
+        };
+      } else if (
         window.CaskCommon.CDAPHelpers.isAuthSetToManagedMode() &&
         $rootScope.currentUser &&
         $rootScope.currentUser.token
@@ -63,6 +77,7 @@ angular.module(PKG.name + '.services')
       } else {
         resource.headers = {};
       }
+
       if (!resource.url) {
         resource.url = myCdapUrl.constructUrl(resource);
       }
