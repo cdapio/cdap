@@ -74,7 +74,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/profiles")
-  public void getSystemProfiles(HttpRequest request, HttpResponder responder) {
+  public void getSystemProfiles(HttpRequest request, HttpResponder responder) throws Exception {
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(NamespaceId.SYSTEM, true)));
   }
 
@@ -82,7 +82,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/profiles/{profile-name}")
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
                                @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException {
+    throws Exception {
     ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
@@ -132,7 +132,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
                           @QueryParam("includeSystem") @DefaultValue("false") String includeSystem)
-    throws BadRequestException, MethodNotAllowedException {
+    throws Exception {
     NamespaceId namespace = getValidatedNamespace(namespaceId);
     boolean include = Boolean.valueOf(includeSystem);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
@@ -146,7 +146,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
                          @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException, MethodNotAllowedException {
+    throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
@@ -185,7 +185,7 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
                                @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException, MethodNotAllowedException {
+    throws Exception {
     responder.sendJson(HttpResponseStatus.OK,
       GSON.toJson(profileService.getProfile(getValidatedProfile(namespaceId, profileName)).getStatus()));
   }

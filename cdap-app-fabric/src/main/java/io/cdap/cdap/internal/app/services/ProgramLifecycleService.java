@@ -544,7 +544,7 @@ public class ProgramLifecycleService {
 
   @VisibleForTesting
   ProgramOptions createProgramOptions(ProgramId programId, Map<String, String> userArgs, Map<String, String> sysArgs,
-                                      boolean debug) throws NotFoundException, ProfileConflictException {
+                                      boolean debug) throws Exception {
     ProfileId profileId = SystemArguments.getProfileIdForProgram(programId, userArgs);
     Map<String, String> profileProperties = SystemArguments.getProfileProperties(userArgs);
     Profile profile = profileService.getProfile(profileId, profileProperties);

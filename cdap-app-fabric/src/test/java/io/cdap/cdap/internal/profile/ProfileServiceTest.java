@@ -51,6 +51,8 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
@@ -469,7 +471,9 @@ public abstract class ProfileServiceTest {
 
     ProfileService service = new ProfileService(cConfWithProfileCreationDisabled,
                                                 getInjector().getInstance(MetricsSystemClient.class),
-                                                getInjector().getInstance(TransactionRunner.class));
+                                                getInjector().getInstance(TransactionRunner.class),
+                                                getInjector().getInstance(AuthenticationContext.class),
+                                                getInjector().getInstance(AuthorizationEnforcer.class));
 
     ProfileId profileId = NamespaceId.DEFAULT.profile("MyProfile");
     Profile profile = new Profile("MyProfile", "label", "my profile for testing",
@@ -490,7 +494,9 @@ public abstract class ProfileServiceTest {
 
     ProfileService service = new ProfileService(cConfWithProfileCreationDisabled,
                                                 getInjector().getInstance(MetricsSystemClient.class),
-                                                getInjector().getInstance(TransactionRunner.class));
+                                                getInjector().getInstance(TransactionRunner.class),
+                                                getInjector().getInstance(AuthenticationContext.class),
+                                                getInjector().getInstance(AuthorizationEnforcer.class));
 
     Profile newProfile = new Profile("MyProfile", "label", "my new profile for testing",
                                   new ProvisionerInfo("defaultProvisioner", PROPERTY_SUMMARIES));

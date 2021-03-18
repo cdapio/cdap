@@ -17,6 +17,7 @@
 package io.cdap.cdap.internal.profile;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.cdap.cdap.api.annotation.Name;
 import io.cdap.cdap.api.metrics.MetricDeleteQuery;
 import io.cdap.cdap.api.metrics.MetricsSystemClient;
 import io.cdap.cdap.common.MethodNotAllowedException;
@@ -24,6 +25,7 @@ import io.cdap.cdap.common.NotFoundException;
 import io.cdap.cdap.common.ProfileConflictException;
 import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
+import io.cdap.cdap.common.security.AuthEnforce;
 import io.cdap.cdap.internal.app.runtime.SystemArguments;
 import io.cdap.cdap.internal.app.store.AppMetadataStore;
 import io.cdap.cdap.internal.app.store.RunRecordDetail;
@@ -38,7 +40,11 @@ import io.cdap.cdap.proto.id.ProgramRunId;
 import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.runtime.spi.profile.ProfileStatus;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.data.transaction.TransactionRunner;
 import io.cdap.cdap.spi.data.transaction.TransactionRunners;
 import org.slf4j.Logger;
@@ -53,6 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 /**
@@ -64,15 +71,19 @@ public class ProfileService {
   private final CConfiguration cConf;
   private final MetricsSystemClient metricsSystemClient;
   private final TransactionRunner transactionRunner;
-
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
 
   @Inject
   public ProfileService(CConfiguration cConf,
                         MetricsSystemClient metricsSystemClient,
-                        TransactionRunner transactionRunner) {
+                        TransactionRunner transactionRunner,
+                        AuthenticationContext authenticationContext, AuthorizationEnforcer authorizationEnforcer) {
     this.cConf = cConf;
     this.metricsSystemClient = metricsSystemClient;
     this.transactionRunner = transactionRunner;
+    this.authenticationContext = authenticationContext;
+    this.authorizationEnforcer = authorizationEnforcer;
   }
 
   /**
@@ -82,7 +93,8 @@ public class ProfileService {
    * @return the profile information about the given profile
    * @throws NotFoundException if the profile is not found
    */
-  public Profile getProfile(ProfileId profileId) throws NotFoundException {
+  public Profile getProfile(ProfileId profileId) throws Exception {
+    AuthorizationUtil.ensureAccess(profileId, authorizationEnforcer, authenticationContext.getPrincipal());
     return TransactionRunners.run(transactionRunner, context -> {
       return ProfileStore.get(context).getProfile(profileId);
     }, NotFoundException.class);
@@ -97,7 +109,7 @@ public class ProfileService {
    * @return the profile information about the given profile
    * @throws NotFoundException if the profile is not found
    */
-  public Profile getProfile(ProfileId profileId, Map<String, String> overrides) throws NotFoundException {
+  public Profile getProfile(ProfileId profileId, Map<String, String> overrides) throws Exception {
     Profile storedProfile = getProfile(profileId);
 
     List<ProvisionerPropertyValue> properties = new ArrayList<>();
@@ -136,10 +148,19 @@ public class ProfileService {
    * @param includeSystem whether to include profiles in system namespace
    * @return the list of profiles which is in this namespace
    */
-  public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem) {
-    return TransactionRunners.run(transactionRunner, context -> {
+  public List<Profile> getProfiles(NamespaceId namespaceId, boolean includeSystem) throws Exception {
+    List<Profile> profileList = TransactionRunners.run(transactionRunner, context -> {
       return ProfileStore.get(context).getProfiles(namespaceId, includeSystem);
     });
+    //granular enforcement at profile level
+    Set<ProfileId> profileIdSet = profileList.stream()
+      .map(profile -> ProfileId.fromScopedName(namespaceId, profile.getScopedName())).collect(
+        Collectors.toSet());
+    Set<? extends EntityId> visibleIds = authorizationEnforcer
+      .isVisible(profileIdSet, authenticationContext.getPrincipal());
+    return profileList.stream()
+      .filter(profile -> visibleIds.contains(ProfileId.fromScopedName(namespaceId, profile.getScopedName()))).collect(
+        Collectors.toList());
   }
 
   /**
@@ -149,7 +170,8 @@ public class ProfileService {
    * @param profile the information of the profile
    * @throws MethodNotAllowedException if trying to update the Native profile or creating a new profile when disallowed.
    */
-  public void saveProfile(ProfileId profileId, Profile profile) throws MethodNotAllowedException {
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void saveProfile(@Name("profileId") ProfileId profileId, Profile profile) throws MethodNotAllowedException {
     TransactionRunners.run(transactionRunner, context -> {
       if (!cConf.getBoolean(Constants.Profile.UPDATE_ALLOWED)) {
         throw new MethodNotAllowedException("Compute profile creation and update are not allowed");
@@ -174,7 +196,8 @@ public class ProfileService {
    * @param profileId the id of the profile to add
    * @param profile the information of the profile
    */
-  public void createIfNotExists(ProfileId profileId, Profile profile) {
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void createIfNotExists(@Name("profileId") ProfileId profileId, Profile profile) {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).createIfNotExists(profileId, profile);
     });
@@ -193,7 +216,8 @@ public class ProfileService {
    * @throws ProfileConflictException if the profile is enabled
    * @throws MethodNotAllowedException if trying to delete the Native profile
    */
-  public void deleteProfile(ProfileId profileId)
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void deleteProfile(@Name("profileId") ProfileId profileId)
     throws MethodNotAllowedException, NotFoundException, ProfileConflictException {
     if (profileId.equals(ProfileId.NATIVE)) {
       throw new MethodNotAllowedException(String.format("Profile Native %s cannot be deleted.",
@@ -223,9 +247,11 @@ public class ProfileService {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore profileStore = ProfileStore.get(context);
       AppMetadataStore appMetadataStore = AppMetadataStore.create(context);
-      List<Profile> profiles = profileStore.getProfiles(namespaceId, false);
+      List<Profile> profiles = getProfiles(namespaceId, false);
       for (Profile profile : profiles) {
         ProfileId profileId = namespaceId.profile(profile.getName());
+        //granular enforcement at profile level
+        authorizationEnforcer.enforce(profileId, authenticationContext.getPrincipal(), Action.EXECUTE);
         deleteProfile(profileStore, appMetadataStore, profileId, profile);
         deleted.add(profileId);
       }
@@ -253,7 +279,8 @@ public class ProfileService {
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is already enabled
    */
-  public void enableProfile(ProfileId profileId) throws NotFoundException, ProfileConflictException {
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void enableProfile(@Name("profileId") ProfileId profileId) throws NotFoundException, ProfileConflictException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).enableProfile(profileId);
     }, NotFoundException.class, ProfileConflictException.class);
@@ -267,7 +294,8 @@ public class ProfileService {
    * @throws ProfileConflictException if the profile is already disabled
    * @throws MethodNotAllowedException if trying to disable the native profile
    */
-  public void disableProfile(ProfileId profileId)
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void disableProfile(@Name("profileId") ProfileId profileId)
     throws NotFoundException, ProfileConflictException, MethodNotAllowedException {
     if (profileId.equals(ProfileId.NATIVE)) {
       throw new MethodNotAllowedException(String.format("Cannot change status for Profile Native %s, " +
@@ -285,7 +313,8 @@ public class ProfileService {
    * @return the entities that the profile is assigned to
    * @throws NotFoundException if the profile is not found
    */
-  public Set<EntityId> getProfileAssignments(ProfileId profileId) throws NotFoundException {
+  public Set<EntityId> getProfileAssignments(ProfileId profileId) throws Exception {
+    AuthorizationUtil.ensureAccess(profileId, authorizationEnforcer, authenticationContext.getPrincipal());
     return TransactionRunners.run(transactionRunner, context -> {
       return ProfileStore.get(context).getProfileAssignments(profileId);
     }, NotFoundException.class);
@@ -299,7 +328,8 @@ public class ProfileService {
    * @throws NotFoundException if the profile is not found
    * @throws ProfileConflictException if the profile is disabled
    */
-  public void addProfileAssignment(ProfileId profileId,
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void addProfileAssignment(@Name("profileId") ProfileId profileId,
                                    EntityId entityId) throws NotFoundException, ProfileConflictException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).addProfileAssignment(profileId, entityId);
@@ -313,7 +343,9 @@ public class ProfileService {
    * @param entityId the entity to remove from the assignments
    * @throws NotFoundException if the profile is not found
    */
-  public void removeProfileAssignment(ProfileId profileId, EntityId entityId) throws NotFoundException {
+  @AuthEnforce(entities = "profileId", enforceOn = ProfileId.class, actions = Action.EXECUTE)
+  public void removeProfileAssignment(@Name("profileId") ProfileId profileId,
+                                      EntityId entityId) throws NotFoundException {
     TransactionRunners.run(transactionRunner, context -> {
       ProfileStore.get(context).removeProfileAssignment(profileId, entityId);
     }, NotFoundException.class);

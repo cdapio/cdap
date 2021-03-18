@@ -26,6 +26,8 @@ import io.cdap.cdap.common.conf.CConfiguration;
 import io.cdap.cdap.common.conf.Constants;
 import io.cdap.cdap.internal.AppFabricTestHelper;
 import io.cdap.cdap.internal.app.store.DefaultStore;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.cdap.spi.data.StructuredTableAdmin;
 import io.cdap.cdap.spi.data.TableAlreadyExistsException;
 import io.cdap.cdap.spi.data.sql.PostgresInstantiator;
@@ -74,7 +76,9 @@ public class SqlProfileServiceTest extends ProfileServiceTest {
     StoreDefinition.createAllTables(structuredTableAdmin, registry);
 
     injector = AppFabricTestHelper.getInjector();
-    profileService = new ProfileService(cConf, injector.getInstance(MetricsSystemClient.class), transactionRunner);
+    profileService = new ProfileService(cConf, injector.getInstance(MetricsSystemClient.class), transactionRunner,
+                                        injector.getInstance(AuthenticationContext.class),
+                                        injector.getInstance(AuthorizationEnforcer.class));
     defaultStore = new DefaultStore(transactionRunner);
   }
 
