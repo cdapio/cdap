@@ -27,6 +27,9 @@ import PostAddIcon from '@material-ui/icons/PostAdd';
 import { preventPropagation } from 'services/helpers';
 import { IComment } from 'components/AbstractWidget/Comment/CommentConstants';
 import cloneDeep from 'lodash/cloneDeep';
+import { UniversalBackdrop } from 'components/UniversalBackdrop';
+import { IconButton } from '@material-ui/core';
+import CloseIcon from '@material-ui/icons/Close';
 const useStyles = makeStyles((theme) => {
   return {
     root: {
@@ -83,6 +86,7 @@ interface IPipelineCommentsProps {
   anchorEl: React.ReactNode;
   onChange: (comments: IComment[]) => void;
   disabled?: boolean;
+  onClose: () => void;
 }
 
 const DEFAULT_COMMENTS = [{ content: '', createDate: Date.now() }];
@@ -97,6 +101,7 @@ export function PipelineComments({
   anchorEl,
   onChange,
   disabled = false,
+  onClose,
 }: IPipelineCommentsProps) {
   const [localComments, setLocalComments] = React.useState(getDefaultComments(comments));
   const [localAnchorEl, setLocalAnchorEl] = React.useState(null);
@@ -162,6 +167,7 @@ export function PipelineComments({
             },
           }}
         >
+          <UniversalBackdrop open={isOpen} onClose={onClose} invisible />
           <div className={classes.arrow} ref={setArrowRef} />
           <Paper className={classes.pipelineCommentsWrapper}>
             <If condition={!disabled}>
@@ -173,6 +179,9 @@ export function PipelineComments({
                   <PostAddIcon />
                   <span>Add Comment</span>
                 </Button>
+                <IconButton onClick={onClose}>
+                  <CloseIcon />
+                </IconButton>
               </div>
             </If>
             {localComments.map((comment, id) => {
@@ -184,6 +193,7 @@ export function PipelineComments({
                   onDelete={onDelete.bind(null, id)}
                   focus={!comment.content.length}
                   disabled={disabled}
+                  onClose={onClose}
                 />
               );
             })}

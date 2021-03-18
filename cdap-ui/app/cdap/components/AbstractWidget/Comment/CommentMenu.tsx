@@ -53,7 +53,7 @@ export default function CommentMenu({ onEdit, onDelete }: ICommentMenuProps) {
   return (
     <ClickAwayListener onClickAway={() => setIsSettingsOpen(false)}>
       <div className={classes.root}>
-        <IconButton onClick={toggleSettingsMenu}>
+        <IconButton onClick={toggleSettingsMenu} size="small">
           <MoreVertIcon />
         </IconButton>
         <Popper
