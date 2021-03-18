@@ -44,10 +44,14 @@ $expanded-menu-icon-width: 40px;
       margin: 15px 0;
       padding-left: 15px;
       cursor: pointer;
+      text-overflow: ellipsis;
 
       h5 {
         font-size: 14px;
         font-weight: 600;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow-x: hidden;
 
         .panel-toggle-icon {
           padding-right: 5px;
