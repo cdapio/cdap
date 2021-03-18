@@ -19,6 +19,7 @@ import Input from '@material-ui/core/Input';
 import withStyles, { StyleRules } from '@material-ui/core/styles/withStyles';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
+import If from 'components/If';
 import AbstractRow, {
   IAbstractRowProps,
   AbstractRowStyles,
@@ -27,6 +28,11 @@ import AbstractRow, {
 const styles = (theme): StyleRules => {
   return {
     ...AbstractRowStyles(theme),
+    inputContainerWithCondition: {
+      display: 'grid',
+      gridTemplateColumns: '0.80fr 0.80fr 0.80fr 30px 0.80fr',
+      gridGap: '20px',
+    },
     inputContainer: {
       display: 'grid',
       gridTemplateColumns: '1fr 1fr 30px 1fr',
@@ -42,6 +48,7 @@ const styles = (theme): StyleRules => {
 };
 
 interface IComplexDropdown {
+  hasCondition?: boolean;
   value: string | number;
   label: string;
 }
@@ -57,6 +64,8 @@ interface IKeyValueState {
   field: string;
   func: string;
   alias: string;
+  hasCondition: boolean;
+  condition: string;
 }
 
 type StateKeys = keyof IKeyValueState;
@@ -66,6 +75,7 @@ class FunctionDropdownRow extends AbstractRow<IFunctionDropdownRowProps, IKeyVal
     placeholders: {
       field: 'field',
       alias: 'alias',
+      condition: 'condition',
     },
     dropdownOptions: [],
   };
@@ -74,59 +84,108 @@ class FunctionDropdownRow extends AbstractRow<IFunctionDropdownRowProps, IKeyVal
     field: '',
     func: '',
     alias: '',
+    hasCondition: false,
+    condition: '',
   };
 
   /**
    * Sample input: alias:Avg(fieldName)
    */
   public componentDidMount() {
-    const [alias, fn] = this.props.value.split(':');
-    const { func, field } = this.extractFunctionAndAlias(fn);
+    const [alias, fn, conditionValue] = this.props.value.split(':');
+    const { func, field, hasCondition, condition } = this.extractFunctionAliasAndCondition(
+      fn,
+      conditionValue
+    );
 
     this.setState({
       field,
       func,
       alias,
+      hasCondition,
+      condition,
     });
   }
 
-  private extractFunctionAndAlias(fn) {
+  private extractFunctionAliasAndCondition(fn, conditionValue) {
     const defaultResponse = {
       func: '',
       field: '',
+      hasCondition: false,
+      condition: '',
     };
 
     if (!fn) {
       return defaultResponse;
     }
 
-    const openBracketIndex = fn.indexOf('(');
-    const closeBracketIndex = fn.indexOf(')');
+    const fnOpenBracketIndex = fn.indexOf('(');
+    const fnCloseBracketIndex = fn.indexOf(')');
+    const conditionOpenBracketIndex = conditionValue.indexOf('(');
+    const conditionCloseBracketIndex = conditionValue.indexOf(')');
 
-    if (openBracketIndex === -1 || closeBracketIndex === -1) {
+    if (fnOpenBracketIndex === -1 || fnCloseBracketIndex === -1) {
       return defaultResponse;
     }
 
+    if (conditionValue) {
+      return {
+        func: fn.substring(0, fnOpenBracketIndex),
+        field: fn.substring(fnOpenBracketIndex + 1, fnCloseBracketIndex),
+        hasCondition: true,
+        condition: conditionValue.substring(
+          conditionOpenBracketIndex + 1,
+          conditionCloseBracketIndex + 1
+        ),
+      };
+    }
+
     return {
-      func: fn.substring(0, openBracketIndex),
-      field: fn.substring(openBracketIndex + 1, closeBracketIndex),
+      func: fn.substring(0, fnOpenBracketIndex),
+      field: fn.substring(fnOpenBracketIndex + 1, fnCloseBracketIndex),
+      hasCondition: false,
+      condition: '',
     };
   }
 
+  private handleCondition = (type: StateKeys, e) => {
+    if (type === 'func') {
+      const targetValueObj = this.props.dropdownOptions.filter(
+        (el) => typeof el === 'object' && el.value === e.target.value
+      );
+      if (targetValueObj.length !== 0) {
+        this.setState({
+          hasCondition: targetValueObj[0].hasOwnProperty('hasCondition'),
+        });
+      } else {
+        this.setState({
+          hasCondition: false,
+        });
+      }
+    }
+  };
+
   private handleChange = (type: StateKeys, e) => {
+    this.handleCondition(type, e);
     this.setState(
       {
         [type]: e.target.value,
       } as Pick<IKeyValueState, StateKeys>,
       () => {
-        const { field, func, alias } = this.state;
+        const { field, func, alias, condition, hasCondition } = this.state;
+        let updatedValue = '';
 
         if (field.length === 0 || func.length === 0 || alias.length === 0) {
           this.onChange('');
           return;
         }
 
-        const updatedValue = `${alias}:${func}(${field})`;
+        if (hasCondition) {
+          updatedValue = `${alias}:${func}(${field}):condition(${condition})`;
+          this.onChange(updatedValue);
+          return;
+        }
+        updatedValue = `${alias}:${func}(${field})`;
         this.onChange(updatedValue);
       }
     );
@@ -145,7 +204,13 @@ class FunctionDropdownRow extends AbstractRow<IFunctionDropdownRowProps, IKeyVal
     });
 
     return (
-      <div className={this.props.classes.inputContainer}>
+      <div
+        className={
+          !this.state.hasCondition
+            ? this.props.classes.inputContainer
+            : this.props.classes.inputContainerWithCondition
+        }
+      >
         <Input
           classes={{ disabled: this.props.classes.disabled }}
           placeholder={this.props.placeholders.field}
@@ -173,9 +238,18 @@ class FunctionDropdownRow extends AbstractRow<IFunctionDropdownRowProps, IKeyVal
             );
           })}
         </Select>
-
+        <If condition={this.state.hasCondition}>
+          <Input
+            classes={{ disabled: this.props.classes.disabled }}
+            placeholder={this.props.placeholders.condition}
+            onChange={this.handleChange.bind(this, 'condition')}
+            value={this.state.condition}
+            onKeyPress={this.handleKeyPress}
+            onKeyDown={this.handleKeyDown}
+            disabled={this.props.disabled}
+          />
+        </If>
         <span className={this.props.classes.separator}>as</span>
-
         <Input
           classes={{ disabled: this.props.classes.disabled }}
           placeholder={this.props.placeholders.alias}
