@@ -28,6 +28,9 @@ import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import CommentMenu from 'components/AbstractWidget/Comment/CommentMenu';
 import { humanReadableDate } from 'services/helpers';
 import Markdown from 'components/Markdown';
+import { IconButton } from '@material-ui/core';
+import CloseIcon from '@material-ui/icons/Close';
+import isObject from 'lodash/isObject';
 
 const useStyles = makeStyle<Theme, ICommentStyleProps>((theme) => {
   return {
@@ -62,6 +65,7 @@ interface ICommentBoxProps {
   onDelete?: () => void;
   focus?: boolean;
   disabled?: boolean;
+  onClose: () => void;
 }
 
 export default function CommentBox({
@@ -70,6 +74,7 @@ export default function CommentBox({
   onDelete,
   focus = false,
   disabled = false,
+  onClose,
 }: ICommentBoxProps) {
   const isThereExistingComment = comment.content && comment.content.length > 0 ? true : false;
   const [editMode, setEditMode] = React.useState(!isThereExistingComment && !disabled);
@@ -108,7 +113,12 @@ export default function CommentBox({
   }, [comment]);
 
   const CommentMenuLocal = disabled ? null : (
-    <CommentMenu onEdit={() => setEditMode(true)} onDelete={onDelete} />
+    <div className={classes.cardAction}>
+      <CommentMenu onEdit={() => setEditMode(true)} onDelete={onDelete} />
+      <IconButton onClick={onClose} size="small">
+        <CloseIcon />
+      </IconButton>
+    </div>
   );
   if (!editMode) {
     return (
@@ -151,6 +161,10 @@ export default function CommentBox({
         </Button>
         <Button
           onClick={() => {
+            if (isObject(comment) && !comment.content.length) {
+              onClose();
+              return;
+            }
             setLocalComment({ ...localComment, content: comment.content });
             onResetComment();
             setEditMode(false);

@@ -166,6 +166,7 @@ function DynamicAnchor({
                   onDelete={onDelete.bind(null, id)}
                   focus={localComments.length - 1 === id}
                   disabled={disabled}
+                  onClose={onClose}
                 />
               );
             })}
