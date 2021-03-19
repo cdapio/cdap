@@ -30,7 +30,15 @@ const styles = (theme): StyleRules => {
       borderRadius: '4px',
       width: '50px',
       color: theme.palette.grey[50],
-      '&:hover': {
+      '&:not([href])': {
+        // beating specificity
+        cursor: 'not-allowed',
+        color: theme.palette.grey[200],
+        '&:hover': {
+          color: theme.palette.grey[200],
+        },
+      },
+      '&[href]:hover': {
         backgroundColor: theme.palette.white[50],
         border: `1px solid ${theme.palette.grey[400]}`,
         color: 'inherit',
@@ -52,7 +60,9 @@ const LogsButtonView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
   const programType = PROGRAM_INFO.programType;
   const programId = PROGRAM_INFO.programId;
 
-  const logViewerPath = getLogViewerPageUrl(namespace, name, programType, programId, runId);
+  const logViewerPath = runId
+    ? getLogViewerPageUrl(namespace, name, programType, programId, runId)
+    : null;
 
   return (
     <a className={classes.root} href={logViewerPath} target="_blank" rel="noopener noreferrer">
