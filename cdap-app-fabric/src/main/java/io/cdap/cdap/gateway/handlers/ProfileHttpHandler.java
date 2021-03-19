@@ -32,6 +32,10 @@ import io.cdap.cdap.proto.profile.Profile;
 import io.cdap.cdap.proto.profile.ProfileCreateRequest;
 import io.cdap.cdap.proto.provisioner.ProvisionerInfo;
 import io.cdap.cdap.proto.provisioner.ProvisionerPropertyValue;
+import io.cdap.cdap.proto.security.Action;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.http.AbstractHttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.buffer.ByteBufInputStream;
@@ -63,11 +67,18 @@ import javax.ws.rs.QueryParam;
 public class ProfileHttpHandler extends AbstractHttpHandler {
   private static final Gson GSON = new GsonBuilder().create();
 
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final ProfileService profileService;
   private final ProvisioningService provisioningService;
 
   @Inject
-  public ProfileHttpHandler(ProfileService profileService, ProvisioningService provisioningService) {
+  public ProfileHttpHandler(AuthorizationEnforcer authorizationEnforcer,
+                            AuthenticationContext authenticationContext,
+                            ProfileService profileService,
+                            ProvisioningService provisioningService) {
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
     this.profileService = profileService;
     this.provisioningService = provisioningService;
   }
@@ -131,9 +142,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles")
   public void getProfiles(HttpRequest request, HttpResponder responder,
                           @PathParam("namespace-id") String namespaceId,
-                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem)
-    throws BadRequestException, MethodNotAllowedException {
+                          @QueryParam("includeSystem") @DefaultValue("false") String includeSystem) throws Exception {
     NamespaceId namespace = getValidatedNamespace(namespaceId);
+    AuthorizationUtil.ensureAccess(namespace, authorizationEnforcer, authenticationContext.getPrincipal());
     boolean include = Boolean.valueOf(includeSystem);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespace, include)));
   }
@@ -145,9 +156,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void getProfile(HttpRequest request, HttpResponder responder,
                          @PathParam("namespace-id") String namespaceId,
-                         @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException, MethodNotAllowedException {
+                         @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    AuthorizationUtil.ensureAccess(profileId, authorizationEnforcer, authenticationContext.getPrincipal());
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
@@ -158,9 +169,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void writeProfile(FullHttpRequest request, HttpResponder responder,
                            @PathParam("namespace-id") String namespaceId,
-                           @PathParam("profile-name") String profileName)
-    throws BadRequestException, IOException, MethodNotAllowedException {
+                           @PathParam("profile-name") String profileName) throws Exception {
     ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    authorizationEnforcer.enforce(profileId, authenticationContext.getPrincipal(), Action.EXECUTE);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -174,8 +185,9 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}")
   public void deleteProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("profile-name") String profileName)
-    throws BadRequestException, MethodNotAllowedException, NotFoundException, ProfileConflictException {
+                            @PathParam("profile-name") String profileName) throws Exception {
+    authorizationEnforcer.enforce(getValidatedNamespace(namespaceId),
+                                  authenticationContext.getPrincipal(), Action.EXECUTE);
     profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -184,10 +196,11 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/status")
   public void getProfileStatus(HttpRequest request, HttpResponder responder,
                                @PathParam("namespace-id") String namespaceId,
-                               @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException, MethodNotAllowedException {
-    responder.sendJson(HttpResponseStatus.OK,
-      GSON.toJson(profileService.getProfile(getValidatedProfile(namespaceId, profileName)).getStatus()));
+                               @PathParam("profile-name") String profileName) throws Exception {
+    AuthorizationUtil.ensureAccess(getValidatedNamespace(namespaceId),
+                                   authorizationEnforcer, authenticationContext.getPrincipal());
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId).getStatus()));
   }
 
   /**
@@ -198,9 +211,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/disable")
   public void disableProfile(HttpRequest request, HttpResponder responder,
                              @PathParam("namespace-id") String namespaceId,
-                             @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, MethodNotAllowedException, BadRequestException {
-          profileService.disableProfile(getValidatedProfile(namespaceId, profileName));
+                             @PathParam("profile-name") String profileName) throws Exception {
+    authorizationEnforcer.enforce(getValidatedNamespace(namespaceId),
+                                  authenticationContext.getPrincipal(), Action.EXECUTE);
+    profileService.disableProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
@@ -211,9 +225,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @Path("/namespaces/{namespace-id}/profiles/{profile-name}/enable")
   public void enableProfile(HttpRequest request, HttpResponder responder,
                             @PathParam("namespace-id") String namespaceId,
-                            @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
-    profileService.enableProfile(getValidatedProfile(namespaceId, profileName));
+                            @PathParam("profile-name") String profileName) throws Exception {
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
+    authorizationEnforcer.enforce(profileId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    profileService.enableProfile(profileId);
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
