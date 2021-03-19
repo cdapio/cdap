@@ -98,6 +98,7 @@ final class DataprocClient implements AutoCloseable {
   static final String DATAPROC_GOOGLEAPIS_COM_443 = "-dataproc.googleapis.com:443";
   private static final int MIN_DEFAULT_CONCURRENCY = 32;
   private static final int PARTITION_NUM_FACTOR = 32;
+  private static final int MIN_INITIAL_PARTITIONS_DEFAULT = 128;
   private static final int MAX_INITIAL_PARTITIONS_DEFAULT = 8192;
   private final DataprocConf conf;
   private final ClusterControllerClient client;
@@ -428,7 +429,9 @@ final class DataprocClient implements AutoCloseable {
         //Set spark.sql.adaptive.coalescePartitions.initialPartitionNum as 32x of default parallelism,
         //but no more than 8192. This value is used only in spark 3 with adaptive execution and
         //according to our tests spark can handle really large numbers and 32x is a reasonable default.
-        int initialPartitionNum = Math.min(defaultConcurrency * PARTITION_NUM_FACTOR, MAX_INITIAL_PARTITIONS_DEFAULT);
+        int initialPartitionNum = Math.min(
+          Math.max(conf.getTotalWorkerCPUs() * PARTITION_NUM_FACTOR, MIN_INITIAL_PARTITIONS_DEFAULT),
+          MAX_INITIAL_PARTITIONS_DEFAULT);
         clusterProperties.putIfAbsent("spark:spark.default.parallelism", Integer.toString(defaultConcurrency));
         clusterProperties.putIfAbsent("spark:spark.sql.adaptive.coalescePartitions.initialPartitionNum",
                                       Integer.toString(initialPartitionNum));
