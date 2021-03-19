@@ -31,6 +31,7 @@ import Markdown from 'components/Markdown';
 import { IconButton } from '@material-ui/core';
 import CloseIcon from '@material-ui/icons/Close';
 import isObject from 'lodash/isObject';
+import If from 'components/If';
 
 const useStyles = makeStyle<Theme, ICommentStyleProps>((theme) => {
   return {
@@ -65,7 +66,7 @@ interface ICommentBoxProps {
   onDelete?: () => void;
   focus?: boolean;
   disabled?: boolean;
-  onClose: () => void;
+  onClose?: () => void;
 }
 
 export default function CommentBox({
@@ -112,12 +113,16 @@ export default function CommentBox({
     setEditMode(!commentExists && !disabled);
   }, [comment]);
 
-  const CommentMenuLocal = disabled ? null : (
+  const CommentMenuLocal = (
     <div className={classes.cardAction}>
-      <CommentMenu onEdit={() => setEditMode(true)} onDelete={onDelete} />
-      <IconButton onClick={onClose} size="small">
-        <CloseIcon />
-      </IconButton>
+      <If condition={!disabled}>
+        <CommentMenu onEdit={() => setEditMode(true)} onDelete={onDelete} />
+      </If>
+      <If condition={typeof onClose === 'function'}>
+        <IconButton onClick={onClose} size="small">
+          <CloseIcon />
+        </IconButton>
+      </If>
     </div>
   );
   if (!editMode) {
@@ -161,7 +166,7 @@ export default function CommentBox({
         </Button>
         <Button
           onClick={() => {
-            if (isObject(comment) && !comment.content.length) {
+            if (isObject(comment) && !comment.content.length && typeof onClose === 'function') {
               onClose();
               return;
             }
