@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -42,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,17 +75,27 @@ public final class AuthorizationUtil {
                                         AuthorizationEnforcer authorizationEnforcer,
                                         Principal principal) throws Exception {
     boolean isAuthorized = false;
+    boolean includePrincipal = true;
+    String entityString = entityId.toString();
+    String addendum = null;
+    Set<String> missingPermissions = new LinkedHashSet<>();
     for (Action action : actionSet) {
       try {
         authorizationEnforcer.enforce(entityId, principal, action);
         isAuthorized = true;
         break;
       } catch (UnauthorizedException e) {
-        // continue to next action
+        missingPermissions.addAll(e.getMissingPermissions());
+        if (!e.includePrincipal()) {
+          includePrincipal = false;
+        }
+        entityString = e.getEntity();
+        addendum = e.getAddendum();
       }
     }
     if (!isAuthorized) {
-      throw new UnauthorizedException(principal, actionSet, entityId, false);
+      throw new UnauthorizedException(principal.toString(), missingPermissions, entityString, null, false,
+                                      includePrincipal, addendum);
     }
   }
 
@@ -128,9 +139,7 @@ public final class AuthorizationUtil {
    */
   public static void ensureAccess(EntityId entityId, AuthorizationEnforcer authorizationEnforcer,
                                   Principal principal) throws Exception {
-    if (authorizationEnforcer.isVisible(Collections.singleton(entityId), principal).isEmpty()) {
-      throw new UnauthorizedException(principal, entityId);
-    }
+    authorizationEnforcer.isVisible(entityId, principal);
   }
 
   /**

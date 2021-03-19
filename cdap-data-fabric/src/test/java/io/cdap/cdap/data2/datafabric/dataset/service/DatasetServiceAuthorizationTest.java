@@ -1,5 +1,5 @@
 /*
- * Copyright © 2014-2019 Cask Data, Inc.
+ * Copyright © 2014-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -140,7 +140,9 @@ public class DatasetServiceAuthorizationTest extends DatasetServiceTestBase {
       dsFramework.deleteAllInstances(NamespaceId.DEFAULT);
       Assert.fail();
     } catch (Exception e) {
-      Assert.assertTrue(e.getMessage().contains("is not authorized to perform actions"));
+      if (!(e instanceof UnauthorizedException)) {
+        Assert.fail();
+      }
     }
     // alice should still be able to see all dataset instances
     Assert.assertEquals(ImmutableSet.of(dsId1, dsId2, dsId),
