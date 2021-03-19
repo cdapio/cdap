@@ -18,7 +18,7 @@ import React from 'react';
 import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/withStyles';
 import { ITableMetricsData } from 'components/Replicator/Detail/Monitoring/TableScatterPlotGraph/parser';
 import { convertBytesToHumanReadable, truncateNumber } from 'services/helpers';
-import { formatNumber } from 'components/Replicator/utilities';
+import { formatNumber, getTableDisplayName } from 'components/Replicator/utilities';
 
 const styles = (): StyleRules => {
   return {
@@ -80,10 +80,11 @@ const ScatterPlotTableView: React.FC<IScatterPlotTableProps> = ({ classes, data 
             const eventsPerMin = truncateNumber(table.eventsPerMin, PRECISION);
             const latency = truncateNumber(table.latency, PRECISION);
             const dataReplicated = convertBytesToHumanReadable(table.dataReplicated, null, true);
+            const tableDisplayName = getTableDisplayName(table.tableInfo);
 
             return (
-              <div className="grid-row" key={table.tableName}>
-                <div>{table.tableInfo.table}</div>
+              <div className="grid-row" key={tableDisplayName}>
+                <div>{tableDisplayName}</div>
                 <div>{dataReplicated}</div>
                 <div>{eventsPerMin}</div>
                 <div>{latency}</div>
