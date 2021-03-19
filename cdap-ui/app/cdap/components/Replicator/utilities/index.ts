@@ -392,6 +392,10 @@ export function getFullyQualifiedTableName(tableInput) {
 }
 
 export function getTableDisplayName(row) {
+  if (!row) {
+    return '';
+  }
+
   let table = row.table;
   let schema = row.schema;
 
