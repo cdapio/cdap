@@ -24,6 +24,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.id.InstanceId;
 import io.cdap.cdap.proto.id.NamespaceId;
 import io.cdap.cdap.proto.id.ParentedId;
+import io.cdap.cdap.proto.id.ProfileId;
 import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
@@ -136,6 +137,9 @@ public final class AuthEnforceUtil {
     }
     if (enforceOn.equals(Type.getType(ProgramId.class))) {
       return CONS_CACHE.get(ProgramId.class).getParameterTypes().length;
+    }
+    if (enforceOn.equals(Type.getType(ProfileId.class))) {
+      return CONS_CACHE.get(ProfileId.class).getParameterTypes().length;
     }
     throw new IllegalArgumentException(String.format("Failed to determine required number of entity parts " +
                                                        "needed for %s. Please make sure its a valid %s class " +
