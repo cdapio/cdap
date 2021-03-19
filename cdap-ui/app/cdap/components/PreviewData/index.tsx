@@ -91,9 +91,11 @@ const PreviewDataViewBase: React.FC<IPreviewDataViewProps> = ({
     off: { value: PreviewMode.Table, label: PreviewMode.Table },
   };
 
+  let shouldShowRecordView = false;
   // CDAP-17114 - Don't show record view if the node is batch joiner or aggregator
-  const shouldShowRecordView =
-    ['batchaggregator', 'batchjoiner'].indexOf(selectedNode.nodeType) === -1;
+  if (selectedNode) {
+    shouldShowRecordView = ['batchaggregator', 'batchjoiner'].indexOf(selectedNode.nodeType) === -1;
+  }
 
   const updatePreviewCb = (updatedPreview: IPreviewData) => {
     setPreviewData(updatedPreview);
