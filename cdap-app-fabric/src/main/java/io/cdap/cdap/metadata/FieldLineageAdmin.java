@@ -99,7 +99,7 @@ public class FieldLineageAdmin {
    * dataset of includeCurrent is set to true
    */
   public Set<Field> getFields(EndPoint endPoint, long start, long end, @Nullable String prefix,
-                              boolean includeCurrent) throws Exception {
+                              boolean includeCurrent) throws IOException {
 
     Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
 
@@ -152,7 +152,7 @@ public class FieldLineageAdmin {
    */
   public DatasetFieldLineageSummary getDatasetFieldLineage(Constants.FieldLineage.Direction direction,
                                                            EndPoint endPoint,
-                                                           long start, long end) throws Exception {
+                                                           long start, long end) throws IOException {
     Set<String> lineageFields = fieldLineageReader.getFields(endPoint, start, end);
     Map<DatasetId, Set<FieldRelation>> incomingRelations = new HashMap<>();
     Map<DatasetId, Set<FieldRelation>> outgoingRelations = new HashMap<>();
@@ -269,7 +269,7 @@ public class FieldLineageAdmin {
   }
 
   private Set<String> getFieldsWithNoFieldLineage(EndPoint dataset,
-                                                  Set<String> lineageFields) throws Exception {
+                                                  Set<String> lineageFields) throws IOException {
     // get the system properties of this dataset
     Map<String, String> properties = metadataAdmin.getProperties(MetadataScope.SYSTEM,
                                                                  MetadataEntity.ofDataset(dataset.getNamespace(),
