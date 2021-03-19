@@ -146,7 +146,7 @@
     <jline.version>2.12</jline.version>
     <junit.version>4.11</junit.version>
     <kafka.version>0.8.2.2</kafka.version>
-    <leveldb.version>0.6</leveldb.version>
+    <leveldb.version>0.12</leveldb.version>
     <logback.version>1.0.9</logback.version>
     <mockftp.version>2.6</mockftp.version>
     <mockito.version>1.9.5</mockito.version>
@@ -469,6 +469,8 @@
         <groupId>org.iq80.leveldb</groupId>
         <artifactId>leveldb</artifactId>
         <version>${leveldb.version}</version>
+        <!-- leveldb 0.12 has conflicting guava 20 as a dependency. The uber jar shades guava -->
+        <classifier>uber</classifier>
       </dependency>
       <dependency>
         <groupId>commons-cli</groupId>
