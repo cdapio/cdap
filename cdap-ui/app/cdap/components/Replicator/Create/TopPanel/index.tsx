@@ -98,7 +98,7 @@ const TopPanelView: React.FC<ICreateContext & WithStyles<typeof styles>> = ({
             className={`${classes.heading} ${classes.contentHeading}`}
           />
 
-          <If condition={name && !!sourcePluginInfo}>
+          <If condition={!!sourcePluginInfo}>
             <PluginInfo
               type="Source"
               pluginInfo={sourcePluginInfo}
