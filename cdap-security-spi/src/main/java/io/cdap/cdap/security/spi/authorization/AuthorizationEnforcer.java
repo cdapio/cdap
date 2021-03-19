@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -21,6 +21,7 @@ import io.cdap.cdap.proto.id.EntityId;
 import io.cdap.cdap.proto.security.Action;
 import io.cdap.cdap.proto.security.Principal;
 
+import java.util.Collections;
 import java.util.Set;
 
 /**
@@ -54,8 +55,25 @@ public interface AuthorizationEnforcer {
   void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception;
 
   /**
+   * Checks whether a single {@link EntityId} is visible to the specified {@link Principal}.
+   * An entity is visible to a principal if the principal has any privileges on the entity, or any of its descendants.
+   * However, visibility check behavior can be overwritten at the authorization extension level.
+   *
+   * @param entityId the entity on which the visibility check is to be performed
+   * @param principal the principal to check the visibility for
+   * @throws UnauthorizedException if the entity is not visible to the principal
+   * @throws Exception if any errors occurred while performing the check
+   */
+  default void isVisible(EntityId entityId, Principal principal) throws Exception {
+    if (isVisible(Collections.singleton(entityId), principal).isEmpty()) {
+      throw new UnauthorizedException(principal, entityId);
+    }
+  }
+
+  /**
    * Checks whether the set of {@link EntityId}s are visible to the specified {@link Principal}.
    * An entity is visible to a principal if the principal has any privileges on the entity, or any of its descendants.
+   * However, visibility check behavior can be overwritten at the authorization extension level.
    *
    * @param entityIds the entities on which the visibility check is to be performed
    * @param principal the principal to check the visibility for
