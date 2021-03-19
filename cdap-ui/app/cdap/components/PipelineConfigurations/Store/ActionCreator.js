@@ -42,6 +42,7 @@ import uniqBy from 'lodash/uniqBy';
 import cloneDeep from 'lodash/cloneDeep';
 import { CLOUD } from 'services/global-constants';
 import { Observable } from 'rxjs/Observable';
+import { map } from 'rxjs/operators';
 
 // Filter certain preferences from being shown in the run time arguments
 // They are being represented in other places (like selected compute profile).
@@ -233,12 +234,16 @@ const updatePipeline = () => {
     }
   );
 
-  publishObservable.subscribe(() => {
-    PipelineDetailStore.dispatch({
-      type: PipelineDetailActions.SET_CONFIG,
-      payload: { config },
-    });
-  });
+  // Use pipe/map and not subscribe to not break error handling on other observers
+  publishObservable.pipe(
+    map((returnVal) => {
+      PipelineDetailStore.dispatch({
+        type: PipelineDetailActions.SET_CONFIG,
+        payload: { config },
+      });
+      return returnVal;
+    })
+  );
 
   return publishObservable;
 };
