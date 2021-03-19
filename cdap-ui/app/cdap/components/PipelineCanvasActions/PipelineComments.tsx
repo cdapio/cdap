@@ -193,7 +193,6 @@ export function PipelineComments({
                   onDelete={onDelete.bind(null, id)}
                   focus={!comment.content.length}
                   disabled={disabled}
-                  onClose={onClose}
                 />
               );
             })}
