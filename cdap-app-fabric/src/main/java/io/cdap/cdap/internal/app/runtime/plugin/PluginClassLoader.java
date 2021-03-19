@@ -53,6 +53,7 @@ import java.util.jar.Manifest;
 public class PluginClassLoader extends DirectoryClassLoader {
 
   private final ArtifactId artifactId;
+  private final String topLevelJar;
   private final Set<String> exportPackages;
 
   static ClassLoader createParent(ClassLoader templateClassLoader) {
@@ -77,9 +78,10 @@ public class PluginClassLoader extends DirectoryClassLoader {
     return new CombineClassLoader(programClassLoader.getParent(), filteredTemplateClassLoader);
   }
 
-  PluginClassLoader(ArtifactId artifactId, File directory, ClassLoader parent) {
-    super(directory, parent, "lib");
+  PluginClassLoader(ArtifactId artifactId, File directory, String topLevelJar, ClassLoader parent) {
+    super(directory, topLevelJar, parent, "lib");
     this.artifactId = artifactId;
+    this.topLevelJar = topLevelJar;
     this.exportPackages = ManifestFields.getExportPackages(getManifest());
   }
 
@@ -96,5 +98,13 @@ public class PluginClassLoader extends DirectoryClassLoader {
    */
   public ClassLoader getExportPackagesClassLoader() {
     return new PackageFilterClassLoader(this, exportPackages::contains);
+  }
+
+  /**
+   *
+   * @return a file name of top level plugin jar. Main plugin class should reside in this jar.
+   */
+  public String getTopLevelJar() {
+    return topLevelJar;
   }
 }

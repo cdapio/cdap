@@ -17,12 +17,7 @@
 package io.cdap.cdap.internal.app.runtime.artifact;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
 import com.google.common.base.Throwables;
-import com.google.common.collect.AbstractIterator;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.primitives.Primitives;
 import com.google.common.reflect.TypeToken;
@@ -50,6 +45,7 @@ import io.cdap.cdap.common.id.Id;
 import io.cdap.cdap.common.io.Locations;
 import io.cdap.cdap.common.lang.jar.BundleJarUtil;
 import io.cdap.cdap.common.utils.DirUtils;
+import io.cdap.cdap.internal.app.runtime.plugin.PluginClassLoader;
 import io.cdap.cdap.internal.app.runtime.plugin.PluginInstantiator;
 import io.cdap.cdap.internal.io.ReflectionSchemaGenerator;
 import org.apache.twill.filesystem.Location;
@@ -68,22 +64,21 @@ import java.io.InputStream;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import javax.annotation.Nullable;
 
@@ -226,7 +221,7 @@ final class ArtifactInspector {
                                                  ArtifactId artifactId, PluginInstantiator pluginInstantiator,
                                                  Set<PluginClass> additionalPlugins)
     throws IOException, InvalidArtifactException {
-    ClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
+    PluginClassLoader pluginClassLoader = pluginInstantiator.getArtifactClassLoader(artifactId);
     inspectAdditionalPlugins(artifactId, additionalPlugins, pluginClassLoader);
 
     // See if there are export packages. Plugins should be in those packages
@@ -293,74 +288,49 @@ final class ArtifactInspector {
    * Returns an {@link Iterable} of class name that are under the given list of package names that are loadable
    * through the plugin ClassLoader.
    */
-  private Iterable<Class<?>> getPluginClasses(final Iterable<String> packages, final ClassLoader pluginClassLoader) {
-    return new Iterable<Class<?>>() {
-      @Override
-      public Iterator<Class<?>> iterator() {
-        final Iterator<String> packageIterator = packages.iterator();
-
-        return new AbstractIterator<Class<?>>() {
-          Iterator<String> classIterator = ImmutableList.<String>of().iterator();
-          String currentPackage;
-
-          @Override
-          protected Class<?> computeNext() {
-            while (!classIterator.hasNext()) {
-              if (!packageIterator.hasNext()) {
-                return endOfData();
-              }
-              currentPackage = packageIterator.next();
-
-              try {
-                // Gets all package resource URL for the given package
-                String resourceName = currentPackage.replace('.', File.separatorChar);
-                Enumeration<URL> resources = pluginClassLoader.getResources(resourceName);
-                List<Iterator<String>> iterators = new ArrayList<>();
-                // Go though all available resources and collect all class names that are plugin classes.
-                while (resources.hasMoreElements()) {
-                  URL packageResource = resources.nextElement();
-
-                  // Only inspect classes in the top level jar file for Plugins.
-                  // The jar manifest may have packages in Export-Package that are loadable from the bundled jar files,
-                  // which is for classloading purpose. Those classes won't be inspected for plugin classes.
-                  // There should be exactly one of resource that match, because it maps to a directory on the FS.
-                  if (packageResource.getProtocol().equals("file")) {
-                    Iterator<String> classFiles = DirUtils.list(new File(packageResource.toURI()), "class").iterator();
-
-                    // Transform class file into class name and filter by @Plugin class only
-                    iterators.add(Iterators.filter(
-                      Iterators.transform(classFiles, new Function<String, String>() {
-                        @Override
-                        public String apply(String input) {
-                          return getClassName(currentPackage, input);
-                        }
-                      }), new Predicate<String>() {
-                        @Override
-                        public boolean apply(String className) {
-                          return isPlugin(className, pluginClassLoader);
-                        }
-                      }));
-                  }
-                }
-                if (!iterators.isEmpty()) {
-                  classIterator = Iterators.concat(iterators.iterator());
-                }
-              } catch (Exception e) {
-                // Cannot happen
-                throw Throwables.propagate(e);
-              }
-            }
-
-            try {
-              return pluginClassLoader.loadClass(classIterator.next());
-            } catch (ClassNotFoundException | NoClassDefFoundError e) {
-              // Cannot happen, since the class name is from the list of the class files under the classloader.
-              throw Throwables.propagate(e);
-            }
+  private Iterable<Class<?>> getPluginClasses(Collection<String> packages,
+                                              PluginClassLoader pluginClassLoader) {
+    Predicate<String> nameCheckPredicate = getClassNameCheckPredicate(packages);
+    try (JarFile jarFile = new JarFile(pluginClassLoader.getTopLevelJar())) {
+      return jarFile
+        .stream()
+        .filter(entry -> !entry.isDirectory())
+        .map(ZipEntry::getName)
+        .filter(nameCheckPredicate)
+        .map(fileName -> fileName
+          //nameCheckPredicate ensures filename ends with .class
+          .substring(0, fileName.length() - ".class".length())
+          .replace('/', '.'))
+        .filter(className -> isPlugin(className, pluginClassLoader))
+        .map(className -> {
+          try {
+            return pluginClassLoader.loadClass(className);
+          } catch (ClassNotFoundException | NoClassDefFoundError e) {
+            // Cannot happen, since the class name is from the list of the class files under the classloader.
+            throw Throwables.propagate(e);
           }
-        };
-      }
-    };
+        })
+        .collect(Collectors.toList());
+    } catch (IOException e) {
+      // Cannot happen
+      throw Throwables.propagate(e);
+    }
+  }
+
+  /**
+   * Given list of packages produces a predicate that can check if a given jar file name is a class within
+   * one of the packages (but not subpackages).
+   * @param packages list to packages class must belong to
+   * @return a predicate that would tell if class file belong to one of package names
+   */
+  @VisibleForTesting
+  static Predicate<String> getClassNameCheckPredicate(Collection<String> packages) {
+    return Pattern.compile(
+      packages
+        .stream()
+        .map(p -> Pattern.quote(p.replace('.', '/')) + "/[^/]+[.]class")
+        .collect(Collectors.joining("|", "^(?:", ")$"))
+    ).asPredicate();
   }
 
   /**

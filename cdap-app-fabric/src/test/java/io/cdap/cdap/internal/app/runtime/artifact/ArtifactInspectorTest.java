@@ -188,6 +188,31 @@ public class ArtifactInspectorTest {
     }
   }
 
+  @Test
+  public void testGetClassNameCheckPredicate() {
+    Assert.assertTrue(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "my.package"
+    )).test("my/package/my.class"));
+    Assert.assertTrue(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "blah", "my.package", "blah2"
+    )).test("my/package/my.class"));
+    Assert.assertTrue(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "my.package", "my.package.subpackage"
+    )).test("my/package/subpackage/my.class"));
+    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "my.package"
+    )).test("my/package/subpackage/my.class"));
+    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "my.package"
+    )).test("prefix/my/package/my.class"));
+    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "my.package"
+    )).test("prefix/my/package/my.notclass"));
+    Assert.assertFalse(ArtifactInspector.getClassNameCheckPredicate(ImmutableList.of(
+      "my.package"
+    )).test("prefix/my/package/my.class/some.class"));
+  }
+
   private File getAppFile() throws IOException {
     Manifest manifest = new Manifest();
     manifest.getMainAttributes().put(ManifestFields.EXPORT_PACKAGE, InspectionApp.class.getPackage().getName());

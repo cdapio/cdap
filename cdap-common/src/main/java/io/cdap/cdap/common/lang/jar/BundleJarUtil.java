@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.EnumSet;
+import java.util.function.Predicate;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarInputStream;
@@ -176,8 +177,22 @@ public class BundleJarUtil {
    * @throws IOException If failed to expand the jar
    */
   public static File unJar(Location jarLocation, File destinationFolder) throws IOException {
+    return unJar(jarLocation, destinationFolder, name -> true);
+  }
+
+  /**
+   * Unpack a jar file in the given location to a directory.
+   *
+   * @param jarLocation Location containing the jar file
+   * @param destinationFolder Directory to expand into
+   * @param nameFilter Predicate to select files to unpack
+   * @return The {@code destinationFolder}
+   * @throws IOException If failed to expand the jar
+   */
+  public static File unJar(Location jarLocation, File destinationFolder, Predicate<String> nameFilter)
+    throws IOException {
     try (ZipInputStream zipIn = new ZipInputStream(new BufferedInputStream(jarLocation.getInputStream()))) {
-      unJar(zipIn, destinationFolder);
+      unJar(zipIn, destinationFolder, nameFilter);
     }
     return destinationFolder;
   }
@@ -225,18 +240,25 @@ public class BundleJarUtil {
   }
 
   private static void unJar(ZipInputStream input, File targetDirectory) throws IOException {
+    unJar(input, targetDirectory, name -> true);
+  }
+
+  private static void unJar(ZipInputStream input, File targetDirectory, Predicate<String> nameFilter)
+    throws IOException {
     Path targetPath = targetDirectory.toPath();
     Files.createDirectories(targetPath);
 
     ZipEntry entry;
     while ((entry = input.getNextEntry()) != null) {
-      Path output = targetPath.resolve(entry.getName());
+      if (nameFilter.test(entry.getName())) {
+        Path output = targetPath.resolve(entry.getName());
 
-      if (entry.isDirectory()) {
-        Files.createDirectories(output);
-      } else {
-        Files.createDirectories(output.getParent());
-        Files.copy(input, output);
+        if (entry.isDirectory()) {
+          Files.createDirectories(output);
+        } else {
+          Files.createDirectories(output.getParent());
+          Files.copy(input, output);
+        }
       }
     }
   }
