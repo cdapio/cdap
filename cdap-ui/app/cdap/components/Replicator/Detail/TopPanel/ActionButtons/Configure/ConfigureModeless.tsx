@@ -26,6 +26,7 @@ import mapKeys from 'lodash/mapKeys';
 import Button from '@material-ui/core/Button';
 import WidgetWrapper from 'components/ConfigurationGroup/WidgetWrapper';
 import isEqual from 'lodash/isEqual';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 
 const modelessWidth = '600px';
 const buttonWidth = '70px';
@@ -222,37 +223,39 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
   }
 
   return (
-    <div className={classes.root}>
-      <div className={classes.header}>
-        <Heading type={HeadingTypes.h4} label="Configure" />
-      </div>
-
-      <div className={classes.body}>
-        <Heading type={HeadingTypes.h5} label="Memory" />
-        <div className={classes.taskMemory}>
-          <TaskMemoryEditor value={taskMemory} onChange={setTaskMemory} />
+    <ClickAwayListener onClickAway={onToggle}>
+      <div className={classes.root}>
+        <div className={classes.header}>
+          <Heading type={HeadingTypes.h4} label="Configure" />
         </div>
 
-        <Heading type={HeadingTypes.h5} label="Compute profile" />
-        <div className={classes.content}>
-          <ProfilesListViewInPipeline
-            appName={name}
-            onProfileSelect={handleProfileSelect}
-            selectedProfile={activeProfile}
-            tableTitle="Select the compute profile you want to use to run this replication job"
-          />
+        <div className={classes.body}>
+          <Heading type={HeadingTypes.h5} label="Memory" />
+          <div className={classes.taskMemory}>
+            <TaskMemoryEditor value={taskMemory} onChange={setTaskMemory} />
+          </div>
+
+          <Heading type={HeadingTypes.h5} label="Compute profile" />
+          <div className={classes.content}>
+            <ProfilesListViewInPipeline
+              appName={name}
+              onProfileSelect={handleProfileSelect}
+              selectedProfile={activeProfile}
+              tableTitle="Select the compute profile you want to use to run this replication job"
+            />
+          </div>
+        </div>
+
+        <div className={classes.footer}>
+          <Button variant="contained" color="primary" onClick={handleSave} disabled={loading}>
+            Save
+          </Button>
+          <Button color="primary" onClick={onToggle}>
+            Cancel
+          </Button>
         </div>
       </div>
-
-      <div className={classes.footer}>
-        <Button variant="contained" color="primary" onClick={handleSave} disabled={loading}>
-          Save
-        </Button>
-        <Button color="primary" onClick={onToggle}>
-          Cancel
-        </Button>
-      </div>
-    </div>
+    </ClickAwayListener>
   );
 };
 

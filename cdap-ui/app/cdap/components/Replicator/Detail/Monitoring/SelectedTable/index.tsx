@@ -19,7 +19,7 @@ import withStyles, { WithStyles, StyleRules } from '@material-ui/core/styles/wit
 import { DetailContext } from 'components/Replicator/Detail';
 import Heading, { HeadingTypes } from 'components/Heading';
 import If from 'components/If';
-import { objectQuery } from 'services/helpers';
+import { getTableDisplayName } from 'components/Replicator/utilities';
 
 const styles = (theme): StyleRules => {
   return {
@@ -54,7 +54,7 @@ const SelectedTableView: React.FC<WithStyles<typeof styles>> = ({ classes }) => 
     setActiveTable(null);
   }
 
-  const activeTableDisplayName = objectQuery(activeTable, 'table');
+  const activeTableDisplayName = getTableDisplayName(activeTable);
   const heading = activeTable ? `"${activeTableDisplayName}"` : 'All tables replicated';
 
   return (
