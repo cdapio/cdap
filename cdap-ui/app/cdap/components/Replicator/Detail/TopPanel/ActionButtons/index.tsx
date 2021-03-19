@@ -41,19 +41,20 @@ const styles = (theme): StyleRules => {
   };
 };
 
+export const START_DISABLED_STATUS = [
+  PROGRAM_STATUSES.RUNNING,
+  PROGRAM_STATUSES.STOPPING,
+  PROGRAM_STATUSES.STARTING,
+  PROGRAM_STATUSES.PENDING,
+];
+
 const ActionButtonsView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
   classes,
   start,
   stop,
   status,
 }) => {
-  const startDisabled =
-    [
-      PROGRAM_STATUSES.RUNNING,
-      PROGRAM_STATUSES.STOPPING,
-      PROGRAM_STATUSES.STARTING,
-      PROGRAM_STATUSES.PENDING,
-    ].indexOf(status) !== -1;
+  const startDisabled = START_DISABLED_STATUS.indexOf(status) !== -1;
 
   return (
     <div className={classes.root}>

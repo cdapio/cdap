@@ -22,6 +22,7 @@ import { PROGRAM_STATUSES } from 'services/global-constants';
 import IconSVG from 'components/IconSVG';
 import ConfigureModeless from 'components/Replicator/Detail/TopPanel/ActionButtons/Configure/ConfigureModeless';
 import If from 'components/If';
+import { START_DISABLED_STATUS } from 'components/Replicator/Detail/TopPanel/ActionButtons';
 
 const styles = (theme): StyleRules => {
   return {
@@ -47,13 +48,19 @@ const ConfigureView: React.FC<IDetailContext & WithStyles<typeof styles>> = ({
     setShowConfigure(!showConfigure);
   }
 
+  React.useEffect(() => {
+    if (START_DISABLED_STATUS.indexOf(status) !== -1) {
+      setShowConfigure(false);
+    }
+  }, [status]);
+
   return (
     <div className={classes.root}>
       <ActionButton
         icon={<IconSVG name="icon-sliders" className={classes.icon} />}
         text="Configure"
         onClick={toggleConfigure}
-        disabled={status === PROGRAM_STATUSES.RUNNING}
+        disabled={START_DISABLED_STATUS.indexOf(status) !== -1}
         classes={{
           root: classes.actionButtonRootOverride,
         }}
