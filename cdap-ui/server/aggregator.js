@@ -326,7 +326,10 @@ function onSocketData(message) {
         break;
       case 'request':
         r.startTs = Date.now();
-        if (r.headers && this.cdapConfig['security.authentication.mode'] === 'PROXY') {
+        if (this.cdapConfig['security.authentication.mode'] === 'PROXY') {
+          if (!r.headers) {
+            r.headers = {};
+          }
           r.headers.Authorization = this.connection.authToken;
           r.headers[this.cdapConfig['security.authentication.proxy.user.identity.header']] = this.connection.userid;
         }
