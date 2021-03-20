@@ -1,6 +1,6 @@
 // @ts-nocheck
 /*
- * Copyright © 2015-2020 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -295,7 +295,7 @@ function makeApp(authAddress, cdapConfig, uiSettings) {
 
     if (req.headers.authorization) {
       customHeaders = {
-        authorization: 'Bearer ' + req.headers.authorization,
+        authorization: req.headers.authorization,
       };
       if (cdapConfig['security.authentication.mode'] === 'PROXY') {
         const userIdProperty = cdapConfig['security.authentication.proxy.user.identity.header'];
