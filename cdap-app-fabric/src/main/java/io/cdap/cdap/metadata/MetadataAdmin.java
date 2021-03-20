@@ -49,7 +49,7 @@ public interface MetadataAdmin {
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
   void addProperties(MetadataEntity metadataEntity, Map<String, String> properties, MutationOptions options)
-    throws Exception;
+    throws InvalidMetadataException, IOException;
 
   /**
    * Adds the specified tags to specified {@link MetadataEntity}. This API only supports adding tags in
@@ -57,19 +57,20 @@ public interface MetadataAdmin {
    *
    * @throws InvalidMetadataException if some of the properties violate metadata validation rules
    */
-  void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws Exception;
+  void addTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options)
+    throws InvalidMetadataException, IOException;
 
   /**
    * Returns all metadata (including properties and tags) for the specified {@link MetadataEntity}
    * in both {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}.
    */
-  Metadata getMetadata(MetadataEntity metadataEntity) throws Exception;
+  Metadata getMetadata(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * Returns the metadata (including properties and tags) for the specified {@link MetadataEntity}
    * in the specified {@link MetadataScope}.
    */
-  Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws Exception;
+  Metadata getMetadata(MetadataEntity metadataEntity, MetadataScope scope) throws IOException;
 
   /**
    * Returns the metadata of specified kind (properties or tags) for the specified {@link MetadataEntity}
@@ -79,30 +80,30 @@ public interface MetadataAdmin {
    * @param kind the kind of metadata to select, or null for all metadata
    */
   Metadata getMetadata(MetadataEntity entity, @Nullable MetadataScope scope, @Nullable MetadataKind kind)
-    throws Exception;
+    throws IOException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in both
    * {@link MetadataScope#USER} and {@link MetadataScope#SYSTEM}
    */
-  Map<String, String> getProperties(MetadataEntity metadataEntity) throws Exception;
+  Map<String, String> getProperties(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return a {@link Map} representing the metadata of the specified {@link MetadataEntity} in the specified
    * {@link MetadataScope}
    */
-  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws Exception;
+  Map<String, String> getProperties(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return all the tags for the specified {@link MetadataEntity} in both {@link MetadataScope#USER} and
    * {@link MetadataScope#SYSTEM}
    */
-  Set<String> getTags(MetadataEntity metadataEntity) throws Exception;
+  Set<String> getTags(MetadataEntity metadataEntity) throws IOException;
 
   /**
    * @return all the tags for the specified {@link MetadataEntity} in the specified {@link MetadataScope}
    */
-  Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws Exception;
+  Set<String> getTags(MetadataScope scope, MetadataEntity metadataEntity) throws IOException;
 
   /**
    * Removes all the metadata (including properties and tags) for the specified {@link MetadataEntity}. This
@@ -110,7 +111,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove metadata for
    */
-  void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws Exception;
+  void removeMetadata(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
    * Removes all properties from the metadata of the specified {@link MetadataEntity}. This API only supports
@@ -118,7 +119,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove properties for
    */
-  void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws Exception;
+  void removeProperties(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
    * Removes the specified keys from the metadata properties of the specified {@link MetadataEntity}. This API only
@@ -127,7 +128,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified properties for
    * @param keys the metadata property keys to remove
    */
-  void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options) throws Exception;
+  void removeProperties(MetadataEntity metadataEntity, Set<String> keys, MutationOptions options) throws IOException;
 
   /**
    * Removes all tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -135,7 +136,7 @@ public interface MetadataAdmin {
    *
    * @param metadataEntity the {@link MetadataEntity} to remove tags for
    */
-  void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws Exception;
+  void removeTags(MetadataEntity metadataEntity, MutationOptions options) throws IOException;
 
   /**
    * Removes the specified tags from the specified {@link MetadataEntity}. This API only supports removing tags in
@@ -144,7 +145,7 @@ public interface MetadataAdmin {
    * @param metadataEntity the {@link MetadataEntity} to remove the specified tags for
    * @param tags the tags to remove
    */
-  void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws Exception;
+  void removeTags(MetadataEntity metadataEntity, Set<String> tags, MutationOptions options) throws IOException;
 
   /**
    * Applies a metadata mutation directly.
