@@ -20,7 +20,7 @@ import fs from 'fs';
 import log4js from 'log4js';
 import { REQUEST_ORIGIN_ROUTER, REQUEST_ORIGIN_MARKET, constructUrl, deconstructUrl, isVerifiedMarketHost} from 'server/url-helper';
 import * as sessionToken from 'server/token';
-
+import { stripAuthHeadersInProxyMode } from 'server/express';
 const log = log4js.getLogger('default');
 /**
  * Aggregator
@@ -40,6 +40,8 @@ function Aggregator(conn, cdapConfig) {
   this.initializeEventListeners();
   this.isSessionValid = false;
 }
+
+Aggregator.prototype.stripAuthHeaderInProxyMode = stripAuthHeadersInProxyMode;
 
 Aggregator.prototype.initializeEventListeners = function() {
   /**
@@ -149,7 +151,7 @@ Aggregator.prototype.pushConfiguration = function(resource) {
 
   this.connection.write(
     JSON.stringify({
-      resource: resource,
+      resource: this.stripAuthHeaderInProxyMode(this.cdapConfig, resource),
       statusCode: statusCode,
       response: config,
     })
@@ -243,14 +245,10 @@ function emitResponse(resource, error, response, body) {
     let newResource = Object.assign({}, resource, {
       url: deconstructUrl(this.cdapConfig, resource.url, resource.requestOrigin),
     });
-    if (authMode === 'PROXY') {
-      delete newResource.headers.Authorization;
-      delete newResource.headers[this.cdapConfig['security.authentication.proxy.user.identity.header']];
-    }
     this.connection.write(
       JSON.stringify(
         {
-          resource: newResource,
+          resource: this.stripAuthHeaderInProxyMode(this.cdapConfig, newResource),
           error: error,
           warning: error.toString(),
           statusCode: getResponseCode(response),
@@ -279,7 +277,7 @@ function emitResponse(resource, error, response, body) {
     this.connection.write(
       JSON.stringify(
         {
-          resource: newResource,
+          resource: this.stripAuthHeaderInProxyMode(this.cdapConfig, newResource),
           statusCode: getResponseCode(response),
           response: body,
         },
@@ -326,7 +324,7 @@ function onSocketData(message) {
         break;
       case 'request':
         r.startTs = Date.now();
-        if (this.cdapConfig['security.authentication.mode'] === 'PROXY') {
+        if (r.requestOrigin === REQUEST_ORIGIN_ROUTER && this.cdapConfig['security.authentication.mode'] === 'PROXY') {
           if (!r.headers) {
             r.headers = {};
           }
