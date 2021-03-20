@@ -171,6 +171,7 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
     const memoryIsEqual = taskMemory === initialMemory;
 
     if (profileIsEqual && memoryIsEqual) {
+      onToggle();
       return;
     }
 
@@ -182,13 +183,7 @@ const ConfigureModelessView: React.FC<IConfigureModelessProps> = ({ classes, nam
     };
 
     MyPreferenceApi.getAppPreferences(params).subscribe((appPreferences) => {
-      const existingPreferences = pickBy(appPreferences, (value, key) => {
-        return key !== PROFILE_NAME && !key.startsWith(PROPERTIES_PREFIX);
-      });
-
-      let preferences = {
-        ...existingPreferences,
-      };
+      let preferences = appPreferences;
 
       if (!profileIsEqual) {
         const customProperties = mapKeys(activeProfile.profileCustomizations, (value, key) => {
