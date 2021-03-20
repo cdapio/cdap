@@ -27,7 +27,12 @@ import io.cdap.cdap.internal.app.store.RunRecordDetail;
 import io.cdap.cdap.logging.context.LoggingContextHelper;
 import io.cdap.cdap.logging.read.LogReader;
 import io.cdap.cdap.proto.ProgramType;
+import io.cdap.cdap.proto.id.ApplicationId;
+import io.cdap.cdap.proto.id.ProgramId;
 import io.cdap.cdap.proto.id.ProgramRunId;
+import io.cdap.cdap.security.authorization.AuthorizationUtil;
+import io.cdap.cdap.security.spi.authentication.AuthenticationContext;
+import io.cdap.cdap.security.spi.authorization.AuthorizationEnforcer;
 import io.cdap.http.HttpHandler;
 import io.cdap.http.HttpResponder;
 import io.netty.handler.codec.http.HttpRequest;
@@ -47,14 +52,20 @@ import javax.ws.rs.QueryParam;
 @Path(Constants.Gateway.API_VERSION_3)
 public class LogHttpHandler extends AbstractLogHttpHandler {
 
+  private final AuthorizationEnforcer authorizationEnforcer;
+  private final AuthenticationContext authenticationContext;
   private final LogReader logReader;
   private final ProgramRunRecordFetcher programRunRecordFetcher;
 
   @Inject
-  public LogHttpHandler(LogReader logReader,
+  public LogHttpHandler(AuthorizationEnforcer authorizationEnforcer,
+                        AuthenticationContext authenticationContext,
+                        LogReader logReader,
                         ProgramRunRecordFetcher programRunFetcher,
                         CConfiguration cConf) {
     super(cConf);
+    this.authorizationEnforcer = authorizationEnforcer;
+    this.authenticationContext = authenticationContext;
     this.logReader = logReader;
     this.programRunRecordFetcher = programRunFetcher;
   }
@@ -69,7 +80,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) {
+                      @QueryParam("suppress") List<String> suppress) throws Exception {
+    ensureAccessOnProgram(namespaceId, appId, programType, programId);
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
@@ -87,7 +99,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                            @QueryParam("escape") @DefaultValue("true") boolean escape,
                            @QueryParam("filter") @DefaultValue("") String filterStr,
                            @QueryParam("format") @DefaultValue("text") String format,
-                           @QueryParam("suppress") List<String> suppress) throws NotFoundException, IOException {
+                           @QueryParam("suppress") List<String> suppress) throws Exception {
+    ensureAccessOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
     RunRecordDetail runRecord = getRunRecordMeta(programRunId);
@@ -107,7 +120,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr,
                    @QueryParam("format") @DefaultValue("text") String format,
-                   @QueryParam("suppress") List<String> suppress) {
+                   @QueryParam("suppress") List<String> suppress) throws Exception {
+    ensureAccessOnProgram(namespaceId, appId, programType, programId);
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId,
                                              programId, ProgramType.valueOfCategoryName(programType));
@@ -124,7 +138,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
                         @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) throws NotFoundException, IOException {
+                        @QueryParam("suppress") List<String> suppress) throws Exception {
+    ensureAccessOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
     RunRecordDetail runRecord = getRunRecordMeta(programRunId);
@@ -144,7 +159,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                    @QueryParam("escape") @DefaultValue("true") boolean escape,
                    @QueryParam("filter") @DefaultValue("") String filterStr,
                    @QueryParam("format") @DefaultValue("text") String format,
-                   @QueryParam("suppress") List<String> suppress) {
+                   @QueryParam("suppress") List<String> suppress) throws Exception {
+    ensureAccessOnProgram(namespaceId, appId, programType, programId);
     LoggingContext loggingContext =
       LoggingContextHelper.getLoggingContext(namespaceId, appId, programId,
                                              ProgramType.valueOfCategoryName(programType));
@@ -161,7 +177,8 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                         @QueryParam("escape") @DefaultValue("true") boolean escape,
                         @QueryParam("filter") @DefaultValue("") String filterStr,
                         @QueryParam("format") @DefaultValue("text") String format,
-                        @QueryParam("suppress") List<String> suppress) throws NotFoundException, IOException {
+                        @QueryParam("suppress") List<String> suppress) throws Exception {
+    ensureAccessOnProgram(namespaceId, appId, programType, programId);
     ProgramType type = ProgramType.valueOfCategoryName(programType);
     ProgramRunId programRunId = new ProgramRunId(namespaceId, appId, type, programId, runId);
     RunRecordDetail runRecord = getRunRecordMeta(programRunId);
@@ -181,7 +198,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) {
+                      @QueryParam("suppress") List<String> suppress) throws Exception {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
     doGetLogs(logReader, responder, loggingContext, fromTimeSecsParam,
@@ -196,7 +213,7 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
                       @QueryParam("escape") @DefaultValue("true") boolean escape,
                       @QueryParam("filter") @DefaultValue("") String filterStr,
                       @QueryParam("format") @DefaultValue("text") String format,
-                      @QueryParam("suppress") List<String> suppress) {
+                      @QueryParam("suppress") List<String> suppress) throws Exception {
     LoggingContext loggingContext = LoggingContextHelper.getLoggingContext(Id.Namespace.SYSTEM.getId(), componentId,
                                                                            serviceId);
     doNext(logReader, responder, loggingContext, maxEvents,
@@ -223,5 +240,12 @@ public class LogHttpHandler extends AbstractLogHttpHandler {
       throw new NotFoundException(programRunId);
     }
     return runRecordMeta;
+  }
+
+  private void ensureAccessOnProgram(String namespace, String application, String programType, String program)
+    throws Exception {
+    ApplicationId appId = new ApplicationId(namespace, application);
+    ProgramId programId = new ProgramId(appId, ProgramType.valueOfCategoryName(programType), program);
+    AuthorizationUtil.ensureAccess(programId, authorizationEnforcer, authenticationContext.getPrincipal());
   }
 }
