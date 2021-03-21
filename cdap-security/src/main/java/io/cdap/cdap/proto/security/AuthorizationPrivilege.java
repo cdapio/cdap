@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -18,20 +18,24 @@ package io.cdap.cdap.proto.security;
 
 import io.cdap.cdap.proto.id.EntityId;
 
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 /**
  * Key for caching Privileges on containers. This represents a specific privilege on which authorization can be
  * enforced. The cache stores whether the enforce succeeded or failed.
+ *
+ * Action may be empty in the case of isVisible checks for single entities.
  */
 public class AuthorizationPrivilege {
   private final EntityId entityId;
-  private final Action action;
+  private final Set<Action> actions;
   private final Principal principal;
 
-  public AuthorizationPrivilege(Principal principal, EntityId entityId, Action action) {
+  public AuthorizationPrivilege(Principal principal, EntityId entityId, Set<Action> actions) {
     this.entityId = entityId;
-    this.action = action;
+    this.actions = Collections.unmodifiableSet(actions);
     this.principal = principal;
   }
 
@@ -43,8 +47,8 @@ public class AuthorizationPrivilege {
     return entityId;
   }
 
-  public Action getAction() {
-    return action;
+  public Set<Action> getActions() {
+    return actions;
   }
 
   @Override
@@ -56,20 +60,20 @@ public class AuthorizationPrivilege {
       return false;
     }
     AuthorizationPrivilege that = (AuthorizationPrivilege) o;
-    return Objects.equals(entityId, that.entityId) && action == that.action &&
+    return Objects.equals(entityId, that.entityId) && actions.equals(that.actions) &&
       Objects.equals(principal, that.principal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(entityId, action, principal);
+    return Objects.hash(entityId, actions, principal);
   }
 
   @Override
   public String toString() {
     return "AuthorizationPrivilege{" +
       "entityId=" + entityId +
-      ", action=" + action +
+      ", action=" + actions +
       ", principal=" + principal +
       '}';
   }

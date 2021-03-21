@@ -132,11 +132,14 @@ public final class AuthorizationUtil {
   /**
    * Checks if one entity is visible to the principal
    *
+   * DEPRECATED: Please use the {@link AuthorizationEnforcer#isVisible(EntityId, Principal)} method directly.
+   *
    * @param entityId entity id to be checked
    * @param authorizationEnforcer enforcer to make the authorization check
    * @param principal the principal to be checked
    * @throws UnauthorizedException if the principal does not have any privilege in the action set on the entity
    */
+  @Deprecated
   public static void ensureAccess(EntityId entityId, AuthorizationEnforcer authorizationEnforcer,
                                   Principal principal) throws Exception {
     authorizationEnforcer.isVisible(entityId, principal);
