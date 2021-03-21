@@ -324,7 +324,7 @@ function onSocketData(message) {
         break;
       case 'request':
         r.startTs = Date.now();
-        if (r.requestOrigin === REQUEST_ORIGIN_ROUTER && this.cdapConfig['security.authentication.mode'] === 'PROXY') {
+        if ((!r.requestOrigin || r.requestOrigin === REQUEST_ORIGIN_ROUTER) && this.cdapConfig['security.authentication.mode'] === 'PROXY') {
           if (!r.headers) {
             r.headers = {};
           }
