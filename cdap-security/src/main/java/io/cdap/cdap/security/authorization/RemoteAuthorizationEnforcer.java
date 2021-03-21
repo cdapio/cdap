@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017-2018 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -44,6 +44,7 @@ import io.cdap.cdap.proto.security.VisibilityRequest;
 import io.cdap.cdap.security.spi.authorization.UnauthorizedException;
 import io.cdap.common.http.HttpMethod;
 import io.cdap.common.http.HttpRequest;
+import io.cdap.common.http.HttpResponse;
 import org.apache.twill.discovery.DiscoveryServiceClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +58,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nullable;
 import javax.annotation.ParametersAreNonnullByDefault;
 
 /**
@@ -91,7 +93,33 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
   private final RemoteClient remoteClient;
   private final boolean cacheEnabled;
 
-  private final LoadingCache<AuthorizationPrivilege, Boolean> authPolicyCache;
+  private class EnforcementResponse {
+    private boolean success;
+    private Exception exception;
+
+    EnforcementResponse(boolean success, @Nullable Exception exception) {
+      this.success = success;
+      this.exception = exception;
+    }
+
+    /**
+     * Returns whether the enforcement was successful or not.
+     * @return Whether authorization succeeded
+     */
+    public boolean isSuccess() {
+      return success;
+    }
+
+    /**
+     * If the response failed due to some non-authorization reason, this will return the exception.
+     * @return The failure exception
+     */
+    public Exception getException() {
+      return exception;
+    }
+  }
+  private final LoadingCache<AuthorizationPrivilege, EnforcementResponse> authPolicyCache;
+  private final LoadingCache<AuthorizationPrivilege, EnforcementResponse> singleVisibilityCache;
   private final LoadingCache<VisibilityKey, Boolean> visibilityCache;
 
   @Inject
@@ -104,16 +132,28 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     // Cache can be disabled by setting the number of entries to <= 0
     this.cacheEnabled = cacheMaxEntries > 0;
 
-    int perCacheSize = cacheMaxEntries / 2 + 1;
+    int perCacheSize = cacheMaxEntries / 3 + 1;
     authPolicyCache = CacheBuilder.newBuilder()
       .expireAfterWrite(cacheTTLSecs, TimeUnit.SECONDS)
       .maximumSize(perCacheSize)
-      .build(new CacheLoader<AuthorizationPrivilege, Boolean>() {
+      .build(new CacheLoader<AuthorizationPrivilege, EnforcementResponse>() {
         @Override
         @ParametersAreNonnullByDefault
-        public Boolean load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
+        public EnforcementResponse load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
           LOG.trace("Cache miss for {}", authorizationPrivilege);
           return doEnforce(authorizationPrivilege);
+        }
+      });
+
+    singleVisibilityCache = CacheBuilder.newBuilder()
+      .expireAfterWrite(cacheTTLSecs, TimeUnit.SECONDS)
+      .maximumSize(perCacheSize)
+      .build(new CacheLoader<AuthorizationPrivilege, EnforcementResponse>() {
+        @Override
+        @ParametersAreNonnullByDefault
+        public EnforcementResponse load(AuthorizationPrivilege authorizationPrivilege) throws Exception {
+          LOG.trace("Cache miss for {}", authorizationPrivilege);
+          return doIsVisibleSingleEntity(authorizationPrivilege);
         }
       });
 
@@ -138,14 +178,35 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
 
   @Override
   public void enforce(EntityId entity, Principal principal, Action action) throws Exception {
+    enforce(entity, principal, Collections.singleton(action));
+  }
+
+  @Override
+  public void enforce(EntityId entity, Principal principal, Set<Action> actions) throws Exception {
     if (!isSecurityAuthorizationEnabled()) {
       return;
     }
-    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, action);
+    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity, actions);
 
-    boolean allowed = cacheEnabled ? authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
-    if (!allowed) {
-      throw new UnauthorizedException(principal, action, entity);
+    EnforcementResponse res = cacheEnabled ?
+      authPolicyCache.get(authorizationPrivilege) : doEnforce(authorizationPrivilege);
+    if (!res.isSuccess()) {
+      throw res.getException();
+    }
+  }
+
+  @Override
+  public void isVisible(EntityId entity, Principal principal) throws Exception {
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+    AuthorizationPrivilege authorizationPrivilege = new AuthorizationPrivilege(principal, entity,
+                                                                               Collections.emptySet());
+
+    EnforcementResponse res = cacheEnabled ?
+      singleVisibilityCache.get(authorizationPrivilege) : doIsVisibleSingleEntity(authorizationPrivilege);
+    if (!res.isSuccess()) {
+      throw res.getException();
     }
   }
 
@@ -172,14 +233,38 @@ public class RemoteAuthorizationEnforcer extends AbstractAuthorizationEnforcer {
     visibilityCache.invalidateAll();
   }
 
-  private boolean doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
+  private EnforcementResponse doEnforce(AuthorizationPrivilege authorizationPrivilege) throws IOException {
     HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "enforce")
       .withBody(GSON.toJson(authorizationPrivilege))
       .build();
     try {
-      return HttpURLConnection.HTTP_OK == remoteClient.execute(request).getResponseCode();
+      HttpResponse response = remoteClient.execute(request);
+      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        return new EnforcementResponse(true, null);
+      }
+      return new EnforcementResponse(false, new IOException(String.format("Failed to enforce with code %d: %s",
+                                                                   response.getResponseCode(),
+                                                                   response.getResponseBodyAsString())));
     } catch (UnauthorizedException e) {
-      return false;
+      return new EnforcementResponse(false, e);
+    }
+  }
+
+  private EnforcementResponse doIsVisibleSingleEntity(AuthorizationPrivilege authorizationPrivilege)
+    throws IOException {
+    HttpRequest request = remoteClient.requestBuilder(HttpMethod.POST, "isSingleVisible")
+      .withBody(GSON.toJson(authorizationPrivilege))
+      .build();
+    try {
+      HttpResponse response = remoteClient.execute(request);
+      if (response.getResponseCode() == HttpURLConnection.HTTP_OK) {
+        return new EnforcementResponse(true, null);
+      }
+      return new EnforcementResponse(false, new IOException(String.format("Failed to enforce with code %d: %s",
+                                                                   response.getResponseCode(),
+                                                                   response.getResponseBodyAsString())));
+    } catch (UnauthorizedException e) {
+      return new EnforcementResponse(false, e);
     }
   }
 

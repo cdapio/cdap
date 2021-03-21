@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
 <!--
-  Copyright © 2014-2019 Cask Data, Inc.
+  Copyright © 2014-2021 Cask Data, Inc.
 
   Licensed under the Apache License, Version 2.0 (the "License"); you may not
   use this file except in compliance with the License. You may obtain a copy of
@@ -3859,7 +3859,7 @@
 
   <property>
     <name>security.authorization.cache.max.entries</name>
-    <value>100000</value>
+    <value>150000</value>
     <description>
       Number of entries to hold in the container authorization cache. If set to 0, no
       caching will be performed.

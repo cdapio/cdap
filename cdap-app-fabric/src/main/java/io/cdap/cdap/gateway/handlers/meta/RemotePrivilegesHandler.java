@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -72,7 +72,17 @@ public class RemotePrivilegesHandler extends AbstractRemoteSystemOpsHandler {
                                                                   AuthorizationPrivilege.class);
     LOG.debug("Enforcing for {}", authorizationPrivilege);
     authorizationEnforcer.enforce(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal(),
-                                  authorizationPrivilege.getAction());
+                                  authorizationPrivilege.getActions());
+    responder.sendStatus(HttpResponseStatus.OK);
+  }
+
+  @POST
+  @Path("/isSingleVisible")
+  public void isSingleVisible(FullHttpRequest request, HttpResponder responder) throws Exception {
+    AuthorizationPrivilege authorizationPrivilege = GSON.fromJson(request.content().toString(StandardCharsets.UTF_8),
+                                                                  AuthorizationPrivilege.class);
+    LOG.debug("Enforcing visibility for {}", authorizationPrivilege);
+    authorizationEnforcer.isVisible(authorizationPrivilege.getEntity(), authorizationPrivilege.getPrincipal());
     responder.sendStatus(HttpResponseStatus.OK);
   }
 

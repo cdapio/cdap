@@ -1,5 +1,5 @@
 /*
- * Copyright © 2016-2019 Cask Data, Inc.
+ * Copyright © 2016-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -197,6 +197,66 @@ public abstract class RemotePrivilegesTestBase {
 
     for (EntityId entityId : allEntities) {
       privilegesManager.revoke(Authorizable.fromEntityId(entityId));
+    }
+  }
+
+  @Test
+  public void testSingleVisibility() throws Exception {
+    ApplicationId app1 = NS.app("app1");
+    ProgramId program1 = app1.program(ProgramType.SERVICE, "service1");
+
+    ApplicationId app2 = NS.app("app2");
+    ProgramId program2 = app2.program(ProgramType.MAPREDUCE, "service2");
+
+    DatasetId ds = NS.dataset("ds");
+    DatasetId ds1 = NS.dataset("ds1");
+    DatasetId ds2 = NS.dataset("ds2");
+
+    // Grant privileges on non-numbered entities to ALICE
+    privilegesManager.grant(Authorizable.fromEntityId(PROGRAM), ALICE, Collections.singleton(Action.EXECUTE));
+    privilegesManager.grant(Authorizable.fromEntityId(ds), ALICE, EnumSet.of(Action.READ, Action.WRITE));
+
+    // Grant privileges on entities ending with 2 to BOB
+    privilegesManager.grant(Authorizable.fromEntityId(program2), BOB, Collections.singleton(Action.ADMIN));
+    privilegesManager.grant(Authorizable.fromEntityId(ds2), BOB, EnumSet.of(Action.READ, Action.WRITE));
+
+    Set<? extends EntityId> allEntities = ImmutableSet.of(NS,
+                                                          APP, PROGRAM, ds,
+                                                          app1, program1, ds1,
+                                                          app2, program2, ds2);
+
+    // Verify ALICE has the right permissions
+    authorizationEnforcer.isVisible(PROGRAM, ALICE);
+    authorizationEnforcer.isVisible(ds, ALICE);
+    shouldNotHaveVisibility(authorizationEnforcer, program2, ALICE);
+    shouldNotHaveVisibility(authorizationEnforcer, ds2, ALICE);
+
+    // Verify BOB has the right permissions
+    authorizationEnforcer.isVisible(program2, BOB);
+    authorizationEnforcer.isVisible(ds2, BOB);
+    shouldNotHaveVisibility(authorizationEnforcer, PROGRAM, BOB);
+    shouldNotHaveVisibility(authorizationEnforcer, ds, BOB);
+
+    // Verify CAROL has the right permissions
+    shouldNotHaveVisibility(authorizationEnforcer, PROGRAM, CAROL);
+    shouldNotHaveVisibility(authorizationEnforcer, ds, CAROL);
+    shouldNotHaveVisibility(authorizationEnforcer, program2, CAROL);
+    shouldNotHaveVisibility(authorizationEnforcer, ds2, CAROL);
+
+    for (EntityId entityId : allEntities) {
+      privilegesManager.revoke(Authorizable.fromEntityId(entityId));
+    }
+  }
+
+  // Throws an assertion failure exception if the visibility check succeeds.
+  protected void shouldNotHaveVisibility(AuthorizationEnforcer enforcer, EntityId entityId, Principal principal)
+    throws Exception {
+    try {
+      enforcer.isVisible(entityId, principal);
+      Assert.fail(String.format("Expected principal %s to not have visibility permissions for entity '%s'.", principal,
+                                entityId));
+    } catch (UnauthorizedException e) {
+      // This is expected.
     }
   }
 
