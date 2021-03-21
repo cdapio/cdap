@@ -181,6 +181,8 @@ export default class Datasource {
 
     if (resource.requestOrigin) {
       generatedResource.requestOrigin = resource.requestOrigin;
+    } else {
+      generatedResource.requestOrigin = REQUEST_ORIGIN_ROUTER;
     }
 
     let subject = new Subject();
@@ -239,6 +241,8 @@ export default class Datasource {
 
     if (resource.requestOrigin) {
       generatedResource.requestOrigin = resource.requestOrigin;
+    } else {
+      generatedResource.requestOrigin = REQUEST_ORIGIN_ROUTER;
     }
     let subject = new Subject();
 
