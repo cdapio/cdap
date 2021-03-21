@@ -1,5 +1,5 @@
 /*
- * Copyright © 2015-2018 Cask Data, Inc.
+ * Copyright © 2015-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -403,14 +403,14 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
   public NamespaceMeta get(NamespaceId namespaceId) throws Exception {
     Principal principal = authenticationContext.getPrincipal();
 
-    boolean isAuthorized = true;
+    UnauthorizedException lastUnauthorizedException = null;
     // if the principal is not same as cdap master principal do the authorization check. Otherwise, skip the auth check
     // See: CDAP-7387
     if (masterShortUserName == null || !masterShortUserName.equals(principal.getName())) {
       try {
         AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, principal);
       } catch (UnauthorizedException e) {
-        isAuthorized = false;
+        lastUnauthorizedException = e;
       }
     }
 
@@ -418,7 +418,7 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
     try {
       namespaceMeta = namespaceMetaCache.get(namespaceId);
     } catch (Exception e) {
-      if (isAuthorized) {
+      if (lastUnauthorizedException == null) {
         Throwable cause = e.getCause();
         if (cause instanceof NamespaceNotFoundException || cause instanceof IOException ||
           cause instanceof UnauthorizedException) {
@@ -433,10 +433,8 @@ public final class DefaultNamespaceAdmin implements NamespaceAdmin {
       return namespaceMeta;
     }
 
-    if (!isAuthorized) {
-      throw new UnauthorizedException(
-        String.format("Namespace %s is not visible to principal %s since the principal does not have any " +
-                        "privilege on this namespace or any entity in this namespace.", namespaceId, principal));
+    if (lastUnauthorizedException != null) {
+      throw lastUnauthorizedException;
     }
     return namespaceMeta;
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2017 Cask Data, Inc.
+ * Copyright © 2017-2021 Cask Data, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
  * use this file except in compliance with the License. You may obtain a copy of
@@ -64,5 +64,14 @@ public class RemotePrivilegesNoCacheTest extends RemotePrivilegesTestBase {
     // The super class revokes all privileges after test is done. Since cache is disabled, nothing should be visible.
     Assert.assertEquals(ImmutableSet.of(),
                         authorizationEnforcer.isVisible(ImmutableSet.of(NS, APP, PROGRAM), ALICE));
+  }
+
+  @Override
+  public void testSingleVisibility() throws Exception {
+    super.testSingleVisibility();
+
+    // The super class revokes all privileges after test is done. Since cache is disabled, nothing should be visible.
+    shouldNotHaveVisibility(authorizationEnforcer, PROGRAM, ALICE);
+    shouldNotHaveVisibility(authorizationEnforcer, PROGRAM, BOB);
   }
 }
