@@ -243,6 +243,12 @@ var socketDataSource = angular.module(PKG.name+'.services');
             resource.url = `/${apiVersion}${resource.url}`;
           }
 
+          if (resource.requestOrigin) {
+            generatedResource.requestOrigin = resource.requestOrigin;
+          } else {
+            generatedResource.requestOrigin = REQUEST_ORIGIN_ROUTER;
+          }
+
           generatedResource.url = buildUrl(resource.url, resource.params || {});
           self.bindings[generatedResource.id] = {
             poll: true,
@@ -360,6 +366,11 @@ var socketDataSource = angular.module(PKG.name+'.services');
           let apiVersion = resource.apiVersion || CDAP_API_VERSION;
           if (!resource.requestOrigin || resource.requestOrigin === REQUEST_ORIGIN_ROUTER) {
             resource.url = `/${apiVersion}${resource.url}`;
+          }
+          if (resource.requestOrigin) {
+            generatedResource.requestOrigin = resource.requestOrigin;
+          } else {
+            generatedResource.requestOrigin = REQUEST_ORIGIN_ROUTER;
           }
           generatedResource.url = buildUrl(resource.url, resource.params || {});
           generatedResource.id = uuid.v4();
