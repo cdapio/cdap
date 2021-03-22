@@ -65,6 +65,7 @@ function EnabledTriggersView({ enabledTriggers, pipelineName }) {
                 loading: state.enabledTriggers.loading,
                 info: state.enabledTriggers.pipelineInfo,
                 pipelineName,
+                disableError: state.enabledTriggers.disableError,
               };
             };
 
