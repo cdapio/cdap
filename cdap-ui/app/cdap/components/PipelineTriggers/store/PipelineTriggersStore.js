@@ -30,11 +30,14 @@ const defaultInitialState = {
   pipelineType: '',
   expandedPipeline: null,
   expandedTrigger: null,
+  configureError: null,
+  payloadModalIsOpen: false,
 };
 
 const defaultInitialEnabledTriggersState = {
   loading: false,
   pipelineInfo: null,
+  disableError: null,
 };
 
 const triggers = (state = defaultInitialState, action = defaultAction) => {
@@ -52,6 +55,7 @@ const triggers = (state = defaultInitialState, action = defaultAction) => {
         pipelineList: action.payload.pipelineList,
         selectedNamespace: action.payload.selectedNamespace,
         expandedPipeline: null,
+        configureError: null,
       });
       break;
     case PipelineTriggersActions.setTriggersAndPipelineList:
@@ -60,16 +64,30 @@ const triggers = (state = defaultInitialState, action = defaultAction) => {
         enabledTriggers: action.payload.enabledTriggers,
         selectedNamespace: action.payload.selectedNamespace,
         expandedPipeline: null,
+        configureError: null,
       });
       break;
     case PipelineTriggersActions.setExpandedPipeline:
       stateCopy = Object.assign({}, state, {
         expandedPipeline: action.payload.expandedPipeline,
+        configureError: null,
       });
       break;
     case PipelineTriggersActions.setExpandedTrigger:
       stateCopy = Object.assign({}, state, {
         expandedTrigger: action.payload.expandedTrigger,
+        configureError: null,
+      });
+      break;
+    case PipelineTriggersActions.setConfigureTriggerError:
+      stateCopy = Object.assign({}, state, {
+        configureError: action.payload.error,
+      });
+      break;
+    case PipelineTriggersActions.setPayloadModalState:
+      stateCopy = Object.assign({}, state, {
+        payloadModalIsOpen: action.payload.isOpen,
+        configureError: null,
       });
       break;
     case PipelineTriggersActions.reset:
@@ -88,12 +106,24 @@ const enabledTriggers = (state = defaultInitialEnabledTriggersState, action = de
     case PipelineTriggersActions.setExpandedTrigger:
       stateCopy = Object.assign({}, state, {
         loading: true,
+        disableError: null,
+      });
+      break;
+    case PipelineTriggersActions.setTriggersAndPipelineList:
+      stateCopy = Object.assign({}, state, {
+        disableError: null,
       });
       break;
     case PipelineTriggersActions.setEnabledTriggerPipelineInfo:
       stateCopy = Object.assign({}, state, {
         pipelineInfo: action.payload.pipelineInfo,
         loading: false,
+        disableError: null,
+      });
+      break;
+    case PipelineTriggersActions.setDisableTriggerError:
+      stateCopy = Object.assign({}, state, {
+        disableError: action.payload.error,
       });
       break;
     case PipelineTriggersActions.reset:
