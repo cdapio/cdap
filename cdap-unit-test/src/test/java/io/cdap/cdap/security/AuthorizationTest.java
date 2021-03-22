@@ -620,7 +620,9 @@ public class AuthorizationTest extends TestBase {
     URL url = new URL(serviceManager.getServiceURL(5, TimeUnit.SECONDS), "write/data");
     HttpResponse response = executeHttp(HttpRequest.put(url).build());
     Assert.assertEquals(500, response.getResponseCode());
-    Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' is not authorized"));
+    // This is a hack that works around the fact that we cannot properly catch exceptions in the service handler.
+    // TODO: Figure out a way to stop checking error messages.
+    Assert.assertTrue(response.getResponseBodyAsString().contains("'" + BOB + "' has insufficient permissions"));
 
     serviceManager.stop();
     serviceManager.waitForStopped(10, TimeUnit.SECONDS);
