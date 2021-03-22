@@ -20,6 +20,7 @@ import NamespaceStore from 'services/NamespaceStore';
 import { MyAppApi } from 'api/app';
 import { MyScheduleApi } from 'api/schedule';
 import { GLOBALS } from 'services/global-constants';
+import { extractErrorMessage } from 'services/helpers';
 
 const WORKFLOW_TYPE = 'workflows';
 
@@ -47,6 +48,17 @@ export function changeNamespace(namespace) {
         selectedNamespace: namespace,
       },
     });
+  });
+}
+
+function setConfigureError(err) {
+  console.log('Error configuring trigger', err);
+  const errMessage = extractErrorMessage(err);
+  PipelineTriggersStore.dispatch({
+    type: PipelineTriggersActions.setConfigureTriggerError,
+    payload: {
+      error: errMessage,
+    },
   });
 }
 
@@ -100,39 +112,25 @@ export function enableSchedule(
   MyScheduleApi.get(scheduleParams).subscribe(
     () => {
       // Schedule exist, update it
-      MyScheduleApi.update(scheduleParams, requestObj).subscribe(
-        () => {
-          MyScheduleApi.enableTrigger(scheduleParams).subscribe(
-            () => {
-              // fetch list triggers
-              fetchTriggersAndApps(activePipeline, workflowName);
-            },
-            () => {}
-          );
-        },
-        (err) => {
-          console.log('error update', err);
-        }
-      );
+      MyScheduleApi.update(scheduleParams, requestObj)
+        .flatMap(() => {
+          return MyScheduleApi.enableTrigger(scheduleParams);
+        })
+        .subscribe(() => {
+          // fetch list triggers
+          fetchTriggersAndApps(activePipeline, workflowName);
+        }, setConfigureError);
     },
     () => {
       // Schedule does not exist, create it
-      MyScheduleApi.create(scheduleParams, requestObj).subscribe(
-        () => {
-          MyScheduleApi.enableTrigger(scheduleParams).subscribe(
-            () => {
-              // fetch list triggers
-              fetchTriggersAndApps(activePipeline, workflowName);
-            },
-            (err) => {
-              console.log('error enable', err);
-            }
-          );
-        },
-        (err) => {
-          console.log('error create', err);
-        }
-      );
+      MyScheduleApi.create(scheduleParams, requestObj)
+        .flatMap(() => {
+          return MyScheduleApi.enableTrigger(scheduleParams);
+        })
+        .subscribe(() => {
+          // fetch list triggers
+          fetchTriggersAndApps(activePipeline, workflowName);
+        }, setConfigureError);
     }
   );
 }
@@ -189,7 +187,14 @@ export function disableSchedule(schedule, activePipeline, workflowName) {
       fetchTriggersAndApps(activePipeline, workflowName);
     },
     (err) => {
-      console.log('Error deleting schedule', err);
+      console.log('Error deleting trigger', err);
+      const errMessage = extractErrorMessage(err);
+      PipelineTriggersStore.dispatch({
+        type: PipelineTriggersActions.setDisableTriggerError,
+        payload: {
+          error: errMessage,
+        },
+      });
     }
   );
 }

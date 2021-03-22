@@ -21,6 +21,9 @@ const PipelineTriggersActions = {
   setExpandedTrigger: 'TRIGGERS_SET_EXPANDED_TRIGGER',
   setTriggersAndPipelineList: 'TRIGGERS_SET_TRIGGERS_PIPELINE',
   setEnabledTriggerPipelineInfo: 'TRIGGERS_SET_PIPELINE_INFO',
+  setConfigureTriggerError: 'TRIGGERS_SET_CONFIGURE_ERROR',
+  setDisableTriggerError: 'TRIGGERS_SET_DISABLE_ERROR',
+  setPayloadModalState: 'TRIGGERS_SET_PAYLOAD_MODAL_STATE',
   reset: 'TRIGGERS_RESET',
 };
 

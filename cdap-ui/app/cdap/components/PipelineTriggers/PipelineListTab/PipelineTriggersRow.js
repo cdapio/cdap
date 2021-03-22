@@ -22,6 +22,7 @@ import PipelineTriggersStore from 'components/PipelineTriggers/store/PipelineTri
 import { enableSchedule } from 'components/PipelineTriggers/store/PipelineTriggersActionCreator';
 import PayloadConfigModal from 'components/PipelineTriggers/PayloadConfigModal';
 import T from 'i18n-react';
+import If from 'components/If';
 
 const TRIGGER_PREFIX = 'features.PipelineTriggers';
 const PREFIX = `${TRIGGER_PREFIX}.SetTriggers`;
@@ -34,6 +35,9 @@ export default class PipelineTriggersRow extends Component {
     triggeringPipelineInfo: PropTypes.object,
     triggeredPipelineInfo: PropTypes.object,
     selectedNamespace: PropTypes.string,
+    configureError: PropTypes.string,
+    onPayloadToggle: PropTypes.func,
+    payloadModalIsOpen: PropTypes.bool,
   };
 
   state = {
@@ -125,7 +129,14 @@ export default class PipelineTriggersRow extends Component {
   };
 
   render() {
-    let { onToggle, pipelineRow, triggeringPipelineInfo, selectedNamespace } = this.props;
+    let {
+      onToggle,
+      pipelineRow,
+      triggeringPipelineInfo,
+      selectedNamespace,
+      configureError,
+      payloadModalIsOpen,
+    } = this.props;
 
     if (!this.props.isExpanded) {
       return (
@@ -183,6 +194,10 @@ export default class PipelineTriggersRow extends Component {
           </div>
         </div>
 
+        <If condition={configureError && !payloadModalIsOpen}>
+          <div className="text-danger error">{configureError}</div>
+        </If>
+
         <div className="action-buttons-container clearfix">
           <button
             className="btn btn-primary"
@@ -196,6 +211,8 @@ export default class PipelineTriggersRow extends Component {
             triggeringPipelineInfo={this.props.triggeringPipelineInfo}
             triggeredPipelineInfo={this.props.triggeredPipelineInfo}
             onEnableSchedule={this.configureAndEnable}
+            configureError={configureError}
+            onToggle={this.props.onPayloadToggle}
           />
         </div>
       </div>

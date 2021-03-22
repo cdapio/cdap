@@ -37,6 +37,8 @@ const mapStateToProps = (state) => {
     pipelineName: state.triggers.pipelineName,
     expandedPipeline: state.triggers.expandedPipeline,
     workflowName: state.triggers.workflowName,
+    configureError: state.triggers.configureError,
+    payloadModalIsOpen: state.triggers.payloadModalIsOpen,
   };
 };
 
@@ -46,6 +48,14 @@ const mapDispatch = (dispatch) => {
       dispatch({
         type: PipelineTriggersActions.setExpandedPipeline,
         payload: { expandedPipeline: pipeline },
+      });
+    },
+    onPayloadToggle: (isOpen) => {
+      dispatch({
+        type: PipelineTriggersActions.setPayloadModalState,
+        payload: {
+          isOpen,
+        },
       });
     },
   };
@@ -58,6 +68,9 @@ function PipelineListTabView({
   expandedPipeline,
   toggleExpandPipeline,
   workflowName,
+  configureError,
+  onPayloadToggle,
+  payloadModalIsOpen,
 }) {
   let namespaceList = NamespaceStore.getState().namespaces;
   let { selectedNamespace: namespace } = NamespaceStore.getState();
@@ -122,6 +135,9 @@ function PipelineListTabView({
                 triggeredPipelineInfo={triggeredPipelineInfo}
                 selectedNamespace={selectedNamespace}
                 workflowName={workflowName}
+                configureError={configureError}
+                onPayloadToggle={onPayloadToggle}
+                payloadModalIsOpen={payloadModalIsOpen}
               />
             );
           })}
@@ -138,6 +154,9 @@ PipelineListTabView.propTypes = {
   expandedPipeline: PropTypes.string,
   toggleExpandPipeline: PropTypes.bool,
   workflowName: PropTypes.string,
+  configureError: PropTypes.string,
+  onPayloadToggle: PropTypes.func,
+  payloadModalIsOpen: PropTypes.bool,
 };
 
 const PipelineListTab = connect(mapStateToProps, mapDispatch)(PipelineListTabView);
