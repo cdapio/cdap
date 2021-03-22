@@ -76,6 +76,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.jar.JarFile;
 import javax.annotation.Nullable;
 
 /**
@@ -147,7 +148,7 @@ public class PluginInstantiator implements Closeable {
    *
    * @see PluginClassLoader
    */
-  public ClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
+  public PluginClassLoader getArtifactClassLoader(ArtifactId artifactId) throws IOException {
     try {
       return classLoaders.get(new ClassLoaderKey(artifactId));
     } catch (ExecutionException e) {
@@ -444,11 +445,12 @@ public class PluginInstantiator implements Closeable {
     public PluginClassLoader load(ClassLoaderKey key) throws Exception {
       File unpackedDir = DirUtils.createTempDir(tmpDir);
       File artifact = new File(pluginDir, Artifacts.getFileName(key.artifact));
-      BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir);
+      BundleJarUtil.unJar(Locations.toLocation(artifact), unpackedDir, name ->
+        name.equals(JarFile.MANIFEST_NAME) || name.endsWith(".jar"));
 
       Iterator<ArtifactId> parentIter = key.parents.iterator();
       if (!parentIter.hasNext()) {
-        return new PluginClassLoader(key.artifact, unpackedDir, parentClassLoader);
+        return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentClassLoader);
       }
 
       List<ArtifactId> parentsOfParent = new ArrayList<>(key.parents.size() - 1);
@@ -473,7 +475,7 @@ public class PluginInstantiator implements Closeable {
       PluginClassLoader parentPluginCL = getPluginClassLoader(parentArtifact, parentsOfParent);
       ClassLoader parentCL =
         new CombineClassLoader(parentPluginCL.getParent(), parentPluginCL.getExportPackagesClassLoader());
-      return new PluginClassLoader(key.artifact, unpackedDir, parentCL);
+      return new PluginClassLoader(key.artifact, unpackedDir, artifact.getAbsolutePath(), parentCL);
     }
   }
 
