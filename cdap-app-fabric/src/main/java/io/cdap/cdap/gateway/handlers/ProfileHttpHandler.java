@@ -85,25 +85,29 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
 
   @GET
   @Path("/profiles")
-  public void getSystemProfiles(HttpRequest request, HttpResponder responder) {
-    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(NamespaceId.SYSTEM, true)));
+  public void getSystemProfiles(HttpRequest request, HttpResponder responder) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
+    responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfiles(namespaceId, true)));
   }
 
   @GET
   @Path("/profiles/{profile-name}")
   public void getSystemProfile(HttpRequest request, HttpResponder responder,
-                               @PathParam("profile-name") String profileName)
-    throws NotFoundException, BadRequestException {
-    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+                               @PathParam("profile-name") String profileName) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    AuthorizationUtil.ensureAccess(namespaceId, authorizationEnforcer, authenticationContext.getPrincipal());
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     responder.sendJson(HttpResponseStatus.OK, GSON.toJson(profileService.getProfile(profileId)));
   }
 
   @PUT
   @Path("/profiles/{profile-name}")
   public void writeSystemProfile(FullHttpRequest request, HttpResponder responder,
-                                 @PathParam("profile-name") String profileName)
-    throws BadRequestException, IOException, MethodNotAllowedException {
-    ProfileId profileId = getValidatedProfile(NamespaceId.SYSTEM, profileName);
+                                 @PathParam("profile-name") String profileName) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    ProfileId profileId = getValidatedProfile(namespaceId, profileName);
     writeProfile(profileId, request);
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -111,17 +115,19 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @POST
   @Path("/profiles/{profile-name}/enable")
   public void enableSystemProfile(HttpRequest request, HttpResponder responder,
-                                  @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException {
-    profileService.enableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
+                                  @PathParam("profile-name") String profileName) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    profileService.enableProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
   @POST
   @Path("/profiles/{profile-name}/disable")
   public void disableSystemProfile(HttpRequest request, HttpResponder responder,
-                                   @PathParam("profile-name") String profileName)
-    throws NotFoundException, ProfileConflictException, BadRequestException, MethodNotAllowedException {
+                                   @PathParam("profile-name") String profileName) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
     profileService.disableProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
@@ -129,9 +135,10 @@ public class ProfileHttpHandler extends AbstractHttpHandler {
   @DELETE
   @Path("/profiles/{profile-name}")
   public void deleteSystemProfile(HttpRequest request, HttpResponder responder,
-                                  @PathParam("profile-name") String profileName)
-    throws BadRequestException, ProfileConflictException, NotFoundException, MethodNotAllowedException {
-    profileService.deleteProfile(getValidatedProfile(NamespaceId.SYSTEM, profileName));
+                                  @PathParam("profile-name") String profileName) throws Exception {
+    NamespaceId namespaceId = NamespaceId.SYSTEM;
+    authorizationEnforcer.enforce(namespaceId, authenticationContext.getPrincipal(), Action.EXECUTE);
+    profileService.deleteProfile(getValidatedProfile(namespaceId, profileName));
     responder.sendStatus(HttpResponseStatus.OK);
   }
 
