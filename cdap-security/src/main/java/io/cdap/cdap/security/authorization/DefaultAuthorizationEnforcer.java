@@ -77,6 +77,30 @@ public class DefaultAuthorizationEnforcer extends AbstractAuthorizationEnforcer 
   }
 
   @Override
+  public void isVisible(EntityId entity, Principal principal) throws Exception {
+    if (!isSecurityAuthorizationEnabled()) {
+      return;
+    }
+    if (isAccessingSystemNSAsMasterUser(entity, principal) || isEnforcingOnSamePrincipalId(entity, principal)) {
+      return;
+    }
+
+    LOG.trace("Checking single entity visibility on {} for principal {}.", entity, principal);
+    long startTime = System.nanoTime();
+    try {
+      authorizerInstantiator.get().isVisible(entity, principal);
+    } finally {
+      long timeTaken = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startTime);
+      String logLine = "Checked single entity visibility on {} for principal {}. Time spent in enforcement was {} ms.";
+      if (timeTaken > logTimeTakenAsWarn) {
+        LOG.warn(logLine, entity, principal, timeTaken);
+      } else {
+        LOG.trace(logLine, entity, principal, timeTaken);
+      }
+    }
+  }
+
+  @Override
   public Set<? extends EntityId> isVisible(Set<? extends EntityId> entityIds, Principal principal) throws Exception {
     if (!isSecurityAuthorizationEnabled()) {
       return entityIds;
